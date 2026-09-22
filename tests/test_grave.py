@@ -286,13 +286,21 @@ for _e in ("rb", "sr", "y", "zr", "cs", "ba", "la", "ce", "pr", "nd", "sm", "eu"
 
 
 def _sample_rows(n, seed, *, inject=None):
-    """SGP-shaped rows: 60 % PAAS-like, with boundary ages and sections."""
+    """SGP-shaped rows: PAAS-like shale spread over a continuum of ages.
+
+    The background ages are uniform over the Phanerozoic-and-older column, so
+    a +/- 1-2 Myr boundary window holds a small minority of the sections --
+    which is what the sedimentary record looks like and what makes the
+    hypergeometric section test in ``agestack`` informative.  ``inject``
+    places named sections at chosen ages, with (``a`` > 0) or without a
+    fission component.
+    """
     rng = np.random.default_rng(seed)
     X = synth(n, seed=seed)
     rows = []
     for i in range(n):
         c = X[i].copy()
-        age = float(rng.choice([66.0, 252.0, 372.0, 444.5, 100.0, 300.0, 500.0, 800.0]) + rng.normal(0, 0.3))
+        age = float(rng.uniform(5.0, 800.0))
         sec = f"SEC{i % 25}"
         override = {}
         if inject and i in inject:
@@ -366,7 +374,9 @@ def _small_conf(tmp_path):
     conf["sgp"]["page_count"] = 40
     conf["sgp"]["age_bin_edges_ma"] = [0, 200, 600, 1000]
     conf["sgp"]["show_candidates"] = list(SGP_KEYS) + ["bogus_code"]
+    conf["sgp"]["probe_age_window"] = [0, 4000]
     conf["screen"]["min_element_count"] = 10
+    conf["screen"]["min_panel_element_count"] = 3
     conf["screen"]["floor_max_rows"] = 200
     conf["screen"]["null_max_rows"] = 100
     conf["earthchem"]["max_rows"] = 100
@@ -388,11 +398,24 @@ def test_probe_learns_codes_from_bundle_and_trials(tmp_path):
     assert rep["reached"] == {"sgp": True, "earthchem": False, "georoc": False}
 
 
+#: Six independent sections carry the injected vector at the K-Pg, two more
+#: sections are sampled at the same level and carry nothing (so the cluster
+#: test cannot be satisfied by sampling density alone), and one lone section
+#: carries it at the end-Permian (the contamination hypothesis).
+KPG_INJECT = {3: "SEC_A", 7: "SEC_B", 11: "SEC_C", 14: "SEC_E", 17: "SEC_F", 23: "SEC_G"}
+
+
+def _cluster_inject(a=1.5):
+    inj = {i: {"a": a, "age": 66.0 + 0.1 * (k - 2), "section": s}
+           for k, (i, s) in enumerate(KPG_INJECT.items())}
+    inj[31] = {"a": 0.0, "age": 66.0, "section": "SEC_BG1"}      # boundary, no vector
+    inj[35] = {"a": 0.0, "age": 65.9, "section": "SEC_BG2"}
+    inj[20] = {"a": a, "age": 252.0, "section": "SEC_D"}          # one section only
+    return inj
+
+
 def test_end_to_end_recovers_an_injected_cluster_and_flags_single_sections(tmp_path):
-    inject = {3: {"a": 1.5, "age": 66.0, "section": "SEC_A"},
-              7: {"a": 1.5, "age": 66.1, "section": "SEC_B"},
-              11: {"a": 1.5, "age": 65.9, "section": "SEC_C"},
-              20: {"a": 1.5, "age": 252.0, "section": "SEC_D"}}
+    inject = _cluster_inject()
     rows = _sample_rows(300, seed=2, inject=inject)
     fetch = ScriptedSGP(rows)
     conf = _small_conf(tmp_path)
@@ -402,15 +425,17 @@ def test_end_to_end_recovers_an_injected_cluster_and_flags_single_sections(tmp_p
     assert acq["sources"]["sgp"]["resolution"]["meta"]["age"] == "interpreted age"
     assert "earthchem:NO_DATA_REACHED" in acq["degraded"]
     scr = stage_screen(conf, tmp_path)
-    assert scr["status"] == "OK" and scr["funnel"]["survivors"] >= 3
+    assert scr["status"] == "OK" and scr["funnel"]["survivors"] >= 4
     s = stage_assess(conf, tmp_path)
     assert s["verdict"].endswith("FISSION_VECTOR_STRATIGRAPHIC_CLUSTER"), s["verdict"]
     assert s["verdict"].startswith("DEGRADED_SOURCE")
     kpg = s["age_stack"]["boundaries"]["k_pg"]
-    assert kpg["status"] == "STRATIGRAPHIC_CLUSTER" and kpg["n_candidate_sections"] >= 3
+    assert kpg["status"] == "STRATIGRAPHIC_CLUSTER" and kpg["n_candidate_sections"] >= 4
+    assert "SEC_BG1" not in kpg["candidate_sections"] and "SEC_BG2" not in kpg["candidate_sections"]
     assert s["age_stack"]["boundaries"]["end_permian"]["status"] == "single_section"
     ids = {c["sample_id"] for c in s["survivors"]}
-    assert {"SGP3", "SGP7", "SGP11", "SGP20"} <= ids
+    assert len({f"SGP{i}" for i in KPG_INJECT} & ids) >= 4
+    assert "SGP20" in ids
     assert (tmp_path / "REPORT.md").exists() and (tmp_path / "samples.csv").exists()
 
 
@@ -425,16 +450,24 @@ def test_end_to_end_clean_population_is_a_count_not_a_candidate(tmp_path):
 
 
 def test_impact_layer_is_the_positive_control_in_the_age_stack(tmp_path):
+    """The K-Pg iridium, rebuilt: five sections with a chondritic PGE panel at
+    one level, five more sampled at that level without one.  The channel must
+    class the ejecta ``impact`` (never fission) and recover the stratigraphic
+    cluster -- on a panel carried by 5 of 130 analyses, which is why the
+    refined pass may not be cut on measurement count."""
     chond = {e: R.CI_CHONDRITE[e] * 1e-3 for e in R.PGE}
-    inject = {i: {"age": 66.0, "section": f"IMP{i}", "override": chond} for i in (2, 5, 8)}
-    rows = _sample_rows(120, seed=6, inject=inject)
+    inject = {i: {"age": 66.0, "section": f"IMP{i}", "override": chond} for i in (2, 5, 8, 12, 16)}
+    inject.update({i: {"age": 66.0, "section": f"BG{i}"} for i in (21, 24, 27, 30, 33)})
+    rows = _sample_rows(130, seed=6, inject=inject)
     fetch = ScriptedSGP(rows)
     conf = _small_conf(tmp_path)
     grave_run(conf, stage="probe,acquire,screen,assess", out_dir=tmp_path, fetch_fn=fetch)
     s = json.loads((tmp_path / "summary.json").read_text())
     assert s["verdict"].endswith("NO_FISSION_VECTOR")
-    assert s["refined_counts"]["pge"].get("impact") == 3
-    assert s["impact_positive_control"]["boundaries"]["k_pg"]["status"] == "STRATIGRAPHIC_CLUSTER"
+    assert s["refined_counts"]["pge"].get("impact") == 5
+    kpg = s["impact_positive_control"]["boundaries"]["k_pg"]
+    assert kpg["status"] == "STRATIGRAPHIC_CLUSTER", kpg
+    assert kpg["n_candidate_sections"] == 5 and kpg["n_sections"] >= 10
 
 
 def test_every_source_empty_is_no_data_reached(tmp_path):

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from scipy.stats import poisson
+from scipy.stats import hypergeom
 
 #: (key, name, age Ma, default half-width Myr, note)
 BOUNDARIES: tuple[dict, ...] = (
@@ -96,42 +96,62 @@ def section_key(row: dict) -> str:
 
 
 def age_stack(df: pd.DataFrame, boundaries: list[dict], *, candidate_col: str = "is_candidate",
-              boundary_col: str = "boundary", section_col: str = "section_key") -> dict:
-    """Per boundary: sections sampled, candidates, candidate sections, Poisson excess.
+              boundary_col: str = "boundary", section_col: str = "section_key",
+              cluster_p: float = 0.01) -> dict:
+    """Per boundary: sections sampled, candidates, candidate sections, clustering p.
 
-    The global candidate rate per *section* (a section with >= 1 candidate
-    anywhere counts once) sets the expectation; the observed count of
-    candidate sections inside the window is tested against
-    ``Poisson(rate x n_sections_in_window)``.  A window whose candidate
-    sections are >= 2 and whose p is below ``0.01`` is a *stratigraphic
-    cluster* -- the only thing that can promote a per-sample candidate to a
-    boundary-level claim.  One candidate section is always ``single_section``.
+    The unit is the *section*, not the sample: a section with >= 1 candidate
+    counts once however many analyses it contributed, because ten aliquots of
+    one core are one opportunity for contamination, not ten.
+
+    The test is conditional and therefore does not let the window contaminate
+    its own null.  Given that the whole corpus produced ``C`` candidate
+    sections out of ``S`` sections, and that ``S_w`` of those sections carry
+    a sample inside the window, the count in the window under "candidates fall
+    where sections are, regardless of stratigraphic level" is
+    ``Hypergeometric(S, C, S_w)`` and ``p = P(X >= k)``.  (The earlier
+    Poisson-with-global-rate form estimated the background from a rate the
+    window's own candidates had already inflated, which is anticonservative
+    for the rate and, worse, loses power exactly when every candidate sits at
+    one level.)  A window with >= 2 candidate sections and ``p < cluster_p``
+    is a *stratigraphic cluster* -- the only thing that promotes a per-sample
+    candidate to a boundary-level claim.  One candidate section is always
+    ``single_section``: that is the contamination hypothesis, not a find.
     """
-    n_sec_total = df[section_col].nunique()
-    cand_sec_total = df.loc[df[candidate_col].astype(bool), section_col].nunique()
+    n_sec_total = int(df[section_col].nunique())
+    cand_sec_all = set(df.loc[df[candidate_col].astype(bool), section_col].astype(str))
+    cand_sec_total = len(cand_sec_all)
     rate = cand_sec_total / n_sec_total if n_sec_total else 0.0
-    out = {"n_sections_total": int(n_sec_total), "n_candidate_sections_total": int(cand_sec_total),
-           "section_candidate_rate": round(float(rate), 6), "boundaries": {}}
+    out = {"n_sections_total": n_sec_total, "n_candidate_sections_total": cand_sec_total,
+           "section_candidate_rate": round(float(rate), 6), "test": "hypergeometric_on_sections",
+           "cluster_p": float(cluster_p), "boundaries": {}}
     for b in boundaries:
         w = df[df[boundary_col] == b["key"]]
-        n_sec = w[section_col].nunique()
+        n_sec = int(w[section_col].nunique())
         cand = w[w[candidate_col].astype(bool)]
-        n_cand_sec = cand[section_col].nunique()
-        exp = rate * n_sec
-        p = float(poisson.sf(n_cand_sec - 1, exp)) if n_cand_sec > 0 and exp > 0 else (1.0 if n_cand_sec == 0 else 0.0)
+        in_window = set(cand[section_col].astype(str))
+        n_cand_sec = len(in_window)
+        exp = (cand_sec_total * n_sec / n_sec_total) if n_sec_total else 0.0
+        if n_cand_sec == 0:
+            p = 1.0
+        elif cand_sec_total <= 0 or n_sec <= 0:
+            p = 1.0
+        else:
+            p = float(hypergeom.sf(n_cand_sec - 1, n_sec_total, cand_sec_total, n_sec))
         if n_cand_sec == 0:
             status = "no_candidate"
         elif n_cand_sec == 1:
             status = "single_section"
-        elif p < 0.01:
+        elif p < cluster_p:
             status = "STRATIGRAPHIC_CLUSTER"
         else:
             status = "multi_section_at_background_rate"
         out["boundaries"][b["key"]] = {
             "name": b["name"], "age_ma": b["age_ma"], "half_width_myr": b["half_width_myr"],
-            "n_samples": int(len(w)), "n_sections": int(n_sec), "n_candidates": int(len(cand)),
-            "n_candidate_sections": int(n_cand_sec), "expected_candidate_sections": round(float(exp), 4),
-            "p_poisson": round(p, 6), "status": status,
+            "n_samples": int(len(w)), "n_sections": n_sec, "n_candidates": int(len(cand)),
+            "n_candidate_sections": n_cand_sec, "expected_candidate_sections": round(float(exp), 4),
+            "n_candidate_sections_elsewhere": int(len(cand_sec_all - in_window)),
+            "p_hypergeom": round(p, 6), "status": status,
             "candidate_sections": sorted(cand[section_col].astype(str).unique().tolist())[:25],
         }
     return out

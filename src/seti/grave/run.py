@@ -83,6 +83,7 @@ DEFAULTS: dict = {
             "base_show": ["section_name", "coord_lat", "coord_long", "interpreted_age", "max_age", "min_age",
                           "lithology_name", "site_type", "alu", "mo", "u"],
             "anchor_show": ["interpreted_age", "coord_lat"], "show_candidates": [], "max_code_tests": 200,
+            "probe_age_window": [0, 4000],
             "page_count": 5000, "max_pages_per_bin": 60, "age_bin_edges_ma": [0, 4000]},
     "earthchem": {"rest_url": "https://portal.earthchem.org/restsearchservice", "timeout_s": 120,
                   "page_size": 50, "max_rows": 5000, "max_rows_per_window": 500, "window_half_width_myr": 5.0,
@@ -92,7 +93,8 @@ DEFAULTS: dict = {
                "file_regex": "(?i)sediment|tuff|tephra|ash", "max_files": 12, "max_total_bytes": 150_000_000,
                "timeout_s": 300},
     "detector": {},
-    "screen": {"min_element_count": 50, "floor_max_rows": 4000, "null_max_rows": 2000, "max_assess": 5000,
+    "screen": {"min_element_count": 50, "min_panel_element_count": 5, "unmeasured_floor_dex": 0.30,
+               "floor_max_rows": 4000, "null_max_rows": 2000, "max_assess": 5000,
                "min_age_ma": 0.0, "max_age_ma": 4000.0,
                "provenance_flag_regex": r"(?i)core|drill|well|borehole|mine|quarry|tailing"},
     "agestack": {"width_scale": 1.0, "max_span_myr": 20.0, "cluster_p": 0.01, "histogram_bin_myr": 10.0},
@@ -317,14 +319,32 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
             df[c] = np.nan
     # candidate-source rows (GEOROC is the reference population only)
     df["is_reference_only"] = df["source"].astype(str).eq("georoc")
-    # elements in the design: those the data actually carry
-    elements = [e for e in R.FIT_ELEMENTS if e in df.columns
-                and int(pd.to_numeric(df[e], errors="coerce").notna().sum()) >= int(sc.get("min_element_count", 50))]
+    # Elements in the design.  Two thresholds, because the elements that matter
+    # most are the rarest ones: Ru, Rh, Pd, Te, Ir, Pt are measured on a per-cent
+    # minority of analyses, and they are exactly the light-peak / PGE
+    # discriminants.  A common element needs ``min_element_count`` measurements
+    # (enough to measure its own error floor on the control population); an
+    # element of the fission / PGE / alloy panel enters at
+    # ``min_panel_element_count`` and carries the wider ``unmeasured_floor_dex``
+    # sigma, since its scatter could not be measured.
+    n_meas = {e: int(pd.to_numeric(df[e], errors="coerce").notna().sum())
+              for e in R.FIT_ELEMENTS if e in df.columns}
+    panel = set(R.FISSION_ELEMENTS) | set(R.PGE) | set(R.ALLOY_PANEL)
+    min_common = int(sc.get("min_element_count", 50))
+    min_panel = int(sc.get("min_panel_element_count", 5))
+    elements = [e for e in R.FIT_ELEMENTS
+                if n_meas.get(e, 0) >= (min_panel if e in panel else min_common)]
     if not elements:
         rep = {"stage": "screen", "generated_utc": _now(), "status": VERDICT_NO_DATA, "n_samples": int(len(df)),
                "note": "no element column with enough measurements"}
         _write(out / "screen.json", rep)
         return rep
+    # every element column present at all, for the kills (redox, Fe-Mn, PGE,
+    # alloy) which must see the measurement even when the design cannot use it
+    all_elements = [e for e in R.FIT_ELEMENTS if n_meas.get(e, 0) > 0]
+    full_df = df[all_elements].apply(pd.to_numeric, errors="coerce")
+    full = full_df.to_numpy(dtype=float)
+    full[full <= 0] = np.nan
     conc_df = df[elements].apply(pd.to_numeric, errors="coerce")
     dl_mask, dl_ledger = V.detection_limit_mask(conc_df, cfg)
     conc = conc_df.to_numpy(dtype=float)
@@ -342,7 +362,7 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
     control = (df["boundary"] == "") & ~df["is_reference_only"]
     floors = V.error_floors(conc[control.to_numpy()] if control.any() else conc, D0, cfg,
                             max_rows=int(sc.get("floor_max_rows", 4000)))
-    D = V.apply_floors(D0, floors)
+    D = V.apply_floors(D0, floors, unmeasured_dex=float(sc.get("unmeasured_floor_dex", 0.30)))
     null = V.shuffled_null(conc[control.to_numpy()] if control.any() else conc, D, cfg,
                            max_rows=int(sc.get("null_max_rows", 2000)))
     threshold = max(cfg.lr_min, float(null.get("lr_quantile") or 0.0))
@@ -360,11 +380,12 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
     cands: list[dict] = []
     prov_re = sc.get("provenance_flag_regex", "")
     for i in idx:
-        row = {e: (float(conc[i, k]) if np.isfinite(conc[i, k]) else np.nan) for k, e in enumerate(D.elements)}
+        # the kills see every element the sample carries, not only the design's
+        row = {e: float(full[i, k]) for k, e in enumerate(all_elements) if np.isfinite(full[i, k])}
         for extra in ("TOC",):
             if extra in df.columns:
                 row[extra] = pd.to_numeric(df.at[i, extra], errors="coerce")
-        dl_flags = {e for k, e in enumerate(D.elements) if bool(dl_mask.iat[i, k])}
+        dl_flags = {e for e in D.elements if e in dl_mask.columns and bool(dl_mask[e].iat[i])}
         res = V.assess_row(row, conc[i], D, cfg, D.sigma, fit=df.loc[i].to_dict(), threshold=threshold,
                            dl_flags=dl_flags)
         df.at[i, "class"] = res["class"]
@@ -382,7 +403,7 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
     survivors = [c for c in cands if c["class"] == V.FISSION_CANDIDATE]
     df["is_candidate"] = df["class"].eq(V.FISSION_CANDIDATE)
     # refined-particulate classes on every sample with a panel
-    refined = _refined_pass(df, conc, D, cfg)
+    refined = _refined_pass(df, full, all_elements, cfg)
     # outputs
     slim = df[[c for c in META_COLS if c in df.columns] + ["boundary", "section_key", "n_measured", "fission_lr",
                                                              "a_fission", "reduced_chi2_natural",
@@ -397,6 +418,7 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
            "n_candidate_source_samples": int((~df["is_reference_only"]).sum()),
            "n_reference_only": int(df["is_reference_only"].sum()),
            "elements_in_design": D.elements, "n_elements": len(D.elements),
+           "elements_measured": {e: n_meas.get(e, 0) for e in all_elements},
            "design": D.to_dict(), "error_floors": floors, "shuffled_null": null, "threshold": threshold,
            "detection_limits": dl_ledger,
            "funnel": {"samples": int(len(df)), "with_age": int(pd.to_numeric(df["age"], errors="coerce").notna().sum()),
@@ -441,8 +463,15 @@ def _quantiles(s: pd.Series) -> dict:
             "max": round(float(v.max()), 3)}
 
 
-def _refined_pass(df: pd.DataFrame, conc: np.ndarray, D: V.Design, cfg: V.GraveConfig) -> dict:
-    idx = {e: k for k, e in enumerate(D.elements)}
+def _refined_pass(df: pd.DataFrame, conc: np.ndarray, elements: list[str], cfg: V.GraveConfig) -> dict:
+    """PGE and alloy classes over every element column present.
+
+    Deliberately *not* restricted to the mixture design: a chondritic Ir-Os-Ru
+    -Pt-Pd panel is reported on a per-cent minority of analyses, so a design
+    cut on measurement count would delete the impact positive control and the
+    refined-catalyst test together.
+    """
+    idx = {e: k for k, e in enumerate(elements)}
     has_pge = [e for e in R.PGE if e in idx]
     has_alloy = [e for e in ("Ta", "W") if e in idx]
     pge_cls = np.full(len(df), V.PGE_INSUFFICIENT, dtype=object)
@@ -501,13 +530,16 @@ def stage_assess(conf: dict, out: Path) -> dict:
         print(f"[grave] assess: {VERDICT_NO_DATA}")
         return summary
     bounds = G.boundary_table(conf)
+    cluster_p = float((conf.get("agestack") or {}).get("cluster_p", 0.01))
     main = df[~df["is_reference_only"]].copy()
-    stack = G.age_stack(main, bounds, candidate_col="is_candidate")
+    stack = G.age_stack(main, bounds, candidate_col="is_candidate", cluster_p=cluster_p)
     main["is_impact"] = main["pge_class"].eq(V.PGE_IMPACT)
-    impact_stack = G.age_stack(main, bounds, candidate_col="is_impact") if main["is_impact"].any() else None
+    impact_stack = G.age_stack(main, bounds, candidate_col="is_impact", cluster_p=cluster_p) \
+        if main["is_impact"].any() else None
     main["is_refined"] = main["pge_class"].isin([V.PGE_REFINED, V.PGE_FISSION_LIKE]) | \
         main["alloy_class"].isin([V.ALLOY_REFINED_TA, V.ALLOY_REFINED_W])
-    refined_stack = G.age_stack(main, bounds, candidate_col="is_refined") if main["is_refined"].any() else None
+    refined_stack = G.age_stack(main, bounds, candidate_col="is_refined", cluster_p=cluster_p) \
+        if main["is_refined"].any() else None
     hist = G.age_histogram(main, bin_myr=float((conf.get("agestack") or {}).get("histogram_bin_myr", 10.0)))
     clusters = [k for k, v in stack["boundaries"].items() if v["status"] == "STRATIGRAPHIC_CLUSTER"]
     n_surv = int(cands.get("n_survivors", 0))
@@ -574,14 +606,15 @@ def _report(s: dict, scr: dict, cands: dict, refined: dict, stack: dict | None) 
           "|---|---|---|---|---|---|---|---|---|"]
     for b in ((s.get("age_stack") or {}).get("boundaries") or {}).values():
         L.append(f"| {b['name']} | {b['age_ma']} | {b['n_samples']} | {b['n_sections']} | {b['n_candidates']} | "
-                 f"{b['n_candidate_sections']} | {b['expected_candidate_sections']} | {b['p_poisson']} | {b['status']} |")
+                 f"{b['n_candidate_sections']} | {b['expected_candidate_sections']} | "
+                 f"{b.get('p_hypergeom')} | {b['status']} |")
     ic = s.get("impact_positive_control")
     L += ["", "## Impact class as positive control (chondritic PGE, Ir-anchored)", ""]
     if ic:
         for b in ic["boundaries"].values():
             if b["n_candidates"]:
                 L.append(f"- {b['name']}: {b['n_candidates']} impact-class samples in {b['n_candidate_sections']} "
-                         f"sections, p = {b['p_poisson']} ({b['status']})")
+                         f"sections, p = {b.get('p_hypergeom')} ({b['status']})")
     else:
         L.append("No sample carries a PGE panel that classes as impact — the Ir positive control could not run "
                  "on this corpus (state which elements were present: "

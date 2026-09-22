@@ -17,7 +17,10 @@ sgp:
   type: "samples"                       # the Macrostrat call; "nhhxrf" = no hand-held XRF (Stockey)
   type_variants: ["samples", "nhhxrf"]
   timeout_s: 180
-  probe_age_window: [60, 70]
+  # the window every probe request filters on.  Wide on purpose: a code is
+  # accepted only if a row comes back carrying its column, so a narrow window
+  # that happens to hold no samples would silently reject the whole schema.
+  probe_age_window: [0, 4000]
   # the published Stockey body (known to work), used as the base call
   base_show: [height_meters, section_name, fe, fe_hr_fe_t, fe_py_fe_hr, toc, alu, mo, u, fe_t_al,
               site_type, coord_lat, coord_long, basin_type, meta_bin, strat_name, strat_name_long,
@@ -233,7 +236,10 @@ detector:
   dl_floor_fraction: 0.5
 
 screen:
-  min_element_count: 50                 # an element enters the design if >= this many samples carry it
+  min_element_count: 50                 # a common element enters the design if >= this many samples carry it
+  min_panel_element_count: 5            # ... but a fission / PGE / alloy panel element enters at this count:
+                                        # Ru, Rh, Pd, Te, Ir, Pt are the decisive elements and the rarest
+  unmeasured_floor_dex: 0.30            # sigma for an element whose control scatter could not be measured
   floor_max_rows: 4000
   null_max_rows: 2000
   max_assess: 5000                      # above-threshold samples put through the full vet (highest LR first)

@@ -336,7 +336,8 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
     """
     s = conf["sgp"]
     timeout = float(s.get("timeout_s", 120))
-    ledger: dict = {"generated_utc": _now(), "hosts": {}, "requests": []}
+    window = [float(x) for x in (s.get("probe_age_window") or [0.0, 4000.0])]
+    ledger: dict = {"generated_utc": _now(), "hosts": {}, "requests": [], "probe_age_window": window}
 
     def rec(fr: FetchResult, why: str) -> FetchResult:
         d = fr.record()
@@ -367,7 +368,7 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
     api = s["post_paged_url"]
     base_show = list(s.get("base_show", []))
     fr = rec(_post(fetch, api, sgp_body(s, count=3, page=1, show=base_show,
-                                         filters={"interpreted_age": list(s.get("probe_age_window", [60, 70]))}),
+                                         filters={"interpreted_age": window}),
                    timeout), "base call: the published Stockey et al. body")
     rows = _rows_of(fr)
     j = fr.json() if fr.ok else None
@@ -378,7 +379,7 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
     ledger["type_variants"] = {}
     for kind in s.get("type_variants", ["samples", "nhhxrf"]):
         fr2 = rec(_post(fetch, api, sgp_body(s, count=2, page=1, show=base_show, kind=kind,
-                                              filters={"interpreted_age": [60, 70]}), timeout),
+                                              filters={"interpreted_age": window}), timeout),
                   f"type variant {kind!r}")
         r2 = _rows_of(fr2)
         ledger["type_variants"][kind] = {"status": fr2.status, "n_rows": len(r2) if r2 is not None else None,
@@ -387,7 +388,7 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
     # anchor codes; a new key in the rows is the acceptance test.
     anchor = list(s.get("anchor_show", ["interpreted_age", "coord_lat"]))
     fr0 = rec(_post(fetch, api, sgp_body(s, count=2, page=1, show=anchor,
-                                          filters={"interpreted_age": [60, 70]}), timeout), "anchor-only keys")
+                                          filters={"interpreted_age": window}), timeout), "anchor-only keys")
     r0 = _rows_of(fr0) or []
     base_keys = set(r0[0].keys()) if r0 else set()
     candidates = list(dict.fromkeys(list(s.get("show_candidates", [])) + list(codes_from_bundle)))
@@ -397,7 +398,7 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
         if code in anchor:
             continue
         frc = _post(fetch, api, sgp_body(s, count=2, page=1, show=anchor + [code],
-                                          filters={"interpreted_age": [60, 70]}), timeout)
+                                          filters={"interpreted_age": window}), timeout)
         rc = _rows_of(frc)
         if rc is None:
             rejected[code] = frc.status if frc.status is not None else (frc.error or "no response")

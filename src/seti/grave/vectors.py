@@ -400,10 +400,22 @@ def error_floors(conc: np.ndarray, D: Design, cfg: GraveConfig, *, max_rows: int
     return out
 
 
-def apply_floors(D: Design, floors: dict[str, dict]) -> Design:
-    sig = np.array([max(float(D.sigma[k]), float(floors.get(e, {}).get("floor_dex") or 0.0))
-                    for k, e in enumerate(D.elements)])
-    return Design(elements=D.elements, reservoirs=D.reservoirs, A=D.A, phi=D.phi, sigma=sig)
+def apply_floors(D: Design, floors: dict[str, dict], *, unmeasured_dex: float = 0.0) -> Design:
+    """Widen each element's sigma to its measured scatter.
+
+    An element whose floor could **not** be measured (too few control
+    residuals -- which is the case for exactly the rare, decisive elements:
+    Ru, Rh, Pd, Te, Ir) is given ``unmeasured_dex`` instead of its nominal
+    class sigma, because an unmeasured scatter is not a small scatter.
+    """
+    sig = []
+    for k, e in enumerate(D.elements):
+        f = floors.get(e) or {}
+        measured = f.get("floor_dex")
+        floor = float(measured) if measured is not None else float(unmeasured_dex)
+        sig.append(max(float(D.sigma[k]), floor))
+    return Design(elements=D.elements, reservoirs=D.reservoirs, A=D.A, phi=D.phi,
+                  sigma=np.array(sig, dtype=float))
 
 
 def shuffled_null(conc: np.ndarray, D: Design, cfg: GraveConfig, *, max_rows: int = 2000,

@@ -60,8 +60,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Offline gate — injected fission vector recovered, confounders rejected, on this runner
-        run: python -m pytest tests/test_grave.py -q -p no:cacheprovider
+      # The probe makes no scientific claim — it only asks each service what it
+      # serves — so it runs BEFORE the offline gate: a schema the runner has
+      # learned is worth having even from a run whose detector gate then fails.
+      # Everything downstream of the probe IS gated.
       - name: Probe (learn the SGP field codes, EarthChem counts, GEOROC files)
         if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'probe' || startsWith(github.event.inputs.stage, 'probe') }}
         run: |

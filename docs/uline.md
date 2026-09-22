@@ -442,13 +442,25 @@ in `summary.json`, never folded into the verdict string.
 python -m seti.uline.run --stage probe            # archive inventory; cheap
 python -m seti.uline.run --stage all              # probe, acquire, screen, assess
 python -m seti.uline.run --stage screen --species CHF3,NF3 --n-trials 5000
+python -m seti.uline.run --stage validate         # the predictor vs SO2/CH2F2/COF2
+python -m seti.uline.run --stage litfetch         # the microwave literature ladder
+python -m seti.uline.run --stage propose          # offline: adjudicate that ledger
 ```
+
+The workflow input `stage: full` runs everything in one dispatch, in the order
+**probe → acquire → screen → assess → validate → litfetch → propose**: the
+search writes `summary.json` *before* the literature ladder starts, so a slow
+or hanging service can cost only its own output, never the verdict.  The
+ladder also carries its own wall clock (`archives.litfetch_budget_s`), and a
+source it does not reach is recorded `NOT_ATTEMPTED` rather than as a route
+that answered with nothing.
 
 Workflow `.github/workflows/uline.yml` (`workflow_dispatch`: `stage`,
 `sources`, `species`, `n_trials`, `reduce_only_run_id`); results commit back
 through `scripts/commit_results.sh`.  Outputs in `results/uline/`:
 `probe.json`, `acquire.json`, `acquisition_log.json`, `screen.json`,
-`coincidences.csv`, `summary.json`, `candidates.csv`.  Offline suite:
+`coincidences.csv`, `summary.json`, `candidates.csv`,
+`rotor_validation.json`, `literature.json`, `constants_proposal.json`.  Offline suite:
 `tests/test_uline.py` — which, for §3.3, scripts a TAP that 503s every query
 against a VizieR that answers over ASU (discovery off `-meta.all`, rows off
 `asu-tsv`, reported as `route: asu_tsv`) and the world where every route is

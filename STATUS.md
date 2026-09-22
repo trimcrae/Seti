@@ -637,8 +637,27 @@ does the same work in one job on one slot, which is affordable because only
 No `results/slag/summary.json` exists yet — the verdict line stays empty until
 that run commits one.
 
-Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
-the runner installs), per `docs/channel-brief.md` §0 item 5.
+Because that envelope finding blunts Tier 2, the same draws now also give a
+**calibrated per-element residual**: for each element, the fraction of natural
+draws left at least as badly fitted there as the data are. It does not depend
+on the envelope at all — it inherits the model's full freedom — and it says
+*which* element carries a panel's misfit. The Bonferroni-corrected minimum
+over the panel is reported beside the raw minimum and is what any claim must
+use. On the offline injection it recovers a 1.5 dex Ti excess as the worst
+element; a natural CI panel's corrected minimum stays above 0.05.
+
+Two record-keeping fixes came out of reading the acquisition rather than
+trusting it: all twelve PyllutedWD timescale grids downloaded OK and **parsed
+to nothing**, silently, so a file that does not parse now records why and
+keeps its raw text (the source actually in use, PEWDD's own per-star
+`SinTime*`, is the better one anyway); and `summary.json` now names the commit
+that computed it, because the job checks out a branch head rather than a
+commit.
+
+Offline: 42 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
+the runner installs), per `docs/channel-brief.md` §0 item 5, with the real
+PEWDD table giving identical numbers under each.
+
 ### GROWTH direct: the TIC repair is confirmed on the runner, and the method recovers Kepler-1520 b, 2026-09-22
 
 Shard 12 of run 35738702139 ran with the fixes; shard 1 ran without them. Same
@@ -1296,19 +1315,7 @@ its strength is stated in units of that exposure's sensitivity:
 | drift null / in-eclipse residual | 0.42σ / −0.13σ | 0.40σ / −0.32σ |
 | features on the *un-injected* baseline | 2 | 0 |
 
-The four screen shards were released at 15:45 UTC (11:45 EDT); shard 3 started
-screening at 15:55 UTC (11:55 EDT) and shards 0–2 are waiting on runner
-concurrency. Each runs to a 270-minute deadline inside a 350-minute job cap, so
-the run's own `assess` job will commit `summary.json`, `candidates.json` and
-`exposures.json` several hours later. **When it lands, read in this order:**
-`funnel.exposure_statuses` (does `read_failed` collapse?),
-`funnel.exposures_eclipse_class` (is it non-zero — the thing the first screen
-could never do?), `funnel.dispatch_coverage.fraction_of_scheduled_bytes_downloaded`
-(what fraction of the 509 GB this dispatch reached), then `rejections`,
-`tiers` and `candidates`. To continue the sweep, re-dispatch `lantern.yml` with
-`reuse_inventory=true` and `prior_run_ids=35745941769`: checkpoints carry a
-version and accumulate, so successive dispatches add coverage instead of
-repeating it. Checkpoint version is 3
+The four screen shards began at 15:53 UTC (11:53 EDT). Checkpoint version is 3
 and deliberately unchanged, so a mid-flight assess cannot mark a running
 screen's checkpoints stale — which is how run 35737559234 reported 159 stale
 checkpoints and zero exposures. The honest limitation stands, in the

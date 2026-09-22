@@ -296,9 +296,11 @@ Counting *detections only* — upper limits excluded, per §5:
 |---|---|
 | 0–1 | 2723 |
 | 2–4 | 656 |
-| **≥ 5 (screened and calibrated)** | **168 panels / 137 objects** |
+| **≥ 5 (screened and calibrated)** | **168 panels / 123 objects** |
 
-187 panels carry at least one upper limit. (Before the negative-error
+(137 objects under the old name grouping; the sky reconciliation of §5 merges
+14 of those into another object's designations.) 187 panels carry at least one
+upper limit. (Before the negative-error
 convention was understood, 209 panels appeared to reach ≥ 5 elements — the
 extra 41 were limits read as detections.)
 

@@ -231,6 +231,14 @@ reason — roughly one candidate in eight. **None of the six lines left standing
 them at 0 px**; two have a neighbour one pixel away. The statistic goes in the summary per
 release.
 
+The two releases fail differently, which is what one would hope. The DESI candidates are
+spread over 72 healpix with up to 5 in one, and **not a single same-pixel pair shares a
+healpix** — so the DESI excess is release-wide, not per-tile. Of its 11 exact
+coincidences, six sit within 22 Å of a listed OH line (three within 3.5 Å) and one is
+inside the H₂O 7200 band: for an *absorption* search, an over- or under-subtracted
+airglow line is exactly a narrow deficit at a fixed observed wavelength. The SDSS excess
+is the opposite — it concentrates on plates (below), which is a detector, not the sky.
+
 ## A background galaxy in the fibre — the leading explanation for the strongest line
 
 `galaxy_reject` already tests for this, but it tests the **candidate list**: it needs two

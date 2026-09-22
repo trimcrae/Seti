@@ -5,6 +5,7 @@ name: growth-direct
 #
 #   targets ──▶ measure (N shards, checkpointed, each commits its own file)
 #           ──▶ assess (aggregate, population offsets, classify, funnel)
+#           ──▶ control (the look-elsewhere null on everything that changed)
 #           ──▶ vet (stage 2 + stage 3 on every candidate)
 #
 # WHY.  Stage 1 reached 108 of 9,564 KOIs through the TOI alert catalogue.  This
@@ -27,9 +28,10 @@ on:
     inputs:
       stage:
         description: >-
-          "all" (targets, measure, assess, vet), "targets", "measure"
+          "all" (targets, measure, assess, control, vet), "targets", "measure"
           (needs a targets.csv on the branch or targets_run_id), "assess"
-          (aggregate the committed shard files), or "vet".
+          (aggregate the committed shard files), "control" (the look-elsewhere
+          null on everything that changed), or "vet".
         required: false
         default: "all"
       n_shards:
@@ -272,8 +274,65 @@ jobs:
           path: results/growth/direct/
           if-no-files-found: warn
 
-  vet:
+  # The look-elsewhere null: the epoch search maximises S/N over up to 161
+  # offsets and the depth is fitted at the winner, which is biased upward and
+  # is not in the formal error.  Every planet the measurement said CHANGED gets
+  # the identical search repeated at phases where the planet is not.
+  control:
     needs: [assess]
+    if: ${{ always() && (needs.assess.result == 'success' || github.event.inputs.stage == 'control') && github.event.inputs.stage != 'targets' && github.event.inputs.stage != 'measure' && github.event.inputs.stage != 'vet' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+      - name: Refresh the committed aggregate
+        run: |
+          git fetch --quiet origin "${{ github.ref_name }}" || true
+          git checkout --quiet "origin/${{ github.ref_name }}" -- results/growth/direct 2>/dev/null || true
+      - name: Control-phase null on every class that changed
+        run: |
+          python -m seti.growth.direct --stage control \
+            --budget-s $(( ${{ github.event.inputs.shard_budget_min || '270' }} * 60 ))
+          echo "=== control ==="
+          python - <<'PY'
+          import json
+          c = json.load(open("results/growth/direct/control/summary.json"))
+          print(json.dumps(c, indent=2)[:8000])
+          if c.get("budget_exhausted"):
+              print("::warning::the control stage exhausted its budget; "
+                    "targets it did not reach are CONTROL_UNAVAILABLE, never a pass")
+          print("::notice::control " + str(c.get("n_above_control")) + " above, "
+                + str(c.get("n_within_search_noise")) + " within search noise, "
+                + str(c.get("n_control_unavailable")) + " unavailable")
+          PY
+      - name: Commit control results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+          RESULTS_PUSH_ATTEMPTS: "12"
+        run: |
+          scripts/commit_results.sh \
+            "growth direct: the control-phase null on every planet that changed" \
+            results/growth/direct/control/control.csv \
+            results/growth/direct/control/summary.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: growth-direct-control
+          path: results/growth/direct/control/
+          if-no-files-found: warn
+
+  vet:
+    needs: [assess, control]
     if: ${{ always() && needs.assess.result == 'success' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'vet' || github.event.inputs.stage == '') }}
     runs-on: ubuntu-latest
     timeout-minutes: 350

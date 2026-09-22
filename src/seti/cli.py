@@ -1102,6 +1102,13 @@ def _cmd_baffle(args, cfg):
     return _baffle_cmd(args, cfg)
 
 
+# --- RELAY ---
+def _cmd_relay(args, cfg):
+    from .relay.run import main as _relay_main
+
+    return _relay_main(list(args.rest))
+
+
 def _cmd_roman(args, cfg):
     from .roman.run import main as _roman_main
 
@@ -2306,6 +2313,15 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- RELAY ---
+    p = sub.add_parser("relay",
+                       help="RELAY (S60): intercepting node-to-node beams by geometry — "
+                            "Gaia pair cones, the BL open-data recut and the drift prior; "
+                            "flags are passed through to seti.relay.run "
+                            "(--stage {probe,targets,geometry,recut,assess,all})")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_relay)
 
     args = parser.parse_args(argv)
     cfg = load_config()

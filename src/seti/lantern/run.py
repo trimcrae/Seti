@@ -1434,17 +1434,35 @@ def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
                 if e_ref else np.nan)
     off = disc.get("free_step_offset_days")
     lo_d, hi_d = vcfg["depth_range"]
+    # Does the light curve PREFER a step somewhere other than the predicted
+    # ingress?  On a thermal phase curve the residual arch left by a linear
+    # detrend pulls a free two-level step away from the eclipse (WASP-43 b
+    # MIRI/LRS, run 35737559234: the free step landed 0.17 d away yet improved
+    # chi2 by only 10 over the step at the predicted ingress), so an offset
+    # alone is not evidence that the ephemeris is wrong.  The test that is:
+    # either the free step lands within the timing tolerance, or it does not
+    # beat the predicted step by more than the same delta-chi2 = 25 that
+    # `step_beats_flat` demands -- i.e. the data do not prefer a differently
+    # placed eclipse.  A genuinely wrong ephemeris fails both: its predicted
+    # step sits at a random phase, so the free step beats it by a lot.
+    dchi2_free = (float(disc["chi2_step_predicted"]) - float(disc["chi2_step_free"])
+                  if np.isfinite(disc.get("chi2_step_predicted", np.nan))
+                  and np.isfinite(disc.get("chi2_step_free", np.nan)) else np.nan)
+    within_tol = bool(off is not None and np.isfinite(off) and abs(off) <= tol_days)
+    not_preferred = bool(np.isfinite(dchi2_free) and dchi2_free < 25.0)
     checks = {
         "depth_positive_and_significant": bool(depth > 0 and depth / depth_err >= float(vcfg["min_depth_snr"])),
         "depth_in_planetary_range": bool(lo_d <= depth <= hi_d),
-        "free_step_at_predicted_ingress": bool(off is not None and np.isfinite(off)
-                                               and abs(off) <= tol_days),
+        "eclipse_at_predicted_ingress": bool(within_tol or not_preferred),
         "step_beats_flat": bool(np.isfinite(disc.get("chi2_flat", np.nan))
                                 and disc["chi2_step_predicted"] < disc["chi2_flat"] - 25.0),
     }
     out.update(depth=depth, depth_err=depth_err, depth_snr=depth / depth_err if depth_err > 0 else None,
                out_scatter=s_out, detrend_slope_per_day=float(coef[0]),
                free_step_offset_days=off, timing_tolerance_days=tol_days,
+               free_step_within_tolerance=within_tol,
+               delta_chi2_free_over_predicted=(float(dchi2_free)
+                                               if np.isfinite(dchi2_free) else None),
                chi2_flat=disc.get("chi2_flat"), chi2_step_predicted=disc.get("chi2_step_predicted"),
                chi2_step_free=disc.get("chi2_step_free"), checks=checks,
                continuum_binned=_bin_series(d, 60), in_eclipse_binned=_bin_series(inn.astype(float), 60),

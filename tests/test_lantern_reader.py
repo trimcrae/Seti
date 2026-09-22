@@ -317,6 +317,29 @@ def test_verify_eclipse_stack_on_a_synthetic_eclipse():
     assert not v3["passed"] and not v3["checks"]["depth_positive_and_significant"]
 
 
+def test_verify_rejects_a_misplaced_ephemeris():
+    """The timing check must still fail when the eclipse is NOT where the
+    ephemeris says.  A free two-level step is allowed to land off the predicted
+    ingress (a thermal phase curve pulls it there), but only while it does not
+    BEAT the step at the predicted ingress -- a shifted ephemeris does both."""
+    from seti.lantern.phase import Ephemeris
+
+    s = synthesise_timeseries(line_amp=0.0, eclipse_depth=0.006, noise=1e-3, seed=5)
+    s["meta"] = {"INSTRUME": "NIRSPEC", "GRATING": "G395H"}
+    s["time_source"] = "row_bjd_tdb"
+    good = s["ephemeris"]
+    ok = R.verify_eclipse_stack(s, [good], _CONF)
+    assert ok["phase_passed"] and ok["checks"]["eclipse_at_predicted_ingress"]
+    bad = Ephemeris(name="wrong b", period=good.period, t0=good.t0 + 0.55 * good.duration,
+                    duration=good.duration, period_err=good.period_err, t0_err=good.t0_err,
+                    ecc=0.0, omega_deg=90.0, rp_rs=good.rp_rs)
+    off = R.verify_eclipse_stack(s, [bad], _CONF)
+    assert not off["checks"]["eclipse_at_predicted_ingress"], {
+        "offset": off.get("free_step_offset_days"), "tol": off.get("timing_tolerance_days"),
+        "dchi2": off.get("delta_chi2_free_over_predicted")}
+    assert not off["phase_passed"]
+
+
 def test_verify_injection_scales_to_the_exposures_own_sensitivity():
     """A FIXED injected amplitude tests nothing on a noisy exposure: on the real
     products 2% of the continuum sits below the 5-sigma equivalent-width limit,

@@ -197,6 +197,22 @@ def test_alloy_classes():
     assert V.classify_alloy(w2, CFG)["alloy_class"] == V.ALLOY_REFINED_W
 
 
+def test_brief_ratios_have_the_signs_the_brief_asserts():
+    # the vector's own imposition, read off the yields, not asserted
+    X = synth(1, a=2.0, seed=41)
+    m, _ = V.natural_model(X[0], D, D.sigma)
+    br = V.brief_ratios(rowdict(X[0]), m, D, CFG)
+    assert br["[Nd/Ba]"]["fission_dex"] > 1.0          # Nd/Ba strongly up
+    assert br["[Eu/Nd]"]["fission_dex"] < 0.0          # Eu/Nd slightly down
+    assert br["[Mo/Zr]"]["fission_dex"] > 1.0          # Mo/Zr strongly up
+    # and an injected sample shows them against the best natural mixture
+    assert br["[Nd/Ba]"]["vs_model"] is not None and br["[Mo/Zr]"]["vs_model"] > 0
+    # a plain shale does not
+    m0, _ = V.natural_model(synth(1, seed=42)[0], D, D.sigma)
+    br0 = V.brief_ratios(rowdict(synth(1, seed=42)[0]), m0, D, CFG)
+    assert abs(br0["[Mo/Zr]"]["vs_model"]) < abs(br["[Mo/Zr]"]["vs_model"])
+
+
 def test_shuffled_null_and_error_floors_run():
     X = synth(120, seed=31)
     fl = V.error_floors(X, D, CFG, max_rows=120)
@@ -426,6 +442,10 @@ def test_end_to_end_recovers_an_injected_cluster_and_flags_single_sections(tmp_p
     assert "earthchem:NO_DATA_REACHED" in acq["degraded"]
     scr = stage_screen(conf, tmp_path)
     assert scr["status"] == "OK" and scr["funnel"]["survivors"] >= 4
+    # both nulls are reported, and the threshold names the one that bound it
+    assert scr["control_population_null"]["n"] > 200
+    assert scr["threshold_bound_by"] in ("lr_min", "shuffled_null", "control_population")
+    assert scr["threshold"] >= CFG.lr_min
     s = stage_assess(conf, tmp_path)
     assert s["verdict"].endswith("FISSION_VECTOR_STRATIGRAPHIC_CLUSTER"), s["verdict"]
     assert s["verdict"].startswith("DEGRADED_SOURCE")

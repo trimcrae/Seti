@@ -353,6 +353,45 @@ def leave_one_out(conc_row: np.ndarray, D: Design, cfg: GraveConfig, s: np.ndarr
             "lr_without": {e: round(float(v), 3) for e, v in out.items()}}
 
 
+#: The three ratios the brief names, as (numerator, denominator, expected sign
+#: of the fission vector's effect in dex).  Values from the yield table at the
+#: 1 Myr horizon: [Nd/Ba] = +1.51, [Eu/Nd] = -0.03, [Mo/Zr] = +2.17.
+BRIEF_RATIOS: tuple[tuple[str, str], ...] = (("Nd", "Ba"), ("Eu", "Nd"), ("Mo", "Zr"))
+
+
+def brief_ratios(row: dict, model: np.ndarray, D: Design, cfg: GraveConfig | None = None) -> dict:
+    """The named ratios, three ways: observed, PAAS-normalised, model-normalised.
+
+    ``obs_dex`` is ``log10(X/Y)`` of the sample; ``vs_paas`` divides by PAAS's
+    own ratio; ``vs_model`` divides by the best *natural* mixture's ratio for
+    that same sample, which is the discriminating one -- it asks "given
+    everything natural that can be in this rock, is the ratio still off?".
+    ``fission_dex`` is what the fission vector alone would impose.
+    """
+    cfg = cfg or GraveConfig()
+    phi = fission_mass_vector(cfg)
+    idx = {e: k for k, e in enumerate(D.elements)}
+    out = {}
+    for a, b in BRIEF_RATIOS:
+        va, vb = row.get(a), row.get(b)
+        rec: dict = {"obs_dex": None, "vs_paas": None, "vs_model": None, "fission_dex": None}
+        pa, pb = R.PAAS.get(a), R.PAAS.get(b)
+        fa, fb = phi.get(a), phi.get(b)
+        if fa and fb and pa and pb:
+            rec["fission_dex"] = round(float(np.log10((fa / pa) / (fb / pb))), 3)
+        if va and vb and np.isfinite(va) and np.isfinite(vb) and va > 0 and vb > 0:
+            r = float(np.log10(va / vb))
+            rec["obs_dex"] = round(r, 3)
+            if pa and pb:
+                rec["vs_paas"] = round(r - float(np.log10(pa / pb)), 3)
+            if a in idx and b in idx:
+                ma, mb = float(model[idx[a]]), float(model[idx[b]])
+                if ma > 0 and mb > 0:
+                    rec["vs_model"] = round(r - float(np.log10(ma / mb)), 3)
+        out[f"[{a}/{b}]"] = rec
+    return out
+
+
 def peak_coherence(resid: np.ndarray, D: Design, cfg: GraveConfig, s: np.ndarray) -> dict:
     """How many heavy-set and light-set elements sit >= peak_sigma above the natural model."""
     z = resid / s
@@ -663,7 +702,7 @@ def assess_row(row: dict, conc_row: np.ndarray, D: Design, cfg: GraveConfig, s: 
         "residual_dex": {e: round(float(resid[k]), 3) for k, e in enumerate(D.elements) if np.isfinite(resid[k])},
         "peak": coh, "redox": {k: (round(v, 3) if isinstance(v, float) and np.isfinite(v) else v)
                                for k, v in red.items()},
-        "pge": pge, "alloy": alloy,
+        "pge": pge, "alloy": alloy, "brief_ratios": brief_ratios(row, m, D, cfg),
         "a_fission": round(float(fit["a_fission"]), 4),
         "fission_nd_added_ppm": round(float(fit["fission_nd_added_ppm"]), 3),
         "reduced_chi2_fission": round(float(fit["reduced_chi2_fission"]), 3),
@@ -673,10 +712,10 @@ def assess_row(row: dict, conc_row: np.ndarray, D: Design, cfg: GraveConfig, s: 
 
 __all__ = [
     "ALLOY_INSUFFICIENT", "ALLOY_NATURAL_TA", "ALLOY_NATURAL_W", "ALLOY_NONE", "ALLOY_REFINED_TA",
-    "ALLOY_REFINED_W", "Design", "FISSION_AMBIGUOUS", "FISSION_CANDIDATE", "GraveConfig",
+    "ALLOY_REFINED_W", "BRIEF_RATIOS", "Design", "FISSION_AMBIGUOUS", "FISSION_CANDIDATE", "GraveConfig",
     "INSUFFICIENT", "NATURAL", "NORMAL", "PGE_BACKGROUND", "PGE_FEMN", "PGE_FISSION_LIKE",
     "PGE_IMPACT", "PGE_INSUFFICIENT", "PGE_REFINED", "PGE_ULTRAMAFIC", "PGE_UNCLASSIFIED",
-    "UNEXPLAINED", "VETOES", "apply_floors", "assess_row", "build_design", "classify_alloy",
+    "UNEXPLAINED", "VETOES", "apply_floors", "assess_row", "brief_ratios", "build_design", "classify_alloy",
     "classify_pge", "default_sigma", "detection_limit_mask", "enrichment_factor",
     "error_floors", "fission_discriminants", "fission_mass_vector", "fit_mixture",
     "leave_one_out", "natural_model", "peak_coherence", "redox_state", "shuffled_null",

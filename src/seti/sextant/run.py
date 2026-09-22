@@ -1089,6 +1089,7 @@ CSV_COLUMNS = (
     "jpl_a2", "jpl_a2_sigma", "jpl_a2_snr", "jpl_nongrav_fitted", "is_control",
     "published_control", "ceiling_hard", "ceiling_realistic",
     "a2_expected_yarkovsky", "ratio_hard", "ratio_realistic", "ratio_expected",
+    "ceiling_measured_diameter", "ratio_measured_diameter",
     "epsilon_eff", "a2_detected", "known_binary", "reasons", "vetoes", "reason",
 )
 

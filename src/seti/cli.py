@@ -1090,6 +1090,13 @@ def _cmd_ignition(args, cfg):
     return _ignition_main(list(args.rest))
 
 
+# --- FORGE ---
+def _cmd_forge(args, cfg):
+    from .forge.run import main as _forge_main
+
+    return _forge_main(list(args.rest))
+
+
 def _cmd_uline(args, cfg):
     from .uline.run import main as _uline_main
 
@@ -2306,6 +2313,14 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- FORGE ---
+    p = sub.add_parser("forge",
+                       help="FORGE (S47): hot exozodis as ~1500 K swarm candidates — the "
+                            "outlier whose N-band excess matches the Planck extrapolation of "
+                            "its K excess; flags are passed through to seti.forge.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_forge)
 
     args = parser.parse_args(argv)
     cfg = load_config()

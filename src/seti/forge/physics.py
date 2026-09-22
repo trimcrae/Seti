@@ -56,7 +56,9 @@ TIER_UNVERIFIED = "UNVERIFIED_INPUT"          # driving values not confirmed aga
 TIER_BAD_FIT = "NEITHER_MODEL_FITS"           # both families rejected by the data
 
 DEFAULT_PHYSICS = {
-    "t_grid_k": [400.0, 3500.0, 90],         # log grid for the grey / nano temperature
+    # log grid for the grey / nano temperature; the free grey fit must reach a
+    # companion photosphere as hot as the primary, hence the 7000 K ceiling
+    "t_grid_k": [400.0, 7000.0, 110],
     "f_grid_pct": [0.02, 60.0, 90],          # log grid for f_ref (percent at K)
     "grain_sizes_um": [0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5],
     "betas": [1.0, 2.0],

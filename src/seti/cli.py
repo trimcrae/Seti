@@ -1092,6 +1092,14 @@ def _cmd_growth_centroid(args, cfg):
     return _growth_centroid_main(list(args.rest))
 
 
+# --- GROWTH-DIRECT ---
+def _cmd_growth_direct(args, cfg):
+    from .growth.direct import main as _growth_direct_main
+
+    return _growth_direct_main(list(args.rest))
+# --- end GROWTH-DIRECT ---
+
+
 def _cmd_arc(args, cfg):
     from .arc.run import main as _arc_main
 
@@ -1102,6 +1110,13 @@ def _cmd_ignition(args, cfg):
     from .ignition.run import main as _ignition_main
 
     return _ignition_main(list(args.rest))
+
+
+# --- FORGE ---
+def _cmd_forge(args, cfg):
+    from .forge.run import main as _forge_main
+
+    return _forge_main(list(args.rest))
 
 
 def _cmd_uline(args, cfg):
@@ -1116,6 +1131,12 @@ def _cmd_ring(args, cfg):
 
     run(args.stage, args.leg, out=args.out, shard=args.shard, dec_band=args.dec_band,
         followup=not args.no_followup)
+# --- CRADLE ---
+def _cmd_cradle(args, cfg):
+    from .cradle.run import run_from_args as _cradle_run
+
+    return _cradle_run(args, cfg)
+# --- /CRADLE ---
 
 
 def _cmd_baffle(args, cfg):
@@ -1129,6 +1150,13 @@ def _cmd_slag(args, cfg):
     from .slag.run import main as _slag_main
 
     return _slag_main(list(args.rest))
+
+
+# --- RELAY ---
+def _cmd_relay(args, cfg):
+    from .relay.run import main as _relay_main
+
+    return _relay_main(list(args.rest))
 
 
 def _cmd_roman(args, cfg):
@@ -2325,6 +2353,16 @@ def main(argv=None):
                             "through to seti.growth.centroid")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_growth_centroid)
+    # --- GROWTH-DIRECT ---
+    p = sub.add_parser("growth-direct",
+                       help="GROWTH direct (S57): the TESS-era depth of EVERY confirmed/candidate "
+                            "KOI with a TIC id, fitted from the SPOC / TESS-SPOC / QLP light "
+                            "curves on both SAP and PDCSAP against the KOI depth — sharded, "
+                            "checkpointed, per-planet sensitivity; flags are passed through to "
+                            "seti.growth.direct")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_growth_direct)
+    # --- end GROWTH-DIRECT ---
     p = sub.add_parser("arc",
                        help="ARC (S59): superflares above the starspot energy ceiling; "
                             "flags are passed through to seti.arc.run")
@@ -2379,6 +2417,13 @@ def main(argv=None):
     p.set_defaults(func=_cmd_ring)
     # --- RING ---
 
+    # --- FORGE ---
+    p = sub.add_parser("forge",
+                       help="FORGE (S47): hot exozodis as ~1500 K swarm candidates — the "
+                            "outlier whose N-band excess matches the Planck extrapolation of "
+                            "its K excess; flags are passed through to seti.forge.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_forge)
     # --- CRYPT ---
     p = sub.add_parser("crypt",
                        help="CRYPT (S55): anisothermal hot components and compact radar anomalies "
@@ -2404,6 +2449,37 @@ def main(argv=None):
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_slag)
     # --- SLAG ---
+
+    # --- RELAY ---
+    p = sub.add_parser("relay",
+                       help="RELAY (S60): intercepting node-to-node beams by geometry — "
+                            "Gaia pair cones, the BL open-data recut and the drift prior; "
+                            "flags are passed through to seti.relay.run "
+                            "(--stage {probe,targets,geometry,recut,assess,all})")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_relay)
+    # --- RELAY ---
+
+    # --- SPARK ---
+    from .spark.run import _add_arguments as _spark_args
+    from .spark.run import _cmd_spark
+    p = sub.add_parser("spark",
+                       help="SPARK (S48/S49): a single-spectral-element excess on a stellar point "
+                            "source — Euclid Q1 NISP line features x Gaia, SPHEREx QR2 forced "
+                            "spectrophotometry (probe/euclid/spherex/screen/assess/all)")
+    _spark_args(p)
+    p.set_defaults(func=_cmd_spark)
+    # --- SPARK ---
+
+    # --- CRADLE ---
+    from .cradle.run import add_arguments as _cradle_args
+    p = sub.add_parser("cradle",
+                       help="CRADLE (S52/S53): warm debris at the habitable-zone radius of a "
+                            "MATURE star, above the collisional steady-state maximum; "
+                            "same flags as seti.cradle.run")
+    _cradle_args(p)
+    p.set_defaults(func=_cmd_cradle)
+    # --- /CRADLE ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

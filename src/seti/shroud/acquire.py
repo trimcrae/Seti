@@ -197,6 +197,103 @@ def unquote_table(name: str) -> str:
     return str(name).strip().strip("\"'").strip("\"'").strip()
 
 
+# --- route 0: ask the IVOA registry where the service actually is -----------
+#: RegTAP mirrors.  The registry is the authoritative index of every published
+#: VO service, so it answers "where is the VASCO cone search" without guessing
+#: URL paths --- which is all runs 30203741898 and 35653059591 could do, and
+#: they spent themselves on 404s from ``svo2`` and TCP timeouts from
+#: ``svocats``.  A moved or renamed service is found here or nowhere.
+REGTAP_ENDPOINTS = (
+    "https://reg.g-vo.org/tap/sync",
+    "http://dc.g-vo.org/tap/sync",
+    "https://registry.euro-vo.org/regtap/tap/sync",
+)
+
+#: The RegTAP idiom: resource, its capabilities, their interfaces.  Matching is
+#: on title/description/ivoid because the SVO publishes under names this
+#: channel cannot predict.
+REGTAP_ADQL = (
+    "SELECT DISTINCT ivoid, short_name, res_title, access_url, standard_id "
+    "FROM rr.resource NATURAL JOIN rr.capability NATURAL JOIN rr.interface "
+    "WHERE res_title LIKE '%anish%' OR res_title LIKE '%VASCO%' "
+    "OR res_description LIKE '%VASCO%' OR res_description LIKE '%anishing%' "
+    "OR ivoid LIKE '%vanish%' OR ivoid LIKE '%vasco%'"
+)
+
+
+def tap_sync_at(base: str, adql: str, cfg: dict, timeout: int | None = None
+                ) -> tuple[pd.DataFrame, str, str]:
+    """One synchronous ADQL query against an arbitrary TAP ``/sync``."""
+    a = cfg.get("acquire", {})
+    q = urllib.parse.urlencode({"REQUEST": "doQuery", "LANG": "ADQL",
+                                "FORMAT": "csv", "MAXREC": 2000, "QUERY": adql})
+    full = f"{base}?{q}"
+    body, detail = http_get(full, int(timeout or a.get("tap_timeout_s", 120)),
+                            retries=1, backoff=5.0)
+    if body is None:
+        return pd.DataFrame(), full, detail
+    try:
+        df = pd.read_csv(io.StringIO(body.decode("utf-8", "replace")))
+    except Exception as e:                                     # noqa: BLE001
+        return pd.DataFrame(), full, f"{detail}; parse: {e}"
+    return df, full, detail
+
+
+def _root_of_access_url(url: str) -> str:
+    """A VO ``access_url`` reduced to the root :func:`_svo_urls` expects.
+
+    A cone-search access URL is a base that already ends at the query string
+    (``.../vanish-possi/cs.php?``); the probe builds its own query, so the
+    trailing ``?``/``&`` and the script name come off again.
+    """
+    u = str(url).split("#")[0].rstrip("&?")
+    if "?" in u:
+        u = u.split("?")[0]
+    u = re.sub(r"/(cs|cs\.php|conesearch|scs\.php|search|query)$", "", u, flags=re.I)
+    return u.rstrip("/")
+
+
+def discover_registry_services(cfg: dict) -> tuple[list[str], Provenance]:
+    """Roots for anything the IVOA registry knows about VASCO / vanishing.
+
+    Returns ``(roots, provenance)``; cone-search interfaces come first because
+    those are the ones :func:`probe_svo_catalog` can actually exercise.  Every
+    mirror tried and every error is recorded verbatim --- an unreachable
+    registry is a statement about the registry, never about the sky.
+    """
+    a = cfg.get("acquire", {})
+    prov = Provenance(route="registry_regtap_discovery")
+    endpoints = list(a.get("regtap_endpoints", REGTAP_ENDPOINTS))
+    cone: list[str] = []
+    other: list[str] = []
+    for base in endpoints:
+        df, url, detail = tap_sync_at(base, a.get("regtap_adql", REGTAP_ADQL), cfg)
+        prov.record(url, len(df) > 0, detail, len(df))
+        if not len(df) or "access_url" not in df.columns:
+            continue
+        for _, row in df.iterrows():
+            std = str(row.get("standard_id", "")).lower()
+            root = _root_of_access_url(row.get("access_url", ""))
+            if not root:
+                continue
+            (cone if "conesearch" in std else other).append(root)
+        prov.notes.append("registry rows: " + "; ".join(
+            f"{str(r.get('short_name') or r.get('ivoid'))[:40]} "
+            f"[{str(r.get('standard_id', '')).split('/')[-1][:20]}] "
+            f"{str(r.get('access_url'))[:90]}"
+            for _, r in df.head(12).iterrows())[:1500])
+        break                     # the first mirror that answers is enough
+    roots = list(dict.fromkeys(cone + other))
+    # "empty" only if a mirror actually ANSWERED and knew of no such service;
+    # if none answered, the verdict is about the registry, not about the sky.
+    answered = any(a["ok"] for a in prov.attempts)
+    prov.status = "ok" if roots else ("empty" if answered else "unreachable")
+    prov.n_rows = len(roots)
+    if not roots:
+        prov.notes.append("no VO registry mirror returned a vanishing/VASCO service")
+    return roots, prov
+
+
 # --- route 1: the Solano+2022 VO archive ------------------------------------
 def discover_vo_archive(cfg: dict, catalog: str = "vanish_neowise",
                         out_dir: Path | None = None
@@ -491,6 +588,40 @@ def _solano_candidates(tables: pd.DataFrame) -> list[str]:
     return out
 
 
+def vizier_catalogue_meta(cat: str, cfg: dict) -> tuple[list[str], Provenance]:
+    """Does VizieR hold ``cat`` at all, and under what table names?
+
+    ``-meta.all`` returns the catalogue's tables and columns instead of rows.
+    This separates the two answers a bare row query confuses: *the catalogue
+    is not in VizieR* and *the catalogue is there but the query was wrong*.
+    Used for the literal ids keyword discovery cannot reach --- the
+    Solano+2022 by-product tables are published under a bibcode-derived name
+    whose description carries neither 'vanish' nor a bare 'VASCO', so the
+    TAP_SCHEMA keyword sweep of run 35653059591 returned only 'Vasco D.' and
+    'Vasconcelos' and never looked the catalogue up by name.
+    """
+    a = cfg.get("acquire", {})
+    prov = Provenance(route=f"vizier_meta:{cat}")
+    url = (f"{a.get('vizier_asu', VIZIER_ASU)}?"
+           f"-source={urllib.parse.quote(cat, safe='/')}&-meta.all&-out.form=TSV")
+    body, detail = http_get(url, int(a.get("tap_timeout_s", 120)), retries=1, backoff=5.0)
+    prov.record(url, body is not None, detail)
+    if body is None:
+        prov.status = "unreachable"
+        return [], prov
+    txt = body.decode("utf-8", "replace")
+    errs = [ln.strip() for ln in txt.splitlines()
+            if ln.startswith("#***") or ln.startswith("****")]
+    tables = sorted({unquote_table(m) for m in
+                     re.findall(rf"{re.escape(cat)}/[A-Za-z0-9_.+-]+", txt)})
+    if errs:
+        prov.notes.append("ASU: " + " | ".join(errs)[:400])
+    prov.status = "ok" if tables else ("asu_error" if errs else "absent")
+    prov.n_rows = len(tables)
+    prov.notes.append(f"tables reported for {cat}: {tables[:20] or 'none'}")
+    return tables, prov
+
+
 def fetch_vizier_table_asu(table: str, cfg: dict, out_dir: Path,
                            max_rows: int = 400000) -> tuple[pd.DataFrame, Provenance]:
     """Pull a whole VizieR table through ASU (tab-separated), all columns."""
@@ -741,10 +872,22 @@ def fetch_usnob1_field(ra: float, dec: float, radius_deg: float, cfg: dict,
             rec["asu_errors"] = [str(e)[:200] for e in errs[:5]]
         if not len(raw):
             rec["body_head"] = asu_body_head(txt, 1200)
+        rec["columns"] = [str(c) for c in raw.columns][:40]
+        # ROWS ARE NOT ENOUGH.  Run 35738062833 got 1380-5899 rows from every
+        # field and reconstructed ZERO sources, because the answer carried
+        # positions and no photometry at all: the POSS-I-red-only mask is a
+        # statement about which plate magnitudes are present, so a frame
+        # without them cannot express the selection and its "no survivors" is
+        # an artefact of the request, not of the sky.  A rung that answers
+        # without the columns the selection needs is not accepted; the ladder
+        # falls through to the ``-out.all`` rung, which names no columns.
+        need = [str(c) for c in r.get("required_columns", ("RAJ2000", "DEJ2000", "R1mag"))]
+        missing = [c for c in need if c not in raw.columns]
+        rec["missing_required"] = missing
         attempts.append(rec)
-        if len(raw):
+        if len(raw) and not missing:
             return raw, form, attempts
-    return raw, "", attempts
+    return pd.DataFrame(), "", attempts
 
 
 def normalise_usnob1_frame(df: pd.DataFrame, field_id: int = -1,
@@ -830,14 +973,18 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     meta = usnob1_meta_probe(cfg)
     prov.notes.append(
         f"I/284/out -meta.all: {meta['detail']}; "
-        + (f"{len(meta['columns'])} column(s) reported"
+        + (f"{len(meta['columns'])} column(s) reported: {meta['columns'][:40]}"
            if meta["columns"] else "no column names parsed")
-        + (f"; MISSING from the catalogue: {sorted(meta['missing'])}"
-           if meta["missing"] else "; every requested column exists"))
-    # A name the catalogue does not advertise is dropped rather than sent: one
-    # bad ``-out=`` is enough for ASU to answer with a header and no rows.
-    columns = ([c for c in USNOB1_COLUMNS if c not in set(meta["missing"])]
-               if meta["columns"] else None)
+        + (f"; not mentioned by the probe: {sorted(meta['missing'])}"
+           if meta["missing"] else "; every requested column mentioned")
+        + " (reported only -- the request is not edited from this)")
+    # The probe REPORTS; it does not edit the request.  Run 35738062833 had it
+    # strip every name the -meta.all body failed to mention, and that body
+    # mentioned 8 columns out of ~30 --- so B1mag/R1mag/R2mag/Ndet were all
+    # dropped, the fields came back as bare positions, and the selection could
+    # not be expressed.  A bad column name is handled where it shows up: the
+    # ladder falls through to the ``-out.all`` rung.
+    columns = None
     for _, f in grid.iterrows():
         fid = int(f["field_id"])
         rec = {"field_id": fid, "ra_deg": float(f["ra_deg"]),
@@ -1172,6 +1319,44 @@ def join_xmatch_photometry(positions: pd.DataFrame,
     return out
 
 
+def modern_optical_depth(positions: pd.DataFrame, provs: dict, cfg: dict
+                         ) -> tuple[pd.Series, pd.Series]:
+    """Per source: the deepest modern-optical limit actually ESTABLISHED there.
+
+    ``(depth_mag, catalogues)``.  A catalogue contributes only if its X-Match
+    really answered (``ok``/``cached``) **and** the source lies inside that
+    survey's footprint --- Pan-STARRS stops at dec = -30, so a southern source
+    has only Gaia behind its "absence", three magnitudes shallower.
+
+    This exists because absence is the whole signature, and an absence is only
+    as good as the search that failed to find it.  Without this, a Pan-STARRS
+    X-Match that simply errored would hand every source in the run an empty
+    ``ps1_r`` --- and empty reads as *gone*.  A catalogue that was never
+    successfully queried has established nothing, so its sources get NaN here
+    and are excluded from the disappearance count rather than counted as
+    disappearances.
+    """
+    mo = cfg.get("modern_optical", {})
+    limits = mo.get("limits", {})
+    dec = pd.to_numeric(positions.get("dec_deg"), errors="coerce")
+    depth = pd.Series(np.nan, index=positions.index, dtype=float)
+    names = pd.Series("", index=positions.index, dtype=object)
+    for name, spec in limits.items():
+        st = str((provs.get(name) or {}).get("status", "")).lower()
+        if st not in ("ok", "cached"):
+            continue
+        inside = ((dec >= float(spec.get("dec_min_deg", -90.0)))
+                  & (dec <= float(spec.get("dec_max_deg", 90.0))))
+        mag = float(spec.get("mag", np.nan))
+        if not np.isfinite(mag):
+            continue
+        better = inside & (depth.isna() | (mag > depth))
+        depth = depth.where(~better, mag)
+        names = names.where(~inside, names.str.cat(pd.Series(
+            [name] * len(names), index=names.index), sep=",").str.strip(","))
+    return depth, names
+
+
 def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
                            ) -> tuple[pd.DataFrame, dict]:
     """Attach POSS-I, modern-optical and infrared photometry to a position list.
@@ -1218,6 +1403,24 @@ def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
         xmatches[name] = df
     merged = join_xmatch_photometry(positions, xmatches, cfg,
                                     phot_radius={"gaia": r_match})
+    # How deep the search that found nothing actually went, per source.  An
+    # absence is only as good as the search behind it.
+    depth, cats = modern_optical_depth(merged, provs, cfg)
+    merged["modern_depth_mag"] = depth.to_numpy()
+    merged["modern_depth_cats"] = cats.to_numpy()
+    plate = pd.to_numeric(merged.get("poss1_e"), errors="coerce")
+    if "poss1_o" in merged.columns:
+        plate = plate.fillna(pd.to_numeric(merged["poss1_o"], errors="coerce"))
+    merged["modern_depth_margin_mag"] = (depth.to_numpy()
+                                         - plate.to_numpy())
+    provs["_modern_optical_depth"] = {
+        "route": "derived", "status": "ok",
+        "n_rows": int(np.isfinite(depth.to_numpy()).sum()),
+        "catalogues_that_answered": sorted(
+            n for n in cfg.get("modern_optical", {}).get("limits", {})
+            if str((provs.get(n) or {}).get("status", "")).lower() in ("ok", "cached")),
+        "n_sources_with_no_modern_coverage": int((~np.isfinite(depth.to_numpy())).sum()),
+    }
     (out_dir / "acquire_provenance.json").write_text(
         json.dumps(provs, indent=2, default=str))
     return merged, provs
@@ -1256,12 +1459,23 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     got: dict[str, int] = {}
     routes_ok: list[str] = []
 
+    # Route 0: the IVOA registry — where the service says it lives, rather
+    # than where this channel guessed it lived.
+    reg_roots: list[str] = []
+    if cfg.get("acquire", {}).get("try_registry", True):
+        reg_roots, p_reg = discover_registry_services(cfg)
+        prov["routes"].append(p_reg.as_dict())
+        prov["registry_roots"] = reg_roots[:40]
+
     # Route 1: the published SVO catalogues (short probes; long fetch only if live).
     if cfg.get("acquire", {}).get("try_svo", True):
         for cat, sample in (("vanish_neowise", "solano2022_ir_present"),
                             ("vanish_possi", "solano2022_no_counterpart")):
             roots, p_disc = discover_vo_archive(cfg, cat, out_dir)
             prov["routes"].append(p_disc.as_dict())
+            # A registry-published root is tried FIRST: it is the only one of
+            # these that any service actually claims to be at.
+            roots = list(dict.fromkeys(reg_roots + list(roots)))
             root, _, p_probe = probe_svo_catalog(cat, roots, cfg)
             prov["routes"].append(p_probe.as_dict())
             if not root:
@@ -1280,7 +1494,16 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     tables, p_tap = discover_vizier_tables(cfg)
     prov["routes"].append(p_tap.as_dict())
     prov["vizier_tables_discovered"] = tables.to_dict("records") if len(tables) else []
-    for t in _solano_candidates(tables)[:4]:
+    # Look the literal ids up by NAME as well: a keyword sweep can only find a
+    # catalogue whose description happens to carry the keyword.
+    named: list[str] = []
+    for cat in cfg.get("acquire", {}).get("vizier_direct_catalogues", []):
+        found, p_m = vizier_catalogue_meta(str(cat), cfg)
+        prov["routes"].append(p_m.as_dict())
+        named.extend(found)
+    candidates = list(dict.fromkeys(_solano_candidates(tables) + named))
+    prov["vizier_direct_tables_found"] = named
+    for t in candidates[:8]:
         df_t, p_t = fetch_vizier_table_asu(t, cfg, out_dir)
         prov["routes"].append(p_t.as_dict())
         if len(df_t):

@@ -91,6 +91,152 @@ Two red tests on the branch were fixed on their merits rather than relaxed:
   summary records which applied.
 
 24/24 ring tests and 32/32 ossuary tests green, ruff clean.
+### ARC closed out: 4,206 stars on the ceiling, one left standing (KIC 9418692), 2026-09-22
+
+S59 (`docs/arc.md`, §9 carries every number). The stage-1 assess stage had
+never once finished — run 35675114711 sat in it for **4 h 54 m** on a `pyvo`
+async job with no time limit and was killed by the workflow cap with no
+`summary.json` written at all. With a per-query clock and a stage budget it
+now runs in **277 s** (run **35738218021**, `NO_CEILING_EXCESS`):
+
+| | |
+|---|---|
+| flares screened / stars | 190,486 / 8,908 |
+| **assessable** (has a rotational amplitude) | **4,206** |
+| no amplitude, so no ceiling, so untested | 4,702 |
+| `ξ_conservative > 0` | **1** |
+| candidate / interest / watch | 0 / 0 / 14 |
+
+**The Santos+2021 lever is not what STATUS expected.** It was already in the
+sample (245 of 2,507 Yang & Liu stars, 22 of 279 Shibayama); it moved the
+assessable count 4,204 → 4,206, not "well beyond". What it actually did was
+**raise the ceiling**: rescaling `Sph` from a standard deviation to a range
+(×2√2) lifts `E_mag` by 4.75 (**0.68 dex**) and took the conservative
+positives 5 → 2 and the nominal positives 24 → 9.
+
+**Stage 2 ran** (run **35675112803**, 2 h 08 m, 30 stars, 69 flares, pixel
+centroids + Gaia census + Berger+2020 parameters). Both stage-1 interest
+stars dissolved on measured parameters — KIC 11507705 `ξ 0.440 → −0.590`
+(0.677 dex of it the `Sph` rescaling, 0.353 dex the 1.311 R☉ radius) and KIC
+8487271 `ξ 0.104 → −0.920`. Neither was ever tested on the pixels. The pixel
+test does bite on real data: of 69 flares, **9 on target, 1 on a neighbour**
+(KIC 7009116), 2 ambiguous.
+
+**What is left is one object, not a null.** **KIC 9418692**:
+`ξ_conservative = +0.462` on **4 flares** (ξ_nominal = +1.178 on 11) of 14
+Yang & Liu events; `E_flare,max = 9.78e34` vs `E_mag,cons = 3.37e34 erg`;
+amplitude `2.008e-4` from Santos **with** the ×2.828 scaling already applied.
+On Berger+2020 (5677 K, 1.089 R☉) instead of the Shibayama star table (5378
+K, 1.300 R☉) the same flares give **ξ = +0.715** — the excess *grows* on the
+better parameters. It is `first_veto = companion_suspect` on Gaia **RUWE =
+1.556** alone, which put it in no tier and so outside every stage-2
+shortlist. Its Gaia census: target supplies **99.73 %** of the flux inside
+one Kepler pixel; the two neighbours (G = 20.4 at 3.2″, G = 19.7 at 5.2″)
+would need **39 %** and **41 %** brightenings, and neither is excluded by
+arithmetic. Its centroid test has never been run on its Yang & Liu flares.
+
+Three defects found and fixed this session, each measured on real output: the
+assess-stage hang; a difference image that required **every** pixel of a
+cadence to be finite, which cost 11 of 30 stars their centroid test while the
+same flares had 5–7 in-flare and 68–82 baseline cadences in the aperture
+centroid; and a `Sph` rescaling that would have been applied **twice** now
+that stage 1 applies it (ceiling ×4.75 too high — the direction that hides a
+candidate). Stage 2 now shortlists hard-vetoed ceiling-excess stars *first*.
+
+**Next decisive action:** the stage-2 pixel test on KIC 9418692's 14 Yang &
+Liu flares with the Berger radius, plus a Gaia DR3 non-single-star and
+archival-spectroscopy look for the companion RUWE 1.556 only suspects.
+
+### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
+
+S52/S53 went from a package that had never been run to a channel with a
+workflow, a doc, CLI wiring and a green offline suite. The target is one cell
+that is empty in the literature: **250 ≤ T_bb ≤ 350 K** (the habitable-zone
+blackbody radius) **and** log(f/f_max) > 3 (three decades above the Wyatt 2007
+collisional maximum) **and** age > 1 Gyr from **two independent** indicators.
+Every known extreme debris disk is young, or — in the two mature cases,
+BD+20 307 and TYC 4479-3-1 — hot (~400 K).
+
+What the offline suite proves before any archive is touched: an injected 300 K
+excess at log(f/f_max) = 4.0 on a 3 Gyr star is recovered into the cell; the
+same excess on a Sco–Cen star is vetoed by position and parallax; a galaxy
+blend is vetoed by `ext_flag` and a Gaia beam neighbour; a star with one old
+indicator is `IN_CELL_AGE_UNDETERMINED`, never a candidate; an empty archive is
+`NO_DATA_REACHED`; a missing ages shard is `DEGRADED`, never a clean null; and
+every one of the seventeen kill rules trips on its own case and has a counter.
+
+Two bugs the suite found in the inherited code, both silent killers:
+
+* `excess.harmonise` **renamed** `ks_m` → `Ksmag`, so the K_s anchor vanished
+  from the shortlist contract and every star downstream came out `KS_MISSING`.
+  It now adds the OSSUARY spellings and keeps the archive ones.
+* `assess` only honoured `--shards` when the stage was `all`, so a sharded
+  production run would have reported a clean null over a partial set of ages
+  shards instead of `DEGRADED (ages_shards_missing:…)`.
+
+Sky coverage is exact rather than sampled: `source_id` carries the level-12
+NESTED HEALPix index, so 768 level-3 pixels are the whole sky as contiguous
+primary-key ranges; pixel *k* goes to shard *k* mod *n*, and a unit that times
+out splits into its four children.
+
+**Run 35741356662** (`stage=all`, 8 acquire shards over the 768 units, 4 ages
+shards, branch `claude/goap-cradle`) was dispatched at 10:35 a.m. EDT and is
+**queued**: the account's Actions concurrency is fully occupied. Nothing has
+been measured on the sky yet, and `results/cradle/` is empty — the channel's
+verdict is not `NO_CRADLE_CANDIDATE`, it is *not yet run*. The first thing to
+read when it lands is `probe.json`: which of the three join shapes answers,
+whether the three controls resolve and come back through the join, and whether
+`irs_enhv211` and each VizieR table exist. `acquire` reads the working shape
+out of that artifact.
+### IGNITION: four transports refused identically, so it was never the transport, 2026-09-22
+
+Run 35653615329 produced no shard output at all, and its two failures were
+different problems that had been read as one.
+
+**The upload ladder.** The probe walked all four rungs — pyvo's synchronous
+form, a raw `POST` with the parameters in the URL (sync, then async), and
+IRSA's Gator multi-object search — and three of them came back with the *same*
+sentence from IRSA's own TAP: `INTERNAL_SERVER_ERROR: Unimplemented data type:
+unicodeChar`. Four transports cannot fail identically on a transport fault,
+and the server only gets to make that complaint after it has parsed the
+request and read the upload — so those rungs were working. The refusal is
+about a **column type**: `Table.from_pandas` on `source_id.astype(str)` gives a
+numpy `<U19` column, astropy serialises it `datatype="unicodeChar"`, and IRSA
+does not implement that type. `sid` now goes up as `long` (a Gaia `source_id`
+is an integer by construction), a non-numeric id as ASCII `char`, every
+remaining unicode column is converted on the way out, and if a service refuses
+`long` too the ladder downgrades **once** to a 32-bit row index. None of it
+can touch the science: rows are assigned to stars locally, by exact
+unit-vector separation with per-star radii, never by the service's join column.
+
+The same probe showed the hand-rolled async rung getting `200` with **no
+`Location` header**, so the job URL is now also read from the job document in
+the body, and pyvo's own UWS client is a fifth rung.
+
+**The parent sample was a wall clock, not an archive.** That run's `sample`
+step ran **2 h 22 min** over the same 20 one-degree cones without finishing —
+run 35039105536 had pulled the identical 846-star parent in **719 s** — and
+the job was cancelled with the acquire matrix never started. `sample_from_run_id`
+now takes `sample.json` and `parent.parquet` from a prior run's artifact: the
+`sample` job then takes **1 m 48 s** (measured, run 35738088082). The reused
+`probe.json` is dropped rather than committed — a dispatch must not overwrite
+the branch's live probe record with evidence it did not gather.
+
+For the all-sky sweep the same stall is paid in *tiles never reached*, so
+`fetch_parent` takes `unit_budget_s`: attempts begun after a unit has spent it
+are recorded `SKIPPED_ON_UNIT_BUDGET` with the route and shape named, the unit
+is a recorded `QUERY_FAILED`, and `degraded` carries
+`unit_budget_skips:<n>/<units>`. The ladder's **order is untouched** and no
+science cut changes — it bounds only how long one tile may be chased.
+
+**Scale.** The pilot's 20 cones are 62.8 deg². The `tiles` sweep at 4° is
+**2,047 tiles over 32,451 deg²** of the `|b| > 15°` sky — **517× the area** —
+which at the measured 13.5 stars/deg² is an all-sky parent of order **4 × 10⁵**
+stars. Two ways to make that bigger were rejected on the science, not the
+effort: `|b| > 10°` samples stars `vet.py`'s `galactic_plane` rule exists to
+kill, and `G < 15` buys stars at W1 ≈ 13 whose per-epoch scatter is several
+times that of the W1 ≈ 10 stars the measured 0.1 mag/decade sensitivity was
+established on. Scale here comes from **area**, not depth.
 
 ### CRYPT built: the thermal and radar axes of the lunar-PSR artifact search, 2026-09-22
 

@@ -513,3 +513,135 @@ def test_screen_panel_records_are_json_serialisable(tmp_path, atm, teff):
     rec = screen_panel(FAM, TSM, p, cfg, n_cal=10)
     json.dumps(rec, default=str)
     assert rec["status"] == "SCREENED" and rec["misfit_class"] in ("NATURAL", "WATCH", "UNEXPLAINED")
+
+
+# ---------------------------------------------------------------------------
+# What the runner taught us about PEWDD's real columns (runs 35737518217 /
+# 35737893922).  Each of these is a convention read off the served table and
+# then verified against the catalogue's own bookkeeping; a regression in any
+# of them silently manufactures the anomaly this channel hunts.
+# ---------------------------------------------------------------------------
+PEWDD_COLS = ["recno", "Star", "Paper", "Identifier", "Teff", "e_Teff", "logg", "e_logg",
+              "atmosphere", "Mass", "RAJ2000", "DEJ2000", "B", "e_B", "IRexcess", "gascomp",
+              "bin", "binSep", "Time", "Ref", "Comm",
+              "log(Be/H(e))", "e_log(Be/H(e))", "SinTimeBe",
+              "log(Mg/H(e))", "e_log(Mg/H(e))", "SinTimeMg",
+              "log(Ca/H(e))", "e_log(Ca/H(e))", "SinTimeCa",
+              "log(Ti/H(e))", "e_log(Ti/H(e))", "SinTimeTi",
+              "log(Fe/H(e))", "e_log(Fe/H(e))", "SinTimeFe"]
+PEWDD_UNITS = {"B": "I8", "e_B": "I8", "log(Ca/H(e))": "F8.4", "Teff": "F8.1"}
+PEWDD_DESC = {"B": "? Magnitude of white dwarf magnetic field",
+              "e_B": "? Error on the magnetic field",
+              "IRexcess": "Infrared excess", "gascomp": "Gaseous component of the disc",
+              "bin": "Binarity of the system", "binSep": "Binary separation",
+              "Time": "Time since accretion ended", "Identifier": "Identifier of the row",
+              "atmosphere": "Dominant atmospheric element"}
+
+
+def test_boron_never_resolves_to_the_magnetic_field_column():
+    """PEWDD's ``B`` is the magnetic field, and the table states its abundances as ratios."""
+    roles = acq.resolve_roles(PEWDD_COLS, ["B", "Be", "Mg", "Ca", "Ti", "Fe"],
+                              units=PEWDD_UNITS, descriptions=PEWDD_DESC)
+    assert roles["ratio_convention_detected"] is True
+    assert "B" not in roles["elements"]
+    assert roles["elements"]["Be"]["value"] == "log(Be/H(e))"
+    assert roles["elements"]["Ca"]["error"] == "e_log(Ca/H(e))"
+    # the magnetic field is still captured, as provenance
+    assert roles["bfield"] == "B"
+    assert roles["ir_excess"] == "IRexcess" and roles["gas_disc"] == "gascomp"
+    assert roles["binary"] == "bin" and roles["binary_sep"] == "binSep"
+    assert roles["sinking_time_columns"]["Ca"] == "SinTimeCa"
+
+
+def test_a_bare_symbol_table_still_resolves():
+    """A table that does NOT state ratios keeps the bare-symbol fallback."""
+    cols = ["Name", "Teff", "Ca", "Ca error", "Fe", "Fe error", "Mg", "Mg error"]
+    roles = acq.resolve_roles(cols, ["Ca", "Fe", "Mg"])
+    assert roles["ratio_convention_detected"] is False
+    assert roles["elements"]["Ca"]["value"] == "Ca"
+
+
+def test_negative_error_is_an_upper_limit_not_a_detection():
+    """PEWDD marks an upper limit by writing a negative error, with no ``l_`` flag."""
+    df = pd.DataFrame([{"Star": "WD test", "Paper": "Someone 2020", "atmosphere": "He",
+                        "Teff": 12000.0, "logg": 8.0,
+                        "log(Ca/H(e))": -8.0, "e_log(Ca/H(e))": 0.1,
+                        "log(Mg/H(e))": -7.5, "e_log(Mg/H(e))": 0.1,
+                        "log(Fe/H(e))": -9.9, "e_log(Fe/H(e))": -1.0,
+                        "log(Ti/H(e))": -10.2, "e_log(Ti/H(e))": -1.0}])
+    roles = acq.resolve_roles(list(df.columns), ["Ca", "Mg", "Fe", "Ti"],
+                              descriptions={"atmosphere": "Dominant atmospheric element"})
+    panels, diag = acq.build_panels(df, roles, elements=["Ca", "Mg", "Fe", "Ti"])
+    p = panels[0]
+    assert p.elements == ["Ca", "Mg"]
+    assert sorted(p.limit_elements) == ["Fe", "Ti"]
+    assert not p.meta["errors_assumed_for"]          # a limit is never an assumed error
+    assert diag[0]["n_limits"] == 2
+
+
+def test_limit_bookkeeping_agrees_with_the_catalogue_counts():
+    from seti.slag.run import _limit_bookkeeping
+    df = pd.DataFrame([{"Star": "WD a", "atmosphere": "He", "Teff": 1.2e4, "logg": 8.0,
+                        "total_detections": 2, "total_upper_limits": 1,
+                        "log(Ca/H(e))": -8.0, "e_log(Ca/H(e))": 0.1,
+                        "log(Mg/H(e))": -7.5, "e_log(Mg/H(e))": 0.1,
+                        "log(Fe/H(e))": -9.9, "e_log(Fe/H(e))": -1.0}])
+    roles = acq.resolve_roles(list(df.columns), ["Ca", "Mg", "Fe"])
+    panels, _ = acq.build_panels(df, roles, elements=["Ca", "Mg", "Fe"])
+    book = _limit_bookkeeping(panels)
+    assert book["detections_checked"] == 1 and book["detections_agree"] == 1
+    assert book["upper_limits_checked"] == 1 and book["upper_limits_agree"] == 1
+    assert book["disagreements"] == []
+
+
+def test_model_and_revision_qualifiers_group_to_one_object():
+    for raw, want in [("PG1225-079 Model 2", "PG1225-079"), ("GD 362 Updated", "GD 362"),
+                      ("WDJ0649-7624 (phot)", "WDJ0649-7624"),
+                      ("Gaia J0347+1624 (Spec, Opt)", "Gaia J0347+1624"),
+                      ("SDSSJ010629.85-?010344.2", "SDSSJ010629.85-010344.2")]:
+        assert acq.normalise_name(raw) == acq.normalise_name(want)
+    assert acq.normalise_name("GD 362") != acq.normalise_name("GD 40")
+
+
+def test_row_timescales_beat_the_embedded_law():
+    """A row carrying its own tau_Z is used verbatim, and the source says so."""
+    from seti.slag.sinking import SOURCE_ROW, SOURCE_SCALING, TimescaleModel
+    tsm = TimescaleModel(FAM)
+    els = ["Ca", "Mg", "Fe"]
+    _base, _, src0 = tsm.log_tau_rel(els, "He", 12000.0, 8.0)
+    assert src0 == SOURCE_SCALING
+    row = {"Ca": 1.0e12, "Mg": 1.48e12, "Fe": 7.6e11}     # log ratios +0.170 / -0.119
+    v, s, src = tsm.log_tau_rel(els, "He", 12000.0, 8.0, row_tau=row)
+    assert src == SOURCE_ROW
+    assert v[0] == pytest.approx(0.0) and s[0] == 0.0
+    assert v[1] == pytest.approx(0.170, abs=0.01)
+    assert v[2] == pytest.approx(-0.119, abs=0.01)
+    # an incomplete row falls back rather than inventing a timescale
+    assert tsm.log_tau_rel(els, "He", 12000.0, 8.0, row_tau={"Ca": 1.0, "Mg": 2.0})[2] \
+        == SOURCE_SCALING
+
+
+def test_relative_timescale_library_is_built_from_the_catalogue_rows():
+    from seti.slag.sinking import SOURCE_LIBRARY, TimescaleModel, relative_timescale_library
+    rng = np.random.default_rng(4)
+    n = 40
+    df = pd.DataFrame({
+        "SinTimeCa": np.full(n, 1.0e12),
+        "SinTimeMg": 1.0e12 * 10.0 ** rng.normal(0.171, 0.02, n),
+        "SinTimeFe": 1.0e12 * 10.0 ** rng.normal(-0.120, 0.02, n),
+        "SinTimeTi": 1.0e12 * 10.0 ** rng.normal(-0.076, 0.02, n),
+        "SinTimeSc": np.full(n, np.nan),                  # too thin: must not enter
+        "atmosphere": ["He"] * n,
+    })
+    lib = relative_timescale_library(df, {"Ca": "SinTimeCa", "Mg": "SinTimeMg",
+                                          "Fe": "SinTimeFe", "Ti": "SinTimeTi",
+                                          "Sc": "SinTimeSc"}, atmosphere_column="atmosphere")
+    assert lib["n_rows_with_reference"] == n
+    assert set(lib["elements"]) == {"Mg", "Fe", "Ti"}
+    assert lib["elements"]["Mg"]["median"] == pytest.approx(0.171, abs=0.02)
+    assert lib["beta"] is not None and lib["beta"] > 0.5      # steeper than the embedded 0.45
+    tsm = TimescaleModel(FAM, library=lib["elements"], library_beta=lib["beta"])
+    v, s, src = tsm.log_tau_rel(["Ca", "Mg", "Fe"], "He", 12000.0, 8.0)
+    assert src == SOURCE_LIBRARY
+    assert v[1] == pytest.approx(0.171, abs=0.02)
+    assert s[1] >= 0.05 and s[0] == 0.0

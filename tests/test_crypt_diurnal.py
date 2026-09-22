@@ -282,9 +282,14 @@ def test_crop_cube_keeps_the_georeference(cube_psr):
 # the real PCP table format
 # ---------------------------------------------------------------------------
 def _pcp_tab_bytes(pole: str, half_px: int, pixels, *, origin_frac: float = 0.0,
-                   flip_y: bool = False) -> bytes:
-    """A table in the real PCP layout: one header record, then five
-    whitespace-separated ASCII columns x y lon lat T, empty bins omitted."""
+                   flip_y: bool = False, delim: str = ",") -> bytes:
+    """A table in the real PCP layout: one header record, then five ASCII
+    columns x, y, lon, lat, T with empty bins omitted.
+
+    The real products are COMMA-separated with padding spaces (run
+    35747661552); ``delim=" "`` writes the whitespace-only spelling the
+    reader must also accept.
+    """
     g = PCP.pcp_georef(pole, half_px)
     lines = ["PCP synthetic header record"]
     for (i, j, t) in pixels:
@@ -292,17 +297,50 @@ def _pcp_tab_bytes(pole: str, half_px: int, pixels, *, origin_frac: float = 0.0,
         yy = (i - half_px) if flip_y else (half_px - i)
         y = (yy + origin_frac) * PCP.PCP_SCALE_M / PCP.MOON_RADIUS_M
         lon, lat = g.pix_to_lonlat(np.array([i]), np.array([j]))
-        lines.append(f"{x:+.8f} {y:+.8f} {float(lon[0]):10.5f} {float(lat[0]):9.5f} {t:8.3f}")
+        fields = [f"{x:+.8f}", f"{y:+.8f}", f"{float(lon[0]):10.5f}",
+                  f"{float(lat[0]):9.5f}", f"{t:8.3f}"]
+        lines.append((delim + " ").join(fields) if delim == "," else " ".join(fields))
     return ("\r\n".join(lines) + "\r\n").encode("ascii")
 
 
+def test_the_real_products_comma_delimiter_is_sniffed_from_the_record(tmp_path):
+    """The label does not say how the five fields are separated. The real
+    products separate them with commas, and reading them as whitespace makes
+    every value a string ending in a comma — which is how run 35747661552
+    lost all twelve tables."""
+    half = 12
+    px = [(10, 11, 41.0), (12, 13, 43.5)]
+    comma = tmp_path / "comma.tab"
+    comma.write_bytes(_pcp_tab_bytes("north", half, px, delim=","))
+    assert PCP.sniff_delimiter(comma) == ","
+    assert b"," in comma.read_bytes().splitlines()[1]
+    tab = PCP.read_pcp_tab(comma)
+    assert tab["n"] == 2
+    assert float(tab["t"][0]) == pytest.approx(41.0, abs=1e-3)
+    assert np.all(np.isfinite(tab["x"])) and np.all(np.isfinite(tab["lat"]))
+    r = PCP.rasterise(tab, "north", half)
+    assert r["status"] == "OK" and r["n_on_grid"] == 2
+    assert float(r["array"][10, 11]) == pytest.approx(41.0, abs=1e-2)
+
+
+def test_a_whitespace_only_table_still_reads(tmp_path):
+    half = 12
+    p = tmp_path / "ws.tab"
+    p.write_bytes(_pcp_tab_bytes("north", half, [(10, 11, 41.0)], delim=" "))
+    assert PCP.sniff_delimiter(p) == r"\s+"
+    assert PCP.read_pcp_tab(p)["n"] == 1
+
+
+@pytest.mark.parametrize("delim", [",", " "])
 @pytest.mark.parametrize("origin_frac", [0.0, 0.5])
 @pytest.mark.parametrize("flip_y", [False, True])
-def test_a_real_format_table_lands_on_the_grid_at_either_registration(tmp_path, origin_frac, flip_y):
+def test_a_real_format_table_lands_on_the_grid_at_either_registration(tmp_path, origin_frac,
+                                                                     flip_y, delim):
     half = 12
     px = [(10, 11, 41.0), (12, 13, 43.5), (14, 9, 39.25)]
     p = tmp_path / "pcp.tab"
-    p.write_bytes(_pcp_tab_bytes("north", half, px, origin_frac=origin_frac, flip_y=flip_y))
+    p.write_bytes(_pcp_tab_bytes("north", half, px, origin_frac=origin_frac, flip_y=flip_y,
+                                 delim=delim))
     tab = PCP.read_pcp_tab(p)
     assert tab["n"] == len(px)
     r = PCP.rasterise(tab, "north", half)

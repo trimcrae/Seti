@@ -10,6 +10,62 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ARC closed out: 4,206 stars on the ceiling, one left standing (KIC 9418692), 2026-09-22
+
+S59 (`docs/arc.md`, §9 carries every number). The stage-1 assess stage had
+never once finished — run 35675114711 sat in it for **4 h 54 m** on a `pyvo`
+async job with no time limit and was killed by the workflow cap with no
+`summary.json` written at all. With a per-query clock and a stage budget it
+now runs in **277 s** (run **35738218021**, `NO_CEILING_EXCESS`):
+
+| | |
+|---|---|
+| flares screened / stars | 190,486 / 8,908 |
+| **assessable** (has a rotational amplitude) | **4,206** |
+| no amplitude, so no ceiling, so untested | 4,702 |
+| `ξ_conservative > 0` | **1** |
+| candidate / interest / watch | 0 / 0 / 14 |
+
+**The Santos+2021 lever is not what STATUS expected.** It was already in the
+sample (245 of 2,507 Yang & Liu stars, 22 of 279 Shibayama); it moved the
+assessable count 4,204 → 4,206, not "well beyond". What it actually did was
+**raise the ceiling**: rescaling `Sph` from a standard deviation to a range
+(×2√2) lifts `E_mag` by 4.75 (**0.68 dex**) and took the conservative
+positives 5 → 2 and the nominal positives 24 → 9.
+
+**Stage 2 ran** (run **35675112803**, 2 h 08 m, 30 stars, 69 flares, pixel
+centroids + Gaia census + Berger+2020 parameters). Both stage-1 interest
+stars dissolved on measured parameters — KIC 11507705 `ξ 0.440 → −0.590`
+(0.677 dex of it the `Sph` rescaling, 0.353 dex the 1.311 R☉ radius) and KIC
+8487271 `ξ 0.104 → −0.920`. Neither was ever tested on the pixels. The pixel
+test does bite on real data: of 69 flares, **9 on target, 1 on a neighbour**
+(KIC 7009116), 2 ambiguous.
+
+**What is left is one object, not a null.** **KIC 9418692**:
+`ξ_conservative = +0.462` on **4 flares** (ξ_nominal = +1.178 on 11) of 14
+Yang & Liu events; `E_flare,max = 9.78e34` vs `E_mag,cons = 3.37e34 erg`;
+amplitude `2.008e-4` from Santos **with** the ×2.828 scaling already applied.
+On Berger+2020 (5677 K, 1.089 R☉) instead of the Shibayama star table (5378
+K, 1.300 R☉) the same flares give **ξ = +0.715** — the excess *grows* on the
+better parameters. It is `first_veto = companion_suspect` on Gaia **RUWE =
+1.556** alone, which put it in no tier and so outside every stage-2
+shortlist. Its Gaia census: target supplies **99.73 %** of the flux inside
+one Kepler pixel; the two neighbours (G = 20.4 at 3.2″, G = 19.7 at 5.2″)
+would need **39 %** and **41 %** brightenings, and neither is excluded by
+arithmetic. Its centroid test has never been run on its Yang & Liu flares.
+
+Three defects found and fixed this session, each measured on real output: the
+assess-stage hang; a difference image that required **every** pixel of a
+cadence to be finite, which cost 11 of 30 stars their centroid test while the
+same flares had 5–7 in-flare and 68–82 baseline cadences in the aperture
+centroid; and a `Sph` rescaling that would have been applied **twice** now
+that stage 1 applies it (ceiling ×4.75 too high — the direction that hides a
+candidate). Stage 2 now shortlists hard-vetoed ceiling-excess stars *first*.
+
+**Next decisive action:** the stage-2 pixel test on KIC 9418692's 14 Yang &
+Liu flares with the Berger radius, plus a Gaia DR3 non-single-star and
+archival-spectroscopy look for the companion RUWE 1.556 only suspects.
+
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 
 S52/S53 went from a package that had never been run to a channel with a

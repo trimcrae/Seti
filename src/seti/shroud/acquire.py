@@ -807,12 +807,17 @@ def usnob1_meta_url(cfg: dict) -> str:
 def usnob1_meta_probe(cfg: dict) -> dict:
     """Ask I/284/out for its own column list before believing any zero.
 
-    Returns ``{url, detail, columns, missing, body_head}``.  ``missing`` is the
-    subset of :data:`USNOB1_COLUMNS` the catalogue does not advertise --- if it
-    is non-empty, a column-list query is asking for a name that does not exist
-    and its empty answer says nothing about the sky.  A failed probe is
-    recorded and the sweep continues: the ladder's ``-out.all`` rung does not
-    name columns at all.
+    Returns ``{url, detail, columns, missing, body_head}``.
+
+    ``missing`` is the subset of :data:`USNOB1_COLUMNS` this body does not
+    mention.  Read it as a HINT, never as a fact about the catalogue: the
+    ``-meta.all`` + ``-out.form=TSV`` body carries ``#Column`` lines for the
+    catalogue's DEFAULT output columns, and I/284/out's defaults are the eight
+    astrometric ones, so run 35738062833's probe reported B1mag, R1mag, R2mag,
+    Imag and Ndet as "missing" from a catalogue that plainly has them.  That
+    probe then edited the request and every field came back as bare positions;
+    it now reports only.  A wrong column name is handled where it shows up ---
+    the ladder falls through to the ``-out.all`` rung, which names none.
     """
     url = usnob1_meta_url(cfg)
     r = cfg.get("acquire", {}).get("reconstruct", {})
@@ -977,7 +982,9 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
            if meta["columns"] else "no column names parsed")
         + (f"; not mentioned by the probe: {sorted(meta['missing'])}"
            if meta["missing"] else "; every requested column mentioned")
-        + " (reported only -- the request is not edited from this)")
+        + " (reported only -- the request is not edited from this; the "
+          "-meta.all body lists the catalogue's DEFAULT output columns, so "
+          "'not mentioned' does NOT mean 'absent from the catalogue')")
     # The probe REPORTS; it does not edit the request.  Run 35738062833 had it
     # strip every name the -meta.all body failed to mention, and that body
     # mentioned 8 columns out of ~30 --- so B1mag/R1mag/R2mag/Ndet were all

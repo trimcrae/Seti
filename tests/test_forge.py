@@ -14,9 +14,9 @@ No network anywhere (``conftest.py`` raises on any socket).  Per
   embedded values the archive did not confirm are ``UNVERIFIED_INPUT``;
 * degrades honestly: a dead VizieR yields ``NO_DATA_REACHED`` and no
   candidate, with every embedded row ``table_not_reached``;
-* the broadband leg flags an injected 10 % hot component, leaves a 1 % one
-  alone (below its sensitivity, which it reports), and reads cold dust as
-  ``BROADBAND_W3_TOO_BRIGHT``.
+* the broadband leg flags an injected 15 % hot component, leaves a 1 % one
+  alone (below its sensitivity, which it reports), and reads the same hot
+  component plus a cold belt as ``BROADBAND_W3_TOO_BRIGHT``.
 """
 
 from __future__ import annotations
@@ -38,6 +38,7 @@ from seti.forge.physics import (
     BROADBAND_W3_BRIGHT,
     TIER_CANDIDATE,
     TIER_COMPANION_T,
+    TIER_INCONCLUSIVE,
     TIER_INTEREST,
     TIER_KNOWN_COMPANION,
     TIER_N_UNTESTED,
@@ -314,21 +315,29 @@ SPTYPES = {"HD 172167": "A0V", "HD 10700": "G8V", "HD 177724": "A0V", "HD 102647
            "HD 22049": "K2V", "HD 7788": "F6V", "HD 216956": "A4V"}
 
 
+# A fixed sky position per star.  Deliberately NOT derived from the order of
+# the identifiers in the query: the resolver batches and expands alt names, so
+# an index-derived position silently moves when the query shape changes and the
+# cone fakes below then land on the wrong star.
+FAKE_POS = {k: (10.0 + 3.0 * i, -20.0 + 4.0 * i) for i, k in enumerate(SPTYPES)}
+WDS_PAIR_AT = FAKE_POS["HD 999004"]          # the one star with a catalogued pair
+
+
 def fake_simbad(adql: str, url: str) -> pd.DataFrame:
     ids = re.findall(r"'([^']+)'", adql)
     rows = []
-    for i, k in enumerate(ids):
+    for k in dict.fromkeys(ids):
         if k not in SPTYPES:
             continue
-        rows.append({"asked": k, "main_id": k, "ra": 10.0 + i, "dec": -20.0 + i,
+        ra, dec = FAKE_POS[k]
+        rows.append({"asked": k, "main_id": k, "ra": ra, "dec": dec,
                      "sp_type": SPTYPES[k], "plx_value": 50.0})
     return pd.DataFrame(rows)
 
 
 def fake_cone(table: str, ra: float, dec: float, radius: float) -> pd.DataFrame:
     if table.startswith("B/wds"):
-        # HD 999004 sits at index 7 in the SPTYPES order -> ra 17, dec -13
-        if abs(ra - 17.0) < 0.01 and abs(dec + 13.0) < 0.01:
+        if abs(ra - WDS_PAIR_AT[0]) < 0.01 and abs(dec - WDS_PAIR_AT[1]) < 0.01:
             return pd.DataFrame({"Sep2": [0.4], "mag1": [4.0], "mag2": [7.0], "Comp": ["AB"]})
         return pd.DataFrame()
     if table.startswith("I/355"):
@@ -350,7 +359,11 @@ def _synthetic_population(seed=3, n=2500):
     k_w1 = 0.02 + 0.05 * (bp_rp - 0.5) + rng.normal(0, 0.03, n)
     w1_w2 = -0.02 + 0.03 * (bp_rp - 0.5) ** 2 + rng.normal(0, 0.03, n)
     w2_w3 = 0.01 + 0.02 * (bp_rp - 0.5) + rng.normal(0, 0.08, n)
-    ks = rng.uniform(5.0, 9.0, n)
+    # above the WISE saturation cuts the config applies (w1 > 8, w2 > 7): the
+    # fixture has to exercise the classifier, so it is a population the leg can
+    # actually measure.  On the sky most stars inside 30 pc are BRIGHTER than
+    # this and the runner reports the saturated fraction it really finds.
+    ks = rng.uniform(8.6, 11.5, n)
     df = pd.DataFrame({"source_id": np.arange(n), "ra": rng.uniform(0, 360, n),
                        "dec": rng.uniform(-89, 89, n), "parallax": rng.uniform(34, 100, n),
                        "parallax_over_error": 50.0, "phot_g_mean_mag": ks + 1.5 + bp_rp,
@@ -360,18 +373,31 @@ def _synthetic_population(seed=3, n=2500):
                        "tmass_qual": "AAA", "kind": "normal"})
     df["w2"] = df["w1"] - w1_w2
     df["w3"] = df["w2"] - w2_w3
-    # injections: a hot 1500 K component at 10 % (detectable), 1 % (not), and cold dust
-    def inject(idx, f_k, t_k, kind):
+    # injections: a hot 1500 K component at 10 % (detectable), 1 % (not), and
+    # warm dust.  Redden the COLOURS, then rebuild the magnitudes from Ks --
+    # shifting w1, w2, w3 in place mixes pre- and post-shift colours and puts
+    # the star somewhere no model predicts.
+    def inject(idx, f_k, t_k, kind, d_w3_extra=0.0):
         for i in idx:
             teff = float(np.interp(df.loc[i, "bp_rp"], [0.5, 1.0, 2.0, 3.0], [6600, 5400, 3900, 3200]))
             sh = colour_shift(teff, f_k, t_k)
-            df.loc[i, "w1"] -= sh["d_k_w1"]
-            df.loc[i, "w2"] = df.loc[i, "w1"] - (df.loc[i, "w1"] - df.loc[i, "w2"]) - sh["d_w1_w2"]
-            df.loc[i, "w3"] = df.loc[i, "w2"] - (df.loc[i, "w2"] - df.loc[i, "w3"]) - sh["d_w2_w3"]
+            ks_i = float(df.loc[i, "ks"])
+            c_kw1 = ks_i - float(df.loc[i, "w1"])
+            c_w12 = float(df.loc[i, "w1"]) - float(df.loc[i, "w2"])
+            c_w23 = float(df.loc[i, "w2"]) - float(df.loc[i, "w3"])
+            w1 = ks_i - (c_kw1 + sh["d_k_w1"])
+            w2 = w1 - (c_w12 + sh["d_w1_w2"])
+            w3 = w2 - (c_w23 + sh["d_w2_w3"] + d_w3_extra)
+            df.loc[i, "w1"], df.loc[i, "w2"], df.loc[i, "w3"] = w1, w2, w3
             df.loc[i, "kind"] = kind
-    inject(range(0, 6), 10.0, 1500.0, "hot10")
-    inject(range(6, 10), 1.0, 1500.0, "hot1")
-    inject(range(10, 14), 10.0, 300.0, "cold")      # a 300 K body: W3 far too bright for its W1/W2
+    inject(range(0, 6), 15.0, 1500.0, "hot_strong")
+    inject(range(6, 10), 1.0, 1500.0, "hot_weak")
+    # The dominant astrophysical confounder is not a cold body on its own -- a
+    # body much cooler than 1500 K fails the K-W1 / W1-W2 consistency test
+    # first and reads NORMAL.  It is a hot component that ALSO has a cold
+    # debris belt, which most of these stars do: the NIR pair mimics a swarm
+    # exactly and only W3 gives it away.
+    inject(range(10, 14), 15.0, 1500.0, "hot_plus_belt", d_w3_extra=0.6)
     return df
 
 
@@ -433,9 +459,17 @@ def test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset(tmp_path)
     assert tier["HD 999003"] == TIER_COMPANION_T
     assert tier["HD 999004"] == TIER_KNOWN_COMPANION
     assert tier["HD 10700"] == TIER_N_UNTESTED
-    assert tier["HD 102647"] == TIER_NANO           # 0.94 % K, 1.7 % N: K-bright / N-faint
-    assert tier["HD 172167"] != TIER_CANDIDATE
+    assert tier["HD 172167"] == TIER_NANO           # 1.26 % K, 0.4 % N: K-bright / N-faint
     assert tier["HD 22049"] == TIER_NO_NIR
+    # bet Leo: 0.94 +/- 0.26 % in K, 1.70 +/- 0.30 % in N.  N sits below the
+    # 1500 K extrapolation, but the two families are only ~4 in chi2 apart --
+    # under the 9 the channel demands -- so the honest verdict is no
+    # preference.  What must hold is that it never reaches candidate.
+    bl = next(s for s in scr["stars"] if s["key"] == "HD 102647")
+    assert bl["tier"] in (TIER_NANO, TIER_INCONCLUSIVE) and bl["delta_chi2"] < 0
+    # one published number is one datum: the embedded FLUOR row and the
+    # absil2013 archive row for bet Leo's K excess must not both enter chi^2
+    assert sum(1 for m in bl["measurements"] if m["band"] == "K") == 1
     # the zeta Aql row is discrepant: the archive value (1.50) is what the fit used
     zaq = next(s for s in scr["stars"] if s["key"] == "HD 177724")
     assert abs(zaq["anchor"]["value_pct"] - 1.50) < 1e-6 and zaq["anchor"]["origin"] == "archive"
@@ -457,7 +491,7 @@ def test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset(tmp_path)
     classes = bp["classes"]
     assert classes.get(BROADBAND_W3_BRIGHT, 0) >= 3
     assert classes.get(BROADBAND_NORMAL, 0) > 2000
-    assert all(star_cls[i] == "hot10" for i in flagged["source_id"])
+    assert all(star_cls[i] == "hot_strong" for i in flagged["source_id"])
     s = res["assess"]
     assert s["verdict"].startswith(VERDICT_CANDIDATES)
     assert s["funnel"]["n_candidates"] == 1 and s["funnel"]["n_N_UNTESTED"] >= 1

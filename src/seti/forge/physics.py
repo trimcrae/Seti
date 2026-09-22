@@ -150,6 +150,12 @@ class Measurement:
     source: str = ""
     verified: bool = False
     origin: str = "embedded"
+    #: the published survey this value belongs to (``absil2013``, ``ertel2020``,
+    #: ...).  The embedded citation row and the archive row for the SAME
+    #: published number share it, which is how the merge keeps one datum one
+    #: datum instead of letting a recalled value and its own archive table
+    #: enter chi^2 twice.
+    survey: str = ""
 
     @property
     def significance(self) -> float:
@@ -161,7 +167,8 @@ class Measurement:
         return {"band": self.band, "wl_um": self.wl_um, "value_pct": self.value_pct,
                 "err_pct": self.err_pct, "kind": self.kind, "instrument": self.instrument,
                 "epoch": self.epoch, "source": self.source, "verified": bool(self.verified),
-                "origin": self.origin, "significance": round(self.significance, 2)}
+                "origin": self.origin, "survey": self.survey,
+                "significance": round(self.significance, 2)}
 
 
 def band_family(band: str) -> str:
@@ -249,6 +256,14 @@ def fit_family(meas: list[Measurement], teff_k: float, family: str = "grey",
     n_free = 2 if family == "grey" else 3
     best["dof"] = max(len(meas) - n_free, 0)
     best["n_meas"] = len(meas)
+    # Whether the temperature is MEASURED (an interior minimum) or merely
+    # pushed against the edge of the grid.  A fit that runs away to the hot
+    # edge says only "bluer than any body this family can make" -- which is
+    # the small-grain signature -- and its T must not be read as a temperature.
+    best["t_grid_k"] = [float(t_grid[0]), float(t_grid[-1])]
+    best["t_at_grid_edge"] = bool(
+        math.isfinite(best["t_k"])
+        and (best["t_k"] <= t_grid[0] * 1.001 or best["t_k"] >= t_grid[-1] * 0.999))
     if math.isfinite(best["t_k"]):
         best["prediction_pct"] = {m.band: float(v) for m, v in zip(
             meas, excess_fraction(wl, best["t_k"], best["f_ref_pct"], teff_k,
@@ -426,22 +441,68 @@ def assess_star(meas: list[Measurement], ctx: StarContext, physics: dict | None 
     out["gates"]["driving_values_verified"] = all(m.verified for m in driving)
     grey_ok = out["grey_fit_p"] >= ph["grey_fit_p_min"]
     nano_ok = out["nano_fit_p"] >= ph["grey_fit_p_min"]
-    # --- tiers -----------------------------------------------------------
-    # A free grey body hotter than anything that survives, preferred over BOTH
-    # the swarm-range grey body and the small grains, is a photosphere.
-    hot_pref = (grey_free["t_k"] > t_hi
-                and grey["chi2"] - grey_free["chi2"] >= ph["delta_chi2_min"]
-                and nano["chi2"] - grey_free["chi2"] >= ph["delta_chi2_min"])
+    # --- the companion-photosphere check ---------------------------------
+    # A free (unit-emissivity) grey body whose temperature is MEASURED above
+    # the sublimation ceiling is a photosphere, not dust: no grain survives
+    # there.  Two conditions, and the second is the one that matters.
+    #
+    #   (a) the free fit decisively beats the swarm-range grey body, and
+    #   (b) its temperature is an interior minimum of the grid.
+    #
+    # (b) separates a companion from the archetypal K-bright / N-faint star.
+    # Small grains make an excess BLUER than any grey body can be, so the free
+    # grey fit runs away to the hot edge of the grid and reports an edge value
+    # that is not a temperature at all.  A companion photosphere instead gives
+    # a nearly flat H-to-N excess and the fit converges (e.g. ~4600 K).
+    #
+    # Note what is deliberately NOT required: that the free hot body also beat
+    # the nano-grain family.  At the top of its temperature range (~2000 K)
+    # with beta = 1 and a << lambda, Q ~ 1/lambda cancels most of the Planck
+    # slope and the small-grain family is itself near-flat from H to N, so it
+    # fits a companion about as well.  That degeneracy is real and is reported
+    # per star rather than being allowed to veto the kill.
+    hot_interior = not grey_free["t_at_grid_edge"]
+    hot_gain_grey = float(grey["chi2"] - grey_free["chi2"])
+    hot_gain_nano = float(nano["chi2"] - grey_free["chi2"])
+    out["hot_grey"] = {
+        "t_k": float(grey_free["t_k"]),
+        "chi2": float(grey_free["chi2"]),
+        "above_sublimation_ceiling": bool(grey_free["t_k"] > t_hi),
+        "temperature_measured": bool(hot_interior),
+        "delta_chi2_vs_swarm_grey": hot_gain_grey,
+        "delta_chi2_vs_nano": hot_gain_nano,
+        "nano_fits_comparably": bool(hot_gain_nano < ph["delta_chi2_min"]),
+    }
+    hot_pref = (grey_free["t_k"] > t_hi and hot_interior
+                and hot_gain_grey >= ph["delta_chi2_min"])
     if hot_pref:
         out["tier"] = TIER_COMPANION_T
-        out["reason"] = ("a grey body at T = {:.0f} K > {:.0f} K is preferred over every "
-                         "swarm-range and small-grain model: a companion photosphere".format(grey_free["t_k"], t_hi))
+        deg = (f"; the small-grain family fits comparably (Delta chi2 = {hot_gain_nano:.1f}), "
+               "so the kill rests on the colour temperature, not on rejecting grains"
+               ) if out["hot_grey"]["nano_fits_comparably"] else ""
+        out["reason"] = ("a grey body at a measured T = {:.0f} K > {:.0f} K beats every "
+                         "swarm-range model by Delta chi2 = {:.1f}: a companion photosphere"
+                         "{}".format(grey_free["t_k"], t_hi, hot_gain_grey, deg))
         return out
     if ctx.known_companion:
         out["tier"] = TIER_KNOWN_COMPANION
         out["reason"] = "known companion at the %% level: %s" % (ctx.companion_note or "catalogued")
         return out
+    # A weaker form of the same kill: the free fit prefers a photospheric
+    # temperature but not decisively.  A genuine 1500 K swarm with a detected
+    # N band pins its own temperature (the N/K ratio measures it), so the free
+    # fit lands inside the swarm range and this never fires; when it does
+    # fire, the excess colour is at least as well explained by a companion and
+    # the star is not a clean candidate.
+    out["gates"]["hot_photosphere_alternative"] = bool(
+        grey_free["t_k"] > t_hi and hot_interior and hot_gain_grey > 0.0)
     if delta >= ph["delta_chi2_min"] and grey_ok and n_consistent and out["n_band"]["detected"]:
+        if out["gates"]["hot_photosphere_alternative"]:
+            out["tier"] = TIER_INCONCLUSIVE
+            out["reason"] = ("Planck-consistent, but a companion photosphere at T = {:.0f} K "
+                             "fits as well or better (Delta chi2 = {:.1f} over the swarm-range "
+                             "grey body): the excess colour does not single out a swarm".format(grey_free["t_k"], hot_gain_grey))
+            return out
         if not out["gates"]["driving_values_verified"]:
             out["tier"] = TIER_UNVERIFIED
             out["reason"] = ("Planck-consistent on embedded values that this run did not "

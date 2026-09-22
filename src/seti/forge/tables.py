@@ -216,22 +216,37 @@ def embedded_measurements(excess: pd.DataFrame, targets: TargetTable) -> dict[st
         out.setdefault(key, []).append(Measurement(
             band=band, wl_um=wl, value_pct=val, err_pct=err, kind=kind,
             instrument=str(r.get("instrument", "")), epoch=str(r.get("epoch", "")),
-            source=str(r.get("source", "")), verified=verified, origin="embedded"))
+            source=str(r.get("source", "")), verified=verified, origin="embedded",
+            survey=str(r.get("survey", "") or "").strip()))
     return out
+
+
+def _merge_key(m: Measurement) -> tuple:
+    """What makes two rows the SAME published measurement.
+
+    The survey id, not the citation string: an embedded row carries a free-text
+    reference ("Akeson+2009 ApJ 691 1896; Absil+2013") while the archive row
+    carries the survey name ("absil2013"), so keying on the citation lets one
+    published number enter chi^2 twice with its error effectively halved.  The
+    published tables are one row per star per band, so (survey, band) is the
+    identity of a datum; genuine repeat epochs come from different surveys
+    (FLUOR 2013 / JouFLU 2017 / PIONIER 2014) and are kept apart.
+    """
+    return (m.survey or m.source, m.band)
 
 
 def merge_measurements(embedded: dict[str, list[Measurement]],
                        archive: dict[str, list[Measurement]]) -> dict[str, list[Measurement]]:
-    """Archive rows win over embedded rows for the same (survey, band, epoch);
+    """Archive rows win over embedded rows for the same (survey, band);
     embedded rows with no archive counterpart are kept, unverified."""
     out: dict[str, list[Measurement]] = {}
     keys = set(embedded) | set(archive)
     for k in keys:
         got: dict[tuple, Measurement] = {}
         for m in embedded.get(k, []):
-            got[(m.source, m.band, m.epoch)] = m
+            got[_merge_key(m)] = m
         for m in archive.get(k, []):
-            got[(m.source, m.band, m.epoch)] = m
+            got[_merge_key(m)] = m
         out[k] = list(got.values())
     return out
 

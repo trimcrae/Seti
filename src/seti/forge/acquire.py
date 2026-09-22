@@ -376,7 +376,7 @@ def fetch_excess_table(disc: DiscoveredTable, spec: dict, targets: TargetTable, 
             value_pct=float(val), err_pct=float(err) if math.isfinite(err) else 0.0,
             kind="upper" if limit else "meas", instrument=str(spec.get("instrument", "")),
             epoch=str(spec.get("epoch", "")), source=disc.name, verified=True,
-            origin="archive"))
+            origin="archive", survey=disc.name))
         record["n_measurements"] += 1
     record["unmatched"] = record["unmatched"][:20]
     return out, record

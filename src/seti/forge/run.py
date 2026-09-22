@@ -318,7 +318,8 @@ def _load_archive(data: Path) -> dict[str, list]:
         out[k] = [Measurement(m["band"], float(m["wl_um"]), float(m["value_pct"]),
                               float(m["err_pct"]), m.get("kind", "meas"), m.get("instrument", ""),
                               m.get("epoch", ""), m.get("source", ""), bool(m.get("verified")),
-                              m.get("origin", "archive")) for m in ms]
+                              m.get("origin", "archive"),
+                              m.get("survey", m.get("source", ""))) for m in ms]
     return out
 
 

@@ -393,6 +393,92 @@ def literature_sources(assets: dict) -> list[dict]:
     return [dict(x) for x in (assets.get("literature") or [])]
 
 
+def propose_constants(assets: dict, literature: dict, *, agree_rtol: float = 1e-4,
+                      plausible_rtol: float = 0.05) -> dict:
+    """Turn a ``litfetch`` ledger into an auditable proposal, deciding nothing.
+
+    ``literature`` is ``results/uline/literature.json``.  Its ``by_species``
+    block holds, per species and per constant, **every** value any route
+    produced with the URL it came from — several routes, several numbers, no
+    isotopologue labels and no adjudication.  That is the right shape for a
+    ledger and the wrong shape for a decision, so this turns it into one row
+    per (species, constant):
+
+    * ``candidates``   every fetched value with the route and URL it came from;
+    * ``embedded``     what the assets' FIRST isotopologue currently carries;
+    * ``agreement``    how many distinct values there are within ``agree_rtol``
+                       of the most common one, and how many routes back it —
+                       two independent routes agreeing is the only cheap
+                       evidence available that a scraped number is not a
+                       transcription artefact;
+    * ``rel_diff``     the fetched consensus against the embedded value;
+    * ``verdict``      ``FILLS_A_GAP`` (the assets carry ``None``),
+                       ``CONFIRMS`` (agrees with the embedded value),
+                       ``CONFLICTS`` (differs by more than ``plausible_rtol``),
+                       ``AMBIGUOUS`` (routes disagree among themselves).
+
+    Nothing here writes the assets: promoting a value is
+    :func:`merge_fetched_constants` plus a commit somebody can read, which is
+    what the ``verify`` flag is for.  A ``CONFLICTS`` row in particular is a
+    question, not an answer — the scraper may have caught a comparison value,
+    an excited-state constant or another isotopologue.
+    """
+    by_species = (literature or {}).get("by_species") or {}
+    keys = ("A", "B", "C", *QUARTIC, *SEXTIC)
+    out: dict = {"species": {}, "n_rows": 0, "agree_rtol": float(agree_rtol),
+                 "plausible_rtol": float(plausible_rtol)}
+    for sp, blk in by_species.items():
+        isos = species_isotopologues(assets, sp)
+        current = isos[0].constants.as_dict() if isos else {}
+        rows = []
+        for k in keys:
+            vals = [v for v in ((blk.get("constants") or {}).get(k) or [])
+                    if v.get("value_mhz") is not None]
+            if not vals:
+                continue
+            nums = [float(v["value_mhz"]) for v in vals]
+            # the most-supported value: the one the most other values sit near
+            best, best_n = nums[0], 0
+            for x in nums:
+                n = sum(1 for y in nums
+                        if abs(y - x) <= agree_rtol * max(abs(x), abs(y), 1e-12))
+                if n > best_n:
+                    best, best_n = x, n
+            emb = current.get(k)
+            rel = (abs(best - float(emb)) / max(abs(float(emb)), 1e-12)
+                   if emb is not None else None)
+            if emb is None:
+                verdict = "FILLS_A_GAP"
+            elif rel is not None and rel <= agree_rtol:
+                verdict = "CONFIRMS"
+            elif rel is not None and rel > plausible_rtol:
+                verdict = "CONFLICTS"
+            else:
+                verdict = "NEARBY"
+            if best_n < 2 and len(nums) > 1:
+                verdict = "AMBIGUOUS"
+            rows.append({
+                "constant": k, "consensus_mhz": best, "n_routes_agreeing": best_n,
+                "n_candidates": len(nums), "embedded_mhz": emb, "rel_diff": rel,
+                "verdict": verdict,
+                "candidates": [{"value_mhz": float(v["value_mhz"]), "from": v.get("from"),
+                                "url": v.get("url")} for v in vals[:12]],
+            })
+        if rows:
+            out["species"][sp] = {
+                "isotopologue": isos[0].name if isos else None,
+                "quality": isos[0].quality if isos else None,
+                "quartic_known": bool(isos) and isos[0].constants.quartic_known,
+                "rows": rows,
+            }
+            out["n_rows"] += len(rows)
+    out["note"] = ("a proposal, not a change: promoting a value is a commit to "
+                   "src/seti/data_assets/rotor_constants.yaml, and a CONFLICTS row is a "
+                   "question (a comparison value, an excited state or another isotopologue) "
+                   "rather than an answer")
+    return out
+
+
 def merge_fetched_constants(assets: dict, fetched: dict) -> tuple[dict, list[dict]]:
     """Apply constants a ``litfetch`` run established, reporting every change.
 
@@ -428,5 +514,6 @@ def merge_fetched_constants(assets: dict, fetched: dict) -> tuple[dict, list[dic
 
 __all__ = ["QUALITY_ORDER", "Isotopologue", "assets_path", "literature_sources",
            "load_rotor_assets", "merge_fetched_constants", "predict_species_lines",
-           "predictable_species", "rotor_error_model", "searchability", "species_isotopologues",
+           "predictable_species", "propose_constants", "rotor_error_model", "searchability",
+           "species_isotopologues",
            "summarise_assets", "validation_targets"]

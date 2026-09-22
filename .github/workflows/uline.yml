@@ -237,6 +237,32 @@ jobs:
               for k, vals in (blk.get("constants") or {}).items():
                   print(f"     {k:5s} " + "; ".join(f"{v['value_mhz']:.6g} <- {v['from']}" for v in vals[:6]))
           PY
+      # The step between "these routes answered" and "this constant should
+      # change".  It decides nothing — promoting a value is a commit to
+      # src/seti/data_assets/rotor_constants.yaml — but adjudicating a few
+      # hundred ledger entries by eye is how a transcription artefact gets
+      # promoted, so the run does the bookkeeping and shows its evidence.
+      - name: Propose constants from the ledger (decides nothing)
+        if: ${{ github.event.inputs.stage == 'litfetch' || github.event.inputs.stage == 'propose' || github.event.inputs.stage == 'full' }}
+        run: |
+          python -m seti.uline.run --stage propose
+          echo "=== constants proposal ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/uline/constants_proposal.json"))
+          print(d["n_rows"], "rows over", len(d["species"]), "species")
+          for sp, blk in d["species"].items():
+              print(f"== {sp} ({blk['isotopologue']}, quality {blk['quality']}, "
+                    f"quartic_known={blk['quartic_known']})")
+              for r in blk["rows"]:
+                  rel = r["rel_diff"]
+                  print(f"   {r['constant']:5s} {r['verdict']:14s} "
+                        f"fetched={r['consensus_mhz']:.8g} embedded={r['embedded_mhz']} "
+                        f"rel={'' if rel is None else format(rel, '.2e')} "
+                        f"routes={r['n_routes_agreeing']}/{r['n_candidates']}")
+                  for c in r["candidates"][:4]:
+                      print(f"        {c['value_mhz']:.8g}  <- {c['from']}  {c['url']}")
+          PY
       - name: Commit results
         if: always()
         env:
@@ -252,7 +278,8 @@ jobs:
             results/uline/summary.json \
             results/uline/candidates.csv \
             results/uline/rotor_validation.json \
-            results/uline/literature.json
+            results/uline/literature.json \
+            results/uline/constants_proposal.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

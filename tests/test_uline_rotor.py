@@ -553,6 +553,50 @@ def test_every_recalled_constant_is_bounded_by_its_own_corroboration():
                 assert float(child["abc_uncertainty_mhz"]) >= parent, f"{sp} {child['name']}"
 
 
+def test_propose_constants_adjudicates_the_ledger_without_deciding_anything(tmp_path):
+    """The ledger is the right shape for a record and the wrong shape for a
+    decision: several routes, several numbers, no isotopologue labels.  The
+    proposal turns it into one row per (species, constant) with the evidence
+    attached — and never touches the assets."""
+    from seti.uline.rotorpred import load_rotor_assets, propose_constants
+
+    assets = load_rotor_assets()
+    b_emb = assets["species"]["CFCl3"]["isotopologues"][0]["constants"]["B"]
+    lit = {"by_species": {"CFCl3": {"constants": {
+        # two independent routes agree, and they agree with the embedded value
+        "B": [{"value_mhz": b_emb, "from": "r1", "url": "u1"},
+              {"value_mhz": b_emb * (1 + 1e-6), "from": "r2", "url": "u2"}],
+        # the assets carry no DJK for this species at all
+        "DJK": [{"value_mhz": 0.0012, "from": "r1", "url": "u1"},
+                {"value_mhz": 0.0012, "from": "r3", "url": "u3"}],
+        # one route, far from the embedded value: a question, not an answer
+        "A": [{"value_mhz": 12345.0, "from": "r4", "url": "u4"}],
+        # two routes that do not agree with each other
+        "DJ": [{"value_mhz": 0.001, "from": "r1", "url": "u1"},
+               {"value_mhz": 0.009, "from": "r2", "url": "u2"},
+               {"value_mhz": 0.020, "from": "r3", "url": "u3"}],
+    }}}}
+    rep = propose_constants(assets, lit)
+    rows = {r["constant"]: r for r in rep["species"]["CFCl3"]["rows"]}
+    assert rows["B"]["verdict"] == "CONFIRMS" and rows["B"]["n_routes_agreeing"] == 2
+    assert rows["DJK"]["verdict"] == "FILLS_A_GAP" and rows["DJK"]["embedded_mhz"] is None
+    assert rows["A"]["verdict"] == "CONFLICTS"
+    assert rows["DJ"]["verdict"] == "AMBIGUOUS"
+    assert all(c["url"] for r in rows.values() for c in r["candidates"])
+    assert "not a change" in rep["note"]
+    # the assets are untouched
+    assert load_rotor_assets()["species"]["CFCl3"]["isotopologues"][0]["constants"]["B"] == b_emb
+
+
+def test_the_propose_stage_writes_a_proposal_and_survives_a_missing_ledger(tmp_path):
+    from seti.uline.run import load_uline_config, stage_propose
+
+    conf = load_uline_config()
+    rep = stage_propose(conf, tmp_path)               # no literature.json at all
+    assert rep["n_rows"] == 0 and rep["species"] == {}
+    assert (tmp_path / "constants_proposal.json").exists()
+
+
 def test_litfetch_stops_at_its_wall_clock_and_says_what_it_did_not_try():
     """One hanging service must not spend the job's whole budget — and a source
     that was never reached is NOT a route that answered with nothing."""

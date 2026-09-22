@@ -1093,10 +1093,39 @@ def stage_litfetch(conf: dict, out: Path, *, fetch_fn=None, assets: dict | None 
     return rep
 
 
+def stage_propose(conf: dict, out: Path, *, assets: dict | None = None,
+                  literature: dict | None = None) -> dict:
+    """Turn the litfetch ledger into an auditable constants proposal.
+
+    Offline and free: it reads ``results/uline/literature.json`` and writes
+    ``results/uline/constants_proposal.json``.  It changes nothing — promoting
+    a value is a commit to ``src/seti/data_assets/rotor_constants.yaml`` — but
+    it is the step between "these routes answered" and "this constant should
+    change", and doing it by eye over a few hundred ledger entries is how a
+    transcription artefact gets promoted.
+    """
+    from .rotorpred import propose_constants
+
+    assets = load_rotor_assets() if assets is None else assets
+    if literature is None:
+        p = out / "literature.json"
+        literature = json.loads(p.read_text()) if p.exists() else {}
+    rep = propose_constants(assets, literature)
+    rep["generated_utc"] = _now()
+    _write(out / "constants_proposal.json", rep)
+    counts: dict[str, int] = {}
+    for blk in rep["species"].values():
+        for r in blk["rows"]:
+            counts[r["verdict"]] = counts.get(r["verdict"], 0) + 1
+    print(f"[uline] propose: {rep['n_rows']} constant rows over "
+          f"{len(rep['species'])} species — {counts}")
+    return rep
+
+
 # ---------------------------------------------------------------------------
 # entry points
 # ---------------------------------------------------------------------------
-STAGES = ("probe", "validate", "litfetch", "acquire", "screen", "assess")
+STAGES = ("probe", "validate", "litfetch", "propose", "acquire", "screen", "assess")
 #: ``--stage all``.  ``validate`` and ``litfetch`` are not in it: they are about
 #: the PREDICTOR, not about the sky, they are slow (dozens of HTTP round trips),
 #: and their outputs change only when the constants do.  Run them explicitly.
@@ -1119,6 +1148,8 @@ def uline_run(conf: dict | None = None, stage: str = "all", *, out_dir=None, fet
             rep = stage_validate(conf, out, fetch_fn=fetch_fn)
         elif s == "litfetch":
             rep = stage_litfetch(conf, out, fetch_fn=fetch_fn, species=species)
+        elif s == "propose":
+            rep = stage_propose(conf, out)
         elif s == "acquire":
             rep = stage_acquire(conf, out, fetch_fn=fetch_fn, query_fn=query_fn, sources=sources)
         elif s == "screen":
@@ -1135,7 +1166,7 @@ def main(argv=None):
                                 description="ULINE (S54): industrial fluorine molecules in "
                                             "public unidentified-line lists")
     p.add_argument("--stage", default="all", choices=list(STAGES) + ["all"],
-                   help="probe|validate|litfetch|acquire|screen|assess|all "
+                   help="probe|validate|litfetch|propose|acquire|screen|assess|all "
                         "(all = probe,acquire,screen,assess)")
     p.add_argument("--out-dir", default="results/uline")
     p.add_argument("--sources", default="", help="comma-separated source keys (default all)")
@@ -1161,5 +1192,6 @@ __all__ = ["DEFAULTS", "DEFAULT_STAGES", "STAGES", "VERDICT_NONE", "VERDICT_NO_D
            "VERDICT_PATTERN", "VERDICT_PATTERN_VERIFY",
            "build_species_tables", "contaminant_lines", "load_uline_config",
            "main", "screen_all", "source_from_table", "stage_acquire", "stage_assess",
-           "stage_litfetch", "stage_probe", "stage_screen", "stage_validate", "uline_run",
+           "stage_litfetch", "stage_probe", "stage_propose", "stage_screen", "stage_validate",
+           "uline_run",
            "validate_rotor"]

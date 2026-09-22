@@ -11,13 +11,21 @@ on:
 # behind the last, starving the data-touching searches of runners. Superseded
 # runs are cancelled; the newest one still gates the branch.
 concurrency:
-  group: ci-${{ github.ref }}
-  # On a feature branch only the newest commit needs its gate run, so supersede
-  # the older ones. On `main` never cancel: merges land faster than a run takes,
-  # so cancelling meant no run on `main` ever finished and the branch everything
-  # is merged into was the one branch that stopped being gated. Runs there queue
-  # and each one completes against the head it was raised for.
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  # On a feature branch only the newest commit needs its gate run, so every
+  # commit shares one group and supersedes the older runs. On `main` the group
+  # additionally carries the commit, so no two runs ever share a group and none
+  # can cancel another: merges land faster than a run takes, and cancelling
+  # meant no run on `main` ever finished, leaving the branch everything is
+  # merged into as the one branch that had stopped being gated.
+  #
+  # This is expressed through the GROUP rather than through `cancel-in-progress`
+  # on purpose. The obvious spelling, `cancel-in-progress: ${{ github.ref !=
+  # 'refs/heads/main' }}`, was tried first and did NOT work — runs on `main`
+  # went on being cancelled with it in place (six consecutive ones on
+  # 2026-09-22, 16:02-16:14 UTC). A group name is plain string interpolation
+  # and has no such ambiguity.
+  group: ci-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || 'head' }}
+  cancel-in-progress: true
 
 jobs:
   offline:

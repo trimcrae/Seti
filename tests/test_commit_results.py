@@ -407,3 +407,64 @@ def test_a_concurrent_runs_checkpoint_is_not_pruned_by_a_run_that_never_had_it(
     assert "theirs" in remote_file(origin, "results/catalogue.inprogress.json"), (
         "a run that never had the checkpoint deleted another run's")
     assert "rows" in remote_file(origin, "results/catalogue.json")
+
+
+# --------------------------------------------------------------------------
+# A run that reached no data must not overwrite one that did.
+# --------------------------------------------------------------------------
+
+def test_a_no_data_summary_never_lands_on_a_measured_one(remote_and_clone):
+    """THE INCIDENT (2026-09-22, shroud).
+
+    A superseded run was cancelled.  Its `analyze` job runs `if: always()`, so
+    it started with no artifact, wrote NO_DATA_REACHED, and committed that over
+    a summary carrying 127 real sources.  An empty file is not a measurement of
+    an empty sky; per CLAUDE.md it is never a statement about the sky at all.
+    """
+    origin, work, seed = remote_and_clone
+    (seed / "results" / "summary.json").write_text(
+        '{"verdict": "VIZIER_FALLBACK", "n_sample": 127}\n')
+    git(seed, "add", "-A")
+    git(seed, "commit", "-qm", "a real measurement")
+    git(seed, "push", "-q", "origin", "main")
+
+    (work / "results" / "summary.json").write_text(
+        '{"verdict": "NO_DATA_REACHED", "n_sample": 0}\n')
+    run_script(work, "the cancelled run", "results/summary.json")
+
+    kept = remote_file(origin, "results/summary.json")
+    assert "VIZIER_FALLBACK" in kept and "127" in kept, (
+        "a cancelled run's empty summary overwrote a real measurement")
+    attempt = remote_file(origin, "results/summary_attempt.json")
+    assert "NO_DATA_REACHED" in attempt, (
+        "the run's own record should be kept beside it, not discarded")
+
+
+def test_a_no_data_summary_lands_where_the_branch_has_none(remote_and_clone):
+    """The guard protects a measurement; it must not suppress a first result.
+
+    Reaching no data IS the honest outcome of a first run against a dead
+    archive, and the channel has to be able to say so.
+    """
+    origin, work, seed = remote_and_clone
+    (work / "results" / "summary.json").write_text(
+        '{"verdict": "NO_DATA_REACHED", "n_sample": 0}\n')
+    run_script(work, "first run, archive down", "results/summary.json")
+
+    assert "NO_DATA_REACHED" in remote_file(origin, "results/summary.json")
+
+
+def test_a_measured_summary_still_replaces_an_earlier_no_data_one(remote_and_clone):
+    """And the reverse must stay unobstructed: the archive came back."""
+    origin, work, seed = remote_and_clone
+    (seed / "results" / "summary.json").write_text(
+        '{"verdict": "NO_DATA_REACHED", "n_sample": 0}\n')
+    git(seed, "add", "-A")
+    git(seed, "commit", "-qm", "archive was down")
+    git(seed, "push", "-q", "origin", "main")
+
+    (work / "results" / "summary.json").write_text(
+        '{"verdict": "MEASURED", "n_sample": 4096}\n')
+    run_script(work, "the archive answered", "results/summary.json")
+
+    assert "MEASURED" in remote_file(origin, "results/summary.json")

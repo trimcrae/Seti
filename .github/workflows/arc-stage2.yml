@@ -1,0 +1,165 @@
+name: arc-stage2
+
+# ARC stage 2 — IS THE FLARE ON THE TARGET?  (docs/arc.md §6)
+#
+#   probe ──▶ run (catalogue rows, Berger+2020 + Gaia FLAME, Gaia census,
+#             light curves, target pixel files, the centroid test per flare,
+#             xi recomputed) ──▶ assert ──▶ commit-back
+#
+# Stage 1 (arc.yml) ends with stars whose catalogued flare energy exceeds the
+# magnetic energy their own spots can store, and every one of them carries
+# `centroid: not_checked`.  A catalogue cannot say which PIXEL flared; the
+# Kepler target pixel file can.  Per exceeding flare this stage measures
+#   * the flux-weighted aperture centroid in flare against its out-of-flare
+#     baseline trend (the shift, its scatter-based error, and the shift each
+#     Gaia source would PREDICT: a/(1+a) x (c_source - c_baseline));
+#   * the centroid of the per-pixel-detrended DIFFERENCE IMAGE, which is the
+#     position of whatever brightened, against the anchored positions of the
+#     target and of every Gaia neighbour in the census;
+# and attributes the flare: on_target / on_neighbour / ambiguous /
+# unattributed / undetected_in_pixels / untestable.  The Gaia census inside
+# one Kepler pixel (4") and the 12" aperture says what fraction of the flux
+# each neighbour supplies and how much it would have to brighten.
+#
+# THE GOVERNING DISCIPLINES:
+#  * a star whose pixel file or light curve did not arrive is
+#    centroid_untestable WITH THE REASON — never flare_on_target;
+#  * QUERY_FAILED and QUERY_RETURNED_ZERO_ROWS are kept apart per product;
+#  * every fetch has a wall clock (config/arc.yaml stage2.budget_s /
+#    per_star_budget_s); a star the clock did not reach says budget_exhausted;
+#  * xi is recomputed on MEASURED Teff / radius (Berger+2020 table2, Gaia
+#    FLAME) with the star's own amplitude — the catalogue Sph rescaled to a
+#    range and the quarter's own Rvar — and the larger amplitude (the
+#    conservative choice) is the headline;
+#  * STAGE2_NO_DATA_REACHED is not a null result and is not written up.
+#
+# Re-running arc.yml (stage=all) afterwards carries each star's stage-2
+# verdict into the `centroid` column of candidates.csv / summary.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (probe + the whole stage) or "probe" (which MAST route exists
+          on this runner and what the shortlist is — cheap, run first).
+        required: false
+        default: "all"
+      tiers:
+        description: 'Comma-separated tiers to test, in order (default "interest,watch")'
+        required: false
+        default: ""
+      max_stars:
+        description: "Cap on stars tested (-1 = config)"
+        required: false
+        default: "-1"
+
+permissions:
+  contents: write
+
+jobs:
+  arc-stage2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          # `tess` brings lightkurve (the preferred MAST route for Kepler and
+          # TESS pixel files); the stage falls back to astroquery.mast + FITS
+          # when it is absent and probe.json records which route it had.
+          pip install -e ".[dev,tess]"
+      # The gate: a synthetic pixel file with the flare on the TARGET must give
+      # on_target with a centroid shift consistent with zero, the same flare on
+      # a NEIGHBOUR must give on_neighbour with the shift toward it, and a
+      # missing pixel file must leave the star centroid_untestable.
+      - name: Offline gate — the injected flare must be attributed on this runner
+        run: python -m pytest tests/test_arc_stage2.py tests/test_arc.py -q -p no:cacheprovider
+      - name: Probe (MAST route, shortlist)
+        run: |
+          python -m seti.arc.stage2 --stage probe
+          python - <<'PY'
+          import json
+          d = json.load(open("results/arc/stage2/probe.json"))
+          m = d["mast"]
+          print("route_preferred:", m.get("route_preferred"))
+          for k in ("lightkurve", "astroquery_mast", "astropy_io_fits"):
+              print(" ", k, m[k])
+          print("shortlist:", d.get("shortlist_size"))
+          for s in d.get("shortlist") or []:
+              print("  ", s)
+          if not m.get("route_preferred"):
+              print("::error::no route to MAST on this runner")
+          PY
+      - name: Run (rows, parameters, census, light curves, pixels, the centroid test)
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == '' }}
+        run: |
+          TIERS=""
+          if [ -n "${{ github.event.inputs.tiers }}" ]; then
+            TIERS="--tiers ${{ github.event.inputs.tiers }}"
+          fi
+          python -m seti.arc.stage2 --stage all --max-stars "${{ github.event.inputs.max_stars || '-1' }}" $TIERS
+          echo "=== summary ==="
+          python - <<'PY'
+          import json
+          s = json.load(open("results/arc/stage2/summary.json"))
+          print(json.dumps({k: s[k] for k in s if k not in ("acquisition", "mast")}, indent=2)[:12000])
+          for st in (s.get("acquisition") or {}).get("stages") or []:
+              if st.get("status") != "OK":
+                  print(f"::warning::{st['stage']}: {st['status']} {st.get('error', '')[:300]}")
+          PY
+      - name: Assert the verdict is not a disguised no-data run
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == '' }}
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/arc/stage2/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the stage produced nothing"); sys.exit(0)
+          s = json.loads(p.read_text())
+          v = s.get("verdict", "")
+          vc = s.get("verdict_counts") or {}
+          tested = sum(n for k, n in vc.items() if k != "centroid_untestable")
+          if tested == 0 and s.get("n_params_measured", 0) == 0 and v != "STAGE2_NO_DATA_REACHED":
+              print(f"::error::verdict {v!r} with nothing tested and nothing measured is a disguised no-data run"); sys.exit(1)
+          if v == "STAGE2_NO_DATA_REACHED" and (tested or s.get("n_params_measured")):
+              print(f"::error::STAGE2_NO_DATA_REACHED with {tested} tested / {s.get('n_params_measured')} measured is incoherent"); sys.exit(1)
+          for st in s.get("stars") or []:
+              if st.get("verdict") == "flare_on_target" and not st.get("n_flares_tested"):
+                  print(f"::error::{st['star_key']} is flare_on_target with no tested flare"); sys.exit(1)
+              if st.get("verdict") == "centroid_untestable" and not st.get("verdict_reason"):
+                  print(f"::error::{st['star_key']} is untestable with no reason"); sys.exit(1)
+              print(f"::notice::{st['star_key']} [{st.get('tier')}]: {st['verdict']} — {st.get('verdict_reason','')[:160]} | "
+                    f"xi stage1 {st.get('xi_conservative_stage1')} -> measured {st.get('xi_conservative_measured')} ({st.get('xi_status')}), "
+                    f"R = {st.get('radius_rsun')} ({st.get('radius_source')}), amplitude {st.get('amplitude_used')} ({st.get('amplitude_used_source')})")
+          if s.get("budget_exhausted"):
+              print("::warning::the stage-2 wall clock was exhausted; stars it did not reach are centroid_untestable (budget_exhausted), NOT refuted")
+          print(f"::notice::{v}: {s.get('reason')}")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          # The push is VERIFIED against the remote (scripts/commit_results.sh);
+          # the downloaded pixel files stay in the artifact only.
+          scripts/commit_results.sh \
+            "arc stage 2: is the flare on the target? — pixel centroids, Gaia census, measured parameters" \
+            results/arc/stage2/probe.json \
+            results/arc/stage2/summary.json \
+            results/arc/stage2/stars.json \
+            results/arc/stage2/flares.csv \
+            results/arc/stage2/census.csv \
+            results/arc/stage2/acquisition_log.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc-stage2-run
+          path: results/arc/stage2/
+          if-no-files-found: warn

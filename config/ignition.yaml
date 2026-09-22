@@ -276,7 +276,16 @@ tiles:
 # one wall clock, tile-level checkpoints, resume from the shard's own artifact.
 sweep:
   time_budget_s: 9000.0       # stop STARTING tiles after this (2.5 h); the job timeout is longer
-  sample_timeout_s: 900.0     # one tile's parent query
+  sample_timeout_s: 300.0     # one tile's parent query, PER ATTEMPT
+  # And what one tile may cost across the WHOLE route ladder.  Run 35653615329's
+  # fields-mode sample step spent 2 h 22 min on 20 cones without finishing, and
+  # the acquire matrix never started; in the all-sky sweep the same stall is
+  # paid for in tiles never reached.  A tile that spends this is recorded
+  # QUERY_FAILED with the routes that were SKIPPED_ON_UNIT_BUDGET named, and the
+  # sweep moves on.  The ladder's ORDER is untouched -- ESA is still asked first
+  # and still answers first -- and every science cut is unchanged: this bounds
+  # only how long one tile may be chased.
+  sample_unit_budget_s: 600.0
   max_tiles: 0                # 0 = every tile of the shard
 
 # The screen's ensemble zero-point correction (src/seti/ignition/ensemble.py).

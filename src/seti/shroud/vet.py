@@ -272,6 +272,16 @@ def ledger_vetoes(row, cfg: dict, fit_dust=None) -> list[str]:
     if np.isfinite(bg) and bg <= float(v.get("bright_neighbour_gmag_max", 10.0)):
         flags.append("BRIGHT_STAR_HALO")
 
+    # The depth kill.  A source "missing" from a search that never happened,
+    # or from one no deeper than the plate that found it, is not missing.
+    mo = cfg.get("modern_optical", {})
+    if mo.get("require_depth_margin", True):
+        margin = val("modern_depth_margin_mag")
+        if not np.isfinite(val("modern_depth_mag")):
+            flags.append("MODERN_OPTICAL_NOT_SEARCHED")
+        elif np.isfinite(margin) and margin < float(mo.get("min_depth_margin_mag", 2.0)):
+            flags.append("MODERN_DEPTH_INSUFFICIENT")
+
     p_chance = val("p_chance_match")
     if np.isfinite(p_chance):
         cm = cfg.get("crossmatch", {})

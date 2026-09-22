@@ -44,7 +44,11 @@ def _enshrouded_row(plate_mag=17.0, t_dust=350.0, ir_scale_factor=1.0,
     scale = ir_scale_factor * f_bol_then * math.pi / (SIGMA_SB * t_dust ** 4)
     row = {"source_id": source_id, "ra_deg": 190.0, "dec_deg": 42.0,
            "poss1_e": plate_mag, "sample": "usnob1_poss1_red_only",
-           "n_ir_neighbours": 1, "ir_local_density_per_deg2": 2000.0}
+           "n_ir_neighbours": 1, "ir_local_density_per_deg2": 2000.0,
+           # The modern search that found nothing was real and 3.9 mag deeper
+           # than the plate detection (Pan-STARRS r = 23.2 vs POSS-I E ~ 20).
+           "modern_depth_mag": 23.2, "modern_depth_cats": "ps1,gaia",
+           "modern_depth_margin_mag": 23.2 - plate_mag}
     for b in ("w1", "w2", "w3", "w4"):
         row[b] = S.fnu_to_mag(b, scale * S.planck_fnu(t_dust, S.BANDS[b][0]))
         row[f"{b}_err"] = 0.03
@@ -56,7 +60,9 @@ def _enshrouded_row(plate_mag=17.0, t_dust=350.0, ir_scale_factor=1.0,
 def _plate_defect_row(source_id="DEFECT"):
     return {"source_id": source_id, "ra_deg": 12.0, "dec_deg": 70.0,
             "poss1_e": 19.8, "sample": "usnob1_poss1_red_only",
-            "n_ir_neighbours": 0, "ir_local_density_per_deg2": 1500.0}
+            "n_ir_neighbours": 0, "ir_local_density_per_deg2": 1500.0,
+            "modern_depth_mag": 23.2, "modern_depth_cats": "ps1,gaia",
+            "modern_depth_margin_mag": 3.4}
 
 
 def test_field_grid_is_deterministic_and_inside_the_poss1_footprint(sc):
@@ -537,3 +543,61 @@ def test_a_field_with_no_usable_rung_returns_an_empty_frame_not_a_bad_one(sc):
     assert len(raw) == 0 and form == ""
     assert len(attempts) == len(acq.USNOB1_QUERY_FORMS)
     assert all(a["n_raw"] == 1 and a["missing_required"] for a in attempts)
+
+
+# --- the depth kill: an absence is only as good as the search behind it -----
+def test_a_failed_modern_xmatch_is_not_a_disappearance(sc):
+    """The dominant way this channel could fabricate a detection.
+
+    If the Pan-STARRS and Gaia X-Matches simply error, every source in the run
+    comes out with an empty ps1_r / gaia_g -- and empty reads as *gone*.  The
+    depth record must make that impossible: a catalogue that did not answer
+    establishes nothing.
+    """
+    pos = pd.DataFrame({"source_id": ["A", "B"], "ra_deg": [10.0, 20.0],
+                        "dec_deg": [40.0, -50.0]})
+    dead = {"ps1": {"status": "unreachable"}, "gaia": {"status": "unreachable"}}
+    depth, cats = acq.modern_optical_depth(pos, dead, sc)
+    assert depth.isna().all(), depth
+    assert (cats == "").all()
+    # ... and every such source trips the veto rather than surviving
+    for sid, d in zip(pos["source_id"], depth, strict=False):
+        flags = V.ledger_vetoes({"source_id": sid, "poss1_e": 18.0,
+                                 "modern_depth_mag": d,
+                                 "modern_depth_margin_mag": float("nan")}, sc)
+        assert "MODERN_OPTICAL_NOT_SEARCHED" in flags, flags
+
+
+def test_depth_follows_the_footprint_not_just_the_query_status(sc):
+    """Pan-STARRS stops at dec = -30, so a southern source has only Gaia --
+    three magnitudes shallower -- behind its absence."""
+    pos = pd.DataFrame({"source_id": ["north", "south"], "ra_deg": [10.0, 20.0],
+                        "dec_deg": [40.0, -50.0]})
+    live = {"ps1": {"status": "ok"}, "gaia": {"status": "ok"}}
+    depth, cats = acq.modern_optical_depth(pos, live, sc)
+    lim = sc["modern_optical"]["limits"]
+    assert depth.iloc[0] == lim["ps1"]["mag"]        # PS1 is the deeper one
+    assert depth.iloc[1] == lim["gaia"]["mag"]       # outside the PS1 footprint
+    assert "ps1" in cats.iloc[0] and "ps1" not in cats.iloc[1]
+
+
+def test_a_shallow_absence_is_vetoed_and_a_deep_one_is_not(sc):
+    """POSS-I E ~ 20.  Absent from Gaia (G = 20.7) alone means it faded by
+    0.7 mag -- ordinary variability.  Absent from Pan-STARRS means >= 3 mag."""
+    base = {"source_id": "S", "ra_deg": 10.0, "dec_deg": 40.0, "poss1_e": 20.0}
+    shallow = V.ledger_vetoes({**base, "modern_depth_mag": 20.7,
+                               "modern_depth_margin_mag": 0.7}, sc)
+    assert "MODERN_DEPTH_INSUFFICIENT" in shallow, shallow
+    deep = V.ledger_vetoes({**base, "modern_depth_mag": 23.2,
+                            "modern_depth_margin_mag": 3.2}, sc)
+    assert "MODERN_DEPTH_INSUFFICIENT" not in deep, deep
+    assert "MODERN_OPTICAL_NOT_SEARCHED" not in deep, deep
+
+
+def test_a_live_catalogue_that_is_only_partly_deep_is_recorded_per_source(sc):
+    """One catalogue up, one down: the depth is whatever ACTUALLY answered."""
+    pos = pd.DataFrame({"source_id": ["a"], "ra_deg": [10.0], "dec_deg": [40.0]})
+    depth, cats = acq.modern_optical_depth(
+        pos, {"ps1": {"status": "unreachable"}, "gaia": {"status": "cached"}}, sc)
+    assert depth.iloc[0] == sc["modern_optical"]["limits"]["gaia"]["mag"]
+    assert cats.iloc[0] == "gaia"

@@ -515,7 +515,7 @@ broken commit and was cancelled rather than left to produce a degraded leg.
 The branch CI is the only gate that runs the stack the data-touching jobs
 actually install.
 
-### OSSUARY ran at last — and its survivors have no W1/W2 excess at all, 2026-09-22
+### OSSUARY ran at last — and not one of its 584 survivors is a candidate, 2026-09-22
 
 `results/ossuary/` existed nowhere on `main` until today. Three things had to
 be fixed to get a number out of the 6.2 M-star sample that run 30203264572
@@ -549,16 +549,54 @@ from the top 200 to **all 598** rows carried: **251 surviving, 347 rejected**
 (554 isolated beams, 29 blends, 15 clean). That is the first
 `results/ossuary/summary.json` this repository has ever held.
 
-**Do not read that as 251 candidates.** Tracing them in the committed
-`followup.csv`: of the 251, **0 have a significant W1 or W2 excess** —
-*none at all* above 3σ, median χ_W1 = −0.22, χ_W2 = +0.59 — while
-**251/251 are significant in W3** (median χ_W3 = 8.8) and 217/251 in W4. The
-fitted dust temperature is **182 K median** (interquartile 162–201 K, maximum
-526 K), and only **19 of 251** land anywhere inside the 250–800 K band at all.
-That is the inherited ledger's long-band artefact signature, one band over
-from the W4-only rule, and the population-level cirrus correlation could not
-be run on the lean path ("flagged rows only"), so the statistical leak is
-untested.
+**Do not read that as 251 candidates, or 584 either.** The orchestrator's
+audit of the committed table was right on every count, and re-measuring it
+(`results/ossuary/survivor_audit.json`, written by the new
+`seti.ossuary.run.audit_candidates`, offline from `candidates.csv`) makes it
+worse than reported. The funnel admits on a **disjunction** — metal-poor *or*
+halo-kinematic — but the claim needs a conjunction:
+
+| requirement | surviving |
+|---|---|
+| gauntlet survivors | 584 |
+| … and metal-poor ([Fe/H] < −1) | 574 |
+| … and halo-kinematic | **15** |
+| … and an optically thin fit (τ ≤ 0.1) | **0** |
+| … and a W1/W2 excess at 3σ | **0** |
+
+Dropping the kinematic leg entirely does not save it: 574 → **0** at the same
+τ step. Three separate things, none of which the funnel could say:
+
+- **The fits are not self-consistent.** τ is the fitted fractional
+  luminosity from an *optically thin* blackbody. Median τ = **0.389**;
+  **576 of 576** fitted rows are above 0.1 and **39** are at or above 1.0 —
+  reprocessing more light than the star emits. Debris disks sit at
+  τ ~ 10⁻⁵–10⁻³. There was no gate on this; `optical_depth_gate` is now one.
+- **One unconfirmed estimator carried the sample.** 584/584 metallicities are
+  Gaia GSP-Phot with **no spectroscopic confirmation anywhere**, at median
+  G = 17.6, 28.6% redder than bp_rp 1.4 and 2.6% below [Fe/H] = −3 (min
+  −4.09) — the regime where GSP-Phot is least reliable. 582/584 are
+  tangential-velocity *lower bounds*, not space velocities; only **2** have a
+  full UVW. `docs/ossuary.md` §4 already required a headline candidate to be
+  *either* spectroscopically metal-poor *or* halo-kinematic, and **559 of the
+  584 are neither** — the rule was written and never enforced.
+- **The excesses are long-band.** 583/584 significant in W3, 478/584 in W4,
+  but only **22/584** in W1 and **24/584** in W2; fitted temperatures median
+  **182 K**. `require_bands` includes W3, so the W4-only ledger rule never
+  reached one band inwards and a W3-only excess passed unnamed. Now flagged
+  `long_band_only` — *named, not rejected*, since a real ~180 K reservoir is
+  W3/W4-only too.
+
+**The 584 and Theissen & West's 584.** §2 of `docs/ossuary.md` credits T&W
+with 584 extreme excesses and this funnel outputs 584 survivors. That doc line
+predates the result by three days, and 584 is an arithmetic consequence of ten
+cuts. What is checkable offline says the populations differ — T&W select
+proper-motion-verified *M dwarfs*, and only 28.6% of these rows are redder
+than bp_rp 1.4 — so it is recorded as a coincidence. The alternative is worth
+naming: Silverberg+2018 found **all thirteen** T&W candidates with W4 S/N > 3
+spurious, so a cross-match showing we had rediscovered their population would
+confirm the contamination reading, not produce candidates. That cross-match
+needs VizieR and is a runner step; it is not done and is not claimed.
 
 **This is the number that motivates RING.** OSSUARY asked the warm-dust
 question of hosts with no reservoir and got back a census that is entirely
@@ -567,13 +605,19 @@ in W1/W2, where OSSUARY's survivors have nothing. A clean null changes the
 question rather than being written up: S63 asks the same photometry the
 hotter question, over hosts where biology is impossible.
 
-*Next decisive action for OSSUARY:* extend the ledger's long-band rule from
-W4-only to **W3/W4-only without a W1/W2 counterpart** — as a *named* class in
-the census, not a silent rejection, since a genuine 200 K reservoir is
-W3/W4-only too and OSSUARY's own sensitivity band includes it — and carry
-E(B−V) for the flagged rows into the gauntlet so `cirrus_correlation_test`
-can run on the population rather than on the shortlist. Neither needs new
-acquisition: run 30203264572's 6.2 M-star artifacts are still alive.
+*Next decisive actions for OSSUARY,* none of which needs new acquisition (run
+30203264572's 6.2 M-star artifacts are still alive):
+1. **Cross-match the 584 to a spectroscopic metallicity** (LAMOST DR12,
+   APOGEE DR17, GALAH DR4, SEGUE) and report what fraction of the GSP-Phot
+   [Fe/H] survives. This is the single number the channel's premise rests on.
+2. **Cross-match to Theissen & West's table** and say whether these are their
+   objects.
+3. **Carry E(B−V) for the flagged rows into the gauntlet** so
+   `cirrus_correlation_test` runs on the population rather than the
+   shortlist — at τ ~ 0.4 and 182 K, diffuse emission in the WISE beam is the
+   leading hypothesis and is untested at population level.
+4. Re-run with `tau_gate_rejects: true` for the census an optically thin
+   model can actually carry.
 
 ### RING (S63) built and green: rings around the dead, 2026-09-22
 

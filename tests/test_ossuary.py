@@ -12,6 +12,8 @@ same blackbody fit the real pipeline uses, not a hand-tuned magnitude offset.
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -711,3 +713,148 @@ def test_blackbody_fit_recovers_a_known_temperature():
     assert chi2 < 1.0
     # Fewer than two bands cannot constrain a temperature: say so, do not guess.
     assert np.isnan(oex.fit_excess_blackbody({"W1": 1.0}, {"W1": 0.1})[0])
+
+
+# --------------------------------------------------------------------------
+# The 2026-09-22 catalogue run's 584 survivors did not survive their own
+# contamination discipline.  Each test below pins one thing the funnel had no
+# way to say about them.
+# --------------------------------------------------------------------------
+
+def test_an_optically_thick_fit_is_not_a_measurement(cfg):
+    """tau >= 1 reprocesses more light than the star emits: reject it.
+
+    The catalogue run returned 584 survivors at a median tau of 0.389, 98.6%
+    above 0.1 and 39 rows above 1.0 -- from an optically THIN blackbody fit.
+    Real debris sits at tau ~ 1e-5 to 1e-3.
+    """
+    e = dict(cfg.thresholds["ossuary"]["excess"])
+    df = pd.DataFrame({"tau": [1e-4, 0.05, 0.39, 1.2, np.nan]})
+    g = ovet.optical_depth_gate(df, e)
+    assert list(g["optical_depth_ok"]) == [True, True, True, False, True]
+    assert list(g["tau_implausible"]) == [False, False, True, True, False]
+    # An unfitted row is untested, never failed.
+    assert not bool(g["tau_tested"].iloc[4])
+    # Turning the debris ceiling into a rejection is a config switch, so the
+    # census can be recomputed without a new acquisition.
+    g2 = ovet.optical_depth_gate(df, {**e, "tau_gate_rejects": True})
+    assert list(g2["optical_depth_ok"]) == [True, True, False, False, True]
+
+
+def test_a_long_band_only_excess_is_named_not_silently_passed(cfg):
+    """W3/W4 significance with nothing in W1/W2 must be visible in the census.
+
+    ``require_bands`` includes W3, so a W3-only excess satisfied the ledger's
+    star-band requirement and passed unnamed: 583 of the run's 584 survivors
+    were significant in W3 and 22 in W1.  It is not thereby an artefact -- a
+    genuine ~180 K reservoir is W3/W4-only too, and that is inside this
+    channel's own sensitivity band -- so it is flagged and counted rather than
+    rejected.
+    """
+    th = cfg.thresholds["ossuary"]
+    assert float(th["excess"]["chi_min"]) <= 9.0
+    df = pd.DataFrame({
+        "chi_W1": [0.1, 9.0, 0.2], "chi_W2": [0.5, 1.0, 9.0],
+        "chi_W3": [9.0, 9.0, 0.3], "chi_W4": [9.0, 0.1, 0.1],
+        "W1_excess_jy": [1e-6, 1e-4, 1e-6], "W2_excess_jy": [1e-6, 1e-6, 1e-4],
+        "W3_excess_jy": [1e-4, 1e-4, 1e-6], "W4_excess_jy": [1e-4, 1e-6, 1e-6],
+        "w1_w2_obs": [0.1, 0.1, 0.1], "phot_g_mean_mag": [15.0] * 3,
+        "bp_rp": [1.0] * 3})
+    g = ovet.ledger_gate(df, th["excess"], th["sample"])
+    assert list(g["long_band_only"]) == [True, False, False]
+    assert list(g["warm_band_excess"]) == [False, True, True]
+    # Named, not rejected: the ledger verdict is unchanged by the flag.
+    assert bool(g["ledger_ok"].iloc[0])
+
+
+def test_survivor_provenance_separates_one_argument_from_two():
+    """A disjunctive selection must report what each survivor rests on.
+
+    metal-poor OR halo-kinematic means a survivor can carry one argument.  In
+    the catalogue run 584 rows carried a Gaia GSP-Phot metallicity with no
+    spectroscopic confirmation, 582 had only a tangential-velocity lower
+    bound, and the two arguments agreed for 15.
+    """
+    surv = pd.DataFrame({
+        "feh_provenance": ["gaia_gspphot"] * 4,
+        "kinematic_method": ["vtan_lower_bound", "vtan_lower_bound", "uvw",
+                             "vtan_lower_bound"],
+        "population": ["unclassified", "halo", "halo", "unclassified"],
+        "metal_poor": [True, True, False, True],
+        "halo_flag": [False, True, True, False],
+        "two_independent_arguments": [False, True, False, False],
+        "feh_spectroscopic": [False] * 4,
+        "kinematics_is_full_space_velocity": [False, False, True, False],
+        "tau": [0.4, 0.05, 1.5, 0.3],
+        "t_dust_k": [180.0, 190.0, 200.0, 170.0],
+        "feh": [-1.5, -2.0, -0.3, -1.2],
+        "bp_rp": [1.0, 1.2, 1.6, 1.1]})
+    p = orun._survivor_provenance(surv)
+    assert p["n"] == 4
+    assert p["feh_provenance"] == {"gaia_gspphot": 4}
+    assert p["n_two_independent_arguments"] == 1
+    assert p["n_feh_spectroscopic"] == 0
+    assert p["n_full_space_velocity"] == 1
+    assert p["n_tau_above_1"] == 1
+    assert p["tau_fraction_above_0.1"] == pytest.approx(0.75)
+    assert p["tau_median"] == pytest.approx(0.35)
+    assert orun._survivor_provenance(pd.DataFrame()) == {"n": 0}
+
+
+def test_vet_records_which_argument_carried_each_row(cfg):
+    """The two-argument intersection is a field, not something to recompute."""
+    th = cfg.thresholds["ossuary"]
+    df = pd.DataFrame({
+        "feh": [-2.0, -0.2, -1.5, -0.3],
+        "feh_provenance": ["gaia_gspphot", "gaia_gspphot", "lamost", None],
+        "kinematic_method": ["vtan_lower_bound", "uvw", "uvw", "vtan_lower_bound"],
+        "halo_flag": [True, True, False, False],
+        "luminosity_class": ["dwarf"] * 4})
+    out = ovet.vet(df, th["contamination"], th["sample"], th["excess"],
+                   th.get("kinematics", {}))
+    assert list(out["two_independent_arguments"]) == [True, False, False, False]
+    assert list(out["feh_spectroscopic"]) == [False, False, True, False]
+    assert list(out["kinematics_is_full_space_velocity"]) == [False, True, True, False]
+
+
+def test_audit_reads_a_committed_table_and_reports_the_conjunction(cfg, tmp_path):
+    """The census can be re-examined offline, without re-acquiring the sample.
+
+    The funnel applies a disjunction (metal-poor OR halo-kinematic); the claim
+    needs a conjunction, plus a fit that is self-consistent as optically thin
+    dust.  The audit walks that chain on a committed candidates.csv.
+    """
+    t = pd.DataFrame({
+        # metal-poor + halo + thin + a W1/W2 excess: the only real candidate.
+        "feh": [-2.0, -2.0, -2.0, -0.2, -2.0],
+        "population": ["halo", "halo", "unclassified", "halo", "halo"],
+        "tau": [0.01, 0.4, 0.01, 0.01, 1.5],
+        "chi_W1": [6.0, 0.1, 6.0, 6.0, 0.1],
+        "chi_W2": [6.0, 0.2, 6.0, 6.0, 0.2],
+        "chi_W3": [9.0, 9.0, 9.0, 9.0, 9.0],
+        "chi_W4": [4.0, 4.0, 4.0, 4.0, 4.0],
+        "feh_provenance": ["lamost", "gaia_gspphot", "gaia_gspphot",
+                           "gaia_gspphot", "gaia_gspphot"],
+        "kinematic_method": ["uvw", "vtan_lower_bound", "vtan_lower_bound",
+                             "uvw", "vtan_lower_bound"]})
+    p = tmp_path / "candidates.csv"
+    t.to_csv(p, index=False)
+    out = tmp_path / "audit.json"
+    rec = orun.audit_candidates(cfg, path=p, out=out)
+    assert rec["status"] == "OK" and rec["n_rows"] == 5
+    conj = rec["conjunction"]
+    assert conj["gauntlet_survivors"] == 5
+    assert conj["and_metal_poor"] == 4
+    assert conj["and_halo_kinematic"] == 3
+    assert conj["and_optically_thin_fit"] == 1
+    assert conj["and_a_W1_W2_excess_3sigma"] == 1
+    # tau = 1.5 is not a self-consistent optically thin fit.
+    assert rec["optical_depth"]["n_optically_thick_fit"] == 1
+    assert rec["optical_depth"]["n_tau_implausible"] == 2
+    assert rec["provenance"]["n_feh_spectroscopic"] == 1
+    assert rec["provenance"]["n_full_space_velocity"] == 2
+    assert rec["band_significance"]["W3"]["n_ge_5"] == 5
+    assert json.loads(out.read_text())["conjunction"] == conj
+    # A table that is not there is a stated absence, not a crash.
+    assert orun.audit_candidates(cfg, path=tmp_path / "nope.csv",
+                                 out=tmp_path / "x.json")["status"] == "NO_TABLE"

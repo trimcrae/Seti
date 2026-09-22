@@ -13,6 +13,7 @@ photosphere reports log(Z/H) or log(Z/He) by number.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -190,7 +191,136 @@ def ratio_envelope(fam: NaturalFamily, num: str, den: str, *, endmembers=None,
             "unfractionated_hi": float(max(per_end.values()))}
 
 
-__all__ = ["ASSET", "ENDMEMBER_GROUPS", "PRESENCE_FLOOR_PPM", "TC_FRACTIONATION_OVERRIDE_K",
-           "NaturalFamily",
-           "fractionation_factor", "load_family", "mixture", "natural_parcel", "ratio_envelope",
-           "softmax"]
+# ---------------------------------------------------------------------------
+# the MEASURED family: PEWDD's meteorite compilation
+# ---------------------------------------------------------------------------
+#: A bulk meteorite never has a log element ratio beyond this.  Entries past it
+#: are the compilation's zero / detection-limit sentinels (values near −36 dex
+#: appear in the Mn column) and are dropped before any percentile is taken.
+METEORITE_SANITY_DEX = 10.0
+
+#: Percentiles that define the measured envelope.  With ~1,100 meteorites per
+#: pair this leaves ~5 real rocks outside each end, which are reported by name
+#: rather than hidden.
+METEORITE_Q_LO = 0.5
+METEORITE_Q_HI = 99.5
+
+#: Minimum meteorites before the measured envelope is used at all.
+METEORITE_MIN_N = 30
+
+
+def load_meteorites(path: Path | str) -> pd.DataFrame | None:
+    """PEWDD's meteorite compilation: one row per measured meteorite.
+
+    Columns are ``[X/Mg]`` (or ``[X/Fe]`` / ``[X/Si]`` in the sibling files):
+    base-10 logarithms of ABSOLUTE number ratios, not solar-referenced --- the
+    class medians reproduce this module's end-member values to ~0.1 dex, which
+    is what makes them directly comparable.
+    """
+    try:
+        df = pd.read_csv(path, low_memory=False)
+    except Exception:                                             # noqa: BLE001
+        return None
+    if not any(str(c).startswith("[") for c in df.columns):
+        return None
+    return df
+
+
+def _bracket_denominator(df: pd.DataFrame) -> str | None:
+    for c in df.columns:
+        m = re.fullmatch(r"\[([A-Z][a-z]?)/([A-Z][a-z]?)\]", str(c))
+        if m and m.group(1) == m.group(2):
+            return m.group(2)
+    for c in df.columns:
+        m = re.fullmatch(r"\[[A-Z][a-z]?/([A-Z][a-z]?)\]", str(c))
+        if m:
+            return m.group(1)
+    return None
+
+
+def meteorite_ratio_envelope(df: pd.DataFrame | None, num: str, den: str, *,
+                             q_lo: float = METEORITE_Q_LO, q_hi: float = METEORITE_Q_HI,
+                             min_n: int = METEORITE_MIN_N,
+                             model_envelope: tuple | None = None) -> dict | None:
+    """The MEASURED natural envelope of log10(num/den) over real meteorites.
+
+    Both elements are read against the file's own denominator and subtracted,
+    so the denominator cancels and the result is the absolute log ratio.
+    Returns ``None`` when the compilation does not constrain the pair.
+    """
+    if df is None or len(df) < min_n:
+        return None
+    dn = _bracket_denominator(df)
+    if dn is None:
+        return None
+    ca, cb = f"[{num}/{dn}]", f"[{den}/{dn}]"
+    if ca not in df.columns or cb not in df.columns:
+        return None
+    r = pd.to_numeric(df[ca], errors="coerce") - pd.to_numeric(df[cb], errors="coerce")
+    raw = r[np.isfinite(r)]
+    sane = raw[(raw > -METEORITE_SANITY_DEX) & (raw < METEORITE_SANITY_DEX)]
+    if len(sane) < min_n:
+        return None
+    lo, hi = (float(x) for x in np.percentile(sane, [q_lo, q_hi]))
+    names = df["Names"].astype(str) if "Names" in df.columns else pd.Series(
+        [""] * len(df), index=df.index)
+    classes = df["Class"].astype(str) if "Class" in df.columns else names
+    ext_hi = sane[sane > hi].sort_values(ascending=False).index[:5]
+    ext_lo = sane[sane < lo].sort_values().index[:5]
+    frac_out = None
+    if model_envelope is not None:
+        mlo, mhi = (float(x) for x in model_envelope)
+        if np.isfinite(mlo) and np.isfinite(mhi):
+            frac_out = float(np.mean((sane < mlo) | (sane > mhi)))
+    return {
+        "fraction_outside_model": frac_out,
+        "num": num, "den": den, "denominator_column": dn,
+        "lo": lo, "hi": hi, "width_dex": hi - lo,
+        "min": float(sane.min()), "max": float(sane.max()),
+        "median": float(np.median(sane)),
+        "n": int(len(sane)), "n_dropped_sentinel": int(len(raw) - len(sane)),
+        "q_lo": q_lo, "q_hi": q_hi,
+        "beyond_hi": [[str(names[i])[:24], str(classes[i]), round(float(sane[i]), 3)]
+                      for i in ext_hi],
+        "beyond_lo": [[str(names[i])[:24], str(classes[i]), round(float(sane[i]), 3)]
+                      for i in ext_lo],
+    }
+
+
+def combined_ratio_envelope(fam: NaturalFamily, num: str, den: str, *,
+                            meteorites: pd.DataFrame | None = None, **kw) -> dict:
+    """The natural envelope of log10(num/den): end-member model UNION measurement.
+
+    The model envelope alone is not the natural family.  Measured against
+    PEWDD's 1,226-meteorite compilation it is *too narrow* for the pairs that
+    matter --- 53 % of real meteorites fall outside the model Ni/Co envelope
+    and 35 % outside the model Ti/Al envelope, because aubrites, ureilites,
+    lodranites, eucrites and pallasites are real rocks that eighteen idealised
+    compositions do not span.  It is also too wide for Mn/Cr (2.9 dex modelled
+    against 1.5 dex measured), which needlessly weakens that test.  The
+    envelope used is therefore the union, and both components, plus the
+    fraction of real meteorites the model alone would have excluded, are
+    carried in the record.
+    """
+    model = ratio_envelope(fam, num, den, **kw)
+    met = meteorite_ratio_envelope(meteorites, num, den,
+                                   model_envelope=(model["lo"], model["hi"]))
+    out = dict(model)
+    out["model_lo"], out["model_hi"] = model["lo"], model["hi"]
+    out["meteorite"] = met
+    if met is None:
+        out["source"] = "endmember_model_only"
+        return out
+    out["lo"] = float(min(model["lo"], met["lo"])) if np.isfinite(model["lo"]) else met["lo"]
+    out["hi"] = float(max(model["hi"], met["hi"])) if np.isfinite(model["hi"]) else met["hi"]
+    out["width_dex"] = out["hi"] - out["lo"]
+    out["source"] = "endmember_model_union_measured_meteorites"
+    out["meteorites_outside_model_envelope_fraction"] = met.get("fraction_outside_model")
+    return out
+
+
+__all__ = ["ASSET", "ENDMEMBER_GROUPS", "METEORITE_MIN_N", "METEORITE_Q_HI", "METEORITE_Q_LO",
+           "METEORITE_SANITY_DEX", "PRESENCE_FLOOR_PPM", "TC_FRACTIONATION_OVERRIDE_K",
+           "NaturalFamily", "combined_ratio_envelope",
+           "fractionation_factor", "load_family", "load_meteorites", "meteorite_ratio_envelope",
+           "mixture", "natural_parcel", "ratio_envelope", "softmax"]

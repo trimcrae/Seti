@@ -645,3 +645,91 @@ def test_relative_timescale_library_is_built_from_the_catalogue_rows():
     assert src == SOURCE_LIBRARY
     assert v[1] == pytest.approx(0.171, abs=0.02)
     assert s[1] >= 0.05 and s[0] == 0.0
+
+
+# ---------------------------------------------------------------------------
+# The MEASURED natural family.  PEWDD's repository ships the compilation of
+# individually measured meteorites that the database itself compares against
+# (1,226 rows).  Read against it, the eighteen-end-member model envelope is
+# not a description of nature: 53 % of real meteorites fall outside the model
+# Ni/Co envelope and 35 % outside the model Ti/Al envelope, and the model
+# Mn/Cr envelope is twice as wide as the measured one.  Tier 2 therefore runs
+# against the union, and a candidate a real rock already reproduces is killed.
+# ---------------------------------------------------------------------------
+def _meteorite_frame(n=200, seed=5):
+    rng = np.random.default_rng(seed)
+    # [X/Mg] columns, as PEWDD writes them: absolute log10 number ratios
+    al = rng.normal(-1.10, 0.10, n)
+    return pd.DataFrame({
+        "Names": [f"met{i}" for i in range(n)],
+        "Class": ["EUC"] * (n // 2) + ["CL"] * (n - n // 2),
+        "[Mg/Mg]": np.zeros(n),
+        "[Al/Mg]": al,
+        "[Ti/Mg]": al - 1.50 + rng.normal(0, 0.25, n),      # log(Ti/Al) ~ -1.50 +- 0.25
+        "[Ca/Mg]": rng.normal(-1.25, 0.10, n),
+        "[Fe/Mg]": rng.normal(0.10, 0.20, n),
+    })
+
+
+def test_measured_meteorite_envelope_is_read_in_absolute_log_ratios():
+    from seti.slag.family import load_meteorites, meteorite_ratio_envelope
+    m = _meteorite_frame()
+    e = meteorite_ratio_envelope(m, "Ti", "Al", model_envelope=(-1.55, -1.45))
+    assert e is not None
+    assert e["denominator_column"] == "Mg"
+    assert e["median"] == pytest.approx(-1.50, abs=0.08)
+    assert e["lo"] < -1.9 and e["hi"] > -1.1          # the 0.5-99.5% of a 0.25 dex spread
+    assert e["n"] == 200 and e["n_dropped_sentinel"] == 0
+    # the model envelope excludes most real rocks, and that is reported
+    assert e["fraction_outside_model"] > 0.5
+    assert e["beyond_hi"] and e["beyond_lo"]
+    # a pair the compilation does not carry is None, never a guess
+    assert meteorite_ratio_envelope(m, "Sr", "Ca") is None
+    # a frame with no bracket columns is not a compilation
+    assert load_meteorites.__doc__ and meteorite_ratio_envelope(
+        pd.DataFrame({"a": [1, 2, 3]}), "Ti", "Al") is None
+
+
+def test_sentinel_entries_are_dropped_before_any_percentile():
+    from seti.slag.family import meteorite_ratio_envelope
+    m = _meteorite_frame(n=120)
+    m.loc[:9, "[Ti/Mg]"] = -36.9                      # the compilation's zero sentinel
+    e = meteorite_ratio_envelope(m, "Ti", "Al")
+    assert e["n"] == 110 and e["n_dropped_sentinel"] == 10
+    assert e["min"] > -5.0                            # no sentinel reached the envelope
+
+
+def test_combined_envelope_is_the_union_and_names_its_source():
+    from seti.slag.family import combined_ratio_envelope, ratio_envelope
+    m = _meteorite_frame()
+    model = ratio_envelope(FAM, "Ti", "Al", t_cut_max=1400.0)
+    both = combined_ratio_envelope(FAM, "Ti", "Al", meteorites=m, t_cut_max=1400.0)
+    assert both["source"] == "endmember_model_union_measured_meteorites"
+    assert both["lo"] <= model["lo"] and both["hi"] >= model["hi"]
+    assert both["width_dex"] >= model["width_dex"]
+    assert both["model_lo"] == model["lo"] and both["model_hi"] == model["hi"]
+    # no compilation -> the model alone, said so
+    alone = combined_ratio_envelope(FAM, "Ti", "Al", meteorites=None, t_cut_max=1400.0)
+    assert alone["source"] == "endmember_model_only"
+    assert alone["lo"] == model["lo"] and alone["hi"] == model["hi"]
+    # an end-member-restricted envelope is a statement about the MODEL: the
+    # measured spread of all meteorites must not be unioned into it
+    mantle = combined_ratio_envelope(FAM, "Ti", "Al", meteorites=m, t_cut_max=1400.0,
+                                     endmembers=["mantle_BSE", "crust_cont"])
+    assert mantle["source"] == "endmember_model_only"
+
+
+def test_a_ratio_a_real_meteorite_reproduces_is_killed():
+    from seti.slag.pairs import KILL_REAL_METEORITE, apply_kills
+    p = natural_panel(seed=3)
+    fit = fit_panel(FAM, p, TSM, FitSettings(n_random=120, n_refine=1, refine_maxiter=150))
+    inside = {"a": "Ti", "b": "Al", "obs_log_ratio": -1.50, "met_min": -2.4, "met_max": -0.6,
+              "rest_p_naive": 0.5}
+    outside = {"a": "Ti", "b": "Al", "obs_log_ratio": -0.10, "met_min": -2.4, "met_max": -0.6,
+               "rest_p_naive": 0.5}
+    assert KILL_REAL_METEORITE in apply_kills(p, inside, None, fit, None, None)
+    assert KILL_REAL_METEORITE not in apply_kills(p, outside, None, fit, None, None)
+    # no compilation for this pair -> the kill cannot fire, and does not
+    unknown = {"a": "Sr", "b": "Ca", "obs_log_ratio": -3.0, "met_min": None, "met_max": None,
+               "rest_p_naive": 0.5}
+    assert KILL_REAL_METEORITE not in apply_kills(p, unknown, None, fit, None, None)

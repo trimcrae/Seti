@@ -33,7 +33,7 @@ from __future__ import annotations
 import numpy as np
 from scipy.optimize import minimize
 
-from .family import NaturalFamily, ratio_envelope
+from .family import NaturalFamily, combined_ratio_envelope
 from .misfit import FitResult, FitSettings, Panel, PanelModel, fit_panel, naive_p
 from .sinking import TimescaleModel, phase_grid, phase_log_factor
 
@@ -51,6 +51,7 @@ KILL_ASYNC = "ASYNCHRONOUS_ACCRETION_EXPLAINS"
 KILL_CARBONATE = "CARBONATE_CRUST_POSSIBLE"
 KILL_MULTI_REF = "MULTI_REFERENCE_DISAGREEMENT"
 KILL_FREE_FRACTIONATION = "REFRACTORY_FRACTIONATION_EXPLAINS"
+KILL_REAL_METEORITE = "A_REAL_METEORITE_DOES_THIS"
 CAVEAT_EXOTIC_MANTLE = "EXOTIC_MANTLE_POSSIBLE"
 PHASE_UNCONSTRAINED = "unconstrained_full_grid"
 PHASE_FROM_REST = "rest_of_panel_fit"
@@ -105,9 +106,17 @@ def phase_shift_range(tsm: TimescaleModel, a: str, b: str, atmosphere: str, teff
 
 def natural_interval(fam: NaturalFamily, tsm: TimescaleModel, a: str, b: str, panel: Panel,
                      settings: FitSettings, *, t_cut_max: float = 1400.0, endmembers=None,
-                     phases=None) -> dict:
-    """The natural envelope of log(a/b) for this atmosphere, with the phase shift folded in."""
-    env = ratio_envelope(fam, a, b, endmembers=endmembers, t_cut_max=t_cut_max)
+                     phases=None, meteorites=None) -> dict:
+    """The natural envelope of log(a/b) for this atmosphere, with the phase shift folded in.
+
+    ``meteorites`` is PEWDD's measured compilation; when it constrains the
+    pair the envelope is the union of the end-member model and the measured
+    spread (``family.combined_ratio_envelope``).  Restricting to an end-member
+    subset (the mantle-only Fe/Mg floor) is a statement about the MODEL, so
+    the measured envelope is not unioned in that case.
+    """
+    env = combined_ratio_envelope(fam, a, b, endmembers=endmembers, t_cut_max=t_cut_max,
+                                  meteorites=None if endmembers else meteorites)
     if not np.isfinite(env["lo"]):
         return {**env, "phase_lo": 0.0, "phase_hi": 0.0, "lo_total": np.nan, "hi_total": np.nan}
     plo, phi = phase_shift_range(tsm, a, b, panel.atmosphere, panel.teff, panel.logg, settings,
@@ -132,7 +141,8 @@ def _z_outside(obs: float, lo: float, hi: float, sigma: float) -> float:
 # ---------------------------------------------------------------------------
 def pair_residuals(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel,
                    settings: FitSettings, *, pairs=None, t_cut_max: float = 1400.0,
-                   z_threshold: float = 4.0, rest_p_min: float = 0.01) -> list[dict]:
+                   z_threshold: float = 4.0, rest_p_min: float = 0.01,
+                   meteorites=None) -> list[dict]:
     """Every orthogonal pair both of whose elements this panel measures."""
     out = []
     idx = {e: i for i, e in enumerate(panel.elements)}
@@ -144,13 +154,19 @@ def pair_residuals(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel,
                             + settings.sigma_sys ** 2))
         phases, how, rest_fit = rest_phase_set(fam, tsm, panel, [a, b], settings)
         env = natural_interval(fam, tsm, a, b, panel, settings, t_cut_max=t_cut_max,
-                               phases=phases)
+                               phases=phases, meteorites=meteorites)
         z = _z_outside(obs, env["lo_total"], env["hi_total"], sig)
+        met = env.get("meteorite") or {}
         rec = {"name": panel.name, "reference": panel.reference, "pair": f"{a}/{b}", "a": a,
                "b": b, "obs_log_ratio": obs, "sigma": sig, "env_lo": env["lo"],
                "env_hi": env["hi"], "phase_lo": env["phase_lo"], "phase_hi": env["phase_hi"],
                "env_lo_total": env["lo_total"], "env_hi_total": env["hi_total"],
                "env_width_dex": env.get("width_dex"), "z_pair": z,
+               "env_source": env.get("source"),
+               "env_model_lo": env.get("model_lo"), "env_model_hi": env.get("model_hi"),
+               "met_lo": met.get("lo"), "met_hi": met.get("hi"), "met_n": met.get("n"),
+               "met_min": met.get("min"), "met_max": met.get("max"),
+               "met_fraction_outside_model": met.get("fraction_outside_model"),
                "exceeds": bool(np.isfinite(z) and abs(z) > z_threshold),
                "n_measured": panel.n_measured, "rest_n": panel.n_measured - 2,
                "phase_constraint": how, "n_phases": len(phases),
@@ -184,8 +200,8 @@ def _obs_ratio(panel: Panel, a: str, b: str) -> tuple[float, float, str] | None:
     return None
 
 
-def _above_env(fam, tsm, panel, settings, a, b, *, nsig, t_cut_max, phases, endmembers=None
-               ) -> dict | None:
+def _above_env(fam, tsm, panel, settings, a, b, *, nsig, t_cut_max, phases, endmembers=None,
+               meteorites=None) -> dict | None:
     """Is log(a/b) above the natural envelope by ``nsig``?  None if unconstrained."""
     r = _obs_ratio(panel, a, b)
     if r is None or r[2] == "upper_limit":
@@ -193,22 +209,23 @@ def _above_env(fam, tsm, panel, settings, a, b, *, nsig, t_cut_max, phases, endm
     obs, sig, kind = r
     sig = float(np.hypot(sig, settings.sigma_sys))
     env = natural_interval(fam, tsm, a, b, panel, settings, t_cut_max=t_cut_max,
-                           endmembers=endmembers, phases=phases)
+                           endmembers=endmembers, phases=phases, meteorites=meteorites)
     z = _z_outside(obs, env["lo_total"], env["hi_total"], sig)
     return {"ratio": f"{a}/{b}", "obs": obs, "sigma": sig, "kind": kind,
             "env_hi_total": env["hi_total"], "env_lo_total": env["lo_total"], "z": z,
+            "env_source": env.get("source"),
             "above": bool(np.isfinite(z) and z > nsig)}
 
 
 def _below_env(fam, tsm, panel, settings, a, b, *, nsig, t_cut_max, phases, margin=0.0,
-               endmembers=None) -> dict | None:
+               endmembers=None, meteorites=None) -> dict | None:
     r = _obs_ratio(panel, a, b)
     if r is None or r[2] == "lower_limit":
         return None
     obs, sig, kind = r
     sig = float(np.hypot(sig, settings.sigma_sys))
     env = natural_interval(fam, tsm, a, b, panel, settings, t_cut_max=t_cut_max,
-                           endmembers=endmembers, phases=phases)
+                           endmembers=endmembers, phases=phases, meteorites=meteorites)
     lo = env["lo_total"] - margin
     z = _z_outside(obs, lo, env["hi_total"], sig)
     return {"ratio": f"{a}/{b}", "obs": obs, "sigma": sig, "kind": kind,
@@ -218,7 +235,7 @@ def _below_env(fam, tsm, panel, settings, a, b, *, nsig, t_cut_max, phases, marg
 
 def refinery_flags(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel, settings: FitSettings,
                    *, nsig: float = 4.0, t_cut_max: float = 1400.0,
-                   exotic_mantle_margin_dex: float = 0.5,
+                   exotic_mantle_margin_dex: float = 0.5, meteorites=None,
                    mantle_members=("mantle_BSE", "Moon_BSM", "Mars_BSM", "crust_cont",
                                    "Vesta_eucrite")) -> list[dict]:
     """The brief's direct refinery vectors, each as a comparison against the natural envelope."""
@@ -266,7 +283,7 @@ def refinery_flags(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel, settin
         parts = {}
         for x in ("Mg", "O", "Fe"):
             r = _below_env(fam, tsm, panel, settings, x, "Si", nsig=nsig, t_cut_max=t_cut_max,
-                           phases=phases)
+                           phases=phases, meteorites=meteorites)
             if r is not None:
                 parts[x] = r
         if len(parts) == 3:
@@ -286,7 +303,7 @@ def refinery_flags(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel, settin
             parts = {}
             for ref in refs_all:
                 r = _above_env(fam, tsm, panel, settings, x, ref, nsig=nsig, t_cut_max=t_cut_max,
-                               phases=phases)
+                               phases=phases, meteorites=meteorites)
                 if r is not None:
                     parts[ref] = r
             if parts:
@@ -301,7 +318,7 @@ def refinery_flags(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel, settin
         parts = {}
         for ref in (refs_lith or ["Fe"]):
             r = _above_env(fam, tsm, panel, settings, "Be", ref, nsig=nsig, t_cut_max=t_cut_max,
-                           phases=phases)
+                           phases=phases, meteorites=meteorites)
             if r is not None:
                 parts[ref] = r
         enriched = bool(parts) and all(r["above"] for r in parts.values())
@@ -424,6 +441,19 @@ def apply_kills(panel: Panel, pair: dict, fit_full: FitResult | None, fit_restri
     if fit_full is not None and \
             naive_p(fit_full.chi2, fit_full.n_measured - 1) > free_fractionation_p_min:
         kills.append(KILL_FREE_FRACTIONATION)
+    # The plainest kill there is: a measured rock already sits where this ratio
+    # sits.  PEWDD's compilation carries ~1,100 meteorites per common pair, and
+    # the full sane min-max of that sample is natural by demonstration, not by
+    # model.  (The percentile envelope, which is what z_pair is measured
+    # against, is deliberately tighter; this catches a candidate that the
+    # percentile cut excluded but a real aubrite, ureilite or pallasite does.)
+    if pair.get("met_min") is not None and pair.get("met_max") is not None \
+            and pair.get("obs_log_ratio") is not None:
+        try:
+            if float(pair["met_min"]) <= float(pair["obs_log_ratio"]) <= float(pair["met_max"]):
+                kills.append(KILL_REAL_METEORITE)
+        except (TypeError, ValueError):
+            pass
     if "Ca" in (pair["a"], pair["b"]) and "C" in panel.elements and "Ca" in panel.elements:
         i = panel.elements.index("C")
         j = panel.elements.index("Ca")
@@ -450,7 +480,8 @@ def apply_kills(panel: Panel, pair: dict, fit_full: FitResult | None, fit_restri
 __all__ = ["CAVEAT_EXOTIC_MANTLE", "COOL_HE_ELEMENTS", "FLAG_ALLOY", "FLAG_BE",
            "FLAG_BE_UNMEASURED", "FLAG_CU_ZN_SN_PB", "FLAG_FE_MG", "FLAG_PURE_SI",
            "KILL_ASYNC", "KILL_CARBONATE", "KILL_COOL_HE", "KILL_FREE_FRACTIONATION",
-           "KILL_INFORMATION_LIMITED", "KILL_MULTI_REF", "KILL_REST_NOT_NATURAL",
+           "KILL_INFORMATION_LIMITED", "KILL_MULTI_REF", "KILL_REAL_METEORITE",
+           "KILL_REST_NOT_NATURAL",
            "MIN_REST_FOR_PHASE", "ORTHOGONAL_PAIRS", "PHASE_FROM_REST", "PHASE_UNCONSTRAINED",
            "apply_kills", "fit_two_parcel", "natural_interval", "pair_residuals",
            "phase_shift_range", "refinery_flags", "rest_phase_set"]

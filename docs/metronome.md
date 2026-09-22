@@ -935,6 +935,40 @@ the sky, and the workflow refuses to let either read as a science null.
 
 ---
 
+## 8b. One operational hazard, measured
+
+Run 35741300225 was dispatched at 14:34 UTC on 2026-09-22 from commit
+22e7b3d2, queued nine hours behind the account's Actions ceiling while two
+newer runs overtook it, and at 23:37 UTC committed its assess output over run
+35746944111's.  `scripts/commit_results.sh` is last-writer-wins by design — it
+never rebases, so a conflict cannot happen — and that is the right rule only
+for a queue that runs in order.  `summary.json` silently went from
+3,131 scanned / 53 watch / 5 interest / 1 candidate with nine light-curve
+demotions back to 3,040 / 19 / 0 / 1 with no `redetect` block, in a green run.
+
+**A timestamp cannot catch this, and it is worth knowing why**: the delayed
+run writes its file LAST, so `generated_utc` makes it look newest.  Wall-clock
+recency is exactly the property the failure has.  **Nor can an ancestry test
+on the checkout**: the stale run's commit is an ancestor of the branch head,
+as every legitimate run's is.
+
+What is stale is the *code*.  `scripts/metronome_stale_guard.py` finds the
+commit that last wrote each result file on the branch and blocks the
+commit-back when this run's checkout is a strict ancestor of it **and** the
+channel's own sources differ between the two — so a re-run of identical code
+still commits.  It fails open on every unknown: shallow history, no recorded
+writer, any git error.  The run stays green and its artifacts still upload;
+only the commit-back is skipped.
+
+Two things follow for any other channel here.  A dispatch that has been queued
+for hours should be **cancelled rather than left to land**.  And a
+`permissions:` block **replaces** the defaults, so a workflow that downloads
+artifacts across runs needs `actions: read` or it will 403 and quietly receive
+nothing — which is why an early vet run reported `n_catalogue_epochs = 0`
+(§4.7d) and why `catalogue_epochs_for_star` now asks VizieR directly instead.
+
+---
+
 ## 9. Layout
 
 ```
@@ -955,6 +989,8 @@ tests/test_metronome_vetstar.py offline suite for the vet (injected EB, real clo
 .github/workflows/metronome.yml probe+acquire -> screen matrix -> assess -> commit-back; lit job;
                                 assess-only, redetect-only and vetstar over a prior run's artifacts
 scripts/metronome_vetstar_report.py  prints the vet verbatim into the run log
+scripts/metronome_stale_guard.py     refuses a commit-back whose CODE predates the code
+                                that produced the results already on the branch
 scripts/metronomelit_fetch.py   prior-art sweep, verbatim abstracts -> results/metronomelit/
 ```
 

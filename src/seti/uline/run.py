@@ -803,6 +803,17 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
             if cur is None or float(s.get("err_over_tolerance") or 0) > float(
                     cur.get("err_over_tolerance") or 0):
                 limited[r["species"]] = {k: v for k, v in s.items() if k != "remedy"}
+    # A species can also be MODEL-limited: SO2F2 is accidentally near-spherical
+    # and Watson's A-reduction fails for it, so even the published quartic set
+    # would not make this A-reduced predictor right.
+    caveats = {}
+    for sp, st in tables.items():
+        cav = ((st.get("rotor") or {}).get("hamiltonian_caveat"))
+        if cav:
+            caveats[sp] = cav
+    for sp, cav in sorted(caveats.items()):
+        degraded.append(f"HAMILTONIAN CAVEAT {sp}: {cav.get('reduction')} — "
+                        f"{cav.get('consequence')}")
     if limited:
         degraded.append(
             "FREQUENCY-LIMITED (predicted error wider than the survey linewidth; the remedy is "
@@ -857,6 +868,7 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
         "targets_unsearchable": unsearchable,
         "targets_with_predicted_frequencies": predicted_used,
         "targets_frequency_limited": limited,
+        "targets_hamiltonian_caveats": caveats,
         "sources": {k: {kk: vv for kk, vv in v.items()} for k, v in sources.items()},
         "n_ulines_total": n_ulines,
         "pairs": per_pair,

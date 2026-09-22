@@ -276,10 +276,32 @@ species:
     role: target
     formula: SO2F2
     search_names: ["sulfuryl fluoride", "sulphuryl fluoride", "sulfuryl difluoride"]
+    # A REDUCTION CAVEAT THAT IS NOT A DETAIL.  SO2F2 is an ACCIDENTALLY
+    # NEAR-SPHERICAL top (A ~ B ~ C).  Sarka, Demaison, Margules et al. found
+    # that Watson's A-reduction FAILS for it, that the S-reduction does better,
+    # and that an UNREDUCED Hamiltonian was needed, in which six rather than
+    # five quartic constants are determinable -- the first asymmetric top for
+    # which all six were measured.  This channel's predictor is A-reduced.  So
+    # for SO2F2, unlike the other four species, obtaining the published quartic
+    # set would NOT by itself make the prediction right: the Hamiltonian would
+    # have to be extended to the S-reduction or left unreduced.  Recorded here
+    # rather than discovered later as an unexplained residual.
+    hamiltonian_caveat:
+      reduction: "A-reduction fails for this near-spherical top (Sarka et al.)"
+      needed: "S-reduction or an unreduced Hamiltonian with all six quartic constants"
+      consequence: "predicted frequencies are model-limited, not only constant-limited"
     literature:
       - "Lide, Mann & Fristrom 1957, J. Chem. Phys. 26, 734 (structure, dipole 1.110(15) D)"
-      - "Sarka et al. 2000, J. Mol. Spectrosc. 200, 55 (all six quartic constants)"
-      - "Margules et al. 2003, J. Mol. Spectrosc. (ground state 10-472 GHz, sextic)"
+      - >-
+        Sarka et al., J. Mol. Spectrosc.: "Centrifugal Distortion Analysis of a
+        Near-Spherical Top, SO2F2: The First Determination of All Six Quartic
+        Centrifugal Distortion Constants for an Asymmetric Top"
+      - >-
+        Margules et al., "The ground state rotational spectrum of SO2F2",
+        J. Mol. Spectrosc.: microwave FT plus millimetre-wave, 10-472 GHz; the
+        A reduction of the Watsonian fails, S does better, an unreduced
+        Hamiltonian was used
+      - "Rotational spectra of isotopic species of SO2F2: experimental and ab initio structures, J. Mol. Spectrosc."
     isotopologues:
       - name: "SO2F2 v=0"
         abundance: 0.95
@@ -309,8 +331,16 @@ species:
     hyperfine: {eQq_mhz: 70.0, n_nuclei: 1, nucleus: "35Cl"}
     literature:
       - "Beaudet & Poynter, J. Chem. Phys. (1960s): microwave spectrum, structure, dipole"
-      - "Burczyk et al. 1983, J. Mol. Spectrosc. 97, 39? ground state 70-1280 GHz, J up to 80"
-      - "1997, J. Mol. Spectrosc.: HCFC-22 constants for CHF2(37Cl) and 13CHF2(35Cl)"
+      - >-
+        "Ground State Rotational Spectrum of CHF2Cl in the Millimeter-Wave and
+        Far-Infrared Region", J. Mol. Spectrosc. (1983)
+      - >-
+        "Spectroscopic Constants for HCFC-22 from Rotational and High-Resolution
+        Vibration-Rotation Spectra: CHF2(37Cl) and 13CHF2(35Cl) Isotopomers",
+        J. Mol. Spectrosc. (1997) - the natural-abundance spectrum is measured
+        over 8-705 GHz with SEXTIC constants for every state whose room-
+        temperature population exceeds 4 %, i.e. a complete published line list
+        exists for this species; reaching it is what `litfetch` is for
     isotopologues:
       - name: "CHF2(35Cl)"
         abundance: 0.7576

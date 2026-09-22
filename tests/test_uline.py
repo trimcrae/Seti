@@ -1295,6 +1295,28 @@ def test_frequency_limited_species_are_rolled_up_into_the_summary(tmp_path):
 # ---------------------------------------------------------------------------
 # the LTE test lives or dies on the intensity column resolving
 # ---------------------------------------------------------------------------
+def test_a_species_whose_hamiltonian_is_wrong_says_so_in_the_summary(tmp_path):
+    """SO2F2 is accidentally near-spherical (A ~ B ~ C), and Sarka, Demaison,
+    Margules et al. found Watson's A-REDUCTION FAILS for it — an unreduced
+    Hamiltonian with all six quartic constants was needed.  This predictor is
+    A-reduced, so for SO2F2 alone the published quartic set would not make the
+    prediction right.  A model limit is not a constants limit and must not be
+    reported as one."""
+    from seti.uline.rotorpred import load_rotor_assets
+
+    cav = load_rotor_assets()["species"]["SO2F2"]["hamiltonian_caveat"]
+    assert "A-reduction fails" in cav["reduction"]
+    assert "model-limited" in cav["consequence"]
+
+    conf = synth_conf()
+    screen = _verify_screen(True)
+    screen["results"]["SO2F2|synth"]["best"]["pattern"] = False
+    screen["species_tables"]["SO2F2"]["rotor"] = {"hamiltonian_caveat": cav}
+    s = stage_assess(conf, tmp_path, screen=screen, acquire_report={})
+    assert s["targets_hamiltonian_caveats"]["SO2F2"]["reduction"] == cav["reduction"]
+    assert any("HAMILTONIAN CAVEAT SO2F2" in d for d in s["degraded"])
+
+
 def test_the_real_column_sets_of_the_acquired_surveys_resolve_an_intensity():
     """Runs 35039822190 and 35041128720 reported `lte_testable: false` for every
     pair, and the channel recorded "no intensity column" as a property of the

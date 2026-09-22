@@ -280,6 +280,17 @@ JPL documentation files — and nothing it fetches ever silently overwrites an
 embedded value: the two are written side by side in `literature.json` and
 promoting one is a commit to `rotor_constants.yaml`.
 
+**One species is model-limited, not only constant-limited.**  SO₂F₂ is an
+*accidentally near-spherical* top (A ≈ B ≈ C).  Sarka, Demaison, Margulès et
+al. found that Watson's **A-reduction fails** for it, that the S-reduction does
+better, and that an *unreduced* Hamiltonian was required — in which six rather
+than five quartic constants are determinable, the first asymmetric top for
+which all six were measured.  This predictor is A-reduced, so for SO₂F₂ alone,
+obtaining the published quartic set would not by itself make the prediction
+right: the Hamiltonian would have to be extended.  That is recorded in the
+species' `hamiltonian_caveat` rather than left to surface later as an
+unexplained residual.
+
 **A `verify` line alone never makes a candidate.**  Every block in
 `rotor_constants.yaml` is `verify: true`.  A pattern found only on those
 frequencies gives the verdict `PATTERN_CANDIDATE_VERIFY_CONSTANTS`, with the

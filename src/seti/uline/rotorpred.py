@@ -289,6 +289,13 @@ def predict_species_lines(assets: dict, species: str, *, fmin_mhz: float = 0.0,
         "role": str(((assets.get("species") or {}).get(species) or {}).get("role", "")),
         "literature": list(((assets.get("species") or {}).get(species) or {}).get("literature")
                            or []),
+        # Some species are MODEL-limited, not only constant-limited: SO2F2 is
+        # accidentally near-spherical and Watson's A-reduction fails for it, so
+        # the published quartic set would not by itself make this A-reduced
+        # predictor right.  Carried through to summary.json so it cannot be
+        # mistaken later for an unexplained residual.
+        "hamiltonian_caveat": ((assets.get("species") or {}).get(species)
+                               or {}).get("hamiltonian_caveat"),
         "n_isotopologues": len(isos),
         "isotopologues": per_iso,
         "n_lines": int(len(lines)),

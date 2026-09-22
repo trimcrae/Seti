@@ -1292,6 +1292,90 @@ def second_epoch(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
     return res
 
 
+def lsf_fwhm_measured(wave, wave_sigma, lam0: float, window_A: float = 20.0) -> float:
+    """Instrumental FWHM at ``lam0`` from the pipeline's own LSF column.
+
+    SPARCL serves ``wave_sigma`` (and an SDSS spec file a ``wdisp``) per pixel;
+    using it instead of a nominal R = 2000 matters here, because SDSS's real
+    resolution runs from about 1500 to 2500 across the spectrum and between
+    fibres, and a line called "40 % broader than the LSF" against the wrong LSF
+    is not an argument about anything.
+    """
+    w = np.asarray(wave, float)
+    s = np.asarray(wave_sigma, float) if wave_sigma is not None else None
+    if s is None or s.size != w.size:
+        return float("nan")
+    near = np.abs(w - float(lam0)) <= window_A
+    v = s[near]
+    v = v[np.isfinite(v) & (v > 0)]
+    if v.size == 0:
+        return float("nan")
+    return float(2.3548 * np.median(v))
+
+
+def fit_line_profile(wave, flux, ivar, lam0: float, fwhm_guess: float, mode: str = "emission",
+                     fit_win_A: float = 25.0, cont_win_A: float = 60.0) -> dict:
+    """Gaussian fit of the feature: centre, width, and width / instrumental width.
+
+    A monochromatic source is by definition UNRESOLVED -- its profile is the
+    instrument's LSF, so the fitted FWHM over the instrumental FWHM is 1 within
+    the error.  A feature that is resolved cannot be a single narrow line
+    whatever else it does, and this is the cheapest way to say so.  It is a
+    measurement, not a cut: the fit is reported with its error so a 1.4 +- 0.3
+    is not read as a 1.4 +- 0.05.
+    """
+    from scipy.optimize import curve_fit
+    w = np.asarray(wave, float)
+    f = np.asarray(flux, float)
+    iv = np.asarray(ivar, float)
+    out = {"fit_ok": False, "fit_reason": "", "fit_center_A": float("nan"),
+           "fit_dv_kms": float("nan"), "fit_fwhm_A": float("nan"),
+           "fit_fwhm_err_A": float("nan"), "fit_amp": float("nan"),
+           "fit_amp_sig": float("nan")}
+    good = np.isfinite(w) & np.isfinite(f) & np.isfinite(iv) & (iv > 0)
+    d = w - float(lam0)
+    ann = good & (np.abs(d) <= cont_win_A) & (np.abs(d) > 2.0 * fwhm_guess)
+    sel = good & (np.abs(d) <= fit_win_A)
+    if int(sel.sum()) < 7 or int(ann.sum()) < 8:
+        out["fit_reason"] = "too few pixels"
+        return out
+    try:
+        coef = np.polyfit(w[ann] - lam0, f[ann], 1)[::-1]
+    except (np.linalg.LinAlgError, ValueError):
+        out["fit_reason"] = "continuum fit failed"
+        return out
+    r = f[sel] - (coef[0] + coef[1] * d[sel])
+    sign = -1.0 if mode == "absorption" else 1.0
+    y = sign * r
+    sy = 1.0 / np.sqrt(iv[sel])
+
+    def _g(x, amp, mu, sig):
+        return amp * np.exp(-0.5 * ((x - mu) / sig) ** 2)
+
+    p0 = [max(float(np.max(y)), 1e-6), 0.0, max(fwhm_guess / 2.3548, 1e-3)]
+    lo = [0.0, -2.0 * fwhm_guess, 0.2 * fwhm_guess / 2.3548]
+    hi = [1e6 * abs(p0[0]) + 1e6, 2.0 * fwhm_guess, 8.0 * fwhm_guess / 2.3548]
+    try:
+        p, cov = curve_fit(_g, d[sel], y, p0=p0, sigma=sy, absolute_sigma=True,
+                           bounds=(lo, hi), maxfev=20000)
+    except Exception as exc:  # noqa: BLE001
+        out["fit_reason"] = repr(exc)[:200]
+        return out
+    perr = np.sqrt(np.diag(cov)) if cov is not None and np.all(np.isfinite(cov)) \
+        else np.full(3, np.nan)
+    out.update({
+        "fit_ok": True,
+        "fit_center_A": float(lam0 + p[1]),
+        "fit_dv_kms": float(p[1] / lam0 * 299792.458),
+        "fit_fwhm_A": float(2.3548 * p[2]),
+        "fit_fwhm_err_A": float(2.3548 * perr[2]),
+        "fit_amp": float(sign * p[0]),
+        "fit_amp_sig": float(p[0] / perr[0]) if np.isfinite(perr[0]) and perr[0] > 0
+        else float("nan"),
+    })
+    return out
+
+
 def _control_stats(meas: list[dict], key: str = "sig") -> dict:
     v = np.array([m[key] for m in meas if m.get("testable") and np.isfinite(m.get(key, np.nan))],
                  float)
@@ -1419,6 +1503,30 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
             z = float(r.get("redshift", 0.0) or 0.0)
         except (TypeError, ValueError):
             z = 0.0
+        # Is the feature even unresolved?  Fit its profile in its own coadd and
+        # compare with the pipeline's LSF at that pixel, not with a nominal R.
+        try:
+            own = sparcl_retrieve(client, [str(r["spec_id"])], rel)
+            if own:
+                o = own[0]
+                w = np.asarray(o.get("wavelength", []), float)
+                lam = float(r["wavelength"])
+                lsf = lsf_fwhm_measured(w, o.get("wave_sigma"), lam)
+                if not np.isfinite(lsf):
+                    lsf = lsf_fwhm_A(lam, rel)
+                    e["lsf_source"] = "nominal"
+                else:
+                    e["lsf_source"] = "wave_sigma"
+                e["lsf_fwhm_A"] = round(float(lsf), 3)
+                fit = fit_line_profile(w, np.asarray(o.get("flux", []), float),
+                                       np.asarray(o.get("ivar", []), float), lam, lsf,
+                                       str(r.get("search_mode", "emission")))
+                e.update(_json_safe(fit))
+                if fit.get("fit_ok") and lsf > 0:
+                    e["fwhm_over_lsf"] = round(float(fit["fit_fwhm_A"]) / lsf, 3)
+                    e["fwhm_over_lsf_err"] = round(float(fit["fit_fwhm_err_A"]) / lsf, 3)
+        except Exception as exc:  # noqa: BLE001
+            e["fit_error"] = repr(exc)[:300]
         # Two samples: stars of this object's own type, and stars of any type.
         # A feature the spectral TYPE makes appears in the first and not the
         # second; one the sky or the instrument makes appears in both.
@@ -1437,6 +1545,8 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
         sa = (e.get("same_type", {}).get("obs_frame") or {})
         an = (e.get("any_star", {}).get("obs_frame") or {})
         print(f"[persist] control {e['identifier']} lam={e['wavelength']:.1f} "
+              f"fwhm/lsf={e.get('fwhm_over_lsf')}+-{e.get('fwhm_over_lsf_err')} "
+              f"({e.get('lsf_source')}); "
               f"same-type frac>=3: {sa.get('frac_ge3')} (n={sa.get('n_measured')}), "
               f"any-star frac>=3: {an.get('frac_ge3')} (n={an.get('n_measured')})")
         entries.append(_json_safe(e))
@@ -2235,4 +2345,4 @@ __all__ = ["measure_line", "combine_measurements", "classify_persistence", "deco
            "stack_exposures", "wave_lag", "offset_null",
            "desi_bands_for", "desi_coadd_url", "desi_exposure_rows", "process_spectrum",
            "run_shard", "reduce_results", "final_verdict", "probe", "diagnose",
-           "control_sample", "controls", "main"]
+           "control_sample", "controls", "fit_line_profile", "lsf_fwhm_measured", "main"]

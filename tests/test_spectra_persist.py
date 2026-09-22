@@ -643,6 +643,29 @@ def test_control_sample_separates_observed_frame_from_stellar_frame():
     assert clean["obs_frame"]["frac_ge3"] < 0.2 and clean["star_frame"]["frac_ge3"] < 0.2
 
 
+def test_fit_line_profile_tells_an_unresolved_line_from_a_resolved_one():
+    """A monochromatic source is unresolved: its profile IS the LSF.  A feature
+    measurably broader than the LSF cannot be a single narrow line, whatever
+    else it does -- and the six lines left standing after the first run have
+    triage width ratios of 1.09 to 1.47 against a NOMINAL R = 2000, which is
+    why the fit has to be against the pipeline's own LSF column."""
+    rng = np.random.default_rng(5)
+    _lg, w = _grid(6600.0, 7000.0)
+    lam, lsf = 6809.26, 6809.26 / 2000.0
+    for factor in (1.0, 2.0):
+        sigma = factor * lsf / 2.3548
+        f = 10.0 + _gauss(w, lam, 1.0, sigma) + rng.normal(0, 0.02, w.size)
+        fit = persist.fit_line_profile(w, f, np.full(w.size, 1 / 0.02 ** 2), lam, lsf)
+        assert fit["fit_ok"], fit
+        ratio = fit["fit_fwhm_A"] / lsf
+        assert abs(ratio - factor) < 0.15, (factor, ratio, fit)
+        assert abs(fit["fit_dv_kms"]) < 30.0
+    # And the measured LSF is taken from the pipeline column when it is served.
+    ws = np.full(w.size, 2.0)            # sigma = 2 A  ->  FWHM = 4.71 A
+    assert abs(persist.lsf_fwhm_measured(w, ws, lam) - 2.3548 * 2.0) < 1e-6
+    assert not np.isfinite(persist.lsf_fwhm_measured(w, None, lam))
+
+
 def test_reduce_refuses_to_overwrite_a_real_summary_with_stale_checkpoints(tmp_path):
     """A reduce arriving after an estimator change holds only superseded
     checkpoints.  Writing its empty summary over a real one would replace a

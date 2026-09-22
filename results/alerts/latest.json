@@ -36,7 +36,7 @@
    "body": "`results/tocsin_ztf/run.json` was last written 2.6 days ago; the schedule expects an update at least every 2 days.\n\nA stopped cron and an empty sky look identical from the repository, and only one of them is a result. Check the Actions tab: GitHub disables scheduled workflows after 60 days without repository activity, and a run that fails before its commit step leaves no trace here at all.",
    "channel": "tocsin_ztf",
    "detail": {
-    "age_days": 2.560525354548611,
+    "age_days": 2.5744856129282407,
     "limit_days": 2.5
    },
    "key": "tocsin_ztf:stale:0",
@@ -48,7 +48,7 @@
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61235.41918367943,
-    "lag_days": 70.50753380475695,
+    "lag_days": 70.52149406313657,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:1",
@@ -60,7 +60,7 @@
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 70.51044320407408,
+    "lag_days": 70.5244034624537,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:1",
@@ -73,7 +73,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T10:26:40Z",
     "frontier_mjd": 61235.41918,
-    "frozen_days": 54.49153229899306,
+    "frozen_days": 54.50549255737268,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -82,7 +82,7 @@
    },
    "key": "tocsin:frontier_stalled:2",
    "severity": "health",
-   "title": "TOCSIN's data frontier has not advanced in 54 days"
+   "title": "TOCSIN's data frontier has not advanced in 55 days"
   },
   {
    "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 54.4 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-09-21 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-21 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
@@ -90,7 +90,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 54.37549063232639,
+    "frozen_days": 54.389450890706016,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -115,17 +115,17 @@
    "title": "ASASSN cannot serve light curves"
   }
  ],
- "alert": true,
+ "alert": false,
  "by_severity": {
   "candidate": 0,
-  "health": 1,
+  "health": 0,
   "milestone": 0
  },
- "checked_at_utc": "2026-09-22T22:14:28Z",
+ "checked_at_utc": "2026-09-22T22:34:34Z",
  "frontier": {
   "loom": {
-   "frozen_days": 54.375,
-   "lag_days": 70.51,
+   "frozen_days": 54.389,
+   "lag_days": 70.524,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -133,8 +133,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 54.492,
-   "lag_days": 70.508,
+   "frozen_days": 54.505,
+   "lag_days": 70.521,
    "mjd": 61235.41918,
    "observed_advance_days": {
     "n_advances": 0
@@ -143,18 +143,6 @@
   }
  },
  "n_active": 7,
- "n_new": 1,
- "new": [
-  {
-   "body": "`results/tocsin_ztf/run.json` was last written 2.6 days ago; the schedule expects an update at least every 2 days.\n\nA stopped cron and an empty sky look identical from the repository, and only one of them is a result. Check the Actions tab: GitHub disables scheduled workflows after 60 days without repository activity, and a run that fails before its commit step leaves no trace here at all.",
-   "channel": "tocsin_ztf",
-   "detail": {
-    "age_days": 2.560525354548611,
-    "limit_days": 2.5
-   },
-   "key": "tocsin_ztf:stale:0",
-   "severity": "health",
-   "title": "TOCSIN_ZTF has not produced results for 2.6 days"
-  }
- ]
+ "n_new": 0,
+ "new": []
 }

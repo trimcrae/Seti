@@ -444,8 +444,9 @@ that one excess did, because it had been carried on a KIC-era star table:
 
 Run **35738785437** is the first stage-2 pass with the NaN-pixel fix (a single
 permanently-NaN pixel had been vetoing every cadence of a stamp, §6).  It was
-cancelled at 21 of its 30 stars in favour of a run on the current shortlist,
-and the per-star checkpoint in `stars.json` holds what it measured:
+cancelled at 21 of its 30 stars in favour of a run on the current shortlist;
+its per-star checkpoint is committed at **`c751f006`** (later runs overwrite
+`stars.json` with their own shortlist) and holds what it measured:
 
 | | run 35675112803 (30 stars) | run 35738785437 (21 stars) |
 |---|---|---|
@@ -534,20 +535,53 @@ R = 1.089 R☉, replacing the Shibayama star table's 5378 K / 1.300 R☉):
   Run **35744902798** is the first to put its Yang & Liu record on the pixels:
   `load_shortlist` now ranks it first of 13 as `tier: vetoed_excess`.
 
-This is not a null and it is not a candidate.  It is **one object with three
-open questions, none of them yet answered by a measurement of this star**:
+### 9.4 KIC 9418692 on the pixels (run 35744902798)
 
-1. *Which rotational amplitude is right?*  Santos+2021's `Sph` (as a range,
-   2.008e-4) puts it 0.7 dex above the ceiling; Shibayama's 6.0e-4 puts it
-   exactly at the ceiling.  Decided by `amplitude_quarter_rvar` — the star's
-   own Kepler light curve — in run 35744902798.
-2. *Is the flare on the target?*  Untested until that run.  §9.1a shows the
-   test is not a formality: it moved 5 of 21 stars onto a neighbour.
-3. *Is there a companion?*  RUWE 1.556 is an astrometric **suspicion**, not a
-   detection, and it is the only thing that vetoed the star.  Needs the Gaia
-   DR3 non-single-star solutions and any archival spectroscopy.
+Run **35744902798** put its Yang & Liu record on the target pixel files.  It
+is the first object in this channel to pass **both** tests:
 
-Its Gaia census already bounds the third: the target supplies 99.73 % of the
-flux inside one Kepler pixel, and the two catalogued neighbours would have to
-brighten by 39 % and 41 % — large, but not excluded by arithmetic, which is
-precisely why the centroid and not the census is the instrument.
+| | |
+|---|---|
+| Gaia DR3 | 2080152824394749696, RA 297.20212, Dec +45.971088 |
+| parameters (Berger+2020 `J/AJ/159/280`) | Teff **5677.4 K**, R = **1.089 R☉**, M = **0.957 M☉**, logg 4.341 |
+| amplitude — **its own light curve** | `Rvar` = **3.8425e-4** (`Sph` 1.2483e-4) |
+| ξ_conservative on that amplitude | **+0.292**, `above_ceiling`, **3 flares** above (8 above nominal, ξ_nom = +1.008), 13 independent events |
+| centroid | **5 of 6 tested flares `on_target`**, 0.100–0.266 px (**1.0–2.6σ**) from the target, every Gaia neighbour rejected at > 3σ |
+| the 6th flare | `undetected_in_pixels` — difference-image peak SNR 1.5 < 3.0.  Not a contradiction; no position was measured |
+| Gaia FLAME | `QUERY_RETURNED_ZERO_ROWS` (no independent radius) |
+
+**The amplitude question of §9.3 is settled by the star itself**, and it
+settles *between* the two catalogues: 3.84e-4 sits between Santos's 2.008e-4
+(ξ = +0.715) and Shibayama's 6.0e-4 (ξ = +0.002).  The larger of catalogue and
+quarter is the conservative choice, so +0.292 is the headline.
+
+**The census is no longer what carries the argument.**  Inside one Kepler
+pixel the target supplies 99.73 % of the flux and the two neighbours
+(G = 20.41 at 3.20″, G = 19.69 at 5.18″) would need **287 %** and **305 %**
+brightenings — large, but under the 20× arithmetic threshold, so neither is
+*excluded* by the census.  The centroid excludes them directly, at 1.0–2.6σ
+from the target across four quarters (Q3, Q9, Q13, Q16).
+
+**What is still open, stated plainly.**
+
+1. **The catalogue energies are the dominant systematic.**  Re-measuring the
+   flare energies from the light curve instead of taking Yang & Liu's gives
+   `with_max_amplitude_remeasured_energy`: ξ_conservative = **+0.045** on 2
+   flares of 6 independent events — *at* the ceiling, not 0.3 dex above it.
+   Until that 0.25 dex is traced to its cause (the re-measurement recovers
+   fewer events and a different quiescent level), the object's significance is
+   a range, +0.045 to +0.292, not a number.
+2. **RUWE = 1.5562 is unresolved.**  It is an astrometric *suspicion* and it
+   is the only thing that vetoed the star in stage 1.  A companion inside
+   ~0.1″ is unresolved by Gaia and by the pixels alike, so `flare_on_target`
+   does not exclude it — only the Gaia DR3 non-single-star solutions, a flare
+   colour, or spectroscopy can.
+3. **`f = 1` is the assumption the whole channel rests on.**  ξ > 0 says the
+   flare exceeded the magnetic energy of the spots *if every erg of it were
+   released*; Okamoto+2021's own envelope is f ≈ 0.1, which would move every
+   ξ in this document by +1 dex and is why the *conservative* spot area, not
+   the nominal one, is the headline.
+
+This is not a null and it is not a candidate.  It is **one object that has
+now survived the two tests that killed everything else**, with two named,
+measurable killers left.

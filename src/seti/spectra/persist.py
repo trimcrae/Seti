@@ -1784,7 +1784,8 @@ def diagnose(root: Path, n: int = 8, release: str = "SDSS") -> dict:
             finfo["exposures"] = [
                 {k2: e.get(k2) for k2 in ("expid", "arms", "testable", "reason", "sig", "ew",
                                           "cont", "F", "err", "n_line_pix", "n_cosmic",
-                                          "err_scale", "mjd")}
+                                          "err_scale", "mjd", "peak_sig", "sky_peak_sig",
+                                          "sky_level", "cont_slope_per_A", "cont_one_sided")}
                 for e in ex]
             # The coadd IS supposed to be the stack of the exposure HDUs.  Measure
             # the line in that stack with the very same estimator: it decides

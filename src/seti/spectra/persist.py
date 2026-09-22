@@ -732,7 +732,8 @@ def sparcl_fields(client, release: str) -> list[str]:
         f = getattr(client, fn, None)
         if f is None:
             continue
-        for call in (lambda: f(dataset_list=[release]), lambda: f([release]), lambda: f()):
+        for call in (lambda g=f: g(dataset_list=[release]), lambda g=f: g([release]),
+                     lambda g=f: g()):
             try:
                 got = call()
                 if got:

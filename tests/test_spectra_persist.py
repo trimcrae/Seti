@@ -24,7 +24,9 @@ from seti.spectra import persist
 from seti.spectra.linelist import identify_rest_frame
 
 LAM0 = 6765.5        # test line: r1 camera only, > 300 km/s from every known line
-RNG = np.random.default_rng(3)
+DEFAULT_SEED = 3     # every synthetic file seeds its OWN generator (see make_spec_file)
+# A zero-signal null must never reach the significance at which a line is believed.
+COMBINED_SIG_FLOOR = persist.COMBINED_SIG
 
 
 def _grid(lo, hi):
@@ -55,10 +57,19 @@ def _exposure_hdu(name, loglam, flux, ivar, sky, mask=None, wdisp=1.1, mjd=55000
 
 
 def make_spec_file(line_amp_per_exp, n_exp=4, sky_line_amp_per_exp=None, noise=0.05,
-                   absorption=False, lam=LAM0, coadd_amp=None) -> bytes:
+                   absorption=False, lam=LAM0, coadd_amp=None, seed=DEFAULT_SEED) -> bytes:
     """Synthetic full spec file.  ``line_amp_per_exp`` gives the injected peak
     amplitude (continuum = 10) in each exposure; ``sky_line_amp_per_exp`` puts a
-    sky-model line at the same wavelength with that amplitude per exposure."""
+    sky-model line at the same wavelength with that amplitude per exposure.
+
+    The noise generator is seeded **per call** from ``seed``: a shared module-level
+    generator would make every test's noise realisation depend on how many tests
+    ran before it, so the same assertion would pass or fail with the test order
+    (pytest-xdist, ``-k`` selection, a re-run of one test).  Each file is now a
+    reproducible draw, and the tests that depend on a null being quiet average
+    over an explicit ensemble of seeds instead of trusting one.
+    """
+    rng = np.random.default_rng(seed)
     # Per-exposure (native) grid for r1 and b1; coadd grid spans both.
     lb, wb = _grid(3800.0, 6200.0)
     lr, wr = _grid(5800.0, 9200.0)
@@ -70,7 +81,7 @@ def make_spec_file(line_amp_per_exp, n_exp=4, sky_line_amp_per_exp=None, noise=0
     if coadd_amp is None:
         coadd_amp = float(np.mean(line_amp_per_exp))
     sgn = -1.0 if absorption else 1.0
-    fc = cont + sgn * _gauss(wc, lam, coadd_amp, sigma) + RNG.normal(0, noise / np.sqrt(n_exp), wc.size)
+    fc = cont + sgn * _gauss(wc, lam, coadd_amp, sigma) + rng.normal(0, noise / np.sqrt(n_exp), wc.size)
     coadd = _exposure_hdu("COADD", lc, fc, np.full(wc.size, n_exp / noise ** 2),
                           np.full(wc.size, 2.0))
     hdus.append(coadd)
@@ -87,8 +98,8 @@ def make_spec_file(line_amp_per_exp, n_exp=4, sky_line_amp_per_exp=None, noise=0
         if sky_line_amp_per_exp is not None:
             sky_r = sky_r + _gauss(wr, lam, sky_line_amp_per_exp[k], sigma)
             sky_b = sky_b + _gauss(wb, lam, sky_line_amp_per_exp[k], sigma)
-        fr = cont + sgn * _gauss(wr, lam, amp, sigma) + RNG.normal(0, noise, wr.size)
-        fb = cont + sgn * _gauss(wb, lam, amp, sigma) + RNG.normal(0, noise, wb.size)
+        fr = cont + sgn * _gauss(wr, lam, amp, sigma) + rng.normal(0, noise, wr.size)
+        fb = cont + sgn * _gauss(wb, lam, amp, sigma) + rng.normal(0, noise, wb.size)
         hdus.append(_exposure_hdu(f"B1-{expid:08d}", lb, fb, np.full(wb.size, 1 / noise ** 2),
                                   sky_b))
         hdus.append(_exposure_hdu(f"R1-{expid:08d}", lr, fr, np.full(wr.size, 1 / noise ** 2),
@@ -146,10 +157,31 @@ def test_absorption_mode_persistent():
 
 
 def test_absent_in_exposures_when_only_coadd_has_it():
-    # A feature in the coadd that is in none of its inputs (coadd-stage artefact).
-    parsed, fc, ex, cls = _run(make_spec_file([0.0] * 4, coadd_amp=1.0))
-    assert cls["coadd_recovered"]
-    assert cls["persistence_class"] == "absent_in_exposures", cls
+    """A feature in the coadd that is in none of its inputs (coadd-stage artefact).
+
+    This is the mission's central discriminator, so it is checked over an
+    ensemble of noise realisations rather than one: with zero injected line the
+    per-exposure significance is a standard normal draw, so a single seed can
+    scatter up into ``partial`` by chance.  What must hold for EVERY realisation
+    is the part that matters scientifically -- the coadd feature is recovered and
+    the line is never promoted to a real detection -- and the nominal verdict
+    must be ``absent_in_exposures`` in the large majority.
+    """
+    classes = []
+    for seed in range(20):
+        _, _, _, cls = _run(make_spec_file([0.0] * 4, coadd_amp=1.0, seed=seed))
+        assert cls["coadd_recovered"], (seed, cls)
+        assert cls["persistence_class"] not in ("persistent", "persistent_2exp", "transient",
+                                                "sky_residual"), (seed, cls)
+        assert cls["combined_sig"] < COMBINED_SIG_FLOOR, (seed, cls)
+        classes.append(cls["persistence_class"])
+    n_absent = classes.count("absent_in_exposures")
+    assert n_absent >= 17, classes
+    # ... and the default seed the other tests use is one of them.
+    _, _, _, cls0 = _run(make_spec_file([0.0] * 4, coadd_amp=1.0))
+    assert cls0["persistence_class"] == "absent_in_exposures", cls0
+    assert persist.final_verdict({"persistence_class": "absent_in_exposures",
+                                  "known_line_match": False}) == "KILLED_absent_in_exposures"
 
 
 def test_untestable_degrades_honestly():

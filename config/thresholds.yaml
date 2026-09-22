@@ -160,6 +160,16 @@ ossuary:
     t_dust_max_k: 1800.0       # hotter than grains survive => unresolved companion
     nir_excess_sigma_max: 3.0  # a J/H/Ks excess means a companion photosphere, not dust
     mc_draws: 400              # Monte-Carlo draws for (T_dust, tau) uncertainties
+    # OPTICAL-DEPTH SELF-CONSISTENCY. tau is the fitted fractional luminosity:
+    # the fraction of the host's light reprocessed into the infrared. The fit is
+    # an optically THIN blackbody, so it only means anything while tau << 1, and
+    # a fitted tau >= 1 reprocesses more light than the star emits. Real debris
+    # sits at tau ~ 1e-5 to 1e-3 (Wyatt 2008); a few 1e-2 is already extreme.
+    # The 2026-09-22 catalogue run returned 584 survivors at a MEDIAN tau of
+    # 0.389, 98.6% above 0.1 and 39 rows above 1.0, and no gate said so.
+    tau_max_physical: 1.0      # >= this: the optically thin fit is not self-consistent
+    tau_max_debris: 0.1        # above this: outside any debris population; flagged
+    tau_gate_rejects: false    # true also rejects tau_max_debris < tau < tau_max_physical
 
   contamination:
     wise_quality:

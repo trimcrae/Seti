@@ -1,7 +1,6 @@
 {
-  "verdict": "NO_DATA_REACHED",
-  "reason": "no_shard_outputs_found",
-  "generated_utc": "2026-09-22T00:04:12Z",
+  "verdict": "NO_IGNITION_CANDIDATE",
+  "generated_utc": "2026-09-22T16:15:33Z",
   "endpoints": {
     "parent": {
       "esa_gaia": "https://gea.esac.esa.int/tap-server/tap",
@@ -50,21 +49,17 @@
     ],
     "errors": []
   },
-  "coverage": null,
-  "ensemble": {
-    "per_shard_drift": [],
-    "raw_two_band_fading_5sigma": 0,
-    "raw_two_band_rising_5sigma": 0,
-    "note": "per-shard median zero-point offsets by 0.25-yr bin were subtracted before the rise test (seti.ignition.ensemble); raw_* count stars whose UNCORRECTED bare linear slope is >= 5 sigma in both bands"
-  },
+  "n_candidates": 0,
+  "n_clean": 0,
+  "n_candidates_optical_untested": 0,
   "denominators": {
     "parent_count_archive": 846,
     "n_rows_pulled": 846,
     "n_stars_in_parent_file": 846,
     "subsample_fraction": 1.0,
-    "n_stars_attempted_neowise": 0,
-    "n_stars_with_neowise_rows": 0,
-    "n_stars_screened": 0,
+    "n_stars_attempted_neowise": 846,
+    "n_stars_with_neowise_rows": 846,
+    "n_stars_screened": 846,
     "sample_mode": "fields",
     "local_cut_counters": {
       "n_in": 846,
@@ -96,11 +91,211 @@
     "vizier_capped_units": [],
     "route_note": "routes/route_fractions say which SOURCE served each unit: esa_gaia is the authoritative ESA archive (with its own allwise_best_neighbour cross-match), vizier_asu is the non-TAP VizieR mirror with a positional cross-match. Rows obtained over vizier_asu are bounded by the ASU -out.max cap, which is a row cap and NOT a COUNT(*); a sample drawn from both routes is DEGRADED."
   },
+  "stage_counts": {
+    "screened": 846,
+    "rise_candidates": 0,
+    "vetted": 0,
+    "survivors": 0,
+    "clean": 0
+  },
+  "veto_counters": {
+    "screen": {
+      "NOT_RISING": 780,
+      "INSUFFICIENT_EPOCHS": 23,
+      "FADING": 17,
+      "SCAN_SYSTEMATIC": 1,
+      "IMPULSIVE_SHAPE": 25
+    },
+    "vet": {
+      "verdicts": {},
+      "flags": {}
+    }
+  },
+  "sensitivity": {
+    "n_stars": 823,
+    "amps": {
+      "0.10": {
+        "n": 823,
+        "n_recovered": 690,
+        "fraction": 0.8383961117861483
+      },
+      "0.20": {
+        "n": 823,
+        "n_recovered": 788,
+        "fraction": 0.9574726609963548
+      },
+      "0.40": {
+        "n": 823,
+        "n_recovered": 818,
+        "fraction": 0.9939246658566221
+      }
+    },
+    "note": "linear ramps of the stated amplitude over 10 yr injected on both bands of screened, non-rising stars; fraction recovered as IGNITION_CANDIDATE by the rise test alone (before the contaminant ladder)"
+  },
+  "coverage": null,
+  "ensemble": {
+    "per_shard_drift": [
+      {
+        "tag": "s0of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0206,
+            "first_to_last_mag": 0.0206,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0604,
+            "first_to_last_mag": 0.0574,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s1of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.02,
+            "first_to_last_mag": 0.02,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0577,
+            "first_to_last_mag": 0.0537,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s2of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0175,
+            "first_to_last_mag": 0.0175,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0573,
+            "first_to_last_mag": 0.0545,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s3of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0198,
+            "first_to_last_mag": 0.0198,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0595,
+            "first_to_last_mag": 0.058,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s4of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.022,
+            "first_to_last_mag": 0.022,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.064,
+            "first_to_last_mag": 0.064,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s5of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0175,
+            "first_to_last_mag": 0.0175,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0579,
+            "first_to_last_mag": 0.0545,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s6of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0175,
+            "first_to_last_mag": 0.0175,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0555,
+            "first_to_last_mag": 0.046,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s7of8",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.017,
+            "first_to_last_mag": 0.017,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0625,
+            "first_to_last_mag": 0.0625,
+            "span_yr": 10.75
+          }
+        }
+      }
+    ],
+    "raw_two_band_fading_5sigma": 18,
+    "raw_two_band_rising_5sigma": 0,
+    "note": "per-shard median zero-point offsets by 0.25-yr bin were subtracted before the rise test (seti.ignition.ensemble); raw_* count stars whose UNCORRECTED bare linear slope is >= 5 sigma in both bands"
+  },
   "shards": {
     "expected": 8,
-    "found": 0,
-    "found_tags": [],
-    "missing": [
+    "found": 8,
+    "found_tags": [
       "s0of8",
       "s1of8",
       "s2of8",
@@ -109,28 +304,63 @@
       "s5of8",
       "s6of8",
       "s7of8"
-    ]
+    ],
+    "missing": []
   },
-  "degraded": [
-    "shards_missing:8/8"
-  ],
-  "veto_counters": {
-    "screen": {},
+  "degraded": [],
+  "offline": true,
+  "optical_dir": null,
+  "config": {
+    "rise": {
+      "min_epochs": 10,
+      "min_baseline_yr": 5.0,
+      "slope_sigma_min": 5.0,
+      "rise_sigma_min": 3.0,
+      "tau_p_max": 0.001,
+      "mono_frac_min": 0.6,
+      "dbic_min": 6.0,
+      "scan_amp_frac_max": 0.3333,
+      "scan_period_days": [
+        345.0,
+        385.0
+      ],
+      "scan_period_step_days": 5.0,
+      "decay_tau_grid_yr": [
+        0.3,
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        3.0,
+        5.0
+      ],
+      "growth_tau_grid_yr": [
+        1.0,
+        1.5,
+        2.0,
+        3.0,
+        5.0,
+        8.0,
+        12.0,
+        20.0
+      ],
+      "err_floor_mag": 0.005
+    },
     "vet": {
-      "verdicts": {},
-      "flags": {}
+      "parallax_over_error_min": 10.0,
+      "pm_sig_min": 5.0,
+      "galactic_latitude_min_deg": 15.0,
+      "w1_saturation_mag": 8.0,
+      "w2_saturation_mag": 7.0,
+      "frac_nb_gt1_max": 0.2,
+      "frac_na_gt0_max": 0.2,
+      "ph_qual_cut_frac_max": 0.5,
+      "agn_w1w2_min": 0.8,
+      "w1w2_2010_max": 0.15,
+      "optical_slope_sigma_max": 3.0,
+      "optical_rms_max": 0.05,
+      "optical_min_points": 20
     }
   },
-  "stage_counts": {
-    "screened": 0,
-    "rise_candidates": 0,
-    "vetted": 0,
-    "survivors": 0
-  },
-  "sensitivity": {
-    "n_stars": 0,
-    "amps": {},
-    "note": "linear ramps of the stated amplitude over 10 yr injected on both bands of screened, non-rising stars; fraction recovered as IGNITION_CANDIDATE by the rise test alone (before the contaminant ladder)"
-  },
-  "note": "nothing was screened, so nothing about ignitions was measured; this is NOT a null result and must not be reported as one"
+  "note": "a candidate here is a star whose W1 and W2 both rise monotonically over >= 5 yr at >= 5 sigma with a ramp preferred over an impulsive born excess, and that survived the contaminant ladder; NO_IGNITION_CANDIDATE is a count over n_stars_screened, not an occurrence limit, and is not written up (CLAUDE.md)"
 }

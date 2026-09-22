@@ -21,11 +21,19 @@ on:
       stage:
         description: >-
           "all" (probe, run, reduce), "probe" (SPARCL fields + archive URL
-          reconnaissance only — cheap, run first), "run" (per-exposure
-          measurements, sharded), or "reduce" (merge checkpoints on the branch,
-          SIMBAD, NIST, summary).
+          reconnaissance only — cheap, run first), "diagnose" (raw side-by-side
+          of the SPARCL coadd, the SAS file coadd and each exposure for the top
+          `top` survivors — use when a class looks like a systematic), "run"
+          (per-exposure measurements, sharded), "reduce" (merge checkpoints
+          on the branch, SIMBAD, NIST, summary), or "control" (the same
+          wavelength in unrelated stars of the same type — the only test that
+          rejects a feature of the spectral type itself; needs a reduce first).
         required: false
         default: "all"
+      n_control:
+        description: "control stage: comparison spectra per surviving line"
+        required: false
+        default: "40"
       n_shards:
         description: "Number of parallel shards for the run stage (1-8)"
         required: false
@@ -63,7 +71,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,spectra]"
           pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
-          pip install fsspec aiohttp requests
+          pip install fsspec aiohttp requests astropy-healpix
           python -c "import sparcl.client, fsspec, aiohttp, astropy; print('imports OK')"
       - name: Offline gate
         run: python -m pytest tests/test_spectra_persist.py -q -p no:cacheprovider
@@ -82,25 +90,135 @@ jobs:
         run: |
           scripts/commit_results.sh "spectra-persist probe" results/spectra_persist/probe.json
 
+  diagnose:
+    if: ${{ github.event.inputs.stage == 'diagnose' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,spectra]"
+          pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
+          pip install fsspec aiohttp requests astropy-healpix
+          python -c "import sparcl.client, astropy; print('imports OK')"
+      - name: Diagnose (SPARCL coadd vs SAS file coadd vs exposures)
+        run: |
+          python -m seti.spectra.persist --stage diagnose \
+            --top "${{ github.event.inputs.top || '8' }}" \
+            --release "${{ github.event.inputs.release || 'SDSS' }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: persist-diagnose
+          path: results/spectra_persist/diagnose.json
+          if-no-files-found: warn
+      - name: Commit diagnose
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh "spectra-persist diagnose" results/spectra_persist/diagnose.json
+
+  control:
+    # The comparison sample: the same wavelength in unrelated stars of the same
+    # kind.  It is the only test that can reject a feature the star's spectral
+    # TYPE produces, which persists in every exposure and in every epoch and so
+    # survives both the per-exposure test and a second epoch.
+    if: ${{ github.event.inputs.stage == 'control' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,spectra]"
+          pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
+          pip install requests
+          python -c "import sparcl.client, astropy; print('imports OK')"
+      - name: Control sample (same wavelength, unrelated stars of the same type)
+        run: |
+          python -m seti.spectra.persist --stage control \
+            --n-control "${{ github.event.inputs.n_control || '40' }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: persist-control
+          path: results/spectra_persist/control.json
+          if-no-files-found: warn
+      - name: Commit control
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh "spectra-persist control sample" \
+            results/spectra_persist/control.json
+
+  plan:
+    # A fixed [0..7] matrix asks the scheduler for EIGHT runners even when four
+    # shards were requested: the four extra jobs have to acquire a runner just
+    # to evaluate their own skip condition and exit.  With 18 channels sharing
+    # one account's concurrency that is four slots taken from other channels
+    # for nothing, and four more scheduling events this run has to wait behind.
+    # The matrix is built from n_shards instead.
+    if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.mk.outputs.shards }}
+    steps:
+      - id: mk
+        env:
+          N_SHARDS: ${{ github.event.inputs.n_shards || '4' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          try:
+              n = int((os.environ.get("N_SHARDS") or "4").strip())
+          except ValueError:
+              n = 4
+          n = max(1, min(8, n))
+          print("shards=" + json.dumps(list(range(n))))
+          PY
+          cat "$GITHUB_OUTPUT"
+
   run:
-    if: ${{ always() && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run') && needs.probe.result != 'failure' }}
-    needs: [probe]
+    if: ${{ always() && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run') && needs.probe.result != 'failure' && needs.plan.result == 'success' }}
+    needs: [probe, plan]
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
     steps:
-      - name: Skip shards beyond n_shards
+      - name: Shard identity
         id: gate
-        run: |
-          N="${{ github.event.inputs.n_shards || '4' }}"
-          if [ "${{ matrix.shard }}" -ge "$N" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; else echo "skip=false" >> "$GITHUB_OUTPUT"; fi
+        run: echo "skip=false" >> "$GITHUB_OUTPUT"
+      # Pin the SHARDS to the dispatched commit, not to the branch head.  Run
+      # 35738206630 queued for 45 minutes; its early shards checked out the
+      # median-continuum estimator and its late ones the linear-fit estimator,
+      # so one "run" produced two different measurements of the same survey.
+      # (The ckpt_version guard caught it -- 36 of 98 checkpoints were ignored
+      # as stale -- but a run must not be able to split in the first place.)
+      # The shards only upload artifacts; `reduce` still checks out the branch
+      # because it commits back to it.
       - uses: actions/checkout@v4
         if: steps.gate.outputs.skip == 'false'
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-python@v5
         if: steps.gate.outputs.skip == 'false'
         with:
@@ -111,12 +229,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,spectra]"
           pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
-          pip install fsspec aiohttp requests
+          pip install fsspec aiohttp requests astropy-healpix
           python -c "import sparcl.client, fsspec, aiohttp, astropy; print('imports OK')"
       - name: Per-exposure measurements (shard ${{ matrix.shard }})
         if: steps.gate.outputs.skip == 'false'
         run: |
-          git pull --quiet origin ${{ github.ref_name }} || true
+          # Pick up checkpoints already committed on the branch WITHOUT pulling
+          # the branch's code over the pinned commit: only the ckpt directory.
+          git fetch --quiet origin ${{ github.ref_name }} || true
+          git checkout --quiet FETCH_HEAD -- results/spectra_persist/ckpt || true
+          git reset --quiet || true
           ARGS="--stage run --shard ${{ matrix.shard }} --n-shards ${{ github.event.inputs.n_shards || '4' }}"
           ARGS="$ARGS --top ${{ github.event.inputs.top || '0' }} --max-exposures ${{ github.event.inputs.max_exposures || '10' }}"
           if [ -n "${{ github.event.inputs.release }}" ]; then ARGS="$ARGS --release ${{ github.event.inputs.release }}"; fi

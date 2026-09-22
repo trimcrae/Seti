@@ -7,9 +7,15 @@ is testable offline.  The three quantities the channel turns on:
   host of luminosity ``L`` (a white dwarf's photosphere, a pulsar's spin-down
   power) sits at ``T^4 = L / (16 pi sigma r^2)``.  Osmanov (2016, 2018)
   computes habitable-temperature rings around pulsars at 300-700 K; that band
-  is where a Wien peak falls in W2 (630 K) and W1 (852 K), so it is a **W1/W2
-  excess**, which escapes the frozen W3/W4 ceiling that bounds every warm-dust
-  channel in this repository.
+  is where a Wien peak falls in W2 (630 K) and W1 (864 K) -- the *wavelength*
+  form of Wien's law, ``2897.77 um K / lambda_iso``, which is the convention
+  used throughout this repository (``excess.wien_peak_k``).  The frequency
+  form puts those peaks at 1108 K and 1521 K instead; nothing here depends on
+  which is quoted, because the selection is made on measured colours and a
+  fitted blackbody rather than on a peak, but the two numbers differ by 76%
+  and quoting one while meaning the other is an easy way to mis-state the
+  band.  Either way it is a **W1/W2 excess**, which escapes the frozen W3/W4
+  ceiling that bounds every warm-dust channel in this repository.
 * **The ring flux.**  A ring intercepting a fraction ``f`` of ``L`` re-emits
   ``f L`` as a blackbody at ``T``; at distance ``d`` its flux density is
   ``F_nu = (f L / 4 pi d^2) * pi B_nu(T) / (sigma T^4)``.  Inverting for ``f``

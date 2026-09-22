@@ -447,6 +447,19 @@ jobs:
               print(f"::notice::coverage: {cov.get('tiles_done')}/{cov.get('tiles_in_sky')} tiles, "
                     f"sky fraction {cov.get('sky_fraction_done')}, {cov.get('n_parent_done_tiles')} parent stars")
           PY
+      - name: Drop a reused run's probe record — this dispatch did not gather it
+        if: ${{ always() && github.event.inputs.sample_from_run_id != '' }}
+        run: |
+          # The sample job deliberately does not commit a reused artifact's
+          # probe.json: the branch's own probe record is the most recent LIVE
+          # one.  The reused file is still sitting in the tree, though, and the
+          # commit-back below would put it back over the branch's newer record
+          # — which is what run 35738088082 did to run 35740159635's probe.
+          # Remove it, so only a probe this dispatch actually ran is committed.
+          rm -f results/ignition/probe.json
+          echo "sample_from_run_id=${{ github.event.inputs.sample_from_run_id }}:" \
+               "probe.json in the tree came from that run's artifact, not this" \
+               "dispatch — not committing it over the branch's live probe record"
       - name: Commit results
         if: always()
         env:
@@ -455,7 +468,7 @@ jobs:
           # Small files only: the epochs CSVs and parquet files travel as artifacts.
           scripts/commit_results.sh \
             "ignition: an infrared excess being born — probe/sample/acquire/screen/assess" \
-            results/ignition/probe.json \
+            $(ls results/ignition/probe.json 2>/dev/null) \
             results/ignition/sample.json \
             results/ignition/summary.json \
             $(ls results/ignition/summary_*.json 2>/dev/null) \

@@ -5,19 +5,31 @@ on:
     branches: ["**"]
   pull_request:
   workflow_dispatch:
+  # `main` is gated on a clock, not on every merge. Eighteen channel agents
+  # merge to it every few minutes; one gate run per merge costs one runner slot
+  # per merge, and the runners are what the data-touching searches are starving
+  # for. An hourly run gates the head that exists at the time, which is what
+  # anyone reading `main` actually needs.
+  schedule:
+    - cron: "17 * * * *"
 
-# Only the newest commit on a branch needs its gate run. Parallel channel agents
-# push many small commits, and without this each push queues another full CI run
-# behind the last, starving the data-touching searches of runners. Superseded
-# runs are cancelled; the newest one still gates the branch.
+# Two regimes, both expressed through the GROUP.
+#
+# A push shares one group per ref, so the newest commit supersedes the older
+# runs: on a feature branch that is the agent's own feedback loop and only the
+# tip matters. On `main` this means a burst of merges leaves no completed run —
+# acceptable ONLY because of the scheduled run below, which is never superseded
+# because its group carries its own run id. Without that clock, cancelling on
+# `main` silently left the branch everything is merged into as the one branch
+# not being gated at all (six consecutive cancelled runs, 2026-09-22 16:02-16:14
+# UTC).
+#
+# Expressed through the group and not through `cancel-in-progress` on purpose:
+# `cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}` was tried and did
+# NOT take effect, while a group name is plain string interpolation.
 concurrency:
-  group: ci-${{ github.ref }}
-  # On a feature branch only the newest commit needs its gate run, so supersede
-  # the older ones. On `main` never cancel: merges land faster than a run takes,
-  # so cancelling meant no run on `main` ever finished and the branch everything
-  # is merged into was the one branch that stopped being gated. Runs there queue
-  # and each one completes against the head it was raised for.
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: ci-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
+  cancel-in-progress: true
 
 jobs:
   offline:

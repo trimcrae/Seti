@@ -1238,3 +1238,55 @@ Two smaller defects from the same run, both of which cost a whole shard:
   NON-measurement with `lc_status=MEASURE_RAISED` and the exception verbatim,
   counted as `n_measure_failed`. One pathological target costs itself and
   nothing else.
+
+
+### 11.10 What the population's own sensitivity allows (measured, not assumed)
+
+The stage classifies most of what it reaches `not_measurable`. That is not a
+threshold set too high, and it is not an error model that has been inflated:
+across the 688 rows committed so far, the ratio of the **total** error to the
+purely statistical one has a median of **1.002**, and where the reduction
+ensemble has too few members to measure a spread the ratio is exactly 1. The
+errors are not the problem. The depths are.
+
+Measured on the rows where both families returned a depth (n = 256):
+
+| quantity | median | p84 | p95 |
+|---|---|---|---|
+| KOI depth transposed to the TESS band | **240 ppm** | 769 | 1,963 |
+| TESS total depth error, PDCSAP | 810 ppm | | |
+| TESS total depth error, SAP | 461 ppm | | |
+
+So the *expected* S/N of the reference transit — what TESS would measure if
+nothing had changed at all — is below one for the median KOI. Taking the
+**weaker** of the two families, which is what a candidate must clear in both:
+
+| expected S/N of the reference transit | rows |
+|---|---|
+| > 1 | 46 of 256 |
+| > 2 | 21 |
+| > 3 | 15 |
+| > 5 | **7** |
+| > 10 | 3 |
+
+This is a fact about TESS on the Kepler field, not about this pipeline: the
+median KOI is a 240 ppm transit on a Kp ≈ 14.1 star, and a 30 cm telescope
+with 21″ pixels does not measure that depth to 5 % in a handful of sectors.
+The depth distribution of the target list says the same thing from the other
+side — of 4,619 targets with a depth, **803** are deeper than 1,000 ppm, 277
+deeper than 3,000 ppm and 94 deeper than 10,000 ppm.
+
+Two consequences, both of which the stage is built to honour:
+
+1. **Reach and measurement are different numbers, and both are reported.**
+   Stage 1 reached 108 KOIs. This stage *reaches* every confirmed and
+   candidate KOI with a TIC and states a per-planet detectable depth change
+   for each — `detectable_depth_change_ppm`, which is `+inf` where the star
+   has no sensitivity at all. The subset on which a > 5σ depth *change* could
+   be seen in both SAP and PDCSAP is of order a few hundred, concentrated in
+   the deep, bright tail. A non-detection on the other several thousand is
+   honest only because its sensitivity is on the row; without that number it
+   would be a null dressed as a search.
+2. **The search is a search of that tail.** A `not_measurable` row is not a
+   planet that failed a test; it is a planet no test was possible on. Counting
+   it as a null would be the error the whole channel exists to avoid.

@@ -46,12 +46,17 @@ import numpy as np
 import pandas as pd
 
 from . import acquire as A
+from . import diurnal as D
+from . import pcp as PCP
 from . import radar as R
 from . import thermal as T
 from . import vet as V
 from .labels import RasterMeta, read_label, read_raster
 
-STAGES = ("probe", "acquire", "screen", "assess")
+#: the anisothermality pipeline (kept: it runs the moment per-channel polar
+#: maps exist) and the diurnal one, which is what the PDS holdings support
+STAGES = ("probe", "pcp", "assess_diurnal")
+STAGES_ANISO = ("probe", "acquire", "screen", "assess")
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_NONE = "NO_ANISOTHERMAL_SURVIVOR"
 VERDICT_CANDIDATES = "ANISOTHERMAL_CANDIDATES"
@@ -942,6 +947,239 @@ def stage_assess(conf: dict, out: Path, *, fetch=None, synthetic: bool = False, 
 
 
 # ---------------------------------------------------------------------------
+# the diurnal pipeline: the screen the PDS polar holdings actually support
+# ---------------------------------------------------------------------------
+def _read_raster(path: Path, fallback_dtype=">i2") -> tuple[np.ndarray | None, dict]:
+    """A PDS3 raster through the label parser, falling back to a square read
+    when the label cannot be parsed.  The fallback is recorded, never silent."""
+    note: dict = {}
+    try:
+        meta = read_label(path)
+        arr = read_raster(meta)
+        note["route"] = "label"
+        note["shape"] = list(np.shape(arr))
+        return np.asarray(arr), note
+    except Exception as exc:  # noqa: BLE001
+        note["label_error"] = f"{type(exc).__name__}: {exc}"[:300]
+    img = path.with_suffix(".img")
+    for p in (img, path):
+        if not p.exists():
+            continue
+        n = p.stat().st_size
+        for dt in (fallback_dtype, "<i2", "u1"):
+            item = np.dtype(dt).itemsize
+            if n % item:
+                continue
+            side = int(round((n / item) ** 0.5))
+            if side * side * item == n:
+                note.update({"route": "square_fallback", "dtype": dt, "side": side, "path": str(p)})
+                return np.fromfile(p, dtype=dt).reshape(side, side), note
+    note["route"] = "FAILED"
+    return None, note
+
+
+def _acquire_psr(conf: dict, fetch, pole: str, ddir: Path, half_px: int) -> dict:
+    """The LOLA permanently-shadowed raster, cropped to the PCP grid."""
+    acq = conf["acquire"]
+    rec: dict = {"pole": pole}
+    ddir.mkdir(parents=True, exist_ok=True)
+    for ext in ("lbl", "img"):
+        url = PCP.lpsr_url(pole, ext)
+        dest = ddir / Path(url).name
+        res = A.download(fetch, url, dest, max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
+                         timeout=float(acq.get("download_timeout_s", 900)))
+        rec[ext] = {"url": url, "status": res.status, "error": res.error, "n_bytes": res.n_bytes}
+        if not res.ok:
+            rec["status"] = "NO_PSR_RASTER"
+            return rec
+    arr, note = _read_raster(ddir / Path(PCP.lpsr_url(pole, "lbl")).name)
+    rec["read"] = note
+    if arr is None:
+        rec["status"] = "PSR_UNREADABLE"
+        return rec
+    rec["full_shape"] = list(arr.shape)
+    rec["n_psr_full"] = int((arr > 0).sum())
+    mask = PCP.crop_lpsr(arr, half_px)
+    rec.update({"status": "OK", "n_psr_cropped": int(mask.sum()), "shape": list(mask.shape)})
+    return {**rec, "mask": mask}
+
+
+def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, poles=None,
+              run_sensitivity: bool = True) -> dict:
+    """Download the selected Diviner PCP local-time maps, build the cube, run
+    the diurnal screen.  Each table is deleted after it is rasterised, so peak
+    disk is one product (262 MB) and not the whole set."""
+    fetch = fetch or A.http_fetch
+    acq = conf["acquire"]
+    dcfg = conf.get("diurnal", {})
+    thr = {**D.DEFAULT_THRESHOLDS, **{k: v for k, v in dcfg.items() if k in D.DEFAULT_THRESHOLDS}}
+    half_px = PCP.half_px_for(float(dcfg.get("min_lat_deg", 80.0)))
+    bins = PCP.parse_bin_spec(dcfg.get("ltim_bins", "every:16"))
+    seasons = list(dcfg.get("seasons", ["summer", "winter"]))
+    reports = {}
+    for pole in shard_poles(conf, shard, poles):
+        ddir = out / "data" / pole
+        ddir.mkdir(parents=True, exist_ok=True)
+        rep: dict = {"stage": "pcp", "pole": pole, "generated_utc": _now(), "half_px": half_px,
+                     "grid": [2 * half_px + 1] * 2, "ltim_bins": bins, "seasons": seasons,
+                     "local_times_h": [round(PCP.local_time_hours(b), 3) for b in bins],
+                     "products": {}, "bytes": 0, "degraded": []}
+        psr = _acquire_psr(conf, fetch, pole, ddir, half_px)
+        rep["psr"] = {k: v for k, v in psr.items() if k != "mask"}
+        if psr.get("status") != "OK":
+            rep["degraded"].append(f"psr:{psr.get('status')}")
+        cube = D.DiurnalCube(pole, PCP.pcp_georef(pole, half_px))
+        n_ok = 0
+        for season in seasons:
+            for b in bins:
+                key = f"{season}/ltim{int(b):02d}"
+                url = PCP.pcp_url(pole, season, b, "tab")
+                dest = ddir / Path(url).name
+                res = A.download(fetch, url, dest, max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
+                                 timeout=float(acq.get("download_timeout_s", 900)))
+                prec = {"url": url, "status": res.status, "error": res.error, "n_bytes": res.n_bytes}
+                if not res.ok:
+                    prec["outcome"] = "DOWNLOAD_FAILED"
+                    rep["products"][key] = prec
+                    continue
+                rep["bytes"] += int(res.n_bytes or 0)
+                try:
+                    tab = PCP.read_pcp_tab(dest)
+                    r = PCP.rasterise(tab, pole, half_px)
+                except Exception as exc:  # noqa: BLE001
+                    prec["outcome"] = f"PARSE_FAILED: {type(exc).__name__}: {exc}"[:300]
+                    rep["products"][key] = prec
+                    dest.unlink(missing_ok=True)
+                    continue
+                prec.update({k: v for k, v in r.items() if k not in ("array", "georef")})
+                if r.get("status") == "OK":
+                    cube.put(season, f"ltim{int(b):02d}", r["array"], source=url)
+                    prec["outcome"] = "OK"
+                    n_ok += 1
+                else:
+                    prec["outcome"] = r.get("status")
+                rep["products"][key] = prec
+                dest.unlink(missing_ok=True)      # one product on disk at a time
+                print(f"[crypt] pcp {pole} {key}: {prec['outcome']} "
+                      f"n={prec.get('n_on_grid')} resid={prec.get('georef_resid_deg')}")
+        rep["n_layers"] = n_ok
+        rep["n_missing"] = len(seasons) * len(bins) - n_ok
+        if n_ok == 0:
+            rep["status"] = VERDICT_NO_DATA
+            _write(out / f"pcp_{pole}.json", rep)
+            reports[pole] = rep
+            print(f"[crypt] pcp {pole}: {VERDICT_NO_DATA}")
+            continue
+        scr = D.screen_pole(cube, thr, hardware=conf.get("hardware"), external_psr=psr.get("mask"))
+        flags = scr.pop("flags", None)
+        if flags is not None and len(flags):
+            flags.sort_values("z_floor", ascending=False).head(4000).to_csv(
+                out / f"diurnal_flags_{pole}.csv", index=False)
+            scr["top_flags"] = flags.sort_values("z_floor", ascending=False).head(40).to_dict("records")
+            cand = flags[flags["class"] == "candidate"]
+            scr["candidates"] = cand.sort_values("z_floor", ascending=False).head(200).to_dict("records")
+        else:
+            scr["top_flags"], scr["candidates"] = [], []
+        g = cube.georef
+        scr["mask"]["area_km2_interior"] = scr["mask"].get("n_interior", 0) * g.pixel_area_m2 / 1e6
+        scr["pole"] = pole
+        scr["degraded"] = list(scr.get("degraded", [])) + rep["degraded"]
+        scr["acquisition"] = {"n_layers": n_ok, "n_missing": rep["n_missing"], "bytes": rep["bytes"],
+                              "ltim_bins": bins, "seasons": seasons}
+        if run_sensitivity:
+            sens = D.sensitivity(cube, thr, conf.get("sensitivity", {}).get("areas_m2", [3, 10, 30, 100]),
+                                 float(conf.get("sensitivity", {}).get("t_hot_K", [300.0])[0]),
+                                 n_per_area=int(conf.get("sensitivity", {}).get("n_per_area", 20)),
+                                 seed=int(conf.get("sensitivity", {}).get("seed", 11)),
+                                 hardware=conf.get("hardware"), external_psr=psr.get("mask"))
+            scr["sensitivity"] = sens
+            _write(out / f"diurnal_sensitivity_{pole}.json", sens)
+        _write(out / f"diurnal_{pole}.json", scr)
+        rep["status"] = "OK"
+        _write(out / f"pcp_{pole}.json", rep)
+        reports[pole] = scr
+        print(f"[crypt] diurnal {pole}: {scr['status']} interior={scr['mask'].get('n_interior')} "
+              f"flagged={scr.get('n_flagged')} counts={scr['counts']} floor={scr.get('floor')}")
+    return reports
+
+
+def stage_assess_diurnal(conf: dict, out: Path) -> dict:
+    """Merge the per-pole diurnal screens into results/crypt/summary.json."""
+    poles = conf["products"]["poles"]
+    screens = {p: _read_json(out / f"diurnal_{p}.json") for p in poles}
+    pcps = {p: _read_json(out / f"pcp_{p}.json") for p in poles}
+    probe = _read_json(out / "probe.json") or {}
+    ok = [p for p in poles if (screens.get(p) or {}).get("status") == "OK"]
+    counts = {c: 0 for c in D.CLASSES}
+    degraded: list[str] = []
+    n_interior, n_flagged, area_km2 = 0, 0, 0.0
+    cands: list[dict] = []
+    for p in ok:
+        s = screens[p]
+        for c, n in (s.get("counts") or {}).items():
+            counts[c] = counts.get(c, 0) + int(n)
+        n_interior += int((s.get("mask") or {}).get("n_interior", 0))
+        area_km2 += float((s.get("mask") or {}).get("area_km2_interior", 0.0) or 0.0)
+        n_flagged += int(s.get("n_flagged", 0))
+        degraded += [f"{p}:{d}" for d in s.get("degraded", [])]
+        for c in s.get("candidates", []):
+            cands.append({**c, "pole": p})
+    for p in [x for x in poles if x not in ok]:
+        degraded.append(f"{p}:{(screens.get(p) or {}).get('status') or (pcps.get(p) or {}).get('status') or 'NOT_SCREENED'}")
+    if not ok:
+        verdict = VERDICT_NO_DATA
+    elif cands:
+        verdict = f"DIURNALLY_INVARIANT_CANDIDATES ({len(cands)})"
+    else:
+        verdict = "NO_DIURNALLY_INVARIANT_SURVIVOR"
+    if degraded and ok:
+        verdict = f"{verdict}; DEGRADED ({', '.join(sorted(set(degraded)))})"
+    summary = {
+        "verdict": verdict, "generated_utc": _now(), "screen": "diurnal", "synthetic": False,
+        "poles_screened": ok, "poles_missing": [p for p in poles if p not in ok],
+        "n_psr_interior_px": n_interior, "psr_interior_area_km2": area_km2,
+        "n_flagged": n_flagged, "counts": counts, "n_candidates": len(cands),
+        "candidates": cands[:200], "degraded": sorted(set(degraded)),
+        "floor": {p: screens[p].get("floor") for p in ok},
+        "mask": {p: screens[p].get("mask") for p in ok},
+        "stats": {p: screens[p].get("stats") for p in ok},
+        "sensitivity": {p: (screens[p].get("sensitivity") or {}).get("rows") for p in ok},
+        "acquisition": {p: (screens.get(p) or {}).get("acquisition")
+                        or {"status": (pcps.get(p) or {}).get("status"),
+                            "n_layers": (pcps.get(p) or {}).get("n_layers"),
+                            "n_missing": (pcps.get(p) or {}).get("n_missing")} for p in poles},
+        "products": {p: {"ltim_bins": (pcps.get(p) or {}).get("ltim_bins"),
+                         "local_times_h": (pcps.get(p) or {}).get("local_times_h"),
+                         "bytes": (pcps.get(p) or {}).get("bytes"),
+                         "psr": (pcps.get(p) or {}).get("psr")} for p in poles},
+        "routes": {"pcp_url_template": PCP.PCP_URL_TEMPLATE, "lpsr_url": PCP.LPSR_URL,
+                   "diviner_ode": (probe.get("diviner", {}).get("ode") or {}).get("queries"),
+                   "diviner_reached": probe.get("reached", {}).get("diviner")},
+        "thresholds": {**D.DEFAULT_THRESHOLDS, **{k: v for k, v in (conf.get("diurnal") or {}).items()
+                                                  if k in D.DEFAULT_THRESHOLDS}},
+        "note": ("A candidate is a pixel inside the LOLA-mapped permanently shadowed region (eroded "
+                 "edge_px) whose FLOOR bolometric temperature — the minimum over every loaded "
+                 "(season, local-time) bin — exceeds its local annulus background by >= z_min of that "
+                 "annulus's own scatter, while its winter diurnal amplitude and its summer-winter "
+                 "offset are both below threshold and the excess is present in >= n_bins_excess bins. "
+                 "Passive heating inside a PSR (scattered light off a sunlit rim, re-radiated IR from "
+                 "surrounding terrain) necessarily varies with local time and season; an internal "
+                 "source does not. NO_DIURNALLY_INVARIANT_SURVIVOR is a COUNT at the stated floor, "
+                 "not an occurrence limit, and is not written up. NO_DATA_REACHED is an access "
+                 "statement about the archive, never about the Moon."),
+    }
+    _write(out / "summary.json", summary)
+    _write(out / "candidates.json", {"generated_utc": _now(), "n": len(cands), "candidates": cands})
+    flat = [{k: v for k, v in c.items() if not isinstance(v, (dict, list))} for c in cands]
+    pd.DataFrame(flat if flat else None,
+                 columns=None if flat else ["pole", "line", "sample", "lon", "lat", "class"]
+                 ).to_csv(out / "candidates.csv", index=False)
+    print(f"[crypt] assess(diurnal): {verdict}; interior px={n_interior} ({area_km2:.0f} km2); "
+          f"flagged={n_flagged}; counts={counts}")
+    return summary
+
+
+# ---------------------------------------------------------------------------
 # entry points
 # ---------------------------------------------------------------------------
 def crypt_run(conf: dict | None = None, stage: str = "all", *, shard: str | None = None, poles=None,
@@ -966,8 +1204,15 @@ def crypt_run(conf: dict | None = None, stage: str = "all", *, shard: str | None
                                run_sensitivity=run_sensitivity)
         elif s == "assess":
             rep = stage_assess(conf, out, fetch=fetch, synthetic=synthetic, do_vet=do_vet)
+        elif s == "pcp":
+            if synthetic:
+                continue
+            rep = stage_pcp(conf, out, fetch=fetch, shard=shard, poles=poles,
+                            run_sensitivity=run_sensitivity)
+        elif s == "assess_diurnal":
+            rep = stage_assess_diurnal(conf, out)
         else:
-            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
+            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + STAGES_ANISO}")
     return rep
 
 
@@ -975,7 +1220,8 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="seti crypt",
                                 description="CRYPT (S55): anisothermal hot components and compact radar "
                                             "anomalies inside lunar permanently shadowed regions")
-    p.add_argument("--stage", default="all", help="probe|acquire|screen|assess|all or a comma list")
+    p.add_argument("--stage", default="all",
+                   help="probe|pcp|assess_diurnal|acquire|screen|assess|all or a comma list")
     p.add_argument("--shard", default="", help="i/n: this job's share of the poles")
     p.add_argument("--poles", default="", help="comma list (default from config)")
     p.add_argument("--out-dir", default="", help="results directory (default results/crypt)")
@@ -998,6 +1244,7 @@ if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["DEFAULTS", "STAGES", "VERDICT_CANDIDATES", "VERDICT_NONE", "VERDICT_NO_DATA", "build_layers",
-           "crypt_run", "load_crypt_config", "main", "needed_products", "parse_shard", "shard_poles",
-           "stage_acquire", "stage_assess", "stage_probe", "stage_screen"]
+__all__ = ["DEFAULTS", "STAGES", "STAGES_ANISO", "VERDICT_CANDIDATES", "VERDICT_NONE",
+           "VERDICT_NO_DATA", "build_layers", "crypt_run", "load_crypt_config", "main",
+           "needed_products", "parse_shard", "shard_poles", "stage_acquire", "stage_assess",
+           "stage_assess_diurnal", "stage_pcp", "stage_probe", "stage_screen"]

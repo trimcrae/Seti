@@ -167,7 +167,39 @@ patterns:
   resolution_m: "(?i)(^|[_\\-.])(\\d{2,4})m([_\\-.]|$)"
   subsolar: "(?i)(^|[_\\-.])(ssl|sslon|lon|sl|sub)\\d{2,3}([_\\-.]|$)|sub[- ]?solar"
 
-# The thermal screen (docs/crypt.md §3).
+# The screen the PDS polar holdings support: diurnal/seasonal invariance of
+# bolometric temperature (src/seti/crypt/diurnal.py).
+#
+# Ninety-six local-time bins x 2 seasons x 2 poles at 262 MB each is ~100 GB.
+# The screen does not need every bin, it needs the diurnal curve sampled well
+# enough to measure its amplitude and its floor: "every:16" takes bins
+# 1,17,33,49,65,81 — six bins four hours apart around the clock — in each
+# season, so 12 products and ~3.1 GB per pole.  Raise it once the channel has
+# a measurement; which bins were used is recorded with every result.
+diurnal:
+  min_lat_deg: 80.0          # the PCP cap; sets the 2535 x 2535 grid at 240 m
+  ltim_bins: "every:16"
+  seasons: ["summer", "winter"]
+  psr_tmax_K: 110.0
+  edge_px: 2
+  n_bins_min: 8              # (season, local-time) bins that must carry data
+  n_bins_excess: 5           # bins in which the excess must be present
+  z_min: 5.0
+  z_bin_min: 3.0
+  amp_max_K: 2.0             # winter diurnal amplitude allowed of a candidate
+  dseason_max_K: 2.0         # |summer - winter| allowed of a candidate
+  elevated_frac: 0.5
+  max_cluster_px: 6
+  stripe_min: 4
+  r_in_px: 4
+  r_out_px: 16
+  bg_min_px: 40
+  sigma_floor_K: 0.05
+  floor_t_hot_K: 300.0
+  floor_nsigma: 5.0
+
+# The multi-channel thermal screen (docs/crypt.md §3).  Retained: it runs the
+# moment a per-channel POLAR gridded product exists.  None does today.
 thermal:
   psr_tmax_K: 110.0          # cold trap: never warmer than this (Diviner definition)
   edge_px: 2                 # footprints from the illumination boundary

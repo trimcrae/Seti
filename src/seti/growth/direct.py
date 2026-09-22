@@ -164,6 +164,7 @@ REASON_NO_TRANSIT = "NO_USABLE_TRANSIT"
 REASON_BUDGET = "BUDGET_EXHAUSTED"
 REASON_NOT_REACHED = "NOT_REACHED"
 REASON_NO_REFERENCE = "NO_REFERENCE_DEPTH"
+REASON_MEASURE_FAILED = "MEASURE_RAISED"
 REASONS = (REASON_QUERY_FAILED, REASON_ZERO_ROWS, REASON_TIC_UNRESOLVED, REASON_NO_EPHEMERIS,
            REASON_NO_TRANSIT, REASON_BUDGET, REASON_NOT_REACHED, REASON_NO_REFERENCE)
 
@@ -188,7 +189,7 @@ VETOES = (VETO_ODD_EVEN, VETO_DURATION, VETO_DURATION_INCONCLUSIVE, VETO_FPFLAG,
 #: Extra TIC-resolution routes tried in the shard when the ``ps`` routes failed.
 TIC_FALLBACK_ROUTES: tuple[str, ...] = ("tic_kic_crossid", "tic_region_kic", "tic_region_nearest")
 
-STAGES = ("probe", "targets", "measure", "assess", "control", "vet")
+STAGES = ("probe", "targets", "measure", "assess", "control", "vet", "vet-gather")
 
 #: The KOI columns the direct stage needs on top of stage 1's list: the epoch
 #: (``koi_time0bk`` is NOT in the stage-1 list) and the period's second error.
@@ -396,22 +397,95 @@ def _write(path: Path, obj) -> None:
     os.replace(tmp, path)
 
 
+# Catalogue identifiers that MUST round-trip exactly.  ``float_format="%.8g"``
+# is right for a depth in ppm and catastrophic for a TIC id: TIC 122785305 is
+# nine digits, so it was written "1.227853e+08" --- TIC 122785300, a star that
+# does not exist --- and every product query on it came back empty.  That one
+# format string is what held the ps-resolved route (2,697 of 2,993 TIC ids) to
+# near-zero light-curve coverage.  These columns are written as integers.
+ID_COLUMNS = ("tic_id", "kepid", "tic", "ticid", "TIC")
+
+
 def _write_csv(path: Path, df: pd.DataFrame) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
+    for col in ID_COLUMNS:
+        if col in df.columns:
+            try:
+                v = pd.to_numeric(df[col], errors="coerce")
+                if v.notna().any():
+                    df = df.copy()
+                    df[col] = v.round().astype("Int64")
+            except Exception as exc:                      # noqa: BLE001
+                # The runner installs a different pandas major version than the
+                # bench.  If the nullable-integer cast is not available there,
+                # the write must still happen --- degraded, and saying so.
+                print(f"[growth/direct] WARNING: could not write {col} as an integer "
+                      f"({exc!r}); ids may lose their last digit")
     df.to_csv(tmp, index=False, float_format="%.8g")
     os.replace(tmp, path)
 
 
 def _read_csv(path) -> pd.DataFrame:
+    """Read a results CSV.  A read that fails is REPORTED, never silent.
+
+    An empty frame here means "the shard has nothing to resume from" and, for
+    targets.csv, "this shard has no work" --- so swallowing a pandas-version
+    error would turn a broken read into a shard that measures nothing and says
+    it is done.  ``low_memory`` is a no-op in newer pandas, so it is dropped
+    and retried rather than allowed to decide the run.
+    """
     p = Path(path)
     if not p.exists() or not p.stat().st_size:
         return pd.DataFrame()
-    try:
-        return pd.read_csv(p, low_memory=False)
-    except Exception:                                     # noqa: BLE001
-        return pd.DataFrame()
+    last: Exception | None = None
+    for kw in ({"low_memory": False}, {}):
+        try:
+            return pd.read_csv(p, **kw)
+        except TypeError as exc:
+            last = exc
+            continue
+        except Exception as exc:                          # noqa: BLE001
+            last = exc
+            break
+    print(f"[growth/direct] WARNING: {p} could not be read ({last!r}); "
+          "treating it as empty, which is NOT a statement about the sky")
+    return pd.DataFrame()
+
+
+def tic_is_truncated(tic) -> bool:
+    """Could this TIC id have lost a digit to a ``"%.8g"`` CSV write?
+
+    ``%.8g`` keeps eight significant digits, so anything below 1e8 round-trips
+    exactly and anything at or above it comes back a multiple of ten.  A
+    genuine nine-digit TIC ending in zero is caught too --- it is then simply
+    confirmed against the sky, which costs one cone search and nothing else.
+    """
+    t = _f(tic)
+    if not (np.isfinite(t) and t > 0):
+        return False
+    return t >= 1.0e8 and int(round(t)) % 10 == 0
+
+
+#: Route markers the verification step writes; a route carrying one of these
+#: was checked against the star's own position, whatever the catalogue said.
+TIC_VERIFIED_MARKS = ("_confirms_", "_over_", "_after_")
+
+
+def record_tic_is_unverified(rec: dict) -> bool:
+    """Was this row measured against a TIC id nobody ever checked?
+
+    True for a row whose TIC could have lost a digit to the old ``"%.8g"``
+    write AND whose route is a bare catalogue route --- neither a
+    position/magnitude fallback nor a verified one.  Such a row's
+    ``QUERY_RETURNED_ZERO_ROWS`` says nothing about the star, and its ``OK``
+    may be another star's light curve, so resume must not accept either.
+    """
+    route = _s(rec.get("tic_route"))
+    if any(m in route for m in TIC_VERIFIED_MARKS) or route in TIC_FALLBACK_ROUTES:
+        return False
+    return tic_is_truncated(rec.get("tic_id"))
 
 
 def shard_of(kepid, n_shards: int) -> int:
@@ -1227,6 +1301,28 @@ def measure_family(products, family: str, *, period_days: float, t0_btjd: float,
 # ---------------------------------------------------------------------------
 # The comparison with the Kepler era, and the sensitivity
 # ---------------------------------------------------------------------------
+_MAX_LN_EXP = 709.0          # e**709.78 is the last finite double
+
+
+def detectable_change_ppm(ref_ppm: float, detectable_ln_ratio: float) -> float:
+    """``ref * (e**dln - 1)`` that cannot overflow.
+
+    On a star with essentially no sensitivity --- a shallow reference depth
+    against an enormous TESS error --- ``dln`` runs to hundreds and the plain
+    ``exp`` raises ``OverflowError``.  The honest value there is "larger than
+    any depth this star could have", i.e. ``+inf``, not a crash that costs the
+    whole shard.  ``expm1`` also keeps the small-``dln`` end accurate.
+    """
+    if not (np.isfinite(ref_ppm) and np.isfinite(detectable_ln_ratio)):
+        return float("nan")
+    if detectable_ln_ratio > _MAX_LN_EXP:
+        return float("inf")
+    try:
+        return float(ref_ppm * math.expm1(float(detectable_ln_ratio)))
+    except (OverflowError, ValueError):
+        return float("inf")
+
+
 def compare_family(depth_ppm: float, stat_err_ppm: float, total_err_ppm: float,
                    ref_ppm: float, ref_err_ppm: float, *, params: ClassifyParams | None = None,
                    n_candidate: float | None = None) -> dict:
@@ -1257,7 +1353,7 @@ def compare_family(depth_ppm: float, stat_err_ppm: float, total_err_ppm: float,
         s_exp = math.sqrt((total_err_ppm / ref_ppm) ** 2 + fr_ref ** 2 + params.sigma_sys_ln ** 2)
         out["sigma_ln_expected"] = s_exp
         out["detectable_ln_ratio"] = ncand * s_exp
-        out["detectable_depth_change_ppm"] = ref_ppm * (math.exp(ncand * s_exp) - 1.0)
+        out["detectable_depth_change_ppm"] = detectable_change_ppm(ref_ppm, ncand * s_exp)
     if np.isfinite(stat_err_ppm) and stat_err_ppm > 0:
         out["expected_snr"] = ref_ppm / stat_err_ppm
     if not (np.isfinite(depth_ppm) and np.isfinite(total_err_ppm) and total_err_ppm > 0):
@@ -1803,10 +1899,19 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         targets = _read_csv(out / "targets.csv")
     mine = select_shard(targets, shard, n_shards)
     done: dict[str, dict] = {}
+    n_redo_unverified = 0
     if resume:
         prev = _read_csv(paths["csv"])
         for r in (prev.to_dict(orient="records") if len(prev) else []):
             if _s(r.get("not_measured_reason")) in (REASON_BUDGET, REASON_NOT_REACHED):
+                continue
+            if record_tic_is_unverified(r):
+                # Measured (or, far more often, NOT measured) against a TIC id
+                # that had been truncated by the old "%.8g" write and was never
+                # checked against the sky.  Its QUERY_RETURNED_ZERO_ROWS is an
+                # artefact of the id, not a fact about the star, and its OK is a
+                # depth that may belong to a different star.  Redo it.
+                n_redo_unverified += 1
                 continue
             done[str(r.get("kepoi_name"))] = r
     prev_members = _read_csv(paths["members"]) if resume else pd.DataFrame()
@@ -1819,7 +1924,8 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     recs: list[dict] = list(done.values())
     members_frames: list[pd.DataFrame] = [prev_members] if len(prev_members) else []
     sector_frames: list[pd.DataFrame] = []
-    n_new, n_skipped, n_budget = 0, 0, 0
+    n_new, n_skipped, n_budget, n_measure_failed = 0, 0, 0, 0
+    n_tic_rechecked, n_tic_repaired, n_tic_suspect = 0, 0, 0
     tic_fallback_by_route: dict = {}
     fetch_status_counts: dict = {}
 
@@ -1849,21 +1955,62 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         started = _time.monotonic()
         tic = _f(rows[0].get("tic_id"))
         route = _s(rows[0].get("tic_route"))
-        if not (np.isfinite(tic) and tic > 0) and fp.tic_fallback:
+
+        def _resolve_tic(why: str, _kepid=kepid, _row=rows[0]):
+            """The position+magnitude route to this star's TIC.  ``(tic, route)``.
+
+            Retried, because a suspect catalogue id is now REFUSED when the sky
+            cannot name the star: one flaky TIC query must not turn into a
+            non-measurement that reads like a fact about TESS coverage.
+            """
             fn = tic_fn or astroquery_tic_fn
-            try:
-                tic, route = fn(kepid, _f(rows[0].get("ra")), _f(rows[0].get("dec")),
-                                _f(rows[0].get("koi_kepmag")),
-                                radius_arcsec=float(fp.tic_radius_arcsec),
-                                mag_tolerance=float(fp.tic_mag_tolerance))
-                log.record(f"tic_fallback_{int(kepid)}", f"KIC {int(kepid)}",
-                           rows=1 if np.isfinite(_f(tic)) else 0, extra={"route": route})
-            except Exception as exc:                      # noqa: BLE001
-                log.record(f"tic_fallback_{int(kepid)}", f"KIC {int(kepid)}", error=repr(exc)[:300])
-                tic, route = float("nan"), ""
-            tic = _f(tic)
-            if np.isfinite(tic):
-                tic_fallback_by_route[route] = tic_fallback_by_route.get(route, 0) + 1
+            t, r, last = float("nan"), "", ""
+            for attempt in range(max(int(fp.retries), 1)):
+                if deadline.expired():
+                    last = "budget_exhausted"
+                    break
+                if attempt and float(fp.retry_pause_s) > 0:
+                    _time.sleep(min(float(fp.retry_pause_s) * attempt, deadline.remaining()))
+                try:
+                    t, r = fn(_kepid, _f(_row.get("ra")), _f(_row.get("dec")),
+                              _f(_row.get("koi_kepmag")),
+                              radius_arcsec=float(fp.tic_radius_arcsec),
+                              mag_tolerance=float(fp.tic_mag_tolerance))
+                except Exception as exc:                  # noqa: BLE001
+                    last, t, r = repr(exc)[:300], float("nan"), ""
+                    continue
+                last = ""
+                break
+            if last:
+                log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}", error=last)
+                return float("nan"), ""
+            log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}",
+                       rows=1 if np.isfinite(_f(t)) else 0, extra={"route": r})
+            t = _f(t)
+            if np.isfinite(t):
+                tic_fallback_by_route[r] = tic_fallback_by_route.get(r, 0) + 1
+            return t, r
+
+        if not (np.isfinite(tic) and tic > 0) and fp.tic_fallback:
+            tic, route = _resolve_tic("fallback")
+        elif tic_is_truncated(tic) and route not in TIC_FALLBACK_ROUTES and fp.tic_fallback:
+            # A TIC id that cannot have survived a "%.8g" write is NOT a star
+            # id until the sky says so.  Querying it anyway is the dangerous
+            # case: TIC 122785300 may well be a REAL star with TESS data, and
+            # measuring it would be a silent wrong-target measurement, exactly
+            # the class of error the Kepler-718 b post-mortem warns about.
+            n_tic_suspect += 1
+            t2, r2 = _resolve_tic("verify")
+            if np.isfinite(t2) and t2 > 0:
+                same = int(t2) == int(tic)
+                route = r2 + ("_confirms_" if same else "_over_") + (route or "none")
+                tic = t2
+                n_tic_repaired += 0 if same else 1
+            else:
+                # Unverifiable: refuse it rather than measure a star we cannot
+                # name.  This is a non-measurement, never a statement about the
+                # sky.
+                tic, route = float("nan"), route + "_unverifiable"
         products, status, lc_route = [], REASON_TIC_UNRESOLVED, ""
         if np.isfinite(tic) and tic > 0:
             products, status, lc_route = fetch_products(
@@ -1871,15 +2018,49 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
                 key=str(rows[0].get("kepoi_name")))
             if status == STATUS_FAILED and deadline.expired():
                 status = REASON_BUDGET
+            # A catalogue-route TIC that serves NO products is as likely to be
+            # the wrong star as a star TESS never observed: the `ps` tic_id can
+            # be stale, and a TIC id that round-tripped through a %g float lost
+            # its ninth digit.  Before recording a non-detection, re-resolve the
+            # TIC from the star's own position and magnitude and try that.  A
+            # genuinely unobserved star simply comes back empty twice.
+            if (status == REASON_ZERO_ROWS and fp.tic_fallback and not deadline.expired()
+                    and route not in TIC_FALLBACK_ROUTES):
+                t2, r2 = _resolve_tic("recheck")
+                if np.isfinite(t2) and t2 > 0 and int(t2) != int(tic):
+                    p2, s2, lr2 = fetch_products(
+                        int(t2), products_fn=products_fn, params=fp, log=log, deadline=deadline,
+                        key=str(rows[0].get("kepoi_name")) + "_recheck")
+                    n_tic_rechecked += 1
+                    if s2 == STATUS_OK and p2:
+                        n_tic_repaired += 1
+                        tic, route = t2, (r2 + "_after_" + (route or "none"))
+                        products, status, lc_route = p2, s2, lr2
         fetch_status_counts[status] = fetch_status_counts.get(status, 0) + 1
         for r in rows:
             entry = dict(r)
             entry["tic_id"] = tic if np.isfinite(tic) else float("nan")
             entry["tic_route"] = route
             t1 = _time.monotonic()
-            rec, mem, sec, _fold_df = measure_direct_target(
-                entry, products, fetch_status=status, fetch_route=lc_route, fit=fit, ensemble=ens,
-                search=search, duration=dur_p, classify=cls_p, ld_table=ld_table)
+            try:
+                rec, mem, sec, _fold_df = measure_direct_target(
+                    entry, products, fetch_status=status, fetch_route=lc_route, fit=fit,
+                    ensemble=ens, search=search, duration=dur_p, classify=cls_p,
+                    ld_table=ld_table)
+            except Exception as exc:                          # noqa: BLE001
+                # One pathological star must never cost the shard its other
+                # hundreds.  The failure is recorded as a NON-measurement with
+                # the exception verbatim --- it is never a statement about the
+                # sky, and `assess` counts it under not_measured.
+                rec = {k: entry.get(k) for k in MEASUREMENT_COLUMNS if k in entry}
+                rec.update({"lc_status": REASON_MEASURE_FAILED, "lc_route": lc_route,
+                            "not_measured_reason": repr(exc)[:300],
+                            "n_products": len(products),
+                            "class": CLASS_NOT_MEASURED, "would_be_candidate_without_vetoes": False})
+                mem, sec, _fold_df = [], pd.DataFrame(), pd.DataFrame()
+                n_measure_failed += 1
+                print(f"[growth-direct] {entry.get('kepoi_name')} (shard {shard}): "
+                      f"{REASON_MEASURE_FAILED} {repr(exc)[:200]}")
             rec["shard"] = int(shard)
             rec["elapsed_s"] = round(_time.monotonic() - t1, 1)
             rec["class_provisional"] = rec.get("class")
@@ -1919,6 +2100,10 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
            "generated_utc": _now(), "n_targets_in_shard": int(len(mine)),
            "n_stars_in_shard": int(len(groups)), "n_measured_this_run": n_new,
            "n_skipped_already_done": n_skipped, "n_not_reached_budget": n_budget,
+           "n_measure_failed": n_measure_failed,
+           "n_tic_rechecked": n_tic_rechecked, "n_tic_repaired": n_tic_repaired,
+           "n_tic_suspect_truncation": n_tic_suspect,
+           "n_redone_unverified_tic": n_redo_unverified,
            "n_rows": int(len(df)), "budget_s": fp.shard_budget_s,
            "elapsed_s": round(deadline.elapsed(), 1), "budget_exhausted": bool(deadline.expired()),
            "fetch_status_counts": fetch_status_counts,
@@ -2047,7 +2232,8 @@ def direct_assess(conf: dict, out: Path) -> dict:
             if len(measured) else pd.Series(dtype=float)
         sens[fam] = ({"n": int(len(d)), "median_detectable_ln_ratio": float(d.median()),
                       "p16": float(d.quantile(0.16)), "p84": float(d.quantile(0.84)),
-                      "median_detectable_depth_change_fraction": float(math.exp(d.median()) - 1.0)}
+                      "median_detectable_depth_change_fraction":
+                          detectable_change_ppm(1.0, float(d.median()))}
                      if len(d) else {"n": 0})
     n_meas = int(len(measured))
     n_cand = int(len(cands))
@@ -2303,9 +2489,18 @@ def direct_control(conf: dict, out: Path, *, products_fn=None, tic_fn=None,
 # ---------------------------------------------------------------------------
 def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn=None,
                ensemble_lc_fn=None, kepler_ensemble_lc_fn=None, cone_fn=None, tpf_fn=None,
-               max_targets: int | None = None) -> dict:
+               max_targets: int | None = None, shard: int = 0, n_shards: int = 1) -> dict:
     """Run stage 2 (both eras, one fitter, the reduction ensemble) and stage 3
-    (census + difference image) on every candidate, into ``out/vet/``."""
+    (census + difference image) on every candidate, into ``out/vet/``.
+
+    Stage 2 and stage 3 each cost several fetch budgets per target, so one job
+    can only carry ``classify.vet_max_targets`` of them.  ``n_shards`` > 1
+    splits the candidate list **round-robin by rank** --- so every shard gets a
+    mix of strong and weak candidates rather than one shard getting all the
+    strong ones --- and writes into ``out/vet/shard_NN/``;
+    :func:`direct_vet_gather` merges them.  That is what makes "stage 3 on
+    EVERY survivor" reachable when the candidate list is longer than one job.
+    """
     from .centroid import centroid_run  # noqa: PLC0415
     from .stage2 import stage2_assess, stage2_measure  # noqa: PLC0415
 
@@ -2313,16 +2508,21 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
     cls_p = ClassifyParams.from_config(conf)
     cap = int(cls_p.vet_max_targets if max_targets is None else max_targets)
     cands = _read_csv(out / "candidates.csv")
-    vet_dir = out / "vet"
+    n_shards = max(int(n_shards), 1)
+    vet_dir = out / "vet" if n_shards == 1 else out / "vet" / f"shard_{int(shard):02d}"
     vet_dir.mkdir(parents=True, exist_ok=True)
     if not len(cands):
         rep = {"stage": "vet", "generated_utc": _now(), "n_candidates": 0, "n_vetted": 0,
+               "shard": int(shard), "n_shards": n_shards, "targets": [],
                "note": "no candidate to vet"}
         _write(vet_dir / "summary.json", rep)
         print("[growth-direct] vet: nothing to vet")
         return rep
     cands = cands.assign(_abs=pd.to_numeric(cands.get("pdc_z_pop"), errors="coerce").abs()) \
-        .sort_values("_abs", ascending=False)
+        .sort_values("_abs", ascending=False).reset_index(drop=True)
+    n_all = int(len(cands))
+    if n_shards > 1:
+        cands = cands.iloc[int(shard)::n_shards].reset_index(drop=True)
     chosen = cands.head(cap)
     shortlist = pd.DataFrame([{"kepoi_name": str(r.get("kepoi_name")),
                                "kepler_name": r.get("kepler_name"), "kepid": r.get("kepid"),
@@ -2376,7 +2576,8 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
                     "survives_vet": bool(survives)})
     pdf = pd.DataFrame(per)
     _write_csv(vet_dir / "vetted.csv", pdf)
-    rep = {"stage": "vet", "generated_utc": _now(), "n_candidates": int(len(cands)),
+    rep = {"stage": "vet", "generated_utc": _now(), "shard": int(shard), "n_shards": n_shards,
+           "n_candidates": n_all, "n_candidates_in_shard": int(len(cands)),
            "n_vetted": int(len(chosen)), "n_not_vetted_over_cap": int(max(len(cands) - cap, 0)),
            "n_survive_vet": int(pdf["survives_vet"].sum()) if len(pdf) else 0,
            "stage2_primary_verdict": s2.get("primary_verdict"),
@@ -2395,6 +2596,61 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
                                   "untested")}
     _write(vet_dir / "summary.json", rep)
     print(f"[growth-direct] vet: {rep['n_vetted']} vetted, {rep['n_survive_vet']} survive")
+    return rep
+
+
+def direct_vet_gather(conf: dict, out: Path) -> dict:
+    """Merge the sharded vet into ``out/vet/vetted.csv`` and ``out/vet/summary.json``.
+
+    A candidate that appears in no shard's ``vetted.csv`` is reported as
+    ``n_candidates_not_vetted`` with its identifiers --- it is **not** dropped
+    and it is **not** a pass: a candidate nobody ran stage 3 on has the
+    difference-image question wide open.
+    """
+    out = Path(out)
+    vet_dir = out / "vet"
+    vet_dir.mkdir(parents=True, exist_ok=True)
+    frames, reps = [], []
+    for p in sorted(glob.glob(str(vet_dir / "shard_*" / "vetted.csv"))):
+        df = _read_csv(p)
+        if len(df):
+            frames.append(df)
+    for p in sorted(glob.glob(str(vet_dir / "shard_*" / "summary.json"))):
+        try:
+            reps.append(json.loads(Path(p).read_text()))
+        except Exception:                                 # noqa: BLE001
+            continue
+    pdf = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    if len(pdf) and "kepoi_name" in pdf:
+        pdf = pdf.drop_duplicates(subset=["kepoi_name"], keep="first")
+    _write_csv(vet_dir / "vetted.csv", pdf)
+    cands = _read_csv(out / "candidates.csv")
+    seen = set(pdf["kepoi_name"].astype(str)) if len(pdf) else set()
+    missing = (cands[~cands["kepoi_name"].astype(str).isin(seen)]
+               if len(cands) and "kepoi_name" in cands else pd.DataFrame())
+    surv = pdf[pdf["survives_vet"].map(_b)] if len(pdf) and "survives_vet" in pdf else pd.DataFrame()
+    rep = {"stage": "vet-gather", "generated_utc": _now(),
+           "n_shards_found": len(reps), "n_candidates": int(len(cands)),
+           "n_vetted": int(len(pdf)), "n_candidates_not_vetted": int(len(missing)),
+           "not_vetted": [{k: r.get(k) for k in ("kepoi_name", "kepler_name", "kepid", "tic_id",
+                                                  "class", "pdc_z_pop", "sap_z")}
+                          for r in (missing.to_dict(orient="records") if len(missing) else [])][:200],
+           "n_survive_vet": int(len(surv)),
+           "survivors": surv.to_dict(orient="records") if len(surv) else [],
+           "n_control_within_search_noise": int(
+               (pdf["control_verdict"].map(_s) == CTRL_WITHIN).sum()
+               if len(pdf) and "control_verdict" in pdf else 0),
+           "n_control_not_run": int((pdf["control_verdict"].map(_s) == "CONTROL_NOT_RUN").sum()
+                                    if len(pdf) and "control_verdict" in pdf else 0),
+           "shards": [{k: r.get(k) for k in ("shard", "n_shards", "n_vetted", "n_survive_vet",
+                                             "n_not_vetted_over_cap", "stage2_primary_verdict",
+                                             "stage3_verdict")} for r in reps],
+           "note": ("a candidate in n_candidates_not_vetted has had NO stage-3 difference image "
+                    "run on it; that is an open question, never a pass. survives_vet is defined "
+                    "in each shard's own summary.json.")}
+    _write(vet_dir / "summary.json", rep)
+    print(f"[growth-direct] vet-gather: {rep['n_vetted']} vetted of {rep['n_candidates']} "
+          f"candidates, {rep['n_survive_vet']} survive, {rep['n_candidates_not_vetted']} not vetted")
     return rep
 
 
@@ -2426,7 +2682,10 @@ def direct_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, sh
             rep = direct_control(conf, out, products_fn=products_fn, tic_fn=tic_fn,
                                  budget_s=budget_s)
         elif s == "vet":
-            rep = direct_vet(conf, out, query_fn=query_fn, **vet_kw)
+            rep = direct_vet(conf, out, query_fn=query_fn, shard=shard, n_shards=n_shards,
+                             **vet_kw)
+        elif s in ("vet-gather", "vet_gather"):
+            rep = direct_vet_gather(conf, out)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
     return rep
@@ -2440,7 +2699,7 @@ def main(argv=None):
                     "against the KOI depth — sharded, checkpointed, with per-planet sensitivity")
     p.add_argument("--stage", default="all",
                    help="probe | targets | measure | assess | control | vet | "
-                        "all (probe,targets,measure,assess) | a comma list")
+                        "vet-gather | all (probe,targets,measure,assess) | a comma list")
     p.add_argument("--out-dir", default="results/growth/direct")
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--n-shards", type=int, default=1)
@@ -2468,14 +2727,17 @@ __all__ = [
     "REASON_BUDGET", "REASON_NOT_REACHED", "REASON_NO_EPHEMERIS", "REASON_NO_REFERENCE",
     "REASON_NO_TRANSIT", "REASON_QUERY_FAILED", "REASON_TIC_UNRESOLVED", "REASON_ZERO_ROWS",
     "RUN_CANDIDATES", "RUN_NONE", "RUN_NO_DATA", "RUN_VERDICTS", "SAP_COLUMNS", "STAGES",
-    "TIC_FALLBACK_ROUTES", "VETOES", "VETO_DISPOSITION", "VETO_DURATION",
+    "TIC_FALLBACK_ROUTES", "tic_is_truncated", "record_tic_is_unverified", "TIC_VERIFIED_MARKS",
+    "ID_COLUMNS", "detectable_change_ppm",
+    "VETOES", "VETO_DISPOSITION", "VETO_DURATION",
     "VETO_DURATION_INCONCLUSIVE", "VETO_EPHEMERIS", "VETO_FPFLAG", "VETO_LOWER_BOUND",
     "VETO_ODD_EVEN", "VETO_ONE_FAMILY", "ClassifyParams", "DurationParams", "EpochSearchParams",
     "FetchParams", "TargetParams", "astroquery_tic_fn", "build_targets", "classify_direct",
     "CONTROL_CLASSES", "CONTROL_COLUMNS", "CTRL_ABOVE", "CTRL_UNAVAILABLE", "CTRL_WITHIN",
     "CTRL_VERDICTS", "apply_control", "compare_family", "control_phase_null",
     "default_products_fn", "detrended_fold", "direct_assess", "direct_control", "direct_measure",
-    "direct_probe", "direct_run", "direct_targets", "direct_vet", "family_segments",
+    "direct_probe", "direct_run", "direct_targets", "direct_vet", "direct_vet_gather",
+    "family_segments",
     "fetch_products", "fit_duration", "gather_shards", "ingress_fraction",
     "lightkurve_products_fn", "main", "mast_fits_products_fn", "measure_direct_target",
     "measure_family", "population_offsets", "read_tess_lc_fits_all", "search_epoch_offset",

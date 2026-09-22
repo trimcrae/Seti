@@ -69,6 +69,78 @@ that run commits one.
 Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
 the runner installs), per `docs/channel-brief.md` §0 item 5.
 
+### GROWTH direct: the scale step is running, and a format string was holding it to 40 %, 2026-09-22
+
+S57 (`docs/growth.md` §11, §11.9). Stage 1 reached **108 of 9,564 KOIs** because
+it joined through the TOI alert catalogue, where only 94 of 1,975 KOI TICs have
+any TOI at all. Stage `direct` skips the TOI table: for every confirmed or
+candidate KOI it fetches every TESS light-curve product MAST serves (SPOC 2-min,
+TESS-SPOC and QLP FFI, deduplicated per sector), folds on the KOI ephemeris
+propagated to the TESS epoch with its period error, and fits the depth on
+**both** raw SAP and corrected PDCSAP.
+
+**The target list is built and committed.** 9,564 KOIs → **4,725** confirmed or
+candidate, across **3,611 distinct stars**; 2,993 carry a TIC from the NASA `ps`
+routes (name_planet 2,697, name_host 257, position 39) and 1,732 are left to the
+shard's own TIC resolution. 1,481 have P > 30 d and are carried separately in
+`long_period.csv`, because TESS's 27-day sectors give them few or no transits.
+Run **35738702139** (16 measure shards) is in flight; `results/growth/direct/`
+holds the committed shards as they land.
+
+**What the first shards found was a defect in us, not in the sky.** `_write_csv`
+wrote every float with `float_format="%.8g"`. A TIC id is nine digits. TIC
+122785305 went to `targets.csv` as `1.227853e+08` and came back as TIC
+**122785300** — 2,686 of the 2,993 catalogue ids mangled. The signature, from
+the shards that finished before the fix:
+
+| TIC route | zero rows | products |
+|---|---|---|
+| `name_planet` (round-tripped through the float) | 68 | 13 |
+| `tic_kic_crossid` (resolved in memory, never written) | 4 | 36 |
+
+Light-curve coverage was 40 %; the missing 60 % was a format string. Shard 01,
+the first shard to complete, reached 115 of its 213 stars (54 %) on the old code.
+
+**The silent half of that bug is the dangerous one.** TIC 122785300 may itself be
+a real star with TESS data, in which case the depth fitted belongs to a
+*different star* and nothing downstream notices — the Kepler-718 b error (a
+source 29″ off target) moved out of the vet, where stage 3 catches it, and into
+the depth, where nothing does. It was not hypothetical: two of the three
+classified rows in shard 14 (`K05245.01`/Kepler-1627 b, `K04185.01`/Kepler-1946 b
+— the one `shallower_tess`) rest on a TIC ending in zero that nobody had checked.
+So: identifiers are written as `Int64`; a catalogue TIC ≥ 1e8 that is a multiple
+of ten is **never queried on its own authority** but re-resolved from the star's
+own position and magnitude first (agreement → `_confirms_`, disagreement → the
+sky wins, sky silent → `TIC_UNRESOLVED`, **not measured**); and resume refuses to
+inherit any committed row measured against such an id, so a bug cannot be frozen
+into the funnel as a non-detection. The resolver is retried, because refusing a
+star now depends on it.
+
+Two more defects from the same run, each of which cost a whole shard (6, 7 and
+14 all died): `detectable_depth_change_ppm = ref*(exp(n·σ)−1)` overflowed on a
+star with no sensitivity — the honest value there is `+inf`, not a crash — and
+any exception from `measure_direct_target` killed every star the shard had not
+yet reached. A raise is now a non-measurement (`lc_status=MEASURE_RAISED`, the
+exception verbatim), counted as `n_measure_failed`.
+
+**The Kepler-718 b discriminator is confirmed on real data.** Across shard 14's
+measured rows, `background_direction` is **22 `PDC_DEEPER_THAN_SAP` against 3
+`SAP_DEEPER_THAN_PDC`** — the direction crowding must have, since a bigger
+aperture admits more contaminating light and raw SAP must read *shallower* than
+Kepler. A star whose PDCSAP is deeper than its SAP is a crowding-correction case
+and is classed `crowding_correction`, not growth.
+
+**No candidate yet, and none is claimed.** The pre-fix shards (01, 06, 07, 14)
+carry 4 `consistent`, 1 `shallower_tess`, 4 `transit_not_recovered` and no
+`growth_candidate`; the great majority is `not_measured` (no products for a
+wrong TIC) or `not_measurable` (the transit is below TESS's noise on a Kp≈14.6
+Kepler-field star, with the per-planet detectable depth change stated on every
+row). Those rows are being redone, so none of them is a statement about the sky
+yet. **Next decisive action:** let 35738702139 drain, then re-dispatch
+`stage=measure, resume=true, n_shards=16` to finish the three shards that died
+and redo every unverified-TIC row, then `assess` → `control` → sharded `vet`
+(stage 2 both eras + stage 3 difference image on **every** survivor, not the top
+of the list).
 ### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
 
 SEXTANT asks LOOM's question — is a minor planet accelerating in a way

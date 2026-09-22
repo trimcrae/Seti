@@ -1142,7 +1142,25 @@ control phase can land on a **sibling's** transit, which makes the null
 conservative rather than permissive; and a control phase that lands in a data
 gap returns nothing and is not counted (`control_n_phases_measured`).
 
-### 11.7 Running it
+### 11.7 Vetting every survivor, not the top of the list
+
+Stage 2 (both eras refitted with one fitter, plus the reduction ensemble) and
+stage 3 (the Gaia census and the difference image) each cost several fetch
+budgets per target, so one job carries at most `classify.vet_max_targets` of
+them. With a candidate list longer than that, taking "the strongest N" would
+leave the rest with the difference-image question — the question that killed
+Kepler-718 b — never asked.
+
+So the vet stage **shards**. The candidates are ranked by |z| and split
+**round-robin by rank** across `vet_shards` jobs, so shard 0 gets ranks
+0, N, 2N…, shard 1 gets 1, N+1, … — every shard carries a mix of strong and
+weak candidates, and no shard is the "leftovers" job. Each writes
+`results/growth/direct/vet/shard_NN/`; `vet-gather` merges them into
+`vet/vetted.csv` and `vet/summary.json` and reports
+`n_candidates_not_vetted` **with identifiers**: a candidate nobody ran stage 3
+on is an open question, never a pass.
+
+### 11.8 Running it
 
 `growth_direct.yml`: `targets` → `measure` (sharded **by star**, `kepid mod n`,
 so a system's planets share one download; each shard checkpoints its CSV after
@@ -1152,3 +1170,123 @@ its budget is resumed by re-dispatching with `resume=true`, which skips the
 targets already committed. Planets with `koi_period > 30 d` are carried
 separately in `long_period.csv`: TESS's 27-day sectors give them few or no
 transits and their sensitivity is stated, not assumed.
+
+
+### 11.9 The truncated TIC id — what run 35738702139 found before it found a planet
+
+The first real dispatch of this stage exposed a defect that had nothing to do
+with astrophysics and everything to do with whether the stage can reach scale
+at all. It is recorded here because it is the kind of error that reads as a
+result.
+
+`_write_csv` wrote every float with `float_format="%.8g"`. That is the right
+format for a depth in ppm. A TIC id is **nine digits**, and eight significant
+digits is not enough: TIC 122785305 went to `targets.csv` as `1.227853e+08`
+and came back as TIC **122785300**. 2,686 of the 2,993 catalogue TIC ids were
+mangled that way. The signature in the first two shards to finish:
+
+| TIC route | zero rows | products |
+|---|---|---|
+| `name_planet` (round-tripped through the float) | 68 | 13 |
+| `tic_kic_crossid` (resolved in memory, never written) | 4 | 36 |
+
+Light-curve coverage was 40%, and the missing 60% was a format string rather
+than a sky that TESS had not observed.
+
+The loud half of the failure is the empty query. **The silent half is worse**:
+TIC 122785300 may itself be a real star with TESS data, in which case the
+depth fitted would belong to a different star and nothing downstream would
+notice. That is the Kepler-718 b error --- a measurement of the wrong source
+--- moved from the vet, where stage 3 catches it, into the depth, where
+nothing does.
+
+Three things follow, and all three are in the code:
+
+1. **Identifiers are written as integers.** `ID_COLUMNS` (`tic_id`, `kepid`,
+   ...) are cast to `Int64` before the CSV write, so a nine- or ten-digit id
+   round-trips exactly.
+2. **A suspect id is never queried on its own authority.**
+   `tic_is_truncated()` flags any catalogue TIC at or above 1e8 that is a
+   multiple of ten (below 1e8 `%.8g` is exact), and the star is re-resolved
+   from its own position and magnitude first. Agreement costs one cone search
+   and writes the route `<r>_confirms_<catalogue>`; disagreement lets the sky
+   win (`<r>_over_<catalogue>`); and if the sky cannot name the star it is
+   `TIC_UNRESOLVED` and not measured. **A star we cannot name is not a star we
+   are allowed to measure.**
+3. **Resume does not inherit the old rows.** `record_tic_is_unverified()`
+   marks a committed row whose TIC could have been truncated and was never
+   checked, and resume redoes it. Its `QUERY_RETURNED_ZERO_ROWS` was a fact
+   about a number, not about a star, and freezing it into the funnel would
+   have turned a bug into a published non-detection.
+
+A star the repair cannot help --- catalogue id empty, sky id empty, or both
+ids serving nothing --- stays `QUERY_RETURNED_ZERO_ROWS`. The repair is not
+allowed to invent coverage, and the shard report carries
+`n_tic_suspect_truncation`, `n_tic_rechecked`, `n_tic_repaired` and
+`n_redone_unverified_tic` so the funnel states how much of the coverage came
+through it.
+
+Two smaller defects from the same run, both of which cost a whole shard:
+
+* `detectable_depth_change_ppm = ref * (exp(n * sigma) - 1)` raised
+  `OverflowError` on a star with essentially no sensitivity, where the
+  exponent runs past 709. The honest value there is `+inf` --- a change larger
+  than any depth the star could have --- so `detectable_change_ppm()` clamps
+  and uses `expm1`.
+* Any exception from `measure_direct_target` killed the shard and every star
+  it had not yet reached. The call is now guarded: a raise becomes a
+  NON-measurement with `lc_status=MEASURE_RAISED` and the exception verbatim,
+  counted as `n_measure_failed`. One pathological target costs itself and
+  nothing else.
+
+
+### 11.10 What the population's own sensitivity allows (measured, not assumed)
+
+The stage classifies most of what it reaches `not_measurable`. That is not a
+threshold set too high, and it is not an error model that has been inflated:
+across the 688 rows committed so far, the ratio of the **total** error to the
+purely statistical one has a median of **1.002**, and where the reduction
+ensemble has too few members to measure a spread the ratio is exactly 1. The
+errors are not the problem. The depths are.
+
+Measured on the rows where both families returned a depth (n = 256):
+
+| quantity | median | p84 | p95 |
+|---|---|---|---|
+| KOI depth transposed to the TESS band | **240 ppm** | 769 | 1,963 |
+| TESS total depth error, PDCSAP | 810 ppm | | |
+| TESS total depth error, SAP | 461 ppm | | |
+
+So the *expected* S/N of the reference transit — what TESS would measure if
+nothing had changed at all — is below one for the median KOI. Taking the
+**weaker** of the two families, which is what a candidate must clear in both:
+
+| expected S/N of the reference transit | rows |
+|---|---|
+| > 1 | 46 of 256 |
+| > 2 | 21 |
+| > 3 | 15 |
+| > 5 | **7** |
+| > 10 | 3 |
+
+This is a fact about TESS on the Kepler field, not about this pipeline: the
+median KOI is a 240 ppm transit on a Kp ≈ 14.1 star, and a 30 cm telescope
+with 21″ pixels does not measure that depth to 5 % in a handful of sectors.
+The depth distribution of the target list says the same thing from the other
+side — of 4,619 targets with a depth, **803** are deeper than 1,000 ppm, 277
+deeper than 3,000 ppm and 94 deeper than 10,000 ppm.
+
+Two consequences, both of which the stage is built to honour:
+
+1. **Reach and measurement are different numbers, and both are reported.**
+   Stage 1 reached 108 KOIs. This stage *reaches* every confirmed and
+   candidate KOI with a TIC and states a per-planet detectable depth change
+   for each — `detectable_depth_change_ppm`, which is `+inf` where the star
+   has no sensitivity at all. The subset on which a > 5σ depth *change* could
+   be seen in both SAP and PDCSAP is of order a few hundred, concentrated in
+   the deep, bright tail. A non-detection on the other several thousand is
+   honest only because its sensitivity is on the row; without that number it
+   would be a null dressed as a search.
+2. **The search is a search of that tail.** A `not_measurable` row is not a
+   planet that failed a test; it is a planet no test was possible on. Counting
+   it as a null would be the error the whole channel exists to avoid.

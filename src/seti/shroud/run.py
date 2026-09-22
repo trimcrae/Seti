@@ -85,6 +85,9 @@ def stage_photometry(sc: dict, df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
     r_xm = float(xm.get("radius_arcsec", 5.0))
     n_real = int(len(df))
     n_real_matched = 0
+    # Nearest-match separation per source, kept so the excess can be measured
+    # as a FUNCTION of radius rather than at one radius chosen in advance.
+    real_sep = np.array([], dtype=float)
     p_aw = out_dir / "xmatch_allwise.parquet"
     if p_aw.exists():
         aw = pd.read_parquet(p_aw)
@@ -92,9 +95,12 @@ def stage_photometry(sc: dict, df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
         if d is not None and "source_id" in aw.columns:
             n_real_matched = int(aw.loc[pd.to_numeric(aw[d], errors="coerce") <= r_xm,
                                         "source_id"].nunique())
+            real_sep = (pd.to_numeric(aw[d], errors="coerce")
+                        .groupby(aw["source_id"]).min().to_numpy(dtype=float))
     elif "n_ir_neighbours" in merged:
         n_real_matched = int((merged["n_ir_neighbours"] > 0).sum())
     n_null = n_null_matched = 0
+    null_sep = np.array([], dtype=float)
     cat = sc.get("acquire", {}).get("catalogs", {}).get(
         "allwise", "vizier:II/328/allwise")
     null_prov = []
@@ -117,12 +123,21 @@ def stage_photometry(sc: dict, df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
             d = acq._dist_col(res)
             sel = res if d is None else res[pd.to_numeric(res[d], errors="coerce") <= r_xm]
             n_null_matched += int(sel["source_id"].nunique())
+            if d is not None:
+                null_sep = np.concatenate([null_sep, (
+                    pd.to_numeric(res[d], errors="coerce")
+                    .groupby(res["source_id"]).min().to_numpy(dtype=float))])
+    radii = [float(x) for x in xm.get(
+        "excess_radii_arcsec", [1.0, 1.5, 2.0, 3.0, 4.0, 5.0])
+        if float(x) <= r_xm]
+    by_radius = vetmod.excess_by_radius(real_sep, null_sep, n_real, n_null, radii)
     stats = vetmod.chance_match_rate_from_null(n_real_matched, n_real,
                                                n_null_matched, n_null)
     stats.update({"n_real": n_real, "n_real_matched": n_real_matched,
                   "n_null": n_null, "n_null_matched": n_null_matched,
                   "offset_arcsec": float(xm.get("offset_null_arcsec", 45.0)),
                   "radius_arcsec": r_xm, "catalog": cat,
+                  "by_radius": by_radius, "best_radius": vetmod.best_radius(by_radius),
                   "realisations": null_prov})
     (out_dir / "null_stats.json").write_text(json.dumps(stats, indent=2,
                                                         default=str))
@@ -343,13 +358,61 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
     if len(df):
         df[keep].to_csv(out_dir / "classified.csv", index=False)
 
+    # Which photometry actually happened.  Without this the funnel's zeros are
+    # ambiguous in the worst possible direction: run 35738062833's analyze job
+    # ran after its photometry job was cancelled, and reported
+    # "3_with_any_ir_detection: 0" for 127 sources that were never searched.
+    # A reader cannot tell "we looked and it is not there" from "we never
+    # looked" unless the summary says which it was.
+    phot_prov = _read_json(out_dir / "photometry_provenance.json")
+    phot_status = {k: str(v.get("status", "")) for k, v in phot_prov.items()
+                   if isinstance(v, dict) and not k.startswith("_")}
+    answered = sorted(k for k, s in phot_status.items()
+                      if s.lower() in ("ok", "cached"))
+    ir_cats = [c for c in ("allwise", "catwise", "twomass") if c in answered]
+    opt_cats = [c for c in ("ps1", "gaia") if c in answered]
+
+    def _any_finite(*cols) -> bool:
+        return any(pd.to_numeric(df[c], errors="coerce").notna().any()
+                   for c in cols if c in df.columns)
+
+    # Provenance is the primary evidence, but a table that actually carries
+    # the photometry is proof the search happened whatever the provenance
+    # file survived (a re-reduction from an artifact, a local input).
+    ir_searched = bool(ir_cats) or _any_finite(
+        "w1", "w2", "w3", "w4", "w3_lim", "w4_lim", "2mass_j", "2mass_ks")
+    opt_searched = bool(opt_cats) or _any_finite(
+        "gaia_g", "ps1_r", "modern_depth_mag")
+    degraded_reason: list[str] = []
+    if not ir_searched:
+        degraded_reason.append(
+            "NO_INFRARED_SEARCH: no infrared catalogue answered, so a zero in "
+            "'3_with_any_ir_detection' records that the search did not happen, "
+            "never that nothing is there")
+    if not opt_searched:
+        degraded_reason.append(
+            "NO_MODERN_OPTICAL_SEARCH: no modern optical catalogue answered, so "
+            "no absence is established and no disappearance may be claimed")
+    if verdict in ("VIZIER_FALLBACK", "VO_ARCHIVE_PARTIAL"):
+        degraded_reason.append(
+            f"{verdict}: the intended sample was not reached; population "
+            "fractions are indicative only")
     summary = {
         "channel": "shroud",
         "verdict": verdict,
         # A reconstruction with its own stated selection function is a real
-        # measurement; a 127-row fallback or a half-archive is not.
-        "degraded": verdict not in ("VO_ARCHIVE", "USNOB1_RECONSTRUCTION",
-                                    "VIZIER_SOLANO_TABLE", "LOCAL_INPUT"),
+        # measurement; a 127-row fallback or a half-archive is not.  Nor is a
+        # run whose photometry never happened, however many rows it acquired.
+        "degraded": bool(degraded_reason) or verdict not in (
+            "VO_ARCHIVE", "USNOB1_RECONSTRUCTION", "VIZIER_SOLANO_TABLE",
+            "LOCAL_INPUT"),
+        "degraded_reason": degraded_reason,
+        "photometry_reached": {
+            "catalogues_that_answered": answered,
+            "per_catalogue_status": phot_status,
+            "infrared_searched": ir_searched,
+            "modern_optical_searched": opt_searched,
+        },
         "acquire_note": prov.get("note", ""),
         "acquire_per_sample_rows": prov.get("per_sample_rows",
                                             prov.get("per_catalog_rows", {})),
@@ -415,6 +478,14 @@ def _report_md(s: dict, sc: dict) -> str:
         return "\n".join(L) + "\n"
 
     L += [f"Sample: **{s['n_sample']}** sources.", ""]
+    why = s.get("degraded_reason") or []
+    if why:
+        ph = s.get("photometry_reached") or {}
+        L += ["> **DEGRADED — read the zeros as statements about the search, "
+              "not about the sky.**", ">"]
+        L += [f"> - {w}" for w in why]
+        L += [">", f"> Catalogues that answered: "
+              f"{', '.join(ph.get('catalogues_that_answered') or []) or 'none'}.", ""]
     per = s.get("acquire_per_sample_rows") or {}
     if per:
         L += ["| sample | rows |", "|---|---:|"]
@@ -470,6 +541,24 @@ def _report_md(s: dict, sc: dict) -> str:
               f"- expected chance matches in the sample: "
               f"{_fmt(nul.get('n_expected_chance'), '.0f')}",
               f"- significance: {_fmt(nul.get('significance_sigma'), '.1f')} sigma", ""]
+        rows = nul.get("by_radius") or []
+        if rows:
+            L += ["A single radius cannot tell a counterpart population from the",
+                  "background: unrelated matches accumulate with the search area,",
+                  "a genuine counterpart is already counted at the smallest radius.",
+                  "", "| r (\") | real matched | chance fraction | genuine fraction"
+                  " | sigma |", "|---:|---:|---:|---:|---:|"]
+            for r in rows:
+                L.append(f"| {_fmt(r.get('radius_arcsec'), '.1f')} "
+                         f"| {r.get('n_real_matched')} "
+                         f"| {_fmt(r.get('f_chance'))} "
+                         f"| {_fmt(r.get('f_true'))} "
+                         f"| {_fmt(r.get('significance_sigma'), '.1f')} |")
+            b = nul.get("best_radius") or {}
+            L += ["", f"Most significant radius: "
+                  f"{_fmt(b.get('radius_arcsec'), '.1f')}\" at "
+                  f"{_fmt(b.get('significance_sigma'), '.1f')} sigma. "
+                  "Evidence only --- the selection radius is unchanged.", ""]
 
     L += ["## Energy-budget verdicts", "", "| verdict | n |", "|---|---:|"]
     for k, v in (s.get("budget_verdicts") or {}).items():

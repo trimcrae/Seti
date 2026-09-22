@@ -1,0 +1,34 @@
+# SEXTANT — non-gravitational acceleration in Gaia FPR minor-planet astrometry
+# (docs/sextant.md).  Every selection number in one place; defaults and their
+# provenance live in src/seti/sextant/run.py DEFAULT_CONFIG.
+sextant:
+  release: gaiafpr                 # FPR is the 66-month re-reduction; DR3 is a subset (probe 2026-09-03)
+  objects_per_chunk: 250           # one async Gaia query and one batch propagation per chunk
+  max_objects: 0                   # 0 = every numbered object in the release; the workflow input overrides
+  ephemeris_route: auto            # auto (probe decides) | integrator | horizons
+  horizons_min_interval_s: 1.0     # per-process throttle on the Horizons API
+  probe_sample: 60                 # objects on which integrator-vs-Horizons is measured
+  probe_conventions_objects: 8     # lowest-numbered objects used to resolve the archive conventions
+  max_integrator_disagreement_mas: 0.5   # p95 of per-object max sky difference for the integrator to be used
+  min_observations: 40
+  min_transits: 8
+  min_arc_days: 365.0              # a drift over a shorter arc is an extrapolation
+  min_delta_chi2: 16.0             # model preference threshold (residuals.model_comparison)
+  min_snr_detection: 3.0           # Del Vigna+2018 reliability floor
+  min_force_snr: 5.0               # promotion needs S/N >= 5 on the pessimistic error model
+  max_absorbed_fraction: 0.995     # above this an orbit fit could have removed essentially all of it
+  max_excess_scatter: 2.0          # sqrt(reduced chi2) about the fitted model; a binary wobble shows here
+  epsilon_realistic: 0.3           # LOOM: above the ordinary thermal-recoil tail (p90 = 0.143)
+  epsilon_hard: 1.0                # all absorbed momentum re-emitted in one direction
+  epsilon_median_measured: 0.074   # LOOM, 589 SBDB asteroids, 2026-07-30: the Yarkovsky expectation
+  population_n_null: 2000
+  min_parent_for_population: 200
+  min_anomalies_for_population: 5
+  control_min_jpl_snr: 3.0         # an object is a control when JPL's own A2 is at S/N >= 3
+  conventions:                     # config default; results/sextant/conventions.json (probe) overrides
+    epoch: "epoch:TCB:2455197.5"   # MEASURED 2026-09-03: `epoch` is TCB days from 2010-01-01 (JD 2455197.5)
+    apply_light_time: true
+    apply_stellar_aberration: false   # Gaia SSO positions are published aberration-corrected (probe verifies)
+    apply_solar_deflection: false     # and light-deflection-corrected (probe verifies)
+    scan_pa_north_to_east: true
+  seed: 20260921

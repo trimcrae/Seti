@@ -198,6 +198,48 @@ class so the disagreement is visible rather than buried.
 | `ages` | shard `i/m` of the shortlist: Gaia neighbours, IRSA profile fits, SIMBAD, E(B−V), NEOWISE, VizieR catalogues, Spitzer/IRS + S53, then the age indicators | `enriched_s{i}of{m}.csv`, `ages_s{i}of{m}.json` |
 | `assess` | the kill list, the classes, the controls | `candidates.csv`, `shortlist_vetted.csv`, `controls.json`, `summary.json` |
 
+### The offline gate is not the runner's environment
+
+`pyproject.toml` asks for `pandas>=2.0`. The sandbox venv has **2.3.3**; the
+runner's `pip install -e ".[dev]"` fetches **3.0.6**. A green local suite is
+therefore not a green gate: run 35741356662's `probe` job died on its own
+offline gate at 11:05 a.m. EDT, before one archive call, because
+`parse_ipac_table` used `pd.to_numeric(errors="ignore")` — deprecated in
+pandas 2, **removed in pandas 3, where it raises**. To reproduce the runner
+without touching the shared venv:
+
+```
+pip install --target /tmp/pd3 --no-deps "pandas>=3"
+PYTHONPATH=/tmp/pd3:src pytest tests/test_cradle.py -q
+```
+
+The suite is kept green under both.
+
+### Shard economics — two ways a runner slot is lost, and what stops them
+
+Neither of these changes a number; both decide whether the numbers are ever
+measured at all.
+
+**A wrong shape must cost one unit, not ninety-six.** The probe measures the
+join shapes on *one* HEALPix pixel and `acquire` reads its answer from
+`probe.json`. If that answer is wrong for some other part of the sky, or the
+artifact never reaches the job (the download is `continue-on-error`), the
+ladder would re-pay the failing shape's timeout on every unit of the shard.
+The acquire loop therefore **learns**: the shape that actually answered is
+promoted to the front for the units that follow, and the rollup records
+`shapes_planned`, the running `shapes` order and every `shape_relearned`
+event, so the log says which shape the sky really wanted.
+
+**One pathological pixel must not cost the whole job.** A timed-out unit
+splits into its four children, recursively to `healpix_split_max_level = 6`.
+Unbounded that is `1 + 4 + 16 + 64 = 85` queries at `query_timeout_s = 1200 s`
+— 28 hours inside a 350-minute job, which would lose every unit the shard had
+not yet reached. `fetch_unit` now takes the shard's own deadline and carries
+it through the recursion; past it the split is abandoned, the record carries
+`deadline_exceeded`, and the count reaches `screen` as
+`coverage.n_units_deadline_exceeded` and `assess` as a `DEGRADED` reason.
+Units already done are checkpointed, so what is lost is bounded and named.
+
 ### Classes
 
 `CANDIDATE` (in the cell, ≥ 2 old indicators, no kill) ·

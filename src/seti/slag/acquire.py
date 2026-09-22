@@ -48,7 +48,7 @@ from ..metronome.acquire import (
     vizier_table,
 )
 from .misfit import Panel
-from .sinking import parse_timescale_table
+from .sinking import describe_timescale_text, parse_timescale_table
 
 STATUS_OK = "OK"
 STATUS_FAILED = "QUERY_FAILED"
@@ -919,7 +919,22 @@ def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
         rec["status"] = STATUS_OK
         rec["head"] = text[:600]
         tab = parse_timescale_table(text)
+        if tab is None:
+            # Fetched and then silently ignored is the worst degradation: the
+            # run looks healthy and quietly falls back to another timescale
+            # source.  Say what the file actually holds, and keep the raw text
+            # so the layout can be read from the committed artifacts.
+            rec["parsed"] = False
+            rec["parse_diagnosis"] = describe_timescale_text(text)
+            raw = out_dir / "data" / ("timescales_raw_"
+                                      + re.sub(r"[^A-Za-z0-9_.-]", "_", e["path"]))
+            try:
+                raw.write_text(text[:400_000])
+                rec["raw_local"] = str(raw)
+            except Exception as exc:                          # noqa: BLE001
+                rec["raw_local_error"] = repr(exc)[:200]
         if tab is not None:
+            rec["parsed"] = True
             rec["parsed_columns"] = [str(c) for c in tab.columns]
             rec["parsed_rows"] = int(len(tab))
             local = out_dir / "data" / ("timescales_" + re.sub(r"[^A-Za-z0-9_.-]", "_", e["path"]))

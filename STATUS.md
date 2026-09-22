@@ -10,6 +10,81 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### SHROUD: the SVO VASCO service is dead, so the sample is 127 — and the USNO-B1.0 rebuild is the only way back to scale, 2026-09-22
+
+S33 (`docs/shroud.md`; §9 is the new route ledger). SHROUD looks for POSS-I
+sources absent from the modern optical but **present and warm in the infrared**
+— enshrouded, not destroyed.
+
+**What answers and what does not** (measured on the runner, every endpoint and
+error verbatim in `results/shroud/acquire_verdict.json`):
+
+| route | answer |
+|---|---|
+| Solano+2022 SVO `vanish-neowise` / `vanish-possi` | **dead** — TCP timeout at 25 s, http and https, 4 path spellings each |
+| `svo2.cab.inta-csic.es/vocats/` | **403**; every `vanish-*` path **404**, while the host root returns 200 |
+| VizieR TAP_SCHEMA keyword search | **200, and the answer is "no"** — 11 hits, 9 of them the surnames *Vasco D.* / *Vasconcelos M.J.* |
+| VizieR `J/AJ/159/8` (Villarroel+2020) | **200, 127 rows** |
+| VizieR `I/284/out` (USNO-B1.0) | **200, 12/12 fields, 33,273 raw rows, 9.425 deg²** |
+| CDS X-Match | **200**, 15–21 s per chunk |
+
+So the intended ~172,000-source Solano sample is **unreachable by any route**,
+the verdict ceiling is `VIZIER_FALLBACK`, and the committed sample is 127
+objects — three orders of magnitude short. Population fractions from it are
+indicative only and `summary.json` says so.
+
+**The 5″ excess is −0.9 σ, and that is not a null — it is the wrong question.**
+The committed offset-position null measured 7 matches in 127 real sightlines
+against 39 in 508 displaced ones: 9.8 expected by chance. At 5″ against AllWISE
+(~1.8×10⁴ deg⁻²) the matched subsample is chance-dominated *by construction*,
+so its excess is consistent with zero however real the physics. The channel now
+measures the excess **as a function of radius** (1–5″): chance grows with the
+search area, a genuine counterpart is already counted at the smallest radius, so
+a real population shows up concentrated at small separation with a significance
+that peaks near the astrometric error. Tested both ways offline — half-associated
+population recovered at `f_true = 0.5` with the peak at ≤ 2″; background alone
+gives |σ| < 3 at every radius.
+
+**Two VizieR failure modes, each of which cost a run and each of which looks
+exactly like an empty sky**, are now closed and documented:
+
+1. A literal `+` in a query string decodes to a **space**, so `-c=266+65`
+   arrives as the unsigned pair `266 65` and VizieR returns an empty resource.
+   (This is the bug that cost IGNITION a dispatch.) The sign is percent-encoded
+   on every rung of the query ladder, with a test per rung and for negative dec.
+2. `-meta.all` lists a catalogue's **default output columns, not its
+   dictionary**. I/284/out's defaults are the eight astrometric ones, so the
+   probe declared `B1mag`/`R1mag`/`R2mag`/`Imag`/`Ndet` absent from a catalogue
+   that plainly has them — and run 35738062833 let that probe *edit* the
+   request. All 12 fields came back as bare positions, and "POSS-I red present,
+   everything else absent" cannot be expressed by a frame with no magnitudes.
+   All 12 reported `n_poss1_only = 0`; **that zero was an artefact of the
+   request, not a property of the sky.** The probe now reports only, a rung's
+   answer is accepted only if it carries `RAJ2000`/`DEJ2000`/`R1mag`, and the
+   ladder otherwise falls through to the `-out.all` rung, which names no columns.
+
+**A cancelled run erased a measurement, once.** `analyze` runs `if: always()`,
+so it also runs when `acquire` was cancelled and no artifact exists; it then
+writes `NO_DATA_REACHED` / `n_sample 0` — a statement about archive *access* —
+and at 14:58 EDT-4 (2026-09-22T14:58Z) commit `05df5117` pushed that over the
+127-source summary. Guarded now: an empty summary may be committed only when
+`HEAD` holds no sampled one; otherwise the results are checked back out and the
+empty attempt is kept beside them as `summary_attempt.json`.
+
+**In flight.** Run **35741075121** (dispatched 10:32 EDT, started 11:07 EDT)
+is the first to carry the column fix, so it is the first that *can* return a
+non-zero `n_poss1_red_only`. The decisive number to read from it is
+`sky_coverage.n_poss1_red_only` against `n_usnob1_raw_rows = 33,273` per
+9.425 deg²: if the POSS-I-red-only fraction is of order 10⁻³–10⁻² the rebuilt
+sample reaches 10⁴–10⁵ objects at full grid and the channel has its scale back
+from a source that does not depend on SVO being alive. Runs 35738062833 and
+35740203590 were cancelled as superseded.
+
+**Not yet measured:** the current summary's zeros for IR presence come from a
+photometry job that never ran, not from a search that found nothing — the
+funnel says so (`2c_no_modern_catalogue_covered_the_position = 127`). No
+survivor stands as of this entry.
+
 ### ARC closed out: 4,206 stars on the ceiling, one left standing (KIC 9418692), 2026-09-22
 
 S59 (`docs/arc.md`, §9 carries every number). The stage-1 assess stage had

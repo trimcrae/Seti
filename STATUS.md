@@ -68,6 +68,13 @@ description terms, so 78 tables came back of which ~70 were Orion *star*
 catalogues and Chandra "unidentified sources"; it now runs once over
 `TAP_SCHEMA.columns` on phrases only a spectral U-line table carries.
 
+**Reading the run costs no runner time.** It was dispatched from `d264eb40`,
+three commits before the `searchability` roll-up, the SO₂F₂ Hamiltonian
+caveat and the `propose` stage. None of those need the archive: after
+`git pull`, `python -m seti.uline.run --stage assess` re-reduces the run's own
+committed `screen.json` into a `summary.json` carrying all of them, and
+`--stage propose` adjudicates its `literature.json`. Both are offline.
+
 **Next decisive action.** Read run 35748462805's `literature.json`: if it
 returns the published quartic sets for CHClF₂ and CFCl₃, promote them into
 `rotor_constants.yaml` (a commit, never an automatic overwrite) and re-run —

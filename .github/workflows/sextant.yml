@@ -131,11 +131,24 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Purge checkout-inherited shard outputs
-        # `assess` reads every shard_*.csv.gz it finds, and the branch may carry
-        # a previous run's.  Aggregating those into this run's verdict would be
-        # a silent pooling of two different samples.
-        run: rm -rf results/sextant/fits
+      - name: Purge checkout-inherited shard outputs, and start the job clock
+        # Two things.  `assess` reads every shard_*.csv.gz it finds and the
+        # branch may carry a previous run's, which would silently pool two
+        # different samples into one verdict.
+        #
+        # And SOLO_T0: the fit step's budget has to be what is LEFT of the
+        # 350-minute job cap, not a fixed number.  The probe can take anywhere
+        # from twenty minutes to over an hour --- 26 Horizons perturber grids,
+        # the whole SBDB, a DISTINCT over 46M rows, and 60 Horizons ephemerides
+        # for the route measurement --- so a fixed 230-minute fit budget can
+        # overrun the cap, and a job killed by `timeout-minutes` is cancelled:
+        # its `if: always()` commit step does not reliably run, and every
+        # checkpointed chunk is lost.  That is precisely the failure the in-job
+        # clock exists to prevent, so the clock is set from the real remaining
+        # time rather than from an input.
+        run: |
+          rm -rf results/sextant/fits
+          echo "SOLO_T0=$(date +%s)" >> "$GITHUB_ENV"
       - name: Probe --- perturbers, SBDB, the ephemeris route, the conventions
         run: |
           EXTRA=""
@@ -167,9 +180,20 @@ jobs:
           if [ -n "${{ github.event.inputs.route }}" ]; then
             EXTRA="--route ${{ github.event.inputs.route }}"
           fi
+          # Whatever is left of the 350-minute cap, less 25 minutes for assess
+          # and the two commits, and never more than the requested budget.
+          ELAPSED=$(( ( $(date +%s) - SOLO_T0 ) / 60 ))
+          REMAIN=$(( 350 - ELAPSED - 25 ))
+          WANT=${{ github.event.inputs.solo_fit_budget_minutes || '230' }}
+          BUDGET=$(( REMAIN < WANT ? REMAIN : WANT ))
+          echo "probe took ${ELAPSED} min; fit budget ${BUDGET} min (requested ${WANT}, remaining ${REMAIN})"
+          if [ "$BUDGET" -lt 5 ]; then
+            echo "::error::no time left for the fit step after a ${ELAPSED}-minute probe"
+            exit 1
+          fi
           python -m seti.cli sextant --stage fit --shard 0/1 \
             --release ${{ github.event.inputs.release || 'gaiafpr' }} \
-            --budget-minutes ${{ github.event.inputs.solo_fit_budget_minutes || '230' }} \
+            --budget-minutes "$BUDGET" \
             --max-objects ${{ github.event.inputs.max_objects || '0' }} $EXTRA
       - name: Assess --- controls FIRST, then the A2 distribution and the population
         if: ${{ always() && github.event.inputs.probe_only != 'true' }}

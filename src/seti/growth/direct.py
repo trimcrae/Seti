@@ -412,22 +412,46 @@ def _write_csv(path: Path, df: pd.DataFrame) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     for col in ID_COLUMNS:
         if col in df.columns:
-            v = pd.to_numeric(df[col], errors="coerce")
-            if v.notna().any():
-                df = df.copy()
-                df[col] = v.round().astype("Int64")
+            try:
+                v = pd.to_numeric(df[col], errors="coerce")
+                if v.notna().any():
+                    df = df.copy()
+                    df[col] = v.round().astype("Int64")
+            except Exception as exc:                      # noqa: BLE001
+                # The runner installs a different pandas major version than the
+                # bench.  If the nullable-integer cast is not available there,
+                # the write must still happen --- degraded, and saying so.
+                print(f"[growth/direct] WARNING: could not write {col} as an integer "
+                      f"({exc!r}); ids may lose their last digit")
     df.to_csv(tmp, index=False, float_format="%.8g")
     os.replace(tmp, path)
 
 
 def _read_csv(path) -> pd.DataFrame:
+    """Read a results CSV.  A read that fails is REPORTED, never silent.
+
+    An empty frame here means "the shard has nothing to resume from" and, for
+    targets.csv, "this shard has no work" --- so swallowing a pandas-version
+    error would turn a broken read into a shard that measures nothing and says
+    it is done.  ``low_memory`` is a no-op in newer pandas, so it is dropped
+    and retried rather than allowed to decide the run.
+    """
     p = Path(path)
     if not p.exists() or not p.stat().st_size:
         return pd.DataFrame()
-    try:
-        return pd.read_csv(p, low_memory=False)
-    except Exception:                                     # noqa: BLE001
-        return pd.DataFrame()
+    last: Exception | None = None
+    for kw in ({"low_memory": False}, {}):
+        try:
+            return pd.read_csv(p, **kw)
+        except TypeError as exc:
+            last = exc
+            continue
+        except Exception as exc:                          # noqa: BLE001
+            last = exc
+            break
+    print(f"[growth/direct] WARNING: {p} could not be read ({last!r}); "
+          "treating it as empty, which is NOT a statement about the sky")
+    return pd.DataFrame()
 
 
 def tic_is_truncated(tic) -> bool:

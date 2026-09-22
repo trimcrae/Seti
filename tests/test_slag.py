@@ -955,3 +955,28 @@ def test_grid_vs_published_timescales_recovers_a_known_offset():
     assert grid_vs_published_timescales({}, df, roles)["compared"] is False
     assert grid_tag("data/timescales_He_g850_ov1.csv") == {
         "atmosphere": "He", "logg": 8.5, "overshoot": 1, "file": "timescales_He_g850_ov1.csv"}
+
+
+def test_compaction_keeps_everything_the_controls_and_funnel_read():
+    """An INFORMATION_LIMITED record loses its arrays, not its scalars."""
+    from seti.slag.run import compact_panel
+    rec = {"name": "WD X", "object_key": "WDX", "object_designations": ["WDX", "HEX"],
+           "status": "INFORMATION_LIMITED", "n_measured": 4, "elements": ["Ca", "Mg"],
+           "misfit_class": "INFORMATION_LIMITED",
+           "fit_restricted": {"chi2": 1.0, "chi2_per_dof": 0.5, "phase": "early",
+                              "dominant_endmember": "core", "max_abs_residual_sigma": 0.9,
+                              "residual_sigma": [0.1] * 4, "top_endmembers": {"core": 1.0},
+                              "norm": -5.0},
+           "fit_full": {"chi2": 1.0, "residual_sigma": [0.1] * 4}}
+    got = compact_panel(rec)
+    for k in ("chi2", "chi2_per_dof", "phase", "dominant_endmember", "max_abs_residual_sigma"):
+        assert got["fit_restricted"][k] == rec["fit_restricted"][k]
+    assert "residual_sigma" not in got["fit_restricted"]
+    assert "top_endmembers" not in got["fit_restricted"]
+    assert got["fit_restricted"]["compacted"] is True
+    assert got["fit_full"] is None
+    assert got["n_measured"] == 4 and got["misfit_class"] == "INFORMATION_LIMITED"
+    # a screened record is never touched
+    kept = {"status": "SCREENED", "fit_full": {"chi2": 2.0},
+            "fit_restricted": {"residual_sigma": [1.0]}}
+    assert compact_panel(kept) == kept

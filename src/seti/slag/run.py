@@ -157,9 +157,16 @@ def _json_default(o):
     return str(o)
 
 
-def _write_json(path: Path, obj) -> None:
+def _write_json(path: Path, obj, *, compact: bool = False) -> None:
+    """Write JSON; ``compact`` drops the indentation for machine-read files.
+
+    The screen shard is 3,547 panel records that nothing reads by eye, and
+    indent=2 doubles it on disk.  Everything a human opens -- summary.json,
+    controls.json, probe.json, acquire.json -- stays indented.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=2, default=_json_default))
+    kw = {"separators": (",", ":")} if compact else {"indent": 2}
+    path.write_text(json.dumps(obj, default=_json_default, **kw))
 
 
 def fit_settings(cfg: dict, *, restricted: bool) -> FitSettings:
@@ -531,6 +538,40 @@ def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | Non
     return rec
 
 
+#: Fields kept on an INFORMATION_LIMITED panel's fit block.  Such a panel can
+#: never be a candidate, but it is still counted, still grouped into an object
+#: and still reported when a control lands on it, so the scalars the controls
+#: and the funnel read are kept and the arrays are not.
+_INFO_LIMITED_FIT_KEYS = ("nll2", "chi2", "chi2_per_dof", "n_measured", "n_limits", "dof",
+                          "phase", "timescale_source", "dominant_endmember", "dominant_weight",
+                          "max_abs_residual_sigma", "t_cut_K", "depth_dex",
+                          "t_acc_over_tau_ref", "t_dec_over_tau_ref", "p_naive")
+
+
+def compact_panel(rec: dict) -> dict:
+    """Shrink a record that can never be a candidate, keeping what is read.
+
+    3,379 of the 3,547 served rows are INFORMATION_LIMITED, and writing their
+    full fit blocks made the committed screen output 6.6 MB -- past what this
+    repository should carry per run, for panels whose arrays nothing reads.
+    The per-element residual vectors, the end-member weights and the second
+    (free-fractionation) fit go; every scalar the funnel, the object grouping
+    and the control table read stays, and the full record is still in the
+    run's uploaded artifact.
+    """
+    if rec.get("status") != "INFORMATION_LIMITED":
+        return rec
+    out = dict(rec)
+    fr = out.get("fit_restricted")
+    if isinstance(fr, dict):
+        out["fit_restricted"] = {k: fr[k] for k in _INFO_LIMITED_FIT_KEYS if k in fr}
+        out["fit_restricted"]["compacted"] = True
+    out["fit_full"] = None
+    out.pop("object_designations", None)
+    return out
+
+
+
 def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str | None = None,
                  n_cal: int | None = None, names: list[str] | None = None,
                  max_panels: int | None = None) -> dict:
@@ -597,7 +638,7 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
                        "n_measured": p.n_measured, "status": "SCREEN_ERROR",
                        "error": repr(exc)[:500]}
             rec["n_sources_for_object"] = len(group)
-            out["panels"].append(rec)
+            out["panels"].append(compact_panel(rec))
         # Checkpoint on the OBJECT counter and on the clock, never on the panel
         # count: a group can add several panels at once and step straight over a
         # modulus, which on a multi-hour shard means the file is written far
@@ -610,13 +651,13 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
             # a checkpoint is a partial shard, not a failed query: say so, so a
             # shard killed mid-flight is never merged as if its table had failed
             out["status"] = "IN_PROGRESS"
-            _write_json(out_dir / f"screen_{i}of{n}.json", out)
+            _write_json(out_dir / f"screen_{i}of{n}.json", out, compact=True)
             last_ckpt = _time.time()
     out["elapsed_s"] = round(_time.time() - t0, 1)
     out["n_objects"] = len(keys)
     out["n_panels"] = len(out["panels"])
     out["status"] = A.STATUS_OK if out["panels"] else A.STATUS_ZERO
-    _write_json(out_dir / f"screen_{i}of{n}.json", out)
+    _write_json(out_dir / f"screen_{i}of{n}.json", out, compact=True)
     return out
 
 

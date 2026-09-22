@@ -320,7 +320,7 @@ funnel. No survivor stands as of this entry.
 2.3.3 — and pass unchanged. The channel uses no removed API; `np.trapz` was
 already behind a `getattr(np, "trapezoid", ...)` fallback.
 
-### LANTERN: the reader and the phase are fixed, and the sensitivity floor was not photon noise, 2026-09-22
+### LANTERN: the reader, the phase and the verification all pass on real data, 2026-09-22
 
 The first LANTERN run (34036760527) analysed 21 of 832 exposure checkpoints —
 `read_failed 656`, and **0** exposures classed as eclipse or transit. Run
@@ -373,13 +373,48 @@ candidate (`insufficient_phase_coverage`, and `transit_inconsistent` for a line
 that changes across transit more than the continuum does), which is correct:
 this channel's signature needs an eclipse.
 
-The full screen is dispatched (run **35741401724**, 10 shards, eclipse-class
-first and cheapest-first within a rank, gated on the known-eclipse
-verification, checkpoints accumulating across dispatches). Checkpoint version
-is now 3; version-2 checkpoints are re-analysed rather than trusted. The honest
-limitation is in the contamination ledger: an *unresolved* emission line from
-the planet's own atmosphere passes every veto this channel has, so a survivor
-is a target for higher-resolution follow-up, not a detection.
+**The verification now passes on real data.** Run **35741401724** put both
+known eclipses through the difference search:
+
+| | WASP-18 b NIRISS/SOSS | WASP-43 b MIRI/LRS |
+|---|---|---|
+| integrations / tables | 2 720 / 6 | 9 216 / 30 |
+| eclipse depth | 1 451 ppm at 23.1σ | 4 223 ppm at 7.0σ (in-window) |
+| free step vs predicted ingress | 0.0003 d (tol 0.020 d) ✓ | −0.169 d, but better by only Δχ² = 9.9 |
+| 5σ EW limit, out-of-eclipse | 8.87×10⁻⁵ µm | 1.378×10⁻³ µm |
+| 5σ EW limit, **difference** | **1.73×10⁻⁶ µm** (51×) | **1.93×10⁻⁴ µm** (7.1×) |
+| injected vanishing line | 62.6σ `candidate`, no veto | 10.6σ `candidate`, no veto |
+| its drift null / in-eclipse residual | 0.42σ / −0.13σ | 0.39σ / −0.32σ |
+
+That run's screen was nonetheless **skipped**, because the gate demanded both
+cases and WASP-43 b failed one check — the free-step timing test. That failure
+was not about the sky: on a thermal phase curve the arch a linear detrend
+leaves pulls a free two-level step away from the eclipse, and the step it
+found improved χ² by 9.9 over the step held at the predicted ingress, which
+itself beat flat by 49. Three things changed as a result. The timing check now
+asks whether the data *prefer* a differently placed eclipse (free step inside
+the tolerance, **or** not beating the predicted step by Δχ² > 25); a t₀ shifted
+by 0.55·T₁₄ on a synthetic eclipse still fails it. The gate is the **phase**
+question only — one clean known eclipse settles whether in-eclipse integrations
+can be identified — with the injected-line recovery reported as a separate
+`injection_verdict`. And the injection amplitude is now measured from the
+exposure's own noise rather than fixed at 2% of the continuum, which on both
+these exposures is *below* their 5σ EW limit and so tested nothing.
+
+Two other things that cost the earlier runs: nothing is skipped as `too_large`
+any more (the largest public product is 10.33 GB against a 12 GB cap, so no
+chunking is needed), and the shard deadline is now predictive — it refuses to
+*start* an exposure whose estimated cost would run past it, because a
+checkpoint is only safe once the shard's artifact uploads.
+
+Run **35745941769** (4 shards, eclipse-first, `require_verify=true`,
+`deadline_minutes=270`) is queued with all of this. Checkpoint version is 3 and
+deliberately unchanged, so a mid-flight assess cannot mark a running screen's
+checkpoints stale — which is how run 35737559234 reported 159 stale checkpoints
+and zero exposures. The honest limitation stands, in the contamination ledger:
+an *unresolved* emission line from the planet's own atmosphere passes every
+veto this channel has, so a survivor is a target for higher-resolution
+follow-up, not a detection.
 ### ARC closed out: 4,206 stars on the ceiling, one left standing (KIC 9418692), 2026-09-22
 
 S59 (`docs/arc.md`, §9 carries every number). The stage-1 assess stage had

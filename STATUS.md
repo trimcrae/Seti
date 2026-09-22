@@ -1296,7 +1296,19 @@ its strength is stated in units of that exposure's sensitivity:
 | drift null / in-eclipse residual | 0.42σ / −0.13σ | 0.40σ / −0.32σ |
 | features on the *un-injected* baseline | 2 | 0 |
 
-The four screen shards began at 15:53 UTC (11:53 EDT). Checkpoint version is 3
+The four screen shards were released at 15:45 UTC (11:45 EDT); shard 3 started
+screening at 15:55 UTC (11:55 EDT) and shards 0–2 are waiting on runner
+concurrency. Each runs to a 270-minute deadline inside a 350-minute job cap, so
+the run's own `assess` job will commit `summary.json`, `candidates.json` and
+`exposures.json` several hours later. **When it lands, read in this order:**
+`funnel.exposure_statuses` (does `read_failed` collapse?),
+`funnel.exposures_eclipse_class` (is it non-zero — the thing the first screen
+could never do?), `funnel.dispatch_coverage.fraction_of_scheduled_bytes_downloaded`
+(what fraction of the 509 GB this dispatch reached), then `rejections`,
+`tiers` and `candidates`. To continue the sweep, re-dispatch `lantern.yml` with
+`reuse_inventory=true` and `prior_run_ids=35745941769`: checkpoints carry a
+version and accumulate, so successive dispatches add coverage instead of
+repeating it. Checkpoint version is 3
 and deliberately unchanged, so a mid-flight assess cannot mark a running
 screen's checkpoints stale — which is how run 35737559234 reported 159 stale
 checkpoints and zero exposures. The honest limitation stands, in the

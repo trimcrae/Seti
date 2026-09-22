@@ -105,11 +105,22 @@ more than twice the coadd significance of any of its five plate-mates. Both surv
 look structurally different from the contaminated bulk, which is the first thing in this
 channel that has argued *for* them rather than against.
 
+*And the leading explanation for the strongest line is now a background galaxy.*
+`galaxy_reject` tests the candidate LIST: it needs two surviving candidates in one
+spectrum at one redshift. A galaxy whose Hα clears the 8 σ search threshold while its
+[N II] does not leaves exactly one candidate and passes — and 0412-51942-0465 has
+`n_lines_in_spectrum` = 1. Asking the *spectrum* instead, at the redshift that makes
+6809.26 Å Hα (z = 0.037268), [N II] 6584 is already present at 6830.69 Å at 2.0 σ with an
+equivalent-width ratio of 0.23, which is textbook star-forming. The decisive lines lie
+outside the window the triage stored: Hβ at 5043.9 Å and [O III] 5008 at 5194.9 Å. If
+either reaches 4 σ, the persistence, the second epoch and the unresolved width are all
+explained at once — a real source in the fibre, just not the star.
+
 Next: land the calibrated full run (35747997902), then the control sample on whatever is
-still standing (35751666444). For the strongest candidate the three live kill paths are
-the same-plate control (a bad column in plate 412's red camera would produce everything
-seen so far), how many *distinct fibres* its eight "other epochs" actually are, and the
-same-type control.
+still standing (35751666444). For the strongest candidate the four live kill paths are
+the background-galaxy family at z = 0.0373, how many *distinct fibres* its eight "other
+epochs" actually are, the same-plate control (a bad column in plate 412's red camera
+would produce everything seen so far), and the same-type control.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

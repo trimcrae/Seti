@@ -231,6 +231,40 @@ reason — roughly one candidate in eight. **None of the six lines left standing
 them at 0 px**; two have a neighbour one pixel away. The statistic goes in the summary per
 release.
 
+## A background galaxy in the fibre — the leading explanation for the strongest line
+
+`galaxy_reject` already tests for this, but it tests the **candidate list**: it needs two
+surviving candidates in one spectrum to land on one redshift. A galaxy whose Hα clears
+the 8 σ search threshold while its [N II] and [S II] do not therefore leaves exactly one
+candidate and passes the cut. That is the common case, not the rare one — [N II] 6584 is
+typically 0.3 × Hα in a star-forming galaxy, so a 16 σ Hα comes with a ~5 σ companion that
+was never a candidate. **0412-51942-0465 at 6809.26 Å has `n_lines_in_spectrum` = 1 for
+exactly this reason.**
+
+`background_galaxy_scan()` asks the **spectrum** instead: each strong nebular line is
+tried as the anchor and, at the redshift that implies, every *other* line of the family is
+measured directly in the data however weak. A companion landing within 2 LSF of the
+candidate is skipped — a close doublet partner re-measuring the same feature is not a
+companion, and that alone made a lone injected line look like an [O II] doublet at
+z = 0.83.
+
+On the 125 Å windows the triage stored (all that is reachable offline), Hα is the best
+anchor for three of the five and the companions are suggestive but below 3 σ:
+
+| candidate | anchor | implied z | best companion |
+|---|---|---|---|
+| 6809.26 | Hα | 0.037268 | [N II] 6584 at 6830.69 Å, **2.0 σ**, EW 1.39 Å |
+| 7490.31 | Hα | 0.141014 | [N II] 6584 at 7513.89 Å, 2.8 σ |
+| 6856.46 | Hα | 0.044458 | [N II] 6584 at 6878.04 Å, 1.9 σ |
+
+For 6809.26 the [N II]/Hα equivalent-width ratio is 1.39 / 6.10 = **0.23**, which is
+textbook star-forming. **The decisive lines are outside the stored window**: at
+z = 0.037268, Hβ falls at **5043.9 Å** and [O III] 5008 at **5194.9 Å**. The control stage
+holds the whole spectrum and measures them. If either shows up at ≥ 4 σ, the candidate is
+an unremarkable background galaxy and the persistence, the second epoch and the unresolved
+width are all explained at once — a real astrophysical source in the fibre, just not the
+star.
+
 ## The detector
 
 If the feature is narrow, unresolved and in every exposure and every epoch, the next
@@ -350,11 +384,15 @@ where the hand-kept OH list is least complete and the telluric bands live.
   The object is an M1V dwarf (SIMBAD `LM*`, 2MASS J03095713+0030176). A profile fit to
   the stored coadd window gives **FWHM 3.09 Å against a 3.40 Å LSF — unresolved**, a peak
   of 19.8 on a continuum of ~7.7, two to three pixels wide. So it is not a molecular band
-  gap, and the three things that can still kill it, in order: **the same-plate control**
-  (a bad CCD column in plate 412's red camera would do all of this); **how many distinct
-  fibres its 8 "other epochs" actually are** — if they are all 0412-…-0465 on other
-  nights they are one CCD column, not eight epochs; and the same-type control. All three
-  are in `--stage control`.
+  gap. It is also the **only** candidate on its plate and the nearest other candidate in
+  the whole 350 is 43.8 Å away, so neither the plate statistic nor the pixel-coincidence
+  statistic touches it. What can still kill it, in order of how likely it now looks:
+  **a background star-forming galaxy in the fibre at z = 0.037268** — [N II] 6584 is
+  already there at 2.0 σ with a textbook ratio of 0.23, and Hβ at 5043.9 Å and [O III] at
+  5194.9 Å decide it; **how many distinct fibres its 8 "other epochs" actually are** (if
+  they are all 0412-…-0465 on other nights they are one CCD column, not eight epochs);
+  **the same-plate control**; and the same-type control. All four are in
+  `--stage control`.
 * **3241-54884-0388 @ 8578.3 Å** — 14 exposures over six nights (MJD 54879–54884), every
   one positive, χ²p = 0.76, EW 0.42–0.96 Å, ratio to coadd 0.94. The cleanest persistence
   in the set. Killed by: a same-type control detection; a complete OH atlas covering the

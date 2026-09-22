@@ -116,7 +116,7 @@ def load_grave_config(path: Path | None = None) -> dict:
 
 def detector_config(conf: dict) -> V.GraveConfig:
     d = dict(conf.get("detector") or {})
-    for k in ("zr_hf_natural", "nb_ta_natural", "heavy_set", "light_set"):
+    for k in ("zr_hf_natural", "nb_ta_natural", "heavy_set", "light_set", "ash_drivers"):
         if k in d and isinstance(d[k], list):
             d[k] = tuple(d[k])
     fields = V.GraveConfig.__dataclass_fields__

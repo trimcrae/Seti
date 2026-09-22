@@ -147,6 +147,79 @@ def test_single_element_driver_and_monazite_and_zircon_vetoes():
     assert CFG.zr_hf_natural[0] <= row2["Zr"] / row2["Hf"] <= CFG.zr_hf_natural[1]
 
 
+TEPHRA_SUITE = ("Zr", "Hf", "Nb", "Ta", "Th", "La", "Ce", "Pr", "Nd", "Sm")
+
+
+def _ash_row(factor=4.0, seed=31):
+    """A shale with a distal ash bed in it: the whole HFSE suite up together,
+    Hf still riding with Zr and Ta with Nb at their crustal ratios."""
+    row = rowdict(synth(1, seed=seed, noise=0.0)[0])
+    for e in TEPHRA_SUITE:
+        row[e] = row[e] * factor
+    return row
+
+
+def test_tephra_signature_separates_an_ash_bed_from_a_fission_residue():
+    ash = V.tephra_signature(_ash_row(), CFG)
+    assert ash["tephra"] and ash["reason"] == "hfse_enriched_at_crustal_zr_hf_and_nb_ta"
+    assert CFG.zr_hf_natural[0] <= ash["ratios"]["Zr/Hf"] <= CFG.zr_hf_natural[1]
+    assert CFG.nb_ta_natural[0] <= ash["ratios"]["Nb/Ta"] <= CFG.nb_ta_natural[1]
+    # fission gives Zr with no Hf and has no path to Ta at all, so the four
+    # HFSE cannot rise together: the veto is blind to a real fission residue
+    fis = V.tephra_signature(rowdict(synth(1, a=1.5, seed=3)[0]), CFG)
+    assert not fis["tephra"] and fis["reason"] == "hfse_not_enriched_together"
+    lone = dict(_ash_row())
+    lone["Hf"], lone["Ta"] = lone["Hf"] / 4.0, lone["Ta"] / 4.0   # Zr and Nb alone
+    assert not V.tephra_signature(lone, CFG)["tephra"]
+    # an incomplete panel is never a veto, it is a statement about coverage
+    partial = {k: v for k, v in _ash_row().items() if k != "Ta"}
+    assert V.tephra_signature(partial, CFG)["reason"] == "hfse_panel_incomplete"
+
+
+def test_a_plain_ash_bed_never_reaches_the_vet_at_all():
+    """The reservoir family already contains rhyolite, so a distal tephra is
+    absorbed by the mixture and its LR is zero -- it is not a near-miss that
+    the kills have to catch."""
+    row = _ash_row()
+    c = np.array([row.get(e, np.nan) for e in D.elements])
+    fit = V.fit_mixture(c[None, :], D, CFG)
+    assert float(fit["fission_lr"].iat[0]) == pytest.approx(0.0, abs=1e-6)
+    assert float(fit["reduced_chi2_natural"].iat[0]) < CFG.max_reduced_chi2
+
+
+def test_volcanic_ash_is_the_one_difference_glass_makes_to_the_vet():
+    """The same sample twice -- once on a horizon where Hf rode in with the Zr
+    and Ta with the Nb, once without -- and ``volcanic_ash`` is the only entry
+    that changes.  The driver is Cs, a heavy-peak element a tephra also
+    carries, so the anomaly cannot be attributed to fission on that horizon."""
+    els = [e for e in D.elements if e != "Mo"]      # an analysis without Mo
+    d2 = V.build_design(els, CFG)
+
+    def vet(with_glass):
+        X = synth(1, a=1.5, seed=3, noise=0.0)
+        row = {e: float(X[0][k]) for k, e in enumerate(D.elements) if e != "Mo"}
+        if with_glass:
+            for e in ("Zr", "Hf", "Nb", "Ta"):
+                row[e] = row[e] * 4.0
+        c = np.array([row.get(e, np.nan) for e in d2.elements])
+        fit = V.fit_mixture(c[None, :], d2, CFG)
+        return V.assess_row(row, c, d2, CFG, d2.sigma, fit=fit.iloc[0].to_dict(),
+                            threshold=CFG.lr_min)
+
+    on, off = vet(True), vet(False)
+    assert on["tephra"]["tephra"] is True and off["tephra"]["tephra"] is False
+    assert on["lr_loo_driver"] == off["lr_loo_driver"] == "Cs"
+    assert on["lr_loo_driver"] in CFG.ash_drivers
+    assert "volcanic_ash" in on["vetoes"] and "volcanic_ash" not in off["vetoes"]
+    assert set(on["vetoes"]) - {"volcanic_ash"} == set(off["vetoes"])
+    # and the injected candidate of the main suite is untouched by the new kill
+    X = synth(1, a=1.5, seed=3)
+    fit2 = V.fit_mixture(X, D, CFG)
+    ok = V.assess_row(rowdict(X[0]), X[0], D, CFG, D.sigma, fit=fit2.iloc[0].to_dict(),
+                      threshold=CFG.lr_min)
+    assert ok["class"] == V.FISSION_CANDIDATE and "volcanic_ash" not in ok["vetoes"]
+
+
 def test_detection_limit_mask_flags_a_repeated_floor():
     df = pd.DataFrame({"Mo": [0.5] * 30 + list(np.linspace(0.6, 5, 20)), "U": np.linspace(1, 5, 50)})
     mask, ledger = V.detection_limit_mask(df, CFG)

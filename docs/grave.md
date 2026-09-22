@@ -445,12 +445,22 @@ count would delete the impact test and the refined-catalyst test together.
 | `redox_conditioned` | the sample is anoxic (U or V enrichment factor ≥ 3, or TOC ≥ 2 %) and the driver is a redox-sensitive element (Mo, U, V, Cd, Ag, Re, Se, Tl) |
 | `femn_shuttle` | Mn enrichment factor ≥ 5 and the driver is one of the shuttle's own (Mo, Te, Pt, Ce, Co, Ni) |
 | `heavy_mineral_zr_hf` | Zr drives, and Zr/Hf is in the natural 25–60 range |
+| `volcanic_ash` | **all four** of Zr, Hf, Nb, Ta enriched ≥ 2× together, with Zr/Hf in 25–60 *and* Nb/Ta in 5–40 — the HFSE arrived as glass, in crustal proportion — and the driver is an element the tephra itself carries (Zr, Hf, Nb, Ta, Th, Y, Rb, Cs, Ba, LREE–Eu, U). **This kill cannot fire on a real fission residue**, which is the whole reason it is written on coherence rather than on any one element: fission gives Zr with *no* Hf (Hf's mass sits in the yield valley) and has no path to Ta at all, so the four cannot rise together. A sample that brings Hf and Ta along at crustal ratio has brought a rock, not a reactor |
 | `monazite_th` | an LREE drives, and Th enrichment factor ≥ 3 |
 | `hydrothermal_ba` | Ba drives, and Ba enrichment factor ≥ 5 |
 | `impact_pge` | the PGE panel classes as impact or ultramafic and a PGE drives |
 
 Enrichment factors are always Al-normalised, `(X/Al)_sample / (X/Al)_PAAS`, so
 that dilution by carbonate or silica cannot masquerade as depletion.
+
+A note on the ash kill, because the suite measured it rather than assuming
+it: a *plain* distal tephra never reaches the vet at all. `rhyolite` is one
+of the twelve reservoirs, so the mixture absorbs an ash bed outright — LR = 0,
+reduced χ² below 4. The `volcanic_ash` veto exists for the harder case, an
+anomaly that survives the fit *on a horizon that also carries glass*, where
+the heavy-peak elements may simply be glass-borne. The suite holds the same
+sample against itself with and without the glass and asserts that
+`volcanic_ash` is the only entry that changes.
 
 Two kills are *not* automatic rejections but are reported per sample, because
 they cannot be settled from a database row:

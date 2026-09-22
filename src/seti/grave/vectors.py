@@ -94,6 +94,7 @@ VETOES: tuple[str, ...] = (
     "redox_conditioned",
     "femn_shuttle",
     "heavy_mineral_zr_hf",
+    "volcanic_ash",
     "monazite_th",
     "hydrothermal_ba",
     "impact_pge",
@@ -150,6 +151,11 @@ class GraveConfig:
     redox_toc_pct: float = 2.0
     femn_ef_mn: float = 5.0
     zr_hf_natural: tuple[float, float] = (25.0, 60.0)
+    # distal tephra: the HFSE arrived as glass/minerals, so Hf rides with Zr and
+    # Ta rides with Nb at crustal ratios.  A fission residue brings neither.
+    ash_ef_hfse: float = 2.0
+    ash_drivers: tuple[str, ...] = ("Zr", "Hf", "Nb", "Ta", "Th", "Y", "Rb", "Cs", "Ba",
+                                    "La", "Ce", "Pr", "Nd", "Sm", "Eu", "U")
     monazite_th_ef: float = 3.0
     hydro_ef_ba: float = 5.0
     # refined-particulate test
@@ -545,6 +551,47 @@ def redox_state(row: dict, cfg: GraveConfig) -> dict:
     return {"ef_u": ef_u, "ef_v": ef_v, "ef_mo": ef_mo, "toc": toc, "anoxic": bool(anoxic)}
 
 
+def tephra_signature(row: dict, cfg: GraveConfig) -> dict:
+    """Did the HFSE arrive as volcanic glass rather than as fission product?
+
+    A distal ash fall in a shale raises the whole high-field-strength suite
+    *together and in crustal proportion*: Zr with Hf at Zr/Hf ~ 36-45, Nb with
+    Ta at Nb/Ta ~ 11-17, and the LREE and Th riding along in the glass.  So the
+    diagnostic is not any one element being high, it is the **coherence**: all
+    four of Zr, Hf, Nb, Ta enriched by at least ``ash_ef_hfse``, with both
+    ratios inside their natural ranges.
+
+    This cannot fire on a true fission residue, and that is the whole point of
+    writing it this way.  Fission gives Zr with **no Hf** (Hf's mass sits in
+    the yield valley) and, having no path to Ta at all, **no Ta** with the Nb.
+    A sample that brings Hf and Ta along in crustal ratio has brought a rock,
+    not a reactor.  Reported for every sample; a veto only when the element
+    driving the fission preference is one the tephra itself carries.
+    """
+    ef = {e: enrichment_factor(row, e) for e in ("Zr", "Hf", "Nb", "Ta")}
+    vals = {e: row.get(e) for e in ("Zr", "Hf", "Nb", "Ta")}
+    out = {"tephra": False, "ef": {k: (round(v, 3) if np.isfinite(v) else None) for k, v in ef.items()},
+           "ratios": {}, "reason": ""}
+    have = all(vals[e] is not None and np.isfinite(vals[e] or np.nan) and (vals[e] or 0) > 0
+               for e in vals)
+    if not have:
+        out["reason"] = "hfse_panel_incomplete"
+        return out
+    zr_hf, nb_ta = vals["Zr"] / vals["Hf"], vals["Nb"] / vals["Ta"]
+    out["ratios"] = {"Zr/Hf": round(zr_hf, 3), "Nb/Ta": round(nb_ta, 3)}
+    if not all(np.isfinite(ef[e]) and ef[e] >= cfg.ash_ef_hfse for e in ef):
+        out["reason"] = "hfse_not_enriched_together"
+        return out
+    in_zr = cfg.zr_hf_natural[0] <= zr_hf <= cfg.zr_hf_natural[1]
+    in_nb = cfg.nb_ta_natural[0] <= nb_ta <= cfg.nb_ta_natural[1]
+    if in_zr and in_nb:
+        out["tephra"] = True
+        out["reason"] = "hfse_enriched_at_crustal_zr_hf_and_nb_ta"
+    else:
+        out["reason"] = "hfse_enriched_but_ratios_not_crustal"
+    return out
+
+
 def classify_pge(row: dict, cfg: GraveConfig) -> dict:
     """Refined-particulate test on the PGE panel.
 
@@ -714,6 +761,9 @@ def assess_row(row: dict, conc_row: np.ndarray, D: Design, cfg: GraveConfig, s: 
     if driver == "Zr" and zr and hf and np.isfinite(zr) and np.isfinite(hf) and hf > 0 \
             and cfg.zr_hf_natural[0] <= zr / hf <= cfg.zr_hf_natural[1]:
         vetoes.append("heavy_mineral_zr_hf")
+    ash = tephra_signature(row, cfg)
+    if ash["tephra"] and driver in cfg.ash_drivers:
+        vetoes.append("volcanic_ash")
     ef_th = enrichment_factor(row, "Th")
     if driver in ("La", "Ce", "Pr", "Nd", "Sm") and np.isfinite(ef_th) and ef_th >= cfg.monazite_th_ef:
         vetoes.append("monazite_th")
@@ -735,7 +785,7 @@ def assess_row(row: dict, conc_row: np.ndarray, D: Design, cfg: GraveConfig, s: 
         "residual_dex": {e: round(float(resid[k]), 3) for k, e in enumerate(D.elements) if np.isfinite(resid[k])},
         "peak": coh, "redox": {k: (round(v, 3) if isinstance(v, float) and np.isfinite(v) else v)
                                for k, v in red.items()},
-        "pge": pge, "alloy": alloy, "brief_ratios": brief_ratios(row, m, D, cfg),
+        "pge": pge, "alloy": alloy, "tephra": ash, "brief_ratios": brief_ratios(row, m, D, cfg),
         "a_fission": round(float(fit["a_fission"]), 4),
         "fission_nd_added_ppm": round(float(fit["fission_nd_added_ppm"]), 3),
         "reduced_chi2_fission": round(float(fit["reduced_chi2_fission"]), 3),
@@ -752,4 +802,5 @@ __all__ = [
     "classify_pge", "default_sigma", "detection_limit_mask", "enrichment_factor",
     "error_floors", "fission_discriminants", "fission_mass_vector", "fit_mixture",
     "leave_one_out", "natural_model", "peak_coherence", "redox_state", "shuffled_null",
+    "single_threaded", "tephra_signature",
 ]

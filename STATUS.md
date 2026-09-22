@@ -10,6 +10,236 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### CENTURY (S50) — the probe came back, and three of its four answers were corrections, 2026-09-22
+
+The first live DASCH DR7 exchange in this repository (run 35738717013) reached
+all three endpoints and returned `API_REACHED_NO_LIGHTCURVE`. The four things
+it settled are in `docs/century.md` §6.1; three of them were silent
+degradations, not cosmetics:
+
+1. **The wire format is a JSON array of CSV lines, header first.** Parsed as
+   ordinary JSON that is a single column of strings called `value` — the probe
+   duly reported 18,429 plates in the Kepler field and not one usable column,
+   and the chain never reached `lightcurve` at all. `api.to_frame` now detects
+   and parses it.
+2. **The AFLAGS/BFLAGS enums live in `daschlab/photometry.py`, not
+   `lightcurves.py`.** The probe fetched only `lightcurves.py` — which merely
+   imports them — parsed nothing, and committed an empty `flag_bits.json`.
+   With an empty table `apply_masks` returns all-False for *both* blend and
+   reject, so a whole sweep would have treated every point of every plate as
+   clean, unblended photometry while reporting success. Time-clustered
+   blending is one of this channel's five kills, because blending follows
+   plate scale and emulsion and therefore plate series, which is clustered in
+   calendar time. `photometry.py` is now first in `DASCHLAB_FILES`, the
+   resolution takes a list of source texts, and all 22 AFLAGS + 25 BFLAGS bits
+   are transcribed into `config/century.yaml` as the offline fallback.
+3. **DR7 light curves carry no exposure time** (the served columns are fixed by
+   `_COLTYPES` in `photometry.py`); `queryexps` carries it, in minutes. A long
+   exposure smears a period by `|sinc(f·t_exp)|`, and Harvard exposure lengths
+   are a property of the plate *series*. Unmodelled, the injection efficiency
+   in a star's post-gap blocks is computed as though the late plates smeared
+   like the early ones — optimistic exactly where the cessation claim is made.
+   The `targets` stage now writes `results/century/plate_exptime.csv` from the
+   same `queryexps` that measures field density (no extra requests) and
+   `acquire` joins it on `(series, platenum, mosnum, expnum)`, falling back to
+   `(series, platenum)` and **never** to the series alone.
+
+Also fixed: the error column is paired to the magnitude actually used
+(`magcal_magdep` → `magcal_magdep_rms`, not another calibration's scatter) with
+DASCH's `99.0` "no rms" sentinel mapped to the default error; the screen stage
+has a wall clock inside the sweep job's `timeout-minutes`, so an overrun
+uploads what it screened and resumes rather than being killed with nothing; and
+`targets.min_ndet_bright` is recorded as **inert** against the DR7 refcat,
+which has no detection count (its `num_matches` counts catalogue cross-matches),
+rather than pretending to cut.
+
+**The runner's pandas is not the sandbox's.** The sandbox holds 2.3.3, the
+runner installs 3.0.6 from `pandas>=2.0`. The century package and the five
+sibling modules it imports (`knell.acquire/blocks/efficiency`,
+`rust.scatter/trend`) are clean of the removed APIs, and the offline suite is
+now run against 3.0.6 as well. (`knell/run.py:383` still calls
+`pd.to_numeric(..., errors="ignore")` — not on any century path, but it will
+kill a KNELL dispatch.) The version check surfaced one hazard that is not
+about pandas: the exposure table reaches the shards through a CSV, where one
+empty cell turns an identifier column into `float64` while the light curve's
+is `Int64` — a join that matches nothing and reads as a DASCH coverage gap.
+Both sides are now normalised, with a round-trip test.
+
+In flight: run **35745660073**, `stages=full`, 4 shards, dispatched 11:12 EDT.
+Its `targets` job ran 11:46–12:02 EDT and committed `targets.csv` /
+`targets_summary.json`; its four `sweep` shards queued at 12:02 EDT and are
+the live acquisition. No `results/century/summary.json` exists yet; the
+channel has produced no sky statement.
+
+**Cancelling a run does not cancel a job guarded by `if: always()`.** That run
+was cancelled at 11:38 EDT because its `probe` job had sat queued since 11:12
+without starting. The cancel killed the probe — and `targets`, which carries
+`needs: [probe]` *and* `if: always()`, started eight minutes later and ran to
+completion anyway, taking the sweep with it. Meanwhile run **35748748365** had
+been dispatched as its replacement, so for twenty minutes two runs were
+queueing eight shards for the same 384 targets. 35748748365 is now cancelled
+and 35745660073 kept, because its shards were already twenty minutes ahead in
+the queue. The replacement's only advantages were the `plate_exptime.csv`
+artifact passthrough and the widened gate, and the first of those is exactly
+what `stage_acquire`'s rebuild-it-yourself fallback exists to make
+unnecessary. Check a cancelled run's *job* list before assuming it is dead.
+
+**The first real target selection landed, and it reframes the channel.**
+Run 35748748365's `targets` job (`results/century/targets.csv`,
+`targets_summary.json`) over the six fields at radius 1°: 12,517–19,538 plates
+per field, **77,632 exposure durations** collected (median 60 min — the join
+works), and **384 targets: 360 bright, 24 catalogued variables**. Variables by
+field: kepler 15, cygnus 5, orion 4, and **zero** from praesepe, sa57_ngp and
+m31. Three consequences, all about the cessation arm (`docs/century.md` §6.3):
+
+1. **The cessation sample is 24 stars.** The cap was 60 per field; the
+   catalogues delivered a quarter of one field's worth in total. The binding
+   constraint is `mag_max = 13` + `amp ≥ 0.3` + periodic non-LPV, not the cap.
+2. **The median plate is shallower than the targets.** `limMagApass` medians
+   of 12.3–13.2 against a `mag ≤ 13` cut means the typical plate cannot see
+   the typical target. The margin cut and the censored efficiency handle this
+   honestly, but η — which gates every cessation claim at 0.9 — is capped by
+   it. **Raising `mag_max` makes this worse.** Brighter targets, or fields
+   chosen for plate *depth*, is the productive direction.
+3. **Eclipsing binaries dominate, and they are the wrong population.** The 24
+   are EA/EB/EW/E/ELL/RS/ROT plus one Cepheid (V0547 Cyg, P = 6.225 d, amp
+   0.96) and no RR Lyrae. An eclipsing period is a geometric orbit: it cannot
+   cease without destroying the system, so "an eclipse that stopped" is a
+   statement about the photometry. A pulsation can stop.
+   `vet.PERIODIC_TYPE_RE` admits eclipsers on equal terms, and `amp_cat` is
+   NaN for every `KID`/`KIC` entry, so `amp_min` passed them on a missing
+   value rather than on evidence.
+
+**Next decisive action: a target-selection change, not another sweep of the
+same list** — split pulsators from eclipsers, require a real catalogued
+amplitude, and choose fields on `limMagApass` p90 as well as plate count.
+
+**A third red test was inherited, and it was the channel's central statistic.**
+The two tests the brief named
+(`test_cessation_across_gap_is_flagged_and_mean_flux_deferred`,
+`test_shard_roundtrip_screen_and_assess_end_to_end`) both **pass** — the
+predecessor's work-in-progress commit had already fixed them, confirmed by
+re-running each in isolation rather than inferring it.
+`test_series_change_at_the_transition_is_not_a_cessation` did not, and it
+failed identically on the pre-session commit `cb2dc252`, so it was inherited.
+Instrumenting the failing case block by block showed it was not a broken
+assertion but a real defect in how the transition is located.
+
+The split rule took the earliest split whose later detections passed a
+false-alarm test. That is safe against **one** stray detection and not against
+two: when the post-transition era holds more false alarms than the test
+tolerates, the earliest split that passes is the first false alarm itself.
+Measured — a clock stopping in 1932 with two noise-level blocks firing at 1951
+and 1977 (amplitude 30 mmag against the real signal's 500):
+
+| | transition | `n_pre` | unexplained pre-misses | `series_pre` | overlap | `series_disjoint` |
+|---|---|---|---|---|---|---|
+| before | **1952.0** | 31 | 9 | `a,mc` | 0.091 | no |
+| after | **1932.0** | 21 | 0 | `a` | 0.0 | **yes** |
+
+Twenty years late, hard against the Menzel gap, with nine genuine
+post-cessation blocks charged to the pre segment and the series, blend and
+mean-flux guards all evaluated at the wrong split — the Hippke/Lund trap
+reopening from a direction the earlier fix did not cover.
+
+The split is now the one leaving the fewest unexplained blocks,
+`cost(s) = excess_late(s) + #{undetected up to s}`, ties to the earlier split.
+`excess_late` counts only detections the false-alarm rate **cannot** account
+for, and that subtraction is load-bearing: charging the raw count reopened the
+trap from the *other* side, because the Menzel gap contains no blocks at all,
+so a false alarm in the first post-gap block has zero undetected blocks behind
+it and scored better than the true pre-gap end. The suite caught it —
+transition 1972.0, `transition_at_gap` false — and the named test was not
+relaxed to accommodate it. A detected block left in the post segment now fails
+the new `no_post_detection` check instead of being silently absorbed.
+
+**Cessation family: 14/14 pass. Full suite: 49/49, ruff clean.** It was 42/43
+before the fix, with that one test red.
+
+**71 % of the account's queue is CI, not science — and the fix is one merge
+per branch.** At 11:41 EDT there were **87 queued runs, 62 of them `ci`**.
+`ci.yml` on `main` has carried a `concurrency: ci-${{ github.ref }}` group with
+`cancel-in-progress` since commit 9e8e4696, so a branch that has merged `main`
+keeps at most one queued gate. A branch that has *not* accumulates one per
+push: `claude/goap-century` had **nine** sitting queued at once before this
+session merged `main` in and cancelled them by hand. Every builder whose
+branch predates 9e8e4696 is in the same position, and each stale gate is a
+runner slot a search is not getting. **Recommended for every branch: merge
+`origin/main`, then cancel that branch's superseded queued `ci` runs.**
+
+**A `needs:` edge costs a whole queue wait, not a job.** On a starved queue
+every job waits for a runner separately, so `full` (probe → targets → sweep →
+assess) pays four separate waits before a verdict. The `probe` job produces
+documentation, flag bits and a schema report, and the `targets` job reads none
+of them — the edge was pure serialisation, and it is gone, so the two now run
+in parallel and `full` pays three. This does **not** apply to run
+35745660073: GitHub fixes a run's workflow file when it is *dispatched*, not
+when each job checks out, so that run keeps the old graph (and would also have
+lost `plate_exptime.csv`, which travels as an artifact named in the workflow —
+hence `stage_acquire` now rebuilds the exposure table itself from one
+`queryexps` per field when the file does not arrive). Only the *code* a job
+checks out follows the branch tip.
+
+### CENTURY (S50) wired to DASCH DR7 — and the Menzel trap caught in our own code, 2026-09-22
+
+The first DASCH stage in this repository. `docs/knell.md` §Plates recorded why
+there had never been one: the Menzel gap (no plates 1954–1970, with a 0.1–0.4
+mag photometric offset across it) manufactures exactly the century-scale
+signal a naive search would report, and it is what gave KIC 8462852 its
+"century dimming" (Hippke et al. 2016; Lund, Pepper, Stassun & Hippke 2016).
+The fix is to model it, which DR7's per-exposure limiting magnitudes now
+allow. `necrofrontier.md` row `g4 century fade` records the search space as
+**unoccupied**: the DASCH literature is the survey papers plus *targeted*
+century light curves, and there is no blind DR7 cessation / fade /
+rising-scatter search.
+
+What exists: `src/seti/century/` (DASCH DR7 REST client with payload-variant
+discovery, censored-injection cessation, the Menzel step model, RUST's moments
+and the secular fade on plates, the gauntlet), `config/century.yaml`,
+`tests/test_century.py`, `.github/workflows/century.yml` (probe → targets →
+sharded acquire+screen → assess), `docs/century.md`.
+
+**The methodological finding of this build.** The gap trap bit *us*, inside
+the cessation statistic, and the test suite caught it. The per-block
+periodogram fires at rate `fap` by construction, and the densest post-gap
+block in DASCH is the first one after 1970 — the likeliest single place in a
+century for a false alarm. The split rule ended the pre-segment at the last
+detected block, so **one** noise detection in the 1970–1972 block moved the
+transition from "at the gap" to 1972. `transition_at_gap` then went False, the
+mean-flux test stopped being deferred to the field ensemble, and the plates'
+own 0.29 mag step was charged to the star, which was scored
+`faded_or_brightened`. That is the Hippke/Lund failure mode with a periodogram
+in front of it, and no amount of care in the fade statistic would have caught
+it, because it lives in the cessation statistic.
+
+Fixed three ways (`docs/century.md` §3.1.1): the split is now chosen by a
+false-alarm test rather than by the last detection (take the *earliest* split
+whose later detections are consistent with noise — at most
+`max(1, ⌈3·fap·n_post⌉)`, never two adjacent, since two adjacent late
+detections are a clock that came back); `mean_shift_across_gap` is a statement
+about where the photometry sits in time rather than about a block index; and
+the pre-transition mean is restricted to one side of the gap when the pre
+blocks straddle it. On the synthetic star the verdict went from
+`faded_or_brightened` with the transition at 1972 to `transition_at_gap` with
+the 0.287 mag shift correctly flagged `mean_flux_gap_uncorrected` and deferred.
+
+**A second defect, found by reading the units.** The consistency test between
+the base fade slope and its robustness refits compared a difference in mag per
+century against a combination of *significances*. A base slope of 1.0 ± 0.2
+mag/century against a deeper-plate refit of 0.05 ± 0.2 — a 3.4σ disagreement —
+came out "consistent", because the threshold was 2.5 × hypot(5.0, 0.25) = 12.5
+instead of 2.5 × hypot(0.2, 0.2) = 0.71. So `depends_on_shallow_plates` and
+`depends_on_series` could not fire and two of the three robustness guards were
+guards in name only. Both now use the fit's own slope error. A refit that can
+never disagree is worse than no refit, because it is reported as one.
+
+**Next decisive action:** the probe stage on a runner. Nothing in this
+repository has ever posted to the DR7 API — `results/necrofrontier/` recorded
+the endpoints as reachable, which is not the same as knowing their payload
+shapes — so `api.py` carries an ordered list of key spellings per endpoint and
+the probe settles them in one cheap job, together with the AFLAGS/BFLAGS bit
+meanings from the `daschlab` source and the real plate density of each
+configured field. The sweep follows.
 ### ULINE: both stated limits removed — the five uncatalogued species are now predicted, and the Crockett table is sought over four more doors, 2026-09-22
 
 S54 (`docs/uline.md`). The channel's previous verdict was `NO_PATTERN` over 80

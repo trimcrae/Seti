@@ -1,0 +1,203 @@
+# CENTURY channel (S50) — every threshold in one place.
+#
+# Cessation (KNELL), rising season scatter (RUST) and secular fade on the
+# DASCH DR7 century baseline, 1885–1992.  Three plate-specific rules govern
+# everything below and are not negotiable:
+#   1. every non-detection is normalised by an injection-measured efficiency
+#      that is CENSORED against that block's own per-plate limiting magnitudes
+#      and smeared by its own exposure times;
+#   2. the Menzel gap (no plates 1954–1970) and the pre/post-gap photometric
+#      offset are modelled as a STEP, never as a trend (Hippke+2016, Lund+2016:
+#      that is how KIC 8462852 acquired a "century dimming");
+#   3. every statistic is re-done at a deeper plate-limit margin and inside
+#      the dominant plate series; a result that depends on shallow plates or
+#      on a change of series is a property of the archive, not of the star.
+
+fields:
+  # DASCH-dense candidates; the targets stage measures each one's real plate
+  # count with queryexps and the summary reports it.
+  - {ra: 290.0, dec: 44.5, name: kepler}
+  - {ra: 130.1, dec: 19.7, name: praesepe}
+  - {ra: 299.6, dec: 35.2, name: cygnus}
+  - {ra: 197.9, dec: 29.4, name: sa57_ngp}
+  - {ra: 84.0, dec: -1.2, name: orion}
+  - {ra: 10.7, dec: 41.3, name: m31}
+radius_deg: 1.0
+
+gap:
+  # The Menzel gap.  Sources disagree on the exact bracket (1953–1969 vs
+  # 1954–1965 with incomplete recovery to ~1970); the operative definition is
+  # "before 1954 / after 1970" and nothing in between is used for a segment.
+  start: 1954.0
+  end: 1970.0
+
+targets:
+  mag_max: 13.0            # the plates reach B ~ 14–17 by series; 13 keeps every series usable
+  bright_mag_min: 8.0      # photographic saturation
+  period_min: 0.2          # an hour-long exposure smears anything shorter beyond recovery
+  period_max: 100.0
+  amp_min: 0.3             # catalogued amplitude the plates' ~0.1–0.15 mag errors can resolve
+  max_variables_per_field: 150
+  max_bright_per_field: 80
+  refcat: apass            # calibrated magnitudes on the APASS B scale
+  match_radius_arcsec: 15.0
+  tile_arcmin: 10.0
+  min_ndet_bright: 50
+
+acquire:
+  pause_s: 0.5             # be a good citizen toward the DASCH API
+  time_budget_s: 12000
+  timeout_s: 180
+  max_consecutive_failures: 25
+  checkpoint_every: 25
+
+lightcurve:
+  default_err: 0.15        # only when the archive omits a per-point rms
+  min_detections: 40
+  min_span_yr: 20.0
+
+blocks:
+  block_years: 2.0         # a plate block needs more calendar time than a ZTF season
+  origin_year: 1880.0
+  min_epochs_block: 20
+  min_blocks: 4
+
+cease:
+  half_width_frac: 0.005   # frequency window around the reference (periods drift over a century)
+  oversample: 5.0
+  fap: 0.01
+  n_null: 200
+  # Screen-time injection depth; candidates are re-run at the confirm depth.
+  n_trials: 120
+  n_null_trial: 80
+  n_trials_confirm: 300
+  n_null_trial_confirm: 150
+  eta_min: 0.90
+  p_persist_max: 0.01
+  min_pre_detected: 2
+  min_post_informative: 2
+  min_post_span_yr: 10.0
+  mean_shift_max_mag: 0.10   # photographic zero points are worse than CCD ones
+  post_amp_sigma_max: 3.0
+  drop_sigma_min: 5.0
+  pdm_p_pre_max: 0.01
+  pdm_p_post_min: 0.05
+  pdm_null: 100
+  var_drop_frac: 0.35
+  blend_jump_max: 0.30
+  vanish_margin_mag: 0.5
+  vanish_rate_min: 0.3       # below this the star is a vanishing claim, not a cessation
+  smear: true
+
+fade:
+  margin: 1.0                # plates must be this much deeper than the star (raised to amp+0.5 for variables)
+  deep_extra: 1.0
+  min_per_year: 3
+  min_years: 15
+  min_span_yr: 30.0
+  fade_sigma_min: 5.0
+  pre_sigma_min: 3.0         # the pre-gap segment must show it on its own
+  series_min_years: 10
+  series_min_span_yr: 25.0
+
+scatter:
+  margin: 1.0
+  deep_extra: 1.0
+  season_years: 1.0
+  min_epochs_season: 8
+  min_seasons: 6
+  slope_sigma_min: 3.0
+  pre_rank_p_max: 0.01
+  pre_slope_sigma_min: 3.0
+  pre_loo_min: 2.0
+  robust_sigma_min: 2.0
+
+ensemble:
+  min_stars: 8
+  mag_bin: 1.0
+
+screen:
+  # A wall clock INSIDE the sweep job's timeout-minutes.  The cessation
+  # statistic is a censored injection-efficiency measurement in every block of
+  # a century-long light curve and costs of order a minute per periodic star,
+  # so a shard that drew more variables than expected would otherwise run past
+  # the job timeout and be killed with nothing uploaded.  screen.jsonl is
+  # appended per star, so a truncated shard resumes rather than restarts.
+  time_budget_s: 9000
+
+vet:
+  pm_max_masyr: 50.0         # 5" per century at plate scales of 60–600"/mm
+  bright_limit_mag: 8.0
+  lpv_colour_min: 1.5
+  mean_shift_max_mag: 0.10
+  gaia_radius_arcsec: 5.0
+
+# AFLAGS / BFLAGS bit definitions — the offline fallback.
+#
+# Transcribed verbatim from ``class AFlags(IntFlag)`` / ``class BFlags(IntFlag)``
+# in ``daschlab/photometry.py`` (upstream main, read 2026-09-22).  The probe
+# stage re-parses them from the live source on every runner and overrides these
+# when it succeeds; these exist so that a GitHub outage degrades the run's
+# provenance and not its BLENDING KILL, which is what an empty table silently
+# does (the first probe, run 35738717013, fetched only lightcurves.py — which
+# merely imports the enums — and wrote an empty flag_bits.json).
+#
+# The channel uses the member NAMES, not the numbers: flags.py masks anything
+# matching BLEND/NEIGHBOR/... as a blend and DEFECT/SATURAT/BAD_PLATE/... as
+# unusable.  Keep the names exactly as upstream spells them.
+flag_bits:
+  aflags:
+    HIGH_BACKGROUND: 64
+    BAD_PLATE_QUALITY: 128
+    MULT_EXP_UNMATCHED: 256
+    UNCERTAIN_DATE: 512
+    MULT_EXP_BLEND: 1024
+    LARGE_ISO_RMS: 2048
+    LARGE_LOCAL_SMOOTH_RMS: 4096
+    CLOSE_TO_LIMITING: 8192
+    RADIAL_BIN_9: 16384
+    BIN_DRAD_UNKNOWN: 32768
+    UNCERTAIN_CATALOG_MAG: 524288
+    CASE_B_BLEND: 1048576
+    CASE_C_BLEND: 2097152
+    CASE_BC_BLEND: 4194304
+    LARGE_DRAD: 8388608
+    PICKERING_WEDGE: 16777216
+    SUSPECTED_DEFECT: 33554432
+    SXT_BLEND: 67108864
+    REJECTED_BLEND: 134217728
+    LARGE_SMOOTHING_CORRECTION: 268435456
+    TOO_BRIGHT: 536870912
+    LOW_ALTITUDE: 1073741824
+  bflags:
+    NEIGHBORS: 1
+    BLEND: 2
+    SATURATED: 4
+    NEAR_BOUNDARY: 8
+    APERTURE_INCOMPLETE: 16
+    ISOPHOT_INCOMPLETE: 32
+    DEBLEND_OVERFLOW: 64
+    EXTRACTION_OVERFLOW: 128
+    CORRECTED_FOR_BLEND: 256
+    LARGE_BIN_DRAD: 512
+    PSF_SATURATED: 1024
+    MAG_DEP_CAL_APPLIED: 2048
+    GOOD_STAR: 65536
+    LOWESS_CAL_APPLIED: 131072
+    LOCAL_CAL_APPLIED: 262144
+    EXTINCTION_CAL_APPLIED: 524288
+    TOO_BRIGHT: 1048576
+    COLOR_CORRECTION_APPLIED: 2097152
+    COLOR_CORRECTION_USED_METROPOLIS: 4194304
+    LATE_CATALOG_MATCH: 16777216
+    LARGE_PROMO_UNCERT: 33554432
+    LARGE_SPATIAL_BIN_COLORTERM: 134217728
+    POSITION_ADJUSTED: 268435456
+    LARGE_JD_UNCERT: 536870912
+    PROMO_APPLIED: 1073741824
+
+probe_stars:
+  - {name: "RR Lyr", ra: 291.36631, dec: 42.78435, mag: 7.6}
+  - {name: "SW And", ra: 5.92967, dec: 29.40099, mag: 9.6}
+  - {name: "XZ Cyg", ra: 293.12290, dec: 56.38810, mag: 9.7}
+  - {name: "RT Aur", ra: 97.29296, dec: 30.49364, mag: 5.4}

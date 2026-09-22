@@ -2167,6 +2167,94 @@ def test_redetect_is_never_part_of_stage_all():
     assert STAGE_REDETECT not in STAGES
 
 
+def test_catalogue_epochs_that_are_real_brightenings_are_detected_as_such():
+    """The threshold-free check: real injected flares at the catalogued epochs."""
+    from seti.metronome.redetect import (
+        catalogue_epoch_response,
+        lightcurve_windows,
+        stitch_segments,
+    )
+
+    rng = np.random.default_rng(21)
+    injected = np.sort(rng.uniform(172.0, 536.0, 60))
+    segs = _synthetic_kepler_lightcurve(injected, seed=6)
+    t, f, meta = stitch_segments(segs)
+    w = lightcurve_windows(t, cadence_days=meta["cadence_days"])
+    er = catalogue_epoch_response(t, f, injected, w, cadence_days=meta["cadence_days"],
+                                  n_control=1500, rng=np.random.default_rng(1))
+    assert er["n_epochs"] >= 40, er
+    assert er["epoch_sigma_median"] > 5.0 * er["control_sigma_median"], er
+    assert er["p_empirical"] <= 0.01, er
+    assert er["epoch_frac_above_3"] > 0.8 > er["control_frac_above_3"], er
+
+
+def test_catalogue_epochs_with_no_flux_behind_them_are_indistinguishable_from_random():
+    """The confounder this exists for: a catalogue whose listed epochs are not
+    brightenings in the star's own light curve.  A clock built from them is a
+    pattern in the catalogue, not in the star."""
+    from seti.metronome.redetect import (
+        catalogue_epoch_response,
+        lightcurve_windows,
+        stitch_segments,
+    )
+
+    rng = np.random.default_rng(23)
+    # a perfectly clocked list of epochs -- and no flares injected anywhere
+    fake = 171.0 + 4.3737 * np.arange(0, 84)
+    segs = _synthetic_kepler_lightcurve([], seed=6)
+    t, f, meta = stitch_segments(segs)
+    w = lightcurve_windows(t, cadence_days=meta["cadence_days"])
+    er = catalogue_epoch_response(t, f, fake, w, cadence_days=meta["cadence_days"],
+                                  n_control=1500, rng=rng)
+    assert er["n_epochs"] >= 20, er
+    assert er["epoch_sigma_median"] < 3.0, er
+    assert er["p_empirical"] > 0.01, er
+    assert abs(er["epoch_sigma_median"] - er["control_sigma_median"]) < 0.6, er
+
+
+def test_catalogue_epoch_response_finds_a_time_system_offset():
+    """Epochs in the wrong time system are a recorded shift, not an empty
+    catalogue: every one of them lands outside the windows until it is undone."""
+    from seti.metronome.redetect import (
+        catalogue_epoch_response,
+        lightcurve_windows,
+        stitch_segments,
+    )
+
+    rng = np.random.default_rng(29)
+    injected = np.sort(rng.uniform(172.0, 536.0, 60))
+    segs = _synthetic_kepler_lightcurve(injected, seed=6)
+    t, f, meta = stitch_segments(segs)
+    w = lightcurve_windows(t, cadence_days=meta["cadence_days"])
+    er = catalogue_epoch_response(t, f, injected + 2400000.5, w,
+                                  cadence_days=meta["cadence_days"], n_control=800,
+                                  offsets=[-2457000.0, -2400000.5, -1.0, 1.0],
+                                  rng=np.random.default_rng(2))
+    assert er["n_epochs"] == 0 or er["epoch_sigma_median"] < 3.0
+    assert er["best_offset_days"] == -2400000.5, er
+    assert er["best_offset_sigma_median"] > 5.0, er
+
+
+def test_redetect_demotes_a_star_whose_catalogue_epochs_are_not_in_the_lightcurve(tmp_path):
+    from seti.metronome.redetect import reconcile_summary
+
+    (tmp_path / "summary.json").write_text(json.dumps(
+        {"verdict": "CLOCK_CANDIDATES_PENDING_VET", "n_candidates": 0, "n_interest": 1,
+         "funnel": {"stars_interest": 1}}))
+    (tmp_path / "candidates.json").write_text(json.dumps(
+        {"candidates": [{"star_key": "tess:1", "tier": "interest", "flags": ""}], "watch": []}))
+    res = reconcile_summary(tmp_path, [
+        {"star_key": "tess:1", "status": "TOO_FEW_FLARES",
+         "catalogue_epochs_are_brightenings": False, "cat_epoch_sigma_median": 1.1,
+         "cat_control_sigma_median": 1.0, "cat_n_epochs": 217}],
+        verdict="REDETECT_CONFIRMS_NONE; CATALOGUE_EPOCHS_ABSENT_1")
+    assert res["demoted"] == ["tess:1:catalogue_epochs_absent"]
+    cj = json.loads((tmp_path / "candidates.json").read_text())
+    assert cj["candidates"][0]["first_veto"] == "catalogue_epochs_absent"
+    sj = json.loads((tmp_path / "summary.json").read_text())
+    assert sj["n_interest"] == 0 and sj["funnel"]["stars_demoted_by_lightcurve"] == 1
+
+
 def test_reconcile_demotes_a_candidate_whose_clock_is_its_photometric_period(tmp_path):
     """The light curve has the last word on the headline verdict."""
     from seti.metronome.redetect import reconcile_summary
@@ -2185,7 +2273,7 @@ def test_reconcile_demotes_a_candidate_whose_clock_is_its_photometric_period(tmp
          "confirms_catalogue_clock": True, "rd_period": 3.137, "n_flares": 40},
     ]
     res = reconcile_summary(tmp_path, records, verdict="REDETECT_CONFIRMS_1")
-    assert res["status"] == "OK" and res["demoted"] == ["kepler:1"]
+    assert res["status"] == "OK" and res["demoted"] == ["kepler:1:photometric_oscillation"]
 
     cj = json.loads((tmp_path / "candidates.json").read_text())
     c1, c2 = cj["candidates"]
@@ -2199,8 +2287,8 @@ def test_reconcile_demotes_a_candidate_whose_clock_is_its_photometric_period(tmp
 
     sj = json.loads((tmp_path / "summary.json").read_text())
     assert sj["n_candidates"] == 0 and sj["n_interest"] == 1
-    assert sj["funnel"]["stars_demoted_photometric"] == 1
-    assert "REDETECT_DEMOTED_1_PHOTOMETRIC" in sj["verdict"]
+    assert sj["funnel"]["stars_demoted_by_lightcurve"] == 1
+    assert "REDETECT_DEMOTED_1" in sj["verdict"]
     assert sj["redetect"]["verdict"] == "REDETECT_CONFIRMS_1"
 
 

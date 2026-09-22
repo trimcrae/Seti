@@ -34,8 +34,11 @@ on:
       stage:
         description: >-
           Which stages to run: "all" (probe+acquire, screen matrix, assess),
-          "probe" (schema discovery only — cheap, run this first), or
-          "assess" with reduce_only_run_id to re-vet a prior run's shards.
+          "probe" (schema discovery only — cheap, run this first),
+          "assess" with reduce_only_run_id to re-vet a prior run's shards, or
+          "redetect" with reduce_only_run_id to run ONLY the light-curve
+          verdict (catalogue-epoch stack + photometric veto) over a prior
+          run's shortlist — one runner, MAST only.
         required: false
         default: "all"
       catalogues:
@@ -348,7 +351,9 @@ jobs:
           scripts/commit_results.sh \
             "metronome: flare re-detection on the shortlist's light curves" \
             results/metronome/redetect.json \
-            results/metronome/stars_redetect.csv
+            results/metronome/stars_redetect.csv \
+            results/metronome/summary.json \
+            results/metronome/candidates.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -356,10 +361,100 @@ jobs:
           path: |
             results/metronome/redetect.json
             results/metronome/stars_redetect.csv
+            results/metronome/summary.json
+            results/metronome/candidates.json
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # Re-detection ALONE, over a prior run's acquire + assess artifacts.
+  # The light-curve tests (the catalogue-epoch stack and the photometric
+  # veto) are what decide a shortlist, and they need one runner and no
+  # archive but MAST.  Waiting for a whole acquire + screen matrix to
+  # repeat before they can be re-run costs an hour of queue for nothing.
+  # ------------------------------------------------------------------
+  redetect-only:
+    if: ${{ github.event.inputs.reduce_only_run_id != '' && github.event.inputs.stage == 'redetect' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+      - name: Fetch artifacts from a prior run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: metronome-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/metronome/
+      - name: Offline gate — the detector must recover injected flares and the clock on them
+        run: python -m pytest tests/test_metronome.py -q -p no:cacheprovider -k "redetect or catalogue_epoch or reconcile"
+      - name: Re-detect flares, stack the catalogue epochs, rerun the clock test
+        run: |
+          ls results/metronome/ | head -40
+          ls results/metronome/data 2>/dev/null | head -20
+          python -m seti.metronome.run --stage redetect \
+            --max-stars ${{ github.event.inputs.redetect_max_stars || '40' }} \
+            --budget-s 11000
+          echo "=== redetect ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/metronome/redetect.json"))
+          print(d["verdict"], "targets", d["n_targets"], "fetched", d["n_fetched"],
+                "scanned", d["n_scanned"], "confirmed", d["n_confirms_catalogue_clock"],
+                "epochs_absent", d.get("n_catalogue_epochs_absent"),
+                "epochs_confirmed", d.get("n_catalogue_epochs_confirmed"),
+                "recovery", d["catalogue_recovery_frac_median"])
+          print("reconciliation:", json.dumps(d.get("reconciliation", {}))[:2000])
+          for t in d["targets"]:
+              print(t["star_key"], t["tier"], t["status"],
+                    "n_cat", t["n_events"], "n_lc", t["n_flares"],
+                    "rec", t["catalogue_recovery_frac"],
+                    "Pcat", t["period_catalogue"], "Plc", t["rd_period"],
+                    "confirms", t["confirms_catalogue_clock"],
+                    "Pphot", t.get("phot_period"), "is_phot", t.get("period_is_photometric"),
+                    "| epochs", t.get("cat_n_epochs"),
+                    "sig", t.get("cat_epoch_sigma_median"),
+                    "ctl", t.get("cat_control_sigma_median"),
+                    "p", t.get("cat_p_empirical"),
+                    "real", t.get("catalogue_epochs_are_brightenings"),
+                    "off", t.get("cat_best_offset_days"),
+                    "off_sig", t.get("cat_best_offset_sigma_median"))
+          PY
+          echo "=== summary after reconciliation ==="
+          python -c "import json;d=json.load(open('results/metronome/summary.json'));print(d['verdict']);print(json.dumps(d.get('redetect',{}).get('demoted'),indent=1));print(json.dumps(d.get('funnel'),indent=1))"
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "metronome: light-curve verdict on the shortlist (epoch stack + photometric veto)" \
+            results/metronome/redetect.json \
+            results/metronome/stars_redetect.csv \
+            results/metronome/summary.json \
+            results/metronome/candidates.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metronome-redetect
+          path: |
+            results/metronome/redetect.json
+            results/metronome/stars_redetect.csv
+            results/metronome/summary.json
+            results/metronome/candidates.json
           if-no-files-found: warn
 
   assess-only:
-    if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+    if: ${{ github.event.inputs.reduce_only_run_id != '' && github.event.inputs.stage != 'redetect' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

@@ -71,6 +71,17 @@ DEFAULT_REDETECT: dict = {
     # about.  A re-detected "clock" at the star's own photometric period is
     # the residual of an oscillation the running median could not flatten.
     "phot_max_period_days": 50.0,
+    # The threshold-free catalogue check (catalogue_epoch_response).  A star's
+    # catalogued epochs must carry more flux than random epochs inside the same
+    # windows before any clock built from them is a statement about the star.
+    "epoch_n_control": 4000,
+    "epoch_min_n": 8,          # below this the test has no power; it says None
+    "epoch_alpha": 0.01,
+    "epoch_sigma_min": 2.0,    # median peak residual at the epochs, in run sigmas
+    # a catalogue in the wrong time system announces itself as a stack peak at
+    # a non-zero shift rather than as an empty catalogue
+    "epoch_offsets_days": [-2457000.0, -2400000.5, -2.0, -1.0, -0.5, -0.1,
+                           0.1, 0.5, 1.0, 2.0, 2400000.5, 2457000.0],
 }
 
 STATUS_NO_LC = "NO_LIGHTCURVE"
@@ -316,6 +327,125 @@ def photometric_period(t, f, *, cadence_days: float, min_period_days: float = 0.
     return out
 
 
+def catalogue_epoch_response(t, f, epochs, windows: Windows, *, cadence_days: float,
+                             window_days: float = 0.5, gap_days: float = 0.5,
+                             tol_days: float | None = None, n_control: int = 4000,
+                             offsets=None, rng=None) -> dict:
+    """Does the light curve actually brighten at the CATALOGUED epochs?
+
+    The re-detector answers a harder question than the channel needs.  It has
+    its own threshold, and on a star where it recovers few of the catalogued
+    flares a non-confirmation says as much about the detector as about the
+    star.  This says nothing about thresholds: it reads the detrended
+    residual, in units of the run's own robust sigma, at the times the
+    catalogue put its flares, and compares that to the same statistic at
+    random times inside the same observing windows.
+
+    The question it settles is the one a clock built from catalogue times
+    cannot answer for itself --- whether those times are events at all.  If
+    the catalogue's epochs carry no more flux than random epochs do, then
+    whatever pattern they form is a pattern in the catalogue, not in the star,
+    and no amount of phase coherence changes that.
+
+    ``offsets`` additionally stacks at a list of time shifts.  A catalogue
+    whose times are in a different system, or shifted by a fixed amount,
+    announces itself as a peak of the stack at a non-zero offset instead of
+    looking like an empty catalogue.
+
+    Returns the median and 90th percentile of the epoch sigma, the same for
+    the controls, the fraction of epochs above 3 sigma against the control
+    fraction, a one-sided empirical p for the median, and the best offset.
+    """
+    out = {"n_epochs": 0, "n_control": 0, "epoch_sigma_median": float("nan"),
+           "epoch_sigma_p90": float("nan"), "control_sigma_median": float("nan"),
+           "epoch_frac_above_3": float("nan"), "control_frac_above_3": float("nan"),
+           "p_empirical": float("nan"), "best_offset_days": 0.0,
+           "best_offset_sigma_median": float("nan"), "best_offset_n_epochs": 0}
+    t = np.asarray(t, dtype=float)
+    f = np.asarray(f, dtype=float)
+    ep = np.asarray(epochs, dtype=float)
+    ep = ep[np.isfinite(ep)]
+    if len(t) < 50 or not len(ep) or windows is None or not windows.n:
+        return out
+    resid, sig = detrend_residuals(t, f, cadence_days=cadence_days,
+                                   window_days=window_days, gap_days=gap_days)
+    z = resid / sig
+    ok = np.isfinite(z)
+    if ok.sum() < 50:
+        return out
+    tz, zz = t[ok], z[ok]
+    tol = float(tol_days) if tol_days is not None else 1.5 * float(cadence_days)
+
+    def _stack(times):
+        """Peak sigma within +-tol of each time; NaN where nothing is covered."""
+        lo = np.searchsorted(tz, times - tol, side="left")
+        hi = np.searchsorted(tz, times + tol, side="right")
+        vals = np.full(len(times), np.nan)
+        for i, (a, b) in enumerate(zip(lo, hi, strict=True)):
+            if b > a:
+                vals[i] = float(np.max(zz[a:b]))
+        return vals
+
+    ep_all = np.sort(ep)
+    ep = ep_all[windows.contains(ep_all)]
+    v = _stack(ep)
+    v = v[np.isfinite(v)]
+    rng = rng if rng is not None else np.random.default_rng(0)
+    ctrl_t = np.sort(windows.sample(int(n_control), rng))
+    cv = _stack(ctrl_t)
+    cv = cv[np.isfinite(cv)]
+    if not len(cv):
+        return out
+    # An empty epoch stack is still an answer -- and the commonest reason for
+    # one is a time system, which the offset scan below is here to name.  So
+    # the per-epoch statistics are filled only when there is something to fill
+    # them with, and the scan runs either way.
+    med = float(np.median(v)) if len(v) else float("nan")
+    if len(v):
+        # one-sided empirical p: how often does a random draw of len(v) control
+        # epochs reach this median?  Bootstrapped from the control stack
+        # itself, so it needs no distributional assumption about the residuals.
+        n_boot = 400
+        draws = rng.integers(0, len(cv), size=(n_boot, len(v)))
+        boot = np.median(cv[draws], axis=1)
+        out.update({
+            "epoch_sigma_median": med,
+            "epoch_sigma_p90": float(np.percentile(v, 90)),
+            "epoch_frac_above_3": float(np.mean(v >= 3.0)),
+            "p_empirical": float((1.0 + np.sum(boot >= med)) / (1.0 + n_boot)),
+        })
+    out.update({
+        "n_epochs": int(len(v)), "n_control": int(len(cv)),
+        "control_sigma_median": float(np.median(cv)),
+        "control_frac_above_3": float(np.mean(cv >= 3.0)),
+    })
+    if offsets is not None and len(offsets):
+        # the shift is applied to EVERY catalogued time, not only those already
+        # inside a window: a catalogue in the wrong time system has none of its
+        # epochs inside, and that is the case this is here to catch
+        best_o = 0.0
+        best_m = med if np.isfinite(med) else -np.inf
+        best_n = int(len(v))
+        for o in offsets:
+            if o == 0.0:
+                continue
+            shifted = np.sort(ep_all + float(o))
+            shifted = shifted[windows.contains(shifted)]
+            if len(shifted) < max(4, len(ep_all) // 10):
+                continue
+            vo = _stack(shifted)
+            vo = vo[np.isfinite(vo)]
+            if len(vo) >= max(4, len(ep_all) // 10):
+                m = float(np.median(vo))
+                if m > best_m:
+                    best_o, best_m, best_n = float(o), m, int(len(vo))
+        out.update({"best_offset_days": best_o,
+                    "best_offset_sigma_median": (float(best_m) if np.isfinite(best_m)
+                                                 else float("nan")),
+                    "best_offset_n_epochs": best_n})
+    return out
+
+
 def redetect_star(segments, conf: dict, *, scan_conf: dict | None = None,
                   null_conf: dict | None = None, vet_conf: dict | None = None, rng=None,
                   catalogue_times=None, period_catalogue: float = float("nan")) -> dict:
@@ -351,6 +481,23 @@ def redetect_star(segments, conf: dict, *, scan_conf: dict | None = None,
             rec["catalogue_recovery_frac"] = float(np.mean(near <= float(c["match_tol_days"])))
         else:
             rec["catalogue_recovery_frac"] = 0.0 if in_lc.any() else float("nan")
+        # Threshold-free: is there flux at the catalogue's own epochs?  This
+        # runs BEFORE the n_min gate, because it is exactly the stars whose
+        # light curve yields too few flares for the re-detection that most
+        # need an answer about their catalogue times.
+        er = catalogue_epoch_response(
+            t, f, ct, w, cadence_days=cad, window_days=float(c["detrend_window_days"]),
+            gap_days=float(c["gap_days"]), n_control=int(c["epoch_n_control"]),
+            offsets=list(c["epoch_offsets_days"]), rng=rng)
+        rec.update({"cat_" + k: v for k, v in er.items()})
+        n_ep = int(er["n_epochs"])
+        if n_ep >= int(c["epoch_min_n"]):
+            rec["catalogue_epochs_are_brightenings"] = bool(
+                np.isfinite(er["p_empirical"])
+                and er["p_empirical"] <= float(c["epoch_alpha"])
+                and er["epoch_sigma_median"] >= float(c["epoch_sigma_min"]))
+        else:
+            rec["catalogue_epochs_are_brightenings"] = None
     if len(fl) < int(dict(DEFAULT_SCAN, **(scan_conf or {}))["n_min"]):
         rec.update({"status": STATUS_TOO_FEW})
         return rec
@@ -557,8 +704,12 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
         verdict = f"LIGHTCURVE_CLOCK_WITHOUT_CATALOGUE_AGREEMENT_{len(lc_clocks)}"
     else:
         verdict = "REDETECT_CONFIRMS_NONE"
+    epochs_absent = [r for r in records
+                     if r.get("catalogue_epochs_are_brightenings") is False]
     if photometric:
         verdict += f"; PHOTOMETRIC_OSCILLATION_{len(photometric)}"
+    if epochs_absent:
+        verdict += f"; CATALOGUE_EPOCHS_ABSENT_{len(epochs_absent)}"
     rec_frac = [float(r.get("catalogue_recovery_frac", np.nan)) for r in records]
     rec_frac = [x for x in rec_frac if np.isfinite(x)]
     rep = {"stage": "redetect", "generated_utc": _now(), "verdict": verdict,
@@ -567,6 +718,15 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
            "n_scanned": len(scanned), "n_too_few_flares": int(sum(
                1 for r in records if r.get("status") == STATUS_TOO_FEW)),
            "n_clock_in_lightcurve": len(lc_clocks), "n_confirms_catalogue_clock": len(confirmed),
+           "n_period_is_photometric": len(photometric),
+           "n_catalogue_epochs_absent": len(epochs_absent),
+           "n_catalogue_epochs_confirmed": int(sum(
+               1 for r in records if r.get("catalogue_epochs_are_brightenings") is True)),
+           "catalogue_epoch_sigma_median": float(np.median([
+               float(r["cat_epoch_sigma_median"]) for r in records
+               if np.isfinite(float(r.get("cat_epoch_sigma_median", np.nan) or np.nan))]))
+           if any(np.isfinite(float(r.get("cat_epoch_sigma_median", np.nan) or np.nan))
+                  for r in records) else None,
            "catalogue_recovery_frac_median": float(np.median(rec_frac)) if rec_frac else None,
            "detector": {k: rc[k] for k in ("detrend_window_days", "sigma_lo", "sigma_hi",
                                            "n_consecutive", "gap_days", "cadence")},
@@ -583,6 +743,13 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
                "phot_period", "phot_power", "phot_amplitude_frac",
                "period_is_photometric", "period_photometric_harmonic",
                "rd_duty_cycle", "rd_rise_frac_median", "rd_duration_days_median",
+               # the threshold-free question: is there flux at the catalogue's
+               # own epochs at all?
+               "catalogue_epochs_are_brightenings", "cat_n_epochs",
+               "cat_epoch_sigma_median", "cat_control_sigma_median",
+               "cat_epoch_frac_above_3", "cat_control_frac_above_3",
+               "cat_p_empirical", "cat_best_offset_days",
+               "cat_best_offset_sigma_median",
                "clock_in_lightcurve", "confirms_catalogue_clock", "lc_n_segments",
                "lc_observed_days", "fetch_route")} for r in records],
            "elapsed_s": round(_time.monotonic() - t_start, 1),
@@ -610,7 +777,27 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
 RECONCILE_KEYS = ("status", "n_flares", "catalogue_recovery_frac", "rd_period",
                   "rd_p_window", "period_agrees_with_catalogue", "clock_in_lightcurve",
                   "confirms_catalogue_clock", "period_is_photometric", "phot_period",
-                  "phot_amplitude_frac", "rd_duty_cycle", "rd_rise_frac_median")
+                  "phot_amplitude_frac", "rd_duty_cycle", "rd_rise_frac_median",
+                  "catalogue_epochs_are_brightenings", "cat_n_epochs",
+                  "cat_epoch_sigma_median", "cat_control_sigma_median", "cat_p_empirical",
+                  "cat_best_offset_days", "cat_best_offset_sigma_median")
+
+#: The two ways the light curve can take a claim away, most mundane first.
+#: ``catalogue_epochs_absent`` is first because it is the larger statement:
+#: the events themselves are not in the photometry, so there is nothing for
+#: the photometric veto to be about.
+LIGHTCURVE_VETOES = ("catalogue_epochs_absent", "photometric_oscillation")
+
+
+def _lightcurve_veto(rd: dict | None) -> str | None:
+    """Which light-curve veto, if any, this star's re-detection record trips."""
+    if not rd:
+        return None
+    if rd.get("catalogue_epochs_are_brightenings") is False:
+        return "catalogue_epochs_absent"
+    if rd.get("period_is_photometric"):
+        return "photometric_oscillation"
+    return None
 
 
 def reconcile_summary(out: Path, records, *, verdict: str = "") -> dict:
@@ -658,14 +845,13 @@ def reconcile_summary(out: Path, records, *, verdict: str = "") -> dict:
                     key = str(row.get("star_key"))
                     rd = by_key.get(key)
                     row["redetect"] = rd or {"status": "not_attempted"}
-                    if rd and rd.get("period_is_photometric") \
-                            and str(row.get("tier")) in ("candidate", "interest"):
+                    veto = _lightcurve_veto(rd)
+                    if veto and str(row.get("tier")) in ("candidate", "interest"):
                         row["tier"] = "none"
-                        row["first_veto"] = "photometric_oscillation"
+                        row["first_veto"] = veto
                         row["flags"] = ";".join(
-                            [f for f in str(row.get("flags") or "").split(";") if f]
-                            + ["photometric_oscillation"])
-                        demoted.append(key)
+                            [f for f in str(row.get("flags") or "").split(";") if f] + [veto])
+                        demoted.append(f"{key}:{veto}")
                     if bucket == "candidates":
                         cands.append(row)
             cp.write_text(json.dumps(cj, indent=2, default=_json_default))
@@ -676,16 +862,19 @@ def reconcile_summary(out: Path, records, *, verdict: str = "") -> dict:
         f = summary.get("funnel") or {}
         f["stars_candidate"] = summary["n_candidates"]
         f["stars_interest"] = summary["n_interest"]
-        f["stars_demoted_photometric"] = len(demoted)
+        f["stars_demoted_by_lightcurve"] = len(demoted)
         summary["funnel"] = f
         base = str(summary.get("verdict") or "")
-        summary["verdict"] = f"{base}; REDETECT_DEMOTED_{len(demoted)}_PHOTOMETRIC"
+        summary["verdict"] = f"{base}; REDETECT_DEMOTED_{len(demoted)}"
     summary["redetect"] = {
-        "verdict": str(verdict), "n_demoted_photometric": len(demoted), "demoted": demoted,
-        "per_star": by_key,
-        "note": ("the light curve has the last word: a star whose re-detected period is its "
-                 "own dominant photometric period is a detrending residual, not a flare "
-                 "clock, and is demoted here whatever the catalogue statistics said"),
+        "verdict": str(verdict), "n_demoted": len(demoted), "demoted": demoted,
+        "vetoes": list(LIGHTCURVE_VETOES), "per_star": by_key,
+        "note": ("the light curve has the last word.  catalogue_epochs_absent: the flux at "
+                 "the catalogue's own epochs is no higher than at random epochs in the same "
+                 "windows, so the events the clock is built from are not in the photometry.  "
+                 "photometric_oscillation: the re-detected period IS the star's dominant "
+                 "photometric period, so the 'flares' are a detrending residual.  Either "
+                 "demotes, whatever the catalogue statistics said"),
     }
     sp.write_text(json.dumps(summary, indent=2, default=_json_default))
     res.update({"status": "OK", "demoted": demoted})

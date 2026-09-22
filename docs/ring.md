@@ -160,3 +160,35 @@ or `seti ring` with the same flags. On a runner:
 `.github/workflows/ring.yml` (`workflow_dispatch`), which commits
 `results/ring/summary.json`, `REPORT.md` and the per-leg screens back to the
 branch it ran on.
+
+Two things about *getting* it to run are worth writing down, because neither is
+about the sky and both cost a dispatch:
+
+* **A `workflow_dispatch` API call 404s unless the workflow file exists on the
+  default branch.** `ring.yml` lived only on the channel branch, which is why
+  this channel had never been run at all. The file on `main` is inert (a
+  dispatch-only trigger); a dispatched run still executes the copy on its own
+  ref, so the branch stays the place work happens.
+* **The sandbox and the runner do not run the same library stack.** The
+  sandbox venv holds pandas 2.3.3; a runner that installs the package fresh
+  gets pandas 3, where `future.infer_string` is the default and catalogue text
+  is Arrow-backed. An absent ATNF `assoc` field then survives `.astype(str)`
+  as `NA` and a token test against it raises rather than returning `False`.
+  Catalogue text is therefore read only through `screen.text_column`, which
+  maps element by element and sends every missing value to `""` — the same
+  reader also removes a silent failure mode on the older stack, where a
+  float-`NaN` column came back as the *string* `"nan"` and the veto tokens
+  were being matched against that.
+
+## Why the hotter question, in one number
+
+OSSUARY asked the warm-dust question of 6,192,472 stars that cannot have made
+the dust (metal-poor or halo-kinematic) and produced a census
+(`results/ossuary/`) that is entirely **cold**: of its 251 follow-up
+survivors, **none** has a W1 or W2 excess above 3σ, **251/251** are
+significant in W3, the fitted dust temperature has a median of **182 K**, and
+only **19** reach the 250–800 K band at all. The Osmanov ring prior lives two
+bands hotter than anything that census contains. That is the sense in which
+RING is a different question rather than a refinement: same photometry, a
+temperature prior where the existing warm-dust channels have nothing, over
+hosts where the biological alternative does not exist.

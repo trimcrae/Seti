@@ -64,6 +64,7 @@ which test the *natural* inventory of CDMS/JPL and stop.
 | line lists | JPL `catdir.cat` + `c<tag>.cat` | species directory, log Q on 7 temperatures, every line with LGINT/ELO/GUP | reached by the necrofrontier probe: NF₃, COF₂, CH₂F₂, CH₃Cl present; CHF₃, CH₃F, SO₂F₂, CF₃CN, CF₃Cl, CF₂Cl₂, CFCl₃, CHClF₂, CF₂ absent |
 | line lists | CDMS classic roots (entries, predictions/catalog, partition_function) | same `.cat` format; extra Q temperatures | entries page is script-rendered; roots are mined by regex for whatever renders |
 | predictor | `config/uline.yaml` `predicted:` | symmetric-top constants for CHF₃, CF₃Cl, CF₃CN, NF₃ | placeholders, every one `verify: true` |
+| predictor | `src/seti/data_assets/rotor_constants.yaml` | **full asymmetric-top constants** (A, B, C, quartic where known, dipole components, spin-weight rule, both Cl isotopologues) for CF₂Cl₂, CFCl₃, SO₂F₂, CHClF₂, CF₂ — and for the three validation species SO₂, CH₂F₂, COF₂ | every block `verify: true`, each with a citation and an uncertainty class |
 
 ### 3.1 How a species is found in a catalogue
 
@@ -165,11 +166,27 @@ When **every** route fails, every endpoint and every error text is in
 `sources.<source>.routes` and the status stays an honest `QUERY_FAILED`: no
 route ever fabricates a row.
 
-Not yet reachable as tables (listed in S54, deferred): QUIJOTE TMC-1 (1,591
-features, 188 unidentified), GOTHAM, ALCHEMI, PILS, ReMoCA, PRIMOS.  The
-description-word discovery in the probe stage is how they enter: a table that
-appears there gets a `sources:` entry with its v_LSR and linewidth and is
-screened on the next run.
+Not yet reachable as tables (listed in S54, deferred): QUIJOTE TMC-1, GOTHAM,
+ALCHEMI, PILS, ReMoCA, PRIMOS.  The U-line census in the probe stage is how
+they enter: a table that appears there gets a `sources:` entry with its v_LSR
+and linewidth and is screened on the next run.  **No catalogue id is asserted
+blind** — guessing one puts a wrong Doppler shift on every frequency, which
+would show up as `NO_PATTERN` and be indistinguishable from a real absence.
+
+QUIJOTE is the one worth chasing hardest, and the reason is the linewidth, not
+the sample size.  The Yebes 40 m Q-band (31–50 GHz) survey has 1,591 features
+above 1 mK of which **188 remain unidentified** (and ~1,200 unknown features
+above 3σ as of July 2022), and TMC-1 is a cold dark cloud: its lines are
+~0.6 km s⁻¹ wide against Orion KL's 4 and IRC+10216's 30.  The matching
+tolerance there is ~0.06 MHz at 40 GHz, **two orders of magnitude tighter than
+anywhere else in this channel**, so a coincidence carries correspondingly more
+information and a chance alignment is correspondingly rarer.  It is also the
+regime in which the predictor's own error stops being the tolerance and the
+laboratory constants start to matter absolutely — which is the same
+conclusion §4.1a reaches from the other direction.  The published U-line list
+appears to live in conference-proceedings tables rather than a deposited
+catalogue; the census is how it would be found, and `text_routes` is the shape
+of the reader if it is not.
 
 ---
 
@@ -209,6 +226,93 @@ explicitly over the same levels.  Absolute scale is approximate; only relative
 intensities are used.  Predicted frequencies carry an error
 $\sigma = 0.5\ \mathrm{MHz} + 10^{-5}\nu$ (both distortion constants known) or
 $10^{-4}\nu$ (unknown: the $4D_J(J+1)^3$ term is unmodelled).
+
+### 4.1a The asymmetric-top predictor (the five uncatalogued species)
+
+Five of the most diagnostic species — CF₂Cl₂, CFCl₃, SO₂F₂, CHClF₂ and the
+CF₂ radical — have **no entry in JPL or CDMS** and were reported
+`targets_unsearchable` by every earlier dispatch.  They are the most
+diagnostic precisely because they are long-lived and purely artificial; their
+absence from the *catalogues*, not from the sky, is what excluded them.  A
+rotational spectrum is a computable object, so `src/seti/uline/rotor.py`
+computes it: the **Watson A-reduced Hamiltonian** (Watson 1977; Gordy & Cook
+1984 §8.5) with quartic *and* sextic distortion, set up in the |J,K⟩ basis and
+block-diagonalised in the Wang basis, in either the `Ir` (z = a) or `IIIr`
+(z = c) representation; levels labelled J_{Ka Kc} by the block's fixed K parity
+and fixed Kₐ+K_c sum (robust where the τ-ordering theorem alone fails on a
+near-degenerate K-doublet); line strengths from the eigenvectors and the
+Clebsch–Gordan coefficients of the molecule-fixed dipole components, which
+reduce exactly to S = ((J+1)²−K²)/(J+1) in the symmetric-top limit and obey
+Σ S_g = 2J+1; intensities in the JPL convention with the partition function
+summed explicitly over the same levels, so the output plugs into the same
+`rescale_lgint` as a catalogue entry.  Nuclear-spin weights are a rule on the
+parities of (Kₐ, K_c); quadrupole hyperfine structure is **not** modelled — its
+blend width enters the frequency uncertainty instead.
+
+**Validation is measured, not asserted.**  Offline
+(`tests/test_uline_rotor.py`): closed-form J = 1 and 2 energies, the exact
+symmetric-top limit including ΔJ/ΔJK/ΔK, the Wang-block labels against the
+τ-ordering theorem, the three dipole selection rules, the strength sum rule,
+representation invariance, and laboratory SO₂ lines.  On the runner
+(`--stage validate`): SO₂, CH₂F₂ and COF₂ are predicted and compared **line by
+line** with their JPL/CDMS entries, and then A, B, C and the quartic constants
+are **refitted to the catalogue's own frequencies**.  The two residuals answer
+different questions and `results/uline/rotor_validation.json` reports both:
+the residual *before* the refit measures the embedded **constants** (recalled
+from the literature, expected to be off); `rms_after_mhz` measures the
+**Hamiltonian** and is the only number behind any claim that this predictor
+reproduces a catalogue.  A third, `distortion_truncation`, re-predicts with the
+quartic terms zeroed — the size of the error a species with unknown quartic
+constants carries, at the same J.
+
+**The distortion truncation is the binding limit, and the run says so.**  For
+a heavy rotor an R-branch line at J ≈ 30 is displaced by ~4ΔJ(J+1)³, which is
+orders of magnitude wider than any survey's matching tolerance.  Measured on
+the embedded constants in the IRC+10216 2 mm band (129–172 GHz), the median
+predicted-frequency error is **CF₂Cl₂ 138, CFCl₃ 60, SO₂F₂ 146, CHClF₂ 150,
+CF₂ 92 MHz**, against a 30 km s⁻¹ linewidth that is ~15 MHz there and an Orion
+KL linewidth of ~2 MHz.  Those figures are *after* an audit of the embedded
+A, B, C uncertainties: a `recalled` constant is known only as well as the
+independent check available for it, and where the r0 structure in the same
+block disagreed by more than the stated uncertainty the uncertainty was raised
+to the disagreement (CFCl₃ 0.5 → 21 MHz, CHClF₂ 0.5 → 13 MHz, and the
+isotopologues scaled from them with it).  That moves CFCl₃ to 1.43 GHz and
+CHClF₂ to 677 MHz — honest widths for numbers that were recalled rather than
+read.  It matters in the dangerous direction: the tolerance is
+max(linewidth, σ_pred, σ_U), so an error bound that is too small manufactures
+coincidences.  The current statuses are CF₂Cl₂ ×9 **DEGRADED**, SO₂F₂ ×10
+DEGRADED, CF₂ ×6 DEGRADED, CHClF₂ ×45 **FREQUENCY_LIMITED**, CFCl₃ ×95
+FREQUENCY_LIMITED, against the IRC+10216 tolerance.
+
+When σ_pred exceeds the linewidth the "tolerance" the
+pattern test uses is the prediction's own ignorance, chance alignments rise
+with it, and the rigid-shift FAP can never reach its gate.  That is reported
+per species × source as `searchability`
+(`SEARCHABLE` / `DEGRADED` / `FREQUENCY_LIMITED`) and rolled up as
+`summary.json → targets_frequency_limited`, with the remedy named: **the
+published quartic constants, not more data.**  `--stage litfetch` is the route
+to them — CCCBDB, the NIST Triatomic Spectral Database, PubMed, Zenodo, the
+JPL documentation files — and nothing it fetches ever silently overwrites an
+embedded value: the two are written side by side in `literature.json` and
+promoting one is a commit to `rotor_constants.yaml`.
+
+**One species is model-limited, not only constant-limited.**  SO₂F₂ is an
+*accidentally near-spherical* top (A ≈ B ≈ C).  Sarka, Demaison, Margulès et
+al. found that Watson's **A-reduction fails** for it, that the S-reduction does
+better, and that an *unreduced* Hamiltonian was required — in which six rather
+than five quartic constants are determinable, the first asymmetric top for
+which all six were measured.  This predictor is A-reduced, so for SO₂F₂ alone,
+obtaining the published quartic set would not by itself make the prediction
+right: the Hamiltonian would have to be extended.  That is recorded in the
+species' `hamiltonian_caveat` rather than left to surface later as an
+unexplained residual.
+
+**A `verify` line alone never makes a candidate.**  Every block in
+`rotor_constants.yaml` is `verify: true`.  A pattern found only on those
+frequencies gives the verdict `PATTERN_CANDIDATE_VERIFY_CONSTANTS`, with the
+pairs named in `pattern_candidates_verify_constants` — a reason to obtain the
+laboratory line list, never a detection.  `PATTERN_CANDIDATE` is reserved for a
+pattern on a catalogued list.
 
 ### 4.2 Features, geometry, tolerance
 
@@ -273,7 +377,8 @@ a matched-filter stack in the archive cubes.
 |---|---|
 | `NO_DATA_REACHED` | no U-line list acquired, or no species line list at all — says nothing about the sky |
 | `NO_PATTERN` | lists compared; nothing met every test — a count, not an abundance limit, not written up |
-| `PATTERN_CANDIDATE` | ≥ 1 species × source met every test — pending vet |
+| `PATTERN_CANDIDATE` | ≥ 1 species × source met every test **on a catalogued (laboratory) line list** — pending vet |
+| `PATTERN_CANDIDATE_VERIFY_CONSTANTS` | the only passing pairs rest on `verify` constants reconstructed from the literature — a reason to obtain the laboratory line list, never a detection |
 
 Degradation (a failed archive, an unsearchable species, predicted rather than
 laboratory frequencies, a source without intensities) is the `degraded` list
@@ -305,22 +410,45 @@ in `summary.json`, never folded into the verdict string.
   symmetric CF₂Cl₂/CFCl₃ isotopologue mixes with small dipoles are weak or
   absent here; that is the IR track (SF₆ 10.55 µm, CF₄ 7.8 µm, NF₃ 907 cm⁻¹
   against MIRI/MRS and ISO-SWS), not this channel.
-* **Only species with a line list are searched.**  The necrofrontier probe
-  found NF₃, COF₂, CH₂F₂, CH₃Cl in JPL; CDMS may add CHF₃, CH₃F.  CF₂Cl₂,
-  CFCl₃, SO₂F₂, CHClF₂ and CF₂ are asymmetric tops (or radicals) for which no
-  predictor is offered; without a catalogue entry they are reported
-  `targets_unsearchable`, which is a statement about the archives.
-* **Predicted constants are placeholders** (B, D_J, D_JK for CHF₃ from the
-  channel brief; B only for CF₃Cl, CF₃CN, NF₃).  A pattern found on predicted
-  frequencies is a reason to obtain the laboratory list, not a detection.
+* **The catalogue gap is closed; the constants gap is not.**  CF₂Cl₂, CFCl₃,
+  SO₂F₂, CHClF₂ and CF₂ are no longer `targets_unsearchable`: §4.1a predicts
+  their spectra from embedded constants.  What still binds is that their
+  **quartic centrifugal-distortion constants are published but were not
+  reachable** from the build sandbox, so the predicted frequencies carry
+  60–150 MHz of truncation error and the species come back
+  `FREQUENCY_LIMITED`.  That is a statement about the constants, not the sky,
+  and the fix is the published quartic set (`--stage litfetch`), not more
+  data.
+* **Predicted constants are `verify`** — recalled or read off a search-engine
+  excerpt, with the uncertainty class (`lab` / `recalled` / `snippet` /
+  `structure` / `estimate`) stated per isotopologue.  A pattern found on
+  predicted frequencies gives `PATTERN_CANDIDATE_VERIFY_CONSTANTS`, which is a
+  reason to obtain the laboratory list, not a detection.
 * **A U-line list is the survey's residue**, not the sky: lines the authors
   assigned (rightly or wrongly) are not U-lines.  A species whose strongest
   transitions were mis-assigned to something else is invisible here — which
   is why the top-5 test allows blends with *identified* lines and reports the
   U-only fraction alongside.
-* **Two sources.**  Orion KL is oxygen-rich and hot; IRC+10216 is carbon-rich
-  and the list has 17 entries.  Reach is one dispatch; the description-word
-  discovery is how the list grows.
+* **The U-line sample.**  Orion KL is oxygen-rich and hot; IRC+10216 is
+  carbon-rich; Sgr B2 is a hot core in a third chemistry; comet Lovejoy is a
+  coma, with a tolerance an order of magnitude tighter than any of them.  The
+  Crockett+2014 Orion KL list (~1,730 U-lines *with intensities* — the only
+  one with real statistics) is **measured absent from VizieR** over three
+  independent routes (§6a), and is now sought over the IOP CDN, the article's
+  `suppdata` directory, the CDS ftp mirror and IRSA's HEXOS delivery, each
+  recorded with what it answered.  The U-line **census** (`probe.json →
+  uline_column_census`) is how the sample grows: one TAP_SCHEMA.columns query
+  on phrases only a spectral U-line table carries.  Nothing found there is
+  screened until it is asserted under `sources:` with its own v_LSR,
+  linewidth and `verify` note — guessing a velocity puts a wrong Doppler
+  shift on every frequency.
+* **The LTE test needs an intensity column.**  Runs 35039822190 and
+  35041128720 reported `lte_testable: false` for every pair, which was a
+  *column-matching* failure, not a property of the surveys: Cernicharo+2000
+  carries `T(MB)dv` and He+2008 `Iint`, and neither matched the old regex
+  list.  The integrated forms now come first.  A source with genuinely no
+  intensity column is reported, and the gate falls back to the
+  missing-strong-line test alone.
 
 ---
 
@@ -330,13 +458,25 @@ in `summary.json`, never folded into the verdict string.
 python -m seti.uline.run --stage probe            # archive inventory; cheap
 python -m seti.uline.run --stage all              # probe, acquire, screen, assess
 python -m seti.uline.run --stage screen --species CHF3,NF3 --n-trials 5000
+python -m seti.uline.run --stage validate         # the predictor vs SO2/CH2F2/COF2
+python -m seti.uline.run --stage litfetch         # the microwave literature ladder
+python -m seti.uline.run --stage propose          # offline: adjudicate that ledger
 ```
+
+The workflow input `stage: full` runs everything in one dispatch, in the order
+**probe → acquire → screen → assess → validate → litfetch → propose**: the
+search writes `summary.json` *before* the literature ladder starts, so a slow
+or hanging service can cost only its own output, never the verdict.  The
+ladder also carries its own wall clock (`archives.litfetch_budget_s`), and a
+source it does not reach is recorded `NOT_ATTEMPTED` rather than as a route
+that answered with nothing.
 
 Workflow `.github/workflows/uline.yml` (`workflow_dispatch`: `stage`,
 `sources`, `species`, `n_trials`, `reduce_only_run_id`); results commit back
 through `scripts/commit_results.sh`.  Outputs in `results/uline/`:
 `probe.json`, `acquire.json`, `acquisition_log.json`, `screen.json`,
-`coincidences.csv`, `summary.json`, `candidates.csv`.  Offline suite:
+`coincidences.csv`, `summary.json`, `candidates.csv`,
+`rotor_validation.json`, `literature.json`, `constants_proposal.json`.  Offline suite:
 `tests/test_uline.py` — which, for §3.3, scripts a TAP that 503s every query
 against a VizieR that answers over ASU (discovery off `-meta.all`, rows off
 `asu-tsv`, reported as `route: asu_tsv`) and the world where every route is

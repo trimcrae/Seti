@@ -642,30 +642,48 @@ def fetch_neowise_upload(stars: pd.DataFrame, radius_arcsec: float = 2.5, *,
     order = transport_order(transport) if ladder else [transport or UPLOAD_TRANSPORTS[0]]
     t0 = _time.monotonic()
     errors: list[str] = []
-    for name in order:
-        fn = fns.get(name)
-        if fn is None:
-            continue
-        ta = _time.monotonic()
-        try:
-            if name == "gator":
-                df = fn(q, tbl, timeout_s, radius_arcsec=rad)
-            else:
-                df = fn(q, tbl, timeout_s)
-            n = int(len(df))
-            trunc = bool(max_rows and n >= int(max_rows))
-            print(f"[ignition] upload[{name}] {len(tbl)} stars -> {n} rows in "
-                  f"{_time.monotonic() - ta:.0f} s" + (" TRUNCATED" if trunc else ""),
-                  flush=True)
-            return QueryResult(label=f"neowise_upload[{name}]_{len(tbl)}", service=IRSA_TAP,
-                               status="OK" if n else "QUERY_RETURNED_ZERO_ROWS", n_rows=n,
-                               truncated=trunc, query=q, elapsed_s=_time.monotonic() - t0,
-                               error="; ".join(errors), data=df, n_rows_raw=n)
-        except Exception as exc:                       # noqa: BLE001
-            err = f"{name}: {exc!r}"[:600]
-            errors.append(err)
-            print(f"[ignition] upload[{name}] failed after {_time.monotonic() - ta:.0f} s: "
-                  f"{err[:300]}", flush=True)
+    variants = [("long", tbl)]
+    for vname, vtbl in variants:
+        for name in order:
+            fn = fns.get(name)
+            if fn is None:
+                continue
+            ta = _time.monotonic()
+            try:
+                if name == "gator":
+                    df = fn(q, vtbl, timeout_s, radius_arcsec=rad)
+                else:
+                    df = fn(q, vtbl, timeout_s)
+                n = int(len(df))
+                trunc = bool(max_rows and n >= int(max_rows))
+                print(f"[ignition] upload[{name}/{vname}] {len(vtbl)} stars -> {n} rows in "
+                      f"{_time.monotonic() - ta:.0f} s" + (" TRUNCATED" if trunc else ""),
+                      flush=True)
+                return QueryResult(label=f"neowise_upload[{name}]_{len(vtbl)}",
+                                   service=IRSA_TAP,
+                                   status="OK" if n else "QUERY_RETURNED_ZERO_ROWS", n_rows=n,
+                                   truncated=trunc, query=q,
+                                   elapsed_s=_time.monotonic() - t0,
+                                   error="; ".join(errors), data=df, n_rows_raw=n)
+            except Exception as exc:                   # noqa: BLE001
+                err = f"{name}[{vname}]: {exc!r}"[:600]
+                errors.append(err)
+                print(f"[ignition] upload[{name}/{vname}] failed after "
+                      f"{_time.monotonic() - ta:.0f} s: {err[:300]}", flush=True)
+        # The whole ladder refused on the TYPE of a column, not on the query.
+        # `sid` is already a `long` (the fix for `Unimplemented data type:
+        # unicodeChar`); if this service does not implement that either, the
+        # one type left that every VOTable reader has is a 32-bit int, and the
+        # id is expendable -- rows are assigned to stars locally by exact
+        # separation, so a row index serves the query just as well.  Tried ONCE,
+        # only on that specific refusal, and the downgrade is recorded.
+        if vname == "long" and len(variants) == 1 and \
+                any("nimplemented data type" in e for e in errors):
+            alt = vtbl.copy()
+            alt["sid"] = np.arange(len(alt), dtype="int32")
+            variants.append(("int32_index", alt))
+            print("[ignition] upload: the service refused the sid column type; "
+                  "retrying the ladder with a 32-bit row index", flush=True)
     return QueryResult(label=f"neowise_upload[none]_{len(tbl)}", service=IRSA_TAP,
                        status="QUERY_FAILED", query=q, error=" | ".join(errors),
                        elapsed_s=_time.monotonic() - t0)

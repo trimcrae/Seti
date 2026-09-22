@@ -129,6 +129,38 @@ def test_uploaded_table_carries_no_unicodechar_column():
     assert "unicodeChar" not in _votable_bytes(t3).decode("utf-8", "replace")
 
 
+def test_the_ladder_downgrades_the_id_column_once_on_a_datatype_refusal():
+    """If the service will not take `long` either, the id is expendable.
+
+    Rows are assigned to stars locally by exact separation, so a 32-bit row
+    index serves the query as well as the Gaia id.  The downgrade is tried
+    ONCE, only on that specific refusal, and never on an ordinary failure.
+    """
+    stars = _gaia_rows(3)
+    seen: list[str] = []
+
+    def picky(q, tbl, timeout_s, **_k):
+        seen.append(str(tbl["sid"].dtype))
+        if tbl["sid"].dtype.kind != "i" or tbl["sid"].dtype.itemsize > 4:
+            raise RuntimeError("INTERNAL_SERVER_ERROR: Unimplemented data type: long")
+        return _rows_at(stars)
+
+    r = fetch_neowise_upload(stars, transports={"pyvo_sync": picky})
+    assert r.status == "OK" and len(seen) == 2
+    assert seen[0] == "int64" and seen[1] == "int32"
+    assert "Unimplemented data type" in r.error      # the refusal is kept on the record
+
+    # An ordinary failure is NOT retried with a different column type.
+    tries = {"n": 0}
+
+    def plain_dead(q, tbl, timeout_s, **_k):
+        tries["n"] += 1
+        raise RuntimeError("HTTP 503 from the service")
+
+    r2 = fetch_neowise_upload(stars, transports={"pyvo_sync": plain_dead})
+    assert r2.status == "QUERY_FAILED" and tries["n"] == 1
+
+
 def test_uws_job_url_is_found_when_there_is_no_location_header():
     """IRSA answered the async submission ``200`` with no ``Location``."""
     from seti.ignition.acquire import IRSA_TAP, _uws_job_url
@@ -156,6 +188,54 @@ def test_pyvo_async_is_on_the_ladder_after_the_rung_the_server_parsed():
     # that never reached the upload table at all.
     assert order.index("pyvo_sync") < order.index("gator")
     assert order.index("pyvo_async") < order.index("gator")
+
+
+def test_a_unit_that_spends_its_budget_stops_the_ladder_and_says_so():
+    """One tile must not be able to eat a shard's whole clock.
+
+    The worst case of the parent ladder --- three ESA shapes at the per-attempt
+    timeout, then IRSA, then VizieR --- is tens of minutes for one tile, and in
+    a time-limited sweep that is paid for in tiles never reached.  With
+    ``unit_budget_s`` set, the attempts after the budget is gone are recorded
+    as ``SKIPPED_ON_UNIT_BUDGET`` and the unit is a recorded ``QUERY_FAILED``
+    --- never an empty answer about the sky --- while the ROUTE ORDER and every
+    science cut stay exactly as they were.
+    """
+    import time as _t
+
+    from seti.ignition.sample import fetch_parent
+
+    field = {"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}
+    tried: list[str] = []
+
+    def slow_dead(q, *_a, **_k):
+        tried.append("esa")
+        _t.sleep(0.15)
+        raise RuntimeError("canceling statement due to statement timeout")
+
+    stars, rep = fetch_parent({"fields": [field], "count_parent": False},
+                              mode="fields", query_fn=slow_dead,
+                              irsa_fetch_fn=_irsa_dead, vizier_fetch_fn=_asu_dead,
+                              unit_budget_s=0.2)
+    assert len(stars) == 0 and rep["status"] == "QUERY_FAILED"
+    # ESA was still asked FIRST, and at least once; the rest of the ladder was cut.
+    assert tried and tried[0] == "esa"
+    skips = rep["skipped_on_unit_budget"]
+    assert skips and all(s["status"] == "SKIPPED_ON_UNIT_BUDGET" for s in skips)
+    assert {"irsa_tap", "vizier_asu"} <= {s["route"] for s in skips}
+    assert any(d.startswith("unit_budget_skips:") for d in rep["degraded"])
+    assert rep["unit_budget_s"] == 0.2
+    u = rep["per_unit"][0]
+    assert u["status"] == "QUERY_FAILED" and u["skipped_on_unit_budget"]
+
+    # With no budget the ladder is walked in full, as before.
+    tried.clear()
+    _stars2, rep2 = fetch_parent({"fields": [field], "count_parent": False},
+                                 mode="fields", query_fn=slow_dead,
+                                 irsa_fetch_fn=_irsa_dead, vizier_fetch_fn=_asu_dead)
+    assert rep2["skipped_on_unit_budget"] == [] and rep2["unit_budget_s"] is None
+    assert len(tried) == 3                       # every joined ESA shape was asked
+    assert not any(d.startswith("unit_budget_skips:") for d in rep2["degraded"])
 
 
 def test_upload_chunk_falls_back_to_cones_when_no_rung_answers(tmp_path):
@@ -220,6 +300,30 @@ def test_upload_chunks_shrink_toward_the_ecliptic_poles():
     assert max(len(c) for c in c_nep) < 100 < max(len(c) for c in c_eq) <= 200
     assert sum(len(c) for c in c_nep) == n and sum(len(c) for c in c_eq) == n
     assert set(pd.concat(c_nep)["source_id"]) == set(nep["source_id"])
+
+
+def test_a_tiles_shard_never_screens_the_fields_mode_parent(tmp_path):
+    """A shard whose every tile failed must screen NOTHING, not somebody else's stars.
+
+    `parent.parquet` is a fields/allsky sample over different sky.  A tiles
+    shard is identified by its own ``sweep_{tag}.json``, and for such a shard
+    that file is not a fallback: an empty frame is the honest answer.
+    """
+    import json as _json
+
+    from seti.ignition.run import _shard_parent
+
+    out = tmp_path
+    _gaia_rows(8).to_parquet(out / "parent.parquet", index=False)
+    # No sweep record: this is a fields-mode shard, and it takes its rows.
+    assert len(_shard_parent(out, 0, 2)) == 4
+    # Its own tiles-mode parent wins when it exists.
+    _gaia_rows(3).to_parquet(out / "parent_s0of2.parquet", index=False)
+    assert len(_shard_parent(out, 0, 2)) == 3
+    # And a tiles shard that produced no parent of its own gets nothing.
+    (out / "parent_s1of2.parquet").unlink(missing_ok=True)
+    (out / "sweep_s1of2.json").write_text(_json.dumps({"stage": "sweep", "tiles": []}))
+    assert len(_shard_parent(out, 1, 2)) == 0
 
 
 def test_group_by_star_is_exact_at_high_declination():

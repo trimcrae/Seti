@@ -170,19 +170,33 @@ def stage_probe(out_dir: Path, conf: dict, *, names=None, query_fn=None, fetch_f
     out_dir = Path(out_dir)
     log = acq.AcquisitionLog(prefix="forge/probe")
     budget = float((conf.get("probe") or {}).get("budget_s") or 0) or None
+    # A per-table clock as well as the overall one.  The overall budget only
+    # decides whether to START a table, so without this a single slow
+    # catalogue runs its whole route ladder and then a column query plus a row
+    # count for every table it lists, and the "cheap" probe eats the job.
+    per_table = (conf.get("probe") or {}).get("table_budget_s")
+    per_table = float(per_table) if per_table else (budget / max(len(_enabled_tables(conf, names)), 1)
+                                                    if budget else None)
     t0 = time.time()
     tabs = _enabled_tables(conf, names)
-    rec: dict = {"stage": "probe", "started": _now(), "tables": {}, "endpoints": {}}
+    rec: dict = {"stage": "probe", "started": _now(), "tables": {}, "endpoints": {},
+                 "budget_s": budget, "table_budget_s": per_table}
     for name, spec in tabs.items():
         if budget and time.time() - t0 > budget:
             rec["tables"][name] = {"status": acq.STATUS_NOT_ATTEMPTED,
                                    "note": f"probe budget {budget:.0f}s exhausted before {name}"}
             _write(out_dir / "probe.json", rec)
             continue
+        # never let one table overrun what is left of the overall budget
+        cap = per_table
+        if budget is not None:
+            left = budget - (time.time() - t0)
+            cap = min(cap, left) if cap is not None else left
         role = str(spec.get("role", "excess"))
         disc = acq.discover_table(name, str(spec.get("preferred", "")), role,
                                   tuple(spec.get("keywords", []) or []), query_fn=query_fn,
-                                  log=log, overrides=spec.get("columns"), fetch_fn=fetch_fn)
+                                  log=log, overrides=spec.get("columns"), fetch_fn=fetch_fn,
+                                  budget_s=cap)
         d = disc.as_dict()
         d["preferred"] = spec.get("preferred")
         d["band"] = spec.get("band")
@@ -232,13 +246,23 @@ def stage_acquire(out_dir: Path, conf: dict, *, names=None, query_fn=None, fetch
     archive: dict[str, list] = {}
     polarimetry: dict[str, dict] = {}
     reached: dict[str, str] = {}
+    pconf = conf.get("probe") or {}
+    rediscover_budget = pconf.get("table_budget_s")
+    rediscover_budget = (float(rediscover_budget) if rediscover_budget
+                         else (float(pconf["budget_s"]) / max(len(tabs), 1)
+                               if pconf.get("budget_s") else None))
     for name, spec in tabs.items():
         p = (probe.get("tables") or {}).get(name)
         if not p or p.get("status") != acq.STATUS_OK:
+            # Re-discovery here carries the same per-table clock as the probe:
+            # this path runs for every table the probe could not resolve, so
+            # without it a stalled catalogue the probe already gave up on gets
+            # a second, unbounded try and eats the acquire stage instead.
             disc = acq.discover_table(name, str(spec.get("preferred", "")),
                                       str(spec.get("role", "excess")),
                                       tuple(spec.get("keywords", []) or []), query_fn=query_fn,
-                                      log=log, overrides=spec.get("columns"), fetch_fn=fetch_fn)
+                                      log=log, overrides=spec.get("columns"), fetch_fn=fetch_fn,
+                                      budget_s=rediscover_budget)
         else:
             disc = acq.DiscoveredTable(name, str(p.get("role", "excess")), p.get("table"),
                                        list(p.get("columns", [])), dict(p.get("roles", {})),

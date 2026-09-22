@@ -63,6 +63,17 @@ on:
 permissions:
   contents: write
 
+# The model matrices are ~30 x 18.  Threaded BLAS on them is pure overhead,
+# and it costs real time: measured in the sandbox, four screen processes each
+# spawning eight OpenBLAS threads on four cores dropped each process to ~6 %
+# CPU.  One thread per process throughout.
+env:
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+  VECLIB_MAXIMUM_THREADS: "1"
+
 jobs:
   prepare:
     runs-on: ubuntu-latest

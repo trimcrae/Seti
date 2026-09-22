@@ -10,6 +10,65 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### SLAG-WD: the natural family was too small, and the objects were the wrong objects, 2026-09-22
+
+SLAG-WD (S51) asks, per polluted white dwarf, how badly the best *natural*
+parcel reproduces its photospheric abundance vector — the calibrated misfit
+list that has never been published — and then whether a process-orthogonal
+element pair sits outside the natural envelope while the rest of its panel is
+natural. The acquisition has been green since 14:36 EDT minus 4 (3,547 PEWDD
+rows over VizieR TAP in 14.2 s, run 35739746529); what did not exist was a
+verdict. Three things had to be corrected first, each found by looking at the
+served data rather than at the brief.
+
+**The objects were the wrong objects.** PEWDD is one row per star per paper,
+and each paper uses its own designation: `GD 378` and `WD 1822+410` are one
+star, `PG 0843+516` / `PG 0843+517` / `WD0843+516` are one star. Grouping on
+the (qualifier-stripped) name gave 2,441 "objects" for 3,547 rows and silently
+disabled every check that compares an object's own sources — the
+multi-reference disagreement kill above all. All 3,547 rows carry coordinates,
+so objects are now built by single-linkage **on the sky** within 5″: **1,576
+objects**, 633 of them merging more than one designation. The name deliberately
+does not link two sky positions — PEWDD has rows called `WD1202-232` 40° apart
+and rows called `L745-46A` carrying Ross 640's position, and joining on the
+name chained those into blobs of up to 27 rows over ten unrelated
+designations.
+
+**The natural family was 18 compiled vectors; it is now 1,227 measured
+bodies.** PEWDD's own repository ships the meteorite compilations it compares
+against, and the acquire stage had already fetched them. Read as log₁₀ number
+ratios and de-duplicated across their three reference elements, they say the
+brief's premise is wrong: **Ti/Al spans 2.95 dex across 1,096 real stones
+against 0.31 dex across the compiled end-members**; Ca/Al reaches +2.97 in
+pallasites (compiled maximum +0.04) because Al is a trace element in an
+olivine–metal rock; Mn/Cr 3.21, Ni/Co 3.53. A Tier 2 exceedance measured
+against the compiled end-members alone would have been an artefact of the
+compilation. The two pairs that stay narrow, Sc/Ca and Sr/Ca, are narrow only
+in coverage — 8 and 0 measured bodies carry both elements — and the record now
+says so instead of trading on it. The same bodies also provide a second,
+harder misfit calibration: the draw is a real meteorite, so a small posterior p
+beside a large meteorite p is a statement about the star, and two small p
+values are a statement about the model.
+
+**Two of the seven literature controls cannot be candidates here.**
+WD 0106−328 (served as `HE 0106-3253`) and NLTT 19868 reach only **four**
+measured elements in their best published PEWDD panel, so both are
+`INFORMATION_LIMITED` by construction. Two alias corrections came with that:
+NLTT 19868 is not WD/PG 0843+516 (a different DA 62° away) and LHS 2534 is not
+WD 1214+032 (PEWDD serves it as `WD 1212-022`).
+
+**In flight: run 35747793625** on `claude/goap-slag`, `slag-solo.yml`,
+`stage=all`. The sharded `slag.yml` needs to win a runner slot six times in
+sequence and twice failed to start at all (35739746529's screen matrix, then
+35745205866, which sat 52 minutes without its first job); the solo workflow
+does the same work in one job on one slot, which is affordable because only
+168 of 3,547 panels reach the 5-element floor and carry the calibration cost.
+No `results/slag/summary.json` exists yet — the verdict line stays empty until
+that run commits one.
+
+Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
+the runner installs), per `docs/channel-brief.md` §0 item 5.
+
 ### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
 
 SEXTANT asks LOOM's question — is a minor planet accelerating in a way
@@ -292,6 +351,22 @@ and at 14:58 EDT-4 (2026-09-22T14:58Z) commit `05df5117` pushed that over the
 `HEAD` holds no sampled one; otherwise the results are checked back out and the
 empty attempt is kept beside them as `summary_attempt.json`.
 
+**The probe ladder has no ceiling — a bound, not a diagnosis.** The SVO probe
+walks (configured roots + RegTAP roots + roots scraped from an index page) × 5
+URL forms, each a 25 s timeout against a host dead at the TCP level in every
+run this channel has ever made. The root count is contributed by the registry
+and by a page scrape, not by this channel, so the cost has no upper bound: 200
+roots is seven hours. And it lands on exactly the wrong route —
+`reconstruct_from_usnob1` is handed `max(deadline - elapsed, 60)`, so the only
+route that can restore the channel's scale gets 60 seconds in the limit.
+Bounded now: `acquire.svo_probe_budget_s` = 600 s, also capped at 25% of the
+remaining deadline, reporting `budget_exhausted` with the count of roots not
+tried. *Correction:* an earlier version of this section said run 35741075121
+had spent two hours in that step. That was wrong — I mistook my own elapsed
+working time for the run's. At the time of writing it had been in the step for
+21 minutes, against 11 minutes for the same step in run 35738062833. The bound
+stands on the unbounded root count, not on an overrun that was observed.
+
 **In flight.** Run **35741075121** (dispatched 10:32 EDT, started 11:07 EDT)
 is the first to carry the column fix, so it is the first that *can* return a
 non-zero `n_poss1_red_only`. The decisive number to read from it is
@@ -302,11 +377,19 @@ from a source that does not depend on SVO being alive. Runs 35738062833 and
 35740203590 were cancelled as superseded.
 
 **Not yet measured:** the current summary's zeros for IR presence come from a
-photometry job that never ran, not from a search that found nothing — the
-funnel says so (`2c_no_modern_catalogue_covered_the_position = 127`). No
-survivor stands as of this entry.
+photometry job that never ran, not from a search that found nothing. That
+distinction is now carried explicitly — `summary.json:photometry_reached`
+names which catalogues answered and `degraded_reason` spells out what each
+zero does and does not mean, with `REPORT.md` leading on it rather than on the
+funnel. No survivor stands as of this entry.
 
-### LANTERN: the reader and the phase are fixed, and the sensitivity floor was not photon noise, 2026-09-22
+**Runner-version gate.** Per the repo-wide pandas warning, both shroud suites
+(96 tests) were run against a throwaway venv holding **pandas 3.0.6 / numpy
+2.4.6 / astropy 8.0.1** — what the runner installs, not the sandbox's pandas
+2.3.3 — and pass unchanged. The channel uses no removed API; `np.trapz` was
+already behind a `getattr(np, "trapezoid", ...)` fallback.
+
+### LANTERN: the reader, the phase and the verification all pass on real data, 2026-09-22
 
 The first LANTERN run (34036760527) analysed 21 of 832 exposure checkpoints —
 `read_failed 656`, and **0** exposures classed as eclipse or transit. Run
@@ -359,13 +442,48 @@ candidate (`insufficient_phase_coverage`, and `transit_inconsistent` for a line
 that changes across transit more than the continuum does), which is correct:
 this channel's signature needs an eclipse.
 
-The full screen is dispatched (run **35741401724**, 10 shards, eclipse-class
-first and cheapest-first within a rank, gated on the known-eclipse
-verification, checkpoints accumulating across dispatches). Checkpoint version
-is now 3; version-2 checkpoints are re-analysed rather than trusted. The honest
-limitation is in the contamination ledger: an *unresolved* emission line from
-the planet's own atmosphere passes every veto this channel has, so a survivor
-is a target for higher-resolution follow-up, not a detection.
+**The verification now passes on real data.** Run **35741401724** put both
+known eclipses through the difference search:
+
+| | WASP-18 b NIRISS/SOSS | WASP-43 b MIRI/LRS |
+|---|---|---|
+| integrations / tables | 2 720 / 6 | 9 216 / 30 |
+| eclipse depth | 1 451 ppm at 23.1σ | 4 223 ppm at 7.0σ (in-window) |
+| free step vs predicted ingress | 0.0003 d (tol 0.020 d) ✓ | −0.169 d, but better by only Δχ² = 9.9 |
+| 5σ EW limit, out-of-eclipse | 8.87×10⁻⁵ µm | 1.378×10⁻³ µm |
+| 5σ EW limit, **difference** | **1.73×10⁻⁶ µm** (51×) | **1.93×10⁻⁴ µm** (7.1×) |
+| injected vanishing line | 62.6σ `candidate`, no veto | 10.6σ `candidate`, no veto |
+| its drift null / in-eclipse residual | 0.42σ / −0.13σ | 0.39σ / −0.32σ |
+
+That run's screen was nonetheless **skipped**, because the gate demanded both
+cases and WASP-43 b failed one check — the free-step timing test. That failure
+was not about the sky: on a thermal phase curve the arch a linear detrend
+leaves pulls a free two-level step away from the eclipse, and the step it
+found improved χ² by 9.9 over the step held at the predicted ingress, which
+itself beat flat by 49. Three things changed as a result. The timing check now
+asks whether the data *prefer* a differently placed eclipse (free step inside
+the tolerance, **or** not beating the predicted step by Δχ² > 25); a t₀ shifted
+by 0.55·T₁₄ on a synthetic eclipse still fails it. The gate is the **phase**
+question only — one clean known eclipse settles whether in-eclipse integrations
+can be identified — with the injected-line recovery reported as a separate
+`injection_verdict`. And the injection amplitude is now measured from the
+exposure's own noise rather than fixed at 2% of the continuum, which on both
+these exposures is *below* their 5σ EW limit and so tested nothing.
+
+Two other things that cost the earlier runs: nothing is skipped as `too_large`
+any more (the largest public product is 10.33 GB against a 12 GB cap, so no
+chunking is needed), and the shard deadline is now predictive — it refuses to
+*start* an exposure whose estimated cost would run past it, because a
+checkpoint is only safe once the shard's artifact uploads.
+
+Run **35745941769** (4 shards, eclipse-first, `require_verify=true`,
+`deadline_minutes=270`) is queued with all of this. Checkpoint version is 3 and
+deliberately unchanged, so a mid-flight assess cannot mark a running screen's
+checkpoints stale — which is how run 35737559234 reported 159 stale checkpoints
+and zero exposures. The honest limitation stands, in the contamination ledger:
+an *unresolved* emission line from the planet's own atmosphere passes every
+veto this channel has, so a survivor is a target for higher-resolution
+follow-up, not a detection.
 ### ARC closed out: 4,206 stars on the ceiling, one left standing (KIC 9418692), 2026-09-22
 
 S59 (`docs/arc.md`, §9 carries every number). The stage-1 assess stage had

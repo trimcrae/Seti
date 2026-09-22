@@ -224,6 +224,27 @@ against 1.70 ± 0.30 % in N.
 
 ## 3. Offline tests (`tests/test_forge.py`, the CI gate; no network)
 
+**A green local suite is not a green gate** (`channel-brief.md` §0 item 5).
+The sandbox venv holds pandas 2.3.3; the runner installs **pandas 3.0.6**, and
+a sibling channel lost a whole dispatch to an API pandas 3 had removed, dying
+two minutes in, before a single archive call. FORGE was therefore run against
+the runner's major version in an isolated interpreter (pandas 3.0.6, numpy
+2.4.6, pyarrow 25.0.1): **33/33 pass**, and 32/32 at the commit the first
+dispatch is pinned to. `pyarrow` is a declared dependency, so the population
+parquet checkpoint has an engine on the runner.
+
+Two specific hazards were checked rather than assumed. No `errors="ignore"`,
+`DataFrame.append`, `iteritems` or `applymap` appears anywhere in the package
+(every `append` in it is `list.append`). The one expression the pandas-2
+FutureWarning names —
+`table["driving_verified"].fillna(False).astype(bool).sum()`, the count of
+stars whose driving values were archive-verified — returns the same answer
+under 2.3.3 and 3.0.6 for bool, object-with-`None`, float-with-`NaN` and
+all-`None` columns, because the `.astype(bool)` is explicit and does not rely
+on the intermediate downcast that changed. It is fed an in-memory frame built
+from Python bools, never a re-read CSV, which matters: on string data
+`"False"` is truthy and the count would be wrong in *both* versions.
+
 * an injected Planck 1500 K excess with consistent H, K and N is recovered
   as `candidate` with T within 15 % (G and A star); Δχ² 25–39;
 * a nano-grain system (K-bright / N-faint) is never a candidate; the typical

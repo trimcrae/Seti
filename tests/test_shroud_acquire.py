@@ -603,12 +603,55 @@ def test_a_live_catalogue_that_is_only_partly_deep_is_recorded_per_source(sc):
     assert cats.iloc[0] == "gaia"
 
 
+def test_a_run_whose_photometry_never_happened_says_so(sc, tmp_path):
+    """The exact failure of run 35738062833's analyze job.
+
+    Its photometry job was cancelled, so analyze reported
+    ``3_with_any_ir_detection: 0`` for 127 sources that were never searched.
+    A zero from a search that did not happen must never read like a zero from
+    a search that found nothing.
+    """
+    rows = [{"source_id": f"S{i}", "ra_deg": 10.0 + i, "dec_deg": 40.0,
+             "poss1_e": 18.5, "sample": "vasco2020_surviving_candidates"}
+            for i in range(5)]
+    df = runmod.stage_classify(pd.DataFrame(rows), sc)
+    df, budgets, fits = runmod.stage_budget(df, sc)
+    df = V.vet_table(df, sc, budgets, fits)
+    s = runmod.stage_report(load_config(), sc, df,
+                            {"verdict": "VIZIER_FALLBACK"}, tmp_path)
+    assert s["degraded"] is True
+    assert s["funnel"]["3_with_any_ir_detection"] == 0
+    why = " ".join(s["degraded_reason"])
+    assert "NO_INFRARED_SEARCH" in why, s["degraded_reason"]
+    assert "NO_MODERN_OPTICAL_SEARCH" in why, s["degraded_reason"]
+    assert s["photometry_reached"]["infrared_searched"] is False
+    assert s["photometry_reached"]["modern_optical_searched"] is False
+    # And the human-readable report leads with it, not with the zero.
+    rep = (tmp_path / "REPORT.md").read_text()
+    assert "DEGRADED" in rep and "not about the sky" in rep
+
+
+def test_photometry_that_did_happen_is_not_called_degraded_for_it(sc, tmp_path):
+    """The other half: real photometry must not trip the new reason."""
+    rows = [_enshrouded_row(source_id="A"), _plate_defect_row("B")]
+    df = runmod.stage_classify(pd.DataFrame(rows), sc)
+    df, budgets, fits = runmod.stage_budget(df, sc)
+    df = V.vet_table(df, sc, budgets, fits)
+    s = runmod.stage_report(load_config(), sc, df,
+                            {"verdict": "USNOB1_RECONSTRUCTION"}, tmp_path)
+    assert s["photometry_reached"]["infrared_searched"] is True
+    assert s["photometry_reached"]["modern_optical_searched"] is True
+    assert s["degraded_reason"] == []
+    assert s["degraded"] is False
+
+
 def test_the_svo_probe_ladder_runs_under_a_clock(sc, monkeypatch):
     """A dead service must not be able to eat the run that would have worked.
 
-    Run 35741075121 spent > 45 min in this one step, because the number of
-    roots is contributed by the registry and by an index scrape, not by this
-    channel.  The route AFTER it is the one that can restore the sample.
+    The number of roots is contributed by the registry and by an index
+    scrape, not by this channel, so the ladder's cost has no upper bound --- 200
+    roots x 5 forms x 25 s is seven hours.  The route AFTER it is the one that
+    can restore the sample.
     """
     t = [0.0]
 

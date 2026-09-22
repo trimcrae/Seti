@@ -135,6 +135,18 @@ So the prior per pointing is `centre = (f/c)(a_kin + a_Earth)`,
 term's bound is added to the width and the centre carries the kinematic part
 only (`earth_term_known = false` on the row).
 
+**The supplementary rest-frequency test.** The pair's *velocity* difference,
+unlike its acceleration, is large and measured: a relay de-drifted so R sees a
+chosen rest line puts that line, for Earth, at `f_rest (1 + (v_TR − v_TE)/c)`.
+`assess` tests every pair-line hit against HI 1420.4058, OH 1665.4018 and
+OH 1667.3590 shifted by that pair's own `dv_offset_kms`, with a ±5 km/s RV
+tolerance (≈ ±24 kHz at HI). It is a second, independent discriminant, and it
+is priced as such: a pointing whose pairs lack either radial velocity is
+recorded as **not tested** rather than as a non-match, so the trials count
+(`n_magic_line_tests`) counts only real tests, and `n_magic_expected_by_chance`
+= tests × window / searched band (~7 × 10⁻⁴ per 100 tests over an 800 MHz band)
+is printed beside every match. Only ~43 % of the sample has the RVs this needs.
+
 ## 4. Stages and files
 
 **probe** — `api/list-targets`, `api/list-telescopes`, `api/list-file-types`
@@ -241,6 +253,26 @@ file names; every archive empty → `NO_DATA_REACHED`; and the full pipeline
 through fake transports finds the injected hit at the prior while a zero-drift
 hit, a recurrent frequency, a hit on a star on no pair line and a hit off the
 window are each rejected by the named rule.
+
+**Run the suite under both pandas majors before dispatching.** The sandbox venv
+holds pandas 2.3.3 and the runner's `pip install -e ".[dev]"` fetches 3.0.6;
+CRADLE lost a whole dispatch to an API pandas 3 removed, dying on its own
+offline gate before one archive call (`docs/channel-brief.md` §0 item 5). All
+50 RELAY tests were run under 3.0.6 as well as 2.3.3 on 2026-09-22, without
+touching the shared venv:
+
+    pip install --target <dir> --no-deps "pandas>=3"
+    PYTHONPATH=<dir>:src pytest tests/test_relay*.py -q
+
+RELAY's only `errors="ignore"` is on `DataFrame.drop`, where the argument
+survives; the numeric conversions all use `errors="coerce"`.
+
+`tests/test_relay_magic.py` (7 tests) pins the rest-frequency test: the window
+is the offset plus the RV tolerance and moves with the pair's velocity; a
+pointing without radial velocities is **not tested** rather than counted as a
+miss; a hit on the shifted line matches while the *unshifted* line at 42 km/s
+does not; the OH lines are told apart; and the chance rate is the window over
+the searched band and is small but not negligible.
 
 `tests/test_relay_papers.py` (13 tests, no socket) covers the e-print route on
 fixture bytes: a deluxetable with `$-$` signs and `\tablenotemark` glued to a

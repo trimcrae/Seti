@@ -10,7 +10,7 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
-### METRONOME: the last clock is settled -- it is an uncatalogued oscillation, and probably not even that star's, 2026-09-22
+### METRONOME: the last clock is settled -- it is the RR Lyrae next door, 2026-09-22
 
 `kepler:5879574` was the channel's only `candidate` and the one open question
 in the repository: 21 catalogued flares and 74 independently re-detected ones
@@ -68,7 +68,7 @@ rotation buries a 0.084% signal. **That veto cannot see any oscillation that
 is not the largest thing in the light curve -- which is every oscillation that
 matters, because a large one would already have been catalogued.**
 
-**And the signal is probably not even this star's.** The folded amplitude,
+**And the signal is not this star's.** The folded amplitude,
 measured independently in each of the 17 quarters, is a function of
 `quarter % 4` -- the Kepler roll orientation:
 
@@ -83,11 +83,9 @@ F = 3.07, **p = 5.0e-4** from 20,000 relabellings, ratio 2.37. `quarter % 4`
 is a fact about the spacecraft, not about the sky. An intrinsic signal is
 diluted by crowding, which moves with the mask by tens of percent; a
 neighbour's signal scales with how much of *that* star's flux the mask
-catches, which moves by factors. Gaia names a candidate source: **DR3
-2053563953175635712, 13.3" away (3.3 Kepler pixels), G = 14.37 against the
-target's 14.79 -- brighter -- and flagged `VARIABLE`.** Proving it is the
-source needs pixel-level photometry, which has not been done; what is
-established is that the amplitude tracks the aperture and not the star.
+catches, which moves by factors. Gaia names the source: **DR3 2053563953175635712, 13.3" away (3.3 Kepler
+pixels), G = 14.37 against the target's 14.79 -- brighter -- and flagged
+`VARIABLE`.**
 
 
 **The signal has an owner: KIC 5879583, an RR Lyrae 13.3" away.** Run
@@ -135,6 +133,15 @@ an identity flag.** The vet does this (`neighbour_context`); the assess stage
 does not. Until it does, no shortlist from this channel should be believed on
 the variability veto alone -- and the same question is worth asking of every
 other channel in this repository that vetoes on a positional-uncertainty cone.
+
+**What is still not proved.** Five independent lines -- period to 0.095 of a
+cycle, harmonic shape, roll-season amplitude, the required leakage fraction,
+and the events sitting on the crest -- all say the 0.4233 d signal is KIC
+5879583's. None of them is pixel-level photometry. Fitting the RR Lyrae out of
+the target's target-pixel files, or measuring the flux centroid's motion in
+phase with it, would make the case direct. It is not done here because the
+candidate is already dead whichever star the oscillation belongs to: either
+way it is a pulsation and not a flare clock.
 
 Per `CLAUDE.md` this is a clean result and is **not** written up. METRONOME
 has no candidate.

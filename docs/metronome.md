@@ -51,12 +51,20 @@ stars were fetched from MAST (run 35652897914's `redetect` job):
   threshold-free epoch stack exists.
 
 **The one candidate is settled: the signal is real, it is not flares, and it
-is probably not even this star's.**  Run 35796061650 (2026-09-22) ran the
-single-star vet (§4.7d) on `kepler:5879574` — every variability catalogue by
-name, the fold at P and at 2P, the flares' place in phase, and Gaia
-astrometry.  Verdict:
-`MUNDANE_EXPLANATION_FOUND(COHERENT_OSCILLATION_AT_P; EVENTS_ON_THE_CREST)`,
-with nothing unreached.
+is not this star's.**  Runs 35796061650, 35796768720 and 35797574316
+(2026-09-22) ran the single-star vet (§4.7d) on `kepler:5879574` — every
+variability catalogue by name, the fold at P and at 2P, the events' and the
+catalogued epochs' place in phase, Gaia astrometry, the aperture census and
+the spacecraft-roll test.  Verdict, with nothing unreached:
+
+```
+MUNDANE_EXPLANATION_FOUND(
+  CONTAMINATING_VARIABLE_AT_P:gaia2053563953175635712@13.3arcsec,
+                              KIC 5879583,type=RR,P=0.4232946,in=vsx+ztf_chen2020;
+  COHERENT_OSCILLATION_AT_P:amp=0.00082,p_control=0.00498,z=68.7_with_events_masked;
+  EVENTS_ON_THE_CREST:offset=-0.036cycles;
+  AMPLITUDE_TRACKS_SPACECRAFT_ROLL:F=3.07,p=0.0015,ratio=2.37)  [P=0.423282 d]
+```
 
 | Question | Answer |
 |---|---|
@@ -76,7 +84,7 @@ cannot see any oscillation that is not the largest thing in the light curve —
 which is every oscillation that matters, because a large one would have been
 catalogued.**  §4.7d is the replacement.
 
-**And the signal is probably not even this star's.**  The folded amplitude,
+**And the signal is not this star's.**  The folded amplitude,
 measured independently in each of the 17 quarters, is a function of
 `quarter % 4` — the Kepler roll orientation:
 
@@ -90,9 +98,8 @@ Every quarter respects the grouping; the phase of maximum does not move
 F = 3.07, p = 5.0 × 10⁻⁴ from 20,000 relabellings, ratio 2.37.  `quarter % 4`
 is a fact about the spacecraft and not about the sky, and an intrinsic signal
 diluted by crowding moves with the mask by tens of percent, not by factors.
-Gaia names a candidate source: **2053563953175635712, 13.3″ away (3.3 Kepler
-pixels), G = 14.37 against the target's 14.79 — brighter — and flagged
-`VARIABLE`.**
+Gaia names the source: **2053563953175635712, 13.3″ away (3.3 Kepler pixels),
+G = 14.37 against the target's 14.79 — brighter — and flagged `VARIABLE`.**
 
 **And the signal has an owner.**  The Gaia source the roll test pointed at is
 a catalogued RR Lyrae, and three catalogues give its period:
@@ -156,6 +163,16 @@ aperture scale whose hit is a contamination flag rather than an identity
 flag** — the vet does this (`neighbour_context`), the assess stage does not,
 and any future run of this channel should carry it before the shortlist is
 believed.
+
+**What is still not proved.**  Five independent lines — period to 0.095 of a
+cycle, harmonic shape, roll-season amplitude, the required leakage fraction,
+and the events sitting on the crest — all say the 0.4233 d signal in
+`kepler:5879574` is KIC 5879583's.  None of them is pixel-level photometry.
+Fitting the RR Lyrae's signal out of the target's target-pixel files, or
+measuring the flux centroid's motion in phase with it, would convert this from
+an overwhelming circumstantial case into a direct one.  It is not done here
+because the candidate is already dead whichever star the oscillation belongs
+to: either way it is a pulsation and not a flare clock.
 
 Per `CLAUDE.md` this is a clean result and is not written up.  It changes the
 question: see §8.

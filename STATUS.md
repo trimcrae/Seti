@@ -35,26 +35,54 @@ wall clock a shard. The previous dispatch reached 172. Reusing run
 35039105536's parent took 1 s in the `sample` job, against the 2 h 22 min that
 killed the dispatch before it.
 
-**3. The ensemble zero-point correction has now been run on real data, and it
-took.** This had never been tested outside synthetic drift. 97 of the previous
-run's 172 screened stars were `FADING` at 5 sigma in *both* bands — not 56% of
-the sky dimming, the survey's own zero point. Over the 846:
+**3. The ensemble zero-point correction has now been run on real data — and
+the answer is split.** It *does* measure a real instrumental term: the eight
+shards are disjoint ~106-star sets, each fitting its own 44-bin offset curve
+over a 10.75-yr baseline, and they agree — mean pairwise correlation **+0.970**
+(W1) and **+0.989** (W2), median per-bin scatter between shards **0.4 / 0.9
+mmag** against excursions of **19 / 59 mmag**. Eight independent samples cannot
+reproduce one 44-point curve to under a millimagnitude unless the curve belongs
+to the instrument. NEOWISE drifts faint by **+0.019 mag (W1)** and **+0.056 mag
+(W2)** over the decade, and the correction subtracts it.
+
+But it is **not** what removed the 97 faders, and the run says so itself. The
+summary carries the uncorrected control `raw_two_band_fading_5sigma` — stars
+whose **uncorrected** bare slope is >= 5 sigma fading in *both* bands — and it
+is **18** over the 846, against **17** after correction. The correction moved
+one star. So `FADING` falling from 97 of 172 (56.4%) to 17 of 846 (2.0%) is a
+change of **sample**, not of method: the earlier 172 were the remnant a broken
+`field` route delivered, not a random 172 of the 846. The diagnosis that those
+97 were the survey zero point is **not confirmed**.
+
+The mechanism that would reconcile them is epoch count: the old 172 were the
+ecliptic-pole end, where NEOWISE stacks far more epochs, and a fixed 0.056 mag
+decade drift buys ~sqrt(N_epochs) of slope significance — harmless at ~100
+epochs, a 5-sigma two-band "fade" at ~1000. That is a hypothesis this run does
+not test. The decisive test is to re-screen the high-epoch tail with and
+without the correction and see `raw_two_band_fading_5sigma` and `FADING`
+finally diverge. `raw_two_band_rising_5sigma` is **0** uncorrected, so no
+candidate was created or destroyed either way.
 
 | verdict | prev (of 172) | now (of 846) |
 |---|---|---|
-| `FADING` | 97 (56.4%) | **17 (2.0%)** |
 | `NOT_RISING` | 37 | 780 |
 | `IMPULSIVE_SHAPE` | 12 | 25 |
 | `INSUFFICIENT_EPOCHS` | 26 | 23 |
+| `FADING` | 97 | 17 |
 | `SCAN_SYSTEMATIC` | — | 1 |
 | rise candidates | 0 | **0** |
 
-The veto counts sum to 846 exactly; no star is unaccounted for. 2.0% is what a
-real stellar population gives. 56.4% was the instrument.
+The five veto counts sum to 846 exactly; no star is unaccounted for. The two
+columns are not like for like.
 
-**Zero rise candidates over 846 stars.** The channel now works end to end on
-real data — that is what this dispatch was for. 846 stars is a pilot, not an
-answer, and per `CLAUDE.md` a clean result widens the question rather than
+**Zero rise candidates over 846 stars**, with `verdict:
+NO_IGNITION_CANDIDATE`, `degraded: []` and 8 of 8 shards found in the committed
+`results/ignition/summary.json`. Injection sensitivity measured on this run's
+own 823 screened non-rising stars: **83.8 / 95.7 / 99.4 per cent** recovery of
+**0.10 / 0.20 / 0.40 mag** decade-long ramps, so a 0.2 mag born excess would
+have been found in 19 of every 20 stars carrying one. The channel now works end
+to end on real data — that is what this dispatch was for. 846 stars is a pilot,
+not an answer, and per `CLAUDE.md` a clean result widens the question rather than
 being written up. The scale axis is the `|b| > 15` tiles sweep, run
 **35740159635**, whose probe has landed and whose 12-shard sweep matrix is
 queued behind the account-wide Actions ceiling; continue it with

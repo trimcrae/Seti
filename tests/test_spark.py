@@ -56,6 +56,28 @@ def test_stellar_line_match_and_bands():
     assert L.industrial_flag(1.75, 0.003) is None
 
 
+def test_bands_veto_only_at_their_edges_for_a_single_channel_statistic():
+    # A 0.16 um band is 5 resolution elements wide at R = 40: it cannot make an
+    # excess confined to one channel, so its interior must not veto.  Its edge,
+    # where the gradient is, still does.
+    tol = 1.40 / 40.0
+    assert L.stellar_line_match(1.40, tol, bands_edge_only=True) is None
+    edge = L.stellar_line_match(1.48, 0.004, bands_edge_only=True)   # the band's upper edge
+    assert edge is not None and edge.name == "H2O 1.4 band"
+    interior = L.stellar_line_match(1.40, tol)                   # default: whole interior
+    assert interior is not None and interior.name == "H2O 1.4 band"
+    # a discrete line inside a band still vetoes under the edge-only rule
+    assert L.stellar_line_match(1.4879, 1.4879 / 40.0, bands_edge_only=True) is not None
+
+
+def test_clean_channel_fraction_is_a_coverage_number():
+    lo = L.clean_channel_fraction(1.11, 1.64, 40.0)
+    hi = L.clean_channel_fraction(1.11, 1.64, 130.0)
+    assert lo["n_bins"] > 0 and 0.0 < lo["fraction"] < 0.5      # R=40: most of D2 is stellar-line territory
+    assert hi["fraction"] > lo["fraction"]                       # resolution buys back clean channels
+    assert L.clean_channel_fraction(1.0, 0.5, 40.0)["fraction"] is None
+
+
 def test_redshift_pattern_vetoes_galaxy_and_passes_single_line():
     z = 1.2
     lam = [0.656461 * (1 + z), 0.658527 * (1 + z), 0.671829 * (1 + z)]
@@ -756,7 +778,10 @@ def _spherex_world(rng, box, n_seed=6, inject=True):
         stars.append(_star(6000 + k, box["ra"] + rng.uniform(-9, 9) / 60 / math.cos(math.radians(box["dec"])),
                            box["dec"] + rng.uniform(-9, 9) / 60, g=17.5 + rng.uniform(0, 1.4)))
     gaia = _gaia(stars)
-    bin_ = int(math.floor(math.log(1.30) * 40))
+    # 1.437 um: a channel the stellar-line veto leaves available at R = 40.
+    # (1.30 um is within one resolution element of [Fe II] 1.295 and Pa-beta,
+    # so an injection there is correctly vetoed — see the veto tests.)
+    bin_ = int(math.floor(math.log(1.437) * 40))
     arch = FakeSpherexArchive(rng, gaia[gaia["source_id"] < 6000], box, inject_sid=5000 if inject else None,
                               inject_bin=bin_)
     return gaia, arch, bin_

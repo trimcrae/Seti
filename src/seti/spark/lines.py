@@ -223,32 +223,70 @@ INDUSTRIAL_BANDS: tuple[Line, ...] = (
 # --------------------------------------------------------------------------
 # Matching
 # --------------------------------------------------------------------------
-def _in_band(lam: float, ln: Line, tol_um: float) -> bool:
+def _in_band(lam: float, ln: Line, tol_um: float, *, edge_only: bool = False) -> bool:
     if ln.kind == "band":
+        if edge_only:
+            return min(abs(lam - (ln.um - ln.half_width_um)),
+                       abs(lam - (ln.um + ln.half_width_um))) <= tol_um
         return abs(lam - ln.um) <= ln.half_width_um + tol_um
     return abs(lam - ln.um) <= tol_um
 
 
 def stellar_line_match(lambda_um: float, tol_um: float,
-                       lines: tuple[Line, ...] = STELLAR_LINES, *, include_bands: bool = True) -> Line | None:
+                       lines: tuple[Line, ...] = STELLAR_LINES, *, include_bands: bool = True,
+                       bands_edge_only: bool = False) -> Line | None:
     """The nearest stellar feature within ``tol_um``, else ``None``.
 
     A discrete line within tolerance always beats a band the wavelength merely
     sits inside.  ``include_bands=False`` ignores the broad molecular / ice
     bands — right for a resolved (R ≈ 450) table where the FWHM test already
-    separates an unresolved feature from a band, wrong for R ≈ 40 where a band
-    edge can leave a one-channel residual.
+    separates an unresolved feature from a band.
+
+    ``bands_edge_only=True`` keeps the bands but matches only within ``tol_um``
+    of a band *edge*.  That is the rule for a single-channel statistic: a band
+    many resolution elements wide cannot produce an excess confined to one
+    channel with quiet neighbours (the adjacent-channel test already rejects
+    that), but the sharp gradient at a band edge can leave a one-channel
+    residual.  Vetoing every channel inside the H2O 1.4 and 1.9 bands instead
+    would remove most of the SPHEREx D2/D3 range for no physical reason.
     """
     lam = float(lambda_um)
     best, best_key = None, (2, math.inf)
     for ln in lines:
         if ln.kind == "band" and not include_bands:
             continue
-        if _in_band(lam, ln, tol_um):
+        if _in_band(lam, ln, tol_um, edge_only=(ln.kind == "band" and bands_edge_only)):
             key = (1 if ln.kind == "band" else 0, abs(lam - ln.um))
             if key < best_key:
                 best, best_key = ln, key
     return best
+
+
+def clean_channel_fraction(lam_lo: float, lam_hi: float, R: float, *, tol_resel: float = 1.0,
+                           width_resel: float = 1.0, bands_edge_only: bool = True) -> dict:
+    """How much of a band is even *available* for a single-channel detection.
+
+    The stellar-line veto removes every channel within ``tol_resel`` resolution
+    elements of a catalogued stellar feature.  At R ≈ 40 that is a large part of
+    the H band (the Brackett series is denser than the resolution), so the
+    fraction of clean channels is a coverage number the search has to report,
+    not a detail: a detection can only be claimed where one was possible.
+    """
+    lo, hi = float(lam_lo), float(lam_hi)
+    if not (np.isfinite(lo) and np.isfinite(hi)) or hi <= lo or R <= 0:
+        return {"n_bins": 0, "n_clean": 0, "fraction": None}
+    b0 = int(math.floor(math.log(lo) * R / width_resel))
+    b1 = int(math.floor(math.log(hi) * R / width_resel))
+    n_bins = n_clean = 0
+    for b in range(b0, b1 + 1):
+        lam_c = math.exp((b + 0.5) * width_resel / R)
+        if lam_c < lo or lam_c > hi:
+            continue
+        n_bins += 1
+        if stellar_line_match(lam_c, tol_resel * lam_c / R, bands_edge_only=bands_edge_only) is None:
+            n_clean += 1
+    return {"n_bins": n_bins, "n_clean": n_clean,
+            "fraction": round(n_clean / n_bins, 4) if n_bins else None}
 
 
 def industrial_flag(lambda_um: float, tol_um: float) -> str | None:

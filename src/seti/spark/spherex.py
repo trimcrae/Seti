@@ -711,11 +711,34 @@ def screen_spherex(samples: pd.DataFrame, seeds: pd.DataFrame, conf: dict, bands
                     "n_channels_tested": int(sum(v["n_channels_tested"] for v in stars_done.values())),
                     "n_stars_insufficient": int(sum(1 for v in stars_done.values()
                                                     if v["n_channels_tested"] == 0))}
+    # Coverage: what fraction of each detector band the stellar-line veto even
+    # leaves available for a single-channel detection.  A detection can only be
+    # claimed where one was possible, so this number travels with the verdict.
+    cov: dict = {}
+    if len(samples):
+        s = samples.copy()
+        for col in ("wl_um", "bw_um"):
+            s[col] = pd.to_numeric(s[col], errors="coerce")
+        for det, g in s.groupby("detector"):
+            lam = g["wl_um"].to_numpy(float)
+            bw = g["bw_um"].to_numpy(float)
+            bw = np.where(np.isfinite(bw) & (bw > 0), bw, lam / 40.0)
+            ok = np.isfinite(lam) & (lam > 0) & np.isfinite(bw) & (bw > 0)
+            if not ok.any():
+                continue
+            R_eff = float(np.median(lam[ok] / bw[ok]))
+            band = bands.get(str(det)) or [float(np.min(lam[ok])), float(np.max(lam[ok]))]
+            cov[str(det)] = {"R_eff": round(R_eff, 1),
+                             **L.clean_channel_fraction(float(band[0]), float(band[1]), R_eff,
+                                                        tol_resel=float(c.get("stellar_tol_resel", 1.0)),
+                                                        width_resel=float(c.get("channel_width_resel", 1.0)))}
+    funnel["clean_channel_coverage"] = cov
     cols = ["source_id", "detector", "channel_bin", "lambda_um", "resel_um", "n_samples", "z_combined",
             "n_passes", "n_passes_above_single", "n_positions", "n_positions_above_single",
             "z_neighbour_lo", "z_neighbour_hi", "edge_distance_resel", "tested", "mean_flux_mjy",
             "mean_excess_mjy", "excess_fraction", "x_full_mean", "y_full_mean", "mjd_min", "mjd_max",
-            "reasons", "tier", "stellar_line", "stellar_line_name", "recurrent_channel",
+            "reasons", "tier", "stellar_line", "stellar_line_name", "stellar_line_sep_resel",
+            "stellar_band_name", "recurrent_channel",
             "recurrence_n_stars", "recurrent_pixel", "pixel_recurrence_n_stars", "industrial_flag",
             "vetoes", "survivor", "p_single", "p_global", "significant_after_trials"]
     if not rows:
@@ -725,9 +748,17 @@ def screen_spherex(samples: pd.DataFrame, seeds: pd.DataFrame, conf: dict, bands
     d = pd.DataFrame(rows)
     d["reasons"] = ["|".join(r) for r in d["reasons"]]
     tol = float(c.get("stellar_tol_resel", 1.0)) * d["resel_um"]
-    sl = [L.stellar_line_match(w, t) for w, t in zip(d["lambda_um"], tol, strict=True)]
+    # At R ~ 40 a broad molecular band spans many channels and cannot make a
+    # single-channel excess with quiet neighbours; only its edge can.  Discrete
+    # lines veto wherever they fall.  (lines.stellar_line_match docstring.)
+    sl = [L.stellar_line_match(w, t, bands_edge_only=True) for w, t in zip(d["lambda_um"], tol, strict=True)]
     d["stellar_line"] = [m is not None for m in sl]
     d["stellar_line_name"] = [m.name if m else "" for m in sl]
+    d["stellar_line_sep_resel"] = [round(abs(float(w) - m.um) / float(r), 3) if m and m.kind == "line" else None
+                                   for w, r, m in zip(d["lambda_um"], d["resel_um"], sl, strict=True)]
+    # Descriptor (never a veto): the broad molecular / ice band the channel sits inside.
+    sb = [L.stellar_line_match(w, t) for w, t in zip(d["lambda_um"], tol, strict=True)]
+    d["stellar_band_name"] = [m.name if (m is not None and m.kind == "band") else "" for m in sb]
     d["industrial_flag"] = [L.industrial_flag(w, t) or "" for w, t in zip(d["lambda_um"], tol, strict=True)]
     # recurrence: the same channel (detector, bin) elevated above the total threshold on >= N stars
     s_tot = float(c.get("excess_sigma_total", 5.0))

@@ -950,6 +950,19 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
         rec["sbdb"]["n_rows"] = len(sbdb)
         rec["n_gaia_objects"] = len(numbers)
         checkpoint()
+        # Warm the two VizieR catalogues HERE, once, rather than letting four
+        # shards and then `assess` each discover a VizieR outage separately.
+        # Greenberg+2020 is the control that does not come from the fit being
+        # tested, so whether it was reachable is a fact about the run and
+        # belongs in the run's record, not in a log line in one shard.
+        yark = load_yarkovsky_catalogue(paths, log=log)
+        rec["yarkovsky_controls"] = {
+            "n_rows": len(yark), "vizier": C.GREENBERG2020_VIZIER,
+            "verdict": "OK" if yark else "VIZIER_UNREACHABLE__SBDB_CONTROLS_ONLY"}
+        binaries = load_binaries(paths, log=log)
+        rec["binaries"] = {"retrieved_utc": binaries.retrieved_utc if binaries else None,
+                           "verdict": "OK" if binaries else "UNAVAILABLE__NO_BINARY_VETO"}
+        checkpoint()
         # Sample: the brightest (lowest-numbered) objects, a random draw, and every
         # non-grav solution present, capped.
         rng = np.random.default_rng(int(conf["seed"]))

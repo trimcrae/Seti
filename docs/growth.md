@@ -1142,7 +1142,25 @@ control phase can land on a **sibling's** transit, which makes the null
 conservative rather than permissive; and a control phase that lands in a data
 gap returns nothing and is not counted (`control_n_phases_measured`).
 
-### 11.7 Running it
+### 11.7 Vetting every survivor, not the top of the list
+
+Stage 2 (both eras refitted with one fitter, plus the reduction ensemble) and
+stage 3 (the Gaia census and the difference image) each cost several fetch
+budgets per target, so one job carries at most `classify.vet_max_targets` of
+them. With a candidate list longer than that, taking "the strongest N" would
+leave the rest with the difference-image question — the question that killed
+Kepler-718 b — never asked.
+
+So the vet stage **shards**. The candidates are ranked by |z| and split
+**round-robin by rank** across `vet_shards` jobs, so shard 0 gets ranks
+0, N, 2N…, shard 1 gets 1, N+1, … — every shard carries a mix of strong and
+weak candidates, and no shard is the "leftovers" job. Each writes
+`results/growth/direct/vet/shard_NN/`; `vet-gather` merges them into
+`vet/vetted.csv` and `vet/summary.json` and reports
+`n_candidates_not_vetted` **with identifiers**: a candidate nobody ran stage 3
+on is an open question, never a pass.
+
+### 11.8 Running it
 
 `growth_direct.yml`: `targets` → `measure` (sharded **by star**, `kepid mod n`,
 so a system's planets share one download; each shard checkpoints its CSV after

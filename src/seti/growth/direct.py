@@ -188,7 +188,7 @@ VETOES = (VETO_ODD_EVEN, VETO_DURATION, VETO_DURATION_INCONCLUSIVE, VETO_FPFLAG,
 #: Extra TIC-resolution routes tried in the shard when the ``ps`` routes failed.
 TIC_FALLBACK_ROUTES: tuple[str, ...] = ("tic_kic_crossid", "tic_region_kic", "tic_region_nearest")
 
-STAGES = ("probe", "targets", "measure", "assess", "control", "vet")
+STAGES = ("probe", "targets", "measure", "assess", "control", "vet", "vet-gather")
 
 #: The KOI columns the direct stage needs on top of stage 1's list: the epoch
 #: (``koi_time0bk`` is NOT in the stage-1 list) and the period's second error.
@@ -2303,9 +2303,18 @@ def direct_control(conf: dict, out: Path, *, products_fn=None, tic_fn=None,
 # ---------------------------------------------------------------------------
 def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn=None,
                ensemble_lc_fn=None, kepler_ensemble_lc_fn=None, cone_fn=None, tpf_fn=None,
-               max_targets: int | None = None) -> dict:
+               max_targets: int | None = None, shard: int = 0, n_shards: int = 1) -> dict:
     """Run stage 2 (both eras, one fitter, the reduction ensemble) and stage 3
-    (census + difference image) on every candidate, into ``out/vet/``."""
+    (census + difference image) on every candidate, into ``out/vet/``.
+
+    Stage 2 and stage 3 each cost several fetch budgets per target, so one job
+    can only carry ``classify.vet_max_targets`` of them.  ``n_shards`` > 1
+    splits the candidate list **round-robin by rank** --- so every shard gets a
+    mix of strong and weak candidates rather than one shard getting all the
+    strong ones --- and writes into ``out/vet/shard_NN/``;
+    :func:`direct_vet_gather` merges them.  That is what makes "stage 3 on
+    EVERY survivor" reachable when the candidate list is longer than one job.
+    """
     from .centroid import centroid_run  # noqa: PLC0415
     from .stage2 import stage2_assess, stage2_measure  # noqa: PLC0415
 
@@ -2313,16 +2322,21 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
     cls_p = ClassifyParams.from_config(conf)
     cap = int(cls_p.vet_max_targets if max_targets is None else max_targets)
     cands = _read_csv(out / "candidates.csv")
-    vet_dir = out / "vet"
+    n_shards = max(int(n_shards), 1)
+    vet_dir = out / "vet" if n_shards == 1 else out / "vet" / f"shard_{int(shard):02d}"
     vet_dir.mkdir(parents=True, exist_ok=True)
     if not len(cands):
         rep = {"stage": "vet", "generated_utc": _now(), "n_candidates": 0, "n_vetted": 0,
+               "shard": int(shard), "n_shards": n_shards, "targets": [],
                "note": "no candidate to vet"}
         _write(vet_dir / "summary.json", rep)
         print("[growth-direct] vet: nothing to vet")
         return rep
     cands = cands.assign(_abs=pd.to_numeric(cands.get("pdc_z_pop"), errors="coerce").abs()) \
-        .sort_values("_abs", ascending=False)
+        .sort_values("_abs", ascending=False).reset_index(drop=True)
+    n_all = int(len(cands))
+    if n_shards > 1:
+        cands = cands.iloc[int(shard)::n_shards].reset_index(drop=True)
     chosen = cands.head(cap)
     shortlist = pd.DataFrame([{"kepoi_name": str(r.get("kepoi_name")),
                                "kepler_name": r.get("kepler_name"), "kepid": r.get("kepid"),
@@ -2376,7 +2390,8 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
                     "survives_vet": bool(survives)})
     pdf = pd.DataFrame(per)
     _write_csv(vet_dir / "vetted.csv", pdf)
-    rep = {"stage": "vet", "generated_utc": _now(), "n_candidates": int(len(cands)),
+    rep = {"stage": "vet", "generated_utc": _now(), "shard": int(shard), "n_shards": n_shards,
+           "n_candidates": n_all, "n_candidates_in_shard": int(len(cands)),
            "n_vetted": int(len(chosen)), "n_not_vetted_over_cap": int(max(len(cands) - cap, 0)),
            "n_survive_vet": int(pdf["survives_vet"].sum()) if len(pdf) else 0,
            "stage2_primary_verdict": s2.get("primary_verdict"),
@@ -2395,6 +2410,61 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
                                   "untested")}
     _write(vet_dir / "summary.json", rep)
     print(f"[growth-direct] vet: {rep['n_vetted']} vetted, {rep['n_survive_vet']} survive")
+    return rep
+
+
+def direct_vet_gather(conf: dict, out: Path) -> dict:
+    """Merge the sharded vet into ``out/vet/vetted.csv`` and ``out/vet/summary.json``.
+
+    A candidate that appears in no shard's ``vetted.csv`` is reported as
+    ``n_candidates_not_vetted`` with its identifiers --- it is **not** dropped
+    and it is **not** a pass: a candidate nobody ran stage 3 on has the
+    difference-image question wide open.
+    """
+    out = Path(out)
+    vet_dir = out / "vet"
+    vet_dir.mkdir(parents=True, exist_ok=True)
+    frames, reps = [], []
+    for p in sorted(glob.glob(str(vet_dir / "shard_*" / "vetted.csv"))):
+        df = _read_csv(p)
+        if len(df):
+            frames.append(df)
+    for p in sorted(glob.glob(str(vet_dir / "shard_*" / "summary.json"))):
+        try:
+            reps.append(json.loads(Path(p).read_text()))
+        except Exception:                                 # noqa: BLE001
+            continue
+    pdf = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    if len(pdf) and "kepoi_name" in pdf:
+        pdf = pdf.drop_duplicates(subset=["kepoi_name"], keep="first")
+    _write_csv(vet_dir / "vetted.csv", pdf)
+    cands = _read_csv(out / "candidates.csv")
+    seen = set(pdf["kepoi_name"].astype(str)) if len(pdf) else set()
+    missing = (cands[~cands["kepoi_name"].astype(str).isin(seen)]
+               if len(cands) and "kepoi_name" in cands else pd.DataFrame())
+    surv = pdf[pdf["survives_vet"].map(_b)] if len(pdf) and "survives_vet" in pdf else pd.DataFrame()
+    rep = {"stage": "vet-gather", "generated_utc": _now(),
+           "n_shards_found": len(reps), "n_candidates": int(len(cands)),
+           "n_vetted": int(len(pdf)), "n_candidates_not_vetted": int(len(missing)),
+           "not_vetted": [{k: r.get(k) for k in ("kepoi_name", "kepler_name", "kepid", "tic_id",
+                                                  "class", "pdc_z_pop", "sap_z")}
+                          for r in (missing.to_dict(orient="records") if len(missing) else [])][:200],
+           "n_survive_vet": int(len(surv)),
+           "survivors": surv.to_dict(orient="records") if len(surv) else [],
+           "n_control_within_search_noise": int(
+               (pdf["control_verdict"].map(_s) == CTRL_WITHIN).sum()
+               if len(pdf) and "control_verdict" in pdf else 0),
+           "n_control_not_run": int((pdf["control_verdict"].map(_s) == "CONTROL_NOT_RUN").sum()
+                                    if len(pdf) and "control_verdict" in pdf else 0),
+           "shards": [{k: r.get(k) for k in ("shard", "n_shards", "n_vetted", "n_survive_vet",
+                                             "n_not_vetted_over_cap", "stage2_primary_verdict",
+                                             "stage3_verdict")} for r in reps],
+           "note": ("a candidate in n_candidates_not_vetted has had NO stage-3 difference image "
+                    "run on it; that is an open question, never a pass. survives_vet is defined "
+                    "in each shard's own summary.json.")}
+    _write(vet_dir / "summary.json", rep)
+    print(f"[growth-direct] vet-gather: {rep['n_vetted']} vetted of {rep['n_candidates']} "
+          f"candidates, {rep['n_survive_vet']} survive, {rep['n_candidates_not_vetted']} not vetted")
     return rep
 
 
@@ -2426,7 +2496,10 @@ def direct_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, sh
             rep = direct_control(conf, out, products_fn=products_fn, tic_fn=tic_fn,
                                  budget_s=budget_s)
         elif s == "vet":
-            rep = direct_vet(conf, out, query_fn=query_fn, **vet_kw)
+            rep = direct_vet(conf, out, query_fn=query_fn, shard=shard, n_shards=n_shards,
+                             **vet_kw)
+        elif s in ("vet-gather", "vet_gather"):
+            rep = direct_vet_gather(conf, out)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
     return rep
@@ -2440,7 +2513,7 @@ def main(argv=None):
                     "against the KOI depth — sharded, checkpointed, with per-planet sensitivity")
     p.add_argument("--stage", default="all",
                    help="probe | targets | measure | assess | control | vet | "
-                        "all (probe,targets,measure,assess) | a comma list")
+                        "vet-gather | all (probe,targets,measure,assess) | a comma list")
     p.add_argument("--out-dir", default="results/growth/direct")
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--n-shards", type=int, default=1)
@@ -2475,7 +2548,8 @@ __all__ = [
     "CONTROL_CLASSES", "CONTROL_COLUMNS", "CTRL_ABOVE", "CTRL_UNAVAILABLE", "CTRL_WITHIN",
     "CTRL_VERDICTS", "apply_control", "compare_family", "control_phase_null",
     "default_products_fn", "detrended_fold", "direct_assess", "direct_control", "direct_measure",
-    "direct_probe", "direct_run", "direct_targets", "direct_vet", "family_segments",
+    "direct_probe", "direct_run", "direct_targets", "direct_vet", "direct_vet_gather",
+    "family_segments",
     "fetch_products", "fit_duration", "gather_shards", "ingress_fraction",
     "lightkurve_products_fn", "main", "mast_fits_products_fn", "measure_direct_target",
     "measure_family", "population_offsets", "read_tess_lc_fits_all", "search_epoch_offset",

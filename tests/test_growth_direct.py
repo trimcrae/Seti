@@ -534,6 +534,62 @@ def test_the_vet_stage_hands_survivors_to_stage2_and_stage3(tmp_path, monkeypatc
     assert rep0["n_vetted"] == 0
 
 
+def test_the_vet_stage_shards_round_robin_so_every_candidate_can_be_reached(tmp_path,
+                                                                           monkeypatch):
+    """With more candidates than one job's cap, the shards partition them and
+    the gather says which were never vetted --- an open question, not a pass."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    names = [f"K0{900 + i}.01" for i in range(10)]
+    D._write_csv(out / "candidates.csv", pd.DataFrame([
+        {"kepoi_name": n, "kepler_name": "", "kepid": 7000000 + i, "tic_id": 1.0 * i,
+         "class": D.CLASS_GROWTH, "pdc_z_pop": 20.0 - i, "sap_z": 6.0}
+        for i, n in enumerate(names)]))
+    per_shard: dict = {}
+
+    def fake_stage2_measure(conf, s2_dir, *, shortlist=None, **kw):
+        per_shard.setdefault("s2", []).append(list(shortlist["kepoi_name"]))
+        Path(s2_dir).mkdir(parents=True, exist_ok=True)
+
+    def fake_stage2_assess(conf, s2_dir):
+        return {"primary_verdict": "X", "targets": [
+            {"kepoi_name": n, "like_for_like_verdict": "MEASURED_DEPTH_CHANGED",
+             "z_measured_eras": 6.0, "sap_vs_pdcsap_verdict": "BACKGROUND_TEST_AGREES"}
+            for n in names]}
+
+    def fake_centroid_run(stage, *, out_dir=None, conf=None, shortlist=None, **kw):
+        return {"verdict": "TRANSIT_ON_TARGET", "targets": [
+            {"kepoi_name": n, "verdict": "TRANSIT_ON_TARGET", "offset_arcsec": 0.3,
+             "offset_sigma": 0.2} for n in names]}
+    import seti.growth.centroid as C
+    import seti.growth.stage2 as S2
+    monkeypatch.setattr(S2, "stage2_measure", fake_stage2_measure)
+    monkeypatch.setattr(S2, "stage2_assess", fake_stage2_assess)
+    monkeypatch.setattr(C, "centroid_run", fake_centroid_run)
+    conf = _conf(classify={"vet_max_targets": 3})
+    for sh in range(4):
+        r = D.direct_vet(conf, out, shard=sh, n_shards=4)
+        assert r["shard"] == sh and r["n_candidates"] == 10
+        assert (out / "vet" / f"shard_{sh:02d}" / "vetted.csv").exists()
+    # round-robin BY RANK: no shard gets only the strongest candidates
+    assert per_shard["s2"][0][0] == names[0] and per_shard["s2"][1][0] == names[1]
+    g = D.direct_vet_gather(conf, out)
+    # 4 shards x cap 3, but shards hold 3,3,2,2 candidates -> all 10 reachable
+    assert g["n_vetted"] == 10 and g["n_candidates_not_vetted"] == 0
+    assert g["n_survive_vet"] == 10 and g["n_shards_found"] == 4
+    merged = pd.read_csv(out / "vet" / "vetted.csv")
+    assert len(merged) == 10 and set(merged["kepoi_name"]) == set(names)
+    # a candidate no shard vetted is REPORTED, never silently passed
+    D._write_csv(out / "candidates.csv", pd.DataFrame([
+        *[{"kepoi_name": n, "kepid": 1, "tic_id": 1.0, "class": D.CLASS_GROWTH,
+           "pdc_z_pop": 1.0, "sap_z": 1.0} for n in names],
+        {"kepoi_name": "K00999.99", "kepid": 2, "tic_id": 2.0, "class": D.CLASS_GROWTH,
+         "pdc_z_pop": 1.0, "sap_z": 1.0}]))
+    g2 = D.direct_vet_gather(conf, out)
+    assert g2["n_candidates_not_vetted"] == 1
+    assert g2["not_vetted"][0]["kepoi_name"] == "K00999.99"
+
+
 def test_the_cli_exposes_growth_direct():
     from seti.cli import main as cli_main
     with pytest.raises(SystemExit) as e:

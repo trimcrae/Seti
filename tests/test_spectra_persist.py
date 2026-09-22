@@ -643,6 +643,21 @@ def test_control_sample_separates_observed_frame_from_stellar_frame():
     assert clean["obs_frame"]["frac_ge3"] < 0.2 and clean["star_frame"]["frac_ge3"] < 0.2
 
 
+def test_atmospheric_context_flags_a_telluric_band_and_an_oh_list_gap():
+    """Five of the six lines left standing after the first run sit in the red,
+    where the hand-kept OH list has gaps and the telluric bands are not listed
+    at all.  Both facts have to be on the record next to the candidate."""
+    from seti.spectra.linelist import atmospheric_context
+    assert atmospheric_context(6967.87)["telluric_band"] == "H2O 7200"
+    assert atmospheric_context(7620.0)["telluric_band"] == "O2 A"
+    assert atmospheric_context(5000.0)["telluric_band"] == ""
+    # 6809 A: no listed OH line within 50 A, but the forest is all around it.
+    a = atmospheric_context(6809.26)
+    assert a["oh_gap_A"] > 20.0 and a["oh_density_per_100A"] > 0.5
+    # The blue is genuinely clear of the OH forest.
+    assert atmospheric_context(4200.0)["oh_density_per_100A"] == 0.0
+
+
 def test_json_safe_keeps_a_pixel_window_but_drops_a_whole_spectrum():
     """The diagnose stage dumps pixel windows under the same key names the bulk
     arrays use; stripping by name alone silently emptied exactly the evidence

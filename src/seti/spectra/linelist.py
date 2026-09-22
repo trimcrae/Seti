@@ -231,6 +231,53 @@ EMISSION_ONLY = {"[Fe II]", "[O II]", "[O III]", "[O I]", "[N II]", "[S II]", "[
                  "city Hg I", "city Na (HPS)"}
 
 
+# --- observed-frame BANDS ---------------------------------------------------------
+# The atmosphere's absorption bands are intervals, not lines.  Their edges are
+# where an imperfect telluric correction leaves a narrow residual that a
+# matched-filter line search reads as emission, and inside them the airglow is
+# dense enough that no hand-kept list of individual lines can be trusted to be
+# complete.  Air intervals, converted to vacuum at use.  These are REPORTED, not
+# enforced: the empirical test is the control sample (the same wavelength in
+# unrelated stars), and a band flag is the reason to look at it.
+TELLURIC_BANDS_AIR = [
+    ("O2 gamma", 6270.0, 6330.0),
+    ("H2O 6500", 6450.0, 6600.0),
+    ("O2 B", 6860.0, 6950.0),
+    ("H2O 7200", 6940.0, 7400.0),
+    ("O2 A", 7590.0, 7700.0),
+    ("H2O 8200", 8100.0, 8400.0),
+    ("H2O 9000", 8900.0, 9800.0),
+]
+_OH_VAC = np.sort(air_to_vacuum(np.array(
+    [w for w, lbl, _ in _LINES_AIR if lbl == "sky OH"], float)))
+
+
+def atmospheric_context(lam_obs: float, window_A: float = 60.0) -> dict:
+    """Where this observed wavelength sits relative to the atmosphere.
+
+    ``telluric_band`` names the absorption band it falls in, if any.
+    ``oh_gap_A`` is how far the nearest *listed* OH line is, and
+    ``oh_density_per_100A`` how many listed OH lines lie within ``window_A``:
+    a wavelength with no OH line within a few Angstrom but a dozen within 60 A
+    is in a gap of the LIST inside the forest, which is a much weaker statement
+    than being genuinely clear of airglow.
+    """
+    lam = float(lam_obs)
+    band = ""
+    for name, lo, hi in TELLURIC_BANDS_AIR:
+        if float(air_to_vacuum(np.array([lo]))[0]) <= lam <= \
+                float(air_to_vacuum(np.array([hi]))[0]):
+            band = name
+            break
+    out = {"telluric_band": band, "oh_gap_A": float("nan"),
+           "oh_density_per_100A": 0.0}
+    if _OH_VAC.size:
+        out["oh_gap_A"] = round(float(np.min(np.abs(_OH_VAC - lam))), 2)
+        n = int(np.sum(np.abs(_OH_VAC - lam) <= window_A))
+        out["oh_density_per_100A"] = round(100.0 * n / (2.0 * window_A), 2)
+    return out
+
+
 def n_lines() -> int:
     return int(_WAVE_VAC.size)
 

@@ -1728,7 +1728,7 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     """Merge checkpoints into the flat table + summary; add SIMBAD and line IDs."""
     import pandas as pd
 
-    from .linelist import build_nist_cache, identify_rest_frame, nist_context
+    from .linelist import atmospheric_context, build_nist_cache, identify_rest_frame, nist_context
     root = Path(root)
     out_dir = root / "results" / "spectra_persist"
     ckpt = out_dir / "ckpt"
@@ -1813,6 +1813,14 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     for k in ids[0].keys() if ids else []:
         tab[k] = [d[k] for d in ids]
 
+    # Where the observed wavelength sits relative to the atmosphere: a telluric
+    # band edge and a gap in the OH list inside the forest are the two places a
+    # hand-kept sky list is least trustworthy, and five of the six lines left
+    # standing after the first run are in that part of the spectrum.
+    atm = [atmospheric_context(w) for w in tab["wavelength"]]
+    for k in atm[0].keys() if atm else []:
+        tab[k] = [d[k] for d in atm]
+
     # SIMBAD for every unique position (refresh; the triage table has gaps).
     if do_simbad:
         try:
@@ -1869,8 +1877,10 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
                             ("spec_id", "identifier", "data_release", "ra", "dec", "wavelength",
                              "search_mode", "coadd_ew_A", "coadd_sig_cal", "combined_sig",
                              "combined_sig_raw", "null_exposure_bias_sig", "stack_sig",
-                             "n_tested", "n_present", "simbad_otype", "known_line_label",
-                             "known_line_dv_kms", "second_epoch")
+                             "n_tested", "n_present", "simbad_otype", "simbad_sptype",
+                             "n_lines_in_spectrum", "known_line_label", "known_line_dv_kms",
+                             "telluric_band", "oh_gap_A", "oh_density_per_100A",
+                             "second_epoch")
                             if c in alive.columns]].to_dict("records")],
         "verdict": ("PERSISTENT_UNIDENTIFIED_LINES_REMAIN" if len(alive)
                     else ("NO_DATA_REACHED" if not counts or set(counts) <= {"not_run", "untestable"}

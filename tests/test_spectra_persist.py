@@ -507,7 +507,8 @@ def test_offset_null_is_centred_on_zero_on_a_clean_spectrum():
     its own bias."""
     parsed, _fc, _ex, _cls = _run(make_spec_file([1.0] * 4))
     # Offsets stay inside the r1 arm so the control is not just "not covered".
-    null = persist.offset_null(parsed, LAM0, "emission", n=16, lo_A=12.0, hi_A=120.0)
+    null = persist.offset_null(persist.sdss_measure_at(parsed, "emission"), LAM0,
+                               n=16, lo_A=12.0, hi_A=120.0)
     assert null["n_measured"] >= 12
     assert abs(null["combined_sig_median"]) < 2.0
     assert null["frac_below_minus2"] < 0.35
@@ -526,9 +527,70 @@ def test_offset_null_detects_an_estimator_that_is_biased_everywhere():
     # wavelength, which is what the SDSS runs looked like.
     for e in parsed["exposures"]:
         e["flux"] = e["flux"] + 1.2e-4 * (e["wave"] - LAM0) ** 2
-    null = persist.offset_null(parsed, LAM0, "emission", n=16, lo_A=12.0, hi_A=120.0)
+    null = persist.offset_null(persist.sdss_measure_at(parsed, "emission"), LAM0,
+                               n=16, lo_A=12.0, hi_A=120.0)
     assert null["combined_sig_median"] < -2.0
     assert null["frac_below_minus2"] > 0.5
+
+
+def _bias_the_exposures(parsed, curvature=1.2e-4):
+    """Upward-curving continuum: a straight line fitted across the annulus sits
+    above the data at every window centre, so the estimator reads a deficit
+    everywhere -- the shape the real SDSS blue frames produced."""
+    for e in parsed["exposures"]:
+        e["flux"] = e["flux"] + curvature * (e["wave"] - LAM0) ** 2
+    return parsed
+
+
+def test_null_calibration_stops_a_biased_estimator_calling_a_line_absent():
+    """With the estimator reading several sigma negative everywhere, an absent
+    line must still come out at ~0 sigma once the spectrum's own null is
+    subtracted -- otherwise every survivor is 'killed' by the estimator."""
+    data = make_spec_file([0.0] * 4)
+    with fits.open(io.BytesIO(data)) as hd:
+        parsed = _bias_the_exposures(persist.parse_sdss_spec(hd))
+    fc, ex = persist.sdss_exposure_measurements(parsed, LAM0, "emission")
+    null = persist.offset_null(persist.sdss_measure_at(parsed, "emission"), LAM0,
+                               n=16, lo_A=12.0, hi_A=120.0)
+    raw = persist.classify_persistence(fc, ex)
+    cal = persist.classify_persistence(fc, ex, null=null)
+    assert raw["combined_sig"] < -2.0                     # the bias, uncorrected
+    assert abs(cal["combined_sig"]) < 2.0, cal            # and corrected away
+    assert cal["null_calibrated"] and cal["null_exposure_bias_sig"] < -0.5
+    assert abs(cal["combined_sig_raw"] - raw["combined_sig"]) < 1e-6
+
+
+def test_null_calibration_keeps_a_real_line_under_the_same_bias():
+    """And it must not throw the signal out with the bias: the same curved
+    continuum with a real line in every exposure still reads persistent."""
+    data = make_spec_file([1.0] * 4)
+    with fits.open(io.BytesIO(data)) as hd:
+        parsed = _bias_the_exposures(persist.parse_sdss_spec(hd))
+    fc, ex = persist.sdss_exposure_measurements(parsed, LAM0, "emission")
+    null = persist.offset_null(persist.sdss_measure_at(parsed, "emission"), LAM0,
+                               n=16, lo_A=12.0, hi_A=120.0)
+    cal = persist.classify_persistence(fc, ex, null=null)
+    assert cal["persistence_class"] == "persistent", cal
+    assert cal["n_present"] == cal["n_tested"] == 4
+    assert cal["combined_sig"] > persist.COMBINED_SIG
+
+
+def test_stack_only_is_not_reported_as_absent():
+    """Exposures too noisy individually, but their own inverse-variance mean
+    shows the line: that is a weak line, not an absent one, and calling it
+    absent would throw away real data."""
+    # Each exposure's error is rescaled to its own empirical scatter, which a
+    # single noisy frame overestimates; the stack carries the coadd's ivar.  So
+    # the stack legitimately outruns the combination of the exposures.
+    ex = [{"testable": True, "F": 0.7, "err": 1.0, "sky_peak_sig": 0.0, "sky_level": 1.0}
+          for _ in range(6)]
+    coadd = {"testable": True, "F": 6.0, "err": 1.0, "sig": 6.0, "sky_peak_sig": 0.0}
+    stack = {"testable": True, "F": 6.0, "err": 1.0, "sig": 6.0, "ew": 0.6}
+    assert persist.classify_persistence(coadd, ex)["persistence_class"] == "absent_in_exposures"
+    cls = persist.classify_persistence(coadd, ex, stack=stack)
+    assert cls["persistence_class"] == "stack_only", cls
+    assert persist.final_verdict({"persistence_class": "stack_only",
+                                  "known_line_match": False}) == "OPEN_stack_only"
 
 
 def test_json_safe_keeps_a_pixel_window_but_drops_a_whole_spectrum():

@@ -284,6 +284,71 @@
       "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))"
     },
     {
+      "stage": "textlist_index",
+      "status": "OK",
+      "rows": 14371,
+      "what": "https://iopscience.iop.org/article/10.1088/0004-637X/787/2/112"
+    },
+    {
+      "stage": "textlist_index",
+      "status": "OK",
+      "rows": 14371,
+      "what": "https://iopscience.iop.org/article/10.1088/0004-637X/787/2/112/data"
+    },
+    {
+      "stage": "textlist_index",
+      "status": "OK",
+      "rows": 14371,
+      "what": "https://iopscience.iop.org/0004-637X/787/2/112/suppdata"
+    },
+    {
+      "stage": "textlist_index",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "https://content.cld.iop.org/journals/0004-637X/787/2/112/revision1/",
+      "error": "HTTPError('403 Client Error: Forbidden for url: https://content.cld.iop.org/journals/0004-637X/787/2/112/revision1/')"
+    },
+    {
+      "stage": "textlist_index",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/",
+      "error": "HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/')"
+    },
+    {
+      "stage": "textlist_index",
+      "status": "OK",
+      "rows": 7803,
+      "what": "https://irsa.ipac.caltech.edu/data/Herschel/HEXOS/"
+    },
+    {
+      "stage": "textlist_index",
+      "status": "OK",
+      "rows": 655,
+      "what": "https://irsa.ipac.caltech.edu/data/Herschel/HEXOS/docs/"
+    },
+    {
+      "stage": "textlist",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/table3.dat",
+      "error": "HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/table3.dat')"
+    },
+    {
+      "stage": "textlist",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "https://cdsarc.u-strasbg.fr/ftp/J/ApJ/787/112/table3.dat",
+      "error": "SSLError(MaxRetryError(\"HTTPSConnectionPool(host='cdsarc.u-strasbg.fr', port=443): Max retries exceeded with url: /ftp/J/ApJ/787/112/table3.dat (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1016)')))\"))"
+    },
+    {
+      "stage": "textlist",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "https://cdsarc.cds.unistra.fr/viz-bin/nph-Cat/txt?J/ApJ/787/112/table3",
+      "error": "HTTPError('400 Client Error: Bad Request for url: https://cdsarc.cds.unistra.fr/viz-bin/nph-Cat/txt?J/ApJ/787/112/table3')"
+    },
+    {
       "stage": "tables_irc10216_cernicharo2000",
       "status": "OK",
       "rows": 9,
@@ -357,8 +422,400 @@
       "stage": "fetch_irc10216_cernicharo2000",
       "status": "OK",
       "rows": 399,
-      "what": "SELECT TOP 200000 \"Freq\", \"e_Freq\", \"Mol\", \"Trans\" FROM \"J/A+AS/142/181/table2\"",
+      "what": "SELECT TOP 200000 \"Freq\", \"e_Freq\", \"Mol\", \"T(MB)dv\", \"Trans\" FROM \"J/A+AS/142/181/table2\"",
       "route": "tap"
+    },
+    {
+      "stage": "tables_orion_kl_tercero2010",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "what": "J/A+A/517/A96/",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/A+A/517/A96/%'"
+    },
+    {
+      "stage": "tables_orion_kl_tercero2010_non_tap",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "ASU meta ~ 'J/A+A/517/A96/'",
+      "error": "no non-TAP metadata for 'J/A+A/517/A96/' -- https://vizier.cds.unistra.fr/viz-bin/asu-tsv: OK | https://cdsarc.cds.unistra.fr/ftp/J/A+A/517/A96/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/A+A/517/A96/ReadMe') | https://vizier.cds.unistra.fr/viz-bin/asu-tsv: the ASU body names ['J/MNRAS/430/1125', 'J/MNRAS/430/1125/sources', 'J/MNRAS/430/1125/emlines', 'J/MNRAS/430/1125/tableb3', 'J/ApJ/910/42', 'J/ApJ/910/42/table1', 'J/ApJ/910/42/table2', 'J/A+A/572/L5', 'J/A+A/572/L5/table1', 'J/AJ/139/2034', 'J/AJ/139/2034/stars', 'J/AJ/139/2034/table1', 'J/AJ/139/2034/table2', 'J/AJ/139/2034/table3', 'J/AJ/139/2034/table4', 'J/ApJ/789/104', 'J/ApJ/789/104/table1', 'J/ApJ/789/104/refs', 'J/ApJ/789/104/table2', 'J/ApJ/789/104/table5', 'J/ApJ/773/L36', 'J/ApJ/773/L36/gcdata', 'J/ApJ/773/L36/table2', 'J/ApJ/697/1741', 'J/ApJ/697/1741/table1', 'J/A+A/468/353', 'J/A+A/468/353/table14', 'J/A+A/617/A77', 'J/A+A/617/A77/list', 'J/A+A/560/A73', 'J/A+A/560/A73/list', 'J/ApJ/659/1040', 'J/ApJ/659/1040/table1', 'J/ApJ/659/1040/table5', 'J/ApJ/794/107', 'J/ApJ/794/107/sample', 'J/ApJ/794/107/table1', 'J/A+A/625/A68', 'J/A+A/625/A68/tableb1', 'J/AJ/101/625', 'J/AJ/101/625/table1', 'J/AJ/101/625/table2', 'J/AJ/101/625/table3', 'J/AJ/101/625/table4', 'J/AJ/101/625/notes', 'J/ApJ/891/129', 'J/ApJ/891/129/table2', 'J/ApJ/891/129/table3', 'J/ApJ/709/447', 'J/ApJ/709/447/table1', 'J/ApJ/620/961', 'J/ApJ/620/961/table1', 'J/ApJ/620/961/table2', 'J/ApJ/620/961/table4', 'J/ApJ/620/961/table5', 'J/ApJ/703/1672', 'J/ApJ/703/1672/table1', 'J/ApJ/703/1672/table2', 'J/ApJ/703/1672/refs', 'J/AJ/156/204', 'J/AJ/156/204/table1', 'J/AJ/156/204/table3', 'J/AJ/156/204/table4', 'J/MNRAS/468/3499', 'J/MNRAS/468/3499/table2', 'J/MNRAS/466/163', 'J/MNRAS/466/163/absorber', 'J/MNRAS/466/163/bluesrc', 'J/MNRAS/466/163/emitters', 'J/ApJ/910/134', 'J/ApJ/910/134/novae', 'J/ApJ/910/134/xrtlcs', 'J/A+A/638/A130', 'J/A+A/638/A130/list', 'J/ApJ/818/43', 'J/ApJ/818/43/table3', '",
+      "route": "asu_tsv",
+      "route_attempts": [
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+          "status": "OK",
+          "what": "meta J/A+A/517/A96",
+          "rows": 1
+        },
+        {
+          "route": "readme",
+          "endpoint": "https://cdsarc.cds.unistra.fr/ftp/J/A+A/517/A96/ReadMe",
+          "status": "QUERY_FAILED",
+          "what": "ReadMe J/A+A/517/A96",
+          "error": "HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/A+A/517/A96/ReadMe')"
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+          "status": "QUERY_FAILED",
+          "what": "exists? J/A+A/517/A96/",
+          "error": "the ASU body names ['J/MNRAS/430/1125', 'J/MNRAS/430/1125/sources', 'J/MNRAS/430/1125/emlines', 'J/MNRAS/430/1125/tableb3', 'J/ApJ/910/42', 'J/ApJ/910/42/table1', 'J/ApJ/910/42/table2', 'J/A+A/572/L5', 'J/A+A/572/L5/table1', 'J/AJ/139/2034', 'J/AJ/139/2034/stars', 'J/AJ/139/2034/table1', 'J/AJ/139/2034/table2', 'J/AJ/139/2034/table3', 'J/AJ/139/2034/table4', 'J/ApJ/789/104', 'J/ApJ/789/104/table1', 'J/ApJ/789/104/refs', 'J/ApJ/789/104/table2', 'J/ApJ/789/104/table5', 'J/ApJ/773/L36', 'J/ApJ/773/L36/gcdata', 'J/ApJ/773/L36/table2', 'J/ApJ/697/1741', 'J/ApJ/697/1741/table1', 'J/A+A/468/353', 'J/A+A/468/353/table14', 'J/A+A/617/A77', 'J/A+A/617/A77/list', 'J/A+A/560/A73', 'J/A+A/560/A73/list', 'J/ApJ/659/1040', 'J/ApJ/659/1040/table1', 'J/ApJ/659/1040/table5', 'J/ApJ/794/107', 'J/ApJ/794/107/sample', 'J/ApJ/794/107/table1', 'J/A+A/625/A68', 'J/A+A/625/A68/tableb1', 'J/AJ/101/625', 'J/AJ/101/625/table1', 'J/AJ/101/625/table2', 'J/AJ/101/625/table3', 'J/AJ/101/625/table4', 'J/AJ/101/625/notes', 'J/ApJ/891/129', 'J/ApJ/891/129/table2', 'J/ApJ/891/129/table3', 'J/ApJ/709/447', 'J/ApJ/709/447/table1', 'J/ApJ/620/961', 'J/ApJ/620/961/table1', 'J/ApJ/620/961/table2', 'J/ApJ/620/961/table4', 'J/ApJ/620/961/table5', 'J/ApJ/703/1672', 'J/ApJ/703/1672/table1', 'J/ApJ/703/1672/table2', 'J/ApJ/703/1672/refs', 'J/AJ/156/204', 'J/AJ/156/204/table1', 'J/AJ/156/204/table3', 'J/AJ/156/204/table4', 'J/MNRAS/468/3499', 'J/MNRAS/468/3499/table2', 'J/MNRAS/466/163', 'J/MNRAS/466/163/absorber', 'J/MNRAS/466/163/bluesrc', 'J/MNRAS/466/163/emitters', 'J/ApJ/910/134', 'J/ApJ/910/134/novae', 'J/ApJ/910/134/xrtlcs', 'J/A+A/638/A130', 'J/A+A/638/A130/list', 'J/ApJ/818/43', 'J/ApJ/818/43/table3', 'J/ApJS/236/51', 'J/ApJS/236/51/table1', 'J/ApJS/236/51/cores', 'J/ApJ/870/123', 'J/ApJ/870/123/table1', 'J/ApJ/870/123/table2', 'J/ApJ/870/123/table8', 'J/ApJ/870/123/table9', 'J/A+A/638/A3', 'J/A+A/638/A3/s1', 'J/AJ/162/184', 'J/AJ/162/184/table1', 'J/AJ/162/184/table3', 'J/AJ/162/184/dr17samp', 'J/AJ/16"
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",
+          "status": "QUERY_FAILED",
+          "what": "exists? J/A+A/517/A96/",
+          "error": "the ASU body names ['J/MNRAS/430/1125', 'J/MNRAS/430/1125/sources', 'J/MNRAS/430/1125/emlines', 'J/MNRAS/430/1125/tableb3', 'J/ApJ/910/42', 'J/ApJ/910/42/table1', 'J/ApJ/910/42/table2', 'J/A+A/572/L5', 'J/A+A/572/L5/table1', 'J/AJ/139/2034', 'J/AJ/139/2034/stars', 'J/AJ/139/2034/table1', 'J/AJ/139/2034/table2', 'J/AJ/139/2034/table3', 'J/AJ/139/2034/table4', 'J/ApJ/789/104', 'J/ApJ/789/104/table1', 'J/ApJ/789/104/refs', 'J/ApJ/789/104/table2', 'J/ApJ/789/104/table5', 'J/ApJ/773/L36', 'J/ApJ/773/L36/gcdata', 'J/ApJ/773/L36/table2', 'J/ApJ/697/1741', 'J/ApJ/697/1741/table1', 'J/A+A/468/353', 'J/A+A/468/353/table14', 'J/A+A/617/A77', 'J/A+A/617/A77/list', 'J/A+A/560/A73', 'J/A+A/560/A73/list', 'J/ApJ/659/1040', 'J/ApJ/659/1040/table1', 'J/ApJ/659/1040/table5', 'J/ApJ/794/107', 'J/ApJ/794/107/sample', 'J/ApJ/794/107/table1', 'J/A+A/625/A68', 'J/A+A/625/A68/tableb1', 'J/AJ/101/625', 'J/AJ/101/625/table1', 'J/AJ/101/625/table2', 'J/AJ/101/625/table3', 'J/AJ/101/625/table4', 'J/AJ/101/625/notes', 'J/ApJ/891/129', 'J/ApJ/891/129/table2', 'J/ApJ/891/129/table3', 'J/ApJ/709/447', 'J/ApJ/709/447/table1', 'J/ApJ/620/961', 'J/ApJ/620/961/table1', 'J/ApJ/620/961/table2', 'J/ApJ/620/961/table4', 'J/ApJ/620/961/table5', 'J/ApJ/703/1672', 'J/ApJ/703/1672/table1', 'J/ApJ/703/1672/table2', 'J/ApJ/703/1672/refs', 'J/AJ/156/204', 'J/AJ/156/204/table1', 'J/AJ/156/204/table3', 'J/AJ/156/204/table4', 'J/MNRAS/468/3499', 'J/MNRAS/468/3499/table2', 'J/MNRAS/466/163', 'J/MNRAS/466/163/absorber', 'J/MNRAS/466/163/bluesrc', 'J/MNRAS/466/163/emitters', 'J/ApJ/910/134', 'J/ApJ/910/134/novae', 'J/ApJ/910/134/xrtlcs', 'J/A+A/638/A130', 'J/A+A/638/A130/list', 'J/ApJ/818/43', 'J/ApJ/818/43/table3', 'J/ApJS/236/51', 'J/ApJS/236/51/table1', 'J/ApJS/236/51/cores', 'J/ApJ/870/123', 'J/ApJ/870/123/table1', 'J/ApJ/870/123/table2', 'J/ApJ/870/123/table8', 'J/ApJ/870/123/table9', 'J/A+A/638/A3', 'J/A+A/638/A3/s1', 'J/AJ/162/184', 'J/AJ/162/184/table1', 'J/AJ/162/184/table3', 'J/AJ/162/184/dr17samp', 'J/AJ/16"
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",
+          "status": "QUERY_FAILED",
+          "what": "exists? J/A+A/517/A96/",
+          "error": "the ASU body names ['J/MNRAS/430/1125', 'J/MNRAS/430/1125/sources', 'J/MNRAS/430/1125/emlines', 'J/MNRAS/430/1125/tableb3', 'J/ApJ/910/42', 'J/ApJ/910/42/table1', 'J/ApJ/910/42/table2', 'J/A+A/572/L5', 'J/A+A/572/L5/table1', 'J/AJ/139/2034', 'J/AJ/139/2034/stars', 'J/AJ/139/2034/table1', 'J/AJ/139/2034/table2', 'J/AJ/139/2034/table3', 'J/AJ/139/2034/table4', 'J/ApJ/789/104', 'J/ApJ/789/104/table1', 'J/ApJ/789/104/refs', 'J/ApJ/789/104/table2', 'J/ApJ/789/104/table5', 'J/ApJ/773/L36', 'J/ApJ/773/L36/gcdata', 'J/ApJ/773/L36/table2', 'J/ApJ/697/1741', 'J/ApJ/697/1741/table1', 'J/A+A/468/353', 'J/A+A/468/353/table14', 'J/A+A/617/A77', 'J/A+A/617/A77/list', 'J/A+A/560/A73', 'J/A+A/560/A73/list', 'J/ApJ/659/1040', 'J/ApJ/659/1040/table1', 'J/ApJ/659/1040/table5', 'J/ApJ/794/107', 'J/ApJ/794/107/sample', 'J/ApJ/794/107/table1', 'J/A+A/625/A68', 'J/A+A/625/A68/tableb1', 'J/AJ/101/625', 'J/AJ/101/625/table1', 'J/AJ/101/625/table2', 'J/AJ/101/625/table3', 'J/AJ/101/625/table4', 'J/AJ/101/625/notes', 'J/ApJ/891/129', 'J/ApJ/891/129/table2', 'J/ApJ/891/129/table3', 'J/ApJ/709/447', 'J/ApJ/709/447/table1', 'J/ApJ/620/961', 'J/ApJ/620/961/table1', 'J/ApJ/620/961/table2', 'J/ApJ/620/961/table4', 'J/ApJ/620/961/table5', 'J/ApJ/703/1672', 'J/ApJ/703/1672/table1', 'J/ApJ/703/1672/table2', 'J/ApJ/703/1672/refs', 'J/AJ/156/204', 'J/AJ/156/204/table1', 'J/AJ/156/204/table3', 'J/AJ/156/204/table4', 'J/MNRAS/468/3499', 'J/MNRAS/468/3499/table2', 'J/MNRAS/466/163', 'J/MNRAS/466/163/absorber', 'J/MNRAS/466/163/bluesrc', 'J/MNRAS/466/163/emitters', 'J/ApJ/910/134', 'J/ApJ/910/134/novae', 'J/ApJ/910/134/xrtlcs', 'J/A+A/638/A130', 'J/A+A/638/A130/list', 'J/ApJ/818/43', 'J/ApJ/818/43/table3', 'J/ApJS/236/51', 'J/ApJS/236/51/table1', 'J/ApJS/236/51/cores', 'J/ApJ/870/123', 'J/ApJ/870/123/table1', 'J/ApJ/870/123/table2', 'J/ApJ/870/123/table8', 'J/ApJ/870/123/table9', 'J/A+A/638/A3', 'J/A+A/638/A3/s1', 'J/AJ/162/184', 'J/AJ/162/184/table1', 'J/AJ/162/184/table3', 'J/AJ/162/184/dr17samp', 'J/AJ/16"
+        }
+      ]
+    },
+    {
+      "stage": "fallback_orion_kl_tercero2010",
+      "status": "OK",
+      "rows": 34,
+      "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "column_census_orion_kl_tercero2010",
+      "status": "OK",
+      "rows": 88,
+      "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "tables_orion_kl_crockett2015",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "what": "J/ApJ/806/239/",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/ApJ/806/239/%'"
+    },
+    {
+      "stage": "tables_orion_kl_crockett2015_non_tap",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "ASU meta ~ 'J/ApJ/806/239/'",
+      "error": "no non-TAP metadata for 'J/ApJ/806/239/' -- https://vizier.cds.unistra.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.u-strasbg.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe') | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe') | https://vizier.cds.unistra.fr/viz-bin/asu-tsv: no column header in the ASU body | https://vizier.u-strasbg.fr/viz-bin/asu-tsv: no column header in the ASU body | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv: no column header in the ASU body",
+      "route": "asu_tsv",
+      "route_attempts": [
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+          "status": "QUERY_RETURNED_ZERO_ROWS",
+          "what": "meta J/ApJ/806/239",
+          "rows": 0
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",
+          "status": "QUERY_RETURNED_ZERO_ROWS",
+          "what": "meta J/ApJ/806/239",
+          "rows": 0
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",
+          "status": "QUERY_RETURNED_ZERO_ROWS",
+          "what": "meta J/ApJ/806/239",
+          "rows": 0
+        },
+        {
+          "route": "readme",
+          "endpoint": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe",
+          "status": "QUERY_FAILED",
+          "what": "ReadMe J/ApJ/806/239",
+          "error": "HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe')"
+        },
+        {
+          "route": "readme",
+          "endpoint": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe",
+          "status": "QUERY_FAILED",
+          "what": "ReadMe J/ApJ/806/239",
+          "error": "HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe')"
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+          "status": "QUERY_FAILED",
+          "what": "exists? J/ApJ/806/239/",
+          "error": "no column header in the ASU body"
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",
+          "status": "QUERY_FAILED",
+          "what": "exists? J/ApJ/806/239/",
+          "error": "no column header in the ASU body"
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",
+          "status": "QUERY_FAILED",
+          "what": "exists? J/ApJ/806/239/",
+          "error": "no column header in the ASU body"
+        }
+      ]
+    },
+    {
+      "stage": "fallback_orion_kl_crockett2015",
+      "status": "OK",
+      "rows": 34,
+      "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "column_census_orion_kl_crockett2015",
+      "status": "OK",
+      "rows": 88,
+      "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "tables_irc10216_cernicharo2000_u",
+      "status": "OK",
+      "rows": 1,
+      "what": "J/A+AS/142/181/table3",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/A+AS/142/181/table3%'"
+    },
+    {
+      "stage": "columns_irc10216_cernicharo2000_u",
+      "status": "OK",
+      "rows": 12,
+      "what": "J/A+AS/142/181/table3"
+    },
+    {
+      "stage": "tables_irc10216_cernicharo2000_u_non_tap",
+      "status": "OK",
+      "rows": 1,
+      "what": "ASU meta ~ 'J/A+AS/142/181/table3'",
+      "route": "asu_tsv",
+      "usable": true,
+      "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+    },
+    {
+      "stage": "fetch_irc10216_cernicharo2000_u",
+      "status": "OK",
+      "rows": 63,
+      "what": "SELECT TOP 200000 \"Freq\", \"e_Freq\", \"Name\", \"T(MB)dv\", \"Trans\" FROM \"J/A+AS/142/181/table3\"",
+      "route": "tap"
+    },
+    {
+      "stage": "tables_sgrb2_nummelin1998_u",
+      "status": "OK",
+      "rows": 1,
+      "what": "J/ApJS/117/427/table46",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/ApJS/117/427/table46%'"
+    },
+    {
+      "stage": "columns_sgrb2_nummelin1998_u",
+      "status": "OK",
+      "rows": 6,
+      "what": "J/ApJS/117/427/table46"
+    },
+    {
+      "stage": "tables_sgrb2_nummelin1998_u_non_tap",
+      "status": "OK",
+      "rows": 1,
+      "what": "ASU meta ~ 'J/ApJS/117/427/table46'",
+      "route": "asu_tsv",
+      "usable": false,
+      "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+    },
+    {
+      "stage": "fallback_sgrb2_nummelin1998_u",
+      "status": "OK",
+      "rows": 34,
+      "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "column_census_sgrb2_nummelin1998_u",
+      "status": "OK",
+      "rows": 38,
+      "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "tables_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 5,
+      "what": "J/ApJS/117/427/",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/ApJS/117/427/%'"
+    },
+    {
+      "stage": "columns_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 15,
+      "what": "J/ApJS/117/427/tab6-45"
+    },
+    {
+      "stage": "columns_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 7,
+      "what": "J/ApJS/117/427/table3"
+    },
+    {
+      "stage": "columns_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 7,
+      "what": "J/ApJS/117/427/table4"
+    },
+    {
+      "stage": "columns_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 6,
+      "what": "J/ApJS/117/427/table46"
+    },
+    {
+      "stage": "columns_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 7,
+      "what": "J/ApJS/117/427/table5"
+    },
+    {
+      "stage": "tables_sgrb2_nummelin1998_non_tap",
+      "status": "OK",
+      "rows": 6,
+      "what": "ASU meta ~ 'J/ApJS/117/427/'",
+      "route": "asu_tsv",
+      "usable": false,
+      "endpoint": "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/117/427/ReadMe"
+    },
+    {
+      "stage": "fallback_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 34,
+      "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%'))",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%'))"
+    },
+    {
+      "stage": "column_census_sgrb2_nummelin1998",
+      "status": "OK",
+      "rows": 38,
+      "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%'))",
+      "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%'))"
+    },
+    {
+      "stage": "tables_comet_lovejoy_agundez2014_u",
+      "status": "OK",
+      "rows": 1,
+      "what": "J/A+A/564/L2/table4",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/A+A/564/L2/table4%'"
+    },
+    {
+      "stage": "columns_comet_lovejoy_agundez2014_u",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/564/L2/table4"
+    },
+    {
+      "stage": "tables_comet_lovejoy_agundez2014_u_non_tap",
+      "status": "OK",
+      "rows": 1,
+      "what": "ASU meta ~ 'J/A+A/564/L2/table4'",
+      "route": "asu_tsv",
+      "usable": false,
+      "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+    },
+    {
+      "stage": "fallback_comet_lovejoy_agundez2014_u",
+      "status": "OK",
+      "rows": 34,
+      "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "column_census_comet_lovejoy_agundez2014_u",
+      "status": "OK",
+      "rows": 122,
+      "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+      "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+    },
+    {
+      "stage": "tables_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/559/A47/",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/A+A/559/A47/%'"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/559/A47/b2m_ids1"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/559/A47/b2m_ids2"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/559/A47/b2m_ids3"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 4,
+      "what": "J/A+A/559/A47/b2m_spec"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/559/A47/b2n_ids1"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/559/A47/b2n_ids2"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/A+A/559/A47/b2n_ids3"
+    },
+    {
+      "stage": "columns_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 4,
+      "what": "J/A+A/559/A47/b2n_spec"
+    },
+    {
+      "stage": "tables_sgrb2_belloche2013_non_tap",
+      "status": "OK",
+      "rows": 8,
+      "what": "ASU meta ~ 'J/A+A/559/A47/'",
+      "route": "asu_tsv",
+      "usable": false,
+      "endpoint": "https://cdsarc.cds.unistra.fr/ftp/J/A+A/559/A47/ReadMe"
+    },
+    {
+      "stage": "fallback_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 34,
+      "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%'))",
+      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%'))"
+    },
+    {
+      "stage": "column_census_sgrb2_belloche2013",
+      "status": "OK",
+      "rows": 38,
+      "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%'))",
+      "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%'))"
     },
     {
       "stage": "tables_irc10216_he2008",
@@ -386,13 +843,13 @@
       "stage": "fetch_irc10216_he2008",
       "status": "OK",
       "rows": 409,
-      "what": "SELECT TOP 200000 \"Freq\", \"e_Freq\", \"Species\", \"Trans\" FROM \"J/ApJS/177/275/table4\"",
+      "what": "SELECT TOP 200000 \"Freq\", \"e_Freq\", \"Species\", \"Iint\", \"Trans\" FROM \"J/ApJS/177/275/table4\"",
       "route": "tap"
     }
   ],
-  "n_stages": 48,
-  "n_ok": 46,
-  "n_query_failed": 1,
-  "n_query_returned_zero_rows": 1,
+  "n_stages": 101,
+  "n_ok": 90,
+  "n_query_failed": 8,
+  "n_query_returned_zero_rows": 3,
   "any_query_failed": true
 }

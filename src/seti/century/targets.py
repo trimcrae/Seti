@@ -44,10 +44,65 @@ REF_COLS_COLOR = ("color", "colour", "b_v", "bv")
 #   series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,
 #   epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,
 #   limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd...
-# ``epoch`` is a decimal year; ``expdate`` is a timestamp string.  ``epoch``
-# comes first because it is numeric and unambiguous.
-EXP_TIME_COLS = ("epoch", "date_jd", "jd", "mjd", "hjd", "time", "expdate", "date")
+#
+# ``epoch`` IS NOT THE OBSERVATION DATE.  An earlier revision assumed it was a
+# decimal year and put it first because it is numeric; run 35748748365 then
+# reported all six fields as ``1890..1992 -> 2000.0..2000.0``, every plate
+# post-gap and none pre-gap, across 96,909 exposures.  It is the coordinate
+# epoch, constant at 2000.0.  ``daschlab/exposures.py`` says as much by
+# omission: its ``_COLTYPES`` parses ``expdate`` and leaves ``epoch``
+# commented out.
+#
+# ``expdate`` is the observation timestamp, in DASCH's own dialect --
+# hyphens in the time field as well as the date (``1899-07-04T12-34-56``) and
+# occasionally a ``:60.0`` seconds field -- so only its leading ``YYYY-MM-DD``
+# is parsed, which is four orders of magnitude finer than the two-year blocks
+# it feeds.
+EXP_DATE_COLS = ("expdate", "exp_date", "date_obs", "dateobs")
+EXP_TIME_COLS = ("date_jd", "jd", "mjd", "hjd", "time", "date")
 EXP_LIM_COLS = ("limmagapass", "limmagatlas", "limiting_mag", "limmag")
+
+
+def dasch_dates_to_year(values) -> np.ndarray:
+    """Decimal years from DASCH ``expdate`` strings; NaN where unparseable.
+
+    Only the leading ``YYYY-MM-DD`` is read: DASCH writes the time field with
+    hyphens too (``1899-07-04T12-34-56``) and sometimes a ``:60.0`` seconds
+    value, and a day is already four orders of magnitude finer than the
+    two-year blocks this feeds.
+    """
+    s = pd.Series(values, dtype="object").astype(str).str.strip().str.slice(0, 10)
+    dt = pd.to_datetime(s, format="%Y-%m-%d", errors="coerce")
+    out = np.full(len(s), np.nan)
+    ok = dt.notna().to_numpy()
+    if ok.any():
+        d = dt[ok]
+        year = d.dt.year.to_numpy(dtype=float)
+        start = pd.to_datetime(d.dt.year.astype(str) + "-01-01")
+        frac = ((d - start).dt.days.to_numpy(dtype=float)
+                / np.where(d.dt.is_leap_year.to_numpy(), 366.0, 365.0))
+        out[ok] = year + frac
+    return out
+
+
+def exposure_years(df: pd.DataFrame) -> tuple[np.ndarray, str | None]:
+    """Decimal year per ``queryexps`` row, and the column it came from.
+
+    ``expdate`` first (the observation timestamp), then any numeric JD/MJD
+    column.  Never ``epoch``, which is the coordinate epoch and is 2000.0 for
+    every plate --- see ``EXP_TIME_COLS``.
+    """
+    dcol = pick_column(df, EXP_DATE_COLS)
+    if dcol is not None:
+        yr = dasch_dates_to_year(df[dcol].to_numpy())
+        if np.isfinite(yr).any():
+            return yr, str(dcol)
+    tcol = pick_column(df, EXP_TIME_COLS)
+    if tcol is not None:
+        yr = any_time_to_year(numeric(df, tcol))
+        if np.isfinite(yr).any():
+            return yr, str(tcol)
+    return np.full(len(df), np.nan), None
 
 
 def field_tag(ra: float, dec: float, radius_deg: float) -> str:
@@ -119,16 +174,15 @@ def plate_density(ra: float, dec: float, log: AcquisitionLog | None = None,
         if len(et):
             out["exptime_min_median"] = float(np.nanmedian(et["exptime_min"].to_numpy(float)))
             exposures_out.append(et)
-    tcol = pick_column(df, EXP_TIME_COLS)
-    out["time_column"] = str(tcol) if tcol is not None else None
-    if tcol is not None:
-        yr = any_time_to_year(numeric(df, tcol))
-        yr = yr[np.isfinite(yr)]
-        if yr.size:
-            out["year_min"], out["year_max"] = float(np.min(yr)), float(np.max(yr))
-            out["n_pre_gap"] = int(np.sum(yr < MENZEL_GAP_START))
-            out["n_post_gap"] = int(np.sum(yr >= MENZEL_GAP_END))
-            out["n_in_gap"] = int(np.sum((yr >= MENZEL_GAP_START) & (yr < MENZEL_GAP_END)))
+    yr, tcol = exposure_years(df)
+    out["time_column"] = tcol
+    out["n_undated"] = int(np.sum(~np.isfinite(yr)))
+    yr = yr[np.isfinite(yr)]
+    if yr.size:
+        out["year_min"], out["year_max"] = float(np.min(yr)), float(np.max(yr))
+        out["n_pre_gap"] = int(np.sum(yr < MENZEL_GAP_START))
+        out["n_post_gap"] = int(np.sum(yr >= MENZEL_GAP_END))
+        out["n_in_gap"] = int(np.sum((yr >= MENZEL_GAP_START) & (yr < MENZEL_GAP_END)))
     lcol = pick_column(df, EXP_LIM_COLS)
     out["lim_column"] = str(lcol) if lcol is not None else None
     if lcol is not None:
@@ -327,5 +381,6 @@ def match_refcat(ra: float, dec: float, *, radius_arcsec: float = 15.0, refcat: 
     return row, r
 
 
-__all__ = ["EXPOSURE_KEY_COLS", "exposure_table", "field_tag", "match_refcat",
-           "normalise_refcat", "plate_density", "select_bright", "select_variables"]
+__all__ = ["EXPOSURE_KEY_COLS", "dasch_dates_to_year", "exposure_table",
+           "exposure_years", "field_tag", "match_refcat", "normalise_refcat",
+           "plate_density", "select_bright", "select_variables"]

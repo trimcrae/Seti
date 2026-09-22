@@ -480,6 +480,35 @@ def test_exposure_join_never_falls_back_to_the_series_alone():
     assert not np.isfinite(lc2.exptime_min).any()
 
 
+def test_queryexps_epoch_is_not_the_observation_date():
+    """``epoch`` is the coordinate epoch, 2000.0 on every plate.
+
+    Run 35748748365 reported all six fields as ``2000.0..2000.0``, every plate
+    post-gap and none pre-gap, over 96,909 exposures, because the year was
+    taken from ``epoch``.  The observation timestamp is ``expdate``, in
+    DASCH's own dialect: hyphens in the time field as well as the date, and
+    sometimes a ``:60.0`` seconds value that is not a valid time at all.
+    """
+    from seti.century.targets import exposure_years
+
+    lines = ["series,platenum,scannum,mosnum,expnum,solnum,exptime,expdate,epoch,limMagApass",
+             "a,101,0,0,0,1,45.0,1899-07-04T12-34-56,2000.0,14.2",
+             "mc,900,0,0,0,1,60.0,1975-12-31T23-59-60.0,2000.0,15.1",
+             "dnb,901,0,0,0,1,60.0,1953-06-15T01-02-03,2000.0,15.0",
+             "x,902,0,0,0,1,60.0,,2000.0,15.0"]
+    df = to_frame(lines)
+    assert "epoch" in df.columns          # it is served, and it is still wrong
+    yr, col = exposure_years(df)
+    assert col == "expdate"
+    assert abs(yr[0] - 1899.50) < 0.01
+    assert abs(yr[1] - 1976.00) < 0.01    # the ":60.0" row still parses
+    assert abs(yr[2] - 1953.45) < 0.01
+    assert not np.isfinite(yr[3])         # an empty date is NaN, not year zero
+    # And the gap split is then real, not "everything is post-gap".
+    good = yr[np.isfinite(yr)]
+    assert int(np.sum(good < GAP[0])) == 2 and int(np.sum(good >= GAP[1])) == 1
+
+
 def test_the_exposure_join_picks_the_key_that_places_the_most_plates():
     """A key that matches a handful must not beat one that matches nearly all.
 

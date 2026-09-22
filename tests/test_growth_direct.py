@@ -71,9 +71,15 @@ def _t0_tess() -> float:
 
 
 def _products(depth_pdc_ppm, depth_sap_ppm, *, duration_days=T14_D, noise_ppm=300.0,
-              n_transits=16, offset_days=0.0, odd_depth_factor=None, seed=3,
+              n_transits=16, offset_days=0.0, odd_depth_factor=None, seed=3, span_durations=3.0,
               authors=(("SPOC", 120.0), ("TESS-SPOC", 600.0)), sectors=(41, 54)) -> list[dict]:
-    """Synthetic products: each (author, sector) carries PDCSAP and SAP columns."""
+    """Synthetic products: each (author, sector) carries PDCSAP and SAP columns.
+
+    ``span_durations`` is how much of the phase each epoch's window covers; the
+    default (3 durations either side of mid-transit) is all the depth fit needs,
+    and the control-phase tests widen it because an off-transit phase must land
+    on data rather than in the fixture's own gap.
+    """
     out = []
     i = 0
     for si, sec in enumerate(sectors):
@@ -85,7 +91,7 @@ def _products(depth_pdc_ppm, depth_sap_ppm, *, duration_days=T14_D, noise_ppm=30
                 lc = synth_lightcurve(period_days=P, t0_btjd=t0, duration_days=duration_days,
                                       depth=dep * 1e-6, exptime_s=exptime, n_transits=n_transits,
                                       noise_ppm=noise_ppm, sector=sec, author=author,
-                                      seed=seed + i,
+                                      seed=seed + i, span_durations=float(span_durations),
                                       odd_depth=(dep * odd_depth_factor * 1e-6
                                                  if odd_depth_factor else None))
                 cols[col] = (lc["flux"], lc["flux_err"])
@@ -612,3 +618,97 @@ def test_a_fits_product_yields_both_families_through_both_readers(tmp_path):
     segs = D.family_segments([prod], D.FAMILY_SAP)
     assert len(segs) == 1 and segs[0]["flux_column"] == "SAP_FLUX"
     assert lk.__version__
+
+
+# ---------------------------------------------------------------------------
+# The control-phase null --- the look-elsewhere bias of the epoch search
+# ---------------------------------------------------------------------------
+def _ctrl_conf(**over) -> dict:
+    c = _conf()
+    c["direct"].setdefault("epoch_search", {}).update(
+        {"control_phases": [0.15, 0.25, 0.75, 0.85]})
+    c["direct"]["epoch_search"].update(over)
+    return c
+
+
+def test_a_real_transit_beats_its_own_control_phase_null():
+    """The injected transit's search S/N is above anything the same search finds
+    at phases where the planet is not."""
+    ref = _ref_ppm()
+    conf = _ctrl_conf()
+    prods = _products(ref * 2.0, ref * 2.0, span_durations=8.0)
+    rec, *_ = _measure(prods, conf=conf)
+    assert rec["ephemeris_recovered"]
+    for fam in ("pdc", "sap"):
+        ctrl = D.control_phase_null(prods, fam, period_days=P, t0_btjd=rec["t0_btjd_used"],
+                                    duration_days=T14_D,
+                                    sigma_t0_days=rec["ephemeris_sigma_minutes"] / 1440.0,
+                                    depth_ppm=rec[f"{fam}_depth_ppm"], ref_ppm=ref,
+                                    fit=D.FitParams.from_config(conf),
+                                    params=D.EpochSearchParams.from_config(conf))
+        assert ctrl["control_n_phases_measured"] >= 3
+        assert np.isfinite(ctrl["control_snr_max"])
+        out = D.apply_control(rec, ctrl, family=fam)
+        assert out["control_verdict"] == D.CTRL_ABOVE
+        assert out["snr_excess"] > 0
+        # the search cannot manufacture the injected excess out of this noise
+        assert out["depth_excess_over_control_ppm"] > 0
+
+
+def test_the_control_null_calls_a_search_that_did_not_beat_noise_within_search_noise():
+    """With the transit's own S/N no better than the off-phase maxima, the
+    verdict is WITHIN_SEARCH_NOISE --- the gate the max-over-trials needs."""
+    ref = _ref_ppm()
+    conf = _ctrl_conf()
+    prods = _products(ref * 2.0, ref * 2.0, span_durations=8.0)
+    rec, *_ = _measure(prods, conf=conf)
+    ctrl = D.control_phase_null(prods, "pdc", period_days=P, t0_btjd=rec["t0_btjd_used"],
+                                duration_days=T14_D, sigma_t0_days=0.0,
+                                depth_ppm=rec["pdc_depth_ppm"], ref_ppm=ref,
+                                fit=D.FitParams.from_config(conf),
+                                params=D.EpochSearchParams.from_config(conf))
+    # a record whose search S/N is only as good as the best off-phase maximum
+    weak = dict(rec)
+    weak["epoch_search_snr_best"] = float(ctrl["control_snr_max"]) - 0.5
+    out = D.apply_control(weak, ctrl, family="pdc")
+    assert out["control_verdict"] == D.CTRL_WITHIN
+    assert out["snr_excess"] < 0
+
+
+def test_an_empty_control_is_unavailable_and_never_a_pass():
+    ctrl = D.control_phase_null([], "pdc", period_days=P, t0_btjd=0.0, duration_days=T14_D,
+                                sigma_t0_days=0.0, depth_ppm=1e4, ref_ppm=1e4)
+    assert ctrl["control_verdict"] == D.CTRL_UNAVAILABLE
+    out = D.apply_control({"epoch_search_snr_best": 99.0}, ctrl, family="pdc")
+    assert out["control_verdict"] == D.CTRL_UNAVAILABLE
+
+
+def test_direct_control_reopens_every_changed_class_and_records_the_null(tmp_path):
+    ref = _ref_ppm()
+    conf = _ctrl_conf()
+    prods = _products(ref * 2.0, ref * 2.0, span_durations=8.0)
+    rec, *_ = _measure(prods, conf=conf)
+    row = dict(rec)
+    row["class"] = D.CLASS_GROWTH
+    # a second planet on a star whose TIC never resolved: unavailable, not a pass
+    row2 = dict(rec)
+    row2.update({"kepoi_name": "K00999.01", "kepid": 1234567, "tic_id": float("nan"),
+                 "class": D.CLASS_DEEPER})
+    # a `consistent` planet is NOT re-opened: the bias can only push a depth up
+    row3 = dict(rec)
+    row3.update({"kepoi_name": "K00888.01", "kepid": 7654321, "class": D.CLASS_CONSISTENT})
+    out = tmp_path / "direct"
+    out.mkdir()
+    pd.DataFrame([row, row2, row3]).to_csv(out / "measurements.csv", index=False)
+    rep = D.direct_control(conf, out, products_fn=lambda tic, **kw: list(prods))
+    assert rep["n_selected"] == 2
+    df = pd.read_csv(out / "control" / "control.csv")
+    assert set(df["kepoi_name"]) == {"K00897.01", "K00999.01"}
+    got = df.set_index("kepoi_name")
+    assert got.loc["K00897.01", "control_verdict"] == D.CTRL_ABOVE
+    assert got.loc["K00897.01", "pdc_control_n_phases_measured"] >= 3
+    assert got.loc["K00999.01", "control_status"] == "TIC_UNRESOLVED"
+    assert got.loc["K00999.01", "control_verdict"] == D.CTRL_UNAVAILABLE
+    assert rep["n_above_control"] == 1 and rep["n_control_unavailable"] == 1
+    s = json.loads((out / "control" / "summary.json").read_text())
+    assert s["control_phases"] and s["caveats"]

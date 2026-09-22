@@ -358,12 +358,18 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
     # every element column present at all, for the kills (redox, Fe-Mn, PGE,
     # alloy) which must see the measurement even when the design cannot use it
     all_elements = [e for e in R.FIT_ELEMENTS if n_meas.get(e, 0) > 0]
+    # ``copy=True`` is not optional: under pandas 3's copy-on-write,
+    # ``DataFrame.to_numpy()`` hands back a READ-ONLY view, and the next line
+    # (masking non-positive values to NaN) raises "assignment destination is
+    # read-only".  The sandbox runs pandas 2, the runner installs pandas 3, so
+    # this only ever failed on the runner -- at the top of the screen stage,
+    # after the whole acquisition had been paid for.
     full_df = df[all_elements].apply(pd.to_numeric, errors="coerce")
-    full = full_df.to_numpy(dtype=float)
+    full = full_df.to_numpy(dtype=float, copy=True)
     full[full <= 0] = np.nan
     conc_df = df[elements].apply(pd.to_numeric, errors="coerce")
     dl_mask, dl_ledger = V.detection_limit_mask(conc_df, cfg)
-    conc = conc_df.to_numpy(dtype=float)
+    conc = conc_df.to_numpy(dtype=float, copy=True)
     conc[conc <= 0] = np.nan
     D0 = V.build_design(elements, cfg)
     # boundaries and sections

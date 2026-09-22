@@ -295,8 +295,10 @@ def fetch_one(spec: dict, *, fetch_fn=None, timeout: float = 90.0, retries: int 
     rec = {"name": str(spec.get("name") or url[:60]), "species": spec.get("species"),
            "kind": kind, "url": url, "status": STATUS_FAILED}
     t0 = time.time()
+    errs: list = []
     try:
-        body = fetch_text(url, fetch_fn=fetch_fn, retries=int(retries), timeout=float(timeout))
+        body = fetch_text(url, fetch_fn=fetch_fn, retries=int(retries), timeout=float(timeout),
+                          errors=errs)
     except Exception as exc:                                   # noqa: BLE001
         rec.update({"error": repr(exc)[:1500], "elapsed_s": round(time.time() - t0, 2)})
         if log:
@@ -304,9 +306,13 @@ def fetch_one(spec: dict, *, fetch_fn=None, timeout: float = 90.0, retries: int 
         return rec
     if not body:
         # fetch_text RETURNS None after exhausting its retries; it does not
-        # raise.  A route that came back empty is a failed route, and calling it
-        # OK would put an empty ledger entry next to a real one.
-        rec.update({"error": "no body after retries (fetch_text returned None/empty)",
+        # raise.  It hands the last exception back through ``errors``, and that
+        # text is the record: a 403 from a publisher and a DNS failure are
+        # different facts about a route.  A route that came back empty is a
+        # failed route, and calling it OK would put an empty ledger entry next
+        # to a real one.
+        rec.update({"error": (errs[-1][:1500] if errs
+                              else "no body after retries (fetch_text returned None/empty)"),
                     "elapsed_s": round(time.time() - t0, 2), "n_bytes": 0})
         if log:
             log.record("litfetch", url, error="empty body")

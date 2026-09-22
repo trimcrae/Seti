@@ -67,8 +67,26 @@ does the same work in one job on one slot, which is affordable because only
 No `results/slag/summary.json` exists yet — the verdict line stays empty until
 that run commits one.
 
-Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
-the runner installs), per `docs/channel-brief.md` §0 item 5.
+Because that envelope finding blunts Tier 2, the same draws now also give a
+**calibrated per-element residual**: for each element, the fraction of natural
+draws left at least as badly fitted there as the data are. It does not depend
+on the envelope at all — it inherits the model's full freedom — and it says
+*which* element carries a panel's misfit. The Bonferroni-corrected minimum
+over the panel is reported beside the raw minimum and is what any claim must
+use. On the offline injection it recovers a 1.5 dex Ti excess as the worst
+element; a natural CI panel's corrected minimum stays above 0.05.
+
+Two record-keeping fixes came out of reading the acquisition rather than
+trusting it: all twelve PyllutedWD timescale grids downloaded OK and **parsed
+to nothing**, silently, so a file that does not parse now records why and
+keeps its raw text (the source actually in use, PEWDD's own per-star
+`SinTime*`, is the better one anyway); and `summary.json` now names the commit
+that computed it, because the job checks out a branch head rather than a
+commit.
+
+Offline: 42 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
+the runner installs), per `docs/channel-brief.md` §0 item 5, with the real
+PEWDD table giving identical numbers under each.
 
 ### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
 

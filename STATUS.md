@@ -10,6 +10,58 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### CRADLE is on the sky: eight shards acquiring, and three ways the verdict could have been faked, 2026-09-22
+
+**State at 11:40 a.m. EDT.** Run **35741356662** (`stage=all`, 8 acquire shards
+over the 768 level-3 HEALPix pixels, 4 ages shards) has shards 0, 1 and 3
+querying the ESA Gaia mirror; 5 remain queued behind an Actions queue that
+reached 73 runs. Run **35745911273** (`stage=probe`, dispatched 11:14 a.m. on
+the fixed commit) is still queued. `results/cradle/summary.json` is **not
+written**: the channel's state is *measuring*, not `NO_CRADLE_CANDIDATE`.
+
+**The probe never touched an archive.** Its job reached a runner at 11:03 and
+died at 11:05 on its own offline gate — `pd.to_numeric(errors="ignore")`,
+removed in the pandas 3 the runner installs while the sandbox holds 2.3.3. The
+archive step was `skipped`, the artifact upload warned "No files were found",
+and the eight acquire shards therefore started with **no `probe.json` and no
+measured join shape**. (Now repo-wide as `channel-brief.md` §0.5.)
+
+Three further faults were found and fixed while the shards queued. None of them
+changes a number; each decides whether the number is honest or measured at all.
+
+* **A refused join shape cost one timeout per unit, not one per shard.** The
+  probe measures the shapes on *one* pixel and `acquire` took its answer as a
+  fixed order for all 96 units — and this run has no such answer. The loop now
+  promotes the shape that actually answered and records `shapes_planned`, the
+  running `shapes` and every `shape_relearned` event.
+* **One pathological pixel could outlast its job.** A timed-out unit splits to
+  level 6: unbounded, `1 + 4 + 16 + 64 = 85` queries at 1200 s each — 28 hours
+  inside a 350-minute job, losing every unit not yet reached. `fetch_unit` now
+  carries the shard's deadline through the recursion and reports
+  `deadline_exceeded`, which surfaces as `coverage.n_units_deadline_exceeded`
+  and a named `DEGRADED` reason.
+* **A star the locus will not place read as a star with no excess.** The
+  empirical photosphere refuses to extrapolate, so a star outside every
+  well-populated colour bin gets a NaN `chi` and fails `excess_significant` for
+  exactly the reason a quiet star does. On a partial sky the bins are thin, so
+  that silence would have read as a clean null. `screen` now counts
+  `n_photosphere_assigned` and `n_no_photosphere_locus_refused` apart, and
+  `assess` raises `DEGRADED (locus_refused_photosphere:n/m)` past a fifth.
+
+The suite is 30/30 under **both** pandas 2.3.3 and 3.0.6 (`pip install --target
+<dir> "pandas>=3"`, `PYTHONPATH=<dir>:src pytest`), ruff clean, merged to main.
+
+**What to read first when the runs land**, in this order: `probe.json` —
+which of the three Gaia×AllWISE join shapes answers (IGNITION's flat-join
+failure is the risk), whether BD+20 307, TYC 4479-3-1 and HD 15407A resolve and
+return *through the join*, and whether `irs_enhv211` and each VizieR table
+exist. Then `screen.json`'s funnel, where `n_no_photosphere_locus_refused`
+against `n_ks_present` says whether a thin result is the sky or the bins.
+Expect `IN_CELL_AGE_UNDETERMINED` to be the modal outcome for anything
+interesting: gyrochronology's catalogue coverage is two Kepler/K2 fields
+against an all-sky parent, and a star with one age indicator is never a
+candidate.
+
 ### RING dispatched at last, after the runner's pandas ate the pulsar leg, 2026-09-22
 
 Two things had to be true before S63 could produce anything, and neither was

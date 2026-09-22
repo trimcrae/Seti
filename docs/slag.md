@@ -192,10 +192,24 @@ none spurious. (Run 35737518217.)
 column for the metals. An upper limit is a row whose error column holds −1.
 Read as a detection with an assumed 0.2 dex error, such a value is a fake
 depletion — on 126 of the 221 panels with ≥ 5 elements. A negative error now
-routes the value to the panel's one-sided limit list. The convention is not
-assumed: PEWDD publishes its own `total_detections`, and "error < 0 means not
-a detection" reproduces it on all 3475 rows. That agreement is recomputed
-every run (`summary.json["limit_bookkeeping"]`).
+routes the value to the panel's one-sided limit list.
+
+The convention is not assumed, but *where* it can be checked is not where the
+channel first looked. PEWDD publishes `total_detections` and
+`total_upper_limits` per row — **in the database's own CSV only**. The VizieR
+service serves 200 columns and neither of those two, so the check ran against
+nothing and reported zeros that read like agreement. It now runs against
+whichever fetched copy carries the counts
+(`summary.json["limit_convention_check"]`), and on the served data it says:
+
+> **3,465 of 3,475 rows** reproduce PEWDD's own upper-limit count exactly from
+> "error < 0 means an upper limit", over this channel's 26 elements.
+
+The *upper-limit* count is the strict test. The detection count cannot agree
+and is reported only for completeness: PEWDD counts detections over every
+element it carries, including H, He and elements outside this channel's list,
+so a row with a detection of one of those is undercounted here by
+construction (2,381 of 3,475 agree exactly, the rest low by 1–4).
 
 **The PyllutedWD grids were fetched and silently ignored.** All twelve
 `data/timescales_*.csv` files downloaded with status OK, and

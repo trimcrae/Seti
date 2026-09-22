@@ -300,6 +300,21 @@ def _attach_measured_meteorites(fam, out_dir: Path, cfg: dict) -> dict:
     return out
 
 
+def _check_limit_convention(out_dir: Path, cfg: dict) -> dict:
+    """Run the negative-error check against whichever copy carries the counts."""
+    cands = sorted(glob.glob(str(out_dir / "data" / "*PEWDD*.csv")))
+    cands += sorted(glob.glob(str(out_dir / "data" / "pewdd_*.csv")))
+    best = {"checked": False, "status": "NO_TABLE_WITH_COUNTS", "tried": []}
+    for p in dict.fromkeys(cands):
+        rec = A.verify_limit_convention(p, elements=cfg["elements"]["all"])
+        best["tried"].append({"path": p, "status": rec.get("status")})
+        if rec.get("checked"):
+            rec["tried"] = best["tried"]
+            return rec
+    return best
+
+
+
 def _timescale_model(fam, out_dir: Path, *, df=None, roles: dict | None = None) -> TimescaleModel:
     """The sinking lever, from the best source this run reached.
 
@@ -516,6 +531,7 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
     out["element_columns"] = {e: r["value"] for e, r in roles["elements"].items()}
     out["timescale_library"] = tsm.library_meta
     out["limit_bookkeeping"] = _limit_bookkeeping(panels)
+    out["limit_convention_check"] = _check_limit_convention(out_dir, cfg)
     # The shard unit and the "other sources for this object" set are the
     # reconciled OBJECT (sky position), not the name a given paper used.
     by_key: dict[str, list[Panel]] = {}
@@ -716,6 +732,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     obj_grouping: dict = {}
     measured_rep: dict = {}
     limit_book: dict = {}
+    limit_convention: dict = {}
     for s in shards:
         try:
             d = json.loads(Path(s).read_text())
@@ -729,6 +746,9 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         obj_grouping = d.get("object_grouping") or obj_grouping
         measured_rep = d.get("measured_meteorites") or measured_rep
         ts_library = d.get("timescale_library") or ts_library
+        conv = d.get("limit_convention_check")
+        if conv:
+            limit_convention = conv
         if d.get("limit_bookkeeping"):
             lb = d["limit_bookkeeping"]
             for k in ("detections_checked", "detections_agree", "upper_limits_checked",
@@ -894,6 +914,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         "code": _code_provenance(),
         "acquisition": acq, "timescale_source": ts_source,
         "timescale_library": ts_library, "limit_bookkeeping": limit_book,
+        "limit_convention_check": limit_convention,
         "object_grouping": obj_grouping,
         "measured_meteorites": measured_rep,
         "timescale_source_per_panel": _count_by(screened, "timescale_source"),

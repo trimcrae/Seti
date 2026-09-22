@@ -873,3 +873,40 @@ def test_per_element_calibration_on_a_natural_panel_flags_nothing_hard():
                            rng=np.random.default_rng(8))
     w = rec["per_element"]["_worst"]
     assert w["p_min_corrected"] > 0.05, w
+
+
+def test_limit_convention_check_verifies_and_refuses_to_pretend(tmp_path):
+    """The negative-error convention is checked against the catalogue's counts."""
+    rows = []
+    for i in range(6):
+        r = {"Star": f"s{i}", "Paper": "P", "total_detections": 0, "total_upper_limits": 0}
+        for j, el in enumerate(["Ca", "Mg", "Fe", "Ti"]):
+            v, e = -7.0 - 0.1 * j, (0.1 if (i + j) % 3 else -1.0)
+            r[f"log({el}/H(e))"] = v
+            r[f"log({el}/H(e))e"] = e
+            if e > 0:
+                r["total_detections"] += 1
+            else:
+                r["total_upper_limits"] += 1
+        # H and He are carried by PEWDD and counted by it, but not by this channel
+        r["log(H/H(e))"] = 0.0
+        r["log(H/H(e))e"] = 0.1
+        r["total_detections"] += 1
+        rows.append(r)
+    p = tmp_path / "PEWDD.csv"
+    pd.DataFrame(rows).to_csv(p, index=False)
+    got = acq.verify_limit_convention(p, elements=["Ca", "Mg", "Fe", "Ti"])
+    assert got["checked"] and got["status"] == "OK"
+    assert got["n_element_columns"] == 4
+    assert got["upper_limits_agree"] == got["upper_limits_checked"] == 6
+    assert got["strict_test"] == "upper_limits"
+    # the detection count is undercounted by exactly the H column, by construction
+    assert got["detections_agree"] == 0
+
+    # a table without the count columns says so rather than reporting zeros
+    bare = tmp_path / "bare.csv"
+    pd.DataFrame([{"Star": "s", "log(Ca/H(e))": -7.0, "log(Ca/H(e))e": 0.1}]).to_csv(
+        bare, index=False)
+    none = acq.verify_limit_convention(bare)
+    assert none["checked"] is False and none["status"] == "COUNT_COLUMNS_NOT_SERVED"
+    assert acq.verify_limit_convention(tmp_path / "does_not_exist.csv")["checked"] is False

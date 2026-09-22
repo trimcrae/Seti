@@ -897,6 +897,73 @@ def fetch_meteorite_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
     return out
 
 
+
+def verify_limit_convention(path, elements=None) -> dict:
+    """Check "a negative error means an upper limit" against PEWDD's own counts.
+
+    This is the single most consequential reading decision in the channel: a
+    negative-error value read as a detection is a fabricated depletion of
+    whatever size the error column holds.  PEWDD publishes ``total_detections``
+    and ``total_upper_limits`` per row, so the convention is checkable rather
+    than assumed --- but ONLY in the database's own CSV.  The VizieR service
+    does not serve those two columns at all (200 columns, neither present), so
+    on the VizieR route the check has nothing to compare and must say so
+    instead of reporting zeros that read like agreement.
+
+    The UPPER-LIMIT count is the strict test.  The detection count cannot
+    agree: PEWDD counts detections over every element it carries, including H
+    and He and elements outside this channel's list, so a row whose extra
+    elements are detections is undercounted here by construction.  Both are
+    reported, and which one is the test is stated.
+    """
+    out: dict = {"path": str(path), "checked": False}
+    try:
+        df = pd.read_csv(path, low_memory=False)
+    except Exception as exc:                                  # noqa: BLE001
+        return {**out, "status": f"unreadable:{exc!r}"[:160]}
+    if "total_detections" not in df.columns or "total_upper_limits" not in df.columns:
+        return {**out, "status": "COUNT_COLUMNS_NOT_SERVED",
+                "note": "the VizieR table does not carry total_detections / "
+                        "total_upper_limits; only the database's own CSV does"}
+    pairs = []
+    for c in df.columns:
+        m = re.fullmatch(r"log\(([A-Z][a-z]?)/H\(e\)\)", str(c))
+        if not m:
+            continue
+        el = m.group(1)
+        if el in ("H", "He"):
+            continue
+        if elements is not None and el not in elements:
+            continue
+        for ec in (str(c) + "e", "e_" + str(c)):
+            if ec in df.columns:
+                pairs.append((el, str(c), ec))
+                break
+    if len(pairs) < 3:
+        return {**out, "status": "NO_VALUE_ERROR_PAIRS", "n_pairs": len(pairs)}
+    det = pd.to_numeric(df["total_detections"], errors="coerce")
+    lim = pd.to_numeric(df["total_upper_limits"], errors="coerce")
+    n_det = np.zeros(len(df), dtype=int)
+    n_lim = np.zeros(len(df), dtype=int)
+    for _el, vc, ec in pairs:
+        v = pd.to_numeric(df[vc], errors="coerce")
+        e = pd.to_numeric(df[ec], errors="coerce")
+        ok = v.notna().to_numpy()
+        n_det += (ok & (e > 0).to_numpy()).astype(int)
+        n_lim += (ok & (e < 0).to_numpy()).astype(int)
+    m_lim = lim.notna().to_numpy()
+    m_det = det.notna().to_numpy()
+    lim_agree = int((n_lim[m_lim] == lim[lim.notna()].to_numpy()).sum())
+    det_agree = int((n_det[m_det] == det[det.notna()].to_numpy()).sum())
+    return {**out, "checked": True, "status": STATUS_OK, "n_rows": int(len(df)),
+            "n_element_columns": len(pairs),
+            "upper_limits_checked": int(m_lim.sum()), "upper_limits_agree": lim_agree,
+            "detections_checked": int(m_det.sum()), "detections_agree": det_agree,
+            "strict_test": "upper_limits",
+            "note": ("the detection count cannot agree: PEWDD counts detections over every "
+                     "element it carries, this channel over its own element list")}
+
+
 def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
                               log: AcquisitionLog | None = None) -> dict:
     """PyllutedWD's (or Koester's) diffusion-timescale files, fetched and parsed if they exist."""
@@ -957,6 +1024,7 @@ def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
 __all__ = ["ATM_H", "ATM_HE", "ATM_UNKNOWN", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO",
            "VIZIER_ASU", "AcquisitionLog", "atmosphere_from_spt", "atmosphere_of_row",
            "build_panels", "companion_column", "discover_timescale_tables",
+           "verify_limit_convention",
            "element_value_column", "fetch_meteorite_tables", "fetch_pewdd", "fetch_text",
            "github_raw_url",
            "github_tree", "http_text", "normalise_name", "pick_pewdd_csv",

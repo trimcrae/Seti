@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import time as _t
 
 import numpy as np
 import pandas as pd
@@ -682,6 +683,67 @@ def test_failed_archive_everywhere_is_no_data_reached(tmp_path):
     assert s["verdict"] == S.VERDICT_S2_NO_DATA and "not a null result" in s["note"]
     assert s["acquisition"]["any_query_failed"]
     del world
+
+
+def test_a_hung_archive_fetch_is_abandoned_inside_its_own_clock(tmp_path):
+    """The stage budget is checked BETWEEN stars, so a fetch that never
+    answers has to be bounded by itself.
+
+    MEASURED (run 35738785437): the stage-2 loop sat inside one star's fetch
+    from the moment its 9,000 s budget was spent until the 240-minute job cap,
+    so the budget check it was meant to obey was never reached.
+    """
+    world = _world()
+    tap, cone, lc_fn, tpf_fn = _scripted(world)
+    conf = _conf(tmp_path)
+    params = S.Stage2Params.from_config(conf)
+    params.product_timeout_s = 0.3
+    params.retries = 1
+    calls = {"n": 0}
+
+    def hung(*a, **k):
+        calls["n"] += 1
+        _t.sleep(30.0)                                    # never answers in time
+        raise AssertionError("the hung fetch was waited out")
+
+    out = tmp_path / "s2"
+    t0 = _t.monotonic()
+    s = S.stage2_run(conf, out, params=params, query_fn=tap, cone_fn=cone, lc_fn=hung,
+                     tpf_fn=hung, shortlist=[_entry()])
+    elapsed = _t.monotonic() - t0
+    # two products (light curve, pixels) abandoned at 0.3 s each; waiting them
+    # out would cost 2 x 30 s on its own, before anything else the star needs
+    assert calls["n"] >= 2 and elapsed < 30.0
+    st = json.loads((out / "stars.json").read_text())["stars"][0]
+    assert st["verdict"] == P.VERDICT_UNTESTABLE
+    assert st["statuses"]["lightcurve"] == "QUERY_FAILED"
+    assert st["statuses"]["pixels"] == "QUERY_FAILED"
+    # a timed-out fetch is a FAILED fetch, never "the archive holds nothing"
+    assert "QUERY_RETURNED_ZERO_ROWS" not in json.dumps(st["statuses"])
+    assert s["verdict"] != ""
+    del world
+
+
+def test_an_in_time_fetch_and_its_exception_pass_straight_through():
+    def ok(star_id, **kw):
+        return [{"star_id": star_id, "kw": kw}]
+
+    assert S._bounded_fetch(ok, "9418692", timeout_s=30.0, mission="kepler")[0][
+        "star_id"] == "9418692"
+    assert S._bounded_fetch(ok, "9418692", timeout_s=None, mission="kepler")[0][
+        "star_id"] == "9418692"
+
+    def boom(star_id, **kw):
+        raise RuntimeError("403 from the archive")
+
+    with pytest.raises(RuntimeError, match="403"):
+        S._bounded_fetch(boom, "9418692", timeout_s=30.0, mission="kepler")
+
+    def hung(star_id, **kw):
+        _t.sleep(30.0)
+
+    with pytest.raises(S.ArcProductTimeout, match="no answer in"):
+        S._bounded_fetch(hung, "9418692", timeout_s=0.2, mission="kepler")
 
 
 def test_budget_exhausted_marks_the_rest_untestable(tmp_path):

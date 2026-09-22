@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import threading
 import time as _time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -138,6 +139,9 @@ class Stage2Params:
     retries: int = 2
     retry_pause_s: float = 5.0
     max_products: int = 4
+    #: Wall clock on ONE light-curve / pixel-file fetch (see _fetch_products).
+    #: 0 or None restores the unbounded behaviour.
+    product_timeout_s: float = 600.0
     download_dir: str | None = None
     quality_bitmask: str = "default"
     # flare finder
@@ -881,6 +885,51 @@ def lc_from_pixels(rec: dict) -> dict:
             "author": "aperture_sum_of_pixels"}
 
 
+class ArcProductTimeout(TimeoutError):
+    """One archive product fetch that did not answer inside its wall clock.
+
+    It is a FAILED fetch, never a statement that the archive holds nothing:
+    the caller records ``QUERY_FAILED`` with the elapsed time and the star
+    stays ``centroid_untestable`` with the reason.
+    """
+
+
+def _bounded_fetch(fn, *args, timeout_s: float | None, **kw):
+    """Run one product fetch on a daemon thread and abandon it when the clock
+    is spent.
+
+    MEASURED (run 35738785437): the stage-2 loop checks its 9,000 s budget
+    between stars, but the fetch itself had no clock of its own -- a MAST
+    request that never answers blocks the process for as long as the runner
+    lives.  That run sat in a single star's fetch from 16:51 (budget spent)
+    until the 240-minute job cap, so the budget check it was supposed to obey
+    was never reached.  ``lightkurve`` / ``astroquery`` offer no timeout on
+    the download path, so the bound is imposed here, exactly as
+    ``arc.acquire.timeout_query_fn`` does for the TAP queries.
+    """
+    limit = None if timeout_s in (None, "", 0) else float(timeout_s)
+    if limit is None or not np.isfinite(limit):
+        return fn(*args, **kw)
+    box: dict = {}
+
+    def _work():
+        try:
+            box["out"] = fn(*args, **kw)
+        except BaseException as exc:                       # noqa: BLE001
+            box["exc"] = exc
+
+    th = threading.Thread(target=_work, name="arc-stage2-product", daemon=True)
+    started = _time.monotonic()
+    th.start()
+    th.join(limit)
+    if th.is_alive():
+        raise ArcProductTimeout(f"no answer in {limit:.0f} s (abandoned after "
+                                f"{_time.monotonic() - started:.0f} s)")
+    if "exc" in box:
+        raise box["exc"]
+    return box.get("out")
+
+
 def _fetch_products(star_id, *, mission, segments, fn, default_fn, params: Stage2Params,
                     log: AcquisitionLog, deadline: Deadline | None, label: str, ra, dec
                     ) -> tuple[list[dict], str, str]:
@@ -898,10 +947,17 @@ def _fetch_products(star_id, *, mission, segments, fn, default_fn, params: Stage
         if attempt and float(params.retry_pause_s) > 0:
             _time.sleep(min(float(params.retry_pause_s) * attempt,
                             deadline.remaining() if deadline is not None else 60.0))
+        # The fetch gets its own wall clock, bounded by whatever is left of the
+        # stage budget: an archive that never answers costs one product, not
+        # the run.
+        cap = _f(params.product_timeout_s)
+        if deadline is not None:
+            cap = min(cap, deadline.remaining()) if np.isfinite(cap) else deadline.remaining()
         try:
-            recs = f(star_id, mission=mission, segments=tuple(segments),
-                     max_products=int(params.max_products), download_dir=params.download_dir,
-                     ra=ra, dec=dec, quality_bitmask=params.quality_bitmask)
+            recs = _bounded_fetch(
+                f, star_id, timeout_s=cap, mission=mission, segments=tuple(segments),
+                max_products=int(params.max_products), download_dir=params.download_dir,
+                ra=ra, dec=dec, quality_bitmask=params.quality_bitmask)
         except Exception as exc:                          # noqa: BLE001
             last = repr(exc)[:400]
             continue

@@ -233,8 +233,25 @@ same-pixel effect. Pairs from two spectra of the same object within 2″ are exc
 
 | release | candidates | 0 px | 1 px | baseline (3–10 px) | excess at 0 px |
 |---|---|---|---|---|---|
-| SDSS-DR17 (log grid 10⁻⁴ dex) | 166 | **21** | 18 | 9.75 | +11, z = 3.6 |
-| DESI-DR1 (linear grid 0.8 Å) | 95 | **11** | 4 | 4.62 | +6, z = 3.0 |
+| SDSS-DR17 (log grid 10⁻⁴ dex) | 166 | **21** | 18 | 9.75 | +11.2 |
+| DESI-DR1 (linear grid 0.8 Å) | 95 | **11** | 4 | 4.62 | +6.4 |
+
+A Poisson z on that excess would be 3.6 and 3.0, but it treats the pair counts as
+independent draws and they are not — one candidate sits in many pairs. The null is
+therefore measured: each **sightline's** own set of pixels is slid bodily by a random
+offset far larger than the window counted, which destroys cross-sightline alignment while
+keeping how many candidates each sightline has and roughly where they sit. Over 500 draws:
+
+| release | observed excess | permutation null | z | p |
+|---|---|---|---|---|
+| SDSS-DR17 | +11.2 | −4.27 ± 2.35 | **6.6** | < 0.002 |
+| DESI-DR1 | +6.4 | −0.85 ± 0.94 | **7.7** | < 0.002 |
+
+(A cluster bootstrap is the obvious alternative and is wrong here: resampling sightlines
+with replacement makes duplicate copies of one sightline, and two copies land on the same
+pixel by construction — measured, that "excess" comes out at 93 against an observed 11.
+The null mean is also *negative* rather than zero, so the 3–10 px baseline slightly
+over-states what the 0-px bin should hold, which is what the Poisson assumption hid.)
 
 So about 19 SDSS and 6 DESI candidate pairs sit on a shared pixel for an instrumental
 reason — roughly one candidate in eight. **None of the six lines left standing is one of

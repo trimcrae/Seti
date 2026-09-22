@@ -82,10 +82,15 @@ grid, so the same wavelength is the same pixel. Histogramming the pixel separati
 every pair of candidates from different sightlines, and calibrating against separations
 of 3–10 pixels:
 
-| release | candidates | 0 px | baseline | excess |
-|---|---|---|---|---|
-| SDSS-DR17 | 166 | 21 | 9.75 | +11, z = 3.6 |
-| DESI-DR1 | 95 | 11 | 4.62 | +6, z = 3.0 |
+| release | candidates | 0 px | baseline | excess | permutation null | z |
+|---|---|---|---|---|---|---|
+| SDSS-DR17 | 166 | 21 | 9.75 | +11.2 | −4.27 ± 2.35 | **6.6** |
+| DESI-DR1 | 95 | 11 | 4.62 | +6.4 | −0.85 ± 0.94 | **7.7** |
+
+The null is measured, not assumed: each sightline's pixels are slid bodily by a random
+offset, 500 draws. A Poisson z would have said 3.6 and 3.0, treating dependent pair counts
+as independent; a cluster bootstrap would have said 93 against an observed 11, all of it
+the resampled duplicates landing on their own pixel.
 
 About one candidate in eight is on a shared pixel for an instrumental reason. The
 triage's recurrence cut needed *three* spectra within 3 Å, so pairs came through: 114 of

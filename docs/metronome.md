@@ -6,6 +6,62 @@ never been built.
 
 ---
 
+## 0. What has actually been measured
+
+**Run 35652897914, 2026-09-21** (the channel's first run that scanned
+anything; the 2026-09-06 run scanned zero stars and is not a result).
+
+| | |
+|---|---|
+| Catalogued flare times read | **1,523,888** |
+| Stars in the catalogues | 69,928; with N ≥ 8 events: 27,392 |
+| Stars scanned (after declustering and cross-star removal) | **3,131** |
+| Events removed as cross-star spacecraft epochs | 7,016 |
+| Catalogues reached | Yang+2019 162,262 / Okamoto+2021 2,344 / Shibayama+2013 1,547 / Günther+2020 8,695 / Tu+2022 15,638.  Pietras+2022 `QUERY_RETURNED_ZERO_ROWS` under its bibcode and under an author keyword |
+| Significant at the watch FDR / at α = 0.05 | 225 / 141 |
+| Tiers as first reported | 53 `watch`, 14 `interest`, 1 `candidate` |
+
+Then the contamination work, which is where the numbers move.
+
+**The long-period tail was window structure.**  154 of the 2,548 Kepler stars
+put their best period in 355–389 d and 73 of the 583 TESS stars in 234–257 d
+— unrelated stars agreeing on a period to better than 1%, the TESS group at
+period/span = 0.32 ± 0.02 against the span/3 grid edge and the Kepler group
+at the 372.5 d spacecraft year.  Every one had had 1–5 chances to repeat.
+`population_period` and `few_cycles` (§5) remove **877 of the 3,131** scanned
+stars, and **20 of the 68 survivors** — all `watch`, all at 195–381 d with
+1–5 cycles or in the 0.21–0.23 d Kepler grid-floor pile-up.  The 14 `interest`
+stars and the `candidate` are untouched by both, which is the intended
+asymmetry.
+
+**The light curve then contradicts most of what is left.**  40 shortlist
+stars were fetched from MAST (run 35652897914's `redetect` job):
+
+* `kepler:5879574`, the only `candidate`: the independent detector found
+  **74** flares of its own against 21 catalogued, at P = 0.4232819 d versus
+  the catalogue's 0.4232741 d — agreement to 2 × 10⁻⁵, p ~ 10⁻⁵⁴, strict
+  quality, `confirms_catalogue_clock`.  **The clock is in the photometry, not
+  only in the catalogue.**  That run predates the photometric veto, so
+  whether 0.42327 d is the star's *own* dominant photometric period — it is
+  squarely in the contact-binary / fast-rotator range, and the Kepler
+  survivors pile up across 0.21–0.83 d — has not yet been asked.  It is the
+  single open question on this star.
+* the 14 `interest` stars are **all** `tess_tu2022`, and 13 of them recover
+  **0.000** of their catalogued flares while the detector finds 8–51 flares
+  of its own on the same light curves.  The median recovery over all 40 stars
+  is 0.064.  That is not yet a rejection — a detector missing 94% of a
+  catalogue cannot reject anything — which is exactly why §4.7b's
+  threshold-free epoch stack exists.
+
+**Not yet answered, and named as such:** 13 of the 14 `interest` stars carry
+`variability_catalogue_unreached` (the 2026-09-21 run reached 45.3% of its
+shortlist with the KIC/TIC round trip, so the periodic-variable veto could
+not be applied to them at all), and none of the 3,131 had the pool null,
+the measured time lattice or the photometric veto — all of which postdate
+that run.  `interest` means *the vet is incomplete*, not *it passed*.
+
+---
+
 ## 1. The claim
 
 Is there any star whose catalogued brief optical brightenings — the "flares"
@@ -356,6 +412,59 @@ clock the catalogue did not show is reported separately
 until vetted.  A dead MAST is `NO_DATA_REACHED`, an empty one
 `NO_LIGHTCURVES_FOUND`; the stage checkpoints after every star.
 
+### 4.7b The catalogue-epoch stack — the threshold-free question
+
+Re-detection asks a harder question than the shortlist needs, and the
+2026-09-21 run showed it is not sharp enough on its own.  Over 40 stars
+fetched from MAST the median `catalogue_recovery_frac` was **0.064**, and
+13 of the 14 `interest` stars (all `tess_tu2022`) recovered **0.000** of
+their catalogued flares while the detector found 8–51 flares of its own on
+those same light curves.  17 of the 40 never got past `TOO_FEW_FLARES`.  A
+detector that misses 94% of a catalogue cannot be the reason a star is
+rejected: a non-confirmation from it is a statement about its threshold.
+
+So `catalogue_epoch_response` asks the simpler question, with no threshold
+anywhere in it: **is there flux at the catalogue's own epochs?**  It reads
+the detrended residual in units of the run's own robust σ at the times the
+catalogue put its flares, and compares that to the same statistic at
+`epoch_n_control` random times inside the same observing windows, with a
+one-sided p bootstrapped from the control stack.  If the catalogued epochs
+carry no more flux than random epochs, then whatever pattern they form is a
+pattern in the *catalogue*, not in the star — and no amount of phase
+coherence changes that.  It runs **before** the `n_min` gate, because the
+stars whose light curve yields too few flares to re-detect are exactly the
+ones with no other answer available.
+
+The same stack is repeated at a list of time offsets — including
+±2 400 000.5 and ±2 457 000, applied to *every* catalogued time rather than
+only those already inside a window.  A catalogue in the wrong time system
+then announces itself as a stack peak at a named shift
+(`cat_best_offset_days`) instead of looking like an empty catalogue.
+
+### 4.7c Reconciliation — the light curve has the last word
+
+Assess runs before any light curve is fetched, so its headline was written by
+the catalogue statistics alone.  `reconcile_summary` folds the photometry
+back into `summary.json` and `candidates.json`: every candidate / interest /
+watch row gets a `redetect` block — including the honest
+`{"status": "not_attempted"}` — and a candidate or interest star is demoted
+to `none` on either of two named vetoes, most-mundane-first:
+
+| | |
+|---|---|
+| `catalogue_epochs_absent` | the epochs are not brightenings in the photometry |
+| `photometric_oscillation` | the re-detected period *is* the dominant photometric period |
+
+Counts, the funnel and the verdict string are recomputed from the demoted
+tiers.  **Demotion only ever removes a claim**: a light curve confirming a
+clock is recorded (`confirms_catalogue_clock`) and left to the vet, because
+agreeing with the catalogue is not the same as having passed the gauntlet.
+
+`stage=redetect` with `reduce_only_run_id` runs this stage **alone** over a
+prior run's acquire + assess artifacts — one runner, MAST only, no archive
+and no screen matrix — so the decisive test can be re-run without waiting
+behind a re-acquisition.
+
 ---
 
 ## 5. Contamination ledger — every rejection is a named counter
@@ -373,6 +482,10 @@ star), `flags_raised` (every flag) and `tiers`.
 | `rotation_alias` | Rotational modulation of flare visibility — the dominant natural quasi-periodicity | P within 3% of P_rot, P_rot/2, /3, /4, 2P_rot, 3P_rot, from McQuillan/Santos/Reinhold or the flare catalogue's own P_rot |
 | `periodic_variable` | A pulsator's or eclipsing binary's cycles chopped into "flares" by the flare finder (RR Lyrae, δ Sct, EBs) | VSX / Gaia DR3 vari / ZTF cone at 3″; P within 3% of the catalogued period or its ½, ⅓, 2×, 3× |
 | `pool_null_explains` | The catalogue's own sampling — its time lattice, its sector duty cycle, its preferred epochs — reproduces the coherence, with nothing modelled | `p_pool ≥ 0.05` against 200 draws from the other stars' event times inside this star's windows |
+| `population_period` | **Unrelated stars of the same mission share this period.** A clock belongs to one star; a period many independent stars agree on to 1% is a property of the mission's sampling. Measured from the run's own scanned population, so it needs no list of instrumental periods and catches the ones nobody wrote down | ≥ 4 other scanned stars within 0.005 dex, Poisson-rarer than 10⁻³ against the local background density over ±0.25 dex. Not applied to a mission with < 50 scanned stars |
+| `few_cycles` | The period repeated too few times inside the observing windows for "recurs" to mean anything — the long-period tail where P approaches the span/3 grid edge and three sector groups phase up | `cycles_span < 10`, where `cycles_span` counts the ticks whose ±0.05-cycle phase window had *any* observing coverage |
+| `catalogue_epochs_absent` *(light curve)* | **The catalogued epochs are not brightenings in the star's own photometry.** Whatever pattern they form is a pattern in the catalogue, not in the star | Detrended residual in run-σ at the catalogued times vs. the same at random times inside the same windows; bootstrap p > 0.01 or median < 2σ over ≥ 8 epochs |
+| `photometric_oscillation` *(light curve)* | The re-detected period **is** the star's dominant photometric period: a running median over 0.5 d cannot flatten an oscillation of comparable period with a narrow maximum, and the surviving maxima are detected as a flare train | Lomb–Scargle peak of the flux itself within 2% of P or its ½, 2×, ⅓, 3× |
 | `bursty_random` | Clustered-but-random flaring whose coherence the waiting-time shuffle reproduces | `p_shuffle ≥ 0.05` **and** neither `gap_integer_frac` nor `gap_integer_frac_core` ≥ 0.6 |
 | `jitter_too_large` | Not a clock: fails even the loose thresholds on both routes | (Q < 0.6 or jitter > 0.12) **and** (`f_in_window` < 0.4 or `jitter_core` > 0.12) |
 | `energy_incoherent` *(report)* | Energy depends on clock phase — visibility, not a beacon | Spearman p < 0.01 |
@@ -411,6 +524,12 @@ reports whether it is.
 | 60 sparse events over two TESS sectors 40 d apart | density model alone: 2 windows (no invented in-sector gaps); with the sector column: 40.5 d observed, the inter-sector stretch excluded |
 | Injected flares (linear rise, 0.05 d decay, 12σ peak) in four synthetic Kepler quarters with monthly downlinks; 61 on a P = 3.137 d clock + 25 random | detector recovers ≥ 90% within a cadence, ≤ 10% spurious; light-curve windows split at the downlinks; the clock is recovered to < 0.2% in P and `confirms_catalogue_clock` on the core route; 60 random flares → no clock |
 | Re-detection with MAST dead / empty / one star served | `NO_DATA_REACHED` / `NO_LIGHTCURVES_FOUND` / `REDETECT_CONFIRMS_NONE` with per-star status; `redetect` is never part of `--stage all` |
+| 12 stars piled on one period inside a 200-star background | all 12 `population_period`; ≤ 4 of the 200 swept up; a lone star at its own period untouched; a five-star population is not tested at all |
+| `few_cycles` at the boundary | 3 cycles → vetoed, exactly 10 → `candidate`; on a recovered injected clock `cycles_hit ≤ cycles_span` and occupancy is a fraction |
+| 60 injected flares stacked at the catalogued epochs | epoch σ > 5× the control's, bootstrap p ≤ 0.01, > 80% of epochs above 3σ against a far lower control fraction |
+| A perfectly clocked epoch list with **no** flares injected | epoch and control medians within 0.6σ, p > 0.01 → `catalogue_epochs_absent` |
+| Catalogued epochs shifted by +2400000.5 (wrong time system) | none inside any window; the offset scan recovers −2400000.5 with a stack above 5σ, so a time system is named rather than read as an empty catalogue |
+| Reconciliation | a candidate whose clock is its photometric period, and an interest star whose epochs are absent, are both demoted with the named `first_veto`; the summary counts, funnel and verdict follow; a confirmed star is *not* promoted; an unreached star reads `not_attempted`; a missing summary is `NO_SUMMARY` |
 
 ---
 
@@ -426,9 +545,27 @@ reports whether it is.
   floor `min_period_days: 0.2` binds for both missions — a deliberate choice
   that keeps the TESS grid the same size as Kepler's; lowering it for TESS is
   a one-line config change.  Shorter periods are not scanned.
-* **Span.**  Periods longer than a third of the star's event span are not
-  scanned (fewer than three cycles is a trend).  Kepler: ≲ 500 d; a single
-  TESS sector: ≲ 9 d.
+* **Span — searched.**  Periods longer than a third of the star's event span
+  are not scanned (fewer than three cycles is a trend).  Kepler: ≲ 500 d; a
+  single TESS sector: ≲ 9 d.
+* **Span — *believed*.**  Searching to span/3 and believing to span/3 are
+  different things, and the 2026-09-21 run showed the difference.  154 of
+  2,548 Kepler stars and 73 of 583 TESS stars put their best period in the
+  long tail (355–389 d and 234–257 d respectively), unrelated stars agreeing
+  on a period to better than 1%; every one of them had had 1–5 chances to
+  repeat.  `few_cycles` therefore requires ten ticks inside the windows, and
+  the real long-period reach is **span / 10**, reported per mission as
+  `coverage.max_period_credible_days`.  For the median Kepler star that is
+  ≈ 145 d and for the median TESS star ≈ 76 d.  A genuine beacon slower than
+  that is outside what this data can establish, and the channel says so
+  rather than reporting it.
+* **The catalogue must be right about its own epochs.**  Everything upstream
+  of `redetect` is a statement about somebody else's list of times.  The
+  light-curve stage asks the photometry directly — is there flux at those
+  epochs, and is the period the star's own photometric period — and demotes
+  on either.  A star that was never reached by that stage keeps
+  `redetect: {"status": "not_attempted"}` and is not credited with passing
+  it.
 * **N ≥ 8** after declustering: stars with fewer catalogued flares are not
   tested, and the TESS catalogues are dominated by such stars.
 * **Duty cycle.**  A clock is detectable at any duty cycle high enough to leave

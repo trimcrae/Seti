@@ -10,6 +10,73 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### METRONOME has its first real measurement — and its own output names the artefact, 2026-09-22
+
+The channel's brief said it had scanned nothing. That was true of the
+2026-09-06 run; **run 35652897914 (2026-09-21) read 1,523,888 catalogued
+flare times and scanned 3,131 stars**, from Yang+2019 (162,262 flares),
+Okamoto+2021, Shibayama+2013, Gunther+2020 and Tu+2022. Pietras+2022 returns
+`QUERY_RETURNED_ZERO_ROWS` under its bibcode and under an author keyword and
+is recorded as absent, not assumed. Davenport 2016 has no per-flare table and
+is a rotation source. Funnel: 3,131 scanned -> 225 at the watch FDR -> 141 at
+alpha 0.05 -> 53 watch, 14 interest, 1 candidate.
+
+**The channel's own output identified the dominant confounder.** 154 of 2,548
+Kepler stars put their best period in 355-389 d and 73 of 583 TESS stars in
+234-257 d. Unrelated stars cannot share a clock: the TESS group sits at
+period/span = 0.32 +- 0.02 against the span/3 search edge, the Kepler group at
+the 372.5 d spacecraft year, and every one of them had had 1-5 chances to
+repeat. Two new hard vetoes, both counted:
+
+* `population_period` -- per mission, >= 4 other scanned stars within 0.005 dex
+  and Poisson-rarer than 1e-3 against the local background density. It needs no
+  list of instrumental periods, which is the point.
+* `few_cycles` -- the period must have ticked >= 10 times inside the observing
+  windows. This bounds the believable long-period reach at span/10 (~145 d for
+  the median Kepler star, ~76 d for TESS), stated in `coverage`.
+
+Replayed offline on that run: **877 of 3,131 scanned stars and 20 of the 68
+survivors die**, every one of the 20 a watch star at 195-381 d with 1-5 cycles
+or in the 0.21-0.23 d Kepler grid-floor pile-up. The 14 interest stars and the
+candidate are untouched. Also fixed: `cycles_span` counted tick *instants*
+inside windows, which let occupancy read 2.0; it now counts ticks whose phase
+window had any coverage, so occupancy is a fraction.
+
+**What is hot.** `kepler:5879574`, P = 0.4232741 d, 21 catalogued flares over
+1,231 d. The `redetect` job fetched its Kepler light curve and an independent
+detector found **74 flares of its own** forming a clock at P = 0.4232819 d --
+agreement to 2e-5 -- at p ~ 1e-54 with strict quality. The clock is in the
+photometry, not only in the catalogue. **The open question is whether
+0.42327 d is the star's own dominant photometric period**: that is the
+contact-binary / fast-rotator range, the Kepler survivors pile up across
+0.21-0.83 d, and the 2026-09-21 run predates the photometric veto. It has no
+catalogued P_rot, so `rotation_alias` could not be applied either.
+
+**What is not yet a rejection.** The 14 interest stars are all `tess_tu2022`,
+and 13 of them recover **0.000** of their catalogued flares in their own light
+curves while the detector finds 8-51 flares of its own there. Median recovery
+over all 40 fetched stars is 0.064. A detector that misses 94% of a catalogue
+cannot reject anything, so a threshold-free test was added:
+`catalogue_epoch_response` stacks the detrended residual, in run sigmas, at the
+catalogue's own epochs against random epochs in the same windows, and scans
+time offsets (including +-2400000.5) so a wrong time system names itself.
+`reconcile_summary` folds the light curve back into summary.json and
+candidates.json and demotes on `catalogue_epochs_absent` or
+`photometric_oscillation`; demotion only ever removes a claim.
+
+**In flight** (runner queue was ~13 deep, 2026-09-22 11:20 EDT): run
+35746944111 `stage=redetect` over run 35652897914's artifacts -- one runner,
+MAST only -- is the decisive one; 35745637197 re-assesses the same shards with
+the new vetoes; 35741300225 is a full re-run. All three check out the branch
+head when they start.
+
+**Next decisive action.** Read 35746944111: `cat_epoch_sigma_median` vs
+`cat_control_sigma_median` and `phot_period` for kepler:5879574 and the 14
+Tu+2022 stars. If 0.42327 d is the star's photometric period it is a contact
+binary and dies honestly; if it is not, and the epoch stack is significant, it
+is the first object this channel has that the photometry, the catalogue and
+the timing statistic all agree on.
+
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 
 S52/S53 went from a package that had never been run to a channel with a

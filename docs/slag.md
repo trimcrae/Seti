@@ -192,23 +192,60 @@ none spurious. (Run 35737518217.)
 column for the metals. An upper limit is a row whose error column holds −1.
 Read as a detection with an assumed 0.2 dex error, such a value is a fake
 depletion — on 126 of the 221 panels with ≥ 5 elements. A negative error now
-routes the value to the panel's one-sided limit list. The convention is not
-assumed: PEWDD publishes its own `total_detections`, and "error < 0 means not
-a detection" reproduces it on all 3475 rows. That agreement is recomputed
-every run (`summary.json["limit_bookkeeping"]`).
+routes the value to the panel's one-sided limit list.
 
-**The PyllutedWD grids were fetched and silently ignored.** All twelve
-`data/timescales_*.csv` files downloaded with status OK, and
-`acquire.json["timescales"]["parsed"]` was `{}` — the parser recognised none
-of them and said nothing about why, so the run looked healthy while quietly
-using a different timescale source. A file that does not parse now records
-`parse_diagnosis` (its row keys, row widths, the temperature grid it found and
-which of the three conditions failed) and keeps its raw text under
-`results/slag/data/timescales_raw_*`, so the real layout is readable from the
-committed artifacts without refetching. This costs the channel nothing
-scientifically — the source actually used, PEWDD's own per-star `SinTime*`
-columns, is measured on these very stars and is the better one (below) — but
-an unexplained silent fallback is not acceptable in the record.
+The convention is not assumed, but *where* it can be checked is not where the
+channel first looked. PEWDD publishes `total_detections` and
+`total_upper_limits` per row — **in the database's own CSV only**. The VizieR
+service serves 200 columns and neither of those two, so the check ran against
+nothing and reported zeros that read like agreement. It now runs against
+whichever fetched copy carries the counts
+(`summary.json["limit_convention_check"]`), and on the served data it says:
+
+> **3,465 of 3,475 rows** reproduce PEWDD's own upper-limit count exactly from
+> "error < 0 means an upper limit", over this channel's 26 elements.
+
+The *upper-limit* count is the strict test. The detection count cannot agree
+and is reported only for completeness: PEWDD counts detections over every
+element it carries, including H, He and elements outside this channel's list,
+so a row with a detection of one of those is undercounted here by
+construction (2,381 of 3,475 agree exactly, the rest low by 1–4).
+
+**The PyllutedWD grids were fetched and silently ignored — and they key their
+rows by atomic number.** All twelve `data/timescales_*.csv` files downloaded
+with status OK, and `acquire.json["timescales"]["parsed"]` was `{}`: the
+parser recognised none of them and said nothing about why, so the run looked
+healthy while quietly using a different timescale source. A file that does not
+parse now records `parse_diagnosis` and keeps its raw text under
+`results/slag/data/timescales_raw_*` — and that diagnosis named the cause at
+once. The grids are written
+
+```
+T:,5000,5250,...          the temperature grid
+qcvz:,-6.257,...          the convection-zone mass fraction
+2,5.63,5.426,...          then ONE ROW PER ATOMIC NUMBER, 2 (He) through 30 (Zn)
+```
+
+not one row per element symbol. With `Z_SYMBOL` the parser reads all 29
+elements from each of the ten grids (H and He atmospheres, log g 7.5/8.0/8.5,
+with and without convective overshoot).
+
+**The two sources of the sinking lever agree.** That gives the channel an
+independent check it has never had: the fetched grids against the per-star
+`SinTime*` columns PEWDD publishes *for these very stars*
+(`summary.json["timescale_cross_check"]`). Over the 43 served rows that carry
+Teff, log g and a Ca timescale:
+
+| grid family | comparisons | median offset | rms | IQR |
+|---|---|---|---|---|
+| with overshoot | 406 | **+0.014 dex** | 0.104 | 0.087 |
+| without overshoot | 53 | **−0.029 dex** | 0.131 | 0.054 |
+
+Neither family is preferred by the data, and both reproduce the catalogue's
+own numbers to well inside the 0.15 dex systematic this channel already
+carries. The source in use stays PEWDD's own columns and the library built
+from them — now because that was measured to be as good as the models, not
+because it happened to come first in a priority list.
 
 **The sinking timescales are in the catalogue.** PEWDD publishes τ_Z per star
 per element (`SinTimeCa`, …) for that star's own structure. Where a row has
@@ -358,7 +395,97 @@ Degradation (a failed route, an assumed error, an unresolved atmosphere, an
 embedded rather than catalogued timescale law) is a separate first-class
 field, never folded into the verdict string.
 
-## 9. Running it
+---
+
+## 9. The first measurement — run 35747793625, 2026-09-22
+
+`slag-solo.yml`, `stage=all`, one job, 49 minutes of screen on one runner;
+code at `7c519163`, recorded in `summary.json["code"]`.
+
+**Verdict `MISFIT_LIST_PRODUCED`.** The funnel:
+
+| stage | count |
+|---|---|
+| served rows | 3,547 |
+| objects (sky-reconciled, 5″) | 1,576 |
+| objects with a ≥ 5-element panel | 123 |
+| panels screened and calibrated | 168 |
+| panels `INFORMATION_LIMITED` | 3,379 |
+| `UNEXPLAINED` (p < 0.01) | **4** |
+| `WATCH` (p < 0.05) | **6** |
+| pair residuals tested | 121 |
+| pair exceedances (\|z\| > 4) | 1 |
+| refinery flags fired | 0 |
+| candidates surviving every kill | **0** |
+
+**The calibrated p is itself calibrated.** Across the 123 objects the misfit p
+is close to uniform — KS distance 0.130, 3.3 % below 0.01 against 1 % expected,
+8.1 % below 0.05 against 5 %, median 0.61. The natural family is therefore
+neither too rigid for the population (which would pile p at zero and make the
+list a statement about the model) nor too loose to reject anything.
+
+**The one pair exceedance is killed.** HS 0209+0832 (Wolff 2000) has Ti/Al at
+z = +6.5, and `REST_OF_PANEL_NOT_NATURAL` kills it: the whole panel misfits at
+χ²/dof = 36.7, so the pair is not a process-orthogonal residual on an
+otherwise natural vector. Envelope widths, now including the measured
+meteorites, are 3.3 dex for Ti/Al, 4.0 for Ca/Al, 4.0 for Mn/Cr.
+
+**The meteorite calibration does the job it was added for.** Three of the four
+`UNEXPLAINED` objects — HS 0209+0832, L119-34, WD 1622+587 — also have a small
+*meteorite* p (0.020–0.059): the natural model cannot fit real stones on those
+element sets either, so their misfit is a statement about the model's reach,
+not about the star. One object separates cleanly:
+
+| object | n | p | p(meteorite) | worst element | corrected |
+|---|---|---|---|---|---|
+| **GALEX J2339−0424** | 9 | 0.020 | **0.98** | **Be**, 3.3σ | 0.060 |
+
+The model reproduces real meteorites on this element set essentially always
+(p = 0.98) and still cannot reproduce this star. Its worst element is
+beryllium — which is what GALEX J2339−0424 is known for (Klein et al. 2021,
+Be enriched by ~2 dex). The channel recovered it without being told, and it is
+a **control landing correctly, not a discovery**.
+
+**And the per-element statistic is sharper than the envelope.** On that same
+panel the `BE_WITHOUT_LI_B` flag did *not* fire: the global Be/lithophile
+envelope, widened by the condensation lever, comfortably contains the observed
+Be. The calibrated per-element residual — which asks how unusual Be is *given
+the best fit to the rest of this panel* — puts it at p = 0.0066, the worst of
+its nine elements. The envelope test misses the known anomaly; the
+conditioned test finds it. That is the argument for §2's per-element
+calibration in one object.
+
+**Controls.** All seven were found at the right positions.
+
+| control | n | p | p(meteorite) | class |
+|---|---|---|---|---|
+| GD 362 | 16 | 0.21 | 0.76 | NATURAL |
+| GD 378 | 13 | 0.32 | 1.00 | NATURAL |
+| PG 1225−079 | 11 | 0.50 | 0.92 | NATURAL |
+| GALEX J2339−0424 | 9 | 0.020 | 0.98 | **WATCH** |
+| LHS 2534 | 7 | 0.086 | 0.31 | NATURAL |
+| WD 0106−328 | 4 | — | — | `INFORMATION_LIMITED` |
+| NLTT 19868 | 4 | — | — | `INFORMATION_LIMITED` |
+
+PG 1225−079's "no single meteorite" (Klein 2011, Xu 2013) does not survive a
+*mixture* with the condensation and sinking levers: p = 0.50. LHS 2534, which
+"defies all three hypotheses" (Kaiser 2024), sits inside this model's reach at
+p = 0.086. Both are honest negatives for Tier 1, and both were the point of
+running them.
+
+**Degradation, stated.** 77 of the 168 calibrated panels have no served error
+column and carry the 0.2 dex default, which is why
+`SDSS J153642.53+420519.2` — every one of its six errors assumed — should not
+be read as strongly as the rest of the `UNEXPLAINED` list.
+
+**What would decide the one open object.** GALEX J2339−0424 has a single
+published panel and no Li or B measurement, so the spallation alternative
+(Doyle et al. 2021) is untested rather than excluded: Be made by cosmic-ray
+spallation arrives with Li and B at order-unity ratios. A Li/B measurement is
+the decisive next observation, and until it exists this object is a WATCH with
+a named alternative, not a candidate.
+
+## 10. Running it
 
 ```
 python -m seti.slag.run --stage probe      # what VizieR and GitHub hold, and the column roles

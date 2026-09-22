@@ -1079,15 +1079,44 @@ measured elements in their best published PEWDD panel, so both are
 NLTT 19868 is not WD/PG 0843+516 (a different DA 62° away) and LHS 2534 is not
 WD 1214+032 (PEWDD serves it as `WD 1212-022`).
 
-**In flight: run 35747793625** on `claude/goap-slag`, `slag-solo.yml`,
-`stage=all`. The sharded `slag.yml` needs to win a runner slot six times in
-sequence and twice failed to get through it (35739746529's eight screen jobs
-were still queued 30 minutes after its acquire job finished; 35745205866 had
-not started a single job 22 minutes after dispatch); the solo workflow
-does the same work in one job on one slot, which is affordable because only
-168 of 3,547 panels reach the 5-element floor and carry the calibration cost.
-No `results/slag/summary.json` exists yet — the verdict line stays empty until
-that run commits one.
+**Run 35747793625 landed** (`slag-solo.yml`, `stage=all`, one job, 49 min of
+screen; code `7c519163`). **Verdict `MISFIT_LIST_PRODUCED`** — the calibrated
+misfit list exists for the first time: 3,547 rows → 1,576 objects → 123 with a
+≥ 5-element panel → 168 panels calibrated; **4 UNEXPLAINED (p < 0.01), 6
+WATCH**; 121 pair tests, **1 exceedance, killed** (HS 0209+0832 Ti/Al at
+z = +6.5, `REST_OF_PANEL_NOT_NATURAL`, χ²/dof = 36.7); 0 flags fired; **0
+candidates survive**. The p distribution is close to uniform (KS 0.130, 3.3 %
+below 0.01 against 1 % expected), so the list is a statement about stars, not
+about a model that fits nobody.
+
+The meteorite calibration separates the list. Three of the four UNEXPLAINED
+objects have a small *meteorite* p too (0.020–0.059) — the model cannot fit
+real stones on those element sets either. One does not: **GALEX J2339−0424**,
+p = 0.020 with p(meteorite) = **0.98**, worst element **Be at 3.3σ**. The model
+handles real meteorites on that element set essentially always and still
+cannot handle this star — and beryllium is exactly what that object is known
+for (Klein 2021). It is a **control landing correctly, not a discovery**, and
+its Li/B are unmeasured, so the spallation alternative (Doyle 2021) is
+untested rather than excluded.
+
+Worth recording: on that same panel the `BE_WITHOUT_LI_B` envelope flag did
+not fire — the global Be envelope contains the value — while the calibrated
+per-element residual puts Be at p = 0.0066, the worst of nine. The envelope
+test misses the known anomaly; the conditioned test finds it.
+
+Controls, all found at the right positions: GD 362 p = 0.21, GD 378 p = 0.32,
+PG 1225−079 p = 0.50 (its "no single meteorite" does not survive a mixture
+with the condensation and sinking levers), LHS 2534 p = 0.086,
+GALEX J2339−0424 p = 0.020, and WD 0106−328 and NLTT 19868
+`INFORMATION_LIMITED` at four measured elements each.
+
+**Why it ran in one job.** The sharded `slag.yml` has to win a runner slot six
+times in sequence and twice failed to get through it: 35739746529's eight
+screen jobs were still queued 30 minutes after its acquire job finished, and
+35745205866 had not started a single job 22 minutes after dispatch.
+`slag-solo.yml` does the same work in one job on one slot — affordable because
+only 168 of 3,547 panels reach the 5-element floor and carry the calibration
+cost. It waited 66 minutes in the queue and then took 49 minutes.
 
 Because that envelope finding blunts Tier 2, the same draws now also give a
 **calibrated per-element residual**: for each element, the fraction of natural

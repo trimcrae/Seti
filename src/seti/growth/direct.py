@@ -397,10 +397,25 @@ def _write(path: Path, obj) -> None:
     os.replace(tmp, path)
 
 
+# Catalogue identifiers that MUST round-trip exactly.  ``float_format="%.8g"``
+# is right for a depth in ppm and catastrophic for a TIC id: TIC 122785305 is
+# nine digits, so it was written "1.227853e+08" --- TIC 122785300, a star that
+# does not exist --- and every product query on it came back empty.  That one
+# format string is what held the ps-resolved route (2,697 of 2,993 TIC ids) to
+# near-zero light-curve coverage.  These columns are written as integers.
+ID_COLUMNS = ("tic_id", "kepid", "tic", "ticid", "TIC")
+
+
 def _write_csv(path: Path, df: pd.DataFrame) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
+    for col in ID_COLUMNS:
+        if col in df.columns:
+            v = pd.to_numeric(df[col], errors="coerce")
+            if v.notna().any():
+                df = df.copy()
+                df[col] = v.round().astype("Int64")
     df.to_csv(tmp, index=False, float_format="%.8g")
     os.replace(tmp, path)
 
@@ -1843,6 +1858,7 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     members_frames: list[pd.DataFrame] = [prev_members] if len(prev_members) else []
     sector_frames: list[pd.DataFrame] = []
     n_new, n_skipped, n_budget, n_measure_failed = 0, 0, 0, 0
+    n_tic_rechecked, n_tic_repaired = 0, 0
     tic_fallback_by_route: dict = {}
     fetch_status_counts: dict = {}
 
@@ -1872,21 +1888,27 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         started = _time.monotonic()
         tic = _f(rows[0].get("tic_id"))
         route = _s(rows[0].get("tic_route"))
-        if not (np.isfinite(tic) and tic > 0) and fp.tic_fallback:
+
+        def _resolve_tic(why: str, _kepid=kepid, _row=rows[0]):
+            """The position+magnitude route to this star's TIC.  ``(tic, route)``."""
             fn = tic_fn or astroquery_tic_fn
             try:
-                tic, route = fn(kepid, _f(rows[0].get("ra")), _f(rows[0].get("dec")),
-                                _f(rows[0].get("koi_kepmag")),
-                                radius_arcsec=float(fp.tic_radius_arcsec),
-                                mag_tolerance=float(fp.tic_mag_tolerance))
-                log.record(f"tic_fallback_{int(kepid)}", f"KIC {int(kepid)}",
-                           rows=1 if np.isfinite(_f(tic)) else 0, extra={"route": route})
+                t, r = fn(_kepid, _f(_row.get("ra")), _f(_row.get("dec")),
+                          _f(_row.get("koi_kepmag")),
+                          radius_arcsec=float(fp.tic_radius_arcsec),
+                          mag_tolerance=float(fp.tic_mag_tolerance))
+                log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}",
+                           rows=1 if np.isfinite(_f(t)) else 0, extra={"route": r})
             except Exception as exc:                      # noqa: BLE001
-                log.record(f"tic_fallback_{int(kepid)}", f"KIC {int(kepid)}", error=repr(exc)[:300])
-                tic, route = float("nan"), ""
-            tic = _f(tic)
-            if np.isfinite(tic):
-                tic_fallback_by_route[route] = tic_fallback_by_route.get(route, 0) + 1
+                log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}", error=repr(exc)[:300])
+                return float("nan"), ""
+            t = _f(t)
+            if np.isfinite(t):
+                tic_fallback_by_route[r] = tic_fallback_by_route.get(r, 0) + 1
+            return t, r
+
+        if not (np.isfinite(tic) and tic > 0) and fp.tic_fallback:
+            tic, route = _resolve_tic("fallback")
         products, status, lc_route = [], REASON_TIC_UNRESOLVED, ""
         if np.isfinite(tic) and tic > 0:
             products, status, lc_route = fetch_products(
@@ -1894,6 +1916,24 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
                 key=str(rows[0].get("kepoi_name")))
             if status == STATUS_FAILED and deadline.expired():
                 status = REASON_BUDGET
+            # A catalogue-route TIC that serves NO products is as likely to be
+            # the wrong star as a star TESS never observed: the `ps` tic_id can
+            # be stale, and a TIC id that round-tripped through a %g float lost
+            # its ninth digit.  Before recording a non-detection, re-resolve the
+            # TIC from the star's own position and magnitude and try that.  A
+            # genuinely unobserved star simply comes back empty twice.
+            if (status == REASON_ZERO_ROWS and fp.tic_fallback and not deadline.expired()
+                    and route not in TIC_FALLBACK_ROUTES):
+                t2, r2 = _resolve_tic("recheck")
+                if np.isfinite(t2) and t2 > 0 and int(t2) != int(tic):
+                    p2, s2, lr2 = fetch_products(
+                        int(t2), products_fn=products_fn, params=fp, log=log, deadline=deadline,
+                        key=str(rows[0].get("kepoi_name")) + "_recheck")
+                    n_tic_rechecked += 1
+                    if s2 == STATUS_OK and p2:
+                        n_tic_repaired += 1
+                        tic, route = t2, (r2 + "_after_" + (route or "none"))
+                        products, status, lc_route = p2, s2, lr2
         fetch_status_counts[status] = fetch_status_counts.get(status, 0) + 1
         for r in rows:
             entry = dict(r)
@@ -1959,6 +1999,7 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
            "n_stars_in_shard": int(len(groups)), "n_measured_this_run": n_new,
            "n_skipped_already_done": n_skipped, "n_not_reached_budget": n_budget,
            "n_measure_failed": n_measure_failed,
+           "n_tic_rechecked": n_tic_rechecked, "n_tic_repaired": n_tic_repaired,
            "n_rows": int(len(df)), "budget_s": fp.shard_budget_s,
            "elapsed_s": round(deadline.elapsed(), 1), "budget_exhausted": bool(deadline.expired()),
            "fetch_status_counts": fetch_status_counts,

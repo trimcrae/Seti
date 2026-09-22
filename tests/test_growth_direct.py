@@ -397,6 +397,71 @@ def test_an_unresolvable_tic_is_not_measured_with_its_own_reason(tmp_path):
     assert set(df["class"]) == {D.CLASS_NOT_MEASURED}
 
 
+def test_a_tic_id_round_trips_through_csv_exactly(tmp_path):
+    """Nine digits survive the write.  ``%.8g`` turned TIC 122785305 into
+    1.227853e+08 --- TIC 122785300, a star that does not exist --- and every
+    product query on it came back empty."""
+    df = pd.DataFrame({"kepoi_name": ["K00889.01", "K00001.01"],
+                       "kepid": [757450, 10666592],
+                       "tic_id": [122785305.0, 351053728.0],
+                       "koi_depth": [16053.4, 14000.123456789]})
+    p = tmp_path / "t.csv"
+    D._write_csv(p, df)
+    text = p.read_text()
+    assert "122785305" in text and "351053728" in text
+    assert "e+08" not in text
+    back = D._read_csv(p)
+    assert list(back["tic_id"]) == [122785305, 351053728]
+    assert list(back["kepid"]) == [757450, 10666592]
+    # a missing id stays missing, and the float columns keep their short format
+    D._write_csv(p, df.assign(tic_id=[122785305.0, float("nan")]))
+    assert D._read_csv(p)["tic_id"].isna().iloc[1]
+
+
+def test_a_catalogue_tic_that_serves_nothing_is_rechecked_against_the_sky(tmp_path):
+    """A stale or truncated catalogue TIC is re-resolved before it is called a
+    non-detection; a star TESS really never observed comes back empty twice."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    good = float(pd.to_numeric(targets["tic_id"], errors="coerce").dropna().iloc[0])
+    wrong = float(int(good) - int(good) % 10)          # what %.8g would have left
+    targets = targets.copy()
+    targets["tic_id"] = targets["tic_id"].where(targets["tic_id"].isna(), wrong)
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    calls: list[int] = []
+
+    def pf(tic, **_kw):
+        calls.append(int(tic))
+        if int(tic) == int(good):
+            return _products(ref, ref, n_transits=10, sectors=(41,))
+        return []                                       # the wrong star serves nothing
+
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf,
+                           tic_fn=lambda *a, **k: (good, "tic_kic_crossid"))
+    assert int(wrong) in calls and int(good) in calls   # tried the catalogue, then the sky
+    assert rep["n_tic_rechecked"] >= 1 and rep["n_tic_repaired"] >= 1
+    df = D._read_csv(D._shard_paths(out, 0)["csv"])
+    ok = df[df["lc_status"] == "OK"]
+    assert len(ok) and ok["tic_route"].str.contains("_after_").any()
+    # the repaired rows carry the TIC that actually served the light curve
+    assert (pd.to_numeric(ok.loc[ok["tic_route"].str.contains("_after_"), "tic_id"])
+            == int(good)).all()
+
+    # and the honest negative: nothing anywhere stays QUERY_RETURNED_ZERO_ROWS
+    out2 = tmp_path / "direct2"
+    out2.mkdir()
+    D._write_csv(out2 / "targets.csv", targets)
+    rep2 = D.direct_measure(_conf(), out2, shard=0, n_shards=1,
+                            products_fn=lambda tic, **_kw: [],
+                            tic_fn=lambda *a, **k: (good, "tic_kic_crossid"))
+    assert rep2["n_tic_repaired"] == 0
+    df2 = D._read_csv(D._shard_paths(out2, 0)["csv"])
+    assert (df2["lc_status"] == D.REASON_ZERO_ROWS).any()
+    assert set(df2["class"]) == {D.CLASS_NOT_MEASURED}
+
+
 def test_a_hopeless_sensitivity_does_not_overflow_the_detectable_change():
     """The sensitivity of a star TESS cannot reach is +inf, never an exception.
 

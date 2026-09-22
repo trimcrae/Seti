@@ -488,6 +488,70 @@ def _author_rank(author: str, authors) -> int:
     return len(authors)
 
 
+def _float_array(x) -> np.ndarray:
+    """A plain float array from a Quantity / Column / masked column (masked -> NaN)."""
+    try:
+        if hasattr(x, "filled"):
+            x = x.filled(np.nan)
+    except Exception:                                     # noqa: BLE001
+        pass
+    x = getattr(x, "value", x)
+    try:
+        if hasattr(x, "filled"):
+            x = x.filled(np.nan)
+    except Exception:                                     # noqa: BLE001
+        pass
+    return np.asarray(x, dtype=float)
+
+
+def lightcurve_to_product(lc, *, fallback_sector=None, fallback_author: str = "") -> dict | None:
+    """One ``lightkurve`` LightCurve -> a product record with EVERY flux column it carries.
+
+    The time axis is ``Time.jd - 2457000`` (BTJD) rather than the object's own
+    format string; ``SECTOR`` / ``AUTHOR`` / ``TIMEDEL`` come from the meta,
+    with the search-table values as the fallback.  A product carrying none of
+    the family columns returns ``None``.
+    """
+    try:
+        t = _float_array(lc.time.jd) - BTJD_OFFSET
+    except Exception:                                     # noqa: BLE001
+        t = _float_array(lc.time.value)
+    cols = {str(c).lower(): str(c) for c in getattr(lc, "columns", [])}
+    fluxes = {}
+    for col in ALL_FLUX_COLUMNS:
+        c = col.lower()
+        if c not in cols:
+            continue
+        try:
+            f = _float_array(lc[cols[c]])
+        except Exception:                                 # noqa: BLE001
+            continue
+        if f.shape != t.shape or not np.any(np.isfinite(f)):
+            continue
+        fe = np.full(f.shape, np.nan)
+        if c + "_err" in cols:
+            try:
+                fe = _float_array(lc[cols[c + "_err"]])
+            except Exception:                             # noqa: BLE001
+                pass
+        fluxes[col] = (f, fe)
+    if not fluxes:
+        return None
+    meta = dict(getattr(lc, "meta", {}) or {})
+    exptime = meta.get("TIMEDEL")
+    exptime_s = float(exptime) * 86400.0 if exptime else float("nan")
+    if not np.isfinite(exptime_s) and t.size > 2:
+        exptime_s = float(np.median(np.diff(np.sort(t)))) * 86400.0
+    sector = meta.get("SECTOR")
+    try:
+        sector = int(sector) if sector is not None else (
+            int(fallback_sector) if fallback_sector is not None else None)
+    except (TypeError, ValueError):
+        sector = None
+    return {"sector": sector, "author": str(meta.get("AUTHOR") or fallback_author or "unknown"),
+            "exptime_s": exptime_s, "time": t, "fluxes": fluxes, "n_points": int(t.size)}
+
+
 def lightkurve_products_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_products: int = 45,
                            min_exptime_s: float = 60.0, download_dir: str | None = None,
                            quality_bitmask: str = "default", **_kw) -> list[dict]:
@@ -527,38 +591,9 @@ def lightkurve_products_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_products: int
             continue
         if lc is None:
             continue
-        try:
-            t = np.asarray(lc.time.jd, dtype=float) - BTJD_OFFSET
-        except Exception:                                 # noqa: BLE001
-            t = np.asarray(lc.time.value, dtype=float)
-        cols = {str(c).lower(): str(c) for c in getattr(lc, "columns", [])}
-        fluxes = {}
-        for col in ALL_FLUX_COLUMNS:
-            c = col.lower()
-            if c not in cols:
-                continue
-            try:
-                f = np.asarray(getattr(lc[cols[c]], "value", lc[cols[c]]), dtype=float)
-            except Exception:                             # noqa: BLE001
-                continue
-            fe = np.full(f.shape, np.nan)
-            if c + "_err" in cols:
-                try:
-                    fe = np.asarray(getattr(lc[cols[c + "_err"]], "value",
-                                            lc[cols[c + "_err"]]), dtype=float)
-                except Exception:                         # noqa: BLE001
-                    pass
-            fluxes[col] = (f, fe)
-        if not fluxes:
-            continue
-        meta = dict(getattr(lc, "meta", {}) or {})
-        exptime = meta.get("TIMEDEL")
-        exptime_s = float(exptime) * 86400.0 if exptime else float("nan")
-        if not np.isfinite(exptime_s) and t.size > 2:
-            exptime_s = float(np.median(np.diff(np.sort(t)))) * 86400.0
-        out.append({"sector": int(meta.get("SECTOR")) if meta.get("SECTOR") else int(sec[i]),
-                    "author": str(meta.get("AUTHOR") or auth[i]),
-                    "exptime_s": exptime_s, "time": t, "fluxes": fluxes, "n_points": int(t.size)})
+        rec = lightcurve_to_product(lc, fallback_sector=sec[i], fallback_author=auth[i])
+        if rec is not None:
+            out.append(rec)
     return out
 
 

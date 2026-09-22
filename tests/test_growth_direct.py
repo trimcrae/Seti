@@ -544,3 +544,71 @@ def test_the_repository_config_carries_the_direct_block():
     assert float(d["classify"]["n_candidate"]) == 5.0
     assert D.FetchParams.from_config(conf).max_products >= 20
     assert math.isclose(D.ClassifyParams.from_config(conf).sigma_sys_ln, 0.05)
+
+
+# ---------------------------------------------------------------------------
+# The FITS product, through BOTH readers (no network: a file written here)
+# ---------------------------------------------------------------------------
+def _fake_tess_lc_fits(path: Path, *, sector=41, n=3000, exptime_s=120.0) -> np.ndarray:
+    from astropy.io import fits
+    t = 2459400.0 + np.arange(n) * exptime_s / 86400.0        # BJD
+    sap = 1000.0 + np.zeros(n)
+    pdc = 900.0 + np.zeros(n)
+    q = np.zeros(n, dtype=np.int32)
+    q[::100] = 8                                                 # flagged cadences
+    pdc[5] = np.nan
+    cols = fits.ColDefs([
+        fits.Column(name="TIME", format="D", unit="BJD - 2457000, days", array=t - 2457000.0),
+        fits.Column(name="SAP_FLUX", format="E", array=sap),
+        fits.Column(name="SAP_FLUX_ERR", format="E", array=np.full(n, 2.0)),
+        fits.Column(name="PDCSAP_FLUX", format="E", array=pdc),
+        fits.Column(name="PDCSAP_FLUX_ERR", format="E", array=np.full(n, 1.5)),
+        fits.Column(name="QUALITY", format="J", array=q),
+    ])
+    hdu = fits.BinTableHDU.from_columns(cols, name="LIGHTCURVE")
+    hdu.header["BJDREFI"] = 2457000
+    hdu.header["BJDREFF"] = 0.0
+    hdu.header["TIMEDEL"] = exptime_s / 86400.0
+    hdu.header["TIMESYS"] = "TDB"
+    hdu.header["TIMEUNIT"] = "d"
+    pri = fits.PrimaryHDU()
+    pri.header["TELESCOP"] = "TESS"
+    pri.header["SECTOR"] = sector
+    pri.header["TICID"] = 268924036
+    pri.header["ORIGIN"] = "NASA/Ames"
+    pri.header["PROCVER"] = "spoc-test"
+    fits.HDUList([pri, hdu]).writeto(path, overwrite=True)
+    return q
+
+
+def test_a_fits_product_yields_both_families_through_both_readers(tmp_path):
+    lk = pytest.importorskip("lightkurve")
+    from lightkurve.io.tess import read_tess_lightcurve
+    p = tmp_path / "tess-fake-s0041-lc.fits"
+    q = _fake_tess_lc_fits(p)
+    n_good = int((q == 0).sum())
+    # the astroquery route's reader
+    rec = D.read_tess_lc_fits_all(p)
+    assert rec is not None and set(rec["fluxes"]) == {"SAP_FLUX", "PDCSAP_FLUX"}
+    assert rec["sector"] == 41 and rec["n_points"] == n_good
+    assert abs(rec["exptime_s"] - 120.0) < 1e-6
+    # BTJD through BJDREFI/BJDREFF; cadence 0 is flagged, so the first kept point is 120 s on
+    first = 2400.0 + 120.0 / 86400.0
+    assert abs(rec["time"][0] - first) < 1e-6
+    # the lightkurve route: quality-masked by lightkurve, every column kept
+    lc = read_tess_lightcurve(str(p), quality_bitmask="default")
+    prod = D.lightcurve_to_product(lc, fallback_sector=41, fallback_author="SPOC")
+    assert prod is not None and set(prod["fluxes"]) == {"SAP_FLUX", "PDCSAP_FLUX"}
+    assert prod["n_points"] == n_good and prod["author"] == "SPOC"
+    assert abs(prod["exptime_s"] - 120.0) < 1e-3
+    assert abs(prod["time"][0] - first) < 1e-6
+    f, fe = prod["fluxes"]["SAP_FLUX"]
+    assert np.nanmedian(f) == pytest.approx(1000.0) and np.nanmedian(fe) == pytest.approx(2.0)
+    # a NaN stays a NaN (original cadence 5 is index 4 once flagged cadence 0 is dropped)
+    assert np.isnan(prod["fluxes"]["PDCSAP_FLUX"][0][4])
+    # and the family segments pick the right column per family
+    segs = D.family_segments([prod], D.FAMILY_PDC)
+    assert len(segs) == 1 and segs[0]["flux_column"] == "PDCSAP_FLUX"
+    segs = D.family_segments([prod], D.FAMILY_SAP)
+    assert len(segs) == 1 and segs[0]["flux_column"] == "SAP_FLUX"
+    assert lk.__version__

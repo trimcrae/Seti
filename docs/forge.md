@@ -50,6 +50,30 @@ quadrature (0.1 % H/K, 0.3 % N — the FLUOR/PIONIER/JouFLU visibilities and
 the LBTI/KIN nulls are not tied to each other). The statistic is
 Δχ² = χ²_nano(restricted) − χ²_grey(swarm range).
 
+### 2.1b The polarimetric null: read, carried, and deliberately not in χ²
+
+The polarimetry table (Marshall+2016, HIPPI/AAT) is fetched on the runner
+(`acquire.fetch_polarimetry_table`), keyed to the sample, and carried per star
+as `polarimetry.limit_ppm` — in `star_table.csv` and on every candidate
+record. It is **not** a term in the likelihood ratio, and the reason is
+physical rather than convenience.
+
+Both families the statistic compares emit **thermally** at H and K: a 1500 K
+body peaks at ~1.9 µm, and sub-micron grains at their sublimation temperature
+are hotter still. Thermal emission from an optically thin, randomly oriented
+swarm is essentially unpolarised in *either* case. A polarisation limit
+therefore constrains the **scattered-light fraction**, which is a different
+axis from the emissivity law; folding it into χ² would let a constraint that
+cannot tell the two families apart masquerade as evidence that can. Where it
+is genuinely informative is on a survivor — a scattering constraint on a
+candidate is a real follow-up discriminant — so that is where it is attached.
+
+Two policy rules go with it: a star the polarimetry table lists but the
+infrared sample does not is **not** added (a polarimetric null on a star with
+no measured excess says nothing this channel can use, unlike an excess table's
+rows, which do define the sample), and where a star is listed more than once
+the **tightest** constraint is the one carried.
+
 ### 2.2 The degeneracy every candidate carries
 
 A nano-grain population **cooler** than 1500 K reproduces the K/N ratio of a

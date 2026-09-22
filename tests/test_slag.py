@@ -833,3 +833,43 @@ def test_meteorite_calibration_calls_a_real_meteorite_natural(tmp_path):
         assert rec["p_misfit"] > 0.01, f"a real meteorite came out unexplainable: {rec}"
     finally:
         FAM.measured = None
+
+
+def test_per_element_calibration_finds_the_injected_element():
+    """A Ti excess on an otherwise natural panel must be the worst element."""
+    from seti.slag.misfit import calibrate_misfit
+    from seti.slag.sinking import TimescaleModel
+    els = ["Mg", "Al", "Si", "Ca", "Ti", "Fe", "Sc"]
+    tsm = TimescaleModel(FAM)
+    s = FitSettings(n_random=120, n_refine=1, refine_maxiter=150)
+    clean = natural_panel("mantle_BSE", els, seed=101)
+    spiked = with_excess(natural_panel("mantle_BSE", els, seed=101), "Ti", 1.5)
+    out = {}
+    for tag, panel in (("clean", clean), ("spiked", spiked)):
+        fit = fit_panel(FAM, panel, tsm, s, rng=np.random.default_rng(5))
+        rec = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=80,
+                               rng=np.random.default_rng(6))
+        pe = rec["per_element"]
+        assert set(pe) == set(els) | {"_worst"}
+        assert all(0.0 < pe[e]["p"] <= 1.0 for e in els)
+        out[tag] = pe
+    assert out["spiked"]["_worst"]["element"] == "Ti", out["spiked"]["_worst"]
+    assert out["spiked"]["Ti"]["p"] < out["clean"]["Ti"]["p"]
+    # the look-elsewhere correction is reported and never below the raw p
+    w = out["spiked"]["_worst"]
+    assert w["p_min_corrected"] >= w["p"] and w["n_elements"] == len(els)
+
+
+def test_per_element_calibration_on_a_natural_panel_flags_nothing_hard():
+    """Every element of a natural panel keeps a p the correction cannot kill."""
+    from seti.slag.misfit import calibrate_misfit
+    from seti.slag.sinking import TimescaleModel
+    els = ["Mg", "Al", "Si", "Ca", "Ti", "Fe", "Sc"]
+    tsm = TimescaleModel(FAM)
+    s = FitSettings(n_random=120, n_refine=1, refine_maxiter=150)
+    panel = natural_panel("CI", els, seed=202)
+    fit = fit_panel(FAM, panel, tsm, s, rng=np.random.default_rng(7))
+    rec = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=80,
+                           rng=np.random.default_rng(8))
+    w = rec["per_element"]["_worst"]
+    assert w["p_min_corrected"] > 0.05, w

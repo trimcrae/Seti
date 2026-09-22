@@ -129,3 +129,31 @@ detectors.
 
 *(filled by the runs; see `results/spark/summary.json` and
 `results/spark/candidates.csv`)*
+
+---
+
+## 6. The vet a survivor must pass
+
+`SPARK_CANDIDATES_PENDING_VET` is not a detection. Before any survivor is
+believed, in this order:
+
+1. **Re-extract from the pixels.** For Euclid, pull the 1-D spectrum (and,
+   where available, the 2-D cutout) of the object and confirm the feature is
+   in the data and not an artefact of the fit: check it in each dither
+   separately, and check the trace for a neighbour's zeroth order at the
+   predicted offset (`docs/roman.md` §2.2). For SPHEREx, re-run the photometry
+   with a different aperture and annulus and on the raw (non-ZODI-subtracted)
+   plane.
+2. **The same star, a different epoch.** Euclid Q1 dithers are minutes apart;
+   SPHEREx passes are months apart. A feature that is present in one pass and
+   absent in another is either variable or spurious, and the two are separated
+   only by the noise in the non-detection.
+3. **The same sky, a different instrument.** 2MASS/WISE photometry (SPLICES
+   carries both), Gaia XP where the wavelength falls below 1.05 µm, and any
+   archival NIR spectrum of the star.
+4. **The star itself.** Gaia `ruwe`, `phot_variable_flag`, the colour-magnitude
+   position, and whether the field is a star-forming region (the Q1 field
+   LDN 1641 is YSO-rich: a survivor there is suspect by construction).
+5. **The industrial flag last.** It is read only after the survivor has passed
+   1–4, and it is never a reason to promote a candidate — only a thing to
+   report.

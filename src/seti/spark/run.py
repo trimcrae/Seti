@@ -973,7 +973,11 @@ def assess(conf: dict, out_dir: Path) -> dict:
                 "n_samples_good": sum(int((b.get("cutouts") or {}).get("n_samples_ok", 0) or 0) for led in sled for b in led.get("boxes", [])),
                 "n_stars_with_samples": sum(int(s.get("n_stars_with_samples", 0) or 0) for s in screens),
                 "n_channels_tested": sum(int(s.get("n_channels_tested", 0) or 0) for s in screens),
-                "n_stars_insufficient": sum(int(s.get("n_stars_insufficient", 0) or 0) for s in screens)}
+                "n_stars_insufficient": sum(int(s.get("n_stars_insufficient", 0) or 0) for s in screens),
+                # what fraction of each detector band the stellar-line veto leaves
+                # available at the resolution the data actually have (docs/spark.md §2.1)
+                "clean_channel_coverage": {k: v for s in screens
+                                           for k, v in (s.get("clean_channel_coverage") or {}).items()}}
     if len(chans):
         d = chans.copy()
         s_tot = float(sc["excess_sigma_total"])

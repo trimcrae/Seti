@@ -18,16 +18,34 @@ Sample: **127** sources.
 |---|---:|
 | vasco2020_surviving_candidates | 127 |
 
+## Sky coverage (USNO-B1.0 reconstruction)
+
+- fields fetched: 12 / 12 of radius 0.5 deg = **9.425 deg^2**
+- USNO-B1.0 rows returned (Ndet = 1, R1 <= limit): 33273
+- POSS-I-red-only objects: 0
+
+## How deep the search that found nothing actually went
+
+An absence is only as good as the search behind it: a catalogue
+that was never successfully queried leaves every source with an
+empty magnitude, and empty reads as *gone*.
+
+- modern catalogues that answered: NONE
+- sources no modern catalogue covered: None
+- required depth margin: 2.0 mag below the plate detection
+
 ## Funnel
 
 | stage | n |
 |---|---:|
 | 1_sample | 127 |
-| 2_no_modern_optical_within_5arcsec | 123 |
-| 3_with_any_ir_detection | 7 |
-| 4_ir_present_and_optically_absent | 3 |
-| 5_residual_after_population_cascade | 5 |
-| 6_survive_every_veto | 1 |
+| 2_no_modern_optical_within_5arcsec | 127 |
+| 2b_absence_established_deeper_than_the_plate | 0 |
+| 2c_no_modern_catalogue_covered_the_position | 127 |
+| 3_with_any_ir_detection | 0 |
+| 4_ir_present_and_optically_absent | 0 |
+| 5_residual_after_population_cascade | 0 |
+| 6_survive_every_veto | 0 |
 | 7_energy_conserving_obscuration | 0 |
 | 7_ir_too_faint | 0 |
 
@@ -37,18 +55,15 @@ The first population analysis of this sample.
 
 | class | n | fraction |
 |---|---:|---:|
-| ASTEROID | 63 | 0.4961 |
-| PLATE_DEFECT | 57 | 0.4488 |
-| RESIDUAL_UNEXPLAINED | 5 | 0.0394 |
-| VARIABLE_STAR | 1 | 0.0079 |
-| MODERN_OPTICAL_MATCH | 1 | 0.0079 |
+| ASTEROID | 66 | 0.5197 |
+| PLATE_DEFECT | 61 | 0.4803 |
 
 ## Obscuration vs destruction
 
 - optically vanished **with** an IR counterpart: 0
-- optically vanished with **no** counterpart: 120
+- optically vanished with **no** counterpart: 127
 - raw ratio: -
-- after subtracting the mundane classes: 0.0417
+- after subtracting the mundane classes: 0
 
 ## Chance-match null (offset positions)
 
@@ -64,18 +79,12 @@ Measured, not assumed: the same sightlines displaced by 45.0".
 
 | verdict | n |
 |---|---:|
-| INSUFFICIENT_IR | 95 |
+| INSUFFICIENT_IR | 99 |
 | NO_HISTORICAL_PHOTOMETRY | 28 |
-| IR_UNDERSAMPLED | 3 |
-| ENERGY_CONSERVING_OBSCURATION | 1 |
 
-Survivors of every kill-test: **1** (0 energy-conserving, 0 IR-too-faint).
+Survivors of every kill-test: **0** (0 energy-conserving, 0 IR-too-faint).
 
-3 object(s) have too few infrared bands for a budget verdict (`IR_UNDERSAMPLED`). The published `vanish-neowise` table carries W1/W2 only, so this count is the measure of how much the AllWISE W3/W4 + 2MASS join still owes.
-
-| source | RA | Dec | class | eta_max | budget | FTK |
-|---|---:|---:|---|---:|---|---|
-| VASCO2020-table2-0041 | 157.61429 | 22.73810 | RESIDUAL_UNEXPLAINED | 0.0266 | IR_UNDERSAMPLED | DISAPPEARANCE_LIKE |
+(no survivors at the current thresholds)
 
 No-null rule (CLAUDE.md): an empty survivor list is a statement
 about THIS sample and these thresholds, never a publishable result.

@@ -588,6 +588,89 @@ def _solano_candidates(tables: pd.DataFrame) -> list[str]:
     return out
 
 
+def probe_second_digitisation(cfg: dict) -> Provenance:
+    """Is an INDEPENDENT scan of the same POSS-I plates reachable?
+
+    The single strongest kill available to this channel is not astrophysical.
+    A POSS-I-red-only detection that a *second, independent digitisation of
+    the same glass* does not see is almost certainly a scan artefact of the
+    first digitisation rather than a source that was on the plate --- which is
+    precisely how Solano+2022 classified 3 592 of their 298 165 objects, using
+    SuperCOSMOS against the USNO-B1.0-era scans.  Hambly & Blair 2024 argue
+    the VASCO transients are emulsion artefacts, so a plate-level confirmation
+    is the difference between a candidate and a speck of dust.
+
+    This is a REACHABILITY probe only: it reports which of the candidate
+    routes answers, and touches no science.  The kill itself needs a route
+    that answers, and the answer has to be recorded before it can be used.
+
+    Note the asymmetry that governs how the result may ever be read.  Presence
+    in a second digitisation CONFIRMS a plate image.  Absence is informative
+    only where the second scan is demonstrably deeper than the magnitude
+    claimed for the source --- a source missing from a shallower catalogue is
+    not missing, and treating it as missing is the same depth error the
+    modern-optical kill already closes.
+    """
+    a = cfg.get("acquire", {})
+    s = a.get("second_digitisation", {})
+    prov = Provenance(route="second_digitisation_probe")
+    found: list[str] = []
+
+    kws = list(s.get("discovery_keywords",
+                     ["SuperCOSMOS", "Hambly", "MNRAS/326/1279"]))
+    clauses = []
+    for k in kws:
+        for variant in dict.fromkeys((k, k.lower(), k.upper())):
+            clauses.append(f"description LIKE '%{variant}%'")
+            clauses.append(f"table_name LIKE '%{variant}%'")
+    adql = ("SELECT TOP 100 table_name, description FROM TAP_SCHEMA.tables WHERE "
+            + " OR ".join(dict.fromkeys(clauses)))
+    df, url, detail = tap_sync(adql, cfg)
+    prov.record(url, len(df) > 0, detail, len(df))
+    if len(df) and "table_name" in df.columns:
+        names = [unquote_table(t) for t in df["table_name"]]
+        found.extend(names)
+        prov.notes.append("VizieR TAP_SCHEMA: " + "; ".join(
+            f"{t} ({str(d)[:60]})"
+            for t, d in zip(names, df.get("description", names), strict=False))[:1200])
+    else:
+        prov.notes.append("VizieR TAP_SCHEMA knows no SuperCOSMOS-like table")
+
+    # The WFAU SuperCOSMOS Science Archive is served from Edinburgh, not CDS,
+    # so it is probed on its own endpoints rather than assumed absent.
+    for base in s.get("ssa_tap_urls", []):
+        q = urllib.parse.urlencode(
+            {"REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv", "MAXREC": 1,
+             "QUERY": "SELECT TOP 1 table_name FROM TAP_SCHEMA.tables"})
+        full = f"{base}?{q}"
+        body, detail = http_get(full, int(s.get("probe_timeout_s", 25)),
+                                retries=1, backoff=3.0)
+        ok = bool(body) and _looks_tabular(body)
+        prov.record(full, ok, detail, 1 if ok else 0)
+        if ok:
+            found.append(base)
+            break
+
+    # Any literal VizieR id the keyword sweep cannot reach, asked by name.
+    for cat in s.get("candidate_tables", []):
+        table = str(cat.get("table", cat) if isinstance(cat, dict) else cat)
+        tabs, p_m = vizier_catalogue_meta(table, cfg)
+        prov.attempts.extend(p_m.attempts)
+        if tabs:
+            found.extend(tabs)
+            prov.notes.append(f"{table} is in VizieR as {tabs[:6]}")
+        else:
+            prov.notes.append(f"{table}: {p_m.status}")
+
+    prov.n_rows = len(dict.fromkeys(found))
+    prov.status = "ok" if found else "unreachable"
+    if not found:
+        prov.notes.append("no independent digitisation of the POSS-I plates "
+                          "answered; the plate-confirmation kill is NOT "
+                          "available and no source may be vetoed for lacking it")
+    return prov
+
+
 def vizier_catalogue_meta(cat: str, cfg: dict) -> tuple[list[str], Provenance]:
     """Does VizieR hold ``cat`` at all, and under what table names?
 
@@ -807,12 +890,17 @@ def usnob1_meta_url(cfg: dict) -> str:
 def usnob1_meta_probe(cfg: dict) -> dict:
     """Ask I/284/out for its own column list before believing any zero.
 
-    Returns ``{url, detail, columns, missing, body_head}``.  ``missing`` is the
-    subset of :data:`USNOB1_COLUMNS` the catalogue does not advertise --- if it
-    is non-empty, a column-list query is asking for a name that does not exist
-    and its empty answer says nothing about the sky.  A failed probe is
-    recorded and the sweep continues: the ladder's ``-out.all`` rung does not
-    name columns at all.
+    Returns ``{url, detail, columns, missing, body_head}``.
+
+    ``missing`` is the subset of :data:`USNOB1_COLUMNS` this body does not
+    mention.  Read it as a HINT, never as a fact about the catalogue: the
+    ``-meta.all`` + ``-out.form=TSV`` body carries ``#Column`` lines for the
+    catalogue's DEFAULT output columns, and I/284/out's defaults are the eight
+    astrometric ones, so run 35738062833's probe reported B1mag, R1mag, R2mag,
+    Imag and Ndet as "missing" from a catalogue that plainly has them.  That
+    probe then edited the request and every field came back as bare positions;
+    it now reports only.  A wrong column name is handled where it shows up ---
+    the ladder falls through to the ``-out.all`` rung, which names none.
     """
     url = usnob1_meta_url(cfg)
     r = cfg.get("acquire", {}).get("reconstruct", {})
@@ -977,7 +1065,9 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
            if meta["columns"] else "no column names parsed")
         + (f"; not mentioned by the probe: {sorted(meta['missing'])}"
            if meta["missing"] else "; every requested column mentioned")
-        + " (reported only -- the request is not edited from this)")
+        + " (reported only -- the request is not edited from this; the "
+          "-meta.all body lists the catalogue's DEFAULT output columns, so "
+          "'not mentioned' does NOT mean 'absent from the catalogue')")
     # The probe REPORTS; it does not edit the request.  Run 35738062833 had it
     # strip every name the -meta.all body failed to mention, and that body
     # mentioned 8 columns out of ~30 --- so B1mag/R1mag/R2mag/Ndet were all
@@ -1517,6 +1607,13 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     if len(df_v):
         got["vasco2020_surviving_candidates"] = len(df_v)
         frames.append(df_v)
+
+    # Route 2b: is a SECOND, independent digitisation of the same POSS-I glass
+    # reachable?  Reported, never assumed: the plate-confirmation kill is the
+    # strongest one this channel could have and it may only be applied on a
+    # route that has actually answered.
+    if cfg.get("acquire", {}).get("second_digitisation", {}).get("probe", True):
+        prov["routes"].append(probe_second_digitisation(cfg).as_dict())
 
     # Route 3: own the selection function — USNO-B1.0 POSS-I-red-only objects.
     if cfg.get("acquire", {}).get("reconstruct", {}).get("enabled", True):

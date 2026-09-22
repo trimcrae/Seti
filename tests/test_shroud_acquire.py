@@ -601,3 +601,67 @@ def test_a_live_catalogue_that_is_only_partly_deep_is_recorded_per_source(sc):
         pos, {"ps1": {"status": "unreachable"}, "gaia": {"status": "cached"}}, sc)
     assert depth.iloc[0] == sc["modern_optical"]["limits"]["gaia"]["mag"]
     assert cats.iloc[0] == "gaia"
+
+
+# ===========================================================================
+# The second-digitisation reachability probe.
+# ===========================================================================
+def test_second_digitisation_probe_reports_a_live_route(sc, monkeypatch):
+    """An independent scan reachable: the route is 'ok' and names what answered."""
+    seen = []
+
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        seen.append(url)
+        if "TAPVizieR" in url and "SuperCOSMOS" in urllib.parse.unquote(url):
+            return (b'table_name,description\n'
+                    b'"II/341/sss","SuperCOSMOS Sky Survey (Hambly+ 2001)"\n'), "HTTP 200"
+        if "ssa.roe.ac.uk" in url:
+            return b"table_name\nssa.Source\n", "HTTP 200"
+        if "-meta.all" in url:
+            return b"#Column\tRAJ2000\t(deg)\tRight ascension\n", "HTTP 200"
+        return None, "HTTP 404"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    d = acq.probe_second_digitisation(sc).as_dict()
+    assert d["route"] == "second_digitisation_probe"
+    assert d["status"] == "ok"
+    assert d["n_rows"] >= 1
+    assert any("II/341/sss" in n for n in d["notes"]), d["notes"]
+    assert any("ssa.roe.ac.uk" in u for u in seen)
+
+
+def test_second_digitisation_probe_is_honest_when_nothing_answers(sc, monkeypatch):
+    """Nothing answering is a statement about the archives, not the sky ---
+    and it must FORBID the kill rather than silently skip it."""
+    cap = max(int(sc["acquire"]["second_digitisation"]["probe_timeout_s"]),
+              int(sc["acquire"].get("tap_timeout_s", 120)))
+
+    def dead(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        # A dead host in Edinburgh must not be able to eat the acquisition
+        # budget: run 30203741898 lost a whole 70-minute job to a 300 s retry
+        # ladder against a dead SVO host.
+        assert timeout <= cap, (url, timeout)
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "http_get", dead)
+    d = acq.probe_second_digitisation(sc).as_dict()
+    assert d["status"] == "unreachable"
+    assert d["n_rows"] == 0
+    assert any("no source may be vetoed" in n for n in d["notes"]), d["notes"]
+    # Every endpoint tried is on the record, with its error verbatim.
+    assert d["attempts"] and all(a["ok"] is False for a in d["attempts"])
+    assert any("ssa.roe.ac.uk" in a["url"] for a in d["attempts"])
+
+
+def test_second_digitisation_probe_runs_inside_the_acquisition(sc, tmp_path,
+                                                               monkeypatch):
+    """It is part of the route ledger, not something someone must remember."""
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        if "TAPVizieR" in url and "SuperCOSMOS" in urllib.parse.unquote(url):
+            return b'table_name,description\n"II/341/sss","SuperCOSMOS"\n', "HTTP 200"
+        return None, "HTTP 404"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    _df, prov = acq.acquire_sample(sc, tmp_path, allow_network=True, n_fields=1)
+    routes = {r["route"]: r["status"] for r in prov["routes"]}
+    assert "second_digitisation_probe" in routes, routes

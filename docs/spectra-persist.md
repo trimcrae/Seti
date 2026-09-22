@@ -522,6 +522,13 @@ still running at 1:32, and shard 0 ran 1:05–1:08 PM. Only shards 1, 2 and the 
 skips never started. I read the jobs API repeatedly and it returned `queued` for every
 job each time, and I acted on that without cross-checking the per-job `started_at`.
 
+The rule, since this is cheap and I did not use it: a job that has **never been picked
+up** reports `started_at` equal to the run's `created_at`; one that has a runner reports a
+later `started_at`. Run 35747997902's shards 1, 2, 4, 5 and 6 all read `15:31:52`, the
+creation minute — but shards 7, 3 and 0 read `15:48:35`, `16:16:08` and `17:05:04`. The
+`status` field alone does not distinguish the two and, on this run, read `queued` for
+every job long after three of them had started.
+
 The cancellation cost little in data, for a reason that is luck rather than judgement:
 those shards had checked out `d9070f55`, which is `CKPT_VERSION` **3** — the null
 calibration *before* the thin-null standard-error guard — so a current (version 4) reduce

@@ -31,7 +31,9 @@ from urllib.parse import urljoin, urlparse
 
 USER_AGENT = "seti-crypt/1.0 (+technosignature search; S55 lunar PSR thermal/radar)"
 LABEL_SUFFIXES = (".lbl", ".xml")
-IMAGE_SUFFIXES = (".img", ".tif", ".tiff", ".cub", ".raw")
+# ".tab" belongs here: the Diviner Polar Cumulative Products are served as
+# PDS3 ASCII tables, not rasters (probe of 2026-09-22T14:11Z).
+IMAGE_SUFFIXES = (".img", ".tif", ".tiff", ".cub", ".raw", ".tab")
 
 
 def _now() -> str:

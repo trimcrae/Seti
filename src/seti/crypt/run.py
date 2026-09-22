@@ -261,7 +261,7 @@ def discover_diviner_ode(conf: dict, fetch) -> tuple[list[A.Entry], dict]:
     acq = conf["acquire"]
     base = acq.get("ode_rest")
     spec = acq.get("diviner_ode") or {}
-    rep: dict = {"queries": [], "n_files": 0, "n_products": 0}
+    rep: dict = {"queries": [], "n_files": 0, "n_products": 0, "by_pt": {}}
     if not base or not spec.get("product_types"):
         rep["status"] = "NOT_CONFIGURED"
         return [], rep
@@ -276,11 +276,80 @@ def discover_diviner_ode(conf: dict, fetch) -> tuple[list[A.Entry], dict]:
             continue
         entries.extend(A.entries_from_ode_files(r["files"]))
         rep["queries"].append({k: v for k, v in r.items() if k != "files"} |
-                              {"example_files": [f["name"] for f in r["files"][:40]]})
+                              {"example_files": [f["name"] for f in r["files"][:40]],
+                               **_name_space(r["files"])})
         rep["n_products"] += int(r.get("n_products") or 0)
+        rep["by_pt"][pt] = {f["name"]: f["url"] for f in r["files"]}
     rep["n_files"] = len(entries)
     rep["status"] = "OK" if entries else "NO_FILES"
     return entries, rep
+
+
+def _name_space(files: list[dict]) -> dict:
+    """The complete naming space of a product type, compactly.
+
+    A PDS product name is underscore-delimited fields; tabulating the distinct
+    tokens per position describes every product the type contains in a few
+    hundred bytes, where a list of 18 270 file names would not fit.
+    """
+    from collections import Counter  # noqa: PLC0415
+    fields: dict[int, Counter] = {}
+    exts: Counter = Counter()
+    stems: set[str] = set()
+    for f in files:
+        name = f["name"]
+        m = re.match(r"(?i)^(.*?)((?:\.[a-z0-9]{1,4})+)$", name)
+        stem, ext = (m.group(1), m.group(2).lower()) if m else (name, "")
+        exts[ext] += 1
+        if ext in (".tab", ".img", ".jp2", ".cub", ".tif"):
+            stems.add(stem.upper())
+        for i, tok in enumerate(stem.upper().split("_")):
+            fields.setdefault(i, Counter())[tok] += 1
+    return {"token_fields": {str(i): dict(c.most_common(40)) for i, c in sorted(fields.items())},
+            "n_token_fields": {str(i): len(c) for i, c in sorted(fields.items())},
+            "extensions": dict(exts.most_common(20)),
+            "n_data_stems": len(stems), "data_stems": sorted(stems)[:300]}
+
+
+def probe_formats(conf: dict, fetch, ode_rep: dict) -> list[dict]:
+    """Read one real product of each kind end to end.
+
+    The Diviner gridded products turned out to be PDS3 ASCII TABLES, not
+    rasters, so the label text and the first bytes of the data file are
+    recorded verbatim: the column layout is what the screen has to be written
+    against and it cannot be guessed from the sandbox.
+    """
+    acq = conf["acquire"]
+    out: list[dict] = []
+    for spec in acq.get("format_probe", []):
+        rx = re.compile(spec["match"], re.I)
+        pool: dict[str, str] = {}
+        for pt, files in (ode_rep.get("by_pt") or {}).items():
+            if spec.get("pt") in (None, pt):
+                pool.update(files)
+        pool.update(spec.get("extra_files") or {})
+        hit = next((n for n in sorted(pool) if rx.search(n)), None)
+        rec: dict = {"label": spec.get("label", spec["match"]), "matched": hit}
+        if hit is None:
+            rec["status"] = "NO_MATCH"
+            out.append(rec)
+            continue
+        base = re.sub(r"(?i)\.[a-z0-9]+$", "", hit)
+        for role, exts in (("label", (".LBL", ".XML")), ("data", (".TAB", ".IMG"))):
+            url = next((pool[n] for e in exts for n in (base + e, base + e.lower()) if n in pool), None)
+            if url is None:
+                rec[role] = {"status": "NOT_LISTED"}
+                continue
+            res = fetch(url, timeout=float(acq.get("listing_timeout_s", 60)),
+                        max_bytes=int(spec.get("head_bytes", 40000)))
+            rec[role] = {"url": url, "status": res.status, "error": res.error,
+                         "n_bytes": res.n_bytes,
+                         "head": (res.content or b"")[:int(spec.get("head_bytes", 40000))]
+                         .decode("latin-1", errors="replace")}
+        rec["status"] = "OK" if (rec.get("label", {}).get("head") or rec.get("data", {}).get("head")) \
+            else "NOT_SERVED"
+        out.append(rec)
+    return out
 
 
 def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
@@ -416,6 +485,13 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
                 continue
             rep["psr_ode"].append({k: v for k, v in r.items() if k != "files"} |
                                   {"files": r["files"][:60]})
+            ode_rep.setdefault("by_pt", {})[f"LOLA_{pt}"] = {f["name"]: f["url"] for f in r["files"]}
+    # 6. Read one real product of each kind: label text and data head verbatim.
+    rep["formats"] = probe_formats(conf, fetch, ode_rep)
+    for f in rep["formats"]:
+        print(f"[crypt] format {f['label']}: {f['status']} {f.get('matched')}")
+    # the full name->url tables are working data, far too large to commit
+    ode_rep.pop("by_pt", None)
     rep["crawl_log"] = rep["crawl_log"][:600]
     reached = {"diviner": rep["diviner"]["n_files"] > 0,
                "minirf": rep["minirf"]["n_files"] > 0,

@@ -99,6 +99,25 @@ acquire:
     product_types: ["GDRPSR", "GDRVIS"]
     limit: 500
 
+  # Read one real product of each kind end to end.  Probe 2026-09-22T14:11Z
+  # showed the Diviner gridded polar products are PDS3 ASCII TABLES
+  # (PCP_AVG_TBOL_POLN_SUM_LTIM01_240.TAB), not rasters; the column layout has
+  # to be read off the label, never guessed.
+  format_probe:
+    - {label: "diviner_pcp_summer", pt: "PCP", match: "^PCP_AVG_TBOL_POLN_SUM_LTIM01_240\\.", head_bytes: 40000}
+    - {label: "diviner_pcp_winter", pt: "PCP", match: "^PCP_AVG_TBOL_POLN_WIN_LTIM01_240\\.", head_bytes: 12000}
+    - {label: "diviner_pcp_south_winter", pt: "PCP", match: "^PCP_AVG_TBOL_POLS_WIN_LTIM01_240\\.", head_bytes: 12000}
+    - {label: "diviner_prp_north", pt: "PRP", match: "^DLRE_PRP_NORTH\\.", head_bytes: 40000}
+    - {label: "diviner_gdr_l3", pt: "GDR_L3", match: "_IMG\\.(LBL|IMG)$", head_bytes: 20000}
+    - {label: "lola_psr_north", pt: "LOLA_GDRPSR", match: "^LPSR_65N_240M.*\\.(LBL|IMG)$", head_bytes: 20000}
+    - {label: "lola_psr_south", pt: "LOLA_GDRPSR", match: "^LPSR_65S_240M.*\\.(LBL|IMG)$", head_bytes: 20000}
+    - {label: "minirf_polar_s1_north", pt: null, match: "^lsz_.*90n000.*\\.lbl$", head_bytes: 20000,
+       extra_files: {
+         "lsz_xxxxx_3s1_pfu_90n000_v1.lbl": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-4-cdr-v1/lromrf_0005/data/sar/mosaics/lsz_xxxxx_3s1_pfu_90n000_v1.lbl"}}
+    - {label: "minirf_global_cpr", pt: null, match: "^global_cpr_128ppd.*\\.lbl$", head_bytes: 20000,
+       extra_files: {
+         "global_cpr_128ppd_simp_0c.lbl": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.lbl"}}
+
 # Which products the screen needs, in priority order.  ``channels`` are the
 # Diviner channels used (6 and 7 are the anisothermal discriminant, 8/9 the
 # reference); ``stats`` per season.
@@ -124,8 +143,8 @@ patterns:
   # longitude 000) is recognised; the old form required a separator straight
   # after the "n" and so matched none of the polar mosaics.
   pole:
-    north: "(?i)(^|[_\\-.])(n|np|north|npole|80n|85n|75n|\\d{2,4}n\\d*)([_\\-.]|$)|north\\s*pol"
-    south: "(?i)(^|[_\\-.])(s|sp|south|spole|80s|85s|75s|\\d{2,4}s\\d*)([_\\-.]|$)|south\\s*pol"
+    north: "(?i)(^|[_\\-.])(n|np|north|npole|poln|npol|80n|85n|75n|\\d{2,4}n\\d*)([_\\-.]|$)|north\\s*pol"
+    south: "(?i)(^|[_\\-.])(s|sp|south|spole|pols|spol|80s|85s|75s|\\d{2,4}s\\d*)([_\\-.]|$)|south\\s*pol"
   channel:
     tbol: "(?i)(^|[_\\-.])(tbol|tb|bol|bolo|bolometric)([_\\-.]|$)|bolometric"
     "3": "(?i)(^|[_\\-.])(t3|tb3|ch3|c3|ch03|t03|b3)([_\\-.]|$)|channel\\s*0?3\\b"

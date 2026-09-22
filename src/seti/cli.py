@@ -1122,6 +1122,17 @@ def _cmd_roman(args, cfg):
     return _roman_main(list(args.rest))
 
 
+# --- SEXTANT ---
+def _cmd_sextant(args, cfg):
+    from .sextant.run import run as _sextant_run
+
+    _sextant_run(args.stage, shard=args.shard, cfg=cfg, out_dir=args.out_dir,
+                 work_dir=args.work_dir, route=args.route,
+                 max_objects=args.max_objects,
+                 n_shards_for_all=args.n_shards)
+# --- end SEXTANT ---
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2338,6 +2349,36 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- SEXTANT ---
+    p = sub.add_parser("sextant",
+                       help="SEXTANT: non-gravitational acceleration (A1/A2/A3) in "
+                            "Gaia's milliarcsecond minor-planet astrometry, gated on "
+                            "LOOM's radiation-momentum ceiling and decided on the "
+                            "POPULATION.  Stages: probe | fit | assess | all")
+    p.add_argument("--stage", default="fit",
+                   choices=["probe", "acquire", "fit", "screen", "assess", "all"],
+                   help="probe pulls the perturbers/SBDB and measures the ephemeris "
+                        "route and the archive's astrometric conventions on data; "
+                        "fit acquires+fits+screens one shard; assess gathers every "
+                        "shard, scores the Yarkovsky controls and decides")
+    p.add_argument("--shard", default="0/1",
+                   help="i/n, zero-based; the object list is split by a stable hash "
+                        "so a shard is reproducible and re-runnable on its own")
+    p.add_argument("--n-shards", type=int, default=1,
+                   help="only for --stage all: how many shards to run in-process")
+    p.add_argument("--route", default=None, choices=["integrator", "horizons", "auto"],
+                   help="override the ephemeris route the probe chose.  The local "
+                        "n-body propagator is the only route that scales to 10^5 "
+                        "objects; horizons is the reference it is measured against")
+    p.add_argument("--max-objects", type=int, default=None,
+                   help="0 = every numbered object in the release")
+    p.add_argument("--out-dir", default=None)
+    p.add_argument("--work-dir", default=None,
+                   help="cache for the perturber grids, the SBDB catalogue and the "
+                        "per-chunk Gaia pulls; shared across shards on one runner")
+    p.set_defaults(func=_cmd_sextant)
+    # --- end SEXTANT ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

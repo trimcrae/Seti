@@ -281,9 +281,25 @@ def hermite_cubic(t_grid: np.ndarray, pos: np.ndarray, vel: np.ndarray, t
     """Cubic Hermite interpolation of ``(pos, vel)`` sampled on a uniform grid.
 
     ``pos``/``vel`` are ``(..., M, 3)`` and ``t`` is a scalar or ``(K,)``; the
-    result is ``(..., K, 3)`` (or ``(..., 3)`` for a scalar ``t``).  On a 1-day
-    grid the truncation error is ``(h/P)^4`` of the amplitude: 8 m for the Earth,
-    0.7 km for the Moon --- both far below what any perturber needs.
+    result is ``(..., K, 3)`` (or ``(..., 3)`` for a scalar ``t``).
+
+    The truncation error is fourth order in the step.  **Measured** on a Kepler
+    arc, not estimated: on a 1-day grid, 34 m for an Earth-like orbit and
+    ~0.7 km for the Moon's geocentric motion, falling by the expected factor of
+    16 per halving of the step (2.2 m at 0.5 d, 0.14 m at 0.25 d).  The
+    dimensional estimate ``(h/P)^4 x amplitude`` gives 8 m for the Earth and is
+    low by the ~4x coefficient of the cubic Hermite error term; the measurement
+    is what this docstring quotes and what
+    ``test_cubic_hermite_error_is_fourth_order_and_negligible_for_perturbers``
+    pins.
+
+    This interpolant is used **only for the perturbers** --- the target is
+    integrated directly and densely output through :func:`hermite_quintic`, so
+    this error never enters the target's own trajectory.  What it does enter is
+    the perturbing acceleration, where a 34 m error in a planet's position
+    displaces a main-belt target by well under a millimetre over the whole
+    mission window: 3 GM_p dr / d^3 integrated twice over 2000 days.  The same
+    test asserts that number rather than leaving it as an argument.
     """
     tg = np.asarray(t_grid, dtype=float)
     h = float(tg[1] - tg[0])

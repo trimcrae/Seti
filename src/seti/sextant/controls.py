@@ -74,10 +74,25 @@ def score_control(fitted_a2, fitted_err, jpl_a2, jpl_sigma, *,
                   min_snr: float = 3.0, max_ratio: float = 2.0) -> dict:
     """Did the fit recover JPL's ``A2``?  Sign first, then magnitude.
 
-    Three verdicts: ``RECOVERED`` (same sign, magnitude within a factor
-    ``max_ratio`` and within 3 sigma of the combined error), ``SIGN_WRONG``,
-    ``MAGNITUDE_OFF``; and ``NOT_MEASURED`` when the fit has no usable S/N,
-    which is a statement about sensitivity, not about correctness.
+    Three verdicts for a fit that reached ``min_snr``: ``RECOVERED`` (same sign,
+    magnitude within a factor ``max_ratio`` or within 3 sigma of the combined
+    error), ``SIGN_WRONG``, ``MAGNITUDE_OFF``.
+
+    Below ``min_snr`` the fit has not detected anything, and that is a statement
+    about *sensitivity*, not about correctness --- but it is not a free pass
+    either, because a fit can fail to detect while still sitting far from the
+    known answer.  The two are kept apart:
+
+    ``CONSISTENT_BUT_NOT_DETECTED``
+        below S/N and within 3 sigma of JPL.  The estimator is unexercised.
+    ``INCONSISTENT_BELOW_SNR``
+        below S/N and more than 3 sigma from JPL.  The estimator is not merely
+        insensitive; something is pulling it away from the right answer, and
+        :func:`summarise_controls` refuses to call that "below sensitivity".
+    ``NOT_MEASURED``
+        no finite fitted value or no positive error bar at all.
+
+    ``NO_JPL_VALUE`` means the object was never a control in the first place.
     """
     fa, fe, ja, js = _f(fitted_a2), _f(fitted_err), _f(jpl_a2), _f(jpl_sigma)
     out = {"fitted_a2": fa, "fitted_err": fe, "jpl_a2": ja, "jpl_sigma": js}
@@ -93,8 +108,10 @@ def score_control(fitted_a2, fitted_err, jpl_a2, jpl_sigma, *,
     out["difference_sigma"] = (fa - ja) / comb if comb > 0 else float("nan")
     out["ratio"] = fa / ja if ja != 0 else float("nan")
     if out["fitted_snr"] < min_snr:
+        ds = out["difference_sigma"]
         out["verdict"] = ("CONSISTENT_BUT_NOT_DETECTED"
-                          if abs(out["difference_sigma"]) < 3.0 else "NOT_MEASURED")
+                          if (math.isfinite(ds) and abs(ds) < 3.0)
+                          else "INCONSISTENT_BELOW_SNR")
         return out
     if np.sign(fa) != np.sign(ja):
         out["verdict"] = "SIGN_WRONG"
@@ -122,7 +139,16 @@ def summarise_controls(scored: list[dict]) -> dict:
     measured = [s for s in scored if s.get("verdict") in
                 ("RECOVERED", "SIGN_WRONG", "MAGNITUDE_OFF")]
     out["n_measured"] = len(measured)
+    n_bad_lowsnr = counts.get("INCONSISTENT_BELOW_SNR", 0)
     if not measured:
+        n_quiet = counts.get("CONSISTENT_BUT_NOT_DETECTED", 0)
+        if n_bad_lowsnr > n_quiet:
+            out["verdict"] = "CONTROLS_INCONSISTENT"
+            out["note"] = ("no control reached S/N >= 3, and the majority sit more "
+                           "than 3 sigma from JPL's A2: the fit is not merely "
+                           "insensitive, it is displaced, and nothing downstream "
+                           "is believed")
+            return out
         out["verdict"] = "CONTROLS_BELOW_SENSITIVITY"
         out["note"] = ("controls were present but none reached S/N >= 3 in the "
                        "Gaia-only fit; the estimator is not shown to be wrong, and "

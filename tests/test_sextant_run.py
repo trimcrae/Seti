@@ -13,12 +13,12 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
-from test_sextant_residuals import JD0, make_observations
 
 from seti.sextant import ephem as E
 from seti.sextant import residuals as R
 from seti.sextant import run as RUN
 from seti.sextant.controls import score_control, summarise_controls
+from test_sextant_residuals import JD0, make_observations
 
 MU = E.GM_SUN_AU3_D2
 CONF = RUN.load_config({"sextant": {}})
@@ -115,14 +115,46 @@ def test_quintic_hermite_reproduces_a_kepler_step_to_micrometres():
     assert np.all(np.linalg.norm(vv - truth[:, 3:], axis=1) < 1e-14)
 
 
-def test_cubic_hermite_on_a_daily_grid_is_metre_accurate_for_a_planet_like_orbit():
+def _hermite_cubic_error_m(step_days: float) -> float:
+    """Max cubic-Hermite position error (metres) on an Earth-like Kepler arc."""
     st0 = E.elements_to_heliocentric_state([1.0], [0.017], [0.0], [0.0], [100.0], [0.0])[0]
-    tg = 2457000.0 + np.arange(0.0, 400.0, 1.0)
+    tg = 2457000.0 + np.arange(0.0, 400.0, step_days)
     hist = R.propagate_two_body(st0, tg - tg[0], mu=MU)
-    t = np.array([tg[0] + 10.3, tg[0] + 200.77])
-    p, v = E.hermite_cubic(tg, hist[:, :3], hist[:, 3:], t)
+    t = tg[0] + np.array([10.3, 200.77, 55.13, 301.41])
+    p, _ = E.hermite_cubic(tg, hist[:, :3], hist[:, 3:], t)
     truth = R.propagate_two_body(st0, t - tg[0], mu=MU)
-    assert np.all(np.linalg.norm(p - truth[:, :3], axis=1) * E.AU_KM * 1e3 < 10.0)
+    return float(np.max(np.linalg.norm(p - truth[:, :3], axis=1)) * E.AU_KM * 1e3)
+
+
+def test_cubic_hermite_error_is_fourth_order_and_negligible_for_perturbers():
+    """The interpolant is correct, and its error cannot reach the signal.
+
+    Two separate claims.  (1) The error converges as ``h**4``: that is what
+    proves the implementation is a cubic Hermite and not merely a curve that
+    passes near the knots, and it is checked by halving the step twice.  (2) The
+    size that actually matters is not the interpolation error itself --- this
+    interpolant only ever carries the *perturbers*, since the target is
+    integrated and densely output by :func:`E.hermite_quintic` --- but the
+    target displacement that a perturber position error induces.  A 34 m error
+    in a planet's position perturbs a main-belt body by ``3 GM_p dr / d**3``,
+    which over the 2000-day mission window is far below a millimetre, i.e.
+    ~1e-13 of a milliarcsecond of sky.  A loosened threshold would hide a broken
+    interpolant; the convergence test would not.
+    """
+    e1, e_half, e_quarter = (_hermite_cubic_error_m(h) for h in (1.0, 0.5, 0.25))
+    assert 20.0 < e1 < 60.0                       # measured 34 m; pinned, not assumed
+    assert 12.0 < e1 / e_half < 20.0              # fourth order: expect 16
+    assert 12.0 < e_half / e_quarter < 20.0
+    assert e_quarter < 1.0                        # 0.25 d IS metre-accurate
+
+    # (2) what that error does to a main-belt target, in metres of displacement.
+    gm_earth = 3.986004418e5 * E.GM_KM3S2_TO_AU3D2      # AU^3/day^2
+    dr_au = e1 / 1e3 / E.AU_KM                          # perturber position error
+    d_au = 2.0                                          # target-planet separation
+    da = 3.0 * gm_earth * dr_au / d_au ** 3             # AU/day^2
+    span = 2000.0                                       # mission window, days
+    displacement_m = 0.5 * da * span ** 2 * E.AU_KM * 1e3
+    assert displacement_m < 1e-3, displacement_m
 
 
 # ---------------------------------------------------------------------------
@@ -403,8 +435,19 @@ def test_assessment_degrades_honestly_on_an_empty_table():
 
 
 def test_control_scoring_distinguishes_unmeasured_from_wrong():
-    assert score_control(1e-14, 1e-14, 5e-14, 2e-15)["verdict"] == "CONSISTENT_BUT_NOT_DETECTED"
+    # below S/N and within 3 sigma of JPL: unexercised, not failed
+    assert score_control(1e-14, 4e-14, 5e-14, 2e-15)["verdict"] == "CONSISTENT_BUT_NOT_DETECTED"
+    # below S/N but far from JPL: NOT the same thing, and not a free pass
+    assert score_control(1e-14, 1e-14, 5e-14, 2e-15)["verdict"] == "INCONSISTENT_BELOW_SNR"
     assert score_control(5e-14, 1e-15, -5e-14, 2e-15)["verdict"] == "SIGN_WRONG"
     assert score_control(4e-14, 2e-15, 5e-14, 2e-15)["verdict"] == "RECOVERED"
     assert score_control(2e-13, 1e-15, 5e-14, 1e-15)["verdict"] == "MAGNITUDE_OFF"
     assert score_control(float("nan"), 1, 5e-14, 1e-15)["verdict"] == "NOT_MEASURED"
+    assert score_control(1e-14, 1e-15, float("nan"), 1e-15)["verdict"] == "NO_JPL_VALUE"
+
+
+def test_controls_that_all_miss_jpl_below_snr_do_not_read_as_merely_insensitive():
+    quiet = [score_control(1e-14, 4e-14, 5e-14, 2e-15) for _ in range(3)]
+    assert summarise_controls(quiet)["verdict"] == "CONTROLS_BELOW_SENSITIVITY"
+    displaced = [score_control(1e-14, 1e-14, 5e-14, 2e-15) for _ in range(3)]
+    assert summarise_controls(displaced)["verdict"] == "CONTROLS_INCONSISTENT"

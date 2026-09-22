@@ -1108,6 +1108,14 @@ def _cmd_roman(args, cfg):
     return _roman_main(list(args.rest))
 
 
+# --- CENTURY ---
+def _cmd_century(args, cfg):
+    from .century.run import run_args as _century_run
+
+    return _century_run(args)
+# --- CENTURY ---
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2306,6 +2314,19 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- CENTURY ---
+    # 2026-09-21: CENTURY (S50), cessation / secular fade / rising season
+    # scatter on the DASCH DR7 century baseline; runnable as
+    # `python -m seti.century.run` (what century.yml calls) or `seti century`.
+    from .century.run import add_arguments as _century_args
+    p = sub.add_parser("century",
+                       help="CENTURY (S50): KNELL / RUST / secular fade on the DASCH DR7 "
+                            "1885-1992 plates, Menzel gap modelled as a step; "
+                            "--stage {probe,targets,acquire,screen,assess,all} --shard i/n")
+    _century_args(p)
+    p.set_defaults(func=_cmd_century)
+    # --- CENTURY ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

@@ -147,7 +147,13 @@ enrich:
   simbad: true
   ebv: true
   neowise: true
-  neowise_time_budget_s: 5400.0
+  # A NEOWISE cone is ~90 s a star (IGNITION's measurement), so this is the
+  # number of stars whose variability actually gets measured: ~130 a shard.
+  # The ages job has 350 minutes and the rest of the enrichment costs ~4,000 s,
+  # so 12,000 s leaves headroom.  Stars past the budget are recorded
+  # BUDGET_EXHAUSTED, never silently "not variable"; shortlist.csv is written
+  # in priority order so the budget is spent on the stars in the cell first.
+  neowise_time_budget_s: 12000.0
   vizier: true
   irs: true
   max_stars_per_shard: 0

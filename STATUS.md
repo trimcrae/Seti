@@ -53,11 +53,45 @@ Offline: **86 tests** across `tests/test_crypt.py` (40) and the new
 all. Re-run green against a pandas 3.0.6 / numpy 2.4.6 interpreter, which is
 what the runner installs, not the sandbox's pandas 2.3.3.
 
-**In flight:** run `35747661552` on `claude/goap-crypt` (dispatched
-2026-09-22 11:29 EDT), both poles, 6 local-time bins × 2 seasons per pole.
-Run `35744896637` failed in two seconds because the free-disk step deleted
-`$AGENT_TOOLSDIRECTORY`, which is where `setup-python` had put the
-interpreter the package was installed into; fixed.
+**What the runner has established so far** (run `35747661552` shard 0, north,
+2026-09-22 11:51 EDT — every acquisition route worked and the reader then
+lost the data):
+
+| | |
+|---|---|
+| PCP index, ODE route | `route=ode`, 912 products / 5328 files / **768 LTIM files**; bins available **1–96 at both poles, both seasons** |
+| LOLA PSR raster | `lpsr_65n_240m.img`, 82,432,800 B, 6420 × 6420, `line_offset 3209.5`, **476,117 permanently-shadowed pixels**, `registration: label_offsets` |
+| PCP transfer | twelve 262 MB tables, **2,791,668,367 bytes in ≈20 s** — PDS serves these at >100 MB/s |
+| Parse | **all twelve failed**: `could not convert string to float: '-0.017408,'` |
+
+The label says `FIXED_LENGTH`, `ROW_BYTES = 59`, `COLUMNS = 5` and points at
+`DLRE_PCP.FMT`, which is not served beside the product; it does not say how
+the fields are separated. **They are comma-separated with padding spaces.**
+`read_pcp_tab` now sniffs the delimiter off the first data record, both
+spellings are tested, and a failed parse records the first 400 bytes of the
+product verbatim so the next correction costs no runner time.
+
+Two numbers the run settled: the local-time axis is **96 bins of 0.25 h**
+(not the 24 the first probe's truncated token histogram suggested), and
+bandwidth is not the constraint — so `ltim_bins` went from `every:16` to
+**`every:8`**: twelve bins three hours apart around the clock in each
+season, 24 layers of 2535 × 2535, ≈6.3 GB per pole with one table on disk at
+a time.
+
+**In flight:** run `35750745813` on `claude/goap-crypt` (dispatched
+2026-09-22 11:56 EDT), both poles. `results/crypt/summary.json` presently
+reads `NO_DATA_REACHED` with zero screened pixels — that is an access
+statement about this pipeline's reader, **not** a statement about the Moon.
+Run `35744896637` had failed earlier in two seconds because the free-disk
+step deleted `$AGENT_TOOLSDIRECTORY`, which is where `setup-python` had put
+the interpreter the package was installed into; fixed.
+
+The **radar axis** is now wired into the same pipeline and the same mask:
+Mini-RF polar stereographic mosaics `lsz_xxxxx_3cp/3s1_pfu_90{n,s}000_v1`,
+1294 × 1294 `PC_REAL` at 947.6 m/pix — 6.7 MB each, so the whole radar axis
+is tens of megabytes. Its floor is coarse and stated as such: at 948 m/pixel
+this constrains compact isolated reflectors at the mosaic's own scale, not
+metre-scale hardware.
 ### CRADLE: the `full` join answers, 96/96 pixels, 4,990 stars from one shard of eight, 2026-09-22
 
 **The first real CRADLE measurement, and it settles the question the probe was

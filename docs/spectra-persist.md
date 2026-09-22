@@ -133,6 +133,32 @@ and the range. A line of constant strength across years is a stable property of 
 one that varies is a different object. The per-exposure test cannot separate them,
 because both are in every exposure.
 
+## One explanation that covers the whole surviving set
+
+Checked against each star's own redshift, **all six** lines left standing lie between two
+molecular band heads:
+
+| λ_obs (Å) | blue head | red head |
+|---|---|---|
+| 6809.3 | CaH 6750.7 (−58.5 Å) | CaH 6908.8 (+99.5 Å) |
+| 8578.3 | VO 8519.7 (−58.6 Å) | VO 8622.7 (+44.4 Å) |
+| 6856.5 | CaH 6751.8 (−104.7 Å) | CaH 6909.8 (+53.3 Å) |
+| 7490.3 | CN 7438.4 (−51.9 Å) | TiO 7590.7 (+100.4 Å) |
+| 6403.2 | CaH 6385.5 (−17.8 Å) | ZrO 6477.5 (+74.3 Å) |
+| 6967.9 | CaH 6955.2 (−12.7 Å) | TiO 7059.4 (+91.6 Å) |
+
+In a cool star the flux *between* two band heads is a relative **maximum**. A matched
+filter run against a local linear continuum that is itself inside the band structure
+reads that maximum as an unresolved emission line — and the feature is then in every
+exposure of the star and in every epoch of it, so neither the per-exposure test nor a
+second epoch can see it. Two of the six objects are SIMBAD M1V dwarfs.
+
+`band_gap_context()` puts the head either side, with its label and distance, on the
+record next to each candidate. It is a hypothesis with a prediction: **other stars of the
+same spectral type should show the same feature at the same wavelength.** That is what
+the same-type control sample measures. If the control comes back clean, this explanation
+is wrong and the candidate is stronger for it.
+
 ## The control sample — the test the others cannot do
 
 None of the above can reject a feature that the star's **spectral type** produces. A gap
@@ -204,9 +230,12 @@ where the hand-kept OH list is least complete and the telluric bands live.
   with 8 further epochs available, no sky line, only one candidate line in the whole
   spectrum. Its EW varies 5.1 → 9.4 → 9.3 → 5.8 → 5.5 Å between exposures, a factor 1.8,
   which is formally consistent (χ²p = 0.16) but is not what a steady source looks like.
-  The object is an M dwarf (SIMBAD `LM*`), and 6809 Å sits among the TiO band structure,
-  so **the control sample on other M dwarfs is what kills it** — a band-head gap is
-  persistent in every exposure and every epoch and neither of those tests can see it.
+  The object is an M1V dwarf (SIMBAD `LM*`, 2MASS J03095713+0030176) and the line sits
+  in the CaH 6750.7 → 6908.8 Å gap, so **the control sample on other M1 dwarfs is what
+  kills it** — a band gap is persistent in every exposure and every epoch and neither of
+  those tests can see it. Its triage width ratio is 1.42 against a nominal R = 2000,
+  which the LSF-column fit will either confirm as genuinely resolved (fatal for a
+  monochromatic source) or reduce to ~1.
 * **3241-54884-0388 @ 8578.3 Å** — 14 exposures over six nights (MJD 54879–54884), every
   one positive, χ²p = 0.76, EW 0.42–0.96 Å, ratio to coadd 0.94. The cleanest persistence
   in the set. Killed by: a same-type control detection; a complete OH atlas covering the

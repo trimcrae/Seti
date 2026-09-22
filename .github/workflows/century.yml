@@ -4,7 +4,8 @@ name: century
 # DASCH DR7 century baseline (1885–1992; 252,458,490 sources, 23.6 billion
 # measurements).  docs/century.md.
 #
-#   probe ──▶ targets ──▶ sweep (N shards: acquire + screen) ──▶ assess
+#   targets ──▶ sweep (N shards: acquire + screen) ──▶ assess
+#   probe (reconnaissance, on request only, in parallel with everything)
 #
 # WHY A PROBE STAGE EXISTS.  Nothing in this repository has ever spoken to the
 # DASCH DR7 web API.  The probe stage is the cheapest possible way to learn its
@@ -46,7 +47,12 @@ on:
   workflow_dispatch:
     inputs:
       stages:
-        description: "probe | targets | sweep | assess | full (probe+targets+sweep+assess)"
+        description: >-
+          full (targets+sweep+assess) | targets | sweep | assess | probe.
+          `probe` is reconnaissance and runs ONLY when asked for by name: it
+          reads documentation and the daschlab source, writes nothing a later
+          job consumes, and on a starved queue costs `full` an entire extra
+          runner wait.
         required: false
         default: "full"
       fields:
@@ -107,10 +113,19 @@ jobs:
   # probe — learn the API on the runner.  Cheap, and the only stage that
   # can be run alone before any commitment.
   # ------------------------------------------------------------------
+  # `stages: probe` ONLY — `full` no longer re-probes.  The probe is a
+  # reconnaissance job, not a pipeline stage: it reads documentation and the
+  # daschlab source and writes nothing any later job consumes.  Re-running it
+  # inside `full` spent a whole runner AND a whole queue wait (measured: 95
+  # minutes on run 35745660073, which had not started its probe by the time
+  # four other channels finished entire sweeps) to re-learn a schema already
+  # committed under results/century/probe/.  The acquire stage logs
+  # `flag_definitions` with its source on every shard, so the flag parse is
+  # still verified on real data every run.
   probe:
     if: >-
       ${{ github.event.inputs.reduce_only_run_id == ''
-      && (github.event.inputs.stages == 'probe' || github.event.inputs.stages == 'full') }}
+      && github.event.inputs.stages == 'probe' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

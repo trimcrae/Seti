@@ -1525,6 +1525,12 @@ def classify_direct(rec: dict, *, params: ClassifyParams | None = None,
     flags = []
     if pdc_deeper:
         flags.append("pdc_deeper_than_sap")
+    # The TIC came from the weakest of the three routes --- the nearest source
+    # within the cone whose Tmag is close enough --- so the light curve may not
+    # be this KIC star's at all.  Not a veto (stage 3's difference image is the
+    # test that settles it), but it travels with the record.
+    if _s(rec.get("tic_route")) == "tic_region_nearest":
+        flags.append("tic_identified_by_position_only")
     if both_up and not vetoes:
         out["class"] = CLASS_GROWTH
     elif both_down and not vetoes:

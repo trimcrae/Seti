@@ -1056,7 +1056,20 @@ So `classify_direct` requires, for `growth_candidate`:
 
 A PDCSAP-only rise with `sap_minus_pdcsap_z ≤ −3` and direction
 `PDC_DEEPER_THAN_SAP` is classed **`crowding_correction`** — Kepler-718 b's
-class — and is not a candidate. `deeper_tess` / `shallower_tess` hold the
+class — and is not a candidate.
+
+**What the SAP rule does *not* buy, stated plainly.** Dilution can only make a
+depth shallower, so a raw SAP depth *deeper* than Kepler's is not dilution of
+the target's own transit. It is **not** proof that the signal is on the target:
+a blended eclipsing binary contributes a fractional depth of (its eclipse depth
+× its flux) / (total aperture flux), and if the binary is deep and bright
+enough that product can exceed the target's own Kepler depth in the raw
+photometry too. The SAP rule kills the *crowding-correction* artefact — the
+specific way Kepler-718 b was manufactured — and nothing more. The test that
+settles where the signal is remains stage 3's difference image, which is why
+`vet` runs it on every survivor. A TIC resolved only by the weakest route
+(nearest source in the cone with a compatible Tmag) carries
+`tic_identified_by_position_only` for the same reason. `deeper_tess` / `shallower_tess` hold the
 one-family changes; `consistent` is only ever written where the sensitivity was
 sufficient to see the change.
 

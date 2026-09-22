@@ -826,7 +826,21 @@ def test_acquire_screen_assess_end_to_end_with_scripted_archives(tmp_path):
     assert s["pairs"]["NF3|orion_kl_hifi"]["line_source"] == "jpl"
     c = pd.read_csv(out / "candidates.csv")
     assert len(c) == len(conf["species"]["targets"]) and not c["pattern"].any()
-    assert set(c["line_source"].dropna()) == {"jpl", "cdms", "predicted"}
+    # `rotor` is the fourth line source, and its presence is the point: the five
+    # species with no catalogue entry (CF2Cl2, CFCl3, SO2F2, CHClF2, CF2) are
+    # predicted from src/seti/data_assets/rotor_constants.yaml rather than
+    # reported unsearchable.  A candidates.csv with only the old three would
+    # mean the asymmetric-top predictor had silently stopped reaching them.
+    assert set(c["line_source"].dropna()) == {"jpl", "cdms", "predicted", "rotor"}
+    rotor_rows = c[c["line_source"] == "rotor"]
+    # The five species no catalogue carries must ALL be there.  CH2F2 and COF2
+    # may join them: the assets hold validation blocks for both, and in this
+    # scripted archive their JPL entries come back empty, so the predictor is
+    # the correct fallback rather than `unsearchable`.
+    assert {"CF2Cl2", "CFCl3", "SO2F2", "CHClF2", "CF2"} <= set(rotor_rows["species"])
+    assert set(rotor_rows["species"]) <= {"CF2Cl2", "CFCl3", "SO2F2", "CHClF2", "CF2",
+                                          "CH2F2", "COF2"}
+    assert rotor_rows["verify_constants"].all()   # never a catalogued line list
 
 
 def test_end_to_end_recovers_a_seeded_pattern_through_the_acquire_path(tmp_path):
@@ -1308,6 +1322,45 @@ def test_frequency_limited_species_are_rolled_up_into_the_summary(tmp_path):
 # ---------------------------------------------------------------------------
 # the LTE test lives or dies on the intensity column resolving
 # ---------------------------------------------------------------------------
+def test_the_probe_clock_stops_a_slow_source_and_names_the_ones_it_skipped(tmp_path):
+    """A budget checked only BETWEEN sources decides whether to *start* the next
+    one and can never stop the one already running.
+
+    One slow catalogue runs its whole route ladder — four TAP hosts, each
+    retried, then ASU, then astroquery — plus a column query and a row count
+    for every table it lists.  ULINE walks ten sources, so against a loaded
+    VizieR that is how a job reaches its `timeout-minutes`, and a job killed
+    that way skips the `if: always()` commit-back and leaves NO results.
+    """
+    import time as _t
+
+    conf = load_uline_config()
+    conf["archives"]["probe_budget_s"] = 0.6
+    calls = {"n": 0}
+
+    def slow_tap(adql: str):
+        calls["n"] += 1
+        _t.sleep(0.25)
+        return pd.DataFrame()
+
+    names = ["orion_kl_hifi", "irc10216_he2008", "sgrb2_nummelin1998"]
+    t0 = _t.monotonic()
+    rep = stage_probe(conf, tmp_path, fetch_fn=_FakeWeb(), query_fn=slow_tap, sources=names)
+    elapsed = _t.monotonic() - t0
+
+    # it stopped rather than running the full ladder for every source
+    assert elapsed < 20.0
+    statuses = {k: v.get("status") for k, v in rep["vizier"].items()}
+    assert set(statuses) == set(names)
+    stopped = [k for k, s in statuses.items()
+               if s in ("DISCOVERY_TIMED_OUT", "DISCOVERY_NOT_ATTEMPTED")]
+    assert stopped, f"no source was stopped by the clock: {statuses}"
+    for k in stopped:
+        assert rep["vizier"][k]["error"]            # the reason, always
+    # a clock is not a sky result
+    assert all(s != "OK" or rep["vizier"][k].get("table") for k, s in statuses.items())
+
+
 def test_a_species_whose_hamiltonian_is_wrong_says_so_in_the_summary(tmp_path):
     """SO2F2 is accidentally near-spherical (A ~ B ~ C), and Sarka, Demaison,
     Margules et al. found Watson's A-REDUCTION FAILS for it — an unreduced

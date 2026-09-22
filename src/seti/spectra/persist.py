@@ -609,6 +609,50 @@ def stack_exposures(parsed: dict, lam0: float | None = None,
     return {"wave": w, "flux": flux, "ivar": den, "n_used": n_used}
 
 
+def offset_null(parsed: dict, lam0: float, mode: str, n: int = 24, lo_A: float = 12.0,
+                hi_A: float = 200.0, seed: int = 7) -> dict:
+    """The per-exposure estimator, re-run at wavelengths where nothing was found.
+
+    ``absent_in_exposures`` is only a statement about the sky if the estimator
+    reads ~0 sigma where there is no line.  The first two SDSS runs returned
+    combined significances of -3 to -11 for nearly every survivor, and genuine
+    absence gives 0, so the question "is the deficit at the candidate
+    wavelength, or everywhere?" has to be answered before any of those verdicts
+    means anything.  This repeats the entire measurement -- exposures, coadd,
+    combination -- at ``n`` random offsets from the candidate in the *same*
+    spectrum.  A combined significance already at -5 sigma there is an estimator
+    bias; one centred on 0 there makes the value at ``lam0`` a real statement.
+    """
+    rng = np.random.default_rng(seed)
+    offs = rng.uniform(lo_A, hi_A, n) * rng.choice([-1.0, 1.0], n)
+    comb, comax, co_sig = [], [], []
+    for o in offs:
+        fc, ex = sdss_exposure_measurements(parsed, lam0 + float(o), mode)
+        cls = classify_persistence(fc, ex)
+        v = cls.get("combined_sig", float("nan"))
+        if np.isfinite(v):
+            comb.append(float(v))
+            comax.append(float(cls.get("max_exposure_sig", np.nan)))
+        if fc and fc.get("testable") and np.isfinite(fc.get("sig", np.nan)):
+            co_sig.append(float(fc["sig"]))
+    out = {"n_offsets": int(n), "n_measured": len(comb)}
+    if comb:
+        a = np.asarray(comb, float)
+        out.update({
+            "combined_sig_median": float(np.median(a)),
+            "combined_sig_mean": float(np.mean(a)),
+            "combined_sig_std": float(np.std(a)),
+            "combined_sig_min": float(np.min(a)),
+            "combined_sig_max": float(np.max(a)),
+            "frac_below_minus2": float(np.mean(a < -2.0)),
+            "max_exposure_sig_median": float(np.nanmedian(np.asarray(comax, float))),
+        })
+    if co_sig:
+        out["coadd_sig_median"] = float(np.median(np.asarray(co_sig, float)))
+        out["coadd_sig_std"] = float(np.std(np.asarray(co_sig, float)))
+    return out
+
+
 def wave_lag(co: dict, e: dict, lam0: float, half_width_A: float = 150.0,
              max_shift_A: float = 4.0, step_A: float = 0.05) -> float:
     """Wavelength shift (A) that best aligns one exposure with the coadd.
@@ -1756,6 +1800,9 @@ def diagnose(root: Path, n: int = 8, release: str = "SDSS") -> dict:
                 finfo["stack_window"] = {
                     "wave": [round(float(x), 3) for x in st["wave"][lo:hi]],
                     "flux": [round(float(x), 4) for x in st["flux"][lo:hi]]}
+            # Is the deficit at the candidate wavelength, or everywhere?
+            if parsed.get("exposures"):
+                finfo["offset_null"] = _json_safe(offset_null(parsed, lam0, mode))
             # A wavelength zero-point difference between the coadd and the native
             # exposure frames moves a real line off the window centre; measure it
             # rather than assume it away.
@@ -1815,6 +1862,6 @@ if __name__ == "__main__":
 
 __all__ = ["measure_line", "combine_measurements", "classify_persistence", "decode_specobjid",
            "sdss_spec_urls", "parse_sdss_spec", "sdss_exposure_measurements",
-           "stack_exposures", "wave_lag",
+           "stack_exposures", "wave_lag", "offset_null",
            "desi_bands_for", "desi_coadd_url", "desi_exposure_rows", "process_spectrum",
            "run_shard", "reduce_results", "final_verdict", "probe", "diagnose", "main"]

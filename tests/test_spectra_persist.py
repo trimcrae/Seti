@@ -500,6 +500,37 @@ def test_wave_lag_recovers_an_injected_wavelength_offset():
     assert abs(same) < 0.1
 
 
+def test_offset_null_is_centred_on_zero_on_a_clean_spectrum():
+    """The control that makes an "absent in the exposures" verdict mean
+    something: re-run at wavelengths with no line, the same estimator must read
+    ~0 sigma.  A real run that comes back at -5 sigma here would be measuring
+    its own bias."""
+    parsed, _fc, _ex, _cls = _run(make_spec_file([1.0] * 4))
+    # Offsets stay inside the r1 arm so the control is not just "not covered".
+    null = persist.offset_null(parsed, LAM0, "emission", n=16, lo_A=12.0, hi_A=120.0)
+    assert null["n_measured"] >= 12
+    assert abs(null["combined_sig_median"]) < 2.0
+    assert null["frac_below_minus2"] < 0.35
+
+
+def test_offset_null_detects_an_estimator_that_is_biased_everywhere():
+    """And it must actually fire when the bias is there: a spectrum whose
+    exposures sit below their own coadd at EVERY wavelength reads negative at
+    random offsets, which is how a bias is told apart from an absent line."""
+    data = make_spec_file([0.0] * 4)
+    with fits.open(io.BytesIO(data)) as hd:
+        parsed = persist.parse_sdss_spec(hd)
+    # Give the exposures a continuum that curves upward everywhere.  A straight
+    # line fitted across the annulus then sits ABOVE the data at every window
+    # centre, by -f''/2 times the annulus second moment -- a deficit at every
+    # wavelength, which is what the SDSS runs looked like.
+    for e in parsed["exposures"]:
+        e["flux"] = e["flux"] + 1.2e-4 * (e["wave"] - LAM0) ** 2
+    null = persist.offset_null(parsed, LAM0, "emission", n=16, lo_A=12.0, hi_A=120.0)
+    assert null["combined_sig_median"] < -2.0
+    assert null["frac_below_minus2"] > 0.5
+
+
 def test_json_safe_keeps_a_pixel_window_but_drops_a_whole_spectrum():
     """The diagnose stage dumps pixel windows under the same key names the bulk
     arrays use; stripping by name alone silently emptied exactly the evidence

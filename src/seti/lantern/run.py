@@ -1612,8 +1612,12 @@ def verify(out_dir: Path, conf: dict, work_dir: Path | None = None,
     res["injection_verdict"] = ("SENSITIVITY_VERIFIED" if res["cases"] and n_inj == len(res["cases"])
                                 else ("SENSITIVITY_PARTIALLY_VERIFIED" if n_inj
                                       else "SENSITIVITY_NOT_VERIFIED"))
-    res["verdict"] = ("PHASE_VERIFIED" if res["cases"] and n_pass == len(res["cases"])
-                      else ("PHASE_PARTIALLY_VERIFIED" if n_pass else "PHASE_NOT_VERIFIED"))
+    # `verdict` is the channel's answer to the question the stage is named for --
+    # can the labeller find a known secondary eclipse? -- so it is the PHASE
+    # verdict.  The conjunction with the injection is kept as `full_verdict`.
+    res["verdict"] = res["phase_verdict"]
+    res["full_verdict"] = ("PHASE_VERIFIED" if res["cases"] and n_pass == len(res["cases"])
+                           else ("PHASE_PARTIALLY_VERIFIED" if n_pass else "PHASE_NOT_VERIFIED"))
     _write_json(out_dir / "verify.json", res)
     print(f"[lantern] verify: {res['verdict']} ({n_pass}/{len(res['cases'])}); "
           f"phase {res['phase_verdict']} ({n_phase}/{len(res['cases'])}); "

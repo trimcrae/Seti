@@ -10,7 +10,7 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
-### SEXTANT: dispatched uncapped over all 156,823 objects, 2026-09-22
+### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
 
 SEXTANT asks LOOM's question — is a minor planet accelerating in a way
 sunlight cannot supply — on Gaia's SSO astrometry, where the residual is
@@ -19,12 +19,23 @@ had ever run. Now the whole pipeline exists and is on a runner:
 `.github/workflows/sextant.yml`, `probe` → N `fit` shards → `assess`, wired to
 `python -m seti.cli sextant`.
 
-**In flight: run 35744966028** on `claude/goap-sextant` — `gaiafpr`,
-`max_objects: 0` (every numbered object in the release), 4 shards, a 290-minute
-in-job clock inside a 330-minute job. It supersedes run 35739803943 (8 shards,
-capped at 800 objects), which was cancelled: it had sat queued for 45 minutes
-at a commit that predated the independent Greenberg+2020 control, and 16
-concurrent shards would have starved the other 17 channels for no gain.
+**In flight: run 35746692260** on `claude/goap-sextant` — `gaiafpr`,
+`max_objects: 0` (every numbered object in the release), the new **solo** path:
+probe, fit and assess as three steps of ONE job on ONE runner, with a
+230-minute in-job clock inside a 350-minute cap.
+
+It is the third dispatch and the first that can realistically start. Run
+35739803943 (8 shards, capped at 800 objects) sat queued 45 minutes at a commit
+predating the independent Greenberg+2020 control and was cancelled; its
+replacement 35744966028 (4 shards, uncapped) sat queued another 15 without its
+single probe job starting, against an account queue of **69 waiting runs**
+across 18 channels. The sharded path needs six separate scheduling events — a
+probe slot, four simultaneous fit slots, an assess slot — and a run that never
+starts measures nothing. The solo path needs one. It reaches roughly a quarter
+of the objects; because a shard fits its controls first and then works a seeded
+shuffle, that quarter is a smaller *unbiased sample of the same catalogue* with
+the same complete control set, not a different sample. `solo: false` still runs
+the sharded path when there is capacity to spend.
 
 Uncapped is now the *safer* choice, not the riskier one, because of two
 changes made before the dispatch. A shard works its **positive controls
@@ -64,7 +75,7 @@ the Gaia-only fit does not return these in sign and magnitude, nothing else in
 the output is believed, and `assess` stamps `ESTIMATOR_FAILS_CONTROLS` onto the
 run verdict rather than reporting the exceedances.
 
-**What to do next:** read run 35744966028's `results/sextant/controls.json`
+**What to do next:** read run 35746692260's `results/sextant/controls.json`
 before anything else in `summary.json` — `verdict`, `n_measured` and
 `recovered_fraction`. If it reads `CONTROLS_FAILED_SIGN` or
 `CONTROLS_INCONSISTENT`, the exceedance list is a property of the estimator and

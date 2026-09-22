@@ -564,6 +564,17 @@ python -m seti.cli sextant --stage fit --shard 3/16      # one shard
 python -m seti.cli sextant --stage assess                # gather, score, decide
 ```
 
+The workflow offers two paths through those three stages, chosen by the `solo`
+input. `solo: true` (the default) runs all three as steps of **one job on one
+runner**; `solo: false` runs `probe` → an *N*-shard `fit` matrix → `assess` as
+separate jobs. The choice is about scheduling, not about science: the sharded
+path is six separate scheduling events on a queue shared by 18 channels, and a
+run that never starts measures nothing, while the solo path needs one slot and
+reaches roughly a quarter as many objects. What makes that trade honest rather
+than merely cheap is the work order below — the controls are fitted first
+either way, and what follows is a seeded shuffle, so the solo run is a smaller
+*unbiased sample of the same catalogue* and not a different sample.
+
 The positive controls travel with any capped run: `choose_objects` takes every
 object carrying a JPL non-gravitational solution **first** and fills the
 remainder with a seeded random draw, so `--max-objects 800` is a small run that

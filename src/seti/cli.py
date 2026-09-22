@@ -1122,6 +1122,14 @@ def _cmd_roman(args, cfg):
     return _roman_main(list(args.rest))
 
 
+# --- CRYPT ---
+def _cmd_crypt(args, cfg):
+    from .crypt.run import main as _crypt_main
+
+    return _crypt_main(list(args.rest))
+# --- CRYPT ---
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2338,6 +2346,16 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- CRYPT ---
+    p = sub.add_parser("crypt",
+                       help="CRYPT (S55): anisothermal hot components and compact radar anomalies "
+                            "inside lunar permanently shadowed regions (Diviner PCP, Mini-RF, "
+                            "ShadowCam); --stage {probe,acquire,screen,assess,all} --shard i/n; "
+                            "flags are passed through to seti.crypt.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_crypt)
+    # --- CRYPT ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

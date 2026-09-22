@@ -166,21 +166,47 @@ jobs:
           scripts/commit_results.sh "spectra-persist control sample" \
             results/spectra_persist/control.json
 
+  plan:
+    # A fixed [0..7] matrix asks the scheduler for EIGHT runners even when four
+    # shards were requested: the four extra jobs have to acquire a runner just
+    # to evaluate their own skip condition and exit.  With 18 channels sharing
+    # one account's concurrency that is four slots taken from other channels
+    # for nothing, and four more scheduling events this run has to wait behind.
+    # The matrix is built from n_shards instead.
+    if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.mk.outputs.shards }}
+    steps:
+      - id: mk
+        env:
+          N_SHARDS: ${{ github.event.inputs.n_shards || '4' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          try:
+              n = int((os.environ.get("N_SHARDS") or "4").strip())
+          except ValueError:
+              n = 4
+          n = max(1, min(8, n))
+          print("shards=" + json.dumps(list(range(n))))
+          PY
+          cat "$GITHUB_OUTPUT"
+
   run:
-    if: ${{ always() && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run') && needs.probe.result != 'failure' }}
-    needs: [probe]
+    if: ${{ always() && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run') && needs.probe.result != 'failure' && needs.plan.result == 'success' }}
+    needs: [probe, plan]
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
     steps:
-      - name: Skip shards beyond n_shards
+      - name: Shard identity
         id: gate
-        run: |
-          N="${{ github.event.inputs.n_shards || '4' }}"
-          if [ "${{ matrix.shard }}" -ge "$N" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; else echo "skip=false" >> "$GITHUB_OUTPUT"; fi
+        run: echo "skip=false" >> "$GITHUB_OUTPUT"
       # Pin the SHARDS to the dispatched commit, not to the branch head.  Run
       # 35738206630 queued for 45 minutes; its early shards checked out the
       # median-continuum estimator and its late ones the linear-fit estimator,

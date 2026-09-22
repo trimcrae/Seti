@@ -256,6 +256,10 @@ def _discover(conf: dict, name: str, spec: dict, *, query_fn, log, cols,
     return A.discover_line_table(
         name, spec["vizier_like"], query_fn=_clocked_query(query_fn, deadline), log=log,
         column_patterns=cols,
+        # A table whose every row is a U-line has no identification column,
+        # because there is nothing to identify.  Requiring one of a source
+        # declared `all_unidentified` rejects it for obeying its own config.
+        ident_required=not bool(spec.get("all_unidentified")),
         fallback_terms_all=spec.get("fallback_description_all")
         or [conf["archives"].get("discover_description_word") or "nidentified"],
         fallback_terms_any=spec.get("fallback_description_any") or [])
@@ -686,6 +690,15 @@ def screen_all(conf: dict, lines: pd.DataFrame, entries: dict, source_tables: di
                             "fmin_mhz": src.fmin_mhz, "fmax_mhz": src.fmax_mhz,
                             "frame": src.frame, "v_lsr_km_s": src.v_lsr_km_s,
                             "fwhm_km_s": src.fwhm_km_s, "v_unc_km_s": src.v_unc_km_s,
+                            # The U-line frequencies themselves, rounded, so the
+                            # assess stage can count DISTINCT lines.  Two sources
+                            # can be two views of the same rows — run 35752177872
+                            # read J/A+AS/142/181 table2 (63 U-lines flagged in
+                            # its Mol column) and table3 (the same 63 as a
+                            # standalone U-line table), and summing per source
+                            # reported 143 U-lines where there are 80.  A sample
+                            # size is the one number a reader will quote.
+                            "uline_freqs_mhz": [round(float(f), 1) for f in src.u_freq],
                             "all_unidentified": bool(spec.get("all_unidentified")),
                             "coverage_from": (str(cov_key) if cov_key else None),
                             "n_coverage_lines": int(len(cov)) if cov is not None else 0,
@@ -794,7 +807,29 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
     results = screen.get("results") or {}
     tables = screen.get("species_tables") or {}
 
-    n_ulines = sum(int(v.get("n_ulines", 0)) for v in sources.values())
+    # DISTINCT U-lines, not the per-source sum.  Two configured sources can be
+    # two views of the same rows: run 35752177872 read J/A+AS/142/181 table2
+    # (63 U-lines flagged in its `Mol` column) and table3 (those same 63 as a
+    # standalone U-line table), and the naive sum said 143 where there are 80.
+    # The sample size is the one number a reader quotes, so it is counted on
+    # the frequencies themselves and the overlap is named.
+    n_ulines_sum = sum(int(v.get("n_ulines", 0)) for v in sources.values())
+    freq_sets = {k: {float(f) for f in (v.get("uline_freqs_mhz") or [])}
+                 for k, v in sources.items() if v.get("uline_freqs_mhz")}
+    union: set[float] = set()
+    for fs in freq_sets.values():
+        union |= fs
+    n_ulines = len(union) if union else n_ulines_sum
+    overlaps = []
+    names = sorted(freq_sets)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            shared = freq_sets[a] & freq_sets[b]
+            if shared:
+                overlaps.append({"sources": [a, b], "n_shared": len(shared),
+                                 "fraction_of_smaller": round(
+                                     len(shared) / max(1, min(len(freq_sets[a]),
+                                                              len(freq_sets[b]))), 3)})
     evaluated = [r for r in results.values() if r.get("status") == "OK"
                  and any(x.get("status") == "OK" for x in r.get("records", []))]
     patterns = [r for r in evaluated if (r.get("best") or {}).get("pattern")]
@@ -929,6 +964,8 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
         "targets_hamiltonian_caveats": caveats,
         "sources": {k: {kk: vv for kk, vv in v.items()} for k, v in sources.items()},
         "n_ulines_total": n_ulines,
+        "n_ulines_per_source_sum": n_ulines_sum,
+        "uline_source_overlaps": overlaps,
         "pairs": per_pair,
         "degraded": degraded,
         "match": screen.get("match"),
@@ -1020,14 +1057,32 @@ def validate_rotor(assets: dict, cats: dict[str, pd.DataFrame], *, j_max: int = 
         doc = (docs or {}).get(key) or (docs or {}).get(sp)
         if doc:
             rec["constants_from_documentation"] = doc
-        obs = []
+        # The refit must see ONLY the lines the predictor actually reproduces.
+        # A JPL .cat holds every state the entry covers — vibrationally excited
+        # levels, other isotopologues — whose quantum numbers parse perfectly
+        # but which a ground-state Hamiltonian was never meant to match.  Run
+        # 35752177872 fitted all 4,317 parseable SO2 lines and reported a
+        # 15 GHz pre-fit and 4 GHz post-fit rms, next to a MEASURED median
+        # residual of 2.7 MHz on the 687 lines that did match.  Quoting that
+        # 4 GHz as "the Hamiltonian's floor" says the predictor is worthless
+        # when it is in fact good to a few MHz.  The fit set is now exactly
+        # the matched set, so `rms_after` means what its name says.
         from .rotor import _qn_triplet
+        pred_keys = {(r.j_up, r.ka_up, r.kc_up, r.j_lo, r.ka_lo, r.kc_lo)
+                     for r in pred.itertuples()}
+        obs = []
+        n_parseable = 0
         for r in cat.itertuples():
             qu, ql = _qn_triplet(r.qn_up), _qn_triplet(r.qn_lo)
             if qu is None or ql is None or qu[0] > j_max or ql[0] > j_max:
                 continue
-            obs.append((qu, ql, float(r.freq_mhz)))
+            n_parseable += 1
+            if (*qu, *ql) in pred_keys:
+                obs.append((qu, ql, float(r.freq_mhz)))
         rec["n_fit_lines"] = len(obs)
+        rec["n_parseable_catalogue_lines"] = n_parseable
+        rec["fit_set"] = ("lines matched by quantum numbers only; a .cat's other "
+                          "states are not what this Hamiltonian models")
         if refit and len(obs) >= 8:
             try:
                 fitted, report = fit_constants(c, obs, j_max=int(j_max))
@@ -1040,17 +1095,63 @@ def validate_rotor(assets: dict, cats: dict[str, pd.DataFrame], *, j_max: int = 
     ok = [r for r in out["species"].values() if r.get("status") == "OK"]
     res = [r["comparison"]["residual_mhz"]["median_abs"] for r in ok
            if (r.get("comparison") or {}).get("residual_mhz")]
-    fit = [r["refit"]["rms_after_mhz"] for r in ok
-           if isinstance(r.get("refit"), dict) and "rms_after_mhz" in r["refit"]]
+    # A refit is only a FLOOR if it actually improved on where it started.  One
+    # that ends above its own pre-fit residual has diverged, and publishing that
+    # number under the name "hamiltonian floor" would say the predictor is bad
+    # when the measured line-by-line residual says it is good.
+    good, diverged = partition_refits(ok)
     out["headline"] = {
         "n_species_validated": len(ok),
         "median_abs_residual_mhz_embedded_constants": float(np.median(res)) if res else None,
-        "hamiltonian_floor_rms_mhz_after_refit": float(np.median(fit)) if fit else None,
+        "hamiltonian_floor_rms_mhz_after_refit": float(np.median(good)) if good else None,
+        "n_refits_not_a_floor": len(diverged),
+        "refits_not_a_floor": diverged,
         "reading": ("the first number measures the CONSTANTS (reconstructed from the "
-                    "literature); the second measures the HAMILTONIAN itself, refitted to the "
-                    "catalogue's own frequencies"),
+                    "literature) line by line against the catalogue; the second measures the "
+                    "HAMILTONIAN itself, refitted to the frequencies of the lines it matched. "
+                    "A refit that lands far above the residual the unfitted constants already "
+                    "reach has fitted something else and is excluded, with both numbers, in "
+                    "refits_not_a_floor rather than reported as a floor."),
     }
     return out
+
+
+def partition_refits(records: list[dict], *, tolerance: float = 10.0,
+                     floor_mhz: float = 1.0) -> tuple[list[float], list[dict]]:
+    """Which refits are a Hamiltonian FLOOR, and which fitted something else.
+
+    ``records`` are the validation records, each with a ``refit`` and the
+    ``comparison`` residual already measured line by line **without** fitting.
+    That measured residual is the reference: a refit cannot be a floor if it
+    lands far above the accuracy the unfitted constants already reach.
+
+    "Improved on its own starting point" is NOT the test, and run 35752177872
+    is why.  Its SO2 refit went 15 GHz → 4 GHz, a large improvement, while the
+    line-by-line comparison on the same entry gave a median residual of
+    **2.7 MHz**.  The fit had improved — on a set polluted with vibrationally
+    excited states a ground-state Hamiltonian never models — and 4 GHz
+    published as "the Hamiltonian's floor" says the predictor is worthless
+    when it is good to a few MHz.  A refit is therefore a floor only within
+    ``tolerance`` × the measured median residual; anything above that is
+    returned as a mis-fit, with both numbers, for a human to read.
+    """
+    good: list[float] = []
+    bad: list[dict] = []
+    for rec in records or []:
+        f = rec.get("refit")
+        if not isinstance(f, dict) or f.get("rms_after_mhz") is None:
+            continue
+        after = float(f["rms_after_mhz"])
+        med = ((rec.get("comparison") or {}).get("residual_mhz") or {}).get("median_abs")
+        limit = max(float(floor_mhz), float(tolerance) * float(med)) if med is not None else None
+        if limit is None or after <= limit:
+            good.append(after)
+        else:
+            bad.append({"rms_after_mhz": after, "measured_median_abs_mhz": float(med),
+                        "limit_mhz": limit, "n_fit_lines": f.get("n_fit_lines"),
+                        "why": "refit landed far above the residual the unfitted constants "
+                               "already reach, so it is not this Hamiltonian's floor"})
+    return good, bad
 
 
 def RotorConstantsRigid(c):                                   # noqa: N802
@@ -1249,7 +1350,8 @@ if __name__ == "__main__":                                    # pragma: no cover
 __all__ = ["DEFAULTS", "DEFAULT_STAGES", "STAGES", "VERDICT_NONE", "VERDICT_NO_DATA",
            "VERDICT_PATTERN", "VERDICT_PATTERN_VERIFY",
            "build_species_tables", "contaminant_lines", "load_uline_config",
-           "main", "screen_all", "source_from_table", "stage_acquire", "stage_assess",
+           "main", "partition_refits", "screen_all", "source_from_table", "stage_acquire",
+           "stage_assess",
            "stage_litfetch", "stage_probe", "stage_propose", "stage_screen", "stage_validate",
            "uline_run",
            "validate_rotor"]

@@ -297,6 +297,18 @@ Nothing in this channel is a detection on its own.
   (the difference spectrum, photon limited), and `ew_5sigma_limit_um`, which
   is the difference's wherever the difference ran. **Quote the difference
   limit**: the other one is the pattern, not the data.
+* **What the limit means.** An equivalent width is a fraction of the *star's*
+  continuum. Each eclipse-class exposure also measures its own broad-band
+  event depth (`event_depth`, the planet's day-side flux over the star's,
+  from the same detrended continuum light curve the verification uses), so
+  `line_contrast_5sigma` (= 5 × the difference spectrum's noise, the faintest
+  line peak the exposure could have shown, as a fraction of the stellar
+  continuum) divided by that depth gives
+  **`beacon_fraction_of_event_flux_5sigma`**: the faintest beacon detectable
+  *as a fraction of the planet's own broad-band emission*, in one resolution
+  element. That is the number to quote about a *planet*, and it needs neither
+  a distance nor a stellar model. On the synthetic 600-integration stack it is
+  ~0.10 for a 1% eclipse and ~0.48 for a 0.2% one.
 * **Phase.** Only eclipse-class exposures (≥8 in-eclipse and ≥16 out-of-eclipse
   integrations *and* a pre-ingress baseline) test vanishing, and only they get
   the eclipse difference. A transit-class exposure gets the transit difference

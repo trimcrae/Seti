@@ -359,6 +359,20 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
                 f["drift_control_snr"] = float(ctrl_z[i])
             if diff_z is not None and np.isfinite(diff_z[i]):
                 f["difference_spectrum_snr"] = float(diff_z[i])
+        # What the limit MEANS.  `noise_median` is the difference spectrum's
+        # noise as a fraction of the stellar continuum, so 5x it is the
+        # faintest line peak this exposure could have shown; divided by the
+        # measured event depth it becomes a fraction of the PLANET's own
+        # broad-band emission -- the number that says what kind of beacon was
+        # ruled in or out, with no distance or stellar model needed.
+        nm = dscan.get("noise_median")
+        rec["line_contrast_5sigma"] = float(5.0 * nm) if nm else None
+        ev = measure_event_depth(flux, times, in_mask, out_diff_mask)
+        rec["event_depth"] = ev
+        dep = ev.get("depth")
+        if rec["line_contrast_5sigma"] is not None and dep and dep > 0:
+            rec["beacon_fraction_of_event_flux_5sigma"] = float(
+                rec["line_contrast_5sigma"] / dep)
     _DIFF_KINDS = ("difference", "transit_difference", "both")
     rec["n_features_out_spectrum"] = sum(1 for f in features
                                          if f["found_in"] in ("out_spectrum", "both"))
@@ -1111,7 +1125,9 @@ def assess(out_dir: Path, conf: dict) -> dict:
                                    "resolution_elements": 0, "features": 0,
                                    "features_difference": 0, "eclipse_tested": 0,
                                    "ew_5sigma_limit_um_median": [],
-                                   "ew_5sigma_limit_out_um_median": []})
+                                   "ew_5sigma_limit_out_um_median": [],
+                                   "line_contrast_5sigma_median": [],
+                                   "beacon_fraction_of_event_flux_5sigma_median": []})
         d["exposures"] += 1
         pc = r.get("phase_class")
         if pc in ("eclipse", "both"):
@@ -1130,10 +1146,15 @@ def assess(out_dir: Path, conf: dict) -> dict:
             d["ew_5sigma_limit_um_median"].append(float(r["ew_5sigma_limit_um"]))
         if r.get("ew_5sigma_limit_out_um") is not None:
             d["ew_5sigma_limit_out_um_median"].append(float(r["ew_5sigma_limit_out_um"]))
+        for k in ("line_contrast_5sigma", "beacon_fraction_of_event_flux_5sigma"):
+            if r.get(k) is not None and np.isfinite(float(r[k])):
+                d[f"{k}_median"].append(float(r[k]))
         pk = f"{(r.get('predicted') or {}).get('phase_class')}->{pc}"
         pred_vs[pk] = pred_vs.get(pk, 0) + 1
     for d in by_mode.values():
-        for k in ("ew_5sigma_limit_um_median", "ew_5sigma_limit_out_um_median"):
+        for k in ("ew_5sigma_limit_um_median", "ew_5sigma_limit_out_um_median",
+                  "line_contrast_5sigma_median",
+                  "beacon_fraction_of_event_flux_5sigma_median"):
             v = d.pop(k)
             d[k] = float(np.median(v)) if v else None
     verify_path = out_dir / "verify.json"
@@ -1188,6 +1209,11 @@ def assess(out_dir: Path, conf: dict) -> dict:
                                                  "ew_5sigma_limit_um": r.get("ew_5sigma_limit_um"),
                                                  "ew_5sigma_limit_out_um": r.get("ew_5sigma_limit_out_um"),
                                                  "ew_5sigma_limit_diff_um": r.get("ew_5sigma_limit_diff_um"),
+                                                 "line_contrast_5sigma": r.get("line_contrast_5sigma"),
+                                                 "event_depth": (r.get("event_depth") or {}).get("depth"),
+                                                 "event_depth_snr": (r.get("event_depth") or {}).get("depth_snr"),
+                                                 "beacon_fraction_of_event_flux_5sigma":
+                                                     r.get("beacon_fraction_of_event_flux_5sigma"),
                                                  "n_integrations": r.get("n_integrations_raw") or r.get("n_integrations")}
                         for r in analysed},
         "thresholds": {"discriminant": dcfg, "line": conf.get("line", {}),
@@ -1228,6 +1254,11 @@ def assess(out_dir: Path, conf: dict) -> dict:
                   "ew_5sigma_limit_um": r.get("ew_5sigma_limit_um"),
                   "ew_5sigma_limit_out_um": r.get("ew_5sigma_limit_out_um"),
                   "ew_5sigma_limit_diff_um": r.get("ew_5sigma_limit_diff_um"),
+                  "line_contrast_5sigma": r.get("line_contrast_5sigma"),
+                  "event_depth": (r.get("event_depth") or {}).get("depth"),
+                  "event_depth_snr": (r.get("event_depth") or {}).get("depth_snr"),
+                  "beacon_fraction_of_event_flux_5sigma":
+                      r.get("beacon_fraction_of_event_flux_5sigma"),
                   "analysis_seconds": r.get("analysis_seconds"),
                   "notes": r.get("notes")} for r in recs]
     for e in exposures:
@@ -1241,6 +1272,40 @@ def assess(out_dir: Path, conf: dict) -> dict:
 
 
 # --- verify: known eclipses through the real reader and labeller ------------------------------
+def measure_event_depth(flux, times, in_mask, out_mask) -> dict:
+    """Broad-band fractional depth of the event, in-vs-out, after a linear
+    detrend fitted to the out-of-event integrations.
+
+    For an eclipse this is the planet's day-side flux as a fraction of the
+    star's -- which is what turns the channel's equivalent-width limit into a
+    statement about the PLANET: a line carrying a fraction f of the stellar
+    continuum carries f / depth of the planet's own emission.  Returned as
+    ``depth``, ``depth_err``, ``depth_snr`` and ``out_scatter``; NaN when the
+    groups are too small.
+    """
+    out: dict = {"depth": None, "depth_err": None, "depth_snr": None, "out_scatter": None}
+    inn = np.asarray(in_mask, bool)
+    outm = np.asarray(out_mask, bool)
+    c = _continuum_series({"flux": np.asarray(flux, float)})
+    ok = np.isfinite(c)
+    if (inn & ok).sum() < 4 or (outm & ok).sum() < 8:
+        return out
+    t = np.asarray(times, float)
+    x = t - np.nanmean(t) if np.all(np.isfinite(t)) else np.arange(c.size, dtype=float)
+    try:
+        coef = np.polyfit(x[outm & ok], c[outm & ok], 1)
+    except (np.linalg.LinAlgError, ValueError):
+        return out
+    d = c - np.polyval(coef, x)
+    s_out = float(np.nanstd(d[outm & ok], ddof=1))
+    depth = float(np.nanmean(d[outm & ok]) - np.nanmean(d[inn & ok]))
+    err = s_out * float(np.sqrt(1.0 / (inn & ok).sum() + 1.0 / (outm & ok).sum()))
+    out.update(depth=depth, depth_err=err, out_scatter=s_out,
+               depth_snr=(depth / err) if err > 0 else None,
+               detrend_slope_per_day=float(coef[0]))
+    return out
+
+
 def _continuum_series(stack: dict) -> np.ndarray:
     """Broad-band light curve: per-integration median over the interior 60% of
     the finite samples, normalised to its own median."""

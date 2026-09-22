@@ -456,6 +456,23 @@ def test_final_verdict_map(cls, expect):
         == "KILLED_known_line_rest_frame"
 
 
+def test_shared_ccd_column_kills_even_a_persistent_line():
+    """Two different fibres of one plate with a candidate at the same
+    wavelength are two different objects sharing detector columns.  Both cannot
+    be sources, and a sky or ISM feature there would already have been taken by
+    the known-line cut."""
+    r = {"persistence_class": "persistent", "known_line_match": False,
+         "plate_other_fibre_same_wavelength": 1}
+    assert persist.final_verdict(r) == "KILLED_shared_ccd_column"
+    r["plate_other_fibre_same_wavelength"] = 0
+    assert persist.final_verdict(r) == "ALIVE_persistent_unidentified"
+    # A missing or unparseable column must not kill anything.
+    assert persist.final_verdict({"persistence_class": "persistent",
+                                  "known_line_match": False,
+                                  "plate_other_fibre_same_wavelength": None}) \
+        == "ALIVE_persistent_unidentified"
+
+
 def test_second_epoch_kill_requires_sensitivity():
     r = {"persistence_class": "persistent", "known_line_match": False, "second_epoch": "not_seen",
          "mean_F": 10.0, "other_best_err_rel": 1.0}

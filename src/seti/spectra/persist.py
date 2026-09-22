@@ -2439,6 +2439,15 @@ def final_verdict(r) -> str:
     cls = str(r.get("persistence_class", ""))
     if bool(r.get("known_line_match")):
         return "KILLED_known_line_rest_frame"
+    # Two DIFFERENT fibres of one plate with a candidate at the same wavelength
+    # are two different objects sharing detector columns.  Both cannot be
+    # sources, and a sky or ISM feature at that wavelength would have been taken
+    # by the known-line cut above.  Plate 2333 supplies two such pairs.
+    try:
+        if float(r.get("plate_other_fibre_same_wavelength", 0) or 0) > 0:
+            return "KILLED_shared_ccd_column"
+    except (TypeError, ValueError):
+        pass
     if cls in ("transient", "absent_in_exposures"):
         return "KILLED_" + cls
     if cls == "sky_residual":

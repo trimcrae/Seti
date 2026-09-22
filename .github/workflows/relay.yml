@@ -72,7 +72,21 @@ jobs:
         run: |
           MS=""
           if [ "$RELAY_MAX_STARS" != "0" ]; then MS="--max-stars $RELAY_MAX_STARS"; fi
-          python -m seti.relay.run --stage "$RELAY_STAGE" $MS
+          # A HARD clock inside the job's own cap.  If the job hits `timeout-minutes`
+          # instead, GitHub CANCELS it and every later step -- including the
+          # commit-back -- is skipped, so a run that worked for hours lands
+          # nothing (docs/arc.md, run 35675114711).  `timeout` ends the process
+          # while the JOB is still alive, this step goes red, and the Report and
+          # Commit steps below (`if: always()`) still publish every stage file
+          # that was written before the clock ran out.
+          set +e
+          timeout -k 60 300m python -m seti.relay.run --stage "$RELAY_STAGE" $MS
+          rc=$?
+          set -e
+          if [ "$rc" = "124" ] || [ "$rc" = "137" ]; then
+            echo "::error::relay exceeded its 300-minute clock; the stages it finished are still committed"
+          fi
+          exit "$rc"
       - name: Report
         if: always()
         run: |

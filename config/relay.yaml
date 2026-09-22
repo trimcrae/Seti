@@ -16,6 +16,7 @@ sample:
   # and then recorded as PARTIAL_SAMPLE rather than silently dropped.
   parallax_shells_mas: [10.0, 11.11, 12.5, 14.29, 16.67, 22.22, 33.33, 100000.0]
   max_rows_per_shell: 400000
+  query_timeout_s: 1200           # a Gaia shell is a big job; its clock is longer than the probe's
 
 beams:
   # theta is the FULL beam width 1.22 lambda/D (the FWHM-class number the brief
@@ -36,7 +37,12 @@ geometry:
   row_cap: 4000000               # kept rows per beam (artifact only); counts are always exact
   chunk_candidates: 3000000
   commit_full_catalogue_max_rows: 150000   # a beam's full directed-pair table is committed only below this
-  commit_target_pairs_max_rows: 250000     # committed rows of the BL-target pair table (widest beams first to go)
+  # committed rows of the BL-target pair table, narrow beams kept whole and the
+  # widest trimmed first.  250k rows of this table gzip to 28 MB (run
+  # 35740854882 on the 264,973-star sample) -- far past the few-MB budget for a
+  # committed artifact -- so the cap buys about 4 MB and the rest stays in the
+  # run's uploaded artifact.
+  commit_target_pairs_max_rows: 40000
 
 drift:
   a_local_max_m_s2: 1.0          # envelope on a transmitter platform's acceleration (HZ planet of an M dwarf ~0.7)
@@ -115,10 +121,108 @@ hit_catalogues:
   max_rows: 200000
   zero_drift_rfi_hz_s: 0.0093    # |drift| below one resolution element: co-rotating (terrestrial) source
 
+  # The e-print route.  VERIFIED on the runner (run 35738937745): VizieR carries
+  # the surveys' TARGET lists and not one of their EVENT lists -- 73 tables
+  # discovered under the seed ids and by keyword, 0 of kind `hits`.  The event
+  # tables exist only inside the papers, so they are read from the arXiv e-print
+  # source.  `arxiv_id` is a HINT: the Atom title is fetched and must contain
+  # every phrase in `title_contains`, otherwise the id is discarded and the
+  # `query` is used instead; a seed that resolves to nothing is recorded
+  # UNRESOLVED with the titles it saw, never silently dropped.
+  arxiv:
+    budget_s: 1800
+    timeout_s: 120
+    max_rows_per_table: 20000
+    sweep_queries:
+      - 'abs:"drift rate" AND abs:technosignature'
+      - 'abs:"Breakthrough Listen" AND abs:narrowband'
+      - 'abs:technosignature AND abs:"Green Bank Telescope"'
+    sweep_results_per_query: 40
+    sweep_max_papers: 30
+    papers:
+      enriquez2017:
+        arxiv_id: "1709.03491"
+        title_contains: ["Breakthrough Listen", "692"]
+        query: 'all:"Breakthrough Listen" AND all:"692 Nearby Stars"'
+        telescope: GBT
+        band: L
+      price2020:
+        arxiv_id: "1906.07750"
+        title_contains: ["Breakthrough Listen", "1327"]
+        query: 'all:"Breakthrough Listen" AND all:"1327 Nearby Stars"'
+        telescope: GBT
+        band: L
+      sheikh2020_etz:
+        title_contains: ["Earth Transit Zone"]
+        query: 'ti:"Earth Transit Zone"'
+        telescope: GBT
+        band: C
+      margot2021:
+        title_contains: ["Technosignatures", "31 Sun-like Stars"]
+        query: 'ti:"31 Sun-like Stars"'
+        telescope: GBT
+        band: L
+      pinchuk2019:
+        title_contains: ["TRAPPIST-1", "LHS 1140"]
+        query: 'ti:"LHS 1140"  AND all:technosignatures'
+        telescope: GBT
+        band: L
+      traas2021:
+        title_contains: ["Breakthrough Listen", "TESS"]
+        query: 'all:"Breakthrough Listen" AND ti:"TESS Targets"'
+        telescope: GBT
+        band: L
+      gajjar2021:
+        title_contains: ["Galactic Center"]
+        query: 'all:"Breakthrough Listen" AND ti:"Galactic Center"'
+        telescope: GBT
+        band: C
+      franz2022:
+        title_contains: ["Technosignature", "Transit"]
+        query: 'all:"Breakthrough Listen" AND ti:"transit" AND all:technosignature'
+        telescope: GBT
+        band: L
+      margot2023:
+        title_contains: ["Technosignatures", "Green Bank Telescope"]
+        query: 'all:"11,680 stars" AND all:technosignatures'
+        telescope: GBT
+        band: L
+      ma2023:
+        title_contains: ["820 nearby stars"]
+        query: 'ti:"820 nearby stars"'
+        telescope: GBT
+        band: L
+      sheikh2021_blc1:
+        title_contains: ["blc1"]
+        query: 'all:"blc1" AND all:technosignature'
+        telescope: Parkes
+        band: L
+      tusay2022_sgl:
+        title_contains: ["Gravitational Lens"]
+        query: 'all:"solar gravitational lens" AND all:technosignature'
+        telescope: GBT
+        band: L
+      tusay2024_trappist:
+        title_contains: ["TRAPPIST-1"]
+        query: 'ti:"TRAPPIST-1" AND all:technosignature'
+        telescope: ATA
+        band: L
+
 probe:
   budget_s: 1500
+  # per-call clock on VizieR/SIMBAD TAP. pyvo's run_async polls a remote job
+  # with no limit of its own, so one wedged VizieR job would otherwise hold the
+  # stage until the workflow cap killed it and nothing was written.
+  query_timeout_s: 240
 
 assess:
   match_window_sigma: 3.0        # a hit matches the prior within this many half-widths (tight)
   recurrence_khz: 1.0            # a frequency seen on >= 3 unrelated sightlines within this is instrumental
   recurrence_min_sightlines: 3
+  # the supplementary rest-frequency test (drift.magic_lines_mhz): a relay
+  # de-drifted so the RECEIVER sees a chosen rest line puts it, for Earth, at
+  # f_rest (1 + (v_TR - v_TE)/c).  It needs both radial velocities, so it runs
+  # only on pair lines with complete kinematics (~43 % of the sample), and its
+  # trials are counted and priced separately from the drift test's.
+  magic_line_window_kms: 5.0        # RV tolerance on the offset, both stars (Gaia DR3 envelope)
+  magic_search_bandwidth_mhz: 800.0 # the 1.1-1.9 GHz span a BL L-band hit could have landed in

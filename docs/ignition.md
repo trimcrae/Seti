@@ -508,3 +508,67 @@ star, a short baseline and an empty archive each produce the named
 non-candidate verdict; an accelerating (exponential) rise is recovered
 through the exponential ramp. Dispatch via `.github/workflows/ignition.yml`
 (`stage=probe` first). Run IDs and survivors go to `STATUS.md`.
+
+### 7.1 In flight, 2026-09-22 — and the next decisive action
+
+Two dispatches are queued behind an account-wide GitHub Actions ceiling (11
+runs in flight, 111 queued repo-wide across the parallel channels); neither
+had a runner after four hours, so **neither has yet corrected the brief**:
+
+| run | what it settles | inputs |
+|---|---|---|
+| **35738088082** | Step 1: do the 846 parents get full 10-year series now? | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
+| **35740159635** | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
+
+`route=upload` with `upload_fallback_cone: true` is deliberate: it tests the
+`unicodeChar` fix on the real service, and a chunk no rung answers still goes
+to per-star cones, so the run cannot come back empty because of the route.
+
+**What to read first, in order:**
+
+1. The acquire ledger of any shard — `results/ignition/acquire_s*.json`,
+   `ledger[].label`. `neowise_upload[pyvo_sync]_<n>` or
+   `neowise_upload[pyvo_async]_<n>` means the fix landed and the channel scales;
+   `neowise_upload[none]_<n>` with `Unimplemented data type` still in `error`
+   means the service refuses `long` as well and the run will show the one
+   recorded downgrade to a 32-bit row index (`upload[.../int32_index]` in the
+   job log). Anything else there is a new failure and is quoted verbatim.
+2. `summary_fields.json` → `denominators.n_stars_attempted_neowise` /
+   `n_stars_with_neowise_rows` / `n_stars_screened` against the 846, and
+   `degraded` for `neowise_queries_failed:<n>` (314 last time).
+3. `veto_counters.screen`. The previous run's 172 screened stars were
+   `FADING:97, NOT_RISING:37, IMPULSIVE_SHAPE:12, INSUFFICIENT_EPOCHS:26` —
+   97 five-sigma faders in both bands is the survey's zero point, and
+   `ensemble.per_shard_drift` in the new summary says how much of it the
+   ensemble correction removed. A `FADING` count that stays near half the
+   sample means the correction did not take and the *screen input* is still
+   wrong, not the sky.
+4. `summary_tiles.json` → `coverage.tiles_done / tiles_in_sky`,
+   `sky_fraction_done`, `n_parent_done_tiles`, `shards_stopped_on_budget`, and
+   `degraded` for `unit_budget_skips:<n>/<units>`. That is the honest coverage
+   statement for the sweep; a later dispatch continues it with
+   `resume_run_id=35740159635` **at the same shard count (12)**.
+
+### 7.2 The offline gate is only a gate at the runner's library versions
+
+`docs/channel-brief.md` §0 item 5: the sandbox venv and the runner do not hold
+the same pandas. A sibling channel lost a whole dispatch to `pandas.to_numeric
+(errors="ignore")`, removed in pandas 3, two minutes into a runner job and
+before a single archive call. IGNITION was audited against that failure mode on
+2026-09-22:
+
+* the channel's only `to_numeric` calls (`run.py` 824, 873/874) pass
+  `errors="coerce"`, which pandas 3 keeps; there is no `errors="ignore"`,
+  `applymap`, `iteritems`, `fillna(method=)`, `delim_whitespace`, `.mad()`,
+  `get_values` or `append`-on-a-DataFrame anywhere under `src/seti/ignition/`
+  (every `.append(` there is a plain Python list);
+* the whole offline suite (`tests/test_ignition.py`,
+  `tests/test_ignition_scale.py`, 102 tests) was re-run in a throwaway venv
+  pinned to the runner's exact stack — pandas 3.0.6, numpy 2.4.6, astropy
+  8.0.1 — and is green. The sandbox default (pandas 2.3.3) is *not* the gate;
+  this is.
+
+Independently confirmed on the metal: run 35738088082's eight acquire+screen
+shards each installed pandas 3.0.6 on the runner and completed, so the acquire,
+ensemble-correction and rise-test paths are proven at that version against real
+archive data, not only in tests.

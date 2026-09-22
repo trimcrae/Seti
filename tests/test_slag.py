@@ -328,8 +328,18 @@ def test_atmosphere_from_spectral_type():
 
 def synthetic_table() -> pd.DataFrame:
     rows = []
+    # Distinct sky positions per star, because objects are reconciled on the
+    # sky: two panels of the same star sit within the match radius, different
+    # stars sit degrees apart.  "GD 362"'s two sources are 2" apart, as PEWDD's
+    # own repeat positions for one star are.
+    positions = {"WD NAT0": (10.0, 10.0), "WD NAT1": (20.0, -10.0), "WD NAT2": (30.0, 5.0),
+                 "WD NAT3": (40.0, -25.0), "GD 362": (50.0, 30.0), "WD SMALL": (60.0, -5.0),
+                 "LHS 2534": (70.0, 15.0)}
     def row(name, spt, teff, ref, vals, limits=(), errs=0.1):
-        r = {"Name": name, "RAJ2000": 0.0, "DEJ2000": 0.0, "SpType": spt, "Teff": teff, "e_Teff": 100,
+        ra, dec = positions.get(name, (0.0, 0.0))
+        seen = sum(1 for r0 in rows if r0["Name"] == name)
+        dec = dec + seen * 2.0 / 3600.0
+        r = {"Name": name, "RAJ2000": ra, "DEJ2000": dec, "SpType": spt, "Teff": teff, "e_Teff": 100,
              "logg": 8.0, "Ref": ref}
         for el, v in vals.items():
             r[f"log{el}"] = v
@@ -645,3 +655,181 @@ def test_relative_timescale_library_is_built_from_the_catalogue_rows():
     assert src == SOURCE_LIBRARY
     assert v[1] == pytest.approx(0.171, abs=0.02)
     assert s[1] >= 0.05 and s[0] == 0.0
+
+
+# ---------------------------------------------------------------------------
+# objects are a position, not a name
+# ---------------------------------------------------------------------------
+def _named_table(rows):
+    """A minimal PEWDD-like table: (name, ra, dec, logCa, logMg, logFe)."""
+    recs = []
+    for name, ra, dec, ca, mg, fe in rows:
+        recs.append({"Name": name, "RAJ2000": ra, "DEJ2000": dec, "SpType": "DBZ",
+                     "Teff": 12000.0, "logg": 8.0, "Ref": name,
+                     "logCa": ca, "e_logCa": 0.1, "logMg": mg, "e_logMg": 0.1,
+                     "logFe": fe, "e_logFe": 0.1})
+    df = pd.DataFrame(recs)
+    for c in VIZIER_COLS:
+        if c not in df:
+            df[c] = np.nan
+    return df[VIZIER_COLS]
+
+
+def test_one_star_under_two_designations_is_one_object():
+    """GD 378 / WD 1822+410: two names, one position, one object."""
+    df = _named_table([("GD 378", 275.904215, 41.067252, -7.0, -6.6, -6.8),
+                       ("WD 1822+410", 275.904215, 41.067252, -7.1, -6.5, -6.9),
+                       ("GD 40", 59.0, -1.3, -7.0, -6.6, -6.8)])
+    roles = acq.resolve_roles(list(df.columns), ["Ca", "Mg", "Fe"], descriptions=VIZIER_DESC)
+    rep = {}
+    panels, _ = acq.build_panels(df, roles, elements=["Ca", "Mg", "Fe"], grouping_out=rep)
+    keys = [p.meta["object_key"] for p in panels]
+    assert keys[0] == keys[1] != keys[2]
+    assert rep["n_objects"] == 2 and rep["n_name_groups"] == 3
+    assert rep["n_objects_merging_designations"] == 1
+    assert sorted(panels[0].meta["object_designations"]) == ["GD378", "WD1822+410"]
+
+
+def test_one_designation_at_two_positions_stays_two_objects():
+    """PEWDD reuses names across the sky; a name must never link two positions."""
+    df = _named_table([("WD1202-232", 181.361141, -23.553372, -7.0, -6.6, -6.8),
+                       ("WD1202-232", 194.944403, 27.567816, -7.2, -6.4, -6.7),
+                       ("G149-28", 194.944403, 27.567816, -7.1, -6.5, -6.6)])
+    roles = acq.resolve_roles(list(df.columns), ["Ca", "Mg", "Fe"], descriptions=VIZIER_DESC)
+    rep = {}
+    panels, _ = acq.build_panels(df, roles, elements=["Ca", "Mg", "Fe"], grouping_out=rep)
+    keys = [p.meta["object_key"] for p in panels]
+    assert keys[0] != keys[1], "the shared name must not chain two sky positions"
+    assert keys[1] == keys[2], "the co-located rows are one object"
+    assert rep["n_objects"] == 2
+    assert rep["n_designations_reused_across_objects"] == 1
+
+
+def test_rows_without_coordinates_fall_back_to_the_name():
+    df = _named_table([("GD 378", np.nan, np.nan, -7.0, -6.6, -6.8),
+                       ("GD 378", np.nan, np.nan, -7.1, -6.5, -6.9),
+                       ("GD 40", np.nan, np.nan, -7.0, -6.6, -6.8)])
+    roles = acq.resolve_roles(list(df.columns), ["Ca", "Mg", "Fe"], descriptions=VIZIER_DESC)
+    rep = {}
+    panels, _ = acq.build_panels(df, roles, elements=["Ca", "Mg", "Fe"], grouping_out=rep)
+    keys = [p.meta["object_key"] for p in panels]
+    assert keys[0] == keys[1] != keys[2]
+    assert rep["n_rows_with_coordinates"] == 0 and rep["n_objects"] == 2
+
+
+# ---------------------------------------------------------------------------
+# the measured meteorite suite
+# ---------------------------------------------------------------------------
+def _meteorite_csv(path, reference, bodies):
+    """Write a PEWDD-style ``[X/ref]`` compilation."""
+    recs = []
+    for name, klass, vals in bodies:
+        r = {"Names": name, "Class": klass}
+        for el, v in vals.items():
+            r[f"[{el}/{reference}]"] = v
+        recs.append(r)
+    pd.DataFrame(recs).to_csv(path, index=False)
+    return path
+
+
+def test_measured_suite_dedups_the_reference_files_and_drops_placeholders(tmp_path):
+    from seti.slag.family import load_measured_meteorites
+    bodies = [("Alpha", "CL", {"Si": 0.0, "Ti": -2.6, "Al": -1.1, "Cr": 34.5, "Mn": -2.4}),
+              ("Beta", "EUC", {"Si": 0.0, "Ti": -1.9, "Al": -1.3, "Cr": -2.2, "Mn": -2.5}),
+              ("Gamma", "Pall", {"Si": 0.0, "Ti": -3.1, "Al": -4.8, "Cr": -2.6, "Mn": -3.0})]
+    # the same three bodies against Fe, with [Fe/Si] = -0.1 so [X/Fe] = [X/Si] + 0.1
+    fe = []
+    for n, k, vals in bodies:
+        d = {el: v + 0.1 for el, v in vals.items()}
+        d["Fe"] = 0.0
+        fe.append((n, k, d))
+    p1 = _meteorite_csv(tmp_path / "db_Si.csv", "Si", bodies)
+    p2 = _meteorite_csv(tmp_path / "db_Fe.csv", "Fe", fe)
+    rep = {}
+    suite = load_measured_meteorites([p1, p2], report=rep)
+    assert suite is not None
+    assert rep["reference"] == "Si"
+    assert rep["n_bodies"] == 3, "the two files hold the same bodies, not six"
+    assert rep["n_cells_dropped_out_of_range"] >= 1, "+34 dex [Cr/*] is a placeholder"
+    env = suite.pair_envelope("Ti", "Al")
+    assert env["n"] == 3
+    assert env["lo"] == pytest.approx(-1.5, abs=0.02)      # Alpha:  -2.6 - (-1.1)
+    assert env["hi"] == pytest.approx(1.7, abs=0.02)       # Gamma:  -3.1 - (-4.8)
+
+
+def test_measured_meteorites_widen_a_pair_envelope_and_never_narrow_it(tmp_path):
+    from seti.slag.family import load_measured_meteorites
+    a, b = "Ti", "Al"
+    base = ratio_envelope(FAM, a, b, t_cut_max=1400.0, measured=None)
+    wide = [(f"m{i}", "Pall", {"Si": 0.0, "Ti": -3.0, "Al": -5.0 + 0.01 * i})
+            for i in range(8)]
+    suite = load_measured_meteorites([_meteorite_csv(tmp_path / "wide.csv", "Si", wide)])
+    got = ratio_envelope(FAM, a, b, t_cut_max=1400.0, measured=suite)
+    assert got["hi"] >= base["hi"] and got["lo"] <= base["lo"]
+    assert got["hi"] > base["hi"], "a pallasite-like Ti/Al must widen it"
+    assert got["envelope_source"] == "endmembers+measured"
+    assert got["endmember_hi"] == pytest.approx(base["hi"])
+    thin = load_measured_meteorites([_meteorite_csv(tmp_path / "thin.csv", "Si", wide[:3])])
+    assert ratio_envelope(FAM, a, b, measured=thin)["envelope_source"] == "endmembers"
+
+
+def test_meteorite_calibration_says_when_it_cannot_cover_the_panel(tmp_path):
+    """No suite is reported; a partly covered panel calibrates on the covered subset."""
+    from seti.slag.family import load_measured_meteorites
+    from seti.slag.sinking import TimescaleModel
+    els = ["Mg", "Al", "Si", "Ca", "Ti", "Fe", "Sc"]
+    panel = natural_panel("mantle_BSE", els, seed=7)
+    tsm = TimescaleModel(FAM)
+    s = FitSettings(n_random=40, n_refine=1, refine_maxiter=60)
+    fit = fit_panel(FAM, panel, tsm, s)
+    FAM.measured = None
+    none_cal = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=5, draw_mode="meteorite")
+    assert none_cal["status"] == "NO_MEASURED_SUITE" and none_cal["p_misfit"] is None
+    bodies = [(f"m{i}", "CL", {"Si": 0.0, "Mg": 0.03, "Al": -1.0, "Ca": -1.2, "Ti": -2.6,
+                               "Fe": -0.1}) for i in range(30)]
+    FAM.measured = load_measured_meteorites([_meteorite_csv(tmp_path / "noSc.csv", "Si", bodies)])
+    try:
+        # Sc is in no body, so it is dropped and the other six carry the p ---
+        # and the record names what was used and what was lost.
+        rec = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=5, draw_mode="meteorite")
+        assert rec["status"] == "OK"
+        assert rec["elements_not_in_suite"] == ["Sc"] and rec["elements_dropped"] == ["Sc"]
+        assert "Sc" not in rec["elements_used"] and rec["n_elements_used"] == 6
+        assert rec["p_misfit"] is not None
+        # a suite with too few bodies for ANY 4-element subset gives no p at all
+        thin = [(f"t{i}", "CL", {"Si": 0.0, "Mg": 0.03, "Al": -1.0, "Ca": -1.2})
+                for i in range(6)]
+        FAM.measured = load_measured_meteorites(
+            [_meteorite_csv(tmp_path / "thin2.csv", "Si", thin)])
+        rec2 = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=5, draw_mode="meteorite")
+        assert rec2["status"] == "TOO_FEW_BODIES_COVER_THE_PANEL"
+        assert rec2["p_misfit"] is None
+    finally:
+        FAM.measured = None
+
+
+def test_meteorite_calibration_calls_a_real_meteorite_natural(tmp_path):
+    """A panel that IS one of the drawn bodies must not come out unexplainable."""
+    from seti.slag.family import load_measured_meteorites
+    from seti.slag.sinking import TimescaleModel
+    els = ["Mg", "Al", "Si", "Ca", "Ti", "Fe"]
+    rng = np.random.default_rng(11)
+    truth = {"Si": 0.0, "Mg": 0.03, "Al": -1.02, "Ca": -1.18, "Ti": -2.58, "Fe": -0.07}
+    bodies = [(f"m{i}", "CL", {el: v + float(rng.normal(0, 0.05)) for el, v in truth.items()})
+              for i in range(40)]
+    FAM.measured = load_measured_meteorites([_meteorite_csv(tmp_path / "cl.csv", "Si", bodies)])
+    try:
+        panel = Panel(name="drawn", elements=els,
+                      values=np.array([truth[e] for e in els]) - 7.0,
+                      errors=np.full(len(els), 0.1), atmosphere="He", teff=12000.0, logg=8.0,
+                      reference="synthetic")
+        tsm = TimescaleModel(FAM)
+        s = FitSettings(n_random=60, n_refine=1, refine_maxiter=80)
+        fit = fit_panel(FAM, panel, tsm, s)
+        rec = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=30,
+                               rng=np.random.default_rng(3), draw_mode="meteorite")
+        assert rec["status"] == "OK" and rec["n_draws"] == 30
+        assert rec["n_bodies_covering_panel"] == 40
+        assert rec["p_misfit"] > 0.01, f"a real meteorite came out unexplainable: {rec}"
+    finally:
+        FAM.measured = None

@@ -171,6 +171,49 @@ acquire:
   retries: 2
   retry_backoff_s: 8.0
 
+  # Wall clock on the SVO probe ladder, per catalogue.  Each probe is short
+  # (probe_timeout_s), but the NUMBER of roots is not bounded by this channel:
+  # RegTAP contributes however many the registry publishes and the index
+  # scrape however many links it mines, so roots x 5 forms x 25 s grows without
+  # limit -- 200 roots is seven hours.  The route after it, the USNO-B1.0
+  # reconstruction, is handed max(deadline - elapsed, 60), so the only route
+  # that can restore the channel's scale gets whatever the ladder leaves it.  A
+  # ladder that cannot find a service must not consume the run that would have
+  # worked without it.  Also capped at 25% of the remaining deadline.
+  svo_probe_budget_s: 600
+
+  # An INDEPENDENT digitisation of the same POSS-I glass is the strongest kill
+  # this channel could have: a detection that a second scan of the same plate
+  # does not see is a scan artefact, not a source that vanished.  Solano+2022
+  # classified 3,592 of their 298,165 objects exactly this way (SuperCOSMOS
+  # against the USNO-B1.0-era scans), and Hambly & Blair 2024 argue the whole
+  # VASCO transient class is emulsion artefacts.
+  #
+  # Reachability is PROBED and recorded; nothing is vetoed on a route that did
+  # not answer.  And the test is asymmetric: presence confirms a plate image,
+  # while absence means something only where the second scan is demonstrably
+  # DEEPER than the magnitude claimed for the source.  A source missing from a
+  # shallower catalogue is not missing.
+  second_digitisation:
+    probe: true
+    probe_timeout_s: 25
+    discovery_keywords: ["SuperCOSMOS", "Hambly", "MNRAS/326/1279",
+                         "MNRAS/326/1295", "MNRAS/326/1315", "SSS"]
+    # WFAU serves the SuperCOSMOS Science Archive from Edinburgh, not CDS.
+    ssa_tap_urls:
+      - "http://ssa.roe.ac.uk/TAP/tap/sync"
+      - "https://ssa.roe.ac.uk/TAP/tap/sync"
+    # Literal ids a keyword sweep cannot reach, asked by name via -meta.all.
+    # GSC 2.3.2 is STScI's own scan of the Palomar/UKST plate material; which
+    # of its magnitudes come from POSS-I is NOT assumed here and must be read
+    # off the catalogue's metadata before any kill is built on it.
+    candidate_tables:
+      - table: "I/305"
+      - table: "I/305/out"
+    # Absence only counts where the second scan is this much deeper.
+    min_depth_margin_mag: 0.5
+    match_radius_arcsec: 3.0
+
 epochs:
   # POSS-I plates: 1949-1958.  Mid-survey default when a plate date is absent.
   poss1_default: 1953.0
@@ -202,6 +245,15 @@ crossmatch:
   # (spatial uniformity) that Watters et al. 2026 showed to be false.
   offset_null_arcsec: 45.0
   offset_null_realisations: 4
+  # The excess is also measured as a FUNCTION of radius, because one radius
+  # cannot separate a real counterpart population from the background: at 5"
+  # against AllWISE the matched subsample is chance-dominated by construction.
+  # Unrelated matches accumulate with the search area (chance fraction ~ r^2)
+  # while a genuine counterpart is already counted at the smallest radius, so
+  # a real population shows as an excess concentrated at small separation with
+  # a significance that PEAKS near the combined astrometric error.  Evidence
+  # only: the channel's selection radius stays radius_arcsec above.
+  excess_radii_arcsec: [1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
 
 proper_motion:
   # Largest proper motion searched for when testing "did it just move?".

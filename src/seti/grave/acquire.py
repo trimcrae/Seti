@@ -448,7 +448,10 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
                 fr3 = rec(fetch(f"{host}{path}", method=method, json_body=body,
                                 timeout=min(timeout, 30.0), retries=0),
                           f"attribute listing {path} ({method})")
-                if fr3.ok and len(fr3.content) > 40:
+                # the SPA answers 200 with its index for every unknown path, so
+                # an HTML body is "this is a client-side route", not a listing
+                is_html = "text/html" in (fr3.content_type or "") or fr3.text.lstrip()[:9].lower() == "<!doctype"
+                if fr3.ok and len(fr3.content) > 40 and not is_html:
                     ledger["attribute_endpoints"][f"{method} {host}{path}"] = {
                         "status": fr3.status, "bytes": len(fr3.content), "head": fr3.text[:4000]}
                     break
@@ -496,6 +499,9 @@ def sgp_acquire(conf: dict, *, fetch=http_fetch, show: list[str], out_dir: Path 
             d.update({"bin": [lo, hi], "page": page})
             rows = _rows_of(fr)
             d["n_rows"] = len(rows) if rows is not None else None
+            jr = fr.json() if fr.ok else None
+            if isinstance(jr, dict) and "count" in jr:
+                d["service_count"] = jr["count"]      # rows the service says match this filter
             ledger["requests"].append(d)
             if not rows:
                 stop = "empty_page" if rows is not None else f"no_rows_status_{fr.status}"
@@ -514,8 +520,11 @@ def sgp_acquire(conf: dict, *, fetch=http_fetch, show: list[str], out_dir: Path 
                 break
         else:
             stop = "max_pages_per_bin"
+        svc = [r.get("service_count") for r in ledger["requests"]
+               if r.get("bin") == [lo, hi] and r.get("service_count") is not None]
         ledger["bins"].append({"age_lo": lo, "age_hi": hi, "n_rows": nb, "n_pages": len(bin_frames),
-                               "stopped_because": stop})
+                               "stopped_because": stop, "service_count": svc[0] if svc else None,
+                               "complete": (bool(svc) and nb >= int(svc[0])) if svc else None})
         if bin_frames:
             bdf = pd.concat(bin_frames, ignore_index=True)
             if out_dir is not None:

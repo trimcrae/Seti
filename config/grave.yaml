@@ -210,6 +210,18 @@ earthchem:
       params: {keyword: shale, limit: 5}
     - url: "https://amsearch.earthchem.org/api/search"
       params: {keyword: shale, limit: 5}
+    # api.earthchem.org answers (a 146-byte HTML shell) but not at /v1/samples,
+    # so the host exists and the path is wrong: ask it to describe itself.
+    - url: "https://api.earthchem.org/openapi.json"
+      params: {}
+    - url: "https://api.earthchem.org/"
+      params: {}
+    - url: "https://api.earthchem.org/v1/search"
+      params: {keyword: shale, limit: 5}
+    - url: "https://www.earthchem.org/api/search"
+      params: {keyword: shale, limit: 5}
+    - url: "https://www.earthchem.org/api/samples"
+      params: {keyword: shale, limit: 5}
   timeout_s: 120
   page_size: 50
   max_rows: 20000                       # general pull cap (400 requests)

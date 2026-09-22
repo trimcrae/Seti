@@ -34,6 +34,8 @@ import math
 
 import numpy as np
 
+from .ephem import GM_SUN_AU3_D2
+
 #: number -> (name, sources).  Annotation only; values come from SBDB live.
 PUBLISHED_YARKOVSKY: dict[int, tuple[str, str]] = {
     101955: ("Bennu", "Chesley+2014; Farnocchia+2013; Greenberg+2020"),
@@ -60,6 +62,45 @@ PUBLISHED_YARKOVSKY: dict[int, tuple[str, str]] = {
     3200: ("Phaethon", "Hanus+2018"),
     4179: ("Toutatis", "Farnocchia+2013 (marginal)"),
 }
+
+
+#: VizieR catalogue of Greenberg, Margot, Verma, Taylor & Hodge 2020, AJ 159, 92
+#: --- 247 Yarkovsky detections, tabulating ``da/dt`` rather than ``A2``.
+GREENBERG2020_VIZIER = "J/AJ/159/92"
+
+
+def a2_from_dadt(dadt_au_per_myr, a_au, e) -> float:
+    """Convert a published semimajor-axis drift to JPL's ``A2`` (au/day^2).
+
+    The published Yarkovsky literature reports ``da/dt``; JPL's orbit solutions
+    report ``A2``.  They are the same measurement in different coordinates, and
+    the conversion is exact for JPL's ``g(r) = (1 au / r)^2``:
+
+    Gauss's planetary equation for a purely transverse acceleration ``A_T`` is
+    ``da/dt = 2 (p/r) A_T / (n sqrt(1-e^2))``.  With ``A_T = A2 (1 au/r)^2`` the
+    time average over one revolution needs ``<r^-3>_t``, which is
+    ``1/(a^3 (1-e^2)^{3/2})`` --- obtained by changing the integration variable
+    to true anomaly with ``dt = (r^2/h) df``, which leaves ``(1/Th) \\int r^-1 df``
+    and hence ``2 pi / (T h p)``.  Substituting ``p = a(1-e^2)``,
+    ``h = n a^2 sqrt(1-e^2)`` and ``T = 2 pi / n``:
+
+        da/dt = 2 A2 / (n a^2 (1 - e^2))
+
+    with ``n = sqrt(GM_sun / a^3)`` in rad/day, ``a`` in au and ``A2`` in
+    au/day^2.  Checked against Bennu, where it is not a matter of taste which
+    number is right: JPL's ``A2 = -4.6e-14 au/day^2`` maps to
+    ``-19.2e-4 au/Myr`` against the published ``-19.0 +- 0.1e-4 au/Myr``
+    (Chesley et al. 2014), i.e. 1%.
+
+    ``dadt_au_per_myr`` is in **1e-4 au/Myr**, the unit Greenberg et al. tabulate.
+    """
+    a, ecc, d = _f(a_au), _f(e), _f(dadt_au_per_myr)
+    if not (math.isfinite(a) and a > 0 and math.isfinite(ecc) and 0 <= ecc < 1
+            and math.isfinite(d)):
+        return float("nan")
+    n = math.sqrt(GM_SUN_AU3_D2 / a ** 3)                 # rad/day
+    dadt_au_day = d * 1e-4 / (1e6 * 365.25)               # 1e-4 au/Myr -> au/day
+    return dadt_au_day * n * a ** 2 * (1.0 - ecc ** 2) / 2.0
 
 
 def _f(v) -> float:

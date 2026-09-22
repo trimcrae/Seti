@@ -59,6 +59,7 @@ import numpy as np
 
 from ..loom import nongrav as NG
 from ..loom.replication import replication_tests
+from . import controls as C
 from . import ephem as E
 from . import residuals as R
 from .controls import PUBLISHED_YARKOVSKY, score_control, summarise_controls
@@ -1178,6 +1179,68 @@ def load_binaries(paths: Paths, log=print) -> BinaryCatalogue | None:
         return None
 
 
+def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
+    """Greenberg+2020 (AJ 159, 92), VizieR `J/AJ/159/92`, cached as JSON.
+
+    A control value **independent of JPL's current solution**.  The SBDB ``A2``
+    is the right primary control --- it is the same physical quantity on a
+    longer arc with the covariance the fit actually has --- but it is a fit that
+    saw Gaia DR2/DR3 astrometry.  Greenberg et al. published ``da/dt`` from
+    247 objects' optical and radar astrometry, and :func:`controls.a2_from_dadt`
+    maps it to ``A2`` exactly for JPL's ``g(r)``.  Where the two disagree, the
+    disagreement is itself information about the control and is reported.
+
+    Unreachable VizieR returns ``{}``: the run then scores its controls against
+    SBDB alone and says so.  It never invents a published value.
+    """
+    p = paths.results / "controls_greenberg2020.json"
+    if p.exists():
+        try:
+            rec = json.loads(p.read_text())
+            return {int(k): v for k, v in (rec.get("rows") or {}).items()}
+        except Exception:                                      # noqa: BLE001
+            pass
+    try:
+        from astroquery.vizier import Vizier
+
+        tabs = Vizier(row_limit=-1).get_catalogs(C.GREENBERG2020_VIZIER)
+        rows: dict[int, dict] = {}
+        for t in tabs:
+            names = {c.lower(): c for c in t.colnames}
+            num_c = next((names[k] for k in ("number", "num", "no", "mp", "aster")
+                          if k in names), None)
+            # da/dt is tabulated as `dadt` or `da/dt`; its sigma as `e_dadt`.
+            dadt_c = next((c for c in t.colnames
+                           if c.lower().replace("/", "").replace("_", "") == "dadt"), None)
+            err_c = next((c for c in t.colnames
+                          if c.lower().replace("/", "").replace("_", "") in
+                          ("edadt", "sigmadadt", "sdadt")), None)
+            if num_c is None or dadt_c is None:
+                continue
+            for r in t:
+                try:
+                    n = int(r[num_c])
+                except (TypeError, ValueError):
+                    continue
+                d = {"dadt_1e4_au_per_myr": _f(r[dadt_c]),
+                     "dadt_sigma_1e4_au_per_myr": _f(r[err_c]) if err_c else float("nan")}
+                for extra, key in (("a", "a_au"), ("e", "e"), ("H", "h")):
+                    if extra in names.values() or extra in t.colnames:
+                        d[key] = _f(r[extra])
+                if math.isfinite(d["dadt_1e4_au_per_myr"]):
+                    rows[n] = d
+        rec = {"rows": {str(k): v for k, v in rows.items()}, "retrieved_utc": _utc(),
+               "n_rows": len(rows), "vizier": C.GREENBERG2020_VIZIER,
+               "reference": "Greenberg, Margot, Verma, Taylor & Hodge 2020, AJ 159, 92"}
+        E.save_json(p, rec)
+        log(f"Yarkovsky control catalogue: {len(rows)} da/dt values from VizieR "
+            f"{C.GREENBERG2020_VIZIER}")
+        return rows
+    except Exception as exc:                                  # noqa: BLE001
+        log(f"Yarkovsky control catalogue unavailable: {type(exc).__name__}: {exc}"[:200])
+        return {}
+
+
 def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
                 log=print, gaia=None, client=None, route: str | None = None,
                 max_objects: int | None = None, commit_hook=None) -> dict:
@@ -1364,7 +1427,8 @@ def strata_labels(df, n_bins: int = 4) -> np.ndarray:
     return hb * 100 + tb * 10 + ab
 
 
-def assess_frame(df, conf: dict, details: dict | None = None) -> dict:
+def assess_frame(df, conf: dict, details: dict | None = None,
+                 yarkovsky: dict[int, dict] | None = None) -> dict:
     """The assessment on the gathered per-object table (pure)."""
     out: dict = {"n_objects": int(len(df))}
     if len(df) == 0:
@@ -1429,7 +1493,16 @@ def assess_frame(df, conf: dict, details: dict | None = None) -> dict:
                 dist[f"spearman_abs_z_vs_{col}"] = float(rho)
     out["a2_distribution"] = dist
     # Controls.
-    ctrl = fitted[fitted["is_control"].astype(float) > 0] if "is_control" in fitted else fitted.iloc[0:0]
+    yark = yarkovsky or {}
+    # An object is a control if JPL fits an A2 at S/N >= 3 OR Greenberg+2020
+    # published a da/dt for it.  The second clause matters: it adds controls
+    # whose published detection does not depend on the same fit being consulted
+    # as the truth, and it keeps the estimator exercised if SBDB is unreachable.
+    is_ctrl = fitted["is_control"].astype(float) > 0 if "is_control" in fitted else None
+    if yark and "number_mp" in fitted:
+        in_yark = fitted["number_mp"].astype(int).isin(list(yark)).to_numpy()
+        is_ctrl = in_yark if is_ctrl is None else (is_ctrl.to_numpy() | in_yark)
+    ctrl = fitted[is_ctrl] if is_ctrl is not None else fitted.iloc[0:0]
     scored = []
     for _, r in ctrl.iterrows():
         s = score_control(r.get("a2"), r.get("a2_err"), r.get("jpl_a2"), r.get("jpl_a2_sigma"),
@@ -1445,12 +1518,41 @@ def assess_frame(df, conf: dict, details: dict | None = None) -> dict:
                 s["pinned"] = score_control(d.get("pinned_a2"), d.get("pinned_a2_err"),
                                             r.get("jpl_a2"), r.get("jpl_a2_sigma"),
                                             min_snr=float(conf["min_snr_detection"]))
+        # The independent published control, where Greenberg+2020 has one.
+        g = yark.get(int(r["number_mp"]))
+        if g:
+            a_au = _f(g.get("a_au")) if _fin(g.get("a_au")) else _f(r.get("a"))
+            ecc = _f(g.get("e")) if _fin(g.get("e")) else _f(r.get("e"))
+            pa2 = C.a2_from_dadt(g.get("dadt_1e4_au_per_myr"), a_au, ecc)
+            psig = abs(C.a2_from_dadt(g.get("dadt_sigma_1e4_au_per_myr"), a_au, ecc))
+            s["published_a2"] = pa2
+            s["published_a2_sigma"] = psig if math.isfinite(psig) and psig > 0 else float("nan")
+            s["published_dadt_1e4_au_per_myr"] = _f(g.get("dadt_1e4_au_per_myr"))
+            s["published_source"] = "Greenberg+2020 AJ 159, 92"
+            if math.isfinite(pa2):
+                s["vs_published"] = score_control(
+                    r.get("a2"), r.get("a2_err"), pa2, s["published_a2_sigma"],
+                    min_snr=float(conf["min_snr_detection"]))
+                jp = _f(r.get("jpl_a2"))
+                # Do the two *published* control values agree with each other?
+                # If they do not, the control itself is in question before the fit is.
+                s["published_vs_jpl_ratio"] = (pa2 / jp if math.isfinite(jp) and jp != 0
+                                               else float("nan"))
         scored.append(s)
     controls = summarise_controls(scored)
     controls["scored"] = scored
     pinned = [s["pinned"] for s in scored if s.get("pinned")]
     if pinned:
         controls["pinned_route"] = summarise_controls(pinned)
+    vs_pub = [s["vs_published"] for s in scored if s.get("vs_published")]
+    if vs_pub:
+        controls["against_greenberg2020"] = summarise_controls(vs_pub)
+        ratios = [s["published_vs_jpl_ratio"] for s in scored
+                  if _fin(s.get("published_vs_jpl_ratio"))]
+        if ratios:
+            controls["published_vs_jpl_ratio_median"] = float(np.median(ratios))
+            controls["n_published_vs_jpl_compared"] = len(ratios)
+    controls["n_greenberg2020_rows"] = len(yark)
     out["controls"] = controls
     # Exceedances and their vetting.
     exc_mask = (fitted["tier"].isin(["watch", "interest", "candidate"])
@@ -1529,7 +1631,7 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
                                "finished_utc": j.get("finished_utc")})
         except Exception as exc:                              # noqa: BLE001
             shard_meta.append({"file": f.name, "error": str(exc)[:120]})
-    out = assess_frame(df, conf, details)
+    out = assess_frame(df, conf, details, yarkovsky=load_yarkovsky_catalogue(paths, log=log))
     out["shards"] = shard_meta
     out["shard_files"] = [f.name for f in files]
     out["assessed_utc"] = _utc()

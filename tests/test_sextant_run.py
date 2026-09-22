@@ -17,7 +17,7 @@ import pytest
 from seti.sextant import ephem as E
 from seti.sextant import residuals as R
 from seti.sextant import run as RUN
-from seti.sextant.controls import score_control, summarise_controls
+from seti.sextant.controls import a2_from_dadt, score_control, summarise_controls
 from test_sextant_residuals import JD0, make_observations
 
 MU = E.GM_SUN_AU3_D2
@@ -432,6 +432,51 @@ def test_assessment_with_a_sign_flipped_estimator_flags_the_run():
     out = RUN.assess_frame(df, CONF)
     assert out["controls"]["verdict"] == "CONTROLS_FAILED_SIGN"
     assert out["verdict"].startswith("ESTIMATOR_FAILS_CONTROLS")
+
+
+def test_dadt_to_a2_conversion_reproduces_bennu():
+    """The published literature reports ``da/dt``; JPL reports ``A2``.
+
+    Bennu is where the two are both known to better than a per cent: Chesley
+    et al. 2014 measured ``da/dt = -19.0 +- 0.1e-4 au/Myr`` and JPL's solution
+    carries ``A2 = -4.6e-14 au/day^2``.  If the conversion in
+    :func:`controls.a2_from_dadt` were wrong by the orbit-averaging factor ---
+    the easy error, since ``<r^-3>`` is not ``<r>^-3`` --- this test fails by
+    more than an order of magnitude, and every Greenberg+2020 control would be
+    scored against a wrong truth.
+    """
+    a2 = a2_from_dadt(-19.0, 1.1264, 0.2037)
+    assert a2 < 0
+    assert abs(a2 / -4.6e-14 - 1.0) < 0.05
+    # Sign and linearity, and a refusal on nonsense rather than a silent number.
+    assert a2_from_dadt(+19.0, 1.1264, 0.2037) == pytest.approx(-a2)
+    assert a2_from_dadt(-38.0, 1.1264, 0.2037) == pytest.approx(2 * a2)
+    assert not math.isfinite(a2_from_dadt(-19.0, float("nan"), 0.2))
+    assert not math.isfinite(a2_from_dadt(-19.0, 1.1, 1.4))     # e >= 1
+
+
+def test_greenberg_controls_are_scored_independently_of_jpl():
+    """A published da/dt is a control even where SBDB carries no A2."""
+    df = _table(n_controls=6)
+    # Object 200 has no JPL solution at all; Greenberg published a drift for it.
+    k = df.index[df["number_mp"] == 200][0]
+    a_au, ecc = float(df.loc[k, "a"]), float(df.loc[k, "e"])
+    truth = a2_from_dadt(-8.0, a_au, ecc)
+    df.loc[k, "a2"] = truth
+    df.loc[k, "a2_err"] = abs(truth) / 8.0
+    df.loc[k, "a2_snr"] = 8.0
+    yark = {200: {"dadt_1e4_au_per_myr": -8.0, "dadt_sigma_1e4_au_per_myr": -0.8,
+                  "a_au": a_au, "e": ecc}}
+    out = RUN.assess_frame(df, CONF, yarkovsky=yark)
+    c = out["controls"]
+    assert c["n_controls"] == 7                    # the six JPL ones plus this
+    assert c["n_greenberg2020_rows"] == 1
+    got = next(s for s in c["scored"] if s["number_mp"] == 200)
+    assert got["published_source"].startswith("Greenberg+2020")
+    assert got["vs_published"]["verdict"] == "RECOVERED"
+    assert c["against_greenberg2020"]["verdict"] == "CONTROLS_RECOVERED"
+    # An unreachable VizieR must not invent one.
+    assert RUN.assess_frame(df, CONF)["controls"]["n_greenberg2020_rows"] == 0
 
 
 def test_assessment_degrades_honestly_on_an_empty_table():

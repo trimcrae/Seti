@@ -270,6 +270,30 @@ def test_upload_chunks_shrink_toward_the_ecliptic_poles():
     assert set(pd.concat(c_nep)["source_id"]) == set(nep["source_id"])
 
 
+def test_a_tiles_shard_never_screens_the_fields_mode_parent(tmp_path):
+    """A shard whose every tile failed must screen NOTHING, not somebody else's stars.
+
+    `parent.parquet` is a fields/allsky sample over different sky.  A tiles
+    shard is identified by its own ``sweep_{tag}.json``, and for such a shard
+    that file is not a fallback: an empty frame is the honest answer.
+    """
+    import json as _json
+
+    from seti.ignition.run import _shard_parent
+
+    out = tmp_path
+    _gaia_rows(8).to_parquet(out / "parent.parquet", index=False)
+    # No sweep record: this is a fields-mode shard, and it takes its rows.
+    assert len(_shard_parent(out, 0, 2)) == 4
+    # Its own tiles-mode parent wins when it exists.
+    _gaia_rows(3).to_parquet(out / "parent_s0of2.parquet", index=False)
+    assert len(_shard_parent(out, 0, 2)) == 3
+    # And a tiles shard that produced no parent of its own gets nothing.
+    (out / "parent_s1of2.parquet").unlink(missing_ok=True)
+    (out / "sweep_s1of2.json").write_text(_json.dumps({"stage": "sweep", "tiles": []}))
+    assert len(_shard_parent(out, 1, 2)) == 0
+
+
 def test_group_by_star_is_exact_at_high_declination():
     """A flat (ra cos dec, dec) tree with one cos dec is 10 % off in RA across a
     4-degree tile at dec 60; the unit-vector match is not."""

@@ -570,10 +570,19 @@ def _resolve_route(conf: dict, out: Path, route: str | None) -> tuple[str, str |
 
 
 def _shard_parent(out: Path, shard: int, n_shards: int) -> pd.DataFrame:
-    """The shard's stars: its own tiles-mode parent if present, else its rows of the run's."""
+    """The shard's stars: its own tiles-mode parent if present, else its rows of the run's.
+
+    A shard that swept tiles is identified by its ``sweep_{tag}.json``, and for
+    such a shard the run-level ``parent.parquet`` is **not** a fallback: that
+    file belongs to a fields/allsky sample over different sky, and a shard whose
+    every tile failed must screen *nothing*, not somebody else's stars.  An
+    empty frame here is the honest answer and the screen reports ``NO_EPOCHS``.
+    """
     tag = _tag(shard, n_shards)
     if (out / f"parent_{tag}.parquet").exists():
         return _load_parent(out, tag)
+    if (out / f"sweep_{tag}.json").exists():
+        return pd.DataFrame()
     return shard_rows(_load_parent(out), shard, n_shards)
 
 

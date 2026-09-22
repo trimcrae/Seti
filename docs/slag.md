@@ -179,6 +179,19 @@ assumed: PEWDD publishes its own `total_detections`, and "error < 0 means not
 a detection" reproduces it on all 3475 rows. That agreement is recomputed
 every run (`summary.json["limit_bookkeeping"]`).
 
+**The PyllutedWD grids were fetched and silently ignored.** All twelve
+`data/timescales_*.csv` files downloaded with status OK, and
+`acquire.json["timescales"]["parsed"]` was `{}` — the parser recognised none
+of them and said nothing about why, so the run looked healthy while quietly
+using a different timescale source. A file that does not parse now records
+`parse_diagnosis` (its row keys, row widths, the temperature grid it found and
+which of the three conditions failed) and keeps its raw text under
+`results/slag/data/timescales_raw_*`, so the real layout is readable from the
+committed artifacts without refetching. This costs the channel nothing
+scientifically — the source actually used, PEWDD's own per-star `SinTime*`
+columns, is measured on these very stars and is the better one (below) — but
+an unexplained silent fallback is not acceptable in the record.
+
 **The sinking timescales are in the catalogue.** PEWDD publishes τ_Z per star
 per element (`SinTimeCa`, …) for that star's own structure. Where a row has
 them for the whole panel they are used verbatim. They also calibrate the

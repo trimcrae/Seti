@@ -298,6 +298,49 @@ def _parse_transposed(text: str) -> pd.DataFrame | None:
     return pd.DataFrame(out)
 
 
+def describe_timescale_text(text: str, *, max_keys: int = 25) -> dict:
+    """Why a timescale file did not parse, in terms of what it actually holds.
+
+    A file that is fetched and then silently ignored is the worst kind of
+    degradation: the run looks healthy and quietly uses a different timescale
+    source.  This reports the row keys, the row widths and the temperature
+    grid it found, which is enough to see the real layout from the committed
+    JSON without refetching anything.
+    """
+    lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    keys, widths, grid_n = [], [], None
+    n_numeric_rows = 0
+    for ln in lines:
+        if ln.startswith("#"):
+            continue
+        cells = [c.strip() for c in ln.split(",")]
+        if len(cells) < 4:
+            continue
+        key = cells[0].rstrip(":").strip()
+        try:
+            vals = [float(c) for c in cells[1:] if c not in ("", "--")]
+        except ValueError:
+            keys.append(key + " (non-numeric)")
+            continue
+        n_numeric_rows += 1
+        if key and re.fullmatch(r"(?i)t|teff|temp", key) and grid_n is None:
+            grid_n = len(vals)
+        keys.append(key)
+        widths.append(len(vals))
+    element_keys = [k for k in keys if re.fullmatch(r"[A-Z][a-z]?", k)]
+    return {"n_lines": len(lines), "n_numeric_rows": n_numeric_rows,
+            "row_keys": keys[:max_keys], "n_row_keys": len(keys),
+            "element_like_keys": element_keys[:max_keys],
+            "n_element_like_keys": len(element_keys),
+            "temperature_grid_n": grid_n,
+            "distinct_row_widths": sorted(set(widths))[:10],
+            "reason": ("no T:/Teff row found" if grid_n is None else
+                       "fewer than 3 element-named rows" if len(element_keys) < 3 else
+                       "element rows do not match the temperature grid width"
+                       if all(w != grid_n for w in widths) else
+                       "recognised rows, but fewer than 3 matched the grid width")}
+
+
 #: Above this an element's tabulated value is a timescale in seconds or years;
 #: below it, it is already a base-10 logarithm.  Koester's grids run from
 #: ~1e4 s to ~1e15 s, so no linear timescale is ever this small and no log one
@@ -397,5 +440,6 @@ def phase_grid(t_acc_range=(0.01, 30.0), t_dec_range=(0.0, 5.0), n_acc: int = 7,
 
 
 __all__ = ["PHASE_DECLINING", "PHASE_EARLY", "PHASE_STEADY", "SCALING", "SIGMA_ROW_DEX",
-           "SOURCE_ROW", "SOURCE_SCALING", "SOURCE_TABLE", "TABULATED", "TimescaleModel", "parse_timescale_table", "phase_grid",
+           "SOURCE_ROW", "SOURCE_SCALING", "SOURCE_TABLE", "TABULATED", "TimescaleModel",
+           "describe_timescale_text", "parse_timescale_table", "phase_grid",
            "phase_label", "phase_log_factor"]

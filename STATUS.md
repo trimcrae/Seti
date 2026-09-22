@@ -58,6 +58,57 @@ what the runner installs, not the sandbox's pandas 2.3.3.
 Run `35744896637` failed in two seconds because the free-disk step deleted
 `$AGENT_TOOLSDIRECTORY`, which is where `setup-python` had put the
 interpreter the package was installed into; fixed.
+### CRADLE is on the sky: eight shards acquiring, and three ways the verdict could have been faked, 2026-09-22
+
+**State at 11:40 a.m. EDT.** Run **35741356662** (`stage=all`, 8 acquire shards
+over the 768 level-3 HEALPix pixels, 4 ages shards) has shards 0, 1 and 3
+querying the ESA Gaia mirror; 5 remain queued behind an Actions queue that
+reached 73 runs. Run **35745911273** (`stage=probe`, dispatched 11:14 a.m. on
+the fixed commit) is still queued. `results/cradle/summary.json` is **not
+written**: the channel's state is *measuring*, not `NO_CRADLE_CANDIDATE`.
+
+**The probe never touched an archive.** Its job reached a runner at 11:03 and
+died at 11:05 on its own offline gate — `pd.to_numeric(errors="ignore")`,
+removed in the pandas 3 the runner installs while the sandbox holds 2.3.3. The
+archive step was `skipped`, the artifact upload warned "No files were found",
+and the eight acquire shards therefore started with **no `probe.json` and no
+measured join shape**. (Now repo-wide as `channel-brief.md` §0.5.)
+
+Three further faults were found and fixed while the shards queued. None of them
+changes a number; each decides whether the number is honest or measured at all.
+
+* **A refused join shape cost one timeout per unit, not one per shard.** The
+  probe measures the shapes on *one* pixel and `acquire` took its answer as a
+  fixed order for all 96 units — and this run has no such answer. The loop now
+  promotes the shape that actually answered and records `shapes_planned`, the
+  running `shapes` and every `shape_relearned` event.
+* **One pathological pixel could outlast its job.** A timed-out unit splits to
+  level 6: unbounded, `1 + 4 + 16 + 64 = 85` queries at 1200 s each — 28 hours
+  inside a 350-minute job, losing every unit not yet reached. `fetch_unit` now
+  carries the shard's deadline through the recursion and reports
+  `deadline_exceeded`, which surfaces as `coverage.n_units_deadline_exceeded`
+  and a named `DEGRADED` reason.
+* **A star the locus will not place read as a star with no excess.** The
+  empirical photosphere refuses to extrapolate, so a star outside every
+  well-populated colour bin gets a NaN `chi` and fails `excess_significant` for
+  exactly the reason a quiet star does. On a partial sky the bins are thin, so
+  that silence would have read as a clean null. `screen` now counts
+  `n_photosphere_assigned` and `n_no_photosphere_locus_refused` apart, and
+  `assess` raises `DEGRADED (locus_refused_photosphere:n/m)` past a fifth.
+
+The suite is 30/30 under **both** pandas 2.3.3 and 3.0.6 (`pip install --target
+<dir> "pandas>=3"`, `PYTHONPATH=<dir>:src pytest`), ruff clean, merged to main.
+
+**What to read first when the runs land**, in this order: `probe.json` —
+which of the three Gaia×AllWISE join shapes answers (IGNITION's flat-join
+failure is the risk), whether BD+20 307, TYC 4479-3-1 and HD 15407A resolve and
+return *through the join*, and whether `irs_enhv211` and each VizieR table
+exist. Then `screen.json`'s funnel, where `n_no_photosphere_locus_refused`
+against `n_ks_present` says whether a thin result is the sky or the bins.
+Expect `IN_CELL_AGE_UNDETERMINED` to be the modal outcome for anything
+interesting: gyrochronology's catalogue coverage is two Kepler/K2 fields
+against an all-sky parent, and a star with one age indicator is never a
+candidate.
 
 ### RING dispatched at last, after the runner's pandas ate the pulsar leg, 2026-09-22
 
@@ -246,8 +297,9 @@ WD 1214+032 (PEWDD serves it as `WD 1212-022`).
 
 **In flight: run 35747793625** on `claude/goap-slag`, `slag-solo.yml`,
 `stage=all`. The sharded `slag.yml` needs to win a runner slot six times in
-sequence and twice failed to start at all (35739746529's screen matrix, then
-35745205866, which sat 52 minutes without its first job); the solo workflow
+sequence and twice failed to get through it (35739746529's eight screen jobs
+were still queued 30 minutes after its acquire job finished; 35745205866 had
+not started a single job 22 minutes after dispatch); the solo workflow
 does the same work in one job on one slot, which is affordable because only
 168 of 3,547 panels reach the 5-element floor and carry the calibration cost.
 No `results/slag/summary.json` exists yet — the verdict line stays empty until
@@ -255,6 +307,48 @@ that run commits one.
 
 Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
 the runner installs), per `docs/channel-brief.md` §0 item 5.
+### GROWTH direct: the TIC repair is confirmed on the runner, and the method recovers Kepler-1520 b, 2026-09-22
+
+Shard 12 of run 35738702139 ran with the fixes; shard 1 ran without them. Same
+pipeline, same target list, one shard apart:
+
+| | shard 01 (before) | shard 12 (after) |
+|---|---|---|
+| stars with TESS products | 115 of 213 — **54 %** | 178 of 203 — **88 %** |
+| stars serving nothing | 98 | 25 |
+| planets with a fitted depth (both families) | 3 | **19** |
+| `consistent` / `shallower_tess` | 3 / 0 | 16 / 3 |
+
+`n_tic_suspect_truncation = 85`, `n_tic_repaired = 79`. The route breakdown of
+shard 12's measured rows says how bad the catalogue id was: **98** rows came
+through `tic_kic_crossid_over_name_planet` — the sky disagreed with the
+catalogue TIC and won — against only **8** `_confirms_`. So of the suspect ids
+checked, 98 of 106 were in fact wrong. Every one of those was either a star
+that would have been recorded as a non-detection, or worse, a star whose light
+curve would have been fitted as the target's.
+
+**A positive control fell out of it.** `K03794.01` is **Kepler-1520 b**
+(KIC 12557548), the disintegrating planet whose dust tail makes its transit
+depth vary from transit to transit — the one KOI in the catalogue that is
+*known* to change depth. The stage found it unprompted: PDCSAP 3,529 ± 580 ppm
+and SAP 2,938 ± 414 ppm against a Kepler depth of 6,088 ppm in the TESS band,
+i.e. z = −3.17 and −4.87, shallower in **both** families. It is vetoed
+(`duration_not_fixed_b`: its duration tracks impact parameter) and it is a
+known natural mechanism, so it is not a candidate — but a depth-change search
+that could not see Kepler-1520 b would not be worth running, and this one sees
+it without being told where to look.
+
+**The Kepler-718 b discriminator holds across the population.** Shard 12:
+`background_direction` is **116 `PDC_DEEPER_THAN_SAP` against 21
+`SAP_DEEPER_THAN_PDC`** — crowding's direction, since a bigger aperture admits
+more contaminating light and raw SAP must read shallower. The three
+`shallower_tess` rows (`K00607.01`, `K03689.01`, `K00199.01`/Kepler-490 b) are
+that effect at its strongest: PDCSAP agrees with Kepler to within 0.1σ while
+SAP reads 8.7–18.5σ shallower. They are dilution, not shrinkage, and they are
+classed accordingly.
+
+**Zero growth candidates so far**, on any row: `would_be_candidate_without_vetoes`
+is False for all 255 of shard 12. Nothing is being claimed.
 
 ### GROWTH direct: the scale step is running, and a format string was holding it to 40 %, 2026-09-22
 
@@ -944,9 +1038,46 @@ sample size (~150 stars with any interferometric excess, far fewer with an
 N-band measurement). A star with no N-band measurement is `N_UNTESTED` and is
 never a candidate; `NO_PLANCK_CONSISTENT_OUTLIER` is a count, not a limit.
 
+**Two things the channel claimed but did not do, both now fixed.**
+
+1. *The polarimetric null was a field, not a capability.*
+   `StarContext.polarimetry_limit_ppm` was declared and never populated: the
+   acquire stage skipped every non-excess role as "recorded only". It is now
+   fetched from VizieR, keyed to the sample, and carried per star. It stays
+   **out** of the likelihood ratio on physical grounds — both families emit
+   thermally at H/K (1500 K peaks near 1.9 µm), so a polarisation limit
+   constrains the *scattered-light* fraction, a different axis from the
+   emissivity law, and folding it into χ² would let a constraint that cannot
+   separate the two families look like evidence that can. On a survivor it is
+   a real follow-up discriminant, which is where it is attached.
+2. *The ranked list — the actual deliverable — was not emitted.* The summary
+   carried a candidate subset and a tier histogram. Since nano-grain physics
+   is expected to win wherever K and N both constrain, that list is usually
+   empty on real data, and the channel would have read as having found
+   nothing when it had in fact placed the whole tested population between the
+   two families. `planck_ranking.csv` / `.json` now carry every
+   Planck-testable star ordered by Δχ². "Planck-testable" is both legs: an
+   H/K detection to extrapolate *from* **and** an N-band measurement. The
+   first cut ranked every star with an N band, which let ε Eri — N measured,
+   no NIR detection — into the list on a NaN. A star the test never applied
+   to must not appear in a list that reads as the test's output.
+
+**Version discipline** (per the repo-wide warning). The sandbox holds pandas
+2.3.3; the runner installs 3.0.6. FORGE was run in an isolated 3.0.6 / numpy
+2.4.6 / pyarrow 25.0.1 interpreter: **33/33 pass**, and 32/32 at the commit
+the dispatch is pinned to. No `errors="ignore"`, `DataFrame.append`,
+`iteritems` or `applymap` in the package. The runner's own offline gate then
+passed at 11:36 EDT, so the detector recovers the injected swarm *on the
+runner*, not just locally.
+
+Run 35744731075 started 11:36 EDT after 1 h 32 m queued behind a saturated
+runner pool, cleared its gate, and is in the probe stage against live VizieR.
+
 Next decisive action: read `results/forge/` from 35744731075 — `probe.json`
-first, for which of the nine VizieR ids actually resolved — then dispatch the
-broadband population leg (`skip_population=false`) separately.
+first, for which of the nine VizieR ids actually resolved — then re-dispatch
+on the current head (the run is pinned to a commit that predates the
+polarimetry fetch and the ranking), and run the broadband population leg
+(`skip_population=false`) separately.
 
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 

@@ -10,6 +10,71 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ULINE: both stated limits removed — the five uncatalogued species are now predicted, and the Crockett table is sought over four more doors, 2026-09-22
+
+S54 (`docs/uline.md`). The channel's previous verdict was `NO_PATTERN` over 80
+U-lines from two IRC+10216 surveys, bounded by two limits. Both are now
+addressed; run **35748462805** (`stage=full`, 2,000 shift trials, branch
+`claude/goap-uline`) is the dispatch that measures the result. Three earlier
+dispatches (35744910528, 35745307702, 35746448791) were cancelled *by this
+session while still queued*, each superseded by a correctness fix below; no
+runner time was consumed.
+
+**Limit 1 — five species were never searched.** CF₂Cl₂, CFCl₃, SO₂F₂, CHClF₂
+and CF₂ have no JPL or CDMS entry, and are the most diagnostic precisely
+because they are long-lived and purely artificial. `src/seti/uline/rotor.py`
+now predicts their spectra from a **Watson A-reduced asymmetric-top
+Hamiltonian** with quartic and sextic distortion, Wang-block diagonalisation,
+Clebsch–Gordan line strengths reducing exactly to the symmetric-top limit, and
+nuclear-spin weights; constants for all five (both Cl isotopologues where
+relevant), each `verify` with a citation and an uncertainty class, are in
+`src/seti/data_assets/rotor_constants.yaml`. Validation is a runner
+measurement, not a claim: SO₂, CH₂F₂ and COF₂ are compared line by line with
+their catalogue entries and then refitted, so `rotor_validation.json`
+separates the error of the *constants* from the floor of the *Hamiltonian*,
+and re-predicts with the quartic terms zeroed to measure the
+distortion-truncation error directly.
+
+**What that measurement already says.** The catalogue gap is closed; the
+**constants** gap is not. In the IRC+10216 2 mm band, against a 15 MHz
+linewidth, the median predicted-frequency error is CF₂Cl₂ 138 MHz (×9),
+SO₂F₂ 146 (×10), CF₂ 92 (×6), CHClF₂ 677 (×45), CFCl₃ 1,430 (×95) — the last
+two `FREQUENCY_LIMITED`. That is reported per pair as `searchability` and
+rolled up as `targets_frequency_limited`, with the remedy named: **the
+published quartic constants, not more data.** Those figures are after an
+audit that raised two recalled A/B/C uncertainties (CFCl₃ 0.5 → 21 MHz,
+CHClF₂ 0.5 → 13 MHz) to the disagreement with their own structure estimate —
+an error bound that is too small manufactures coincidences, because the match
+tolerance is max(linewidth, σ_pred, σ_U).
+
+**A `verify` line can no longer make a candidate.** A pattern resting only on
+reconstructed constants now yields `PATTERN_CANDIDATE_VERIFY_CONSTANTS`, with
+the pairs named; `PATTERN_CANDIDATE` is reserved for a catalogued line list.
+
+**Limit 2 — the one U-line list with intensities.** Crockett+2014 (Orion KL,
+~1,730 U-lines) is measured absent from VizieR on three routes. It is now
+sought over four more, each recorded with what it answered: the IOP CDN
+revision directory, the article's `suppdata` directory (which serves
+`*_ascii.txt` as well as `*_mrt.txt`), the CDS ftp mirror and IRSA's HEXOS
+delivery. Three ladder bugs that would have cost it were found and fixed: a
+short directory listing was discarded before its links were read (the 200-byte
+data-file floor applied to index pages); every failed door was logged as "no
+body after retries" instead of its own 403/404 text; and a row whose last
+column was blank — exactly the U-lines with no measured intensity — was
+dropped entirely, which would have biased the LTE test towards complete rows.
+New sources: Sgr B2(N)+(M) Belloche+2013 (`J/A+A/559/A47`). The U-line
+**census** was also asking the wrong question — it inherited each source's own
+description terms, so 78 tables came back of which ~70 were Orion *star*
+catalogues and Chandra "unidentified sources"; it now runs once over
+`TAP_SCHEMA.columns` on phrases only a spectral U-line table carries.
+
+**Next decisive action.** Read run 35748462805's `literature.json`: if it
+returns the published quartic sets for CHClF₂ and CFCl₃, promote them into
+`rotor_constants.yaml` (a commit, never an automatic overwrite) and re-run —
+that is the single step that turns two `FREQUENCY_LIMITED` species into
+searchable ones. Then enable whatever the U-line census names, each with its
+own v_LSR and linewidth.
+
 ### CRYPT built: the thermal and radar axes of the lunar-PSR artifact search, 2026-09-22
 
 S55 (`docs/crypt.md`). Every executed search for artifacts in permanently

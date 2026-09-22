@@ -372,13 +372,25 @@ def extragalactic_gate(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 # 6. Galactic cirrus
 # --------------------------------------------------------------------------
 
-def cirrus_gate(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+def cirrus_gate(df: pd.DataFrame, cfg: dict, *, untested_ok: bool = False) -> pd.DataFrame:
     """Reject sightlines where the 12/22 um background is Galactic cirrus.
 
     Per-object: an SFD reddening above the threshold, or a low Galactic latitude,
     means the WISE long-band flux is dominated by diffuse emission rather than by
     the star.  ``ebv_sfd`` is fetched per candidate on the runner; where it is
     absent the object is marked untested rather than passed.
+
+    ``untested_ok`` decides what "untested" costs, and the two call sites want
+    opposite things.  In the main gauntlet the reddening has not been fetched
+    yet -- it is a per-candidate lookup that only ``stage_followup`` does -- so
+    a strict gate rejects every row for a value nobody has looked up, and the
+    funnel empties before the cut that decides it is applied (run 35737257465:
+    1,764 of 1,764 "galactic_cirrus", ``ebv_sfd`` entirely null).  There the
+    gate defers: ``untested_ok=True``, only a reddening that is present AND
+    over threshold rejects.  At follow-up the lookup has been attempted, so a
+    still-untested candidate must NOT be called surviving: ``untested_ok``
+    stays False and absence rejects.  Either way ``cirrus_tested`` records
+    which rows carry a real measurement.
     """
     c = cfg["cirrus"]
     out = pd.DataFrame(index=df.index)
@@ -389,8 +401,12 @@ def cirrus_gate(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 
     out["ebv_sfd"] = ebv
     out["cirrus_tested"] = ebv.notna()
-    out["ebv_ok"] = (ebv <= c["max_ebv_sfd"]).fillna(False)
-    out["gal_lat_ok"] = (b.abs() >= c["min_gal_lat_deg"]).fillna(False)
+    if untested_ok:
+        out["ebv_ok"] = ~(ebv > c["max_ebv_sfd"]).fillna(False)
+        out["gal_lat_ok"] = ~(b.abs() < c["min_gal_lat_deg"]).fillna(False)
+    else:
+        out["ebv_ok"] = (ebv <= c["max_ebv_sfd"]).fillna(False)
+        out["gal_lat_ok"] = (b.abs() >= c["min_gal_lat_deg"]).fillna(False)
     out["cirrus_ok"] = out["ebv_ok"] & out["gal_lat_ok"]
     return out
 
@@ -668,7 +684,9 @@ def vet(df: pd.DataFrame, cfg: dict, sample_cfg: dict,
                   companion_gate(df, excess_cfg),
                   astrometry_gate(df, cfg["astrometry"]),
                   extragalactic_gate(df, cfg),
-                  cirrus_gate(df, cfg),
+                  # Deferred: the reddening is a per-candidate lookup that has
+                  # not happened yet at this stage (see cirrus_gate).
+                  cirrus_gate(df, cfg, untested_ok=True),
                   globular_cluster_veto(df, cfg),
                   impostor_gate(df, sample_cfg)):
         for c in frame.columns:
@@ -680,7 +698,10 @@ def vet(df: pd.DataFrame, cfg: dict, sample_cfg: dict,
     # The sample's whole point: the host must have no natural reservoir.  A star
     # that is neither metal-poor nor halo-kinematic is not part of the claim even
     # if its excess is real.
-    feh = pd.to_numeric(out.get("feh"), errors="coerce")
+    # _num, not DataFrame.get: a missing column comes back as None and
+    # pd.to_numeric collapses that to a scalar, so the comparison below is a
+    # bare numpy bool and .fillna raises.
+    feh = _num(out, "feh")
     metal_poor = (feh <= sample_cfg["feh_max"]).fillna(False)
     halo = out.get("halo_flag", pd.Series(False, index=out.index)).fillna(False).astype(bool)
     out["metal_poor"] = metal_poor

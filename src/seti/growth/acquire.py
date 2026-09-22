@@ -471,6 +471,61 @@ def _match_positions(ra_a, dec_a, ra_b, dec_b, radius_arcsec: float) -> list[lis
     return tree.query_ball_point(_unit_vectors(ra_a, dec_a), r=chord)
 
 
+def resolve_koi_tics(koi: pd.DataFrame, maps: dict, *, routes=TIC_ROUTES,
+                     pos_radius_arcsec: float = 2.0) -> tuple[np.ndarray, list[str]]:
+    """A TIC id per KOI row by the first of the three TIC routes that answers.
+
+    ``koi`` must already carry the normalised ``_name`` / ``_host`` keys
+    (:func:`_koi_name_keys`) and numeric ``ra`` / ``dec``; ``maps`` is
+    :func:`prepare_ps`'s output.  Returns ``(tic_ids, routes)`` aligned with
+    ``koi``'s rows, NaN / ``""`` where no route answered.  This is the block
+    :func:`join_kepler_tess` uses; it is exposed on its own because the direct
+    stage (:mod:`seti.growth.direct`) needs a TIC for **every** KOI whether or
+    not TESS ever alerted a TOI on it --- the TOI join is what cost 99 % of the
+    sample, and this function is the part of the join that does not depend on
+    the TOI table at all.
+    """
+    routes = tuple(r for r in TIC_ROUTES if r in set(routes or TIC_ROUTES))
+    names = list(koi["_name"]) if "_name" in koi else [""] * len(koi)
+    hosts = list(koi["_host"]) if "_host" in koi else [""] * len(koi)
+    tic = np.full(len(koi), np.nan)
+    tic_route = [""] * len(koi)
+    if "name_planet" in routes and maps.get("name_to_tic"):
+        for i, n in enumerate(names):
+            t = maps["name_to_tic"].get(n)
+            if t is not None:
+                tic[i], tic_route[i] = float(t), "name_planet"
+    if "name_host" in routes and maps.get("host_to_tic"):
+        for i, h in enumerate(hosts):
+            if not tic_route[i]:
+                t = maps["host_to_tic"].get(h)
+                if t is not None:
+                    tic[i], tic_route[i] = float(t), "name_host"
+    pos = maps.get("pos")
+    if "position_tic" in routes and pos is not None and len(pos):
+        need = [i for i in range(len(koi)) if not tic_route[i]]
+        sub = koi.iloc[need]
+        ok = np.isfinite(sub["ra"].to_numpy(float)) & np.isfinite(sub["dec"].to_numpy(float))
+        need = [i for i, keep in zip(need, ok, strict=True) if keep]
+        if need:
+            sub = koi.iloc[need]
+            hits = _match_positions(sub["ra"], sub["dec"], pos["ra"], pos["dec"],
+                                    pos_radius_arcsec)
+            for i, idxs in zip(need, hits, strict=True):
+                if not idxs:
+                    continue
+                ra_i, dec_i = float(koi["ra"].iloc[i]), float(koi["dec"].iloc[i])
+                j = min(idxs, key=lambda j: _sep_arcsec(ra_i, dec_i, pos["ra"].iloc[j],
+                                                        pos["dec"].iloc[j]))
+                tic[i], tic_route[i] = float(pos["_tic"].iloc[j]), "position_tic"
+    return tic, tic_route
+
+
+def koi_name_keys(koi: pd.DataFrame) -> tuple[list[str], list[str]]:
+    """Public alias of :func:`_koi_name_keys` for :mod:`seti.growth.direct`."""
+    return _koi_name_keys(koi)
+
+
 def join_kepler_tess(koi: pd.DataFrame, toi: pd.DataFrame, ps: pd.DataFrame | None = None, *,
                      pos_radius_arcsec: float = 2.0, period_tol: float = 1e-3,
                      alias_max: int = 4, routes=JOIN_ROUTES) -> tuple[pd.DataFrame, dict]:
@@ -527,36 +582,8 @@ def join_kepler_tess(koi: pd.DataFrame, toi: pd.DataFrame, ps: pd.DataFrame | No
     rep["n_koi_with_host_name"] = int(sum(1 for h in hosts if h))
 
     # --- resolve a TIC id per KOI, by the first route that answers ----------
-    tic = np.full(len(koi), np.nan)
-    tic_route = [""] * len(koi)
-    if "name_planet" in routes and maps["name_to_tic"]:
-        for i, n in enumerate(names):
-            t = maps["name_to_tic"].get(n)
-            if t is not None:
-                tic[i], tic_route[i] = float(t), "name_planet"
-    if "name_host" in routes and maps["host_to_tic"]:
-        for i, h in enumerate(hosts):
-            if not tic_route[i]:
-                t = maps["host_to_tic"].get(h)
-                if t is not None:
-                    tic[i], tic_route[i] = float(t), "name_host"
-    pos = maps["pos"]
-    if "position_tic" in routes and len(pos):
-        need = [i for i in range(len(koi)) if not tic_route[i]]
-        sub = koi.iloc[need]
-        ok = np.isfinite(sub["ra"].to_numpy(float)) & np.isfinite(sub["dec"].to_numpy(float))
-        need = [i for i, keep in zip(need, ok, strict=True) if keep]
-        if need:
-            sub = koi.iloc[need]
-            hits = _match_positions(sub["ra"], sub["dec"], pos["ra"], pos["dec"],
-                                    pos_radius_arcsec)
-            for i, idxs in zip(need, hits, strict=True):
-                if not idxs:
-                    continue
-                ra_i, dec_i = float(koi["ra"].iloc[i]), float(koi["dec"].iloc[i])
-                j = min(idxs, key=lambda j: _sep_arcsec(ra_i, dec_i, pos["ra"].iloc[j],
-                                                        pos["dec"].iloc[j]))
-                tic[i], tic_route[i] = float(pos["_tic"].iloc[j]), "position_tic"
+    tic, tic_route = resolve_koi_tics(koi, maps, routes=routes,
+                                      pos_radius_arcsec=pos_radius_arcsec)
     koi["tic_id_ps"] = tic
     koi["tic_route"] = tic_route
     rep["koi_with_tic_id"] = int(np.isfinite(tic).sum())
@@ -991,7 +1018,7 @@ __all__ = [
     "PS_WHERE_KEPLER", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "TIC_ROUTES",
     "TOI_COLUMNS", "AcquisitionLog", "GaiaRouteFailed", "build_url", "fetch_gaia_neighbours",
     "fetch_koi", "fetch_ps_kepler", "fetch_toi", "gaia_cone_adql", "gaia_neighbours_cones",
-    "gaia_neighbours_upload", "host_of_planet_name", "join_kepler_tess", "parse_tap_csv",
-    "parse_tic_id", "period_match", "prepare_ps", "pyvo_sync_transport", "table_query",
-    "tap_sync",
+    "gaia_neighbours_upload", "host_of_planet_name", "join_kepler_tess", "koi_name_keys",
+    "parse_tap_csv", "parse_tic_id", "period_match", "prepare_ps", "pyvo_sync_transport",
+    "resolve_koi_tics", "table_query", "tap_sync",
 ]

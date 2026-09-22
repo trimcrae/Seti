@@ -242,34 +242,115 @@ no hard veto, but a report-only hold), `candidate` (≥ 2 independent flares
 above the conservative bound, every veto applied and passed) — **pending the
 stage-2 centroid test always**.
 
-## 6. Stage 2 — the pixel-centroid test (designed, not built)
+## 6. Stage 2 — is the flare on the target? (`src/seti/arc/stage2.py`, built 2026-09-21)
 
 The catalogues cannot say *which pixel flared*.  The Kepler target pixel
-file and a TESS FFI cutout can.  For every candidate, stage 1 writes
-`centroid: not_checked` and a `stage2_pulls` list: one entry per independent
-flare above the conservative bound with its peak time, energy, ξ, and the
-Kepler quarter (from BKJD via the published quarter table) or TESS sector
-(from the catalogue's sector column), and the product to pull (`kepler_tpf`
-via `lightkurve.search_targetpixelfile(KIC, quarter=Q)`, `tess_ffi_cutout`
-via TESScut at the TIC position, sector S).
+file (and a TESS SPOC pixel file or TESScut cutout) can.  Stage 2 runs on
+the stage-1 shortlist — interest tier first, then watch, by ξ — through
+`arc-stage2.yml` (`python -m seti.arc.stage2 --stage all`), and writes
+`results/arc/stage2/{probe,summary,stars}.json`, `flares.csv`, `census.csv`,
+`acquisition_log.json`.  A stage-1 re-assess (`arc.yml`, `stage=all`) then
+carries each star's verdict into the `centroid` column.
 
-The test, per flare: the flux-weighted centroid of the aperture in a window
-of ±3 cadences around the peak, against the centroid in the ±2 h out-of-flare
-baseline, in the row and column directions; the shift in pixels divided by
-its baseline scatter, and — the decisive quantity — the *direction* of the
-shift, compared with the direction to every Gaia neighbour inside the
-aperture.  A flare that belongs to the target shows no centroid motion above
-the baseline scatter on *every* exceeding flare; a companion flarer moves the
-centroid toward the same neighbour on every one.  A flare with no centroid
-motion but a Gaia neighbour inside 1″ (unresolved by Gaia) remains
-ambiguous and is reported as such; the difference-image method (the flaring
-pixels minus the baseline, as the Kepler DV pipeline does for transits)
-gives the companion's position where the centroid alone cannot.
+**Per star, in order** (every step injectable, every gap a stated status):
 
-Stage 2 also pulls the light curve itself around every exceeding flare, to
-confirm the impulsive rise / exponential decay shape, and to remeasure the
-amplitude in that same quarter / sector (the amplitude used in stage 1 is
-the catalogue's, which may be from a different epoch — spots evolve).
+1. **The catalogue's own flare rows** (`fetch_flare_rows`): the star's rows
+   from the table stage 1 used, with the roles re-resolved.  Yang & Liu 2019
+   `table2` is `recno, KIC, Q, Begin, End, logE` — the start time was there
+   all along; stage 1's `t_start` patterns matched `End` and not `Begin`,
+   which is the whole of `no_peak_times` and the null quarters in the
+   stage-1 pull lists (now fixed in `acquire.ROLE_PATTERNS`).  Times are
+   brought to the mission-native system (`BKJD` / `BTJD`) by the same
+   `guess_time_system` / `normalise_time_system` pair as stage 1.
+2. **Stellar parameters** (`stellar_parameters`): Berger+2020 `table2`
+   (Teff, log g, R★, M★, evolutionary state — no positions), `table1`
+   (Gaia id, RUWE, positions), the KIC as the last resort, merged per column
+   in that order with the source named (`fetch_star_params_by_id`, which no
+   longer demands a position of every table); then Gaia DR3 FLAME
+   (`I/355/paramp`: `Rad-Flame`, `Mass-Flame`, `Lum-Flame`, `Age-Flame`,
+   columns discovered at runtime) by source id.  This closes
+   `stellar_params_assumed`.
+3. **The Gaia census** (`gaia_sources` + `pixels.census`): every DR3 source
+   within 12″, its separation and position angle, its flux ratio to the
+   target and its **capture fraction** into the aperture — from the pixel
+   file's own pipeline aperture through a Gaussian PRF (`verify`: σ = 0.7 px
+   for Kepler), and analytically for a 4″ (one pixel) and a 12″ circle.  The
+   fraction of the aperture flux each neighbour supplies, `f_j`, gives the
+   relative brightening it would need to make the observed aperture excess
+   `a`: `a / f_j`.  A neighbour needing more than 2000 % (`verify`) is
+   *excluded by arithmetic* and stays excluded whatever the pixels say.
+4. **Light curves** (`lightkurve` PDCSAP, SAP as the second column, the
+   pixel aperture sum as the fallback) for every quarter / sector holding a
+   flare above the ceiling: the flare is **re-detected**
+   (`flares.detect_flares`: iterated running-median baseline, ≥ 2 consecutive
+   points above 3σ with a 4σ peak, the window extended to 1σ), **matched** to
+   the catalogue row by time overlap where the row has a window and by energy
+   rank within the quarter where it does not (the method is recorded), and
+   **re-measured**: equivalent duration, rise and decay times, the Shibayama
+   9,000 K blackbody bolometric energy (`flare_energy_shibayama`, the same
+   construction as the catalogue's, through a tabulated Kepler response —
+   `verify`) and the band energy `ED × L_band`.  The quarter's own
+   **rotational amplitude** is measured from the flare-free baseline as
+   `Rvar` (5th–95th percentile range, McQuillan's definition) and `Sph`
+   (standard deviation, Santos's).
+5. **The centroid test** (`pixels`), per matched flare on the target pixel
+   file of that quarter:
+   * *cadences*: in-flare = the detected window; the difference image uses
+     the cadences above 20 % of the peak; baseline = every good cadence
+     within ±1 d outside the flare padded by 3 cadences;
+   * *the flux-weighted shift*: the aperture centroid per cadence, a linear
+     trend fitted on the baseline (pointing drift), the in-flare mean minus
+     the trend, with the error from the baseline residual scatter.  Every
+     source predicts a shift `a/(1+a) · (c_source − c_baseline)`; on the
+     target it is a few 10⁻⁴ px, on a neighbour it points at the neighbour;
+   * *the difference image*: every pixel detrended against its own baseline,
+     the in-flare residual averaged, its per-pixel error from the baseline
+     scatter floored at the photon error; its thresholded centroid **is the
+     position of whatever brightened**, with the analytic error ⊕ a 0.1 px
+     systematic floor (`verify`);
+   * *positions*: the target's pixel position is the baseline image's own
+     centroid corrected for the neighbours' known flux fractions, and every
+     neighbour keeps its WCS offset *relative to the target* — a WCS
+     zero-point error cancels to first order and is recorded
+     (`wcs_anchor_dx/dy_px`);
+   * *attribution*: `z_j = |c_D − c_j| / σ` per source.  `on_target` when the
+     target is within 3σ and every not-excluded neighbour is beyond 3σ;
+     `on_neighbour:<id>` when a neighbour is within 3σ and the target beyond;
+     `ambiguous` when both are, or when a not-excluded neighbour sits within
+     0.5 px of the target (the pixels cannot separate them);
+     `unattributed` when nothing is; `undetected_in_pixels` when the
+     difference image's peak is below 3σ.
+6. **ξ on measured parameters** (`_xi_block`): the catalogue energies with
+   the measured Teff / R★ and (a) the catalogue amplitude — a Santos `Sph`
+   rescaled by 2√2 to a range (§3.2) — and (b) the quarter's own `Rvar`; the
+   **larger** amplitude is the headline (the conservative choice), and the
+   re-measured energies are run through the same ceiling beside it.
+
+**Verdict per star** (`pixels.star_verdict`): `flare_on_target` (every
+attributable flare on the target), `flare_on_neighbour` (any on a
+neighbour), `centroid_ambiguous`, `centroid_untestable` (no attributable
+flare, with the reason: no pixel file / no light curve / flare not
+re-detected / low pixel SNR / budget exhausted).  **Overall**:
+`CEILING_EXCESS_ON_TARGET_PENDING_SPECTROSCOPY` (≥ 1 interest star on target
+*and* ξ > 0 on measured parameters), `CEILING_EXCESS_TRACED_TO_NEIGHBOUR`,
+`CEILING_EXCESS_DISSOLVED_ON_MEASURED_PARAMETERS` (every interest star below
+the ceiling once the measured radius and the rescaled amplitude are in),
+`CEILING_EXCESS_CENTROID_UNTESTABLE`, `CEILING_EXCESS_CENTROID_AMBIGUOUS`,
+`STAGE2_NO_DATA_REACHED`.
+
+**What it cannot do.**  A companion inside ~0.1″ is unresolved by Gaia and by
+the pixels alike; `flare_on_target` therefore means "on the Gaia-resolved
+target", and only spectroscopy or the flare's colour could go further.  Its
+offline gate (`tests/test_arc_stage2.py`, 25 tests): the injected flare on
+the target → `on_target` with a shift consistent with zero and the target's
+prediction; on a neighbour 2 px away → `on_neighbour` with the centroid on
+the neighbour and the shift toward it; a 0.05 px/d pointing drift removed by
+the baseline trend; an unresolved neighbour → `ambiguous`; a faint neighbour
+→ excluded by arithmetic; a missing or failed pixel fetch, a missing light
+curve (the aperture sum takes over), a dead archive and an exhausted budget
+each → `centroid_untestable` with the reason and never `on_target`; and the
+whole stage end to end through scripted VizieR / Gaia / MAST callables,
+including the stage-1 re-assess picking the verdict up.
 
 ## 7. Offline tests (`tests/test_arc.py`)
 
@@ -321,3 +402,152 @@ socket: every route takes an injectable fetch/query callable.
   how many.
 * `NO_CEILING_EXCESS` is a count, not an occurrence limit, and is not
   written up (CLAUDE.md).
+
+## 9. What the runs measured (2026-09-22)
+
+### 9.1 The stage-1 funnel
+
+Run **35738218021** (`arc.yml`, `stage=all`) is the first stage-1 run whose
+*assess* stage finished: probe 2 min, acquire 3 min, screen 7 s, assess
+**277 s** (its predecessor, run 35675114711, sat in assess for 4 h 54 m on a
+`pyvo` async job with no time limit and was killed by the workflow cap
+without writing a line — §4, `assess.budget_s`).
+
+| | |
+|---|---|
+| flares screened | 190,486 across five catalogues |
+| stars with flares | 8,908 |
+| **assessable** (a rotational amplitude, so a ceiling) | **4,206** |
+| no amplitude, so no ceiling and no test | 4,702 |
+| `ξ_conservative > 0` | **1** |
+| candidate / interest / watch | 0 / 0 / 14 |
+
+The Santos+2021 `Sph` lever was *already* in the sample before this run: it
+supplies 245 of 2,507 assessable Yang & Liu stars and 22 of 279 Shibayama
+stars, and the assessable count moved 4,204 → 4,206, not "well beyond".  What
+the lever actually did was **raise the ceiling**: rescaling `Sph` from a
+standard deviation to a range (§3.2, ×2√2) lifts `E_mag` by 2.828^1.5 = 4.75,
+i.e. **0.68 dex**, and that alone cut the conservative-positive count from 5
+to 2 and the nominal-positive count from 24 to 9.
+
+Run **35741271294** re-ran `assess` alone (288 s) with one rule changed: a
+shortlisted star takes its Teff and radius from the measured table whenever
+that table answers, not only when the record was flagged
+`stellar_params_assumed`.  Nothing else moved — 8,908 stars, 4,206 assessable,
+one star above the conservative ceiling, 13 in `watch` — but the *size* of
+that one excess did, because it had been carried on a KIC-era star table:
+`ξ_conservative,max` **+0.462 → +0.715**, `n_above_conservative` 4 → 6,
+`n_above_nominal` 11 → 12 (§9.3).  The displaced values stay on the record as
+`teff_k_before` / `radius_rsun_before` / `xi_conservative_max_before`.
+
+### 9.1a The centroid test on 21 real stars
+
+Run **35738785437** is the first stage-2 pass with the NaN-pixel fix (a single
+permanently-NaN pixel had been vetoing every cadence of a stamp, §6).  It was
+cancelled at 21 of its 30 stars in favour of a run on the current shortlist,
+and the per-star checkpoint in `stars.json` holds what it measured:
+
+| | run 35675112803 (30 stars) | run 35738785437 (21 stars) |
+|---|---|---|
+| `flare_on_target` | 6 | **8** |
+| `flare_on_neighbour` | 1 | **5** |
+| `centroid_ambiguous` | 1 | 5 |
+| `centroid_untestable` | **22** | **3** |
+
+Per flare: 58 examined, **21 on target**, **5 on a neighbour**, 9 ambiguous,
+7 with too few pixels above the difference-image threshold, 2 unattributed,
+14 untestable.  Parameters were measured for 20 of 21 stars.
+
+**Five of 21 stars had their catalogued flare land on a different Gaia source**
+— KIC 10288777 (16.8σ from the target), KIC 7009116 (14.6σ), KIC 9268205
+(7.0σ), KIC 7174965 (4.8σ), KIC 9139163 (3.9σ), each consistent with a named
+DR3 neighbour.  That is not a statement about this channel's candidates; it is
+a statement about the flare catalogues, whose per-star attribution comes from
+the pipeline aperture and has here been contradicted at up to 17σ by the
+difference image on the same cadences.
+
+### 9.2 The two stage-1 interest stars dissolved
+
+Stage 2 (run **35675112803**, 2 h 08 m, 30 stars, 69 flares) closed the
+`stellar_params_assumed` flag on 25 of 30 stars from Berger+2020 `table2` and
+recomputed ξ:
+
+| star | ξ stage 1 | ξ measured | Teff, R★, M★ (Berger+2020 `table2`) | amplitude used | centroid verdict |
+|---|---|---|---|---|---|
+| KIC 11507705 | +0.440 | **−1.240** | 6365.3 K, 1.311 R☉, 1.187 M☉ | 8.890e-4 (quarter `Rvar`) | **`centroid_ambiguous`** |
+| KIC 8487271 | +0.104 | **−0.920** | 5998.6 K, 1.301 R☉, 1.209 M☉ | 1.0746e-3 (catalogue, as range) | **`flare_on_target`** |
+
+Both are settled, and settled differently from each other:
+
+* **KIC 8487271 — the flare is on the star, and the star is under its
+  ceiling.**  Its one testable flare (t_peak 143.487, 4.57e34 erg) put the
+  difference-image centroid **0.171 px (1.5σ) from the target**, with every
+  Gaia neighbour rejected at > 3σ or excluded by arithmetic.  So the pixel
+  test passes and the object still dissolves — on the parameters, not on a
+  blend.  Its quarter `Rvar` (3.45e-4) is *smaller* than the catalogue
+  amplitude, so the conservative larger value is the one used.
+* **KIC 11507705 — ambiguous, and further below the ceiling than stage 1
+  thought.**  Of 6 catalogue flares, 2 reached the pixels: one is consistent
+  with the target *and* with Gaia DR3 2129762445437102464 (`ambiguous`), the
+  other had only 2 pixels above 20 % of the difference-image peak where 3 are
+  required; the remaining 4 were not re-detected in the light curve.  The
+  star's own quarter amplitude (8.890e-4) is **2.7× the catalogue value**, so
+  ξ falls further than §9.1's numbers: +0.440 → **−1.240**.
+
+The stage-1 → measured move for KIC 11507705 decomposes: **0.677 dex** from
+the `Sph` → range rescaling, **0.353 dex** from the radius (1.311 R☉ for an
+assumed 1.000), the rest from its own measured rotational amplitude.
+
+### 9.3 The one star still standing: KIC 9418692
+
+Of 4,206 assessable stars, exactly one is above the conservative ceiling.  On
+run 35741271294's parameters (Berger+2020 `table2`: Teff 5677.4 K,
+R = 1.089 R☉, replacing the Shibayama star table's 5378 K / 1.300 R☉):
+
+* **ξ_conservative = +0.715 on 6 flares** (ξ_nominal = +1.431 on 12), of 14
+  Yang & Liu 2019 flares in 13 independent events;
+  `E_flare,max = 9.78 × 10^34 erg`.  On the displaced KIC-era parameters the
+  same flares gave +0.462 on 4: the excess *grows* by 0.25 dex on the better
+  stellar parameters, which is why they are now preferred whether or not the
+  record was flagged assumed.
+* Amplitude `2.008 × 10^-4` from Santos+2021 **with** the ×2.828 range
+  scaling already applied — the ceiling is not being under-counted.
+* **The amplitude is the whole result, and the two catalogues disagree by 3×.**
+  The same star carries a *second* stage-1 record from Shibayama+2013 whose
+  amplitude is `6.0 × 10^-4` (`amplitude_source: own`, `amplitude_unit`
+  guessed).  Put the Yang & Liu energies on Berger's radius with that
+  amplitude instead and `ξ_conservative = +0.002` — exactly at the ceiling,
+  not 0.7 dex above it, because `E_mag ∝ A^{3/2}` turns a factor 3 in
+  amplitude into 0.71 dex of ceiling.  Nothing about this object can be
+  claimed until its rotational amplitude is measured from its own light
+  curve, which is what stage 2's `amplitude_quarter_rvar` does.
+* Gaia DR3 **RUWE = 1.556** → `first_veto = companion_suspect`, which put the
+  star in *no tier at all* and therefore outside every stage-2 shortlist
+  (fixed: `stage2.include_vetoed_excess`).
+* Gaia census: 3 sources within 12″.  Inside one Kepler pixel (4″) the target
+  supplies **99.73 %** of the flux; the two neighbours (G = 20.41 at 3.20″,
+  G = 19.69 at 5.18″) supply 0.14 % and 0.13 % and would have to brighten by
+  **39 %** and **41 %** to produce the observed aperture excess.  Neither is
+  excluded by arithmetic, so only the pixels can decide.
+* Its only stage-2 pass so far ran on its *Shibayama* record — one flare row
+  at the 6.0e-4 amplitude, `ξ = −0.386` — and returned `centroid_untestable`.
+  Run **35744902798** is the first to put its Yang & Liu record on the pixels:
+  `load_shortlist` now ranks it first of 13 as `tier: vetoed_excess`.
+
+This is not a null and it is not a candidate.  It is **one object with three
+open questions, none of them yet answered by a measurement of this star**:
+
+1. *Which rotational amplitude is right?*  Santos+2021's `Sph` (as a range,
+   2.008e-4) puts it 0.7 dex above the ceiling; Shibayama's 6.0e-4 puts it
+   exactly at the ceiling.  Decided by `amplitude_quarter_rvar` — the star's
+   own Kepler light curve — in run 35744902798.
+2. *Is the flare on the target?*  Untested until that run.  §9.1a shows the
+   test is not a formality: it moved 5 of 21 stars onto a neighbour.
+3. *Is there a companion?*  RUWE 1.556 is an astrometric **suspicion**, not a
+   detection, and it is the only thing that vetoed the star.  Needs the Gaia
+   DR3 non-single-star solutions and any archival spectroscopy.
+
+Its Gaia census already bounds the third: the target supplies 99.73 % of the
+flux inside one Kepler pixel, and the two catalogued neighbours would have to
+brighten by 39 % and 41 % — large, but not excluded by arithmetic, which is
+precisely why the centroid and not the census is the instrument.

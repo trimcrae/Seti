@@ -1,0 +1,139 @@
+# SPARK — a single-spectral-element excess on a stellar point source
+# (docs/spark.md).  S49 on the Euclid Q1 NISP line-feature table, S48 on the
+# SPHEREx QR2 spectral images.  Every threshold the code applies lives here.
+
+services:
+  irsa_tap: "https://irsa.ipac.caltech.edu/TAP"
+  irsa_base: "https://irsa.ipac.caltech.edu/"
+  gaia_tap: "https://gea.esac.esa.int/tap-server/tap"
+  # Gaia copies tried IN ORDER at IRSA before ESA is asked (runtime schema check).
+  irsa_gaia_tables: ["gaia_dr3_source", "gaiadr3_source", "gaia_edr3_source"]
+
+# ---------------------------------------------------------------------------
+# S49 — Euclid Q1 NISP red grism (1.21–1.89 um, R ~ 450 at 1.5 um)
+# ---------------------------------------------------------------------------
+euclid:
+  tables:
+    lines: "euclid_q1_spe_lines_line_features"
+    mer: "euclid_q1_mer_catalogue"
+    # Denominator (objects WITH a spectrum), tried in order: one row per object.
+    spectra: ["euclid_q1_spectro_zcatalog_spe_classification",
+              "euclid_q1_spectro_zcatalog_spe_quality",
+              "euclid.objectid_spectrofile_association_q1"]
+    classification: "euclid_q1_spectro_zcatalog_spe_classification"
+    quality: "euclid_q1_spectro_zcatalog_spe_quality"
+    star_candidates: "euclid_q1_spectro_zcatalog_spe_star_candidates"
+    galaxy_candidates: "euclid_q1_spectro_zcatalog_spe_galaxy_candidates"
+    spectrofile: "euclid.objectid_spectrofile_association_q1"
+  # The Q1 fields (Euclid Collaboration: Aussel+2025).  cone = (ra, dec, radius_deg);
+  # strips of `strip_deg` in declination are the acquisition/shard unit.
+  fields:
+    EDF-N:  {ra: 269.73, dec: 66.01, radius_deg: 2.7, note: "Euclid Deep Field North (~20 deg^2), contains the NEP"}
+    EDF-S:  {ra: 61.24,  dec: -48.42, radius_deg: 2.9, note: "Euclid Deep Field South (~23 deg^2)"}
+    EDF-F:  {ra: 52.93,  dec: -28.09, radius_deg: 2.0, note: "Euclid Deep Field Fornax (~10 deg^2)"}
+    LDN1641: {ra: 85.50, dec: -8.00, radius_deg: 0.9, note: "Q1 star-forming field; YSO-rich — every survivor here is suspect"}
+  strip_deg: 0.5
+  # Acquisition floor; the screen tightens.
+  snr_acquire_min: 3.0
+  band_um: [1.21, 1.89]
+  edge_margin_um: 0.02           # LVF/grism edge: features this close to a band edge are edge artefacts
+  resolving_power: 450.0         # at 1.5 um (Euclid NISP RGS: R >= 380 at 1 arcsec)
+  wavelength_unit: "auto"        # auto | angstrom | nm | um  (auto: from the value range)
+  # Screen thresholds
+  snr_min: 5.0
+  n_dith_min: 2
+  max_fwhm_resel: 2.5            # unresolved: <= this many resolution elements (fwhm/resel)
+  stellar_tol_resel: 1.5         # +/- this many resels around a catalogued stellar line
+  redshift_z_tol: 0.003          # |dz|/(1+z) for two features to share a redshift
+  redshift_min_snr: 3.0          # features that may participate in the pattern test
+  point_like_prob_min: 0.5       # MER point_like_prob (recorded; the Gaia parallax is the anchor)
+  require_point_like: false      # if true, drop features whose MER point_like_prob < min
+  # Gaia join
+  gaia_match_arcsec: 1.0
+  gaia_epoch: 2016.0
+  euclid_epoch: 2024.3           # Q1 observations Feb 2024 - ; positions propagated here
+  plx_over_error_min: 5.0
+  gaia_g_max: 21.5
+  # Neighbour / blend veto (slitless traces overlap): any Gaia neighbour within
+  # `blend_radius_arcsec` brighter than G_target + `blend_dmag` is a blend.
+  blend_radius_arcsec: 6.0
+  blend_dmag: 2.0
+  # Along-dispersion neighbours are counted (descriptor): NISP RGS traces run
+  # ~135 arcsec; the Q1 orientations are RGS000/RGS180 (+/-4 deg), i.e. ~E-W.
+  dispersion_neighbour_radius_arcsec: 140.0
+  dispersion_neighbour_halfwidth_arcsec: 3.0
+  # Recurrence: the same observed wavelength (within `recurrence_bin_resel`
+  # resels) on >= `recurrence_min_stars` DIFFERENT stars is instrumental.
+  recurrence_bin_resel: 1.0
+  recurrence_min_stars: 3
+  # Trials: N_stars_with_spectra x N_resels(band) unless the run measures it.
+  trials_alpha: 0.01
+  max_rows_per_strip: 400000
+  time_budget_s: 15000
+
+# ---------------------------------------------------------------------------
+# S48 — SPHEREx QR2 spectral images (0.75–5 um, R 35–130, 6.15" pixels)
+# ---------------------------------------------------------------------------
+spherex:
+  obscore_table: "spherex.obscore"
+  plane_table: "spherex.plane"
+  artifact_table: "spherex.artifact"
+  splices_table: "splices"
+  # Detector bands (um) from the QR explanatory supplement; the runtime map
+  # replaces these from em_min/em_max when obscore carries them.
+  detector_bands_um:
+    D1: [0.75, 1.11]
+    D2: [1.11, 1.64]
+    D3: [1.64, 2.42]
+    D4: [2.42, 3.82]
+    D5: [3.82, 4.42]
+    D6: [4.42, 5.00]
+  # Seed boxes: (ra, dec) centres; the deep fields at the ecliptic poles get
+  # ~100x the all-sky depth, so the pass/position repeat rule is testable there.
+  boxes:
+    - {name: "NEP-0", ra: 270.00, dec: 66.56}
+    - {name: "NEP-1", ra: 270.90, dec: 66.56}
+    - {name: "NEP-2", ra: 269.10, dec: 66.56}
+    - {name: "NEP-3", ra: 270.00, dec: 66.20}
+    - {name: "SEP-0", ra: 90.00, dec: -66.56}
+    - {name: "SEP-1", ra: 90.90, dec: -66.56}
+    - {name: "SEP-2", ra: 89.10, dec: -66.56}
+    - {name: "SEP-3", ra: 90.00, dec: -66.20}
+  box_arcmin: 15.0               # cutout side; one cutout per image serves every seed in the box
+  # Seeds: Gaia DR3 stars in the box
+  seed_g_min: 9.0
+  seed_g_max: 15.0
+  seed_plx_over_error_min: 5.0
+  neighbour_g_max: 19.0          # neighbours fetched to this depth for the isolation test
+  isolation_radius_arcsec: 20.0  # no neighbour within this radius brighter than G + isolation_dmag
+  isolation_dmag: 3.0
+  inner_radius_arcsec: 9.0       # no neighbour at all brighter than G + inner_dmag inside
+  inner_dmag: 6.0
+  max_seeds_per_box: 200
+  # Images
+  max_images_per_detector: 400   # per box, spread evenly in time (bounded first run)
+  cutout_route: "auto"           # auto | ibe_cutout | full
+  max_full_downloads: 12         # cap on whole-frame downloads (~100 MB each)
+  request_timeout_s: 120
+  time_budget_s: 15000
+  # Photometry (pixels are 6.15"; PSF FWHM ~ 6-7" short-ward of 2.4 um)
+  pixel_arcsec: 6.15
+  aperture_radius_px: 2.0
+  annulus_px: [4.0, 7.0]
+  subtract_zodi_plane: true
+  flag_mask_any: true            # any non-zero FLAGS pixel inside the aperture drops the sample
+  # Spectrum + excess detector
+  pass_gap_days: 30.0            # samples closer than this in time belong to one pass
+  min_pixel_separation_px: 20.0  # two "detector positions" must differ by this much
+  channel_width_resel: 1.0       # one channel = one resolution element (from BANDWIDTH)
+  excess_sigma_total: 5.0
+  excess_sigma_single: 2.5       # each contributing pass must show it at this level
+  neighbour_channel_sigma_max: 2.0   # adjacent channels must NOT be elevated (single-channel)
+  edge_margin_resel: 2.0         # channels this close to a detector band edge are LVF-edge suspects
+  min_samples_per_detector: 12
+  continuum_window_resel: 5.0
+  stellar_tol_resel: 1.0
+  recurrence_min_stars: 3
+  pixel_recurrence_px: 3.0
+  pixel_recurrence_min_stars: 2
+  trials_alpha: 0.01

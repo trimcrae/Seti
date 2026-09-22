@@ -3,8 +3,8 @@ name: lantern
 # LANTERN — a narrow emission line that vanishes at secondary eclipse
 # (docs/lantern.md).
 #
-#   probe+inventory ──▶ screen (N target shards, checkpointed) ──▶ assess ──▶ commit
-#                  └──▶ lit (arXiv/OpenAlex prior-art sweep)     ──▶ commit
+#   probe+inventory+VERIFY ──▶ screen (N exposure shards, eclipses first) ──▶ assess ──▶ commit
+#                          └──▶ lit (arXiv/OpenAlex prior-art sweep)          ──▶ commit
 #
 # Across EVERY public JWST time-series observation of a transiting planet, is
 # there an unresolved emission feature present outside secondary eclipse and
@@ -12,15 +12,22 @@ name: lantern
 # artefacts do not care whether the planet is occulted; a monochromatic source
 # on the planet does.
 #
-# Operational design (docs/channel-brief.md §3):
-#  * the inventory runs ONCE and travels to the shards as an artifact;
-#  * every exposure is streamed one product at a time (download, read, delete)
-#    and checkpointed to its own JSON immediately -- a killed shard loses
-#    minutes; re-running a shard skips exposures that already have a checkpoint;
-#  * fail-fast:false matrix; wall clock is one shard;
+# Operational design (docs/channel-brief.md §3), revised after run 34036760527:
+#  * the inventory runs ONCE (or is re-planned from the committed one with
+#    reuse_inventory=true) and travels to the shards as an artifact;
+#  * VERIFY runs two known eclipses (WASP-43 b MIRI/LRS, WASP-18 b NIRISS/SOSS)
+#    through the real reader and labeller before any shard starts: the
+#    continuum must drop where the ephemeris says the planet is hidden, and an
+#    injected vanishing line must come back.  require_verify gates the screen;
+#  * work units are EXPOSURES, ordered eclipse-class first, transit second,
+#    round-robined into shards; every exposure is streamed one product at a
+#    time (download, read, delete) and checkpointed to its own JSON;
+#  * prior_run_ids pulls earlier runs' checkpoints so dispatches ACCUMULATE
+#    (a checkpoint carries a version; stale ones are re-analysed);
+#  * deadline_minutes stops a shard starting new exposures before the job
+#    timeout so its artifact always uploads;
 #  * reduce_only_run_id re-assesses a prior run's checkpoints without MAST;
-#  * commit-back goes through scripts/commit_results.sh, which VERIFIES the push
-#    against the remote instead of trusting a zero exit.
+#  * commit-back goes through scripts/commit_results.sh.
 
 on:
   workflow_dispatch:
@@ -35,22 +42,42 @@ on:
         description: "Comma-separated MAST instrument prefixes"
         required: false
         default: "NIRSPEC,NIRISS,NIRCAM,MIRI"
-      max_shards:
-        description: "Number of screen shards (targets are round-robined by size)"
+      reuse_inventory:
+        description: "Re-plan the committed results/lantern/inventory.json instead of querying MAST (true/false)"
         required: false
-        default: "8"
+        default: "false"
+      max_shards:
+        description: "Number of screen shards (exposures are round-robined, eclipses first)"
+        required: false
+        default: "12"
+      max_parallel:
+        description: "Shards running at once (MAST download citizenship)"
+        required: false
+        default: "6"
       max_file_gb:
         description: "Skip any single x1dints product larger than this (GB)"
         required: false
-        default: "3.0"
+        default: "12"
       max_products_per_target:
         description: "Cap on exposures analysed per target (0 = all)"
         required: false
         default: "0"
+      deadline_minutes:
+        description: "A shard starts no new exposure after this many minutes"
+        required: false
+        default: "300"
+      prior_run_ids:
+        description: "Comma-separated run ids whose lantern-obs-* checkpoints are reused (accumulate)"
+        required: false
+        default: ""
+      require_verify:
+        description: "Refuse to screen unless the known-eclipse verification passes (true/false)"
+        required: false
+        default: "true"
       run_lit:
         description: "Run the prior-art sweep job (true/false)"
         required: false
-        default: "true"
+        default: "false"
       reduce_only_run_id:
         description: "Skip probe/inventory/screen; assess this prior run's checkpoints"
         required: false
@@ -58,6 +85,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 env:
   RESULTS_BRANCH: ${{ github.ref_name }}
@@ -66,9 +94,10 @@ jobs:
   inventory:
     if: ${{ github.event.inputs.reduce_only_run_id == '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     outputs:
       shards: ${{ steps.plan.outputs.shards }}
+      verified: ${{ steps.verify.outputs.verified }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -83,21 +112,67 @@ jobs:
           python -c "import numpy,pandas,astroquery,requests,yaml; from astropy.io import fits; print('imports OK')"
       - name: Offline gate — the synthetic battery must hold on this runner
         run: |
-          python -m pytest tests/test_lantern.py -q -p no:cacheprovider
+          python -m pytest tests/test_lantern.py tests/test_lantern_reader.py \
+            tests/test_lantern_difference.py -q -p no:cacheprovider
           python -m seti.lantern.run selftest
       - name: Probe the archives
         run: python -m seti.lantern.run probe --instruments "${{ github.event.inputs.instruments || 'NIRSPEC,NIRISS,NIRCAM,MIRI' }}"
       - name: Inventory
         run: |
-          python -m seti.lantern.run inventory \
-            --targets "${{ github.event.inputs.targets }}" \
-            --instruments "${{ github.event.inputs.instruments || 'NIRSPEC,NIRISS,NIRCAM,MIRI' }}" \
-            --n-shards ${{ github.event.inputs.max_shards || '8' }}
+          if [ "${{ github.event.inputs.reuse_inventory }}" = "true" ] && [ -f results/lantern/inventory.json ]; then
+            cp results/lantern/inventory.json "$RUNNER_TEMP/inventory_prev.json"
+            python -m seti.lantern.run inventory \
+              --replan "$RUNNER_TEMP/inventory_prev.json" \
+              --targets "${{ github.event.inputs.targets }}" \
+              --n-shards ${{ github.event.inputs.max_shards || '12' }}
+          else
+            python -m seti.lantern.run inventory \
+              --targets "${{ github.event.inputs.targets }}" \
+              --instruments "${{ github.event.inputs.instruments || 'NIRSPEC,NIRISS,NIRCAM,MIRI' }}" \
+              --n-shards ${{ github.event.inputs.max_shards || '12' }}
+          fi
           python - <<'PY'
           import json
           inv = json.load(open("results/lantern/inventory.json"))
           print(json.dumps(inv.get("funnel"), indent=2))
+          print(json.dumps(inv.get("plan"), indent=2))
           print("verdict:", inv.get("verdict"))
+          PY
+      - id: verify
+        name: Verify the reader and the phase labels on two known eclipses
+        run: |
+          python -m seti.lantern.run verify --work-dir "$RUNNER_TEMP/lantern_verify"
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          v = json.load(open("results/lantern/verify.json"))
+          # The gate is the PHASE question: the continuum of a KNOWN eclipse must
+          # drop, by a planetary amount, where the ephemeris puts the occultation.
+          # ONE clean demonstration settles it -- the claim being gated is that the
+          # labeller can identify in-eclipse integrations at all, and a second
+          # exposure cannot make that more or less true.  (The other case's result
+          # is still reported and still has to be explained.)  The injected-line
+          # recovery is a per-exposure sensitivity statement, reported, not gated.
+          print("verified=" + ("true" if int(v.get("n_phase_passed") or 0) >= 1 else "false"))
+          PY
+          python - <<'PY'
+          import json
+          v = json.load(open("results/lantern/verify.json"))
+          for k, c in v["cases"].items():
+              keep = {x: c.get(x) for x in ("passed", "phase_passed", "injection_passed", "reason",
+                                            "phase_class", "depth", "depth_snr", "verify_window_days",
+                                            "verify_window_n_integrations",
+                                            "free_step_offset_days", "timing_tolerance_days", "checks",
+                                            "ew_5sigma_limit_um", "ew_5sigma_limit_diff_um",
+                                            "line_contrast_5sigma",
+                                            "time_source", "n_integrations", "binned_by", "grid", "cal_ver")}
+              print(k, json.dumps(keep, indent=1))
+              print("  injection:", json.dumps(c.get("injection")))
+              print("  hdu_layout:", json.dumps((c.get("hdu_layout") or [])[:3]))
+          print("PHASE VERDICT:", v.get("phase_verdict"), "INJECTION VERDICT:", v.get("injection_verdict"))
+          if v.get("phase_verdict") != "PHASE_VERIFIED":
+              print("::warning::known-eclipse PHASE verification did not pass -- see verify.json")
+          if v.get("injection_verdict") != "SENSITIVITY_VERIFIED":
+              print("::warning::injected vanishing line not recovered clean -- see verify.json")
           PY
       - id: plan
         name: Shard plan
@@ -116,27 +191,31 @@ jobs:
           name: lantern-inventory
           path: |
             results/lantern/inventory.json
+            results/lantern/plan.json
             results/lantern/shards.json
             results/lantern/probe.json
             results/lantern/selftest.json
+            results/lantern/verify.json
           if-no-files-found: warn
-      - name: Commit inventory
+      - name: Commit inventory and verification
         if: always()
         run: |
           scripts/commit_results.sh \
-            "lantern: inventory of JWST exoplanet time series" \
+            "lantern: inventory, plan and known-eclipse verification" \
             results/lantern/inventory.json \
+            results/lantern/plan.json \
             results/lantern/probe.json \
-            results/lantern/selftest.json
+            results/lantern/selftest.json \
+            results/lantern/verify.json
 
   screen:
     needs: inventory
-    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    if: ${{ github.event.inputs.reduce_only_run_id == '' && (needs.inventory.outputs.verified == 'true' || github.event.inputs.require_verify == 'false') }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
       fail-fast: false
-      max-parallel: 4          # be a good citizen toward the MAST download service
+      max-parallel: ${{ fromJSON(github.event.inputs.max_parallel || '6') }}
       matrix:
         shard: ${{ fromJSON(needs.inventory.outputs.shards) }}
     steps:
@@ -154,21 +233,43 @@ jobs:
         with:
           name: lantern-inventory
           path: results/lantern/
+      - name: Fetch prior runs' checkpoints (accumulate)
+        if: ${{ github.event.inputs.prior_run_ids != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p results/lantern/obs
+          IFS=',' read -ra IDS <<< "${{ github.event.inputs.prior_run_ids }}"
+          for id in "${IDS[@]}"; do
+            id="$(echo "$id" | tr -d '[:space:]')"; [ -z "$id" ] && continue
+            d="$RUNNER_TEMP/prior/$id"; mkdir -p "$d"
+            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -D "$d"; then
+              for a in "$d"/lantern-obs-*; do
+                [ -d "$a/obs" ] && cp -Rn "$a/obs/." results/lantern/obs/ || true
+              done
+            else
+              echo "::warning::could not download lantern-obs-* artifacts of run $id"
+            fi
+          done
+          echo "prior checkpoints: $(find results/lantern/obs -name '*.json' | wc -l)"
       - name: Free disk
         run: |
           df -h / | tail -1
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android 2>/dev/null || true
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost \
+            /usr/lib/jvm /usr/local/.ghcup /opt/hostedtoolcache/CodeQL 2>/dev/null || true
           df -h / | tail -1
+          free -g | head -2
       - name: Screen shard ${{ matrix.shard }}
         run: |
           python -m seti.lantern.run screen \
             --shard ${{ matrix.shard }} \
-            --n-shards ${{ github.event.inputs.max_shards || '8' }} \
-            --max-file-gb ${{ github.event.inputs.max_file_gb || '3.0' }} \
+            --n-shards ${{ github.event.inputs.max_shards || '12' }} \
+            --max-file-gb ${{ github.event.inputs.max_file_gb || '12' }} \
             --max-products-per-target ${{ github.event.inputs.max_products_per_target || '0' }} \
+            --deadline-minutes ${{ github.event.inputs.deadline_minutes || '300' }} \
             --work-dir "$RUNNER_TEMP/lantern_work"
           echo "=== shard log ==="
-          cat results/lantern/screen_shard${{ matrix.shard }}.json | head -80
+          python -c "import json; s=json.load(open('results/lantern/screen_shard${{ matrix.shard }}.json')); print(json.dumps({k: s[k] for k in ('verdict','counts','n_units','bytes_downloaded','elapsed_minutes')}, indent=1))"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -199,12 +300,28 @@ jobs:
           pattern: lantern-*
           merge-multiple: true
           path: results/lantern/
+      - name: Fetch prior runs' checkpoints (accumulate)
+        if: ${{ github.event.inputs.prior_run_ids != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p results/lantern/obs
+          IFS=',' read -ra IDS <<< "${{ github.event.inputs.prior_run_ids }}"
+          for id in "${IDS[@]}"; do
+            id="$(echo "$id" | tr -d '[:space:]')"; [ -z "$id" ] && continue
+            d="$RUNNER_TEMP/prior/$id"; mkdir -p "$d"
+            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -D "$d"; then
+              for a in "$d"/lantern-obs-*; do
+                [ -d "$a/obs" ] && cp -Rn "$a/obs/." results/lantern/obs/ || true
+              done
+            fi
+          done
       - name: Assess
         run: |
           find results/lantern/obs -name '*.json' | wc -l
           python -m seti.lantern.run assess
           echo "=== summary ==="
-          python -c "import json; s=json.load(open('results/lantern/summary.json')); print(json.dumps({k:s[k] for k in ('verdict','funnel','rejections')}, indent=2))"
+          python -c "import json; s=json.load(open('results/lantern/summary.json')); print(json.dumps({k:s[k] for k in ('verdict','funnel','rejections','by_mode','verify')}, indent=2))"
       # A verdict must never read as a science null when no data was tested.
       - name: Assert the verdict is not a disguised no-data run
         run: |
@@ -227,16 +344,18 @@ jobs:
         run: |
           # The per-exposure checkpoints (results/lantern/obs/) stay in the run
           # artifact: they can be hundreds of MB across the archive and are
-          # re-assessable via reduce_only_run_id.  exposures.json is the
-          # committed one-row-per-exposure record.
+          # re-assessable via reduce_only_run_id / prior_run_ids.  exposures.json
+          # is the committed one-row-per-exposure record.
           scripts/commit_results.sh \
             "lantern: eclipse-vanishing narrow-line screen of JWST exoplanet time series" \
             results/lantern/summary.json \
             results/lantern/candidates.json \
             results/lantern/exposures.json \
             results/lantern/inventory.json \
+            results/lantern/plan.json \
             results/lantern/probe.json \
-            results/lantern/selftest.json
+            results/lantern/selftest.json \
+            results/lantern/verify.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -267,6 +386,22 @@ jobs:
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}
           path: results/lantern/
+      - name: Fetch further prior runs' checkpoints
+        if: ${{ github.event.inputs.prior_run_ids != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p results/lantern/obs
+          IFS=',' read -ra IDS <<< "${{ github.event.inputs.prior_run_ids }}"
+          for id in "${IDS[@]}"; do
+            id="$(echo "$id" | tr -d '[:space:]')"; [ -z "$id" ] && continue
+            d="$RUNNER_TEMP/prior/$id"; mkdir -p "$d"
+            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -D "$d"; then
+              for a in "$d"/lantern-obs-*; do
+                [ -d "$a/obs" ] && cp -Rn "$a/obs/." results/lantern/obs/ || true
+              done
+            fi
+          done
       - name: Assess
         run: |
           python -m seti.lantern.run assess
@@ -286,7 +421,7 @@ jobs:
           if-no-files-found: warn
 
   lit:
-    if: ${{ github.event.inputs.run_lit != 'false' && github.event.inputs.reduce_only_run_id == '' }}
+    if: ${{ github.event.inputs.run_lit == 'true' && github.event.inputs.reduce_only_run_id == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

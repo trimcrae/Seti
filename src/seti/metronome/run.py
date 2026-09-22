@@ -755,9 +755,22 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
         "time_grid": {s.get("catalogue"): s.get("time_grid") for s in screens
                       if s.get("time_grid")},
         "n_pool_null_computed": int(sum(1 for r in records if r.get("pool_null_computed"))),
+        # The long-period reach.  ``few_cycles`` requires the best period to
+        # have ticked ``cycles_min`` times inside the observing windows, so
+        # the channel's longest believable period on a given star is
+        # observed span / cycles_min -- shorter than the span/3 search grid.
+        # Stated as a number per mission so a reader can see what the veto
+        # costs rather than inferring it.
+        "cycles_min": float(vconf.get("cycles_min", 10.0)),
+        "max_period_credible_days": {
+            m: float(vdf.loc[vdf["mission"] == m, "span_days"].median()
+                     / float(vconf.get("cycles_min", 10.0)))
+            for m in vdf["mission"].dropna().unique() if "span_days" in vdf},
         "note": ("coverage is bounded by each catalogue's own flare-detection threshold and "
                  "cadence: a clock whose ticks fall below the catalogue's amplitude/energy "
-                 "threshold, or shorter than ~10 cadences, is invisible here by construction"),
+                 "threshold, or shorter than ~10 cadences, is invisible here by construction; "
+                 "at the long end few_cycles bounds it at span/cycles_min, because a period "
+                 "seen two or three times is not a measured recurrence"),
     }
     summary = {
         "verdict": verdict, "generated_utc": _now(),
@@ -795,7 +808,9 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     slim = ("star_key", "star_id", "catalogue", "mission", "tier", "flags", "first_veto",
             "n_events", "period", "Q", "jitter", "f_in_window", "gap_integer_frac",
             "n_gaps_used", "jitter_core", "n_core", "gap_integer_frac_core", "n_gaps_core",
-            "cycle_occupancy", "h_max", "p_window", "p_window_source",
+            "cycles_span", "cycles_hit", "cycle_occupancy",
+            "pop_n_near", "pop_expected", "pop_p",
+            "h_max", "p_window", "p_window_source",
             "p_shuffle", "p_pool", "pn_n_trials", "pn_n_exceed", "grid_days", "grid_source",
             "jitter_floor", "phase_spacing", "comb_coarser_than_window",
             "energy_phase_rho", "energy_phase_p", "t0", "mean_phase",

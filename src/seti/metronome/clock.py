@@ -396,19 +396,32 @@ def scan(times, windows: Windows | None, conf: dict | None = None) -> ScanResult
     if core.sum() >= 2:
         res.gap_integer_frac_core, res.n_gaps_core = gap_integer_fraction(
             t[core], p, windows, tol=float(c["gap_tol"]))
-    # Cycle bookkeeping: how many ticks of the clock fell in observed time, and
-    # how many of those carry an event.  Report-only; a beacon need not tick
-    # every cycle, but a reader should see the duty cycle.
+    # Cycle bookkeeping: how many ticks of the clock had an OPPORTUNITY to be
+    # seen, and how many of those carry an event.
+    #
+    # The opportunity is not the tick instant landing inside an observing
+    # window --- a tick whose instant falls in a gap while its phase window is
+    # half covered is still a chance to see the clock, and a tick whose instant
+    # is covered can still have its events land in the gap on either side.
+    # Counting instants made ``cycles_hit`` exceed ``cycles_span`` (occupancy
+    # above 1 was measured on the 2026-09-21 run) and, at long periods, made
+    # the denominator two or three when the search had only ever had two or
+    # three chances.  So a cycle counts as observed when any part of its phase
+    # window [tick - w P, tick + w P] is inside an observing window, and a hit
+    # counts only among the cycles so observed.  ``cycles_span`` is then the
+    # number of repeats the period claim actually rests on, which is what the
+    # ``few_cycles`` veto reads.
     if windows is not None and windows.n:
-        k0 = np.floor((windows.starts[0] - res.t0) / p)
-        k1 = np.ceil((windows.stops[-1] - res.t0) / p)
+        w = float(c["phase_window"]) * p
+        k0 = np.floor((windows.starts[0] - res.t0 - w) / p)
+        k1 = np.ceil((windows.stops[-1] - res.t0 + w) / p)
         ks = np.arange(k0, k1 + 1)
         ticks = res.t0 + ks * p
-        in_obs = windows.contains(ticks)
-        res.cycles_span = float(in_obs.sum())
+        observed = windows.overlaps(ticks - w, ticks + w)
+        res.cycles_span = float(observed.sum())
         hit = np.unique(np.round((t - res.t0) / p))
-        res.cycles_hit = int(len(hit))
-        res.cycle_occupancy = float(len(hit) / max(in_obs.sum(), 1))
+        res.cycles_hit = int(np.isin(ks[observed], hit).sum())
+        res.cycle_occupancy = float(res.cycles_hit / max(observed.sum(), 1))
     return res
 
 

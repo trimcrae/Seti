@@ -100,6 +100,26 @@ class Windows:
         out[ok] = t[ok] <= self.stops[i[ok]]
         return out
 
+    def overlaps(self, lo, hi) -> np.ndarray:
+        """Does each interval ``[lo, hi]`` intersect the observed union?
+
+        ``contains`` answers for an instant; a clock tick is not an instant
+        once it carries a phase window, and a tick whose instant falls in a
+        gap can still have had most of its window observed.
+        """
+        lo = np.atleast_1d(np.asarray(lo, dtype=float))
+        hi = np.atleast_1d(np.asarray(hi, dtype=float))
+        if not self.n:
+            return np.zeros(len(lo), dtype=bool)
+        # windows are disjoint and sorted, so the last one starting at or
+        # before ``hi`` has the largest stop of any candidate: if its stop is
+        # below ``lo`` every earlier stop is too.
+        i = np.searchsorted(self.starts, hi, side="right") - 1
+        ok = i >= 0
+        out = np.zeros(len(lo), dtype=bool)
+        out[ok] = self.stops[i[ok]] >= lo[ok]
+        return out
+
     def window_index(self, t) -> np.ndarray:
         """Index of the window containing each time; -1 outside every window."""
         t = np.atleast_1d(np.asarray(t, dtype=float))

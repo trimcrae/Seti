@@ -27,6 +27,17 @@ dullest one:
                             Gaia DR3 vari / ZTF) and P sits at its period or a
                             low harmonic: a pulsator's cycles chopped into
                             "flares" by the flare finder
+``population_period``       unrelated stars of the same mission pile up at
+                            this period.  A clock is a property of ONE star;
+                            a period that many independent stars share is a
+                            property of the mission's sampling.  Measured
+                            from the run's own scanned population, so it
+                            needs no list of instrumental periods and catches
+                            the ones nobody wrote down
+``few_cycles``              the period repeated too few times inside the
+                            observing windows for "recurs" to mean anything
+                            --- the long-period tail where P approaches the
+                            span/3 grid edge and three sector groups phase up
 ``bursty_random``           the shuffle null does not beat the observed H
                             (coherence explained by the waiting-time
                             distribution) AND the waiting times are not
@@ -56,6 +67,8 @@ Tiers
 """
 
 from __future__ import annotations
+
+import math
 
 import numpy as np
 
@@ -101,6 +114,29 @@ DEFAULT_VET: dict = {
     # catalogue, not about the star.  Report-only: it says where to look, the
     # pool null says whether to believe.
     "quantisation_factor": 1.5,
+    # ``few_cycles``.  The claim "the brightenings recur on a clock" is only
+    # as strong as the number of repeats behind it.  ``cycles_span`` counts
+    # the ticks whose phase window had any observing coverage, i.e. the
+    # opportunities the clock had; below ``cycles_min`` the star is vetoed.
+    # MEASURED on the 2026-09-21 run: every star whose best period exceeded
+    # ~span/4 had cycles_span <= 5, and those periods clustered at 243 d
+    # (TESS) and 372 d (Kepler) across unrelated stars -- window structure,
+    # not clocks.  This bounds the channel's reach to P < span / cycles_min
+    # and that bound is reported in the coverage block.
+    "cycles_min": 10.0,
+    # ``population_period``.  Per mission, over the log10 periods of every
+    # scanned star: a star is vetoed when at least ``pop_min_count`` OTHER
+    # stars sit within ``pop_tol_dex`` of it and that count is Poisson-rarer
+    # than ``pop_alpha`` against the local background density measured over
+    # ``pop_bg_dex``.  The tolerance is a fractional period tolerance (0.005
+    # dex ~ 1.2%), matched to the period resolution of the scan.
+    # ``pop_min_stars`` is the population below which the density estimate
+    # says nothing and the veto is not applied at all.
+    "pop_tol_dex": 0.005,
+    "pop_bg_dex": 0.25,
+    "pop_min_count": 4,
+    "pop_alpha": 1e-3,
+    "pop_min_stars": 50,
     "instrumental_periods": {
         "kepler": {"long_cadence": 0.020434, "momentum_dump": 3.0,
                    "monthly_downlink": 31.0, "quarter": 93.0},
@@ -110,7 +146,8 @@ DEFAULT_VET: dict = {
     },
 }
 
-HARD_VETO_ORDER = ("pool_null_explains", "cadence_alias", "rotation_alias",
+HARD_VETO_ORDER = ("pool_null_explains", "population_period", "few_cycles",
+                   "cadence_alias", "rotation_alias",
                    "periodic_variable", "bursty_random", "jitter_too_large")
 REPORT_FLAGS = ("energy_incoherent", "rotation_unknown", "variability_catalogue_unreached",
                 "p_extrapolated", "null_truncated_by_budget", "quantisation_limited",
@@ -163,6 +200,66 @@ def periodic_variable(period: float, catalogued, harmonics=None, tol: float = 0.
             if _close(period, p * float(h), tol):
                 return True, f"{src}:{vtype}:P={p:.6g}x{h:.3g}"
     return False, None
+
+
+def population_period_stats(records, conf: dict | None = None) -> None:
+    """Annotate each scanned record with how crowded its best period is.
+
+    Sets ``pop_n_near`` (other scanned stars of the same mission within
+    ``pop_tol_dex``), ``pop_expected`` (the local background density scaled to
+    that tolerance) and ``pop_p`` (Poisson survival) **in place**.
+
+    The argument this makes is the one thing a per-star null cannot make: a
+    clock belongs to a star, so two unrelated stars agreeing on a period to
+    1% is either a coincidence with a computable probability or a property of
+    the instrument.  The background is measured locally in log period, so the
+    steep rise of the period distribution toward the grid floor is divided
+    out and only genuine *narrow* pile-ups are flagged.
+    """
+    c = dict(DEFAULT_VET, **(conf or {}))
+    tol, bg = float(c["pop_tol_dex"]), float(c["pop_bg_dex"])
+    by_mission: dict[str, list[dict]] = {}
+    for r in records:
+        if r.get("status") != "scanned":
+            continue
+        p = _f(r, "period")
+        if not (np.isfinite(p) and p > 0):
+            continue
+        by_mission.setdefault(str(r.get("mission", "") or "").lower(), []).append(r)
+    for _, group in by_mission.items():
+        if len(group) < int(c["pop_min_stars"]):
+            # too few stars for a density to mean anything; leave the keys
+            # unset so vet_star does not apply the veto rather than applying
+            # it with a meaningless background
+            continue
+        lp = np.log10(np.array([_f(r, "period") for r in group], dtype=float))
+        srt = np.sort(lp)
+        n_near = (np.searchsorted(srt, lp + tol, "right")
+                  - np.searchsorted(srt, lp - tol, "left") - 1)
+        n_bg = (np.searchsorted(srt, lp + bg, "right")
+                - np.searchsorted(srt, lp - bg, "left") - 1)
+        # the background band is wider than the test band by bg/tol, and the
+        # star itself is excluded from both
+        expected = n_bg * (tol / bg)
+        for r, k, lam in zip(group, n_near, expected, strict=True):
+            r["pop_n_near"] = int(k)
+            r["pop_expected"] = float(lam)
+            r["pop_p"] = float(_poisson_sf(int(k), float(lam)))
+
+
+def _poisson_sf(k: int, lam: float) -> float:
+    """P(X >= k) for X ~ Poisson(lam), without a SciPy dependency."""
+    if k <= 0:
+        return 1.0
+    lam = max(float(lam), 1e-12)
+    # sum the first k terms of the pmf; k is small (a handful to a few tens)
+    # and lam is small, so the direct sum is stable in double precision
+    term = math.exp(-lam)
+    cdf = term
+    for i in range(1, k):
+        term *= lam / i
+        cdf += term
+    return float(min(1.0, max(0.0, 1.0 - cdf)))
 
 
 def _f(rec: dict, key: str) -> float:
@@ -274,6 +371,26 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
                                           "grid_days": _f(rec, "grid_days"),
                                           "grid_source": rec.get("grid_source")}
 
+    # Unrelated stars sharing a period: a property of the mission, not of any
+    # one star.  Needs population_period_stats to have run over every record.
+    pop_k = rec.get("pop_n_near")
+    if pop_k is not None:
+        pop_p = _f(rec, "pop_p")
+        if int(pop_k) >= int(c["pop_min_count"]) and np.isfinite(pop_p) \
+                and pop_p < float(c["pop_alpha"]):
+            flags.append("population_period")
+            detail["population_period"] = {"n_near": int(pop_k),
+                                           "expected": _f(rec, "pop_expected"),
+                                           "p": pop_p,
+                                           "tol_dex": float(c["pop_tol_dex"])}
+
+    # Too few repeats for "recurs" to mean anything.
+    cyc = _f(rec, "cycles_span")
+    if np.isfinite(cyc) and cyc < float(c["cycles_min"]):
+        flags.append("few_cycles")
+        detail["few_cycles"] = {"cycles_span": cyc, "cycles_min": float(c["cycles_min"]),
+                                "period": period, "span_days": _f(rec, "span_days")}
+
     hit, d = cadence_alias(period, inst, c["cadence_harmonics"], float(c["cadence_tol"]))
     if hit:
         flags.append("cadence_alias")
@@ -355,6 +472,7 @@ def assign_tiers(records: list[dict], contexts: dict | None = None,
     c = dict(DEFAULT_VET, **(conf or {}))
     contexts = contexts or {}
     recs = [dict(r) for r in records]
+    population_period_stats(recs, c)
     scanned = [i for i, r in enumerate(recs) if r.get("status") == "scanned"]
     p = np.array([float(recs[i].get("p_window", np.nan)) for i in scanned], dtype=float)
     sig = bh_fdr(p, float(c["fdr_alpha"])) if len(p) else np.zeros(0, dtype=bool)
@@ -440,4 +558,5 @@ def calibrate_jitter(vetted: list[dict], conf: dict | None = None) -> dict:
 
 __all__ = ["DEFAULT_VET", "HARD_VETO_ORDER", "REPORT_FLAGS", "assign_tiers",
            "cadence_alias", "calibrate_jitter", "core_pass", "periodic_variable",
-           "quality_pass", "rejection_counters", "rotation_alias", "vet_star"]
+           "population_period_stats", "quality_pass", "rejection_counters",
+           "rotation_alias", "vet_star"]

@@ -38,6 +38,7 @@ from seti.metronome.clock import (
     gumbel_tail_p,
     h_statistic,
     phase_stats,
+    scan,
     shuffle_waiting_times,
 )
 from seti.metronome.run import (
@@ -47,6 +48,7 @@ from seti.metronome.run import (
     stage_assess,
 )
 from seti.metronome.vet import (
+    DEFAULT_VET,
     HARD_VETO_ORDER,
     REPORT_FLAGS,
     assign_tiers,
@@ -402,6 +404,8 @@ def _sig_record(**kw) -> dict:
            # whose pool null could not be run, which is an incomplete vet
            "p_pool": 0.005, "pn_n_trials": 200, "pn_n_exceed": 0,
            "jitter_floor": 1e-6, "phase_spacing": 1e-5,
+           # the period ticked 300 times inside the windows: a real recurrence
+           "cycles_span": 300.0, "cycles_hit": 40,
            "grid_days": KEPLER_LC_CADENCE_DAYS, "grid_source": "measured"}
     rec.update(kw)
     return rec
@@ -469,6 +473,80 @@ def test_energy_incoherent_is_report_only():
     assert v["tier"] == "candidate"
 
 
+def _population(n: int, period_fn, **kw) -> list[dict]:
+    """A scanned population of ``n`` kepler stars with given best periods."""
+    return [dict(_sig_record(period=float(period_fn(i)), **kw), star_key=f"kepler:{i}",
+                 mission="kepler") for i in range(n)]
+
+
+def test_population_period_veto_kills_a_period_many_unrelated_stars_share():
+    # a smooth background of 200 periods spread over a decade, plus 12 stars
+    # all sitting within 1% of 243 d -- the shape the 2026-09-21 TESS run had
+    rng = np.random.default_rng(7)
+    bg = _population(200, lambda i: 10.0 ** rng.uniform(1.0, 2.6))
+    spike = [dict(_sig_record(period=243.0 * (1.0 + 0.0005 * (j - 6))),
+                  star_key=f"kepler:s{j}", mission="kepler") for j in range(12)]
+    vetted = assign_tiers(bg + spike, {}, VET)
+    by_key = {r["star_key"]: r for r in vetted}
+    for j in range(12):
+        r = by_key[f"kepler:s{j}"]
+        assert r["first_veto"] == "population_period", (j, r["flags"])
+        assert r["veto_detail"]["population_period"]["n_near"] >= 4
+    # the background stars are not swept up with them
+    swept = sum(1 for i in range(200)
+                if by_key[f"kepler:{i}"]["first_veto"] == "population_period")
+    assert swept <= 4, swept
+
+
+def test_population_period_leaves_a_star_alone_at_its_period():
+    rng = np.random.default_rng(11)
+    bg = _population(200, lambda i: 10.0 ** rng.uniform(1.0, 2.6))
+    lone = dict(_sig_record(period=4.7137), star_key="kepler:lone", mission="kepler")
+    vetted = assign_tiers(bg + [lone], {}, VET)
+    r = next(x for x in vetted if x["star_key"] == "kepler:lone")
+    assert "population_period" not in r["flags"]
+    assert r["tier"] in ("candidate", "interest", "watch")
+
+
+def test_population_period_is_not_applied_to_a_population_too_small_to_measure():
+    # five identical periods among five stars is not evidence of anything
+    vetted = assign_tiers(_population(5, lambda i: 3.137), {}, VET)
+    assert all("population_period" not in r["flags"] for r in vetted)
+
+
+def test_few_cycles_veto_trips_when_the_period_barely_repeated():
+    v = vet_star(_sig_record(period=243.0, cycles_span=3.0), FULL_CTX)
+    assert v["first_veto"] == "few_cycles" and v["tier"] == "none"
+    assert v["veto_detail"]["few_cycles"]["cycles_span"] == 3.0
+    # exactly at the threshold is enough
+    v = vet_star(_sig_record(cycles_span=float(DEFAULT_VET["cycles_min"])), FULL_CTX)
+    assert v["tier"] == "candidate"
+
+
+def test_cycle_bookkeeping_counts_opportunities_not_tick_instants():
+    """cycles_hit can never exceed cycles_span, and occupancy is a fraction."""
+    w = kepler_windows_short()
+    t = clock_events(w, 2.5, w.starts[0] + 0.3, duty=0.5, jitter_days=0.002, seed=3)
+    r = scan(t, star_windows(t, w), dict(SCAN))
+    assert r.cycles_hit <= r.cycles_span
+    assert 0.0 <= r.cycle_occupancy <= 1.0
+    assert r.cycles_span > 20.0
+    # forced onto a period comparable with the baseline, the same events have
+    # only a handful of chances to repeat -- which is what few_cycles reads
+    r2 = scan(t, star_windows(t, w), dict(SCAN, min_period_days=100.0,
+                                          max_period_days=400.0))
+    assert r2.cycles_span < 20.0
+
+
+def test_window_overlap_is_not_window_containment():
+    w = Windows(np.array([0.0, 10.0]), np.array([2.0, 12.0]))
+    inside = w.overlaps(np.array([0.5]), np.array([1.5]))
+    straddle = w.overlaps(np.array([1.5]), np.array([3.0]))
+    gap = w.overlaps(np.array([4.0]), np.array([6.0]))
+    assert bool(inside[0]) and bool(straddle[0]) and not bool(gap[0])
+    assert not bool(w.contains(np.array([2.5]))[0])
+
+
 def test_every_rejection_rule_has_a_counter():
     recs = [dict(_sig_record(period=13.7), star_key="k:1", mission="tess"),
             dict(_sig_record(period=5.5), star_key="k:2"),
@@ -479,7 +557,15 @@ def test_every_rejection_rule_has_a_counter():
             dict(_sig_record(p_window=0.9), star_key="k:7"),
             dict(_sig_record(p_pool=0.4), star_key="k:8"),
             dict(_sig_record(pn_n_trials=0, jitter=0.001, jitter_floor=0.001),
-                 star_key="k:9")]
+                 star_key="k:9"),
+            dict(_sig_record(period=200.0, cycles_span=2.0), star_key="k:10")]
+    # population_period needs a population: a TESS background wide of k:1's
+    # 13.7 d, plus six stars piled up on one period
+    rng = np.random.default_rng(3)
+    recs += [dict(_sig_record(period=float(10.0 ** rng.uniform(1.6, 2.6))),
+                  star_key=f"t:{i}", mission="tess") for i in range(60)]
+    recs += [dict(_sig_record(period=243.0 * (1.0 + 0.0005 * (j - 3))),
+                  star_key=f"t:s{j}", mission="tess") for j in range(6)]
     ctx = {"k:1": {"mission": "tess", "prot": 100.0, "variability_catalogues_reached": True},
            "k:2": {"mission": "kepler", "prot": 11.0, "variability_catalogues_reached": True},
            "k:3": {"mission": "kepler", "prot": 30.0, "variability_catalogues_reached": True,

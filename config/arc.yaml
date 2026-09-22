@@ -189,6 +189,16 @@ acquire:
 # flux-weighted centroid shift and the difference-image centroid per flare).
 stage2:
   tiers: ["interest", "watch"]  # interest first, then watch, by xi
+  # A HARD VETO IS A SUSPICION THE PIXELS CAN ADJUDICATE.  companion_suspect
+  # is raised from RUWE / NSS / a 12" neighbour and keeps a star out of every
+  # tier, so it never reaches stage 2 -- and it is exactly the mechanism the
+  # centroid test exists to settle.  MEASURED (run 35738218021): the channel's
+  # ONLY star above the conservative ceiling on measured parameters, KIC
+  # 9418692 (xi_conservative = +0.462 on 4 flares, 13 independent events),
+  # is first_veto = companion_suspect and appears in no tier at all.  These
+  # stars are now shortlisted AHEAD of every watch star.
+  include_vetoed_excess: true
+  vetoed_first_vetoes: ["companion_suspect", "blend", "catalogue_doubtful"]
   missions: ["kepler", "tess"]
   max_stars: 40
   max_flares_per_star: 6        # the largest exceeding flares per star

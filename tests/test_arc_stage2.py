@@ -712,6 +712,53 @@ def test_shortlist_orders_interest_before_watch_and_caps(tmp_path):
     assert S.load_shortlist(tmp_path / "nowhere", params=p) == []
 
 
+def test_a_hard_vetoed_ceiling_excess_star_is_tested_first_not_dropped(tmp_path):
+    """companion_suspect is a suspicion; the pixels are what can settle it.
+
+    MEASURED (run 35738218021): KIC 9418692 is the ONLY star above the
+    conservative ceiling on measured parameters (xi = +0.462, 4 flares) and
+    its first_veto is companion_suspect, so it sits in no tier and reached
+    no stage-2 shortlist at all.
+    """
+    d = {"candidates": [_entry(star_id="1", tier="interest", xi_conservative_max=0.1)],
+         "watch": [_entry(star_id="3", tier="watch", xi_conservative_max=-0.1)]}
+    (tmp_path / "candidates.json").write_text(json.dumps(d))
+    pd.DataFrame([
+        # above the ceiling but hard-vetoed: belongs in stage 2, first
+        {"star_key": "kepler:9418692", "star_id": "9418692", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "none", "first_veto": "companion_suspect",
+         "xi_conservative_max": 0.462, "amplitude_frac": 2.01e-4,
+         "amplitude_source": "santos2021", "amplitude_scale": 2.828},
+        # above the ceiling but vetoed for a reason the pixels cannot touch
+        {"star_key": "kepler:1", "star_id": "1", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "none", "first_veto": "evolved",
+         "xi_conservative_max": 0.9, "amplitude_frac": 1e-3,
+         "amplitude_source": "mcquillan2014", "amplitude_scale": 1.0},
+        # below the ceiling and vetoed: not a ceiling excess, stays out
+        {"star_key": "kepler:7", "star_id": "7", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "none", "first_veto": "companion_suspect",
+         "xi_conservative_max": -2.0, "amplitude_frac": 1e-3,
+         "amplitude_source": "mcquillan2014", "amplitude_scale": 1.0},
+    ]).to_csv(tmp_path / "xi_table.csv", index=False)
+
+    p = S.Stage2Params(max_stars=10)
+    short = S.load_shortlist(tmp_path, params=p)
+    assert [e["star_id"] for e in short] == ["9418692", "1", "3"]
+    assert short[0]["tier"] == "vetoed_excess"
+    assert short[0]["amplitude_scale"] == pytest.approx(2.828)
+    # "1" keeps its interest row (deduped by star_key), it is not re-tiered
+    assert short[1]["tier"] == "interest"
+
+    off = S.Stage2Params(max_stars=10, include_vetoed_excess=False)
+    assert [e["star_id"] for e in S.load_shortlist(tmp_path, params=off)] == ["1", "3"]
+
+    # the config turns it on with the measurement that motivated it
+    conf = load_arc_config()
+    assert conf["stage2"]["include_vetoed_excess"] is True
+    assert "companion_suspect" in conf["stage2"]["vetoed_first_vetoes"]
+    assert S.Stage2Params.from_config(conf).include_vetoed_excess is True
+
+
 def test_probe_writes_the_route_and_shortlist(tmp_path):
     conf = _conf(tmp_path)
     (tmp_path / "arc").mkdir()

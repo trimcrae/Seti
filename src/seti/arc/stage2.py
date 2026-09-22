@@ -125,6 +125,11 @@ STAGE2_ROLE_EXTRA = {
 class Stage2Params:
     tiers: tuple[str, ...] = ("interest", "watch")
     missions: tuple[str, ...] = ("kepler", "tess")
+    # A hard veto is a SUSPICION the pixels can adjudicate, so a star above
+    # the conservative ceiling that one of these kept out of every tier is
+    # tested FIRST rather than not at all (see vetoed_excess_rows).
+    include_vetoed_excess: bool = True
+    vetoed_first_vetoes: tuple[str, ...] = ("companion_suspect", "blend", "catalogue_doubtful")
     max_stars: int = 40
     max_flares_per_star: int = 6
     # wall clocks
@@ -175,11 +180,11 @@ class Stage2Params:
         c = dict((conf or {}).get("stage2") or {})
         phys = (conf or {}).get("physics") or {}
         d = cls()
-        for k in ("tiers", "missions"):
+        for k in ("tiers", "missions", "vetoed_first_vetoes"):
             if c.get(k):
                 setattr(d, k, tuple(str(x) for x in c[k]))
         for k in d.__dataclass_fields__:
-            if k in ("tiers", "missions", "param_tables"):
+            if k in ("tiers", "missions", "vetoed_first_vetoes", "param_tables"):
                 continue
             if c.get(k) is not None:
                 cur = getattr(d, k)
@@ -244,19 +249,55 @@ def _finite(v) -> bool:
 # ---------------------------------------------------------------------------
 # the shortlist
 # ---------------------------------------------------------------------------
-def load_shortlist(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
-    """Interest / candidate stars first, then watch, from ``candidates.json``."""
-    p = Path(arc_dir) / "candidates.json"
+def vetoed_excess_rows(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
+    """Stars with ``xi_conservative_max > 0`` that a HARD VETO kept out of
+    ``candidates.json``, read from stage 1's ``xi_table.csv``.
+
+    A ``companion_suspect`` / ``blend`` veto is a *suspicion* raised from
+    RUWE, NSS or a 12" neighbour, and the pixel centroid is the instrument
+    that can adjudicate it -- so those stars belong in stage 2 ahead of every
+    watch star, not outside it.  MEASURED (run 35738218021): the channel's
+    only star above the conservative ceiling on measured parameters, KIC
+    9418692 (xi = +0.462 on 4 flares), is vetoed ``companion_suspect`` and so
+    appears in no tier at all; without this it would never be tested.
+    """
+    p = Path(arc_dir) / "xi_table.csv"
     if not p.exists():
         return []
     try:
-        d = json.loads(p.read_text())
+        d = pd.read_csv(p, dtype={"star_id": str, "star_key": str, "record_key": str})
     except Exception:                                     # noqa: BLE001
         return []
-    order = {"candidate": 0, "interest": 1, "watch": 2}
-    rows = list(d.get("candidates") or []) + list(d.get("watch") or [])
-    rows = [r for r in rows if str(r.get("tier")) in set(params.tiers)
-            and str(r.get("mission", "")).lower() in set(params.missions)]
+    if not len(d) or "xi_conservative_max" not in d.columns:
+        return []
+    x = pd.to_numeric(d["xi_conservative_max"], errors="coerce")
+    hard = set(params.vetoed_first_vetoes)
+    keep = d[(x > 0) & d.get("first_veto", pd.Series([""] * len(d))).astype(str).isin(hard)]
+    rows = []
+    for r in keep.to_dict(orient="records"):
+        r = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in r.items()}
+        r["tier"] = "vetoed_excess"
+        rows.append(r)
+    rows.sort(key=lambda r: -_f(r.get("xi_conservative_max")))
+    return rows
+
+
+def load_shortlist(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
+    """Interest / candidate stars first, then watch, from ``candidates.json``,
+    with the hard-vetoed ceiling-excess stars ahead of all of them."""
+    p = Path(arc_dir) / "candidates.json"
+    order = {"vetoed_excess": -1, "candidate": 0, "interest": 1, "watch": 2}
+    rows: list[dict] = []
+    if p.exists():
+        try:
+            d = json.loads(p.read_text())
+        except Exception:                                 # noqa: BLE001
+            d = {}
+        rows = list(d.get("candidates") or []) + list(d.get("watch") or [])
+        rows = [r for r in rows if str(r.get("tier")) in set(params.tiers)]
+    if params.include_vetoed_excess:
+        rows = vetoed_excess_rows(arc_dir, params=params) + rows
+    rows = [r for r in rows if str(r.get("mission", "")).lower() in set(params.missions)]
     seen, out = set(), []
     for r in sorted(rows, key=lambda r: (order.get(str(r.get("tier")), 9),
                                          -_f(r.get("xi_conservative_max")))):
@@ -1406,6 +1447,8 @@ def main(argv=None):
     p.add_argument("--out-dir", default="results/arc/stage2")
     p.add_argument("--tiers", default="", help="comma-separated tiers (default from config)")
     p.add_argument("--max-stars", type=int, default=-1)
+    p.add_argument("--no-vetoed-excess", action="store_true",
+                   help="do NOT shortlist hard-vetoed stars above the conservative ceiling")
     a = p.parse_args(argv)
     conf = load_arc_config()
     conf["_arc_dir"] = a.arc_dir
@@ -1414,6 +1457,8 @@ def main(argv=None):
         params.tiers = tuple(x.strip() for x in a.tiers.split(",") if x.strip())
     if a.max_stars >= 0:
         params.max_stars = int(a.max_stars)
+    if a.no_vetoed_excess:
+        params.include_vetoed_excess = False
     out = Path(a.out_dir)
     stage2_probe(conf, out, params=params)
     if a.stage == "all":

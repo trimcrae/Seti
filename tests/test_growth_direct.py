@@ -995,3 +995,28 @@ def test_a_flaky_tic_query_is_retried_before_a_star_is_refused(tmp_path):
     df = D._read_csv(D._shard_paths(out, 0)["csv"])
     assert (df["lc_status"] == "OK").any()         # the retry rescued it
     assert not (df["lc_status"] == D.REASON_TIC_UNRESOLVED).all()
+
+
+def test_assess_declares_the_rows_that_still_rest_on_an_unchecked_tic(tmp_path):
+    """The first summary.json mixes pre-repair shards with repaired ones.  It
+    must say so, or its funnel reads as coverage that was tried and failed."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    names = list(targets["kepoi_name"].astype(str))
+    D._write_csv(D._shard_paths(out, 0)["csv"], pd.DataFrame([
+        # written before the repair: a truncated id on a bare catalogue route
+        {"kepoi_name": names[0], "tic_id": 122785300.0, "tic_route": "name_planet",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED},
+        # written after: the sky named this star
+        {"kepoi_name": names[1], "tic_id": 122785305.0,
+         "tic_route": "tic_kic_crossid_over_name_planet",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED}]))
+    s = D.direct_assess(_conf(), out)
+    assert s["funnel"]["n_rows_pending_tic_recheck"] == 1
+    assert s["funnel"]["tic_routes"].get("tic_kic_crossid_over_name_planet") == 1
+    assert any("never checked against the sky" in d for d in s["degraded"])
+    assert s["verdict"] == D.RUN_NO_DATA          # and still not a statement about the sky

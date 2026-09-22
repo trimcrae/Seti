@@ -1096,6 +1096,14 @@ def _cmd_uline(args, cfg):
     return _uline_main(list(args.rest))
 
 
+# --- RING ---
+def _cmd_ring(args, cfg):
+    from .ring.run import run
+
+    run(args.stage, args.leg, out=args.out, shard=args.shard, dec_band=args.dec_band,
+        followup=not args.no_followup)
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
@@ -2306,6 +2314,17 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- RING ---
+    # 2026-09-21: RING (S63), rings around the dead — the Osmanov ring-temperature
+    # reading over white dwarfs, pulsars, Y/T dwarfs and free-floating planets;
+    # runnable as `python -m seti.ring.run` (what ring.yml calls) or `seti ring`.
+    from .ring.run import add_arguments as _ring_args
+    p = sub.add_parser("ring",
+                       help="RING (S63): 300-700 K rings around post-biological hosts "
+                            "(WD, pulsar, Y/T dwarf, FFP); same flags as seti.ring.run")
+    _ring_args(p)
+    p.set_defaults(func=_cmd_ring)
 
     args = parser.parse_args(argv)
     cfg = load_config()

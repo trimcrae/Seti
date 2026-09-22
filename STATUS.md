@@ -58,6 +58,41 @@ what the runner installs, not the sandbox's pandas 2.3.3.
 Run `35744896637` failed in two seconds because the free-disk step deleted
 `$AGENT_TOOLSDIRECTORY`, which is where `setup-python` had put the
 interpreter the package was installed into; fixed.
+### CRADLE: the `full` join answers, 96/96 pixels, 4,990 stars from one shard of eight, 2026-09-22
+
+**The first real CRADLE measurement, and it settles the question the probe was
+built to answer.** Shard 3 of run 35741356662 finished at 11:46 a.m. EDT:
+
+```
+[cradle] s3of8 hp3_763: OK rows=53 parent=2541 shape=full 24.9s
+[cradle] acquire s3of8: units ok=86 zero=10 partial=0 failed=0 rows=4990 in 1906.3 s
+```
+
+* **`shape=full` works.** The inner-first join — Gaia-only cuts in a sub-select
+  on `gaia_source` alone, then `allwise_best_neighbour` -> the AllWISE mirror,
+  plus `astrophysical_parameters`, 2MASS *direct* through
+  `tmass_psc_xsc_best_neighbour.original_ext_source_id`, and
+  `vari_rotation_modulation` — returns a whole level-3 HEALPix pixel in **~25
+  seconds**. IGNITION's flat-join failure (run 34787803862: the planner starts
+  from the 750-million-row AllWISE mirror and cannot return even `TOP 5`) does
+  **not** recur, and the `tmass_xmatch_id` spelling that `config/cradle.yaml`
+  marked `verify` is correct. The probe was never needed for this; the acquire
+  log answered it.
+* **96 of 96 units, 0 failed, 0 partial, 0 split.** The 10 `zero` pixels are
+  the |b| > 10° cut removing Galactic-plane pixels, not failures.
+* **4,990 parent stars from one eighth of the sky** — Gaia DR3 FGK dwarfs,
+  G < 13.5, d < 500 pc, with AllWISE W3 **and** W4 each at >= 5 sigma. The
+  all-sky parent is therefore of order **40,000** stars, which is the number
+  the screen will work on.
+* **31.8 minutes per shard** against a 300-minute budget inside a 350-minute
+  job, so the remaining shards have ample headroom and the deadline guard
+  added this morning is not load-bearing here.
+
+Shard 3 ran the pre-fix code (it checked out at 15:13:45 UTC, seconds before
+the fix landed), so the shape-learning path was never exercised — it did not
+need to be, because `full` answered on the first unit. `results/cradle/` is
+still empty: `screen` waits on all eight shards.
+
 ### CRADLE is on the sky: eight shards acquiring, and three ways the verdict could have been faked, 2026-09-22
 
 **State at 11:40 a.m. EDT.** Run **35741356662** (`stage=all`, 8 acquire shards

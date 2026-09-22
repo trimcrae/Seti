@@ -102,6 +102,24 @@ The join is written **inner-first** — every Gaia-only cut in a sub-select on
 lets the planner start from the 750-million-row AllWISE mirror and cannot
 return even `TOP 5`.
 
+### What the archive actually did — run 35741356662, shard 3, 11:46 a.m. EDT
+
+Measured, not assumed:
+
+```
+[cradle] s3of8 hp3_763: OK rows=53 parent=2541 shape=full 24.9s
+[cradle] acquire s3of8: units ok=86 zero=10 partial=0 failed=0 rows=4990 in 1906.3 s
+```
+
+The `full` shape answers — the inner-first join with 2MASS reached *directly*
+through `tmass_psc_xsc_best_neighbour.original_ext_source_id` (the spelling the
+config marked `verify`), plus `astrophysical_parameters` and
+`vari_rotation_modulation` — at **~25 s per level-3 pixel**. IGNITION's
+flat-join failure does not recur. 96 of 96 units returned; the 10 empty ones
+are the |b| > 10° cut removing Galactic-plane pixels. **4,990 parent stars from
+one eighth of the sky**, so the all-sky parent is of order 40,000, and a shard
+costs 31.8 minutes against its 300-minute budget.
+
 ## Ages — two indicators or nothing
 
 HD 15407A is the warning written into the mission: a **2.1 Gyr isochrone age

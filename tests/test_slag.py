@@ -774,7 +774,7 @@ def test_measured_meteorites_widen_a_pair_envelope_and_never_narrow_it(tmp_path)
 
 
 def test_meteorite_calibration_says_when_it_cannot_cover_the_panel(tmp_path):
-    """No suite, and a suite missing an element, are reported --- never a silent p."""
+    """No suite is reported; a partly covered panel calibrates on the covered subset."""
     from seti.slag.family import load_measured_meteorites
     from seti.slag.sinking import TimescaleModel
     els = ["Mg", "Al", "Si", "Ca", "Ti", "Fe", "Sc"]
@@ -789,9 +789,21 @@ def test_meteorite_calibration_says_when_it_cannot_cover_the_panel(tmp_path):
                                "Fe": -0.1}) for i in range(30)]
     FAM.measured = load_measured_meteorites([_meteorite_csv(tmp_path / "noSc.csv", "Si", bodies)])
     try:
+        # Sc is in no body, so it is dropped and the other six carry the p ---
+        # and the record names what was used and what was lost.
         rec = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=5, draw_mode="meteorite")
-        assert rec["status"] == "SUITE_LACKS_ELEMENTS" and rec["elements_not_in_suite"] == ["Sc"]
-        assert rec["p_misfit"] is None
+        assert rec["status"] == "OK"
+        assert rec["elements_not_in_suite"] == ["Sc"] and rec["elements_dropped"] == ["Sc"]
+        assert "Sc" not in rec["elements_used"] and rec["n_elements_used"] == 6
+        assert rec["p_misfit"] is not None
+        # a suite with too few bodies for ANY 4-element subset gives no p at all
+        thin = [(f"t{i}", "CL", {"Si": 0.0, "Mg": 0.03, "Al": -1.0, "Ca": -1.2})
+                for i in range(6)]
+        FAM.measured = load_measured_meteorites(
+            [_meteorite_csv(tmp_path / "thin2.csv", "Si", thin)])
+        rec2 = calibrate_misfit(FAM, panel, tsm, fit, s, n_draws=5, draw_mode="meteorite")
+        assert rec2["status"] == "TOO_FEW_BODIES_COVER_THE_PANEL"
+        assert rec2["p_misfit"] is None
     finally:
         FAM.measured = None
 

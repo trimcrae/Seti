@@ -153,7 +153,7 @@ class PanelModel:
 
     def __init__(self, fam: NaturalFamily, panel: Panel, tsm: TimescaleModel,
                  settings: FitSettings):
-        self.fam, self.panel, self.s = fam, panel, settings
+        self.fam, self.panel, self.s, self.tsm = fam, panel, settings, tsm
         self.elements = list(panel.elements)
         self.lim_elements = [e for e in panel.limit_elements if e in fam.elements]
         self.all_elements = self.elements + self.lim_elements
@@ -374,8 +374,35 @@ def calibrate_misfit(fam: NaturalFamily, panel: Panel, tsm: TimescaleModel, fit:
 
 
 #: A meteorite calibration is only attempted with at least this many real
-#: bodies that measure the panel's whole element list.
+#: bodies that measure, jointly, every element it calibrates on.
 METEORITE_MIN_BODIES = 20
+
+#: and it is not worth doing on fewer elements than this.
+METEORITE_MIN_ELEMENTS = 4
+
+
+def meteorite_subset(suite, elements, *, min_bodies: int = METEORITE_MIN_BODIES,
+                     min_elements: int = METEORITE_MIN_ELEMENTS):
+    """The largest element subset of ``elements`` that enough real bodies cover.
+
+    Requiring a complete analysis of a 16-element panel leaves almost no
+    meteorites --- the compilations are assembled from papers that each
+    measured what they cared about --- so the calibration would be absent
+    exactly on the rich panels that carry the most information.  The rarest
+    element is dropped until enough bodies measure the whole of what is left,
+    and the data are refitted on the same subset so the comparison stays like
+    for like.  Which elements were used, and which were dropped, travel with
+    the result.
+    """
+    els = [e for e in elements if e in (suite.elements if suite is not None else [])]
+    while len(els) >= int(min_elements):
+        idx = [suite.elements.index(e) for e in els]
+        ok = np.flatnonzero(np.all(np.isfinite(suite.log_ratio[:, idx]), axis=1))
+        if ok.size >= int(min_bodies):
+            return els, ok
+        counts = [int(np.isfinite(suite.log_ratio[:, i]).sum()) for i in idx]
+        els.pop(int(np.argmin(counts)))
+    return [], np.zeros(0, dtype=int)
 
 
 def _calibrate_against_meteorites(fam, pm: PanelModel, fit: FitResult, s: FitSettings,
@@ -387,14 +414,22 @@ def _calibrate_against_meteorites(fam, pm: PanelModel, fit: FitResult, s: FitSet
     if suite is None:
         return {**out, "status": "NO_MEASURED_SUITE"}
     missing = [e for e in pm.elements if e not in suite.elements]
-    if missing:
-        return {**out, "status": "SUITE_LACKS_ELEMENTS", "elements_not_in_suite": missing}
-    idx = [suite.elements.index(e) for e in pm.elements]
-    block = suite.log_ratio[:, idx]
-    ok = np.flatnonzero(np.all(np.isfinite(block), axis=1))
-    if ok.size < METEORITE_MIN_BODIES:
+    els, ok = meteorite_subset(suite, pm.elements)
+    if not els:
         return {**out, "status": "TOO_FEW_BODIES_COVER_THE_PANEL",
-                "n_bodies_covering_panel": int(ok.size)}
+                "elements_not_in_suite": missing,
+                "n_elements_in_suite": int(len(pm.elements) - len(missing))}
+    dropped = [e for e in pm.elements if e not in els]
+    if dropped:
+        # refit the DATA on the same subset, so p compares like with like
+        sub = pm.panel.subset(dropped)
+        fit = fit_panel(fam, sub, pm.tsm, s, rng=rng)
+        pm = PanelModel(fam, sub, pm.tsm, s)
+        out.update(nll2_obs=float(fit.nll2), chi2_obs=float(fit.chi2))
+    out.update(elements_used=list(els), elements_dropped=dropped,
+               elements_not_in_suite=missing, n_elements_used=len(els))
+    idx = [suite.elements.index(e) for e in els]
+    block = suite.log_ratio[:, idx]
     pick = rng.choice(ok, size=n, replace=ok.size < n)
     thetas = pm.random_thetas(rng, n)
     base = np.zeros((n, pm.n_meas))

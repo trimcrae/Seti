@@ -84,6 +84,16 @@ Config thresholds go in `config/`, not as magic numbers in code.
 
 ## 3. Workflow design
 
+**Register the workflow on the default branch before you try to dispatch it.**
+A `workflow_dispatch` API call 404s for a workflow file that is not on `main`,
+whatever branch you pass as the ref. A channel whose `.yml` lives only on its
+own branch is therefore *undispatchable*, and the failure looks like a missing
+channel rather than a missing file. RING and FORGE each lost their first
+dispatch to this on 2026-09-22 — FORGE's had been impossible the whole time it
+appeared merely unrun. The file is inert on `main` (`workflow_dispatch` only,
+no `push` or `schedule` trigger) and the run executes the copy on its own ref,
+so registering it early costs nothing.
+
 Copy `.github/workflows/herdsman.yml`. It encodes:
 
 * **Checkpointing** — every completed unit writes its own JSON immediately;

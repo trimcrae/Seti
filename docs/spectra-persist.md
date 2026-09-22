@@ -85,6 +85,17 @@ the stack as well as the exposures.
 with a rest-frame known-line match overriding everything and a second-epoch non-detection
 killing only when that epoch was sensitive enough to have seen the line at ≥ 5 σ.
 
+Two verdicts do not correspond to a class, because they are interpretations of one:
+
+* `KILLED_shared_ccd_column` — another *fibre of the same plate* carries a candidate at
+  the same wavelength. Different objects, same detector columns; both cannot be sources,
+  and a sky or ISM feature there would already have been taken by the known-line cut.
+* `KILLED_not_significant_in_coadd` — the class is `absent_in_exposures` but the
+  **calibrated** coadd significance is below 5 σ. Then "the coadd feature is not in its
+  inputs" is the wrong sentence: there was no coadd feature. Only a line the calibrated
+  coadd *does* show, and the exposures and their own stack do not, is the coaddition
+  artefact this channel exists to catch.
+
 ## The cheap discriminators, run on every survivor
 
 * **rest-frame line identification** at the star's own catalogue redshift against 792

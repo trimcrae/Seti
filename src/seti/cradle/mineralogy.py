@@ -140,6 +140,10 @@ def slag_verdict(score: dict, excess_significant: bool) -> str:
     return "AMBIGUOUS"
 
 
+#: what an IPAC table writes where a value is absent
+_IPAC_NULLS: frozenset[str] = frozenset({"", "null", "nan", "none", "-", "--", "n/a", "na", "*"})
+
+
 def parse_ipac_table(text: str) -> pd.DataFrame:
     """IRSA/IPAC table text -> DataFrame (``|`` header rows, ``\\`` comments)."""
     names: list[str] = []
@@ -158,7 +162,19 @@ def parse_ipac_table(text: str) -> pd.DataFrame:
     rows = [r[:width] + [""] * (width - len(r)) for r in rows]
     df = pd.DataFrame(rows, columns=names)
     for col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors="ignore")
+        # `errors="ignore"` is gone in pandas 3 -- it RAISES "invalid error
+        # value specified" -- and the runner installs the current pandas while
+        # the sandbox had 2.3, so run 35741356662's probe job died here, on the
+        # offline gate, before it made a single archive call.  Same semantics,
+        # spelled in the surviving API: a column becomes numeric only when every
+        # value that is not an IPAC null token converts, so one object name
+        # cannot silently turn a text column into NaNs, and one `null` in a
+        # wavelength column cannot keep it as text.
+        s = df[col]
+        missing = s.astype(str).str.strip().str.lower().isin(_IPAC_NULLS)
+        conv = pd.to_numeric(s.where(~missing), errors="coerce")
+        if bool((conv.notna() | missing).all()) and bool(conv.notna().any()):
+            df[col] = conv
     return df
 
 

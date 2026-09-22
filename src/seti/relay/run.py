@@ -44,6 +44,7 @@ from ..herdsman.acquire import apply_rv_zero_point
 from ..metronome.acquire import STATUS_FAILED, STATUS_OK, STATUS_ZERO, AcquisitionLog, tap_query
 from . import acquire as acq
 from . import geometry as geo
+from . import papers as pap
 
 STAGES = ("probe", "targets", "geometry", "recut", "assess")
 
@@ -898,8 +899,8 @@ def _sep_arcmin(sample: pd.DataFrame, i: int, j: int) -> float:
 # assess: the published hits against the geometry and the prior
 # ---------------------------------------------------------------------------
 def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=None, log=None,
-                 beams=None, hits_df: pd.DataFrame | None = None, probe: dict | None = None
-                 ) -> dict:
+                 beams=None, hits_df: pd.DataFrame | None = None, probe: dict | None = None,
+                 get_text_fn=None, get_fn=None) -> dict:
     log = log or AcquisitionLog(prefix="relay/assess")
     beams = beams or geo.beam_grid(conf["beams"])
     tap_in = tap_fn
@@ -915,7 +916,11 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
     recut = _read(out / "recut.json") or {}
 
     # --- the hit catalogues ---------------------------------------------------
+    # Two routes, and the second one is the one that works.  VizieR carries the
+    # surveys' target lists; the EVENT tables live only in the papers, so they
+    # are parsed out of the arXiv e-print source (src/seti/relay/papers.py).
     tables = []
+    harvest = None
     if hits_df is None:
         probe = probe or _read(out / "probe.json") or {}
         tables = [t for t in probe.get("hit_tables") or []
@@ -927,13 +932,34 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
             t["n_rows_fetched"] = int(len(rows))
             if len(rows):
                 frames.append(acq.standardise_hits(rows))
+        aconf_arxiv = (conf["hit_catalogues"] or {}).get("arxiv") or {}
+        # the e-print route runs when the caller handed in a transport OR when a
+        # runner asked for the default one; a bare stage_assess() in the offline
+        # suite passes neither and opens no socket.
+        if aconf_arxiv and (get_text_fn is not None or get_fn is not None):
+            harvest = pap.harvest_papers(
+                aconf_arxiv, get_text_fn=get_text_fn, get_fn=get_fn, log=log,
+                deadline=time.monotonic() + float(aconf_arxiv.get("budget_s", 1800)))
+            if len(harvest.hits):
+                frames.append(acq.standardise_hits(harvest.hits))
         hits_df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
     else:
         hits_df = acq.standardise_hits(hits_df) if "drift_hz_s" not in hits_df else hits_df
     rep = {"stage": "assess", "generated_utc": _now(), "hit_tables": tables,
            "n_hits": int(len(hits_df)), "beams": {}}
+    if harvest is not None:
+        rep["arxiv"] = {"papers": harvest.papers, "n_hit_tables": harvest.n_hit_tables,
+                        "n_tables_seen": len(harvest.tables),
+                        "hit_tables": [t for t in harvest.tables if t.get("kind") == "hits"],
+                        "n_hit_rows": int(len(harvest.hits))}
     if not len(hits_df):
-        rep["verdict"] = V_NO_HIT_CATALOGUE
+        if harvest is not None:
+            ok = sum(1 for p in harvest.papers if p.get("arxiv_id"))
+            rep["verdict"] = (f"{V_NO_HIT_CATALOGUE} (VizieR: {len(tables)} hit tables; "
+                              f"e-print: {ok} papers read, {len(harvest.tables)} tables parsed, "
+                              f"0 carried a frequency and a drift rate)")
+        else:
+            rep["verdict"] = V_NO_HIT_CATALOGUE
         rep["acquisition"] = log.as_dict()
         _write(out / "hits.json", rep)
         pd.DataFrame().to_csv(out / "hits_crossmatch.csv", index=False)
@@ -1112,6 +1138,9 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
         per_beam[name] = {"theta_label": b.get("theta_label"),
                           "n_spillover": g.get("n_spillover"), "n_between": g.get("n_between"),
                           "analytic": g.get("analytic_expectation"),
+                          "measured_over_analytic": g.get("measured_over_analytic"),
+                          "counts_complete": g.get("counts_complete"),
+                          "flux_ratio_p50_spillover": g.get("flux_ratio_p50_spillover"),
                           "n_bl_targets_as_transmitter": g.get("n_bl_targets_as_transmitter"),
                           "n_pointings_on_pair_line": r.get("n_pointings_on_pair_line"),
                           "n_hits_on_pair_line": a.get("n_hits_on_pair_line"),
@@ -1138,7 +1167,7 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
 # ---------------------------------------------------------------------------
 def relay_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, bl_fetch=None,
               tap_fn=None, query_fn=None, fetch_fn=None, gaia_df=None, max_stars=None,
-              hits_df=None, log=None) -> dict:
+              hits_df=None, log=None, get_text_fn=None, get_fn=None) -> dict:
     conf = conf or load_relay_config()
     out = Path(out_dir) if out_dir else Path("results") / "relay"
     out.mkdir(parents=True, exist_ok=True)
@@ -1161,8 +1190,13 @@ def relay_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, bl_
             # the runner resolves hit names through SIMBAD; the clock comes from
             # _transports, and an injected transport is passed through unchanged
             tap, _q = _transports(conf, tap_fn, query_fn)
+            # the e-print route: the default HTTP transports unless a test injects
+            # its own, so a plain `relay_run("assess")` on the runner DOES read
+            # the papers while the offline suite calls stage_assess directly.
             rep = stage_assess(conf, out, query_fn=query_fn, fetch_fn=fetch_fn, tap_fn=tap,
-                               log=log, hits_df=hits_df)
+                               log=log, hits_df=hits_df,
+                               get_text_fn=get_text_fn or pap.default_get_text,
+                               get_fn=get_fn or pap.default_get_bytes)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
         log.write(out / "acquisition_log.json")

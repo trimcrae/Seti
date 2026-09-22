@@ -243,6 +243,13 @@ the continuum.
 `transit_inconsistent` · `insufficient_phase_coverage` · `low_snr` ·
 `present_in_drift_control` (§3.4a) · `fdr_not_significant`.
 
+**Cross-epoch coherence** is recorded, never used as a veto:
+`recurrent_across_targets` kills a wavelength shared by *unrelated* hosts
+(instrumental), but the same wavelength in two independent exposures of the
+*same* host is the opposite — it is what a persistent source does, and it is
+what would turn one exposure's feature into something worth a telescope. Each
+row carries `same_target_epochs` and the exposure keys.
+
 **Tiers:** `none` → `watch` (a clean narrow feature whose phase coverage cannot
 test vanishing; kept for the recurrence census) → `interest` → `candidate`.
 BH-FDR at α = 0.05 is applied across the population with the **full trial
@@ -290,13 +297,32 @@ Nothing in this channel is a detection on its own.
   ~1000 (M), ~1600 (NIRCam grism), ~700 (SOSS order 1), ~100 (PRISM, MIRI LRS).
   A "narrow" feature is therefore **≥ 110 km/s** wide at best, ~430 km/s at
   SOSS and ~3000 km/s at PRISM/LRS. A true laser (Δλ/λ ~ 10⁻⁸) is always
-  unresolved; what is measured is its **equivalent width**. Every exposure's
-  5σ EW limit (`ew_5sigma_limit_um`, one resolution element) and velocity
-  width are recorded in `summary.json: sensitivity`.
+  unresolved; what is measured is its **equivalent width**. Every exposure
+  records **three** numbers in `summary.json: sensitivity` —
+  `ew_5sigma_limit_out_um` (the out-of-eclipse spectrum, held at ~1% of the
+  continuum by the static pixel pattern, §3.4a), `ew_5sigma_limit_diff_um`
+  (the difference spectrum, photon limited), and `ew_5sigma_limit_um`, which
+  is the difference's wherever the difference ran. **Quote the difference
+  limit**: the other one is the pattern, not the data.
+* **What the limit means.** An equivalent width is a fraction of the *star's*
+  continuum. Each eclipse-class exposure also measures its own broad-band
+  event depth (`event_depth`, the planet's day-side flux over the star's,
+  from the same detrended continuum light curve the verification uses), so
+  `line_contrast_5sigma` (= 5 × the difference spectrum's noise, the faintest
+  line peak the exposure could have shown, as a fraction of the stellar
+  continuum) divided by that depth gives
+  **`beacon_fraction_of_event_flux_5sigma`**: the faintest beacon detectable
+  *as a fraction of the planet's own broad-band emission*, in one resolution
+  element. That is the number to quote about a *planet*, and it needs neither
+  a distance nor a stellar model. On the synthetic 600-integration stack it is
+  ~0.10 for a 1% eclipse and ~0.48 for a 0.2% one.
 * **Phase.** Only eclipse-class exposures (≥8 in-eclipse and ≥16 out-of-eclipse
-  integrations *and* a pre-ingress baseline) test vanishing. Transit-only and
-  `phase_unresolved` exposures contribute constant-line entries (`watch`) and
-  recurrence statistics, nothing more.
+  integrations *and* a pre-ingress baseline) test vanishing, and only they get
+  the eclipse difference. A transit-class exposure gets the transit difference
+  and reaches the same depth, but produces `watch` at most (§3.4a);
+  `phase_unresolved` exposures get neither and are limited by the pattern —
+  they contribute constant-line entries and recurrence statistics, nothing
+  more.
 * **Duty cycle.** A beacon that is off during the observation, or pointed
   elsewhere, is invisible. A beacon brighter than the star's local continuum by
   less than ~5 noise units per resolution element is invisible.
@@ -317,6 +343,8 @@ eclipses, longer baselines) and the stage-3 products.
 src/seti/lantern/{__init__,acquire,phase,line,synth,run}.py
 config/lantern.yaml           thresholds, phase windows, per-instrument artefact table
 tests/test_lantern.py         offline battery (CI gate)
+tests/test_lantern_reader.py  the table-per-segment x1dints layout
+tests/test_lantern_difference.py  the out-minus-in difference search and its drift null
 .github/workflows/lantern.yml inventory -> sharded screen -> assess (+ lit)
 scripts/lanternlit_fetch.py   prior-art sweep -> results/lanternlit/
 results/lantern/              summary.json, candidates.json, exposures.json,

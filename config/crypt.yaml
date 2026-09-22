@@ -11,7 +11,9 @@ acquire:
   download_timeout_s: 900
   retries: 2
   max_bytes_per_file: 400000000       # 400 MB cap on any single raster
-  max_total_bytes: 6000000000         # 6 GB cap on the whole acquisition
+  max_total_bytes: 14000000000        # 14 GB cap on the whole acquisition
+                                      # (24 PCP tables per pole at 262 MB each,
+                                      #  each deleted after it is rasterised)
   max_labels_probe: 400               # labels read at probe (each small)
   label_max_bytes: 400000
   crawl_max_depth: 5
@@ -188,15 +190,22 @@ patterns:
 # a measurement; which bins were used is recorded with every result.
 diurnal:
   min_lat_deg: 80.0          # the PCP cap; sets the 2535 x 2535 grid at 240 m
-  ltim_bins: "every:16"
+  # MEASURED on the runner (35747661552): ODE lists 96 local-time bins per
+  # pole per season, and twelve 262 MB tables came down in about 20 s -- PDS
+  # serves these at over 100 MB/s, so the bin budget is set by memory and not
+  # by bandwidth.  "every:8" takes bins 1,9,...,89: twelve bins three hours
+  # apart around the clock in each season, 24 layers of 2535 x 2535 float32
+  # (617 MB of cube) and about 6.3 GB of transfer per pole, one 262 MB table
+  # on disk at a time.
+  ltim_bins: "every:8"
   n_bins_fallback: 96        # used ONLY if ODE cannot be reached; the real bin
                              # count is read off ODE's own PCP file index
   max_products_per_pole: 0   # 0 = no cap; a hard ceiling on downloads per pole
   seasons: ["summer", "winter"]
   psr_tmax_K: 110.0
   edge_px: 2
-  n_bins_min: 8              # (season, local-time) bins that must carry data
-  n_bins_excess: 5           # bins in which the excess must be present
+  n_bins_min: 16             # of the 24 (season, local-time) layers loaded
+  n_bins_excess: 10          # bins in which the excess must be present
   z_min: 5.0
   z_bin_min: 3.0
   amp_max_K: 2.0             # winter diurnal amplitude allowed of a candidate

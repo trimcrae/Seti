@@ -2,7 +2,7 @@ name: crypt
 
 # CRYPT — artifacts in lunar permanent shadow (docs/crypt.md).  Signature S55.
 #
-#   [pcp × 2 shards (one pole each)] ──▶ assess_diurnal ──▶ commit-back
+#   [pcp + radar × 2 shards (one pole each)] ──▶ assess_diurnal ──▶ commit-back
 #   probe (optional, in parallel: re-records the archive inventory)
 #
 # WHAT THE ARCHIVE ACTUALLY HOLDS (run 35737908601, 2026-09-22, recorded in
@@ -32,6 +32,11 @@ name: crypt
 # rasterised and DELETED before the next is fetched, so peak disk is one
 # product.  Which local-time bins exist is read off ODE's own PCP file index,
 # never assumed; which ones were used is recorded with every result.
+#
+# THE RADAR AXIS runs in the same job on the same mask: the Mini-RF polar
+# stereographic mosaics (lsz_xxxxx_3cp/3s1_pfu_90{n,s}000_v1, 1294 x 1294
+# PC_REAL at 947.6 m/pix, 6.7 MB each) with the LOLA PSR raster re-sampled
+# onto their grid, so a hit on one axis can be read off the other.
 
 on:
   workflow_dispatch:
@@ -132,10 +137,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # The gate is the DIURNAL suite, because the diurnal screen is what this
+      # job runs.  It is the whole of it: 52 tests, ~1 minute, and it covers
+      # the PCP table reader, the grid registration, the PSR mask, every
+      # rejection rule and the end-to-end scripted archive.
       - name: Offline gate — the injected source must be recovered and the confounders rejected
         run: |
+          python -m pytest tests/test_crypt_diurnal.py -q -p no:cacheprovider
           python -m pytest tests/test_crypt.py -q -p no:cacheprovider \
-            -k "injected or lit_rim or empty_archive or pds3 or diurnal or pcp or psr"
+            -k "injected or lit_rim or empty_archive or pds3 or radar"
       # NEVER remove $AGENT_TOOLSDIRECTORY (/opt/hostedtoolcache): that is where
       # setup-python put the interpreter this job installed seti into.  Run
       # 35744896637 shard 1 did, and the next step ran /usr/bin/python and died

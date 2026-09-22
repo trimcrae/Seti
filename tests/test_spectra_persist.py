@@ -853,6 +853,41 @@ def test_recurrence_counts_other_sightlines_at_the_same_wavelength(tmp_path):
     assert empty["n_other_candidates_within_3A"] == [0]
 
 
+def test_background_galaxy_scan_finds_the_family_the_candidate_list_missed():
+    """galaxy_reject needs two CANDIDATES in one spectrum at one redshift.  A
+    galaxy whose Halpha clears the 8-sigma search threshold while its [N II]
+    and [S II] do not leaves exactly one candidate and passes -- and that is
+    the common case, since [N II] 6584 is about 0.3 of Halpha.  Asking the
+    SPECTRUM instead finds the family however weak it is."""
+    from seti.spectra.galaxy_reject import GALAXY_LINES
+    z = 0.0373
+    _lg, w = _grid(4500.0, 9000.0)
+    rng = np.random.default_rng(31)
+    f = 10.0 + rng.normal(0, 0.05, w.size)
+    for name, amp in (("Ha6563", 3.0), ("[NII]6584", 0.9), ("[SII]6716", 0.5),
+                      ("[OIII]5007", 1.2), ("Hb4862", 0.8)):
+        lam = GALAXY_LINES[name] * (1 + z)
+        f = f + _gauss(w, lam, amp, lam / 2000.0 / 2.3548)
+    iv = np.full(w.size, 1 / 0.05 ** 2)
+    lam_ha = GALAXY_LINES["Ha6563"] * (1 + z)
+    got = persist.background_galaxy_scan(w, f, iv, lam_ha, "SDSS-DR17")
+    assert got["anchor"] == "Ha6563", got
+    assert abs(got["z"] - z) < 1e-3
+    assert got["n_companions_ge3"] >= 4, got
+    names = {c["line"] for c in got["companions"]}
+    assert {"[NII]6584", "[OIII]5007", "Hb4862"} <= names, got
+
+    # A lone line with nothing else in the spectrum must not be called a galaxy.
+    clean = 10.0 + rng.normal(0, 0.05, w.size)
+    clean = clean + _gauss(w, 6809.26, 3.0, 6809.26 / 2000.0 / 2.3548)
+    lone = persist.background_galaxy_scan(w, clean, iv, 6809.26, "SDSS-DR17")
+    assert lone["n_companions_ge3"] == 0, lone
+    # Nebular emission is not an explanation for an absorption survivor.
+    absorp = persist.background_galaxy_scan(w, f, iv, lam_ha, "SDSS-DR17",
+                                            mode="absorption")
+    assert absorp["n_companions_ge3"] == 0 and "absorption" in absorp["error"]
+
+
 def test_plate_context_counts_company_on_the_plate_and_shared_columns():
     """An SDSS plate is one exposure set on one pair of CCDs.  A plate that
     contributes many candidates is telling you about the plate; two FIBRES of

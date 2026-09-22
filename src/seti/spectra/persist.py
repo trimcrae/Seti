@@ -1402,6 +1402,78 @@ def _control_stats(meas: list[dict], key: str = "sig") -> dict:
             "frac_ge8": float(np.mean(v >= 8.0))}
 
 
+def background_galaxy_scan(wave, flux, ivar, lam0: float, release: str,
+                           mode: str = "emission", min_sig: float = 3.0) -> dict:
+    """Is the line one nebular line of a background galaxy in the same fibre?
+
+    ``galaxy_reject`` already asks this, but it asks it of the CANDIDATE LIST:
+    it needs two surviving candidates in one spectrum to land on one redshift.
+    A galaxy whose Halpha clears the 8-sigma search threshold while its [N II]
+    and [S II] do not therefore leaves exactly one candidate and passes.  That
+    is the common case, not the rare one -- [N II] 6584 is typically 0.3 of
+    Halpha in a star-forming galaxy, so a 16-sigma Halpha comes with a 5-sigma
+    companion that was never a candidate.
+
+    This asks it of the SPECTRUM.  Each strong nebular line is tried as the
+    anchor; at the redshift that implies, every OTHER line of the family is
+    measured directly in the data, however weak.  A real galaxy answers with a
+    family at one redshift, and the line ratios say which kind.
+    """
+    from .galaxy_reject import GALAXY_LINES
+    w = np.asarray(wave, float)
+    f = np.asarray(flux, float)
+    iv = np.asarray(ivar, float)
+    best: dict = {"anchor": "", "z": float("nan"), "n_companions_ge3": 0,
+                  "companions": [], "tested": 0}
+    if str(mode) == "absorption":
+        # Nebular emission cannot explain an absorption survivor.
+        best["error"] = "absorption mode: a nebular family is not an explanation"
+        return best
+    if w.size < 50:
+        best["error"] = "no spectrum"
+        return best
+    results = []
+    for anchor, rest in GALAXY_LINES.items():
+        z = float(lam0) / float(rest) - 1.0
+        if not (-0.002 <= z <= 1.2):
+            continue
+        comps = []
+        for name, r2 in GALAXY_LINES.items():
+            if name == anchor:
+                continue
+            obs = r2 * (1.0 + z)
+            # A close doublet partner ([O II] 3727/3729, [N II]/Halpha at high
+            # z) can land on the candidate itself, and re-measuring the same
+            # feature is not a companion.
+            if abs(obs - float(lam0)) < 2.0 * lsf_fwhm_A(float(lam0), release):
+                continue
+            m = measure_line(w, f, iv, obs, lsf_fwhm_A(obs, release), "emission")
+            if not m.get("testable"):
+                continue
+            comps.append({"line": name, "obs_A": round(obs, 2),
+                          "sig": round(float(m["sig"]), 2),
+                          "ew_A": round(float(m["ew"]), 3) if np.isfinite(m["ew"]) else None})
+        if not comps:
+            continue
+        n3 = sum(1 for c in comps if c["sig"] >= min_sig)
+        strongest = max((c["sig"] for c in comps), default=float("nan"))
+        results.append({"anchor": anchor, "z": round(z, 6), "n_companions_ge3": n3,
+                        "n_companions_tested": len(comps),
+                        "strongest_companion_sig": strongest,
+                        "companions": sorted(comps, key=lambda c: -c["sig"])[:6]})
+    if not results:
+        best["error"] = "no anchor gives a redshift with covered companions"
+        return best
+    results.sort(key=lambda r: (r["n_companions_ge3"], r["strongest_companion_sig"]),
+                 reverse=True)
+    out = dict(results[0])
+    out["tested"] = len(results)
+    out["all_anchors"] = [{k: r[k] for k in ("anchor", "z", "n_companions_ge3",
+                                             "strongest_companion_sig")}
+                          for r in results]
+    return out
+
+
 def survey_subclass(sptype: str | None) -> str:
     """A SIMBAD spectral type reduced to what a survey pipeline calls a subclass.
 
@@ -1673,6 +1745,11 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
                 if fit.get("fit_ok") and lsf > 0:
                     e["fwhm_over_lsf"] = round(float(fit["fit_fwhm_A"]) / lsf, 3)
                     e["fwhm_over_lsf_err"] = round(float(fit["fit_fwhm_err_A"]) / lsf, 3)
+                # Is it one nebular line of a background galaxy in the fibre?
+                e["background_galaxy"] = _json_safe(background_galaxy_scan(
+                    w, np.asarray(o.get("flux", []), float),
+                    np.asarray(o.get("ivar", []), float), lam, rel,
+                    str(r.get("search_mode", "emission"))))
         except Exception as exc:  # noqa: BLE001
             e["fit_error"] = repr(exc)[:300]
         # Every epoch at the position, one by one, not just the best of them.
@@ -1715,6 +1792,13 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
         an = (e.get("any_star", {}).get("obs_frame") or {})
         sp = (e.get("same_plate", {}).get("obs_frame") or {})
         es = e.get("epoch_series", {})
+        bg = e.get("background_galaxy", {}) or {}
+        if bg.get("n_companions_ge3"):
+            print(f"[persist]   background-galaxy scan: anchor {bg.get('anchor')} at "
+                  f"z={bg.get('z')} gives {bg['n_companions_ge3']} companions >= 3 sigma "
+                  f"(strongest {bg.get('strongest_companion_sig')}): "
+                  + ", ".join(f"{c['line']}@{c['obs_A']}={c['sig']}"
+                              for c in bg.get("companions", [])[:4]))
         print(f"[persist] control {e['identifier']} lam={e['wavelength']:.1f} "
               f"fwhm/lsf={e.get('fwhm_over_lsf')}+-{e.get('fwhm_over_lsf_err')} "
               f"({e.get('lsf_source')}); "
@@ -2767,4 +2851,5 @@ __all__ = ["measure_line", "combine_measurements", "classify_persistence", "deco
            "desi_bands_for", "desi_coadd_url", "desi_exposure_rows", "process_spectrum",
            "run_shard", "reduce_results", "final_verdict", "probe", "diagnose",
            "control_sample", "controls", "fit_line_profile", "lsf_fwhm_measured",
-           "epoch_series", "main"]
+           "epoch_series", "background_galaxy_scan", "plate_context", "pixel_coincidence",
+           "survey_subclass", "main"]

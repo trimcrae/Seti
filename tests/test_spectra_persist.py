@@ -796,6 +796,29 @@ def test_reduce_refuses_to_overwrite_a_real_summary_with_stale_checkpoints(tmp_p
     assert json.loads((out / "summary.json").read_text())["n_alive"] == 6
 
 
+def test_recurrence_counts_other_sightlines_at_the_same_wavelength(tmp_path):
+    """The triage's recurrence cut needed THREE spectra within 3 A, so pairs
+    came through -- and across the 350 triaged candidates there are 114 pairs
+    at exactly the same wavelength, which on a common log-lambda grid is the
+    same pixel.  Unrelated sightlines do not agree to three decimals."""
+    tri = tmp_path / "results" / "spectra_triage"
+    tri.mkdir(parents=True)
+    pd.DataFrame([
+        {"spec_id": "a", "wavelength": 5000.000},
+        {"spec_id": "b", "wavelength": 5000.000},     # same pixel, other sightline
+        {"spec_id": "c", "wavelength": 5001.500},     # within 3 A
+        {"spec_id": "d", "wavelength": 6000.000},     # alone
+        {"spec_id": "a", "wavelength": 5000.000},     # the same spectrum: not evidence
+    ]).to_csv(tri / "triaged_candidates.csv", index=False)
+    got = persist._recurrence_counts(tmp_path, [5000.0, 6000.0], ["a", "d"])
+    assert got["n_other_candidates_within_3A"] == [2, 0]
+    assert got["nearest_other_candidate_dA"][0] == 0.0
+    assert got["nearest_other_candidate_dA"][1] == 998.5      # nearest is c at 5001.5
+    # No triage table on disk: report zeros rather than invent a number.
+    empty = persist._recurrence_counts(tmp_path / "nope", [5000.0], ["a"])
+    assert empty["n_other_candidates_within_3A"] == [0]
+
+
 def test_band_gap_context_names_the_heads_either_side():
     """All six lines left standing sit between two molecular band heads in the
     star's frame, where the flux of a cool star is a relative maximum -- the

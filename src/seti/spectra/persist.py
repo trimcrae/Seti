@@ -2029,6 +2029,47 @@ def run_shard(root: Path, shard: int = 0, n_shards: int = 1, top: int = 0,
     return stats
 
 
+def _recurrence_counts(root: Path, waves, spec_ids, tol_A: float = 3.0) -> dict:
+    """Other sightlines with a candidate at the same wavelength.
+
+    The triage's recurrence cut needed three spectra within 3 A, so pairs came
+    through: across the 350 triaged candidates there are 114 pairs at EXACTLY
+    the same wavelength, and on a survey's common log-lambda grid the same
+    wavelength is the same PIXEL.  Unrelated sightlines do not agree to three
+    decimals by accident.  Counted against every triaged candidate, not only
+    the survivors, because the ones the triage already removed are evidence
+    about the wavelength too.
+    """
+    import pandas as pd
+    out = {"n_other_candidates_within_3A": [0] * len(list(waves)),
+           "nearest_other_candidate_dA": [float("nan")] * len(list(waves))}
+    p = Path(root) / "results" / "spectra_triage" / "triaged_candidates.csv"
+    if not p.exists():
+        return out
+    try:
+        allc = pd.read_csv(p)
+    except (OSError, ValueError):
+        return out
+    aw = pd.to_numeric(allc["wavelength"], errors="coerce").to_numpy(float)
+    aid = allc["spec_id"].astype(str).to_numpy()
+    n_other, d_near = [], []
+    for w, sid in zip(waves, spec_ids, strict=True):
+        try:
+            wv = float(w)
+        except (TypeError, ValueError):
+            n_other.append(0)
+            d_near.append(float("nan"))
+            continue
+        other = aid != str(sid)
+        d = np.abs(aw - wv)
+        n_other.append(int(np.sum(other & np.isfinite(d) & (d <= tol_A))))
+        rest = d[other & np.isfinite(d)]
+        d_near.append(float(np.min(rest)) if rest.size else float("nan"))
+    return {"n_other_candidates_within_3A": n_other,
+            "nearest_other_candidate_dA": [round(x, 3) if np.isfinite(x) else None
+                                           for x in d_near]}
+
+
 def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> dict:
     """Merge checkpoints into the flat table + summary; add SIMBAD and line IDs."""
     import pandas as pd
@@ -2157,6 +2198,16 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     for k in bg[0].keys() if bg else []:
         tab[k] = [d[k] for d in bg]
 
+    # How many OTHER sightlines put a candidate at this same wavelength.  The
+    # triage's recurrence cut needed three spectra within 3 A, so PAIRS came
+    # through -- and across the 350 triaged candidates there are 114 pairs at
+    # EXACTLY the same wavelength, which on a common log-lambda grid means the
+    # same pixel.  Unrelated sightlines do not agree to three decimals by
+    # accident; that is a fixed feature of the detector or the reduction.
+    rec = _recurrence_counts(root, tab["wavelength"], tab["spec_id"])
+    for k, v in rec.items():
+        tab[k] = v
+
     # SIMBAD for every unique position (refresh; the triage table has gaps).
     if do_simbad:
         try:
@@ -2201,6 +2252,9 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
         "verdict_counts": {k: int(v) for k, v in vcounts.items()},
         "route_counts": {k: int(v) for k, v in
                          tab["route"].astype(object).fillna("").value_counts().items()},
+        "n_with_another_candidate_within_3A": int(
+            (pd.to_numeric(tab["n_other_candidates_within_3A"],
+                           errors="coerce").fillna(0) > 0).sum()),
         "n_known_line_rest_frame": int(pd.to_numeric(
             tab["known_line_match"], errors="coerce").fillna(0).sum()),
         "n_second_epoch_available": int((pd.to_numeric(
@@ -2218,7 +2272,9 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
                              "n_lines_in_spectrum", "known_line_label", "known_line_dv_kms",
                              "telluric_band", "oh_gap_A", "oh_density_per_100A",
                              "between_band_heads", "band_blue_label", "band_blue_dA",
-                             "band_red_label", "band_red_dA", "second_epoch")
+                             "band_red_label", "band_red_dA",
+                             "n_other_candidates_within_3A", "nearest_other_candidate_dA",
+                             "second_epoch")
                             if c in alive.columns]].to_dict("records")],
         "verdict": ("PERSISTENT_UNIDENTIFIED_LINES_REMAIN" if len(alive)
                     else ("NO_DATA_REACHED" if not counts or set(counts) <= {"not_run", "untestable"}

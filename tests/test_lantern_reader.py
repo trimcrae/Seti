@@ -317,6 +317,64 @@ def test_verify_eclipse_stack_on_a_synthetic_eclipse():
     assert not v3["passed"] and not v3["checks"]["depth_positive_and_significant"]
 
 
+def test_verify_rejects_a_misplaced_ephemeris():
+    """The timing check must still fail when the eclipse is NOT where the
+    ephemeris says.  A free two-level step is allowed to land off the predicted
+    ingress (a thermal phase curve pulls it there), but only while it does not
+    BEAT the step at the predicted ingress -- a shifted ephemeris does both."""
+    from seti.lantern.phase import Ephemeris
+
+    s = synthesise_timeseries(line_amp=0.0, eclipse_depth=0.006, noise=1e-3, seed=5)
+    s["meta"] = {"INSTRUME": "NIRSPEC", "GRATING": "G395H"}
+    s["time_source"] = "row_bjd_tdb"
+    good = s["ephemeris"]
+    ok = R.verify_eclipse_stack(s, [good], _CONF)
+    assert ok["phase_passed"] and ok["checks"]["eclipse_at_predicted_ingress"]
+    bad = Ephemeris(name="wrong b", period=good.period, t0=good.t0 + 0.55 * good.duration,
+                    duration=good.duration, period_err=good.period_err, t0_err=good.t0_err,
+                    ecc=0.0, omega_deg=90.0, rp_rs=good.rp_rs)
+    off = R.verify_eclipse_stack(s, [bad], _CONF)
+    assert not off["checks"]["eclipse_at_predicted_ingress"], {
+        "offset": off.get("free_step_offset_days"), "tol": off.get("timing_tolerance_days"),
+        "dchi2": off.get("delta_chi2_free_over_predicted")}
+    assert not off["phase_passed"]
+
+
+def test_verify_injection_scales_to_the_exposures_own_sensitivity():
+    """A FIXED injected amplitude tests nothing on a noisy exposure: on the real
+    products 2% of the continuum sits below the 5-sigma equivalent-width limit,
+    so 'not recovered' is a statement about the injection, not the chain.  The
+    amplitude must instead be set from the exposure's own measured noise."""
+    s = synthesise_timeseries(line_amp=0.0, eclipse_depth=0.004, noise=2e-2,
+                              fixed_pattern_amp=0.01, seed=11)
+    s["meta"] = {"INSTRUME": "NIRSPEC", "GRATING": "G395H"}
+    s["time_source"] = "row_bjd_tdb"
+    floor = 0.005
+    # Fixed 0.5% of the continuum: below this exposure's limit, nothing comes back.
+    weak = R.verify_eclipse_stack(s, [s["ephemeris"]], _CONF, injection_amp=floor,
+                                  injection_snr_target=0.0)
+    assert weak["injection"]["amp"] == pytest.approx(floor)
+    assert weak["injection"]["injected_ew_over_5sigma_limit"] < 1.0
+    assert not weak["injection"]["recovered"] and not weak["injection_passed"]
+    # Scaled to the measured difference-spectrum noise, the same chain finds it.
+    strong = R.verify_eclipse_stack(s, [s["ephemeris"]], _CONF, injection_amp=floor,
+                                    injection_snr_target=12.0)
+    inj = strong["injection"]
+    assert inj["amp"] > floor and inj["amp"] == pytest.approx(
+        12.0 * inj["baseline_noise_median"], rel=1e-6)
+    assert inj["injected_ew_over_5sigma_limit"] > 1.5
+    assert inj["recovered"] and strong["injection_passed"]
+    assert inj["tier"] in ("candidate", "interest") and inj["vetoes"] == []
+    # The phase question is answered either way -- it does not depend on the
+    # injection, which is what lets the screen gate on it.
+    assert weak["phase_passed"] and strong["phase_passed"]
+    # The injected sigma tracks the sampling, so the line is never a
+    # sub-resolution-element spike on a coarsely sampled grid (which the search
+    # vetoes by design).
+    spr = float(R.instrument_profile(_CONF, "NIRSPEC", "G395H", None, None)["samples_per_resel"])
+    assert inj["sigma_samples"] == pytest.approx(max(0.55 * spr, 0.6))
+
+
 def test_verify_stage_with_stubbed_archive(tmp_path):
     inv = _fake_inventory()
     inv["targets"]["WASP-43"]["planets"][0].update(

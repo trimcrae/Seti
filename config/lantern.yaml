@@ -191,7 +191,17 @@ verify:
   # `injection_amp` of the local continuum must come back as a candidate.
   min_depth_snr: 5.0
   depth_range: [1.0e-4, 2.0e-2]
-  injection_amp: 0.02
+  # FLOOR on the injected line's peak, as a fraction of the local continuum.
+  # The amplitude actually used is the larger of this and injection_snr_target
+  # times the exposure's OWN measured difference-spectrum noise: 2% of the
+  # continuum is below the 5-sigma equivalent-width limit of both verification
+  # exposures, so a fixed 2% injection tests nothing.  The check that results
+  # is "a vanishing line at N sigma of this exposure's sensitivity comes back
+  # clean", and verify.json records the injected equivalent width in units of
+  # the 5-sigma limit.
+  injection_amp: 0.005
+  injection_snr_target: 12.0
+  max_injection_amp: 0.5
   # A phase curve is not a two-level light curve: over a whole visit the free
   # step locks onto the transit (deeper than the eclipse) and the timing check
   # fails on a perfectly well placed eclipse.  The continuum check runs inside

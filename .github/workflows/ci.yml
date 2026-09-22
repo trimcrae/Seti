@@ -6,6 +6,14 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Only the newest commit on a branch needs its gate run. Parallel channel agents
+# push many small commits, and without this each push queues another full CI run
+# behind the last, starving the data-touching searches of runners. Superseded
+# runs are cancelled; the newest one still gates the branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   offline:
     # Default job: fully offline, runs on the committed sample. Fast, <2 GB, no

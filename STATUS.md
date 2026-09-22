@@ -10,6 +10,307 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### RELAY measured: Earth sits in 1.8e4-1.8e7 node-to-node beams, and none of them optical, 2026-09-22
+
+S60 (`docs/relay.md`). The channel asks a question nobody has asked at catalogue
+scale: for every DIRECTED star pair inside 100 pc, does Earth fall inside the
+transmitter's beam on its way to the other node? Two geometries, counted apart:
+**spillover** (T behind R on the same sightline, Earth gets (|T-R|/|T|)^2 of what
+R gets) and **between** (R near T's antipode, the beam crosses Earth first and
+Earth gets MORE than R). The prior art is single-target only -- Tusay+2022 at
+the alpha Cen SGL antipode -- and the network papers are design studies.
+
+**Run 35740854882 (targets+geometry, 264,973 Gaia DR3 stars, counts exact over
+the whole sample, 5/5 beams):**
+
+| beam | theta | spillover | between | meas/analytic |
+|---|---|---|---|---|
+| 10 m optical, 1 um | 0.0252" | **0** | **0** | (3.3e-5 expected) |
+| 100 m, 1.42 GHz | 8.85' | 18,381 | 145,734 | 1.26 |
+| 10 m, 8 GHz | 15.7' | 54,147 | 461,277 | 1.18 |
+| 10 m, 1.42 GHz | 1.48 deg | 1,586,109 | 14,613,310 | 1.09 |
+| over-filled 5 deg | 5 deg | 17,841,566 | 167,627,412 | 1.07 |
+
+Fitted slopes of log N vs log theta: **1.954** (spillover), **2.000** (between) --
+the theta^2 law measured, not assumed. The sample is the clean subset of the
+GCNS volume (parallax >= 10 mas, parallax/error > 10, RUWE < 1.4); all seven
+parallax shells returned OK and untruncated; 43 % carry a usable RV.
+
+**The yield is the result.** A diffraction-limited 10-m optical link leaves
+Earth outside every one of the 7e10 directed pairs -- that channel is closed,
+and saying so is worth more than searching it. The interceptable regime is
+radio with modest apertures or deliberately over-filled beams, and there the
+intercepted flux is only slightly below (spillover) or above (between) what the
+intended receiver gets: a strong-signal channel, not leakage. The same numbers
+are the trials budget -- 1.8e4 to 1.8e7 qualifying pairs per beam -- so every
+hit count is printed beside `n_expected_by_chance` and `n_trials`, and RFI at
+non-zero drift stays an unexcluded systematic on any survivor.
+
+**What the sky did not supply, and the fix.** Run 35738937745 probed 15 seed
+VizieR ids plus six keyword sweeps: 73 tables, **0** carrying both a frequency
+and a drift rate. These surveys deposit their observed-star lists and keep
+their event lists in the papers. So `src/seti/relay/papers.py` now reads the
+events out of the arXiv e-print source (deluxetable/longtable/tabular plus AAS
+machine-readable tables), with the id verified against the Atom title before
+use, provenance on every row down to the header text it was parsed from, and a
+table counted as a hit table only when a frequency column and a drift column
+both resolve and at least one row parses as numbers. 13 offline tests, no
+socket.
+
+**In flight:** run **35745111146**, `stage=all` on `claude/goap-relay`, the
+first full-scale pass with the e-print route: probe -> targets -> geometry ->
+recut -> assess -> `results/relay/summary.json`. The smoke pass
+(24,878-star debug cap) already committed a summary; this one replaces it at
+full scale.
+
+**Next decisive action:** read 35745111146's `hits.json` -- specifically
+`arxiv.papers[]` (which papers resolved, which e-prints downloaded, which
+tables carried a drift column) and the per-beam `n_hits_on_pair_line` beside
+`n_expected_by_chance`. If the e-print route also comes back empty, the honest
+move is not a limit paper but a change of question: the 1,959 BL targets that
+ARE in the 100 pc sample have 993+ public data files, and the pair-line
+pointings with a predicted drift window can be searched in the raw filterbank
+products directly rather than through anyone's published hit list.
+
+### SHROUD: the SVO VASCO service is dead, so the sample is 127 — and the USNO-B1.0 rebuild is the only way back to scale, 2026-09-22
+
+S33 (`docs/shroud.md`; §9 is the new route ledger). SHROUD looks for POSS-I
+sources absent from the modern optical but **present and warm in the infrared**
+— enshrouded, not destroyed.
+
+**What answers and what does not** (measured on the runner, every endpoint and
+error verbatim in `results/shroud/acquire_verdict.json`):
+
+| route | answer |
+|---|---|
+| Solano+2022 SVO `vanish-neowise` / `vanish-possi` | **dead** — TCP timeout at 25 s, http and https, 4 path spellings each |
+| `svo2.cab.inta-csic.es/vocats/` | **403**; every `vanish-*` path **404**, while the host root returns 200 |
+| VizieR TAP_SCHEMA keyword search | **200, and the answer is "no"** — 11 hits, 9 of them the surnames *Vasco D.* / *Vasconcelos M.J.* |
+| VizieR `J/AJ/159/8` (Villarroel+2020) | **200, 127 rows** |
+| VizieR `I/284/out` (USNO-B1.0) | **200, 12/12 fields, 33,273 raw rows, 9.425 deg²** |
+| CDS X-Match | **200**, 15–21 s per chunk |
+
+So the intended ~172,000-source Solano sample is **unreachable by any route**,
+the verdict ceiling is `VIZIER_FALLBACK`, and the committed sample is 127
+objects — three orders of magnitude short. Population fractions from it are
+indicative only and `summary.json` says so.
+
+**The 5″ excess is −0.9 σ, and that is not a null — it is the wrong question.**
+The committed offset-position null measured 7 matches in 127 real sightlines
+against 39 in 508 displaced ones: 9.8 expected by chance. At 5″ against AllWISE
+(~1.8×10⁴ deg⁻²) the matched subsample is chance-dominated *by construction*,
+so its excess is consistent with zero however real the physics. The channel now
+measures the excess **as a function of radius** (1–5″): chance grows with the
+search area, a genuine counterpart is already counted at the smallest radius, so
+a real population shows up concentrated at small separation with a significance
+that peaks near the astrometric error. Tested both ways offline — half-associated
+population recovered at `f_true = 0.5` with the peak at ≤ 2″; background alone
+gives |σ| < 3 at every radius.
+
+**Two VizieR failure modes, each of which cost a run and each of which looks
+exactly like an empty sky**, are now closed and documented:
+
+1. A literal `+` in a query string decodes to a **space**, so `-c=266+65`
+   arrives as the unsigned pair `266 65` and VizieR returns an empty resource.
+   (This is the bug that cost IGNITION a dispatch.) The sign is percent-encoded
+   on every rung of the query ladder, with a test per rung and for negative dec.
+2. `-meta.all` lists a catalogue's **default output columns, not its
+   dictionary**. I/284/out's defaults are the eight astrometric ones, so the
+   probe declared `B1mag`/`R1mag`/`R2mag`/`Imag`/`Ndet` absent from a catalogue
+   that plainly has them — and run 35738062833 let that probe *edit* the
+   request. All 12 fields came back as bare positions, and "POSS-I red present,
+   everything else absent" cannot be expressed by a frame with no magnitudes.
+   All 12 reported `n_poss1_only = 0`; **that zero was an artefact of the
+   request, not a property of the sky.** The probe now reports only, a rung's
+   answer is accepted only if it carries `RAJ2000`/`DEJ2000`/`R1mag`, and the
+   ladder otherwise falls through to the `-out.all` rung, which names no columns.
+
+**A cancelled run erased a measurement, once.** `analyze` runs `if: always()`,
+so it also runs when `acquire` was cancelled and no artifact exists; it then
+writes `NO_DATA_REACHED` / `n_sample 0` — a statement about archive *access* —
+and at 14:58 EDT-4 (2026-09-22T14:58Z) commit `05df5117` pushed that over the
+127-source summary. Guarded now: an empty summary may be committed only when
+`HEAD` holds no sampled one; otherwise the results are checked back out and the
+empty attempt is kept beside them as `summary_attempt.json`.
+
+**In flight.** Run **35741075121** (dispatched 10:32 EDT, started 11:07 EDT)
+is the first to carry the column fix, so it is the first that *can* return a
+non-zero `n_poss1_red_only`. The decisive number to read from it is
+`sky_coverage.n_poss1_red_only` against `n_usnob1_raw_rows = 33,273` per
+9.425 deg²: if the POSS-I-red-only fraction is of order 10⁻³–10⁻² the rebuilt
+sample reaches 10⁴–10⁵ objects at full grid and the channel has its scale back
+from a source that does not depend on SVO being alive. Runs 35738062833 and
+35740203590 were cancelled as superseded.
+
+**Not yet measured:** the current summary's zeros for IR presence come from a
+photometry job that never ran, not from a search that found nothing — the
+funnel says so (`2c_no_modern_catalogue_covered_the_position = 127`). No
+survivor stands as of this entry.
+
+### LANTERN: the reader and the phase are fixed, and the sensitivity floor was not photon noise, 2026-09-22
+
+The first LANTERN run (34036760527) analysed 21 of 832 exposure checkpoints —
+`read_failed 656`, and **0** exposures classed as eclipse or transit. Run
+**35737559234** settled both causes on the runner, against real data.
+
+**The reader.** Every `x1dints` product in MAST now carries the
+`TSOMultiSpecModel` layout — one `EXTRACT1D` table per segment and spectral
+order, one *row* per integration, 2-D spectral columns, per-row `TDB-MID`
+times. The old reader took each HDU as one integration. The rewritten one read
+WASP-43 b MIRI/LRS as **9 216 integrations across 30 tables** and WASP-18 b
+NIRISS/SOSS as **2 720 across 6 tables and 3 orders**, both with times sourced
+`row_bjd_tdb`. Re-planning the committed inventory with it drops the
+double-counted level-2 segments the level-3 products already hold: **467
+scheduled exposures, 509 GB** (78 eclipse-class at 123 GB, 265 transit, 124
+unresolved; 632 superseded, 182 proprietary) out of the 1.12 TB first counted.
+
+**The phase.** The labeller now places eclipses correctly on real ephemerides:
+WASP-43 b **6 681 ppm at 15.4σ**, WASP-18 b **1 451 ppm at 23.1σ** with the
+free step 0.007 d from the predicted ingress against a 0.020 d tolerance. (The
+WASP-43 timing check failed for a reason of its own: it is a *phase curve*, and
+a free step fitted over the whole visit locks onto the transit, which is
+deeper. The check now runs inside ±0.25 P of one eclipse with transit
+integrations excluded.)
+
+**The finding that matters.** Both verifications still failed, on the same
+thing: an injected line at **2% of the continuum produced zero features**. The
+reason is physical. On a real `x1d` product the time-averaged spectrum's
+residual around its local continuum sits at **~1% of the continuum however long
+the exposure** — the static pixel pattern of the extraction, not photon noise
+(1.3% on SOSS over 2 720 integrations, 1.1% on LRS over 9 216). A 6σ trigger
+there needs a line brighter than **~8% of the continuum**; the screen would have
+been worthless across 509 GB.
+
+That pattern is identical in and out of eclipse, so the search now runs on
+`1 + (⟨out⟩ − ⟨in⟩)`, where it cancels exactly and what is left is what changed
+when the planet was occulted. Its control is the **drift null** — out-of-event
+integrations before the event minus those after it, the same visit and the same
+drift with no occultation in between — used both as the "consistent with zero"
+statistic and as the veto `present_in_drift_control`. Measured on synthetic
+stacks carrying the 1% pattern: a 2% vanishing line is **invisible** to the old
+search and returns at **109σ** as a clean candidate in the difference; a
+constant stellar line of the same amplitude cancels to nothing; a
+persistence-decaying line is caught by the drift null at 15σ. The 5σ EW limit
+improves **2.8×10⁻⁴ → 8.0×10⁻⁶ µm, a factor of 35**, and the trigger is now
+photon limited (~1.5×10⁻³ of the continuum at 600 integrations).
+
+Transit-class exposures — 265 of the 467 — get the analogous out-of-transit
+minus in-transit difference, reaching the same depth. They can never produce a
+candidate (`insufficient_phase_coverage`, and `transit_inconsistent` for a line
+that changes across transit more than the continuum does), which is correct:
+this channel's signature needs an eclipse.
+
+The full screen is dispatched (run **35741401724**, 10 shards, eclipse-class
+first and cheapest-first within a rank, gated on the known-eclipse
+verification, checkpoints accumulating across dispatches). Checkpoint version
+is now 3; version-2 checkpoints are re-analysed rather than trusted. The honest
+limitation is in the contamination ledger: an *unresolved* emission line from
+the planet's own atmosphere passes every veto this channel has, so a survivor
+is a target for higher-resolution follow-up, not a detection.
+### ARC closed out: 4,206 stars on the ceiling, one left standing (KIC 9418692), 2026-09-22
+
+S59 (`docs/arc.md`, §9 carries every number). The stage-1 assess stage had
+never once finished — run 35675114711 sat in it for **4 h 54 m** on a `pyvo`
+async job with no time limit and was killed by the workflow cap with no
+`summary.json` written at all. With a per-query clock and a stage budget it
+now runs in **277 s** (run **35738218021**, `NO_CEILING_EXCESS`):
+
+| | |
+|---|---|
+| flares screened / stars | 190,486 / 8,908 |
+| **assessable** (has a rotational amplitude) | **4,206** |
+| no amplitude, so no ceiling, so untested | 4,702 |
+| `ξ_conservative > 0` | **1** |
+| candidate / interest / watch | 0 / 0 / 14 |
+
+**The Santos+2021 lever is not what STATUS expected.** It was already in the
+sample (245 of 2,507 Yang & Liu stars, 22 of 279 Shibayama); it moved the
+assessable count 4,204 → 4,206, not "well beyond". What it actually did was
+**raise the ceiling**: rescaling `Sph` from a standard deviation to a range
+(×2√2) lifts `E_mag` by 4.75 (**0.68 dex**) and took the conservative
+positives 5 → 2 and the nominal positives 24 → 9.
+
+**Stage 2 ran** (run **35675112803**, 2 h 08 m, 30 stars, 69 flares, pixel
+centroids + Gaia census + Berger+2020 parameters). Both stage-1 interest
+stars dissolved on measured parameters — KIC 11507705 `ξ 0.440 → −0.590`
+(0.677 dex of it the `Sph` rescaling, 0.353 dex the 1.311 R☉ radius) and KIC
+8487271 `ξ 0.104 → −0.920`. Neither was ever tested on the pixels. The pixel
+test does bite on real data: of 69 flares, **9 on target, 1 on a neighbour**
+(KIC 7009116), 2 ambiguous.
+
+**What is left is one object, not a null.** **KIC 9418692**:
+`ξ_conservative = +0.462` on **4 flares** (ξ_nominal = +1.178 on 11) of 14
+Yang & Liu events; `E_flare,max = 9.78e34` vs `E_mag,cons = 3.37e34 erg`;
+amplitude `2.008e-4` from Santos **with** the ×2.828 scaling already applied.
+On Berger+2020 (5677 K, 1.089 R☉) instead of the Shibayama star table (5378
+K, 1.300 R☉) the same flares give **ξ = +0.715** — the excess *grows* on the
+better parameters. It is `first_veto = companion_suspect` on Gaia **RUWE =
+1.556** alone, which put it in no tier and so outside every stage-2
+shortlist. Its Gaia census: target supplies **99.73 %** of the flux inside
+one Kepler pixel; the two neighbours (G = 20.4 at 3.2″, G = 19.7 at 5.2″)
+would need **39 %** and **41 %** brightenings, and neither is excluded by
+arithmetic. Its centroid test has never been run on its Yang & Liu flares.
+
+Three defects found and fixed this session, each measured on real output: the
+assess-stage hang; a difference image that required **every** pixel of a
+cadence to be finite, which cost 11 of 30 stars their centroid test while the
+same flares had 5–7 in-flare and 68–82 baseline cadences in the aperture
+centroid; and a `Sph` rescaling that would have been applied **twice** now
+that stage 1 applies it (ceiling ×4.75 too high — the direction that hides a
+candidate). Stage 2 now shortlists hard-vetoed ceiling-excess stars *first*.
+
+**Next decisive action:** the stage-2 pixel test on KIC 9418692's 14 Yang &
+Liu flares with the Berger radius, plus a Gaia DR3 non-single-star and
+archival-spectroscopy look for the companion RUWE 1.556 only suspects.
+
+### FORGE dispatched — the detector gate is green and the measurement is in flight, 2026-09-22
+
+S47 reads the hot-exozodi population as ~1500 K swarm candidates. The channel
+existed but had never been run, and its injected-signal test was red; both are
+now resolved.
+
+**The gate.** `test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset`
+passes, and not only locally: CI run **35740042459** on `181dea2f` is green on
+the runner, 32/32 forge tests, ruff clean. Nothing the channel ranks would have
+meant anything until the detector could recover a signal it was handed, so this
+was the precondition for reading any ranking.
+
+**What blocked the measurement was not the science.** `forge.yml` lived only on
+`claude/goap-forge`; GitHub 404s a `workflow_dispatch` for a workflow absent
+from the default branch, so the channel could never be run at all. Merging the
+branch to `main` (`6e2bb280`, purely additive — 15 files, all forge-only plus
+one `docs/channels.md` row and the fenced FORGE block in `cli.py`) registered
+workflow `364339715`. First dispatch: run **35744731075**, `stage=all`,
+`skip_population=true`, queued 11:04 EDT.
+
+**The statistic.** Per star, χ² of a free grey body (T, f) against the
+nano-grain emissivity family Q(λ) = min(1, (2πa/λ)^β), a ≤ 0.5 µm, β ∈ {1, 2},
+over the H/K/L/N excesses plus the polarimetric null, with a per-band
+cross-instrument calibration floor in quadrature and a variability term from
+repeat epochs. Δχ² = χ²_nano − χ²_grey. The Planck arithmetic that defines the
+observable, recomputed and confirmed against the brief: a grey 1500 K body at
+1 % in K gives **6.6 % at 10.5 µm for a G2V star, 7.1 % for F5V, 8.1 % for
+A0V** — and 3.0–3.3 % at L. Sub-micron grains cannot do that, which is the
+whole point of the test.
+
+**Stated plainly, before any result: nano-grain physics is expected to win for
+the well-constrained systems.** The K-bright / N-faint pattern that forces
+small grains is exactly what a Planck swarm cannot produce, so `nano_preferred`
+is the anticipated modal outcome. The deliverable is the ranked
+Planck-consistency list and any survivor of it, not a count of how many stars
+behaved as the standard model says they should.
+
+Kills carried on every candidate: faint companions at the 1 % level (closure
+phases do not exclude them — κ Tuc varied and turned out to be a companion),
+K-vs-N cross-instrument calibration, the cool-nano-grain degeneracy, and the
+sample size (~150 stars with any interferometric excess, far fewer with an
+N-band measurement). A star with no N-band measurement is `N_UNTESTED` and is
+never a candidate; `NO_PLANCK_CONSISTENT_OUTLIER` is a count, not a limit.
+
+Next decisive action: read `results/forge/` from 35744731075 — `probe.json`
+first, for which of the nine VizieR ids actually resolved — then dispatch the
+broadband population leg (`skip_population=false`) separately.
+
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 
 S52/S53 went from a package that had never been run to a channel with a

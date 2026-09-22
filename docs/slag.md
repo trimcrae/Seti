@@ -395,7 +395,97 @@ Degradation (a failed route, an assumed error, an unresolved atmosphere, an
 embedded rather than catalogued timescale law) is a separate first-class
 field, never folded into the verdict string.
 
-## 9. Running it
+---
+
+## 9. The first measurement — run 35747793625, 2026-09-22
+
+`slag-solo.yml`, `stage=all`, one job, 49 minutes of screen on one runner;
+code at `7c519163`, recorded in `summary.json["code"]`.
+
+**Verdict `MISFIT_LIST_PRODUCED`.** The funnel:
+
+| stage | count |
+|---|---|
+| served rows | 3,547 |
+| objects (sky-reconciled, 5″) | 1,576 |
+| objects with a ≥ 5-element panel | 123 |
+| panels screened and calibrated | 168 |
+| panels `INFORMATION_LIMITED` | 3,379 |
+| `UNEXPLAINED` (p < 0.01) | **4** |
+| `WATCH` (p < 0.05) | **6** |
+| pair residuals tested | 121 |
+| pair exceedances (\|z\| > 4) | 1 |
+| refinery flags fired | 0 |
+| candidates surviving every kill | **0** |
+
+**The calibrated p is itself calibrated.** Across the 123 objects the misfit p
+is close to uniform — KS distance 0.130, 3.3 % below 0.01 against 1 % expected,
+8.1 % below 0.05 against 5 %, median 0.61. The natural family is therefore
+neither too rigid for the population (which would pile p at zero and make the
+list a statement about the model) nor too loose to reject anything.
+
+**The one pair exceedance is killed.** HS 0209+0832 (Wolff 2000) has Ti/Al at
+z = +6.5, and `REST_OF_PANEL_NOT_NATURAL` kills it: the whole panel misfits at
+χ²/dof = 36.7, so the pair is not a process-orthogonal residual on an
+otherwise natural vector. Envelope widths, now including the measured
+meteorites, are 3.3 dex for Ti/Al, 4.0 for Ca/Al, 4.0 for Mn/Cr.
+
+**The meteorite calibration does the job it was added for.** Three of the four
+`UNEXPLAINED` objects — HS 0209+0832, L119-34, WD 1622+587 — also have a small
+*meteorite* p (0.020–0.059): the natural model cannot fit real stones on those
+element sets either, so their misfit is a statement about the model's reach,
+not about the star. One object separates cleanly:
+
+| object | n | p | p(meteorite) | worst element | corrected |
+|---|---|---|---|---|---|
+| **GALEX J2339−0424** | 9 | 0.020 | **0.98** | **Be**, 3.3σ | 0.060 |
+
+The model reproduces real meteorites on this element set essentially always
+(p = 0.98) and still cannot reproduce this star. Its worst element is
+beryllium — which is what GALEX J2339−0424 is known for (Klein et al. 2021,
+Be enriched by ~2 dex). The channel recovered it without being told, and it is
+a **control landing correctly, not a discovery**.
+
+**And the per-element statistic is sharper than the envelope.** On that same
+panel the `BE_WITHOUT_LI_B` flag did *not* fire: the global Be/lithophile
+envelope, widened by the condensation lever, comfortably contains the observed
+Be. The calibrated per-element residual — which asks how unusual Be is *given
+the best fit to the rest of this panel* — puts it at p = 0.0066, the worst of
+its nine elements. The envelope test misses the known anomaly; the
+conditioned test finds it. That is the argument for §2's per-element
+calibration in one object.
+
+**Controls.** All seven were found at the right positions.
+
+| control | n | p | p(meteorite) | class |
+|---|---|---|---|---|
+| GD 362 | 16 | 0.21 | 0.76 | NATURAL |
+| GD 378 | 13 | 0.32 | 1.00 | NATURAL |
+| PG 1225−079 | 11 | 0.50 | 0.92 | NATURAL |
+| GALEX J2339−0424 | 9 | 0.020 | 0.98 | **WATCH** |
+| LHS 2534 | 7 | 0.086 | 0.31 | NATURAL |
+| WD 0106−328 | 4 | — | — | `INFORMATION_LIMITED` |
+| NLTT 19868 | 4 | — | — | `INFORMATION_LIMITED` |
+
+PG 1225−079's "no single meteorite" (Klein 2011, Xu 2013) does not survive a
+*mixture* with the condensation and sinking levers: p = 0.50. LHS 2534, which
+"defies all three hypotheses" (Kaiser 2024), sits inside this model's reach at
+p = 0.086. Both are honest negatives for Tier 1, and both were the point of
+running them.
+
+**Degradation, stated.** 77 of the 168 calibrated panels have no served error
+column and carry the 0.2 dex default, which is why
+`SDSS J153642.53+420519.2` — every one of its six errors assumed — should not
+be read as strongly as the rest of the `UNEXPLAINED` list.
+
+**What would decide the one open object.** GALEX J2339−0424 has a single
+published panel and no Li or B measurement, so the spallation alternative
+(Doyle et al. 2021) is untested rather than excluded: Be made by cosmic-ray
+spallation arrives with Li and B at order-unity ratios. A Li/B measurement is
+the decisive next observation, and until it exists this object is a WATCH with
+a named alternative, not a candidate.
+
+## 10. Running it
 
 ```
 python -m seti.slag.run --stage probe      # what VizieR and GitHub hold, and the column roles

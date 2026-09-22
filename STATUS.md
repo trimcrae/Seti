@@ -10,7 +10,52 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
-### OSSUARY ran at last — and its 121 survivors have no W1/W2 excess at all, 2026-09-22
+### RING dispatched at last, after the runner's pandas ate the pulsar leg, 2026-09-22
+
+Two things had to be true before S63 could produce anything, and neither was
+about the sky.
+
+**1. The workflow was not dispatchable.** `ring.yml` lived only on
+`claude/goap-ring`, and a `workflow_dispatch` API call **404s unless the
+workflow file exists on the default branch** — so RING had never been run at
+all and `results/ring/` existed nowhere. The file is now on `main` (commit
+`e51b79fd`); it is inert there (dispatch-only trigger) and a dispatched run
+still executes the copy on its own ref. Recorded in `docs/channel-brief.md`
+§0 for the other channels.
+
+**2. The branch was red on the runner and green in the sandbox.** CI run
+**35741442595** failed four ring tests that pass locally. The sandbox venv
+holds **pandas 2.3.3**; a fresh runner installs **3.0.6**, where
+`future.infer_string` is the default and catalogue text is Arrow-backed. An
+absent ATNF `assoc`/`bincomp` field then survives `.astype(str)` as `NA`, so
+`tok in s` in the provenance veto received a float:
+`TypeError: argument of type 'float' is not iterable`. That is the whole
+pulsar leg. A second one was waiting in `assess.wd_followup`, which used
+`.astype("int64", errors="ignore")` — an argument pandas 3 removed — and
+would have killed the assess job outright, so the run would have committed no
+summary at all.
+
+* `screen.text_column` is now the one reader for catalogue text: element by
+  element, every missing value to `""`. It fixes the Arrow crash *and* a
+  silent older bug — with a float-`NaN` column `.astype(str)` gives the string
+  `"nan"`, and the veto tokens were being tested against that.
+* A regression test screens the pulsar fixture with the association fields
+  blanked in both shapes (object `None`, float `NaN`) under **both** settings
+  of `future.infer_string`, asserting absence reads as absence while the Crab
+  and M4 vetoes still fire.
+* Validated in a separate venv pinned to the runner's stack — pandas 3.0.6,
+  numpy 2.4.6, astropy 8.0.1: 24/24 ring and 32/32 ossuary tests green there
+  as well as on pandas 2.3.3.
+
+RING run **35747779136** (11:30 ET) is queued on the fixed head, `stage=all`,
+all four legs, 2 NEOWISE shards. The superseded run 35746473758 carried the
+broken commit and was cancelled rather than left to produce a degraded leg.
+
+*General lesson for every channel:* a green local suite is not a green gate.
+The branch CI is the only gate that runs the stack the data-touching jobs
+actually install.
+
+### OSSUARY ran at last — and its survivors have no W1/W2 excess at all, 2026-09-22
 
 `results/ossuary/` existed nowhere on `main` until today. Three things had to
 be fixed to get a number out of the 6.2 M-star sample that run 30203264572
@@ -33,30 +78,42 @@ needed):
    still cannot be called surviving with its reddening unchecked.
 3. `vet()` fell over the same `DataFrame.get` trap on `feh`; now `_num`.
 
-**The measurement** (run **35738190057**, 10:33 ET; `results/ossuary/`):
-6,192,472 stars → 17,211 excess-flagged → funnel `wise_quality` −6,112,
-`ledger` −9,106, `unresolved_companion` −8, `astrometric_registration` −26,
-`background_source` −195, `galactic_cirrus` −1,032 (latitude, the part that
-*is* testable at that stage), `lambda_boo_or_blue_straggler` −98,
-`giant_or_unclassified` −5, `not_a_null_reservoir_host` −45 → **584
-surviving**. Follow-up on the top 200 by significance: 121 surviving, 79
-rejected (189 isolated beams, 6 blends, 5 clean).
+**The measurement** (run **35738190057**, 10:33 ET, then the full-coverage
+re-run **35741248499**, 11:14 ET; `results/ossuary/`): 6,192,472 stars →
+17,211 excess-flagged → funnel `wise_quality` −6,112, `ledger` −9,106,
+`unresolved_companion` −8, `astrometric_registration` −26, `background_source`
+−195, `galactic_cirrus` −1,032 (latitude, the part that *is* testable at that
+stage), `lambda_boo_or_blue_straggler` −98, `giant_or_unclassified` −5,
+`not_a_null_reservoir_host` −45 → **584 surviving**. The re-run took follow-up
+from the top 200 to **all 598** rows carried: **251 surviving, 347 rejected**
+(554 isolated beams, 29 blends, 15 clean). That is the first
+`results/ossuary/summary.json` this repository has ever held.
 
-**Do not read that as 121 candidates.** Tracing them: of the 121,
-**0 have a significant W1 or W2 excess** (median χ_W1 = −0.26, χ_W2 = +0.63,
-none above 3σ), while **121/121 are significant in W3** and 105/121 in W4. The
-fits land at T ≈ 185 K with τ ≈ 0.32 — a fractional luminosity a third of the
-star, around metal-poor dwarfs. That is the inherited ledger's artefact
-signature (a long-band-only excess) one band over from the W4-only rule, and
-τ ~ 0.3 at 185 K is diffuse emission in the WISE beam, not a reservoir. The
-population-level cirrus correlation could not be run at all on the lean path
-("flagged rows only"), so the statistical leak is untested.
+**Do not read that as 251 candidates.** Tracing them in the committed
+`followup.csv`: of the 251, **0 have a significant W1 or W2 excess** —
+*none at all* above 3σ, median χ_W1 = −0.22, χ_W2 = +0.59 — while
+**251/251 are significant in W3** (median χ_W3 = 8.8) and 217/251 in W4. The
+fitted dust temperature is **182 K median** (interquartile 162–201 K, maximum
+526 K), and only **19 of 251** land anywhere inside the 250–800 K band at all.
+That is the inherited ledger's long-band artefact signature, one band over
+from the W4-only rule, and the population-level cirrus correlation could not
+be run on the lean path ("flagged rows only"), so the statistical leak is
+untested.
+
+**This is the number that motivates RING.** OSSUARY asked the warm-dust
+question of hosts with no reservoir and got back a census that is entirely
+*cold* — W3/W4-driven, ~180 K. The Osmanov ring prior lives two bands hotter,
+in W1/W2, where OSSUARY's survivors have nothing. A clean null changes the
+question rather than being written up: S63 asks the same photometry the
+hotter question, over hosts where biology is impossible.
 
 *Next decisive action for OSSUARY:* extend the ledger's long-band rule from
-W4-only to **W3/W4-only without a W1/W2 counterpart**, and carry E(B-V) for
-the flagged rows into the gauntlet so `cirrus_correlation_test` can run on the
-population rather than on 200 rows. A re-run with `max_followup 600` (to cover
-all 584 rather than 200) is queued.
+W4-only to **W3/W4-only without a W1/W2 counterpart** — as a *named* class in
+the census, not a silent rejection, since a genuine 200 K reservoir is
+W3/W4-only too and OSSUARY's own sensitivity band includes it — and carry
+E(B−V) for the flagged rows into the gauntlet so `cirrus_correlation_test`
+can run on the population rather than on the shortlist. Neither needs new
+acquisition: run 30203264572's 6.2 M-star artifacts are still alive.
 
 ### RING (S63) built and green: rings around the dead, 2026-09-22
 

@@ -72,26 +72,43 @@ All public, small, on VizieR (reachable from the GitHub runner; not from the
 sandbox).  Table ids in `config/metronome.yaml` are **preferred seeds**; the
 probe stage discovers the real table under each id at runtime (§4.6).
 
-| Role | Catalogue | VizieR seed |
-|---|---|---|
-| Kepler flares | Yang & Liu 2019, ApJS 241, 29 (162,262 flares / 3,420 stars) | `J/ApJS/241/29` |
-| Kepler flares (cross-check) | Davenport 2016, ApJ 829, 23 | `J/ApJ/829/23` |
-| TESS flares | Pietras et al. 2022, ApJ 935, 143 (~140k flares / ~25k stars) | `J/ApJ/935/143` |
-| TESS flares | Günther et al. 2020, AJ 159, 60 | `J/AJ/159/60` |
-| TESS superflares | Tu et al. (the brief's id; discovered at runtime) | `J/ApJS/253/35` |
-| Kepler rotation | McQuillan+2014, Santos+2021, Reinhold+2013 | `J/ApJS/211/24`, `J/ApJS/255/17`, `J/A+A/560/A4` |
-| TESS rotation | keyword-discovered | — |
-| Positions | KIC `V/133/kic`; TIC `IV/39/tic82` / `IV/38/tic` | shortlist only |
-| Periodic variables | VSX `B/vsx/vsx`; Gaia DR3 `I/358/vclassre`; ZTF Chen+2020 `J/ApJS/249/18` | 3″ cones, shortlist only |
+| Role | Catalogue | VizieR table (MEASURED columns) | Event time |
+|---|---|---|---|
+| Kepler flares | Yang & Liu 2019, ApJS 241, 29 — 162,262 flares / 3,420 stars | `J/ApJS/241/29/table2`: `KIC, Q, Begin, End, logE` | `Begin` (start; no peak column — `t_peak_source = t_start`) |
+| Kepler superflares | Okamoto+2021, ApJ 906, 72 — 2,344 flares / 266 solar-type stars | `J/ApJ/906/72/table2`: `KIC, Date, Dur, E, Prot, Amp, …` | `Date` (peak) |
+| Kepler superflares | Shibayama+2013, ApJS 209, 5 — 1,547 flares / 279 G dwarfs | `J/ApJS/209/5/table7`: `KIC, BVAmp, Date, FAmp, Dur, E` | `Date` (peak) |
+| TESS flares | Günther+2020, AJ 159, 60 — 8,695 flares / 1,228 stars, sectors 1–2 | `J/AJ/159/60/table1`: `TIC, Sec, tpeak, Ebol, Prot, …` | `tpeak` |
+| TESS superflares | Tu+2022, ApJ 935, 90 — 15,638 flares / 3,715 stars | `J/ApJ/935/90/table2`: `ID, Sector, PDate, Energy, Duration, …` | `PDate` (peak) |
+| TESS flares | Pietras+2022, ApJ 935, 143 | `J/ApJ/935/143` returned **zero rows** from `TAP_SCHEMA` on 2026-09-06; re-tried by author keyword, result recorded in `probe.json` | — |
+| *(not an event list)* | Davenport 2016, ApJ 829, 23 | `J/ApJ/829/23/table1` is a per-star FFD summary (`KIC, Prot, Nfl, alpha, beta`) — a rotation source, not a flare list | — |
+| Kepler rotation | McQuillan+2014 `J/ApJS/211/24/table1`; Santos+2021 `J/ApJS/255/17/table1`; Reinhold+2013 `J/A+A/560/A4`; Yang+2019 `table1`; Davenport 2016 `table1` | `KIC, Prot` | — |
+| TESS rotation | Tu+2022 `J/ApJ/935/90/table1` (71,732 stars, `Per`); Günther+2020 `J/AJ/159/60/table2` | `ID/TIC, Per/Prot` | — |
+| Positions | KIC `V/133/kic`; TIC `IV/39/tic82` / `IV/38/tic` | shortlist only | |
+| Periodic variables | VSX `B/vsx/vsx`; Gaia DR3 `I/358/vclassre`; ZTF Chen+2020 `J/ApJS/249/18` | 3″ cones, shortlist only | |
+
+The column names above are the ones ARC's acquire measured (`results/arc/probe.json`)
+and are the reason the first dispatch scanned nothing (§10): `Begin`, `Date`
+and `PDate` matched no role pattern, and `TAP_SCHEMA` was handing every name
+back double-quoted besides.  The probe now also records the catalogue's own
+unit and description of the time column (`time_column_meta`) beside the
+value-range guess, so a wrong time system is visible in the artefact.
 
 **Observing windows** are built from the catalogue's own event density
 (`windows_from_events`): every event in the catalogue is binned in 0.1-day
 bins, and a run of empty bins is a gap when it is ≥ 0.5 d long *and* the
-catalogue's mean rate predicts ≥ 20 events in it.  With ~10² events/day in a
-mission-scale catalogue, Kepler's 1–3 d inter-quarter gaps and ~1 d monthly
-downlinks resolve; a sparse catalogue resolves only its long gaps, and the
-window label records the effective minimum gap.  A published (approximate)
-Kepler quarter table is the fallback below 2,000 events.  Per star, the
+catalogue's mean rate — events per day over the whole span, a lower bound —
+predicts ≥ 20 events in it.  With ~10² events/day in a mission-scale
+catalogue, Kepler's 1–3 d inter-quarter gaps and ~1 d monthly downlinks
+resolve; a sparse catalogue resolves only its long gaps, and the window label
+records the effective minimum gap.  (Measured over *occupied* bins instead,
+as it first was, 60 events over two TESS sectors rated themselves at ~10/day
+and cut every two-day lull inside a sector into a "gap".)  When the catalogue
+records the sector / quarter of every event, the density windows are
+**intersected with the per-sector spans** (`windows_from_sectors`,
+`intersect_windows`): the spans cut the unobserved stretches a sparse
+catalogue bridges, the density model keeps resolving the gaps inside a
+sector.  A published (approximate) Kepler quarter table is the fallback
+below 2,000 events.  Per star, the
 mission windows are clipped to the star's own event span and a window with no
 events in which the star's own rate predicts ≥ 5 is dropped as presumed
 unobserved (module failure; TESS target not on silicon that sector).  **This is
@@ -133,10 +150,30 @@ At the best period the **clock quality** is read off the phase distribution:
 | `jitter` | rms residual from `t₀ + kP`, in units of P | ≲ 0.01 | 0.15–0.3 |
 | `f_in_window` | fraction within ±0.05 cycle of the clock phase | → 1 | ~0.1 |
 | `gap_integer_frac` | fraction of consecutive same-window waiting times that are integer periods (±0.05) | → 1 | ~0.05–0.1 |
+| `jitter_core`, `n_core` | the same rms, over the events within ±0.15 cycle of the clock phase (the ticks, when a natural background is mixed in) | ≲ 0.01 (0.03 with a 30% background) | ~0.087 |
+| `gap_integer_frac_core` | `gap_integer_frac` over the core events only | → 1 | ~0.1 |
 | `cycle_occupancy` | ticks with an event / ticks in observed time | duty cycle | — |
 
 `gap_integer_frac` is the property a clock has and nothing else does, and it
 is what makes the second null interpretable (§4.3).
+
+**Why the core numbers exist.**  A beacon on a star that also flares
+naturally is a delta in phase plus a uniform background, and the rms
+statistics over *all* events do not know which is which.  Measured offline
+(`test_clock_with_a_natural_flare_background_reaches_strict_quality`): a
+strict clock with 30% random flares mixed in has Q = 0.49 and jitter = 0.13
+— failing even the *watch* thresholds — at p ≈ 10⁻⁶⁴, with 75% of its
+events inside ±0.05 cycle and a core jitter of 0.002; and its
+`gap_integer_frac` of 0.56 would have tripped `bursty_random`, because a
+background flare between two ticks splits one integer gap into two
+non-integer ones without the ticks having moved.  So the quality gates have
+two routes, either suffices: the **rms route** (Q, jitter over everyone) and
+the **core route** (`f_in_window` ≥ 0.6 *and* `jitter_core` ≤ 0.05 over
+≥ 8 core events; watch: 0.4 / 0.12), and the integer-gap test accepts the
+core events' gaps as well as everyone's.  Rotational modulation cannot take
+the core route: `rate ∝ 1 + cos φ` puts 0.20 of its events inside ±0.05
+cycle and has a core jitter of ≈ 0.087 over ±0.15, below both gates, and
+the rotator test still lands on `jitter_too_large`.
 
 ### 4.3 Two nulls, and what each is for
 1. **Window-resampled** (`clock.window_null`): N times uniform in the star's
@@ -183,9 +220,9 @@ the period-grid trials; BH absorbs the star count.
 | Tier | Requires |
 |---|---|
 | `none` | not `fdr_watch`, or any hard veto (§5) |
-| `watch` | `fdr_watch`, no hard veto, loose quality (Q ≥ 0.6, jitter ≤ 0.12) |
-| `interest` | `fdr_significant`, strict quality (Q ≥ 0.85, jitter ≤ 0.05, `gap_integer_frac` ≥ 0.6 over ≥ 4 gaps), but a veto **could not be applied** (no P_rot; a variability catalogue unreached) |
-| `candidate` | as `interest` with every veto applied and passed.  **Always pending light-curve inspection.** |
+| `watch` | `fdr_watch`, no hard veto, loose quality (Q ≥ 0.6, jitter ≤ 0.12 — or `f_in_window` ≥ 0.4 with `jitter_core` ≤ 0.12) |
+| `interest` | `fdr_significant`, strict quality (Q ≥ 0.85, jitter ≤ 0.05 — or `f_in_window` ≥ 0.6 with `jitter_core` ≤ 0.05 over ≥ 8 core events; and `gap_integer_frac` or `gap_integer_frac_core` ≥ 0.6 over ≥ 4 gaps), but a veto **could not be applied** (no P_rot; a variability catalogue unreached) |
+| `candidate` | as `interest` with every veto applied and passed.  **Always pending light-curve inspection** — which §4.7 now performs. |
 
 ### 4.5 Energy–phase coherence (report only)
 Spearman ρ of log energy against distance from the clock phase.  A clock does
@@ -203,9 +240,37 @@ position) with exact canonicalised regexes (`resolve_columns` — substring
 matching is what let `Per` match `Perr` elsewhere), scores each table as a
 per-flare list, falls back to a keyword search, and writes the whole
 scoreboard to `probe.json` with the time-system guess (`BKJD` / `BTJD` / `BJD`
-/ `MJD`, from the median of a 200-row peek through a verified column).  The
-acquisition log separates `QUERY_FAILED` from `QUERY_RETURNED_ZERO_ROWS` at
-every stage.
+/ `MJD`, from the median of a 200-row peek through a verified column) and the
+catalogue's own unit / description of that column.  The acquisition log
+separates `QUERY_FAILED` from `QUERY_RETURNED_ZERO_ROWS` at every stage.
+Star ids get one spelling across every table (`clean_star_id`, shared with
+ARC): `KIC 757099`, `757099.0` and `757099` are one star, and the rotation
+join depends on it.
+
+### 4.7 Flare re-detection on the shortlist's own light curves (`redetect.py`)
+The catalogue stages inherit somebody else's flare finder.  For the stars
+that matter — every star at `watch` or better after assess, plus the most
+flare-rich stars per catalogue, capped at `redetect.max_stars` — the
+`redetect` stage goes back to the light curve: the Kepler / TESS products are
+fetched through GROWTH's bounded MAST loop (`seti.growth.stage2`,
+`lightkurve` first, `astroquery.mast` + FITS without it; long cadence only,
+as the Kepler catalogues used), the brief brightenings are found again with
+one stated detector — a running-median baseline over 0.5 d inside each
+contiguous run of cadences, a MAD sigma per run, ≥ 3 consecutive cadences
+above 2.5σ with the peak above 3.5σ, the peak cadence as the tick — and the
+identical clock statistic runs on the re-detected peaks with the observing
+windows read off the light curve itself (every downlinked cadence is in the
+file, so these are the true windows).  Per star the record carries the
+fraction of the *catalogue's* flares the detector recovered
+(`catalogue_recovery_frac`, its calibration on that star), the re-detected
+period / Q / jitter / core numbers / p, whether the period agrees with the
+catalogue's (or a low harmonic), and `confirms_catalogue_clock`: a catalogue
+clock is **confirmed** only when the independent detector finds it at the
+same period with the same strict quality gate the tiers use.  A light-curve
+clock the catalogue did not show is reported separately
+(`LIGHTCURVE_CLOCK_WITHOUT_CATALOGUE_AGREEMENT_n`) and is not a candidate
+until vetted.  A dead MAST is `NO_DATA_REACHED`, an empty one
+`NO_LIGHTCURVES_FOUND`; the stage checkpoints after every star.
 
 ---
 
@@ -223,8 +288,8 @@ star), `flags_raised` (every flag) and `tiers`.
 | `cadence_alias` | P at a named instrumental period or its 2×, 3×, ½, ⅓: Kepler long cadence, ~3 d momentum dumps, ~31 d downlinks, ~93 d quarters; TESS 2-min / 10-min / 200-s / 30-min cadences, ~3.5 d early-sector momentum dumps, 13.7 d orbit, 27.4 d sector | 2% tolerance.  The brief's "6.02 h" Kepler figure could not be verified and is **not** applied. |
 | `rotation_alias` | Rotational modulation of flare visibility — the dominant natural quasi-periodicity | P within 3% of P_rot, P_rot/2, /3, /4, 2P_rot, 3P_rot, from McQuillan/Santos/Reinhold or the flare catalogue's own P_rot |
 | `periodic_variable` | A pulsator's or eclipsing binary's cycles chopped into "flares" by the flare finder (RR Lyrae, δ Sct, EBs) | VSX / Gaia DR3 vari / ZTF cone at 3″; P within 3% of the catalogued period or its ½, ⅓, 2×, 3× |
-| `bursty_random` | Clustered-but-random flaring whose coherence the waiting-time shuffle reproduces | `p_shuffle ≥ 0.05` **and** `gap_integer_frac < 0.6` |
-| `jitter_too_large` | Not a clock: fails even the loose thresholds | Q < 0.6 or jitter > 0.12 |
+| `bursty_random` | Clustered-but-random flaring whose coherence the waiting-time shuffle reproduces | `p_shuffle ≥ 0.05` **and** neither `gap_integer_frac` nor `gap_integer_frac_core` ≥ 0.6 |
+| `jitter_too_large` | Not a clock: fails even the loose thresholds on both routes | (Q < 0.6 or jitter > 0.12) **and** (`f_in_window` < 0.4 or `jitter_core` > 0.12) |
 | `energy_incoherent` *(report)* | Energy depends on clock phase — visibility, not a beacon | Spearman p < 0.01 |
 | `rotation_unknown`, `variability_catalogue_unreached` *(report)* | A veto could not be applied | Caps the tier at `interest` |
 | `p_extrapolated`, `null_truncated_by_budget` *(report)* | Statistical provenance | — |
@@ -254,6 +319,11 @@ reports whether it is.
 | Archive answers with no tables | `QUERY_RETURNED_ZERO_ROWS`, "NOT a null result" in the note |
 | End-to-end synthetic catalogue through probe → acquire → screen → assess | offline: `DEGRADED_SOURCE (rotation_kepler:none); CLOCK_CANDIDATES_PENDING_VET`, the clock at `interest` with `rotation_unknown`; with a rotation table and scripted cones: 1 `candidate`, the rotator now `rotation_alias`, verdict clean |
 | Every hard veto, `insufficient_events`, `not_significant`, every report flag | each has a case that trips it and appears in the counters |
+| Strict clock (P = 3.137 d, duty 0.6) with 30% Poisson flares mixed in | P recovered; rms Q ≈ 0.5, jitter ≈ 0.13; **core route**: `f_in_window` ≥ 0.6, `jitter_core` ≤ 0.05, `gap_integer_frac_core` ≥ 0.6 → `candidate`, no `bursty_random`; the rotator still `jitter_too_large` |
+| The measured VizieR headers (Yang `Begin/End`, Okamoto & Shibayama `Date`, Tu `PDate`, Günther `tpeak`) | every table scores as an event list with the right time column; Davenport `table1` scores 0 |
+| 60 sparse events over two TESS sectors 40 d apart | density model alone: 2 windows (no invented in-sector gaps); with the sector column: 40.5 d observed, the inter-sector stretch excluded |
+| Injected flares (linear rise, 0.05 d decay, 12σ peak) in four synthetic Kepler quarters with monthly downlinks; 61 on a P = 3.137 d clock + 25 random | detector recovers ≥ 90% within a cadence, ≤ 10% spurious; light-curve windows split at the downlinks; the clock is recovered to < 0.2% in P and `confirms_catalogue_clock` on the core route; 60 random flares → no clock |
+| Re-detection with MAST dead / empty / one star served | `NO_DATA_REACHED` / `NO_LIGHTCURVES_FOUND` / `REDETECT_CONFIRMS_NONE` with per-star status; `redetect` is never part of `--stage all` |
 
 ---
 
@@ -313,21 +383,24 @@ the sky, and the workflow refuses to let either read as a science null.
 ```
 src/seti/metronome/windows.py   observing-window model (Kepler quarters, TESS sectors, data-driven)
 src/seti/metronome/clock.py     H-test scan, clock quality, two nulls, cross-star removal, BH  [pure]
-src/seti/metronome/vet.py       the gauntlet and the tiers                                     [pure]
+src/seti/metronome/vet.py       the gauntlet and the tiers (rms and core quality routes)        [pure]
+src/seti/metronome/redetect.py  flare detector on light curves, lightcurve windows, the redetect stage
 src/seti/metronome/acquire.py   runner-only VizieR access, runtime schema discovery, AcquisitionLog
-src/seti/metronome/run.py       stages probe / acquire / screen / assess -> results/metronome/
+src/seti/metronome/run.py       stages probe / acquire / screen / assess (+ redetect) -> results/metronome/
 config/metronome.yaml           every threshold, every table seed
 tests/test_metronome.py         offline suite (the CI gate)
 .github/workflows/metronome.yml probe+acquire -> screen matrix -> assess -> commit-back; lit job
 scripts/metronomelit_fetch.py   prior-art sweep, verbatim abstracts -> results/metronomelit/
 ```
 
-Entry point: `python -m seti.metronome.run --stage {probe|acquire|screen|assess|all}
-[--catalogues a,b] [--shard i --n-shards n] [--max-stars k] [--max-rows r] [--offline]`;
+Entry point: `python -m seti.metronome.run --stage {probe|acquire|screen|assess|all|redetect}
+[--catalogues a,b] [--shard i --n-shards n] [--max-stars k] [--max-rows r] [--offline]
+[--budget-s s]` (`redetect` runs only when named — it opens MAST);
 programmatic `seti.metronome.run.metronome_run(cfg, stage=..., catalogues=..., shard=...,
 n_shards=..., max_stars=..., max_rows=..., offline=..., seed=..., out_root=...)`.
 
 Outputs: `probe.json`, `acquire.json`, `acquisition_log.json`, `screen_<cat>[_s<i>of<n>].json`,
 `stars_<cat>[...].csv` (every star scanned), `stars_vetted.csv`, `summary.json`
 (verdict, funnel, rejection counters, jitter calibration, coverage, `generated_utc`,
-per-catalogue acquisition log), `candidates.json` (interest + candidate, and the watch list).
+per-catalogue acquisition log), `candidates.json` (interest + candidate, and the watch list),
+`redetect.json` + `stars_redetect.csv` (the light-curve re-detection of the shortlist).

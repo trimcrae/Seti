@@ -1616,7 +1616,32 @@ _ROLE_PATTERNS: dict[str, list[str]] = {
     "ra": [r"^ra_?icrs$", r"^raj2000$", r"^_?ra$", r"^ra_?deg$", r"^radeg$"],
     "dec": [r"^de_?icrs$", r"^dej2000$", r"^_?dec?$", r"^dec_?deg$", r"^dedeg$"],
     "duration": [r"^dur(ation)?$", r"^tdur$", r"^t_?dur$", r"^length$"],
+    # A per-event classification the catalogue itself carries (Tu+2022's
+    # ``Label``; a ``Flag``): kept so a shortlisted star's events can be read
+    # back by class instead of guessed at.
+    "label": [r"^label$", r"^flag$", r"^flags$", r"^class$", r"^type$", r"^note$", r"^qual(ity)?$"],
 }
+
+_TIME_OFFSET_RE = re.compile(r"(?:B?JD|TJD|BKJD|BTJD)\s*[-−–]\s*(2\s?4\d{5}(?:\.\d+)?)", re.I)
+
+
+def time_offset_from_description(desc: str) -> float | None:
+    """The offset a catalogue SAYS its time column carries (``BJD-2454833``,
+    ``BJD-2400000``, ``BJD - 2457000``), or ``None`` when it says nothing.
+
+    Okamoto+2021's and Shibayama+2013's ``Date`` are described as
+    ``BJD-2400000`` --- not MJD (``JD-2400000.5``), which the value-range
+    guess called them; the difference is a constant half day, harmless to
+    a clock inside one catalogue but wrong against the published quarter
+    windows.  The catalogue's own words win over the guess whenever present.
+    """
+    m = _TIME_OFFSET_RE.search(str(desc or ""))
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(" ", ""))
+    except ValueError:
+        return None
 
 
 def _canon(name: str) -> str:
@@ -1881,6 +1906,8 @@ def fetch_events(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | 
     for c in ("t_peak", "t_start", "t_end", "energy", "amplitude", "prot", "ra", "dec"):
         if c in out.columns:
             out[c] = pd.to_numeric(out[c], errors="coerce")
+    if "label" in out.columns:
+        out["label"] = out["label"].astype(str).str.strip()
     if "star_id" in out.columns:
         out["star_id"] = out["star_id"].map(clean_star_id)
     if "sector" in out.columns:
@@ -1930,7 +1957,13 @@ def discover_and_fetch_rotation(catalogue: str, preferred: str, keywords=(), *,
         return pd.DataFrame(), rec
     t, roles = best
     top = f"TOP {int(max_rows)} " if max_rows else ""
-    adql = f'SELECT {top}"{roles["star_id"]}", "{roles["prot"]}" FROM "{t}"'
+    # positions ride along when the table has them: the star tables of
+    # Tu+2022 and Guenther+2020 carry _RA/_DE, and a shortlist that already
+    # has a position does not need the TIC round trip that reached only 45%
+    # of the first run's shortlist
+    keep = ["star_id", "prot"] + [r for r in ("ra", "dec") if r in roles]
+    sel = ", ".join(f'"{roles[r]}"' for r in keep)
+    adql = f'SELECT {top}{sel} FROM "{t}"'
     try:
         df = query_fn(adql)
     except Exception as exc:                              # noqa: BLE001
@@ -1941,12 +1974,14 @@ def discover_and_fetch_rotation(catalogue: str, preferred: str, keywords=(), *,
     n = int(len(df)) if df is not None else 0
     if log:
         log.record(f"fetch_rot_{catalogue}", adql, rows=n)
-    rec.update({"table": t, "roles": {"star_id": roles["star_id"], "prot": roles["prot"]},
+    rec.update({"table": t, "roles": {r: roles[r] for r in keep},
                 "status": STATUS_OK if n else STATUS_ZERO, "n_rows": n})
     if not n:
         return pd.DataFrame(), rec
     out = pd.DataFrame({"star_id": df.iloc[:, 0].map(clean_star_id),
                         "prot": pd.to_numeric(df.iloc[:, 1], errors="coerce")})
+    for j, r in enumerate(keep[2:], start=2):
+        out[r] = pd.to_numeric(df.iloc[:, j], errors="coerce")
     out["prot_source"] = catalogue
     return out, rec
 
@@ -2088,4 +2123,5 @@ __all__ = ["BREAKER_LOG", "ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_
            "parse_asu_meta", "parse_asu_tsv", "parse_readme", "reset_route_state",
            "resolve_columns", "resolve_event_columns", "route_log_summary", "route_note",
            "score_event_table", "search_tables", "split_catalogue", "table_columns",
-           "tap_query", "translate_adql", "unquote_table", "vizier_table"]
+           "tap_query", "time_offset_from_description", "translate_adql", "unquote_table",
+           "vizier_table"]

@@ -213,6 +213,13 @@ class OrbitSource:
     fit_arc_end_utc: str | None = None
     retrieved_utc: str | None = None
     notes: str = ""
+    #: Whether the PREDICTION applied the fit's non-gravitational terms.  A JPL
+    #: solution that carries ``A2`` has had the signal fitted out --- but a
+    #: gravity-only propagation of that solution's state puts it back: the
+    #: difference between the accelerated truth and the gravity-only prediction
+    #: is exactly the variational response the fit measures.  ``False`` here is
+    #: what makes such an object a *positive control* instead of a refusal.
+    nongrav_in_prediction: bool | None = None
 
     @property
     def independence(self) -> str:
@@ -237,6 +244,7 @@ class OrbitSource:
             "nongrav_parameters_fitted": self.nongrav_parameters_fitted,
             "fit_arc_end_utc": self.fit_arc_end_utc,
             "retrieved_utc": self.retrieved_utc, "notes": self.notes,
+            "nongrav_in_prediction": self.nongrav_in_prediction,
         }
         try:
             d["independence"] = self.independence
@@ -324,7 +332,12 @@ def require_independent_prediction(source: OrbitSource, *,
             f"marginalises the six state partials, which is exactly the "
             f"subspace an orbit fit can move in, and the residual sensitivity "
             f"lost is reported as absorbed_fraction.")
-    if source.nongrav_parameters_fitted and source.gaia_sso_astrometry_in_fit:
+    if (source.nongrav_parameters_fitted and source.gaia_sso_astrometry_in_fit
+            and source.nongrav_in_prediction is not False):
+        # A gravity-only propagation of a non-grav solution (nongrav_in_prediction
+        # False) re-inserts the fitted signal into the residual and is the
+        # positive-control route; anything else with a fitted A2 has had the
+        # signal removed and is refused.
         raise CircularOrbitSourceError(
             f"orbit source {source.name!r} carried fitted non-gravitational "
             f"parameters AND saw the Gaia astrometry, so the signal itself was "
@@ -1444,10 +1457,33 @@ def transverse_unit(state: np.ndarray) -> np.ndarray:
     return np.cross(h_hat, r_hat)
 
 
+def rtn_unit(state: np.ndarray, direction: str) -> np.ndarray:
+    """One axis of JPL's radial / transverse / normal triad, per state row.
+
+    ``A1`` acts along ``r_hat``, ``A2`` along the transverse ``t_hat`` (in the
+    orbit plane, perpendicular to ``r``) and ``A3`` along the orbit normal
+    ``h_hat``.  All three are defined on this triad, not on the velocity.
+    """
+    st = np.atleast_2d(np.asarray(state, dtype=float))
+    r, v = st[:, :3], st[:, 3:6]
+    h = np.cross(r, v)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        h_hat = h / np.linalg.norm(h, axis=1)[:, None]
+        r_hat = r / np.linalg.norm(r, axis=1)[:, None]
+    if direction == "radial":
+        return r_hat
+    if direction == "transverse":
+        return np.cross(h_hat, r_hat)
+    if direction == "normal":
+        return h_hat
+    raise ValueError(f"unknown non-gravitational direction {direction!r}")
+
+
 def variational_response(state0: np.ndarray, jd0: float, jd_eval: np.ndarray,
                          law: str = "radiation", *, mu: float = GM_SUN_AU3_DAY2,
                          step_days: float = 1.0,
-                         zero_epoch: float | None = None) -> np.ndarray:
+                         zero_epoch: float | None = None,
+                         direction: str = "transverse") -> np.ndarray:
     """Exact linear displacement response (au, (N, 3)) per unit ``A2`` (au/day^2).
 
     THE SCALAR SECULAR FORMULA IS NOT GOOD ENOUGH, AND THIS IS WHY IT MATTERS.
@@ -1503,7 +1539,7 @@ def variational_response(state0: np.ndarray, jd0: float, jd_eval: np.ndarray,
     ref = propagate_two_body(s0, grid - float(jd0), mu=mu)
     r_ref = ref[:, :3]
     rn = np.linalg.norm(r_ref, axis=1)
-    t_hat = transverse_unit(ref)
+    t_hat = rtn_unit(ref, direction)
     g = np.asarray(FORCE_LAWS[law](rn), dtype=float)
     forcing = g[:, None] * t_hat
 

@@ -10,6 +10,80 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
+
+SEXTANT asks LOOM's question — is a minor planet accelerating in a way
+sunlight cannot supply — on Gaia's SSO astrometry, where the residual is
+milliarcseconds rather than arcseconds. Until today only the acquisition probe
+had ever run. Now the whole pipeline exists and is on a runner:
+`.github/workflows/sextant.yml`, `probe` → N `fit` shards → `assess`, wired to
+`python -m seti.cli sextant`.
+
+**In flight: run 35746692260** on `claude/goap-sextant` — `gaiafpr`,
+`max_objects: 0` (every numbered object in the release), the new **solo** path:
+probe, fit and assess as three steps of ONE job on ONE runner, with a
+230-minute in-job clock inside a 350-minute cap.
+
+It is the third dispatch and the first that can realistically start. Run
+35739803943 (8 shards, capped at 800 objects) sat queued 45 minutes at a commit
+predating the independent Greenberg+2020 control and was cancelled; its
+replacement 35744966028 (4 shards, uncapped) sat queued another 15 without its
+single probe job starting, against an account queue of **69 waiting runs**
+across 18 channels. The sharded path needs six separate scheduling events — a
+probe slot, four simultaneous fit slots, an assess slot — and a run that never
+starts measures nothing. The solo path needs one. It reaches roughly a quarter
+of the objects; because a shard fits its controls first and then works a seeded
+shuffle, that quarter is a smaller *unbiased sample of the same catalogue* with
+the same complete control set, not a different sample. `solo: false` still runs
+the sharded path when there is capacity to spend.
+
+Uncapped is now the *safer* choice, not the riskier one, because of two
+changes made before the dispatch. A shard works its **positive controls
+first** and then the rest in a seeded shuffle, so a shard that never finishes
+still has a complete control set — ascending `number_mp` would have reached the
+NEAs last and left the `A2` distribution with nothing to check itself against
+— and any truncation is an unbiased random subsample rather than a sample of
+large main-belt bodies. And the fit stage runs on a clock *inside* the job's
+cap, stopping between chunks, because a job killed by `timeout-minutes` is
+cancelled and a cancelled job does not reliably upload its artifacts. A
+stopped shard reports `OK_PARTIAL_BUDGET` with the chunks it did not attempt,
+and `summary.json`'s `coverage` block says how much of the assigned sample was
+reached, so unmeasured objects can never be read as a null.
+
+**The probe's decisive finding, written down.** `epoch` is **TCB**, and it is
+derived rather than assumed. The probe measured `epoch_utc − epoch` as
+−85.564 s at MJD 56864 and −90.250 s at MJD 58868; computing TCB − UTC from
+`L_B = 1.550519768e-8` plus TT − TAI plus the leap seconds in force gives
+85.564 s and 90.249 s. Both ends agree to under a millisecond, and the 4.686 s
+drift across the mission decomposes as 2.685 s of secular `L_B` and exactly 2 s
+of leap seconds. Nothing but TCB does that. This mattered more than it sounds:
+87 s of time-tag error is ~0.7 arcsec of along-track offset on *every* object
+in proportion to sky rate — a catalogue-wide fake detection shaped exactly like
+the signal. Also settled: the observer state vectors are equatorial
+(`max|z_gaia| = 0.4098 au`, which is `y_ecl·sin 23.44°` and not an ecliptic
+slab); `is_rejected` runs at 0.6304% against a published 0.58%; and the
+DR3/FPR union deduplicates under **both** candidate keys.
+
+**The controls are the falsifiable part, and there are now two of them.** The
+primary is JPL's fitted `A2`, pulled live from SBDB. It has a weakness — JPL's
+solutions saw Gaia DR2/DR3 astrometry at high weight — so the channel now also
+scores against Greenberg+2020 (AJ 159, 92; VizieR `J/AJ/159/92`), 247 `da/dt`
+measurements from optical and radar. The conversion is exact for JPL's
+`g(r) = (1 au/r)²`: `da/dt = 2 A2 / (n a² (1−e²))`, which reproduces Bennu's
+published −19.0 ± 0.1e−4 au/Myr from JPL's `A2 = −4.6e−14 au/day²` to 1%. If
+the Gaia-only fit does not return these in sign and magnitude, nothing else in
+the output is believed, and `assess` stamps `ESTIMATOR_FAILS_CONTROLS` onto the
+run verdict rather than reporting the exceedances.
+
+**What to do next:** read run 35746692260's `results/sextant/controls.json`
+before anything else in `summary.json` — `verdict`, `n_measured` and
+`recovered_fraction`. If it reads `CONTROLS_FAILED_SIGN` or
+`CONTROLS_INCONSISTENT`, the exceedance list is a property of the estimator and
+`assess` will already have stamped `ESTIMATOR_FAILS_CONTROLS` on the run
+verdict; fix the fit before reading anything else. Only if the controls recover
+does `coverage` (how many of the assigned objects were actually reached),
+`a2_distribution` and the population verdict mean anything.
+
 ### ARC stage 2 on the pixels: 5 of 21 catalogued flares were on a NEIGHBOUR, 2026-09-22
 
 S59 (`docs/arc.md` §9). The centroid test that decides this channel has now

@@ -64,11 +64,24 @@ time offsets (including +-2400000.5) so a wrong time system names itself.
 candidates.json and demotes on `catalogue_epochs_absent` or
 `photometric_oscillation`; demotion only ever removes a claim.
 
-**In flight** (runner queue was ~13 deep, 2026-09-22 11:20 EDT): run
-35746944111 `stage=redetect` over run 35652897914's artifacts -- one runner,
-MAST only -- is the decisive one; 35745637197 re-assesses the same shards with
-the new vetoes; 35741300225 is a full re-run. All three check out the branch
-head when they start.
+**In flight** (2026-09-22, dispatched 10:35-11:23 EDT, all still QUEUED at
+11:40 EDT behind a saturated runner pool):
+
+* **35746944111** -- `stage=redetect`, `reduce_only_run_id=35652897914`. ONE
+  runner, MAST only, no archive and no screen matrix. This is the decisive
+  one: it runs the epoch stack and the photometric veto over the 40-star
+  shortlist and reconciles summary.json / candidates.json.
+* **35741300225** -- the full pipeline (probe+acquire, 48-shard screen,
+  assess, redetect, lit). Slowest but definitive: its acquire is the only one
+  that pulls the flare catalogues' own star positions, which is what lets the
+  `periodic_variable` veto reach the 13 interest stars that could not be
+  vetted at all.
+* 35745637197 (assess-only over the 2026-09-21 shards) was **cancelled**: its
+  shards predate the pool null, and had it landed after 35746944111 it would
+  have overwritten the reconciled summary.json with an unreconciled one.
+
+Every dispatch checks out the branch head when it starts, so all of the above
+run the current code, not the code they were dispatched at.
 
 **A design assumption the run falsified, and it is the most important number
 here.** The channel's own calibration reports

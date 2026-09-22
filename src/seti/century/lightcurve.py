@@ -157,13 +157,26 @@ class CenturyLC:
         lim = np.where(np.isfinite(self.lim), self.lim, -np.inf)
         return self.good & (lim - ref >= float(margin))
 
-    def subset(self, mask: np.ndarray) -> CenturyLC:
+    def subset(self, mask: np.ndarray, mask_nd: np.ndarray | None = None) -> CenturyLC:
+        """The light curve restricted to ``mask`` (detections).
+
+        ``mask_nd`` restricts the NON-detections too, and a caller that
+        restricts by plate series must pass it.  The non-detections are the
+        censoring: they set the limits an injection is evaluated against, so
+        carrying every series' non-detections into a single-series re-run would
+        censor that series' injection with another telescope's plate depths,
+        which is precisely the confounder the single-series re-run exists to
+        remove.
+        """
         m = np.asarray(mask, dtype=bool)
+        mnd = (np.ones(self.n_nd, dtype=bool) if mask_nd is None
+               else np.asarray(mask_nd, dtype=bool))
         return CenturyLC(
             t=self.t[m], mag=self.mag[m], err=self.err[m], lim=self.lim[m],
             series=self.series[m], exptime_min=self.exptime_min[m], blend=self.blend[m],
-            reject=self.reject[m], plate=self.plate[m], t_nd=self.t_nd, lim_nd=self.lim_nd,
-            series_nd=self.series_nd, exptime_nd=self.exptime_nd,
+            reject=self.reject[m], plate=self.plate[m], t_nd=self.t_nd[mnd],
+            lim_nd=self.lim_nd[mnd], series_nd=self.series_nd[mnd],
+            exptime_nd=self.exptime_nd[mnd],
             flags_applied=self.flags_applied, n_raw=self.n_raw, columns=self.columns,
             exptime_unit=self.exptime_unit,
         )

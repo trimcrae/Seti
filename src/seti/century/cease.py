@@ -792,7 +792,10 @@ def same_series_check(lc: CenturyLC, res: CenturyCessation, *, min_epochs_block:
             best, best_n = s_, min(n_pre, n_post)
     if best_n < 2 * min_epochs_block:
         return {"same_series_status": "untestable", "same_series_name": best}
-    sub = lc.subset(ser == best)
+    # The non-detections are restricted to the same series: they are the
+    # censoring, and censoring one series' injection with another series' plate
+    # depths would defeat the point of the re-run.
+    sub = lc.subset(ser == best, lc.series_nd.astype(str) == best)
     r2 = analyze_century(sub, res.period_cat, block_years=block_years, origin_year=origin_year,
                          min_epochs_block=min_epochs_block, min_blocks=3, rng=rng,
                          blind_check=False, **kw)

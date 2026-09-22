@@ -178,6 +178,26 @@ context, and the leading systematic for the strongest candidate is not the star.
 A ratio of 0.52 (6967.9 Å) is *narrower than the instrument can make*, which is its own
 verdict: a single-pixel defect or a cosmic ray, not a spectral feature.
 
+## A leak in the triage's recurrence cut
+
+The triage removed a wavelength as `recurrent_across_runs` when **three or more** spectra
+had a candidate within 3 Å. Pairs came through — and across the 350 triaged candidates
+there are **114 pairs at exactly the same wavelength**. On a survey's common log-λ grid
+the same wavelength is the same **pixel**, and unrelated sightlines do not agree to three
+decimal places by accident. That is the inherited ledger's "a wavelength recurring across
+unrelated sightlines is instrumental", operating one spectrum below the cut.
+
+Counted against every triaged candidate (the ones the triage already removed are evidence
+about the wavelength too), **76 of the 167 survivors** have at least one other sightline
+within 3 Å: 57 with one, 15 with two, 4 with three or more.
+
+Of the six left standing, 6809.3, 8578.3, 6856.5 and 7490.3 have **none** within 3 Å;
+6403.2 and 6967.9 each have one, 1.64 Å and 1.60 Å away — about one pixel. So the two
+strongest survive the stricter cut and the two weakest do not cleanly.
+`n_other_candidates_within_3A` and `nearest_other_candidate_dA` now travel with every
+line. Reported, not enforced — but a survivor that shares a pixel with another sightline
+should not be read as a detection.
+
 ## The detector
 
 If the feature is narrow, unresolved and in every exposure and every epoch, the next

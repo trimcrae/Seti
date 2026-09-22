@@ -38,7 +38,7 @@ on:
     inputs:
       stage:
         description: >-
-          "all" (pcp per pole shard, then assess_diurnal), "pcp", "assess"
+          "all" (pcp + radar per pole shard, then assess_diurnal), "pcp", "assess"
           (re-assess the diurnal files already on the branch), or "probe"
           (re-record the archive inventory only).
         required: false
@@ -165,7 +165,7 @@ jobs:
           if [ -n "${{ github.event.inputs.poles }}" ]; then P="--poles ${{ github.event.inputs.poles }}"; fi
           NS=""
           if [ "${{ github.event.inputs.no_sensitivity }}" = "true" ]; then NS="--no-sensitivity"; fi
-          python -m seti.crypt.run --stage pcp --shard ${{ matrix.shard }}/2 $P $NS
+          python -m seti.crypt.run --stage pcp,radar --shard ${{ matrix.shard }}/2 $P $NS
           echo "=== acquisition ==="
           python - <<'PY'
           import json, glob
@@ -203,6 +203,20 @@ jobs:
                                      "z_mean", "T_floor_K", "T_bg_K", "sigma_bg_K", "dT_K", "amp_K",
                                      "dseason_K", "n_bins_hot", "cluster_px", "area_m2_300K")})
           PY
+          echo "=== radar ==="
+          python - <<'PY'
+          import json, glob
+          for p in sorted(glob.glob("results/crypt/radar_*.json")):
+              d = json.load(open(p))
+              print(p, d.get("status"), "counts", json.dumps(d.get("counts")),
+                    "n_high_cpr", d.get("n_high_cpr"), "mask", json.dumps(d.get("mask")),
+                    (d.get("error") or "")[:200])
+              print("  acquisition", json.dumps(d.get("acquisition"))[:1500])
+              for c in (d.get("radar_candidates") or [])[:20]:
+                  print("   RADAR", {k: c.get(k) for k in
+                                     ("line", "sample", "lon", "lat", "cpr", "cluster_px",
+                                      "bg_cpr", "s1", "s1_bg", "class", "reasons")})
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -211,6 +225,8 @@ jobs:
             results/crypt/pcp_*.json
             results/crypt/diurnal_*.json
             results/crypt/diurnal_flags_*.csv
+            results/crypt/radar_*.json
+            results/crypt/radar_flags_*.csv
           if-no-files-found: warn
 
   assess:
@@ -284,7 +300,7 @@ jobs:
             results/crypt/summary.json \
             results/crypt/candidates.json \
             results/crypt/candidates.csv \
-            $(ls results/crypt/pcp_index.json results/crypt/pcp_*.json results/crypt/diurnal_*.json results/crypt/diurnal_flags_*.csv 2>/dev/null)
+            $(ls results/crypt/pcp_index.json results/crypt/pcp_*.json results/crypt/diurnal_*.json results/crypt/diurnal_flags_*.csv results/crypt/radar_*.json results/crypt/radar_flags_*.csv 2>/dev/null)
       - uses: actions/upload-artifact@v4
         if: always()
         with:

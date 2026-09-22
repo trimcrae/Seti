@@ -54,6 +54,16 @@ acquire:
   minirf_roots:
     - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/"
     - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-4-cdr-v1/"
+  # The polar stereographic mosaics, which is what the radar axis screens.
+  # Read off lsz_xxxxx_3s1_pfu_90n000_v1.lbl on the runner: 1294 x 1294
+  # PC_REAL (6.7 MB), MAP_SCALE 947.6 m/pix, 70-90 deg, centre 90/0,
+  # LINE_PROJECTION_OFFSET 647.5.  "xxxxx" is the MERGED mosaic; a numeric
+  # token is a single-orbit strip.  3cp = circular polarisation ratio,
+  # 3s1 = first Stokes (total power).  The directory is listed rather than
+  # the names assumed, and what was listed is recorded with the result.
+  minirf_mosaic_dirs:
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-4-cdr-v1/lromrf_0005/data/sar/mosaics/"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/sar/mosaics/"
   minirf_dir_regex: "(?i)^(?!.*(browse|extras|document|catalog|index)).*$"
   # WIDENED after run 2026-09-22T01:25Z.  The polar mosaics that exist are
   # named lsz_xxxxx_3s1_pfu_90n000_v1.img / ..._90s000_... — the Mini-RF PDS3

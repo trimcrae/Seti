@@ -186,7 +186,30 @@ survive can actually be made. Each table is ~262 MB of ASCII (≈4.4 M rows;
 empty bins are omitted) and is deleted after it is rasterised, so peak disk
 is one product. Which bins were used is recorded with every result.
 
-### 3.5 Radar
+### 3.8 The radar axis, on the same mapped PSR (stage `radar`)
+
+The Mini-RF **polar stereographic mosaics** — `lsz_xxxxx_3cp_pfu_90{n,s}000_v1`
+(circular polarisation ratio) and `..._3s1_...` (first Stokes, total power) —
+are 1294 × 1294 `PC_REAL` at `MAP_SCALE = 947.6 m/pix` covering 70–90°, i.e.
+6.7 MB each: the whole radar axis is a few tens of megabytes, not a data
+problem. The `xxxxx` token marks the *merged* mosaic; a numeric token is a
+single-orbit strip, and the merged product is preferred. The mosaics
+directory is listed rather than the names assumed, and what was listed is
+recorded with the result.
+
+The mask is the **same LOLA raster the thermal screen uses**, re-sampled from
+the 240 m PCP grid onto the Mini-RF grid by longitude and latitude, so both
+axes screen the same region and a hit on one can be read off the other. The
+rules are §3.5's, and the kills they name — `rock_field`,
+`elevated_background`, `weak_echo`, `mask_edge` — are the natural high-CPR
+sources the brief demands be excluded.
+
+The floor here is coarse and stated as such: at 948 m/pixel a metre-scale
+dihedral is a small perturbation on a resolution cell 16 times the area of a
+Diviner one, so this axis constrains *compact isolated reflectors at the
+mosaic's own scale*, not metre-scale hardware.
+
+### 3.5 Radar (rules)
 
 Inside the mask re-sampled onto the Mini-RF grid: CPR ≥ 1 pixels whose
 connected patch is ≤ 4 px (`rock_field` otherwise), whose annulus (3–12 px)

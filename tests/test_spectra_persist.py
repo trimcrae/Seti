@@ -197,6 +197,20 @@ def test_absent_in_exposures_when_only_coadd_has_it():
     # ... and the default seed the other tests use is one of them.
     _, _, _, cls0 = _run(make_spec_file([0.0] * 4, coadd_amp=1.0))
     assert cls0["persistence_class"] == "absent_in_exposures", cls0
+    # The same, down the PRODUCTION path: with the exposure stack and the
+    # in-spectrum null that process_spectrum supplies, the verdict must not
+    # change.  A calibration that rescued this case would be rescuing the very
+    # artefact the channel exists to catch.
+    parsed, fc, ex, _ = _run(make_spec_file([0.0] * 4, coadd_amp=1.0))
+    st = persist.stack_exposures(parsed, LAM0)
+    stack = persist.measure_line(st["wave"], st["flux"], st["ivar"], LAM0,
+                                 persist.lsf_fwhm_A(LAM0, "SDSS-DR17"), "emission")
+    null = persist.offset_null(persist.sdss_measure_at(parsed, "emission"), LAM0,
+                               n=16, lo_A=12.0, hi_A=120.0)
+    full = persist.classify_persistence(fc, ex, stack=stack, null=null)
+    assert full["coadd_recovered"], full
+    assert full["persistence_class"] == "absent_in_exposures", full
+    assert full["combined_sig"] < COMBINED_SIG_FLOOR and full["stack_sig"] < 4.0, full
     assert persist.final_verdict({"persistence_class": "absent_in_exposures",
                                   "known_line_match": False}) == "KILLED_absent_in_exposures"
 

@@ -367,6 +367,11 @@ def catalogue_epoch_response(t, f, epochs, windows: Windows, *, cadence_days: fl
     ep = ep[np.isfinite(ep)]
     if len(t) < 50 or not len(ep) or windows is None or not windows.n:
         return out
+    # detrend_residuals reads gaps off np.diff, and _stack searchsorts, so
+    # both need time order; the caller's stitched series already has it, but
+    # this function is public and cheap to make safe
+    order = np.argsort(t)
+    t, f = t[order], f[order]
     resid, sig = detrend_residuals(t, f, cadence_days=cadence_days,
                                    window_days=window_days, gap_days=gap_days)
     z = resid / sig

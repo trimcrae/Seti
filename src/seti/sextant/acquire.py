@@ -656,6 +656,16 @@ def _truthy(v) -> bool:
             return float(v) != 0.0
         except (TypeError, ValueError):
             return False
+    if isinstance(v, (bytes, bytearray, np.bytes_)):
+        # A VOTable `char` column reaches us as bytes through astropy, and
+        # `str(b'true')` is `"b'true'"` --- which matches nothing below and
+        # would read every row, rejected or not, as not-rejected.  Decode
+        # before comparing, and let an undecodable byte string fall through to
+        # the unrecognised case rather than raise.
+        try:
+            v = v.decode("utf-8", "replace")
+        except Exception:                                      # noqa: BLE001
+            return False
     s = str(v).strip().lower()
     if s in ("true", "t", "yes", "y", "1"):
         return True

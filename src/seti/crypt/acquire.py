@@ -455,6 +455,83 @@ def ode_count(rec: dict) -> int | None:
     return None
 
 
+def ode_files(rec: dict) -> list[dict]:
+    """Every downloadable file ODE names in a ``results=f`` answer.
+
+    ODE nests the file list differently per product type
+    (``Product_files/Product_file``, ``ProductFiles/ProductFile``, ...), so the
+    answer is walked for any dict carrying a ``URL``-like key whose value looks
+    like an absolute http(s) URL.  The product id the file belongs to is
+    carried down from the nearest enclosing dict that names one.
+    """
+    j = rec.get("json")
+    if not isinstance(j, dict):
+        return []
+    out: list[dict] = []
+    seen: set[str] = set()
+
+    def _pid(d: dict) -> str | None:
+        for k in ("pdsid", "PDSID", "ProductId", "product_id", "LabelFileName", "ExternalId"):
+            v = d.get(k)
+            if isinstance(v, str) and v:
+                return v
+        return None
+
+    def _walk(node, pid: str | None):
+        if isinstance(node, dict):
+            pid = _pid(node) or pid
+            url = None
+            for k in ("URL", "Url", "url", "FileURL", "PDSFileURL"):
+                v = node.get(k)
+                if isinstance(v, str) and v.lower().startswith(("http://", "https://")):
+                    url = v
+                    break
+            if url and url not in seen:
+                seen.add(url)
+                name = node.get("FileName") or node.get("Filename") or url.rsplit("/", 1)[-1]
+                kb = node.get("KBytes") or node.get("kbytes")
+                try:
+                    size = int(float(kb) * 1024) if kb is not None else None
+                except (TypeError, ValueError):
+                    size = None
+                out.append({"name": str(name), "url": url, "size": size,
+                            "type": node.get("Type") or node.get("FileType"),
+                            "description": node.get("Description"), "product_id": pid})
+            for v in node.values():
+                _walk(v, pid)
+        elif isinstance(node, list):
+            for v in node:
+                _walk(v, pid)
+
+    _walk(j, None)
+    return out
+
+
+def ode_dataset_files(fetch, base: str, ihid: str, iid: str, pt: str | None = None, *,
+                      limit: int = 1000, offset: int = 0, timeout: float = 120.0,
+                      target: str = "moon") -> dict:
+    """List every file of one ODE product type, with no spatial constraint.
+
+    This is the route that does not require knowing the PDS directory layout:
+    ODE's own index names each product's files and their absolute URLs.
+    """
+    params = {"target": target, "query": "product", "results": "f", "ihid": ihid, "iid": iid,
+              "pt": pt, "limit": limit, "offset": offset}
+    rec = ode_query(fetch, base, params, timeout=timeout)
+    files = ode_files(rec)
+    return {"url": rec.get("url"), "status": rec.get("status"), "error": rec.get("error"),
+            "head": rec.get("head"), "ihid": ihid, "iid": iid, "pt": pt,
+            "n_products": len(ode_products(rec)), "count": ode_count(rec),
+            "n_files": len(files), "files": files}
+
+
+def entries_from_ode_files(files: list[dict]) -> list[Entry]:
+    """ODE file records → listing entries, so ODE-discovered products flow
+    through the same pairing/classification path as a crawled directory."""
+    return [Entry(name=f["name"], url=f["url"], is_dir=False, size=f.get("size"))
+            for f in files if f.get("name") and f.get("url")]
+
+
 def ode_footprint_params(ihid: str, iid: str, pt: str | None, lon: float, lat: float,
                          half_deg_lat: float = 0.02, limit: int = 25) -> dict:
     """Footprint-intersection query box around (lon_east, lat)."""

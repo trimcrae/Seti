@@ -17,24 +17,49 @@ acquire:
   crawl_max_depth: 5
   crawl_max_entries: 8000
 
-  # Diviner level-3/4 (PDS Geosciences; verified reachable 2026-09-13).
+  # Diviner gridded products.  CORRECTED after run 2026-09-22T01:25Z: the
+  # first guess, lro-l-dlre-4-rdr-v1/lrodlr_1002/data/, answers 200 but holds
+  # the PDS4 *calibrated RDR* collection (by-year dirs 2017..2026) and two
+  # collection files — no gridded product at all, hence NO_DATA_REACHED.
+  # The authoritative identifiers come from ODE's own Moon instrument table
+  # (results/crypt/probe.json, ode.instrument_types):
+  #   LRO / DLRE / PCP     lro_diviner_derived_pcp     Polar Cumulative Products
+  #   LRO / DLRE / GDR_L3  lro_diviner_derived_gdr_l3  Gridded Data Record L3
+  #   LRO / DLRE / GCP     lro_diviner_derived_gcp     Global Cumulative Products
+  #   LRO / DLRE / PRP     lro_diviner_derived_prp     Polar Resource Products
   diviner_volume_roots:
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-5-gdr-v1/lrodlr_1001/"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-5-gdr-v1/lrodlr_1002/"
     - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1002/"
-    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/"
   diviner_data_subdirs: ["data/pcp/", "data/prp/", "data/gdr_l3/", "data/gdr_l4/", "data/gcp/", "data/"]
+
+  # The route that needs no knowledge of the directory layout at all: ODE
+  # indexes every product of a type and ``results=f`` returns absolute URLs.
+  diviner_ode:
+    ihid: "LRO"
+    iid: "DLRE"
+    product_types: ["PCP", "GDR_L3", "GCP", "PRP"]
+    limit: 2000
   # subdirectories worth descending (skip the by-year RDR tree of lrodlr_1001)
   diviner_dir_regex: "(?i)^(?!20\\d\\d$)(pcp|prp|gdr|gcp|polar|pole|north|south|n|s|240|cumul|season|summer|winter|all|lbl|img|data|.*pcp.*|.*polar.*|.*pol.*|\\d+m|\\w{1,4})$"
-  # the PDS4 mirror of the same holdings, if the PDS3 tree is empty
+  # the PDS4 mirror of the same holdings, if the PDS3 tree is empty.  Bundle
+  # directory names follow the ODE DataSetId (urn-nasa-pds-<bundle>).
   diviner_pds4_roots:
     - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/"
     - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived2/"
+    - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived_pcp/"
+    - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived_gdr_l3/"
 
   # Mini-RF (PDS Geosciences): the level-5 mosaics and level-4 CDRs.
   minirf_roots:
     - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/"
     - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-4-cdr-v1/"
   minirf_dir_regex: "(?i)^(?!.*(browse|extras|document|catalog|index)).*$"
-  minirf_product_regex: "(?i)(cpr|s1|stokes|pol|polar|mosaic|_n_|_s_|north|south|80n|80s|85n|85s)"
+  # WIDENED after run 2026-09-22T01:25Z.  The polar mosaics that exist are
+  # named lsz_xxxxx_3s1_pfu_90n000_v1.img / ..._90s000_... — the Mini-RF PDS3
+  # code for a CPR mosaic is "cp", not "cpr", so the old pattern could not have
+  # matched one.  Match every Stokes/CPR product code and every polar tag.
+  minirf_product_regex: "(?i)(cpr|\\dcp[_\\-.]|[_\\-.]cp[_\\-.]|\\ds[1-4][_\\-.]|[_\\-.]s[1-4][_\\-.]|stokes|mosaic|polar|90n|90s|85n|85s|80n|80s|north|south)"
 
   # ShadowCam (PDS4, KPLO) and LROC NAC via ODE footprint search.
   shadowcam_roots:
@@ -42,11 +67,15 @@ acquire:
     - "https://pds.shadowcam.im-ldi.com/data/"
     - "https://shadowcam.im-ldi.com/archive"
   ode_rest: "https://oderest.rsl.wustl.edu/live2/"
-  ode_instruments:                     # (ihid, iid, pt) guesses; the iipy probe corrects them
-    shadowcam: {ihid: "KPLO", iid: "SHADOWCAM", pt: null}
+  # CORRECTED from the ODE Moon instrument table returned by the first probe:
+  # the ShadowCam iid is "ShadowCam", not "SHADOWCAM" — the wrong case returned
+  # HTTP 200 with zero products at both poles, which reads like no coverage.
+  ode_instruments:
+    shadowcam: {ihid: "KPLO", iid: "ShadowCam", pt: "CAL"}
+    shadowcam_umos: {ihid: "KPLO", iid: "ShadowCam", pt: "UMOS"}
     lroc_nac: {ihid: "LRO", iid: "LROC", pt: "EDRNAC4"}
-    minirf: {ihid: "LRO", iid: "MRFLRO", pt: null}
-    diviner: {ihid: "LRO", iid: "DLRE", pt: null}
+    minirf: {ihid: "LRO", iid: "MRFLRO", pt: "MOSCDR"}
+    diviner: {ihid: "LRO", iid: "DLRE", pt: "PCP"}
   ode_footprint_half_deg: 0.02
   ode_limit: 25
 
@@ -61,6 +90,14 @@ acquire:
     - "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/illumination/"
     - "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/"
   psr_product_regex: "(?i)(psr|shadow|illum|ill_|_ill|perm|lit|sun)"
+  # ODE indexes the LOLA GDR permanently-shadowed map itself
+  # (LRO / LOLA / GDRPSR, dataset LRO-L-LOLA-4-GDR-V1.0), so the polygons do
+  # not have to be scraped out of a PGDA product page.
+  psr_ode:
+    ihid: "LRO"
+    iid: "LOLA"
+    product_types: ["GDRPSR", "GDRVIS"]
+    limit: 500
 
 # Which products the screen needs, in priority order.  ``channels`` are the
 # Diviner channels used (6 and 7 are the anisothermal discriminant, 8/9 the
@@ -83,9 +120,12 @@ products:
 # Regexes over the product NAME (then label text) → pole / channel / stat /
 # season.  Corrected from the committed inventory after the first probe.
 patterns:
+  # ``\d{2,4}n\d*`` added so the Mini-RF polar tag 90n000 (latitude 90 N,
+  # longitude 000) is recognised; the old form required a separator straight
+  # after the "n" and so matched none of the polar mosaics.
   pole:
-    north: "(?i)(^|[_\\-.])(n|np|north|npole|80n|85n|75n|\\d{2,4}n)([_\\-.]|$)|north\\s*pol"
-    south: "(?i)(^|[_\\-.])(s|sp|south|spole|80s|85s|75s|\\d{2,4}s)([_\\-.]|$)|south\\s*pol"
+    north: "(?i)(^|[_\\-.])(n|np|north|npole|80n|85n|75n|\\d{2,4}n\\d*)([_\\-.]|$)|north\\s*pol"
+    south: "(?i)(^|[_\\-.])(s|sp|south|spole|80s|85s|75s|\\d{2,4}s\\d*)([_\\-.]|$)|south\\s*pol"
   channel:
     tbol: "(?i)(^|[_\\-.])(tbol|tb|bol|bolo|bolometric)([_\\-.]|$)|bolometric"
     "3": "(?i)(^|[_\\-.])(t3|tb3|ch3|c3|ch03|t03|b3)([_\\-.]|$)|channel\\s*0?3\\b"

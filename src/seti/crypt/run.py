@@ -220,7 +220,12 @@ def crawl_diviner(conf: dict, fetch, log: list) -> tuple[list[A.Entry], list[dic
             roots_tried.append({"url": url, "reached": ok, "n_entries": len(got),
                                 "n_files": sum(1 for e in got if not e.is_dir)})
             entries.extend(got)
-        if sum(1 for e in entries if not e.is_dir) > 0:
+        # Stop only once the crawl has found products that actually carry the
+        # axes the screen needs.  ``lrodlr_1002/data/`` answers 200 with two
+        # PDS4 collection files and nothing else — treating that as "reached"
+        # is what made the first run report NO_DATA_REACHED (results/crypt at
+        # 2026-09-22T01:25Z).
+        if _n_useful(conf, entries) > 0:
             break
     # de-duplicate by URL
     seen, uniq = set(), []
@@ -231,14 +236,66 @@ def crawl_diviner(conf: dict, fetch, log: list) -> tuple[list[A.Entry], list[dic
     return uniq, roots_tried
 
 
+def _n_useful(conf: dict, entries: list[A.Entry]) -> int:
+    """Files whose NAME already places them on a pole and a channel — the
+    minimum for the selector to have anything to choose between."""
+    n = 0
+    for e in entries:
+        if e.is_dir:
+            continue
+        c = A.classify_name(e.name, conf["patterns"])
+        if c.get("pole") and c.get("channel"):
+            n += 1
+    return n
+
+
+def discover_diviner_ode(conf: dict, fetch) -> tuple[list[A.Entry], dict]:
+    """Diviner gridded products through ODE's own index.
+
+    The PDS directory layout is not knowable from the sandbox and the first
+    run's guess was wrong; ODE lists (ihid=LRO, iid=DLRE) product types
+    including PCP (Polar Cumulative Products) and GDR_L3, and ``results=f``
+    hands back each product's absolute file URLs.  Returns listing entries so
+    they join the crawled ones before classification.
+    """
+    acq = conf["acquire"]
+    base = acq.get("ode_rest")
+    spec = acq.get("diviner_ode") or {}
+    rep: dict = {"queries": [], "n_files": 0, "n_products": 0}
+    if not base or not spec.get("product_types"):
+        rep["status"] = "NOT_CONFIGURED"
+        return [], rep
+    entries: list[A.Entry] = []
+    for pt in spec["product_types"]:
+        try:
+            r = A.ode_dataset_files(fetch, base, spec.get("ihid", "LRO"), spec.get("iid", "DLRE"), pt,
+                                    limit=int(spec.get("limit", 1000)),
+                                    timeout=float(acq.get("listing_timeout_s", 60)))
+        except Exception as exc:  # noqa: BLE001
+            rep["queries"].append({"pt": pt, "error": f"{type(exc).__name__}: {exc}"[:300]})
+            continue
+        entries.extend(A.entries_from_ode_files(r["files"]))
+        rep["queries"].append({k: v for k, v in r.items() if k != "files"} |
+                              {"example_files": [f["name"] for f in r["files"][:40]]})
+        rep["n_products"] += int(r.get("n_products") or 0)
+    rep["n_files"] = len(entries)
+    rep["status"] = "OK" if entries else "NO_FILES"
+    return entries, rep
+
+
 def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
     fetch = fetch or A.http_fetch
     acq = conf["acquire"]
     t_list = float(acq.get("listing_timeout_s", 60))
     rep: dict = {"stage": "probe", "generated_utc": _now(), "roots": {}, "diviner": {},
                  "minirf": {}, "shadowcam": {}, "ode": {}, "psr": {}, "crawl_log": []}
-    # 1. Diviner: crawl, read labels, classify, select
+    # 1. Diviner: crawl, read labels, classify, select.  Two independent
+    # routes — the HTTP directory crawl and ODE's index — are merged, so a
+    # wrong volume path cannot by itself produce a no-data verdict.
     entries, roots_tried = crawl_diviner(conf, fetch, rep["crawl_log"])
+    ode_entries, ode_rep = discover_diviner_ode(conf, fetch)
+    have = {e.url for e in entries}
+    entries = entries + [e for e in ode_entries if e.url not in have]
     files = [e for e in entries if not e.is_dir]
     groups = A.pair_products(files)
     label_texts: dict[str, str] = {}
@@ -285,7 +342,7 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
         for ax in axis_counts:
             axis_counts[ax][str(c.get(ax))] = axis_counts[ax].get(str(c.get(ax)), 0) + 1
     rep["diviner"] = {
-        "roots_tried": roots_tried, "n_entries": len(entries), "n_files": len(files),
+        "roots_tried": roots_tried, "ode": ode_rep, "n_entries": len(entries), "n_files": len(files),
         "n_products": len(groups), "n_labels_read": n_lab,
         "directories": sorted({e.url for e in entries if e.is_dir})[:400],
         "inventory": [{"stem": s, **{k: v for k, v in c.items() if k != "name"}} for s, c in
@@ -296,6 +353,11 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
         "n_selected": {p: sum(1 for v in sel.values() if v) for p, sel in selection.items()},
         "n_needed": {p: len(sel) for p, sel in selection.items()},
         "example_names": [e.name for e in files[:60]],
+        "n_useful": _n_useful(conf, entries),
+        "useful_example_names": [s for s, c in classified.items()
+                                 if c.get("pole") and c.get("channel")][:80],
+        "unplaced_example_names": [s for s, c in classified.items()
+                                   if not (c.get("pole") and c.get("channel"))][:80],
     }
     # 2. Mini-RF
     mr_entries: list[A.Entry] = []
@@ -313,6 +375,10 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
     rep["minirf"] = {"roots": mr_roots, "n_files": len(mr_files), "n_matching": len(mr_hits),
                      "directories": sorted({e.url for e in mr_entries if e.is_dir})[:300],
                      "matching": [e.as_dict() for e in mr_hits[:300]],
+                     # every file in a mosaic directory, unfiltered: the product
+                     # codes that actually exist are read off this, not guessed
+                     "mosaic_names": sorted({e.name for e in mr_files
+                                             if "mosaic" in e.url.lower()})[:400],
                      "example_names": [e.name for e in mr_files[:60]]}
     # 3. ShadowCam roots
     rep["shadowcam"] = {u: _reach(fetch, u, t_list) for u in acq.get("shadowcam_roots", [])}
@@ -335,8 +401,21 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
         rep["ode"]["footprint_probe"] = {}
         for pole, (lon, lat) in probe_pos.items():
             rep["ode"]["footprint_probe"][pole] = V.ode_coverage(conf, fetch, lon, lat)
-    # 5. PSR routes
+    # 5. PSR routes: the HTTP pages, plus ODE's index of the LOLA GDR
+    # permanently-shadowed map (LRO/LOLA/GDRPSR) which names the rasters.
     rep["psr"] = {u: _reach(fetch, u, t_list) for u in acq.get("psr_routes", [])}
+    pspec = acq.get("psr_ode") or {}
+    if base and pspec.get("product_types"):
+        rep["psr_ode"] = []
+        for pt in pspec["product_types"]:
+            try:
+                r = A.ode_dataset_files(fetch, base, pspec.get("ihid", "LRO"), pspec.get("iid", "LOLA"),
+                                        pt, limit=int(pspec.get("limit", 500)), timeout=t_list)
+            except Exception as exc:  # noqa: BLE001
+                rep["psr_ode"].append({"pt": pt, "error": f"{type(exc).__name__}: {exc}"[:300]})
+                continue
+            rep["psr_ode"].append({k: v for k, v in r.items() if k != "files"} |
+                                  {"files": r["files"][:60]})
     rep["crawl_log"] = rep["crawl_log"][:600]
     reached = {"diviner": rep["diviner"]["n_files"] > 0,
                "minirf": rep["minirf"]["n_files"] > 0,
@@ -450,7 +529,14 @@ def _acquire_minirf(conf: dict, fetch, probe: dict, pole: str, ddir: Path) -> di
         if g["image"] is None or not pole_rx.search(g["image"].name):
             continue
         low = g["image"].name.lower()
-        kind = "cpr" if "cpr" in low else ("s1" if re.search(r"(^|[_\-.])s1([_\-.]|$)", low) else None)
+        # Mini-RF PDS3 mosaic names carry the level and the product code in one
+        # token: lsz_xxxxx_3s1_pfu_90n000_v1 → level 3, Stokes 1.  The CPR code
+        # is "cp".  Both therefore sit against a digit, not a separator.
+        kind = None
+        if "cpr" in low or re.search(r"(^|[_\-.]|\d)cp([_\-.]|$)", low):
+            kind = "cpr"
+        elif re.search(r"(^|[_\-.]|\d)s1([_\-.]|$)", low):
+            kind = "s1"
         if kind is None:
             continue
         if g["image"].size and g["image"].size > int(acq.get("max_bytes_per_file", 4e8)):

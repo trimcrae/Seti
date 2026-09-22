@@ -16,6 +16,7 @@ sample:
   # and then recorded as PARTIAL_SAMPLE rather than silently dropped.
   parallax_shells_mas: [10.0, 11.11, 12.5, 14.29, 16.67, 22.22, 33.33, 100000.0]
   max_rows_per_shell: 400000
+  query_timeout_s: 1200           # a Gaia shell is a big job; its clock is longer than the probe's
 
 beams:
   # theta is the FULL beam width 1.22 lambda/D (the FWHM-class number the brief
@@ -117,6 +118,10 @@ hit_catalogues:
 
 probe:
   budget_s: 1500
+  # per-call clock on VizieR/SIMBAD TAP. pyvo's run_async polls a remote job
+  # with no limit of its own, so one wedged VizieR job would otherwise hold the
+  # stage until the workflow cap killed it and nothing was written.
+  query_timeout_s: 240
 
 assess:
   match_window_sigma: 3.0        # a hit matches the prior within this many half-widths (tight)

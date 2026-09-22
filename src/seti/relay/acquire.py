@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 
@@ -114,6 +115,45 @@ def requests_json(url: str, params: dict | None = None, *, timeout: float = 60.0
         return r.json()
     except ValueError:
         return {"_non_json_body": r.text[:2000], "_status": r.status_code}
+
+
+class QueryTimeout(TimeoutError):
+    """An archive call that did not answer inside its clock."""
+
+
+def with_timeout(fn, timeout_s: float | None):
+    """Wrap a transport so one hung archive call cannot eat the run.
+
+    pyvo's ``run_async`` polls a remote job with no time limit of its own: a
+    VizieR job that never answers holds the whole stage until the workflow cap
+    kills it and NOTHING is written (the failure mode `docs/arc.md` records).
+    The call runs on a daemon thread --- daemon so a wedged one cannot keep the
+    interpreter alive at exit --- and is abandoned after ``timeout_s``.  The
+    caller then sees an ordinary failed query, which every stage already
+    records as a failure, never as a zero-row answer about the sky.
+    """
+    if not timeout_s or float(timeout_s) <= 0:
+        return fn
+
+    def _wrapped(*args, **kwargs):
+        box: dict = {}
+
+        def _go():
+            try:
+                box["value"] = fn(*args, **kwargs)
+            except BaseException as exc:                  # noqa: BLE001
+                box["error"] = exc
+
+        th = threading.Thread(target=_go, daemon=True)
+        th.start()
+        th.join(float(timeout_s))
+        if th.is_alive():
+            raise QueryTimeout(f"no answer within {float(timeout_s):.0f} s")
+        if "error" in box:
+            raise box["error"]
+        return box.get("value")
+
+    return _wrapped
 
 
 def _retry(fn, retries: int = 3, label: str = "call", base_sleep: float = 3.0):

@@ -40,6 +40,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -624,8 +625,12 @@ def _apply_stage2_verdicts(vetted: list[dict], stars_json: Path) -> dict:
     return applied
 
 
-def _recompute(rec: dict, teff: float, rad: float, phys: dict) -> dict:
-    """Re-run the ceiling for one record with better stellar parameters."""
+def _recompute(rec: dict, teff: float, rad: float, phys: dict, *, table: str = "") -> dict:
+    """Re-run the ceiling for one record with better stellar parameters.
+
+    The values it replaces are kept as ``teff_k_before`` / ``radius_rsun_before``
+    with ``params_source_before``, so the move is auditable rather than silent.
+    """
     if not rec.get("energies_json"):
         return rec
     try:
@@ -640,10 +645,14 @@ def _recompute(rec: dict, teff: float, rad: float, phys: dict) -> dict:
                                                        DEFAULT_GEOMETRIC_FACTOR)),
                        independent_gap_days=float(phys.get("independent_gap_days", 0.5)))
     out = dict(rec)
+    out["teff_k_before"] = rec.get("teff_k")
+    out["radius_rsun_before"] = rec.get("radius_rsun")
+    out["params_source_before"] = rec.get("radius_source")
+    out["xi_conservative_max_before"] = rec.get("xi_conservative_max")
     for k, v in new.items():
         out[k] = json.dumps(v) if k == "flares_above" else v
     out["params_assumed"] = False
-    out["teff_source"] = out["radius_source"] = "assess_params"
+    out["teff_source"] = out["radius_source"] = table or "assess_params"
     return out
 
 
@@ -743,27 +752,66 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     params_by_mission: dict[str, pd.DataFrame] = {}
     param_records: dict = {}
     gaia_reached_frac = float("nan")
+    # MEASURED (run 35675114711): this block ran for 4 h 54 m and the workflow
+    # cap killed the job before a single line of summary.json was written --
+    # every catalogue fetched, every xi computed, nothing recorded.  The
+    # network work is now bounded twice over: each query has its own wall
+    # clock (pyvo's run_async has none), and the block as a whole has one.
+    # What the clock did not reach is an UNAPPLIED veto, never a pass.
+    aconf = conf.get("assess") or {}
+    prefer_measured = bool(aconf.get("prefer_measured_params", True))
+    budget_s = aconf.get("budget_s", 3600.0)
+    budget = None if budget_s in (None, "", 0) else float(budget_s)
+    t0 = time.monotonic()
+
+    def _spent() -> bool:
+        return budget is not None and (time.monotonic() - t0) >= budget
+
+    budget_spent = False
     if short and not offline:
-        from .acquire import fetch_star_params_by_id, gaia_context, tap_query
-        query_fn = query_fn or tap_query
+        from .acquire import (
+            fetch_star_params_by_id,
+            gaia_context,
+            tap_query,
+            timeout_cone_fn,
+            timeout_query_fn,
+        )
+        qt = aconf.get("query_timeout_s", 240.0)
+        query_fn = timeout_query_fn(query_fn or tap_query, timeout_s=qt)
+        cone_fn = timeout_cone_fn(cone_fn, timeout_s=qt)
         gconf = conf.get("gaia") or {}
-        for mission in sorted({str(r["mission"]) for r in short}):
+        missions = sorted({str(r["mission"]) for r in short})
+        for mission in missions:
             ids = sorted({str(r["star_id"]) for r in short if str(r["mission"]) == mission})
+            if _spent():
+                param_records[mission] = [{"table": "(all)", "status": "BUDGET_SPENT",
+                                           "note": f"the assess stage's {budget:.0f} s wall "
+                                                   "clock was spent before this mission"}]
+                print(f"[arc] assess: budget spent before {mission} ({len(ids)} ids)")
+                continue
+            print(f"[arc] assess: {mission} — parameters for {len(ids)} shortlisted ids "
+                  f"({time.monotonic() - t0:.0f} s elapsed)", flush=True)
             pos, prec = fetch_star_params_by_id(ids, mission, query_fn=query_fn, log=log,
                                                 tables=conf.get("param_tables"))
             param_records[mission] = prec
             params_by_mission[mission] = pos
             if not len(pos):
                 continue
+            print(f"[arc] assess: {mission} — Gaia cones on {len(pos)} positions "
+                  f"({time.monotonic() - t0:.0f} s elapsed)", flush=True)
             g = gaia_context(pos, cone_fn=cone_fn, log=log,
                              gaia_table=str(gconf.get("table", "I/355/gaiadr3")),
                              vari_table=str(gconf.get("vari_table", "I/358/vclassre")),
                              radius_arcsec=float(gconf.get("cone_radius_arcsec", 12.0)),
-                             match_arcsec=float(gconf.get("match_arcsec", 2.0)))
+                             match_arcsec=float(gconf.get("match_arcsec", 2.0)),
+                             deadline=_spent)
             for sid, c in g.items():
                 contexts[f"{mission}:{sid}"] = c
+        budget_spent = _spent()
         n_reached = sum(1 for k in short_keys if contexts.get(k, {}).get("gaia_reached"))
         gaia_reached_frac = n_reached / len(short_keys) if short_keys else float("nan")
+        print(f"[arc] assess: context done in {time.monotonic() - t0:.0f} s; Gaia reached "
+              f"{gaia_reached_frac:.2f} of the shortlist", flush=True)
 
     # --- better stellar parameters for the shortlist; recompute --------------------
     vetted_in = []
@@ -784,8 +832,21 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                     ctx["logg"] = lg
                 if np.isfinite(rad):
                     ctx["radius_rsun"] = rad
-                if bool(rec.get("params_assumed")) and np.isfinite(teff) and np.isfinite(rad):
-                    rec = _recompute(rec, teff, rad, phys)
+                # THE MEASURED TABLE WINS, not only over the solar fallback.
+                # Berger+2020 table2 (Gaia-DR2 parallaxes, homogeneous) is a
+                # better radius than a flare catalogue's own KIC-era star
+                # table, and until now it replaced only `params_assumed`
+                # values.  MEASURED (run 35738218021): KIC 9418692 kept
+                # Shibayama's Teff 5378 K / R 1.30 Rsun and xi = +0.462 while
+                # Berger gives 5677.4 K / 1.089 Rsun, i.e. xi = +0.715 -- the
+                # excess was being UNDERSTATED by 0.25 dex on the channel's
+                # one surviving star.  `prefer_measured_params: false`
+                # restores the old behaviour.
+                if np.isfinite(teff) and np.isfinite(rad) and (
+                        bool(rec.get("params_assumed")) or prefer_measured):
+                    rec = _recompute(rec, teff, rad, phys,
+                                     table=str(h.get("radius_source") or h.get("teff_source")
+                                               or "assess_params"))
                 flag = str(h.get("flag", "") or "")
                 if flag and flag.lower() not in ("nan", "none"):
                     rec["catalogue_flag"] = ";".join(x for x in (rec.get("catalogue_flag", ""),
@@ -821,6 +882,8 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
         degraded.append(f"gaia_context:{gaia_reached_frac:.2f}_of_shortlist_reached")
     if offline and short:
         degraded.append("gaia_context:offline")
+    if budget_spent:
+        degraded.append(f"assess_context:budget_spent_after_{budget:.0f}s")
 
     # A star without a rotational amplitude has no spot area, so it has no
     # ceiling and cannot be tested.  Run 34792280736 reached 100,000 flares on
@@ -855,7 +918,8 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
             "flags", "xi_conservative_max", "xi_nominal_max", "n_above_conservative",
             "n_above_nominal", "n_independent", "n_flares", "e_flare_max_erg",
             "e_mag_conservative_erg", "e_mag_nominal_erg", "amplitude_frac",
-            "amplitude_source", "amplitude_unit", "amplitude_scale", "prot", "prot_source",
+            "amplitude_source", "amplitude_unit", "amplitude_scale", "amplitude_scaled",
+            "prot", "prot_source",
             "teff_k", "radius_rsun", "logg", "t_spot_k", "params_assumed", "catalogue_flag",
             "centroid", "centroid_reason", "xi_conservative_measured_stage2")
     cand_rows = [{k: r.get(k) for k in slim} for r in cands]
@@ -887,6 +951,9 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
         "offline": bool(offline),
         "stage2_verdicts_applied": stage2_applied,
         "gaia_reached_fraction_of_shortlist": gaia_reached_frac,
+        "context_budget_s": budget,
+        "context_elapsed_s": round(time.monotonic() - t0, 1),
+        "context_budget_spent": bool(budget_spent),
         "param_tables": param_records,
         "physics": phys,
         "vet": vconf,

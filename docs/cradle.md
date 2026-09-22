@@ -116,8 +116,17 @@ with a single old indicator is `AGE_UNDETERMINED` and is **never** a candidate.
 | `gyro` | a rotation period through the Mamajek & Hillenbrand 2008 gyrochrone | mostly a YOUTH detector |
 | `act` | ESP-CS Ca II IRT activity index: high is YOUNG | **no** — the inactive locus is not a calibrated age |
 
-The kinematic test can certify age only by **excess** velocity: a slow star is
-`UNDETERMINED`, never young. Two vetoes override the count entirely: membership
+**What this costs, stated up front.** Requiring two indicators means most
+in-cell stars will land in `IN_CELL_AGE_UNDETERMINED`, not in `CANDIDATE`. The
+kinematic test certifies age only by **excess** velocity, so a genuinely old
+star on a quiet orbit is `UNDETERMINED`, never young. GSP-Spec [α/Fe] exists
+only for the brighter half of the parent. Gyrochronology's catalogue coverage
+is two Kepler/K2 fields — a few hundred square degrees against an all-sky
+parent — and Gaia's own `vari_rotation_modulation` is populated by active
+stars, so it detects youth and rarely age. `IN_CELL_AGE_UNDETERMINED` is
+therefore the expected *modal* outcome for an interesting star, and it is a
+statement about the age data, not about the star: it names exactly what a
+follow-up spectrum would have to supply. Two vetoes override the count entirely: membership
 of a young moving group (21 groups in XYZ + UVW, 3-D with an RV and the
 tangential projection without, Sco–Cen subgroups included) and a
 star-forming-region sky box at the region's parallax range.

@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import os
 import time as _time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -673,6 +674,39 @@ def _count_by(rows: list[dict], key: str) -> dict:
     return out
 
 
+
+def _code_provenance() -> dict:
+    """Which commit computed this, and on which runner.
+
+    A job that checks out a BRANCH rather than a commit runs whatever is at the
+    head when it starts, so a result that does not name its own commit cannot
+    be reproduced or compared with the next one.  (A sibling channel found two
+    shards of one dispatch measuring with two different estimators for exactly
+    this reason.)  Everything here is best effort: a missing repository is
+    recorded, never guessed.
+    """
+    import subprocess  # noqa: PLC0415  only ever called once, at assess time
+
+    out: dict = {"run_id": os.environ.get("GITHUB_RUN_ID"),
+                 "workflow": os.environ.get("GITHUB_WORKFLOW"),
+                 "dispatch_sha": os.environ.get("GITHUB_SHA"),
+                 "ref": os.environ.get("GITHUB_REF_NAME")}
+    try:
+        root = str(_repo_root())
+        r = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"],
+                           capture_output=True, text=True, timeout=30, check=False)
+        out["commit"] = r.stdout.strip() or None
+        if r.returncode != 0:
+            out["commit_error"] = (r.stderr or "")[:200]
+        d = subprocess.run(["git", "-C", root, "status", "--porcelain"],
+                           capture_output=True, text=True, timeout=30, check=False)
+        out["dirty"] = bool(d.stdout.strip())
+    except Exception as exc:                                  # noqa: BLE001
+        out["commit"] = None
+        out["commit_error"] = repr(exc)[:200]
+    return out
+
+
 def stage_assess(cfg: dict, out_dir: Path) -> dict:
     shards = sorted(glob.glob(str(out_dir / "screen_*of*.json")))
     panels: list[dict] = []
@@ -852,6 +886,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         verdict = VERDICT_LIST
     summary = {
         "generated_utc": _now(), "verdict": verdict, "degraded": degraded,
+        "code": _code_provenance(),
         "acquisition": acq, "timescale_source": ts_source,
         "timescale_library": ts_library, "limit_bookkeeping": limit_book,
         "object_grouping": obj_grouping,

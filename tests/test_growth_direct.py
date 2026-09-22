@@ -418,6 +418,50 @@ def test_a_tic_id_round_trips_through_csv_exactly(tmp_path):
     assert D._read_csv(p)["tic_id"].isna().iloc[1]
 
 
+def test_a_truncatable_tic_is_verified_against_the_sky_before_it_is_believed():
+    """The dangerous case is not the empty query --- it is the truncated id that
+    lands on a REAL other star and gets measured silently."""
+    assert D.tic_is_truncated(122785300.0)          # what %.8g leaves of 122785305
+    assert D.tic_is_truncated(351053720.0)
+    assert not D.tic_is_truncated(122785305.0)      # nine digits, not a multiple of ten
+    assert not D.tic_is_truncated(26817004.0)       # eight digits: exact through %.8g
+    assert not D.tic_is_truncated(float("nan")) and not D.tic_is_truncated(0.0)
+
+
+def test_a_truncated_tic_is_never_queried_on_its_own_authority(tmp_path):
+    """It is re-resolved from the sky first; unverifiable means not measured."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    good, wrong = 122785305.0, 122785300.0          # the real id and what %.8g left
+    assert D.tic_is_truncated(wrong) and not D.tic_is_truncated(good)
+    targets = targets.copy()
+    targets["tic_id"] = targets["tic_id"].where(targets["tic_id"].isna(), wrong)
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    asked: list[int] = []
+
+    def pf(tic, **_kw):
+        asked.append(int(tic))
+        return _products(ref, ref, n_transits=10, sectors=(41,))   # ANY tic would serve
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf,
+                           tic_fn=lambda *a, **k: (good, "tic_kic_crossid"))
+    assert int(wrong) not in asked                  # the wrong star was never touched
+    assert rep["n_tic_suspect_truncation"] >= 1 and rep["n_tic_repaired"] >= 1
+
+    # and when the sky cannot name the star, it is a non-measurement, not a guess
+    out2 = tmp_path / "direct2"
+    out2.mkdir()
+    D._write_csv(out2 / "targets.csv", targets)
+    asked.clear()
+    D.direct_measure(_conf(), out2, shard=0, n_shards=1, products_fn=pf,
+                     tic_fn=lambda *a, **k: (float("nan"), ""))
+    assert int(wrong) not in asked
+    df2 = D._read_csv(D._shard_paths(out2, 0)["csv"])
+    assert (df2["lc_status"] == D.REASON_TIC_UNRESOLVED).any()
+    assert set(df2["class"]) == {D.CLASS_NOT_MEASURED}
+
+
 def test_a_catalogue_tic_that_serves_nothing_is_rechecked_against_the_sky(tmp_path):
     """A stale or truncated catalogue TIC is re-resolved before it is called a
     non-detection; a star TESS really never observed comes back empty twice."""

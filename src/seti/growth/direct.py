@@ -430,6 +430,20 @@ def _read_csv(path) -> pd.DataFrame:
         return pd.DataFrame()
 
 
+def tic_is_truncated(tic) -> bool:
+    """Could this TIC id have lost a digit to a ``"%.8g"`` CSV write?
+
+    ``%.8g`` keeps eight significant digits, so anything below 1e8 round-trips
+    exactly and anything at or above it comes back a multiple of ten.  A
+    genuine nine-digit TIC ending in zero is caught too --- it is then simply
+    confirmed against the sky, which costs one cone search and nothing else.
+    """
+    t = _f(tic)
+    if not (np.isfinite(t) and t > 0):
+        return False
+    return t >= 1.0e8 and int(round(t)) % 10 == 0
+
+
 def shard_of(kepid, n_shards: int) -> int:
     """The shard a star belongs to.  By ``kepid``, so a multi-planet system's
     planets share one shard and one download."""
@@ -1858,7 +1872,7 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     members_frames: list[pd.DataFrame] = [prev_members] if len(prev_members) else []
     sector_frames: list[pd.DataFrame] = []
     n_new, n_skipped, n_budget, n_measure_failed = 0, 0, 0, 0
-    n_tic_rechecked, n_tic_repaired = 0, 0
+    n_tic_rechecked, n_tic_repaired, n_tic_suspect = 0, 0, 0
     tic_fallback_by_route: dict = {}
     fetch_status_counts: dict = {}
 
@@ -1909,6 +1923,24 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
 
         if not (np.isfinite(tic) and tic > 0) and fp.tic_fallback:
             tic, route = _resolve_tic("fallback")
+        elif tic_is_truncated(tic) and route not in TIC_FALLBACK_ROUTES and fp.tic_fallback:
+            # A TIC id that cannot have survived a "%.8g" write is NOT a star
+            # id until the sky says so.  Querying it anyway is the dangerous
+            # case: TIC 122785300 may well be a REAL star with TESS data, and
+            # measuring it would be a silent wrong-target measurement, exactly
+            # the class of error the Kepler-718 b post-mortem warns about.
+            n_tic_suspect += 1
+            t2, r2 = _resolve_tic("verify")
+            if np.isfinite(t2) and t2 > 0:
+                same = int(t2) == int(tic)
+                route = r2 + ("_confirms_" if same else "_over_") + (route or "none")
+                tic = t2
+                n_tic_repaired += 0 if same else 1
+            else:
+                # Unverifiable: refuse it rather than measure a star we cannot
+                # name.  This is a non-measurement, never a statement about the
+                # sky.
+                tic, route = float("nan"), route + "_unverifiable"
         products, status, lc_route = [], REASON_TIC_UNRESOLVED, ""
         if np.isfinite(tic) and tic > 0:
             products, status, lc_route = fetch_products(
@@ -2000,6 +2032,7 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
            "n_skipped_already_done": n_skipped, "n_not_reached_budget": n_budget,
            "n_measure_failed": n_measure_failed,
            "n_tic_rechecked": n_tic_rechecked, "n_tic_repaired": n_tic_repaired,
+           "n_tic_suspect_truncation": n_tic_suspect,
            "n_rows": int(len(df)), "budget_s": fp.shard_budget_s,
            "elapsed_s": round(deadline.elapsed(), 1), "budget_exhausted": bool(deadline.expired()),
            "fetch_status_counts": fetch_status_counts,
@@ -2623,7 +2656,8 @@ __all__ = [
     "REASON_BUDGET", "REASON_NOT_REACHED", "REASON_NO_EPHEMERIS", "REASON_NO_REFERENCE",
     "REASON_NO_TRANSIT", "REASON_QUERY_FAILED", "REASON_TIC_UNRESOLVED", "REASON_ZERO_ROWS",
     "RUN_CANDIDATES", "RUN_NONE", "RUN_NO_DATA", "RUN_VERDICTS", "SAP_COLUMNS", "STAGES",
-    "TIC_FALLBACK_ROUTES", "VETOES", "VETO_DISPOSITION", "VETO_DURATION",
+    "TIC_FALLBACK_ROUTES", "tic_is_truncated", "ID_COLUMNS", "detectable_change_ppm",
+    "VETOES", "VETO_DISPOSITION", "VETO_DURATION",
     "VETO_DURATION_INCONCLUSIVE", "VETO_EPHEMERIS", "VETO_FPFLAG", "VETO_LOWER_BOUND",
     "VETO_ODD_EVEN", "VETO_ONE_FAMILY", "ClassifyParams", "DurationParams", "EpochSearchParams",
     "FetchParams", "TargetParams", "astroquery_tic_fn", "build_targets", "classify_direct",

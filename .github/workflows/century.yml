@@ -4,7 +4,8 @@ name: century
 # DASCH DR7 century baseline (1885–1992; 252,458,490 sources, 23.6 billion
 # measurements).  docs/century.md.
 #
-#   probe ──▶ targets ──▶ sweep (N shards: acquire + screen) ──▶ assess
+#   targets ──▶ sweep (N shards: acquire + screen) ──▶ assess
+#   probe (reconnaissance, on request only, in parallel with everything)
 #
 # WHY A PROBE STAGE EXISTS.  Nothing in this repository has ever spoken to the
 # DASCH DR7 web API.  The probe stage is the cheapest possible way to learn its
@@ -46,7 +47,12 @@ on:
   workflow_dispatch:
     inputs:
       stages:
-        description: "probe | targets | sweep | assess | full (probe+targets+sweep+assess)"
+        description: >-
+          full (targets+sweep+assess) | targets | sweep | assess | probe.
+          `probe` is reconnaissance and runs ONLY when asked for by name: it
+          reads documentation and the daschlab source, writes nothing a later
+          job consumes, and on a starved queue costs `full` an entire extra
+          runner wait.
         required: false
         default: "full"
       fields:
@@ -78,7 +84,14 @@ on:
       time_budget_s:
         description: "Per-shard DASCH wall-clock budget (s)"
         required: false
-        default: "12000"
+        default: "9000"
+      screen_budget_s:
+        description: >-
+          Per-shard SCREEN wall-clock budget (s).  Acquire + screen share one
+          job's timeout-minutes; the sum of the two budgets must leave room for
+          the install and the upload.
+        required: false
+        default: "9000"
       pause_s:
         description: "Pause between DASCH requests (s)"
         required: false
@@ -100,10 +113,19 @@ jobs:
   # probe — learn the API on the runner.  Cheap, and the only stage that
   # can be run alone before any commitment.
   # ------------------------------------------------------------------
+  # `stages: probe` ONLY — `full` no longer re-probes.  The probe is a
+  # reconnaissance job, not a pipeline stage: it reads documentation and the
+  # daschlab source and writes nothing any later job consumes.  Re-running it
+  # inside `full` spent a whole runner AND a whole queue wait (measured: 95
+  # minutes on run 35745660073, which had not started its probe by the time
+  # four other channels finished entire sweeps) to re-learn a schema already
+  # committed under results/century/probe/.  The acquire stage logs
+  # `flag_definitions` with its source on every shard, so the flag parse is
+  # still verified on real data every run.
   probe:
     if: >-
       ${{ github.event.inputs.reduce_only_run_id == ''
-      && (github.event.inputs.stages == 'probe' || github.event.inputs.stages == 'full') }}
+      && github.event.inputs.stages == 'probe' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -158,6 +180,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f -- results/century/probe/probe.json || echo "no probe.json"
           git add -f -- results/century/probe/flag_bits.json || echo "no flag_bits.json"
+          git add -f -- results/century/probe/flag_bit_evidence.json || echo "no flag evidence"
           git diff --cached --name-only
           if git diff --cached --quiet; then
             echo "No probe changes to commit."
@@ -180,10 +203,16 @@ jobs:
   # ------------------------------------------------------------------
   # targets — VSX/GCVS periodic variables + bright refcat stars per field.
   # ------------------------------------------------------------------
+  # NOT `needs: [probe]`.  The probe produces nothing this job reads, so the
+  # dependency was pure serialisation — and on a starved queue each job waits
+  # for a runner SEPARATELY, so it cost `full` an entire extra queue wait
+  # before target selection could even start.  Observed 2026-09-22: run
+  # 35745660073 sat queued from 15:12Z to at least 15:38Z without its probe
+  # job starting, with 87 runs queued account-wide.  The two run in parallel;
+  # they touch different endpoints.
   targets:
-    needs: [probe]
     if: >-
-      ${{ always() && github.event.inputs.reduce_only_run_id == ''
+      ${{ github.event.inputs.reduce_only_run_id == ''
       && (github.event.inputs.stages == 'targets' || github.event.inputs.stages == 'sweep'
           || github.event.inputs.stages == 'full') }}
     runs-on: ubuntu-latest
@@ -242,6 +271,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f -- results/century/targets.csv || echo "no targets.csv"
           git add -f -- results/century/targets_summary.json || echo "no targets_summary.json"
+          # plate_exptime.csv holds the exposure DURATION of every plate, from
+          # the same queryexps that measured the field density.  DR7 light
+          # curves carry no exposure time, and the shards join this on.
+          git add -f -- results/century/plate_exptime.csv || echo "no plate_exptime.csv"
           git diff --cached --name-only
           if git diff --cached --quiet; then
             echo "No target changes to commit."
@@ -261,6 +294,7 @@ jobs:
           path: |
             results/century/targets.csv
             results/century/targets_summary.json
+            results/century/plate_exptime.csv
           if-no-files-found: warn
 
   # ------------------------------------------------------------------
@@ -293,8 +327,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Offline gate — the Menzel-step and efficiency nulls must hold here
-        run: python -m pytest tests/test_century.py -q -p no:warnings -k "gap or step or efficiency or censor"
+      # The gate runs on the runner's OWN pandas (3.x from `pandas>=2.0`), not
+      # the sandbox's 2.x, so it is also the version check.  `dr7` and
+      # `exposure` are in the selection because the schema contract — column
+      # spellings, the JD time scale, the exposure-time join — is what fails
+      # first on real data, and failing it here costs a minute instead of an
+      # acquisition budget.
+      - name: Offline gate — the Menzel step, the efficiency nulls, the DR7 schema
+        run: |
+          python -c "import pandas, numpy, astropy; print('versions', pandas.__version__, numpy.__version__, astropy.__version__)"
+          python -m pytest tests/test_century.py -q -p no:warnings \
+            -k "gap or step or efficiency or censor or dr7 or exposure"
       - uses: actions/download-artifact@v4
         with:
           name: century-targets
@@ -307,7 +350,7 @@ jobs:
           fi
           python -m seti.century.run --stage acquire \
             --shard "${{ matrix.shard }}" \
-            --time-budget-s ${{ github.event.inputs.time_budget_s || '12000' }} \
+            --time-budget-s ${{ github.event.inputs.time_budget_s || '9000' }} \
             --pause-s ${{ github.event.inputs.pause_s || '0.5' }} \
             $MT
           echo "=== acquire summary ==="
@@ -315,7 +358,8 @@ jobs:
       - name: Screen shard ${{ matrix.shard }}
         if: always()
         run: |
-          python -m seti.century.run --stage screen --shard "${{ matrix.shard }}"
+          python -m seti.century.run --stage screen --shard "${{ matrix.shard }}" \
+            --screen-budget-s ${{ github.event.inputs.screen_budget_s || '9000' }}
           echo "=== screen summary ==="
           cat results/century/shards/*/screen_summary.json || true
       - name: Shard tag
@@ -383,9 +427,13 @@ jobs:
           print(json.dumps({k: s[k] for k in s if k != "acquisition"}, indent=1)[:8000])
           if f.get("n_usable", 0) == 0 and v not in ("NO_DATA_REACHED", "NO_TARGETS",
                                                      "NO_LIGHTCURVES_RETURNED",
-                                                     "NO_TESTABLE_LIGHT_CURVES"):
+                                                     "NO_TESTABLE_LIGHT_CURVES",
+                                                     "NO_SHARDS_PRESENT"):
               print(f"::error::verdict {v!r} with 0 usable light curves is a disguised no-data run")
               sys.exit(1)
+          if v == "NO_SHARDS_PRESENT":
+              print("::warning::no shard directory reached assess — the sweep did not run or "
+                    "its artifacts are gone. This is NOT a statement about DASCH.")
           if v == "NO_CANDIDATES":
               print(f"::notice::{f.get('n_usable')} century light curves tested, no cessation / "
                     "fade / rising-scatter candidate at demonstrated sensitivity. "

@@ -1,0 +1,476 @@
+{
+  "stage": "probe",
+  "started_utc": "2026-09-22T14:35:27Z",
+  "docs": {
+    "web_apis": {
+      "url": "https://dasch.cfa.harvard.edu/dr7/web-apis/",
+      "status": 200,
+      "bytes": 75989,
+      "error": "",
+      "text_bytes": 38664
+    },
+    "lc_columns": {
+      "url": "https://dasch.cfa.harvard.edu/dr7/lightcurve-columns/",
+      "status": 200,
+      "bytes": 62099,
+      "error": "",
+      "text_bytes": 25058
+    },
+    "dr7_index": {
+      "url": "https://dasch.cfa.harvard.edu/dr7/",
+      "status": 200,
+      "bytes": 12940,
+      "error": "",
+      "text_bytes": 6887,
+      "links": []
+    },
+    "api_docs": {
+      "url": "https://docs.api.starglass.cfa.harvard.edu/",
+      "status": 200,
+      "bytes": 750,
+      "error": "",
+      "text_bytes": 27
+    },
+    "openapi_1": {
+      "url": "https://api.starglass.cfa.harvard.edu/openapi.json",
+      "status": 403,
+      "bytes": 23,
+      "error": ""
+    },
+    "openapi_2": {
+      "url": "https://api.starglass.cfa.harvard.edu/public/openapi.json",
+      "status": 404,
+      "bytes": 40,
+      "error": ""
+    },
+    "openapi_3": {
+      "url": "https://docs.api.starglass.cfa.harvard.edu/openapi.json",
+      "status": 404,
+      "bytes": 146,
+      "error": ""
+    }
+  },
+  "flag_bits": {
+    "aflags": {
+      "name": "aflags",
+      "source": "none",
+      "bits": {},
+      "blend_mask": 0,
+      "reject_mask": 0
+    },
+    "bflags": {
+      "name": "bflags",
+      "source": "none",
+      "bits": {},
+      "blend_mask": 0,
+      "reject_mask": 0
+    }
+  },
+  "daschlab_api_lines_lightcurves": [
+    "from .apiclient import ApiClient",
+    "client: ApiClient,",
+    "refcat: str,",
+    "payload = {",
+    "\"refcat\": refcat,",
+    "data = client.invoke(\"/dasch/dr7/lightcurve\", payload)",
+    "raise InteractiveError(f\"lightcurve API request failed: {data!r}\")"
+  ],
+  "daschlab_api_lines_refcat.py": [
+    "radius: u.Quantity,",
+    "radius = Angle(radius)",
+    "payload = {",
+    "\"refcat\": name,",
+    "\"radius_arcsec\": radius.arcsec,",
+    "data = client.invoke(\"/dasch/dr7/querycat\", payload)",
+    "table[\"refcat\"] = [name] * len(input_cols[\"ref_text\"])"
+  ],
+  "daschlab_api_lines_query.py": [],
+  "daschlab_api_lines_exposures.py": [
+    "with requests.get(asdf_url, stream=True) as resp:",
+    "data = sess._apiclient.invoke(",
+    "payload = {",
+    "data = client.invoke(\"/dasch/dr7/queryexps\", payload)",
+    "ref_radius = np.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)",
+    "ref_radius /= DSF  # account for the downsampling",
+    "ref_radius * f,  # radius"
+  ],
+  "daschlab_api_lines_apiclient.py": [
+    "_URL_ROOT = \"https://api.starglass.cfa.harvard.edu\"",
+    "api_key = os.environ.get(\"DASCHLAB_API_KEY\")",
+    "self.base_url = os.environ.get(\"DASCHLAB_API_BASE_URL\")",
+    "program = os.environ.get(\"DASCHLAB_API_PROGRAM\")",
+    "self, endpoint: str, payload: Optional[dict], method: str = \"post\"",
+    "print(f\"daschlab API: {method} {endpoint} : {payload!r}\", file=sys.stderr)",
+    "return self._invoke_program(endpoint, payload)",
+    "return self._invoke_web(endpoint, payload, method)",
+    "self, endpoint: str, payload: Optional[dict], method: str",
+    "with requests.request(",
+    "method, url, json=payload, headers=headers, allow_redirects=False",
+    "terse_payload = json.dumps(",
+    "payload, ensure_ascii=False, indent=None, separators=(\",\", \":\")",
+    "f\"error invoking web API {method} {url} with payload {terse_payload}\"",
+    "def _invoke_program(self, endpoint: str, payload: dict) -> object:",
+    "pltext = json.dumps(payload)"
+  ],
+  "daschlab_api_lines___init__.py": [
+    "# In order to get ~all catalog sources on a cutout, the radius should be the",
+    "REFCAT_RADIUS: Angle = Angle(850 * u.arcsec)",
+    "_apiclient: ApiClient",
+    "self._apiclient = ApiClient()",
+    "self._apiclient, name, self._query.pos_as_skycoord(), REFCAT_RADIUS",
+    "return self.refcat()[\"refcat\"][0]",
+    "self._apiclient, self._query.pos_as_skycoord()",
+    "self._apiclient, src[\"refcat\"], src[\"gsc_bin_index\"], src[\"ref_number\"]",
+    "self._apiclient, exp[\"series\"], exp[\"platenum\"], exp[\"solnum\"], center",
+    "self._apiclient,",
+    "self._query.pos_as_skycoord(), fov=REFCAT_RADIUS * 1.2"
+  ],
+  "field_density": {
+    "kepler": {
+      "n_plates": 18429,
+      "n_pre_gap": 0,
+      "n_post_gap": 0,
+      "year_min": null,
+      "year_max": null,
+      "ok": true,
+      "columns": [
+        "value"
+      ],
+      "elapsed_s": 23.2
+    },
+    "praesepe": {
+      "n_plates": 13447,
+      "n_pre_gap": 0,
+      "n_post_gap": 0,
+      "year_min": null,
+      "year_max": null,
+      "ok": true,
+      "columns": [
+        "value"
+      ],
+      "elapsed_s": 15.5
+    },
+    "cygnus": {
+      "n_plates": 19539,
+      "n_pre_gap": 0,
+      "n_post_gap": 0,
+      "year_min": null,
+      "year_max": null,
+      "ok": true,
+      "columns": [
+        "value"
+      ],
+      "elapsed_s": 23.4
+    },
+    "sa57_ngp": {
+      "n_plates": 15684,
+      "n_pre_gap": 0,
+      "n_post_gap": 0,
+      "year_min": null,
+      "year_max": null,
+      "ok": true,
+      "columns": [
+        "value"
+      ],
+      "elapsed_s": 18.7
+    },
+    "orion": {
+      "n_plates": 12518,
+      "n_pre_gap": 0,
+      "n_post_gap": 0,
+      "year_min": null,
+      "year_max": null,
+      "ok": true,
+      "columns": [
+        "value"
+      ],
+      "elapsed_s": 15.1
+    },
+    "m31": {
+      "n_plates": 17298,
+      "n_pre_gap": 0,
+      "n_post_gap": 0,
+      "year_min": null,
+      "year_max": null,
+      "ok": true,
+      "columns": [
+        "value"
+      ],
+      "elapsed_s": 20.4
+    }
+  },
+  "chains": [
+    {
+      "star": {
+        "name": "RR Lyr",
+        "ra": 291.36631,
+        "dec": 42.78435,
+        "mag": 7.6
+      },
+      "querycat": {
+        "endpoint": "querycat",
+        "status": 200,
+        "ok": true,
+        "elapsed_s": 0.5776895839999838,
+        "payload": {
+          "refcat": "apass",
+          "ra_deg": 291.36631,
+          "dec_deg": 42.78435,
+          "radius_arcsec": 30.0
+        },
+        "error": "",
+        "body_head": "[\"ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec\",\"N030330195374,11030330195374,141878532,291.355448,42.79008,2000.0,15.54,-1.48,0,0,0,0,3,1,0,1,28.6971133893646,-20.62",
+        "n_rows": 7,
+        "columns": [
+          "value"
+        ],
+        "method": "POST"
+      },
+      "querycat_head": {
+        "value": [
+          "ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec",
+          "N030330195374,11030330195374,141878532,291.355448,42.79008,2000.0,15.54,-1.48,0,0,0,0,3,1,0,1,28.6971133893646,-20.627999999999247",
+          "N030330195368,11030330195368,141878533,291.374799,42.792545,2000.0,14.52,0.87,0.4,1.5,-13.3,1.5,0,1,0,16,-22.427264322840855,-29.501999999976647",
+          "N030330195369,11030330195369,141878533,291.358398,42.785949,2000.0,15.09,0.23,-4.3,6.9,-4.7,6.7,0,1,0,4,20.903989793439248,-5.756399999995665",
+          "N030330195370,11030330195370,141878533,291.359129,42.783253,2000.0,15.39,-0.01,1.5,14.2,-6.7,15,0,1,0,6,18.973056033554204,3.9492000000052485"
+        ]
+      },
+      "matched": null
+    },
+    {
+      "star": {
+        "name": "SW And",
+        "ra": 5.92967,
+        "dec": 29.40099,
+        "mag": 9.6
+      },
+      "querycat": {
+        "endpoint": "querycat",
+        "status": 200,
+        "ok": true,
+        "elapsed_s": 0.0996670660000234,
+        "payload": {
+          "refcat": "apass",
+          "ra_deg": 5.92967,
+          "dec_deg": 29.40099,
+          "radius_arcsec": 30.0
+        },
+        "error": "",
+        "body_head": "[\"ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec\",\"APASS_J002343.1+292404,400234311292404,125945054,5.929554,29.401042,2000.0,10.3,-89.7,-9.4,2.3,-27.1,2.3,0,1,0,4309,0",
+        "n_rows": 2,
+        "columns": [
+          "value"
+        ],
+        "method": "POST"
+      },
+      "querycat_head": {
+        "value": [
+          "ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec",
+          "APASS_J002343.1+292404,400234311292404,125945054,5.929554,29.401042,2000.0,10.3,-89.7,-9.4,2.3,-27.1,2.3,0,1,0,4309,0.36381525226779277,-0.1872000000005869"
+        ]
+      },
+      "matched": null
+    },
+    {
+      "star": {
+        "name": "XZ Cyg",
+        "ra": 293.1229,
+        "dec": 56.3881,
+        "mag": 9.7
+      },
+      "querycat": {
+        "endpoint": "querycat",
+        "status": 200,
+        "ok": true,
+        "elapsed_s": 0.12923322500000722,
+        "payload": {
+          "refcat": "apass",
+          "ra_deg": 293.1229,
+          "dec_deg": 56.3881,
+          "radius_arcsec": 30.0
+        },
+        "error": "",
+        "body_head": "[\"ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec\",\"N011122025385,11011122025385,154841604,293.108163,56.38491,2000.0,16.69,0.26,0,0,0,0,0,1,0,77,29.36959968983654,11.48",
+        "n_rows": 5,
+        "columns": [
+          "value"
+        ],
+        "method": "POST"
+      },
+      "querycat_head": {
+        "value": [
+          "ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec",
+          "N011122025385,11011122025385,154841604,293.108163,56.38491,2000.0,16.69,0.26,0,0,0,0,0,1,0,77,29.36959968983654,11.484000000012884",
+          "N011122025384,11011122025384,154841605,293.12712,56.385445,2000.0,17.05,0.6,0,0,0,0,0,1,0,19,-8.410045477648795,9.558000000015454",
+          "APASS_J193229.3+562317,419322931562317,154841605,293.122114,56.388191,2000.0,10.59,0.53,83.8,2.1,-23.8,2.1,0,1,0,5391,1.5663643233049829,-0.32759999999143474",
+          "N011122046582,11011122046582,154854356,293.127413,56.393189,2000.0,99.9,99.9,0,0,0,0,3,1,0,22,-8.99305131495369,-18.320399999993242"
+        ]
+      },
+      "matched": null
+    },
+    {
+      "star": {
+        "name": "RT Aur",
+        "ra": 97.29296,
+        "dec": 30.49364,
+        "mag": 5.4
+      },
+      "querycat": {
+        "endpoint": "querycat",
+        "status": 200,
+        "ok": true,
+        "elapsed_s": 0.15771424700000125,
+        "payload": {
+          "refcat": "apass",
+          "ra_deg": 97.29296,
+          "dec_deg": 30.49364,
+          "radius_arcsec": 30.0
+        },
+        "error": "",
+        "body_head": "[\"ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec\",\"N22233121036,1122233121036,127347636,97.286291,30.48816,2000.0,15.86,1.2,-1.2,2.8,-5.7,2.8,3,1,0,10,20.68827258597908",
+        "n_rows": 4,
+        "columns": [
+          "value"
+        ],
+        "method": "POST"
+      },
+      "querycat_head": {
+        "value": [
+          "ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec",
+          "N22233121036,1122233121036,127347636,97.286291,30.48816,2000.0,15.86,1.2,-1.2,2.8,-5.7,2.8,3,1,0,10,20.68827258597908,19.72799999999495",
+          "N22233121139,1122233121139,127347636,97.299296,30.495036,2000.0,17.45,1.29,-0.2,4.6,-6.8,4.7,0,1,0,14,-19.654560422476926,-5.025599999999031",
+          "N22233121256,1122233121256,127367488,97.293494,30.501372,2000.0,17.86,1.11,0,0,0,0,3,1,0,13,-1.6564383668787386,-27.835200000002658"
+        ]
+      },
+      "matched": null
+    }
+  ],
+  "verdict": "API_REACHED_NO_LIGHTCURVE",
+  "acquisition": {
+    "stages": [
+      {
+        "stage": "doc_web_apis",
+        "status": "OK",
+        "rows": 75989,
+        "query": "https://dasch.cfa.harvard.edu/dr7/web-apis/"
+      },
+      {
+        "stage": "doc_lc_columns",
+        "status": "OK",
+        "rows": 62099,
+        "query": "https://dasch.cfa.harvard.edu/dr7/lightcurve-columns/"
+      },
+      {
+        "stage": "doc_dr7_index",
+        "status": "OK",
+        "rows": 12940,
+        "query": "https://dasch.cfa.harvard.edu/dr7/"
+      },
+      {
+        "stage": "doc_api_docs",
+        "status": "OK",
+        "rows": 750,
+        "query": "https://docs.api.starglass.cfa.harvard.edu/"
+      },
+      {
+        "stage": "doc_openapi_1",
+        "status": "QUERY_FAILED",
+        "rows": 0,
+        "query": "https://api.starglass.cfa.harvard.edu/openapi.json",
+        "error": "HTTP 403"
+      },
+      {
+        "stage": "doc_openapi_2",
+        "status": "QUERY_FAILED",
+        "rows": 0,
+        "query": "https://api.starglass.cfa.harvard.edu/public/openapi.json",
+        "error": "HTTP 404"
+      },
+      {
+        "stage": "doc_openapi_3",
+        "status": "QUERY_FAILED",
+        "rows": 0,
+        "query": "https://docs.api.starglass.cfa.harvard.edu/openapi.json",
+        "error": "HTTP 404"
+      },
+      {
+        "stage": "daschlab_github",
+        "status": "OK",
+        "rows": 7,
+        "query": "https://raw.githubusercontent.com/pkgw/daschlab/main/daschlab/"
+      },
+      {
+        "stage": "queryexps",
+        "status": 200,
+        "rows": 18429,
+        "query": "DASCH queryexps (290.00000,44.50000)",
+        "body_head": "[\"series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd"
+      },
+      {
+        "stage": "queryexps",
+        "status": 200,
+        "rows": 13447,
+        "query": "DASCH queryexps (130.10000,19.70000)",
+        "body_head": "[\"series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd"
+      },
+      {
+        "stage": "queryexps",
+        "status": 200,
+        "rows": 19539,
+        "query": "DASCH queryexps (299.60000,35.20000)",
+        "body_head": "[\"series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd"
+      },
+      {
+        "stage": "queryexps",
+        "status": 200,
+        "rows": 15684,
+        "query": "DASCH queryexps (197.90000,29.40000)",
+        "body_head": "[\"series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd"
+      },
+      {
+        "stage": "queryexps",
+        "status": 200,
+        "rows": 12518,
+        "query": "DASCH queryexps (84.00000,-1.20000)",
+        "body_head": "[\"series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd"
+      },
+      {
+        "stage": "queryexps",
+        "status": 200,
+        "rows": 17298,
+        "query": "DASCH queryexps (10.70000,41.30000)",
+        "body_head": "[\"series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd"
+      },
+      {
+        "stage": "probe_querycat",
+        "status": "OK",
+        "rows": 7,
+        "query": "RR Lyr r=30\""
+      },
+      {
+        "stage": "probe_querycat",
+        "status": "OK",
+        "rows": 2,
+        "query": "SW And r=30\""
+      },
+      {
+        "stage": "probe_querycat",
+        "status": "OK",
+        "rows": 5,
+        "query": "XZ Cyg r=30\""
+      },
+      {
+        "stage": "probe_querycat",
+        "status": "OK",
+        "rows": 4,
+        "query": "RT Aur r=30\""
+      }
+    ],
+    "n_stages": 18,
+    "n_ok": 9,
+    "n_query_failed": 3,
+    "n_query_returned_zero_rows": 0,
+    "any_query_failed": true,
+    "total_rows": 248718
+  }
+}

@@ -534,6 +534,39 @@ def globular_cluster_veto(df: pd.DataFrame, cfg: dict,
     return out
 
 
+def _text(df: pd.DataFrame, col: str) -> pd.Series:
+    """A text column as plain strings, with every missing value as ``""``.
+
+    Catalogue text reaches here as object, as an all-float NaN column when the
+    field was absent, or -- on pandas 3, which is what a fresh runner installs
+    -- as an Arrow-backed column whose NA survives ``astype(str)``.  Only an
+    elementwise map is safe across all three.
+    """
+    s = df[col] if col in df.columns else pd.Series("", index=df.index)
+    s = pd.Series(s, index=df.index)
+    return s.map(lambda v: "" if v is None or v is pd.NA or
+                 (isinstance(v, float) and not np.isfinite(v)) else str(v)).astype(object)
+
+
+def provenance_flags(df: pd.DataFrame) -> pd.DataFrame:
+    """Was the metallicity measured, and was the kinematics a full space velocity?
+
+    Both selection arguments have a weak and a strong form, and the committed
+    2026-09-22 census was carried entirely by the weak ones: every [Fe/H] came
+    from Gaia GSP-Phot, and 582 of 584 rows had only a tangential-velocity
+    lower bound.  Neither is wrong, but a survivor resting on one unconfirmed
+    estimator is a statement about that estimator, so which form carried a row
+    is recorded rather than inferred later from a CSV.
+    """
+    out = pd.DataFrame(index=df.index)
+    prov = _text(df, "feh_provenance").str.lower()
+    out["feh_spectroscopic"] = (prov != "") & ~prov.str.contains(
+        "gspphot|phot|photometric", regex=True)
+    out["kinematics_is_full_space_velocity"] = _text(
+        df, "kinematic_method").str.lower().eq("uvw")
+    return out
+
+
 def optical_depth_gate(df: pd.DataFrame, excess_cfg: dict) -> pd.DataFrame:
     """The fitted optical depth must be consistent with the model that produced it.
 
@@ -786,15 +819,8 @@ def vet(df: pd.DataFrame, cfg: dict, sample_cfg: dict,
     # Which of the two carried a row is therefore a first-class field, not a
     # detail: a survivor selected by a photometric metallicity alone is a
     # statement about GSP-Phot until a spectrum says otherwise.
-    prov = out.get("feh_provenance", pd.Series("", index=out.index))
-    prov = prov.map(lambda v: "" if v is None or (isinstance(v, float)
-                                                  and not np.isfinite(v)) else str(v))
-    out["feh_spectroscopic"] = ~prov.str.lower().str.contains("gspphot|phot|photometric",
-                                                              regex=True) & (prov != "")
-    kin = out.get("kinematic_method", pd.Series("", index=out.index))
-    kin = kin.map(lambda v: "" if v is None or (isinstance(v, float)
-                                                and not np.isfinite(v)) else str(v))
-    out["kinematics_is_full_space_velocity"] = kin.str.lower().eq("uvw")
+    for c, v in provenance_flags(out).items():
+        out[c] = v
     out["two_independent_arguments"] = metal_poor & halo
 
     reason = pd.Series("", index=out.index, dtype=object)
@@ -839,5 +865,6 @@ __all__ = ["wise_quality_gate", "ledger_gate", "companion_gate",
            "allwise_source_density_per_arcsec2", "chance_superposition_p",
            "extragalactic_gate", "cirrus_gate", "cirrus_correlation_test",
            "globular_cluster_veto", "impostor_gate", "optical_depth_gate",
+           "provenance_flags",
            "expected_chance_alignments",
            "beam_blend_verdict", "vet", "funnel_counts"]

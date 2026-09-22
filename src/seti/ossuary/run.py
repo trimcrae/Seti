@@ -243,13 +243,21 @@ def _survivor_provenance(surv: pd.DataFrame) -> dict:
                       ("warm_band_excess", "warm_band_excess")):
         if col in surv.columns:
             out[f"n_{name}"] = int(surv[col].fillna(False).astype(bool).sum())
+    def _num(col):
+        # DataFrame.get of a missing column returns None, and pd.to_numeric
+        # collapses that to a SCALAR float -- the trap that has now taken this
+        # channel's funnel down twice.  Name the absence instead.
+        if col not in surv.columns:
+            return pd.Series(np.nan, index=surv.index, dtype=float)
+        return pd.to_numeric(surv[col], errors="coerce")
+
     for name, col in (("tau", "tau"), ("t_dust_k", "t_dust_k"), ("feh", "feh"),
                       ("bp_rp", "bp_rp")):
-        v = pd.to_numeric(surv.get(col), errors="coerce")
-        if v is not None and v.notna().any():
+        v = _num(col)
+        if v.notna().any():
             out[f"{name}_median"] = float(v.median())
-    tau = pd.to_numeric(surv.get("tau"), errors="coerce")
-    if tau is not None and tau.notna().any():
+    tau = _num("tau")
+    if tau.notna().any():
         out["tau_fraction_above_0.1"] = float((tau > 0.1).mean())
         out["n_tau_above_1"] = int((tau > 1.0).sum())
     return out
@@ -598,6 +606,83 @@ def _report_md(s: dict) -> str:
 
 
 # --------------------------------------------------------------------------
+# Auditing a committed candidate table
+# --------------------------------------------------------------------------
+
+def audit_candidates(cfg: Config | None = None, *, path: str | Path | None = None,
+                     out: str | Path | None = None) -> dict:
+    """Re-read a committed ``candidates.csv`` and say what it actually contains.
+
+    This runs offline on the committed table, so a result that is already on
+    the branch can be re-examined without re-acquiring six million stars.  It
+    reports the conjunction the claim needs, step by step, rather than the
+    disjunction the funnel applied: a survivor is only a candidate for *this*
+    channel if it is metal-poor **and** kinematically confirmed **and** its
+    fitted excess is self-consistent as optically thin dust.
+
+    On the 2026-09-22 table that chain is 584 -> 574 -> 15 -> 0.
+    """
+    cfg = cfg or load_config()
+    d = out_dir(cfg)
+    p = Path(path) if path else d / "candidates.csv"
+    rec: dict = {"source": str(p), "audited_at": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                                               time.gmtime())}
+    if not p.exists():
+        rec["status"] = "NO_TABLE"
+        return rec
+    c = pd.read_csv(p)
+    th = cfg.thresholds["ossuary"]
+    e = th["excess"]
+    feh = pd.to_numeric(c.get("feh"), errors="coerce")
+    tau = pd.to_numeric(c.get("tau"), errors="coerce")
+    pop = c.get("population", pd.Series("", index=c.index)).astype(str)
+    metal_poor = (feh <= float(th["sample"]["feh_max"])).fillna(False)
+    halo = pop.eq("halo")
+    thin = (tau <= float(e.get("tau_max_debris", 0.1))).fillna(False)
+    warm = pd.Series(False, index=c.index)
+    for b in ("W1", "W2"):
+        if f"chi_{b}" in c.columns:
+            warm = warm | (pd.to_numeric(c[f"chi_{b}"], errors="coerce") >= 3.0)
+    warm = warm.fillna(False)
+
+    rec["status"] = "OK"
+    rec["n_rows"] = int(len(c))
+    rec["provenance"] = _survivor_provenance(
+        c.assign(metal_poor=metal_poor, halo_flag=halo,
+                 two_independent_arguments=metal_poor & halo,
+                 **{k: v for k, v in vetting.provenance_flags(c).items()}))
+    rec["conjunction"] = {
+        "gauntlet_survivors": int(len(c)),
+        "and_metal_poor": int(metal_poor.sum()),
+        "and_halo_kinematic": int((metal_poor & halo).sum()),
+        "and_optically_thin_fit": int((metal_poor & halo & thin).sum()),
+        "and_a_W1_W2_excess_3sigma": int((metal_poor & halo & thin & warm).sum()),
+    }
+    rec["conjunction_without_kinematics"] = {
+        "metal_poor": int(metal_poor.sum()),
+        "and_optically_thin_fit": int((metal_poor & thin).sum()),
+        "and_a_W1_W2_excess_3sigma": int((metal_poor & thin & warm).sum()),
+    }
+    g = vetting.optical_depth_gate(c, e)
+    rec["optical_depth"] = {
+        "n_fitted": int(tau.notna().sum()),
+        "n_optically_thick_fit": int((~g["optical_depth_ok"]).sum()),
+        "n_tau_implausible": int(g["tau_implausible"].sum()),
+        "tau_max_physical": float(e.get("tau_max_physical", 1.0)),
+        "tau_max_debris": float(e.get("tau_max_debris", 0.1)),
+    }
+    rec["band_significance"] = {
+        b: {"n_ge_3": int((pd.to_numeric(c.get(f"chi_{b}"), errors="coerce") >= 3).sum()),
+            "n_ge_5": int((pd.to_numeric(c.get(f"chi_{b}"), errors="coerce") >= 5).sum())}
+        for b in ("W1", "W2", "W3", "W4") if f"chi_{b}" in c.columns}
+    o = Path(out) if out else d / "survivor_audit.json"
+    o.parent.mkdir(parents=True, exist_ok=True)
+    o.write_text(json.dumps(rec, indent=2, default=str))
+    _log(f"audit: {rec['conjunction']}")
+    return rec
+
+
+# --------------------------------------------------------------------------
 # Driver
 # --------------------------------------------------------------------------
 
@@ -643,4 +728,4 @@ def run(cfg: Config | None = None, *, stage: str = "all",
 
 
 __all__ = ["run", "analyze", "stage_acquire", "stage_followup", "write_results",
-           "out_dir"]
+           "audit_candidates", "out_dir"]

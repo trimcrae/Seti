@@ -12,6 +12,8 @@ same blackbody fit the real pipeline uses, not a hand-tuned magnitude offset.
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -813,3 +815,46 @@ def test_vet_records_which_argument_carried_each_row(cfg):
     assert list(out["two_independent_arguments"]) == [True, False, False, False]
     assert list(out["feh_spectroscopic"]) == [False, False, True, False]
     assert list(out["kinematics_is_full_space_velocity"]) == [False, True, True, False]
+
+
+def test_audit_reads_a_committed_table_and_reports_the_conjunction(cfg, tmp_path):
+    """The census can be re-examined offline, without re-acquiring the sample.
+
+    The funnel applies a disjunction (metal-poor OR halo-kinematic); the claim
+    needs a conjunction, plus a fit that is self-consistent as optically thin
+    dust.  The audit walks that chain on a committed candidates.csv.
+    """
+    t = pd.DataFrame({
+        # metal-poor + halo + thin + a W1/W2 excess: the only real candidate.
+        "feh": [-2.0, -2.0, -2.0, -0.2, -2.0],
+        "population": ["halo", "halo", "unclassified", "halo", "halo"],
+        "tau": [0.01, 0.4, 0.01, 0.01, 1.5],
+        "chi_W1": [6.0, 0.1, 6.0, 6.0, 0.1],
+        "chi_W2": [6.0, 0.2, 6.0, 6.0, 0.2],
+        "chi_W3": [9.0, 9.0, 9.0, 9.0, 9.0],
+        "chi_W4": [4.0, 4.0, 4.0, 4.0, 4.0],
+        "feh_provenance": ["lamost", "gaia_gspphot", "gaia_gspphot",
+                           "gaia_gspphot", "gaia_gspphot"],
+        "kinematic_method": ["uvw", "vtan_lower_bound", "vtan_lower_bound",
+                             "uvw", "vtan_lower_bound"]})
+    p = tmp_path / "candidates.csv"
+    t.to_csv(p, index=False)
+    out = tmp_path / "audit.json"
+    rec = orun.audit_candidates(cfg, path=p, out=out)
+    assert rec["status"] == "OK" and rec["n_rows"] == 5
+    conj = rec["conjunction"]
+    assert conj["gauntlet_survivors"] == 5
+    assert conj["and_metal_poor"] == 4
+    assert conj["and_halo_kinematic"] == 3
+    assert conj["and_optically_thin_fit"] == 1
+    assert conj["and_a_W1_W2_excess_3sigma"] == 1
+    # tau = 1.5 is not a self-consistent optically thin fit.
+    assert rec["optical_depth"]["n_optically_thick_fit"] == 1
+    assert rec["optical_depth"]["n_tau_implausible"] == 2
+    assert rec["provenance"]["n_feh_spectroscopic"] == 1
+    assert rec["provenance"]["n_full_space_velocity"] == 2
+    assert rec["band_significance"]["W3"]["n_ge_5"] == 5
+    assert json.loads(out.read_text())["conjunction"] == conj
+    # A table that is not there is a stated absence, not a crash.
+    assert orun.audit_candidates(cfg, path=tmp_path / "nope.csv",
+                                 out=tmp_path / "x.json")["status"] == "NO_TABLE"

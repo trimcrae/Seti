@@ -53,6 +53,15 @@ from .confirm import _find_with_retry, _make_client
 
 SDSS_SAS = "https://data.sdss.org/sas/dr17"
 DESI_DR1 = "https://data.desi.lbl.gov/public/dr1/spectro/redux/iron"
+# Mirrors of the same DR1 tree, tried in order when the primary host does not
+# answer.  The 2026-09-22 probe got a connection-level failure (status -1, not a
+# 404) from every data.desi.lbl.gov request, so the host being reachable is a
+# thing to measure per run, not to assume.
+DESI_DR1_BASES = [
+    DESI_DR1,
+    "https://data.desi.lbl.gov/public/dr1/spectro/redux/iron",
+    "https://portal.nersc.gov/cfs/desi/public/dr1/spectro/redux/iron",
+]
 
 # --- thresholds ------------------------------------------------------------------
 PRESENT_SIG = 2.5          # an exposure "shows" the line at >= this significance
@@ -329,22 +338,32 @@ def _session():
     return s
 
 
-def http_head(url: str, timeout: float = 30.0) -> dict:
-    """HEAD (falling back to a 1-byte ranged GET) -> status, length, ranges."""
+def http_head(url: str, timeout: float = 60.0, tries: int = 3) -> dict:
+    """HEAD (falling back to a 1-byte ranged GET) -> status, length, ranges.
+
+    A connection-level failure is reported as status -1 *with the exception
+    text*: "the archive refused us" and "the archive does not have this file"
+    are different verdicts and must never be collapsed into one.
+    """
     s = _session()
-    try:
-        r = s.head(url, allow_redirects=True, timeout=timeout)
-        info = {"url": url, "status": r.status_code,
-                "length": int(r.headers.get("Content-Length", 0) or 0),
-                "accept_ranges": r.headers.get("Accept-Ranges", "")}
-        if r.status_code in (403, 405):
-            r2 = s.get(url, headers={"Range": "bytes=0-0"}, timeout=timeout, stream=True)
-            info.update({"status": r2.status_code,
-                         "accept_ranges": "bytes" if r2.status_code == 206 else info["accept_ranges"]})
-            r2.close()
-        return info
-    except Exception as exc:  # noqa: BLE001
-        return {"url": url, "status": -1, "error": repr(exc)}
+    last = ""
+    for k in range(tries):
+        try:
+            r = s.head(url, allow_redirects=True, timeout=timeout)
+            info = {"url": url, "status": r.status_code,
+                    "length": int(r.headers.get("Content-Length", 0) or 0),
+                    "accept_ranges": r.headers.get("Accept-Ranges", "")}
+            if r.status_code in (403, 405):
+                r2 = s.get(url, headers={"Range": "bytes=0-0"}, timeout=timeout, stream=True)
+                info.update({"status": r2.status_code,
+                             "accept_ranges": "bytes" if r2.status_code == 206
+                             else info["accept_ranges"]})
+                r2.close()
+            return info
+        except Exception as exc:  # noqa: BLE001
+            last = repr(exc)
+            time.sleep(2.0 * (k + 1))
+    return {"url": url, "status": -1, "error": last}
 
 
 def fetch_bytes(url: str, timeout: float = 300.0, max_bytes: int = 2_000_000_000,
@@ -541,21 +560,47 @@ def desi_bands_for(lam: float) -> list[str]:
     return bands or ["r"]
 
 
-def desi_coadd_url(survey: str, program: str, healpix: int) -> str:
+def _desi_bases() -> list[str]:
+    """Distinct DR1 host roots, preferred first."""
+    seen, out = set(), []
+    for b in DESI_DR1_BASES:
+        if b not in seen:
+            seen.add(b)
+            out.append(b)
+    return out
+
+
+def _desi_healpix_dir(base: str, survey: str, program: str, healpix: int) -> str:
     hp = int(healpix)
-    return (f"{DESI_DR1}/healpix/{survey}/{program}/{hp // 100}/{hp}/"
-            f"coadd-{survey}-{program}-{hp}.fits")
+    return f"{base}/healpix/{survey}/{program}/{hp // 100}/{hp}"
+
+
+def desi_coadd_urls(survey: str, program: str, healpix: int) -> list[str]:
+    hp = int(healpix)
+    return [f"{_desi_healpix_dir(b, survey, program, hp)}/coadd-{survey}-{program}-{hp}.fits"
+            for b in _desi_bases()]
+
+
+def desi_coadd_url(survey: str, program: str, healpix: int) -> str:
+    return desi_coadd_urls(survey, program, healpix)[0]
 
 
 def desi_spectra_urls(survey: str, program: str, healpix: int) -> list[str]:
     hp = int(healpix)
-    base = f"{DESI_DR1}/healpix/{survey}/{program}/{hp // 100}/{hp}/spectra-{survey}-{program}-{hp}"
-    return [base + ".fits.gz", base + ".fits"]
+    out = []
+    for b in _desi_bases():
+        stem = f"{_desi_healpix_dir(b, survey, program, hp)}/spectra-{survey}-{program}-{hp}"
+        out += [stem + ".fits.gz", stem + ".fits"]
+    return out
 
 
 def desi_frame_urls(kind: str, night: int, expid: int, band: str, petal: int) -> list[str]:
-    base = f"{DESI_DR1}/exposures/{int(night)}/{int(expid):08d}/{kind}-{band}{int(petal)}-{int(expid):08d}"
-    return [base + ".fits", base + ".fits.gz"]
+    out = []
+    for b in _desi_bases():
+        stem = (f"{b}/exposures/{int(night)}/{int(expid):08d}/"
+                f"{kind}-{band}{int(petal)}-{int(expid):08d}")
+        out += [stem + ".fits", stem + ".fits.gz"]
+    return out
 
 
 def desi_exposure_rows(hdul, targetid: int) -> list[dict]:
@@ -797,10 +842,17 @@ def desi_find_exposures(tid: int, hpx: int, survey=None, program=None,
     combos = [(survey, program)] if (survey and program) else DESI_SURVEY_PROGRAMS
     rows, tried, seen = [], [], set()
     for sv, pg in combos:
-        url = desi_coadd_url(sv, pg, hpx)
-        h = http_head(url)
+        h, url = None, ""
+        for cand in desi_coadd_urls(sv, pg, hpx):
+            url = cand
+            h = http_head(cand)
+            if h.get("status") == 200:
+                break
+        h = h or {"status": -1, "error": "no candidate URL"}
         entry = {"survey": sv, "program": pg, "url": url, "status": h.get("status"),
                  "n_rows": 0}
+        if h.get("error"):
+            entry["error"] = str(h["error"])[:300]
         if h.get("status") == 200:
             hd, how = open_fits_remote(url, workdir)
             if hd is not None:
@@ -1348,6 +1400,16 @@ def probe(root: Path, n_each: int = 2) -> dict:
         rep["fsspec"] = True
     except Exception as exc:  # noqa: BLE001
         rep["fsspec_error"] = repr(exc)
+    # Is each archive host reachable at all?  A connection failure and a missing
+    # file are different verdicts; record which one we are looking at before any
+    # DESI result is interpreted.
+    rep["host_reachability"] = [
+        http_head(u, tries=2) for u in
+        [f"{SDSS_SAS}/", *[f"{b}/healpix/" for b in _desi_bases()]]
+    ]
+    for h in rep["host_reachability"]:
+        print(f"[persist] host {h['url']} -> status {h.get('status')} "
+              f"{h.get('error', '')[:200]}")
     for rel in sorted(df["data_release"].unique()):
         fields = sparcl_fields(client, rel)
         ids = df.loc[df["data_release"] == rel, "spec_id"].astype(str).unique()[:n_each].tolist()

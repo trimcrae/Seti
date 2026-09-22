@@ -202,6 +202,59 @@ _DUST_COLS = ("t_dust_k", "t_dust_lo_k", "t_dust_hi_k", "tau", "tau_lo",
               "tau_hi", "dust_fit_chi2", "n_excess_bands")
 
 
+def _survivor_provenance(surv: pd.DataFrame) -> dict:
+    """What the surviving rows actually rest on, as counts rather than prose.
+
+    Three things were true of the 2026-09-22 catalogue run's 584 survivors and
+    none of them was visible in the summary:
+
+    * every [Fe/H] came from Gaia GSP-Phot, with no spectroscopic
+      confirmation anywhere, while 28.6% of the rows were redder than
+      ``bp_rp`` 1.4 -- the regime where that estimator is least reliable;
+    * 582 of 584 were classified from a tangential-velocity LOWER BOUND, not
+      a space velocity, so the kinematic leg was carrying 4% of the sample;
+    * the two independent arguments (metal-poor AND halo-kinematic) agreed
+      for 15 rows.
+
+    A survivor selected by one unconfirmed estimator is a statement about that
+    estimator, so the count that belongs next to ``n_candidates`` is the count
+    where two arguments agree.
+    """
+    out: dict = {"n": int(len(surv))}
+    if not len(surv):
+        return out
+
+    def _counts(col):
+        if col not in surv.columns:
+            return {}
+        v = surv[col].map(lambda x: "" if x is None or (isinstance(x, float)
+                                                        and not np.isfinite(x)) else str(x))
+        return {k: int(n) for k, n in v.value_counts().items()}
+
+    out["feh_provenance"] = _counts("feh_provenance")
+    out["kinematic_method"] = _counts("kinematic_method")
+    out["population"] = _counts("population")
+    for name, col in (("metal_poor", "metal_poor"), ("halo", "halo_flag"),
+                      ("two_independent_arguments", "two_independent_arguments"),
+                      ("feh_spectroscopic", "feh_spectroscopic"),
+                      ("full_space_velocity", "kinematics_is_full_space_velocity"),
+                      ("tau_implausible", "tau_implausible"),
+                      ("long_band_only", "long_band_only"),
+                      ("warm_band_excess", "warm_band_excess")):
+        if col in surv.columns:
+            out[f"n_{name}"] = int(surv[col].fillna(False).astype(bool).sum())
+    for name, col in (("tau", "tau"), ("t_dust_k", "t_dust_k"), ("feh", "feh"),
+                      ("bp_rp", "bp_rp")):
+        v = pd.to_numeric(surv.get(col), errors="coerce")
+        if v is not None and v.notna().any():
+            out[f"{name}_median"] = float(v.median())
+    tau = pd.to_numeric(surv.get("tau"), errors="coerce")
+    if tau is not None and tau.notna().any():
+        out["tau_fraction_above_0.1"] = float((tau > 0.1).mean())
+        out["n_tau_above_1"] = int((tau > 1.0).sum())
+    return out
+
+
 def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
             rng: np.random.Generator | None = None,
             lean: bool | None = None) -> tuple[pd.DataFrame, dict]:
@@ -301,6 +354,7 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
                    vetted.loc[vetted["excess_flag"], "reject_reason"]
                    .value_counts().items() if k2}
         n_cand = int(vetted["candidate"].sum())
+        provenance = _survivor_provenance(vetted[vetted["candidate"]])
         cirrus = vetting.cirrus_correlation_test(vetted) if not lean else \
             {"tested": False, "reason": "lean path carries flagged rows only; "
                                         "tested at follow-up", "n": 0}
@@ -310,6 +364,7 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
         n_flagged, n_cand = 0, 0
         counts = vetting.funnel_counts(vetted)
         rejects = {}
+        provenance = _survivor_provenance(vetted)
         cirrus = {"tested": False, "reason": "no flagged rows", "n": 0}
 
     summary = {
@@ -327,6 +382,12 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
         "funnel": counts,
         "reject_reasons": rejects,
         "n_candidates": n_cand,
+        # What each surviving row actually rests on.  The selection is a
+        # disjunction (metal-poor OR halo-kinematic) and the metallicity may be
+        # photometric, so "584 survivors" can mean 584 statements about one
+        # unconfirmed estimator.  These counts make that readable without
+        # opening the CSV.
+        "survivor_provenance": provenance,
         "cirrus_correlation": cirrus,
         "chance_alignment_budget": vetting.expected_chance_alignments(int(n_all), c),
         "wien_peak_k": {b: exc.wien_peak_k(b) for b in ("W1", "W2", "W3", "W4")},

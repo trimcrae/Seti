@@ -149,6 +149,29 @@ def ledger_gate(df: pd.DataFrame, excess_cfg: dict, sample_cfg: dict) -> pd.Data
     out["w4_only"] = (w4 & ~star_band).fillna(False)
     out["star_band_excess"] = star_band.fillna(False)
 
+    # The W4-only rule generalised one band inwards.  ``require_bands``
+    # includes W3 for this channel, so an excess significant in W3 alone
+    # satisfies ``star_band`` and passes the ledger -- which is how the
+    # 2026-09-22 run produced 584 survivors of which 583/584 were significant
+    # in W3 and 22/584 in W1.  A long-band-only excess is NOT thereby an
+    # artefact (a genuine ~180 K reservoir is W3/W4-only too, and that is
+    # inside this channel's own sensitivity band), so it is NAMED rather than
+    # rejected: an invisible contaminant cannot be counted, and a silently
+    # rejected real detection cannot be found.  The ring-temperature channels
+    # consume this flag to say which part of the census is theirs.
+    warm_band = pd.Series(False, index=df.index)
+    for b in ("W1", "W2"):
+        if f"chi_{b}" in df.columns:
+            warm_band = warm_band | ((df[f"chi_{b}"] >= chi_min)
+                                     & (df.get(f"{b}_excess_jy", 0) > 0))
+    long_band = pd.Series(False, index=df.index)
+    for b in ("W3", "W4"):
+        if f"chi_{b}" in df.columns:
+            long_band = long_band | ((df[f"chi_{b}"] >= chi_min)
+                                     & (df.get(f"{b}_excess_jy", 0) > 0))
+    out["warm_band_excess"] = warm_band.fillna(False)
+    out["long_band_only"] = (long_band & ~warm_band).fillna(False)
+
     w1w2 = _num(df, "w1_w2_obs")
     if w1w2.isna().all() and {"W1mag", "W2mag"} <= set(df.columns):
         w1w2 = pd.to_numeric(df["W1mag"], errors="coerce") - \
@@ -511,6 +534,51 @@ def globular_cluster_veto(df: pd.DataFrame, cfg: dict,
     return out
 
 
+def optical_depth_gate(df: pd.DataFrame, excess_cfg: dict) -> pd.DataFrame:
+    """The fitted optical depth must be consistent with the model that produced it.
+
+    ``tau`` here is the fractional luminosity of the fitted dust: the fraction
+    of the host's light reprocessed into the infrared.  The fit is an
+    **optically thin** blackbody, so it is only self-consistent while
+    ``tau << 1``; a fitted ``tau >= 1`` says the model has been asked to
+    reprocess more light than the star emits and is not a measurement of
+    anything.  Real debris disks sit at ``tau ~ 1e-5`` to ``1e-3``
+    (Wyatt 2008); a few 1e-2 is already an extreme disk.
+
+    This gate exists because it was missing.  The 2026-09-22 catalogue run
+    returned 584 survivors with a **median tau of 0.389**, 98.6% above 0.1 and
+    39 rows above 1.0 -- i.e. essentially the whole surviving sample sat where
+    an optically thin fit cannot be believed, and nothing in the funnel said
+    so.  A fractional luminosity of 0.4 around a field dwarf is an enshrouded
+    object, a blend, or a broken SED anchor; it is not a reservoir, and the
+    value itself is the diagnostic.
+
+    Two thresholds, both named, neither silent:
+
+    * ``tau_max_physical`` (default 1.0) -- at or above this the fit is not
+      self-consistent and the row is **rejected** as ``optically_thick_fit``.
+    * ``tau_max_debris`` (default 0.1) -- above this the excess is far outside
+      any debris-disk population; the row is flagged ``tau_implausible`` and
+      counted, and it is rejected only when ``tau_gate_rejects`` is set, so
+      the census keeps its shape and the channel reports how much of it lives
+      in a regime debris cannot explain.
+
+    A row with no fit (``tau`` NaN) is untested, not failed.
+    """
+    out = pd.DataFrame(index=df.index)
+    tau = _num(df, "tau", "tau_ring")
+    t_max = float(excess_cfg.get("tau_max_physical", 1.0))
+    t_debris = float(excess_cfg.get("tau_max_debris", 0.1))
+    out["tau_tested"] = tau.notna()
+    out["tau_self_consistent"] = ~((tau >= t_max).fillna(False))
+    out["tau_implausible"] = (tau > t_debris).fillna(False)
+    if bool(excess_cfg.get("tau_gate_rejects", False)):
+        out["optical_depth_ok"] = out["tau_self_consistent"] & ~out["tau_implausible"]
+    else:
+        out["optical_depth_ok"] = out["tau_self_consistent"]
+    return out
+
+
 def impostor_gate(df: pd.DataFrame, sample_cfg: dict) -> pd.DataFrame:
     """The three impostors this sample selects for, from the literature sweep.
 
@@ -662,6 +730,7 @@ _ORDER = [
     ("companion_ok", "unresolved_companion"),
     ("astrometry_ok", "astrometric_registration"),
     ("extragalactic_ok", "background_source"),
+    ("optical_depth_ok", "optically_thick_fit"),
     ("cirrus_ok", "galactic_cirrus"),
     ("globular_ok", "globular_cluster_sightline"),
     ("impostor_ok", "lambda_boo_or_blue_straggler"),
@@ -684,6 +753,7 @@ def vet(df: pd.DataFrame, cfg: dict, sample_cfg: dict,
                   companion_gate(df, excess_cfg),
                   astrometry_gate(df, cfg["astrometry"]),
                   extragalactic_gate(df, cfg),
+                  optical_depth_gate(df, excess_cfg),
                   # Deferred: the reddening is a per-candidate lookup that has
                   # not happened yet at this stage (see cirrus_gate).
                   cirrus_gate(df, cfg, untested_ok=True),
@@ -707,6 +777,25 @@ def vet(df: pd.DataFrame, cfg: dict, sample_cfg: dict,
     out["metal_poor"] = metal_poor
     out["null_reservoir_host"] = metal_poor | halo
     out["kinematics_ok"] = out["null_reservoir_host"]
+
+    # The selection is a disjunction, so a survivor may rest on ONE argument.
+    # In the 2026-09-22 catalogue run it rested on one for 569 of 584: every
+    # row's [Fe/H] came from Gaia GSP-Phot (no spectroscopic confirmation
+    # anywhere), 582 of 584 had only a tangential-velocity LOWER BOUND rather
+    # than a space velocity, and the two arguments agreed for just 15 stars.
+    # Which of the two carried a row is therefore a first-class field, not a
+    # detail: a survivor selected by a photometric metallicity alone is a
+    # statement about GSP-Phot until a spectrum says otherwise.
+    prov = out.get("feh_provenance", pd.Series("", index=out.index))
+    prov = prov.map(lambda v: "" if v is None or (isinstance(v, float)
+                                                  and not np.isfinite(v)) else str(v))
+    out["feh_spectroscopic"] = ~prov.str.lower().str.contains("gspphot|phot|photometric",
+                                                              regex=True) & (prov != "")
+    kin = out.get("kinematic_method", pd.Series("", index=out.index))
+    kin = kin.map(lambda v: "" if v is None or (isinstance(v, float)
+                                                and not np.isfinite(v)) else str(v))
+    out["kinematics_is_full_space_velocity"] = kin.str.lower().eq("uvw")
+    out["two_independent_arguments"] = metal_poor & halo
 
     reason = pd.Series("", index=out.index, dtype=object)
     for col, name in _ORDER:
@@ -749,5 +838,6 @@ __all__ = ["wise_quality_gate", "ledger_gate", "companion_gate",
            "registration_offset_arcsec", "astrometry_gate",
            "allwise_source_density_per_arcsec2", "chance_superposition_p",
            "extragalactic_gate", "cirrus_gate", "cirrus_correlation_test",
-           "globular_cluster_veto", "impostor_gate", "expected_chance_alignments",
+           "globular_cluster_veto", "impostor_gate", "optical_depth_gate",
+           "expected_chance_alignments",
            "beam_blend_verdict", "vet", "funnel_counts"]

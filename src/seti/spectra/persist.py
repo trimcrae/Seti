@@ -975,6 +975,7 @@ def process_spectrum(rec: dict, cand_rows: list[dict], release: str, workdir: Pa
         else:
             out["route"] = "sdss_full_spec"
             parsed = None
+            tried_files = []
             for url in sdss_spec_urls(ids["plate"], ids["mjd"], ids["fiberid"], ids.get("run2d")):
                 data = fetch_bytes(url, max_bytes=200_000_000)
                 if data is None:
@@ -982,15 +983,29 @@ def process_spectrum(rec: dict, cand_rows: list[dict], release: str, workdir: Pa
                 try:
                     from astropy.io import fits
                     with fits.open(io.BytesIO(data), memmap=False) as hd:
-                        parsed = parse_sdss_spec(hd)
-                    out["file_url"] = url
-                    break
+                        got = parse_sdss_spec(hd)
                 except Exception as exc:  # noqa: BLE001
                     out["error"] = f"parse failed {url}: {exc!r}"
+                    continue
+                n_exp = len({e["expid"] for e in got["exposures"]})
+                tried_files.append({"url": url, "n_bytes": len(data), "n_exposures": n_exp})
+                # A reduction whose full spec file carries NO per-exposure HDUs (the
+                # legacy run2d=26 files are coadd-only) cannot answer the persistence
+                # question.  Keep it only as a last resort and prefer any reduction of
+                # the same plate that does carry them.
+                if parsed is None or n_exp > out["n_exposures_in_file"]:
+                    parsed = got
+                    out["file_url"] = url
+                    out["n_exposures_in_file"] = n_exp
+                if n_exp > 0:
+                    break
+            out["provenance"]["files_tried"] = tried_files
             if parsed is None:
                 out["error"] = out["error"] or "no full spec file reachable"
-            else:
-                out["n_exposures_in_file"] = len({e["expid"] for e in parsed["exposures"]})
+            elif out["n_exposures_in_file"] == 0:
+                out["error"] = ("full spec file has no per-exposure HDUs "
+                                "(coadd-only reduction); spCFrame route needed")
+            if parsed is not None:
                 for c in cand_rows:
                     lam0 = float(c["wavelength"])
                     fc, ex = sdss_exposure_measurements(parsed, lam0, mode)

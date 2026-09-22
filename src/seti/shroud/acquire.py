@@ -377,15 +377,41 @@ def _looks_tabular(body: bytes) -> bool:
     return len(lines) >= 2 and any(sep in lines[0] for sep in (",", "|", "\t"))
 
 
-def probe_svo_catalog(name: str, roots, cfg: dict) -> tuple[str | None, str, Provenance]:
+def probe_svo_catalog(name: str, roots, cfg: dict, budget_s: float | None = None
+                      ) -> tuple[str | None, str, Provenance]:
     """Find the live root for one named SVO catalogue.
 
     Probes the index page and a small cone with SHORT timeouts, records the
     HTTP status of every form and mines the index for bulk-download links.
     Returns ``(root, working_url_form, provenance)``.
+
+    **The ladder runs under a clock.** Each probe is short, but the number of
+    roots is not bounded by this channel: the RegTAP route contributes however
+    many the registry publishes, and the index scrape contributes however many
+    links it mines, so *roots x 5 URL forms x 25 s* grows without limit. Run
+    35741075121 spent more than 45 minutes in this step alone, and the route
+    that follows it --- the USNO-B1.0 reconstruction, the only one that can
+    restore the channel's scale --- is given whatever is left of the
+    acquisition deadline. A probe ladder that cannot find a service must not
+    be able to consume the run that would have worked without it.
     """
     prov = Provenance(route=f"probe_svo:{name}")
-    for root in roots:
+    t0 = time.time()
+    budget = float(budget_s if budget_s is not None
+                   else cfg.get("acquire", {}).get("svo_probe_budget_s", 600.0))
+
+    def _spent() -> bool:
+        return budget > 0 and (time.time() - t0) >= budget
+
+    roots = list(roots)
+    for i, root in enumerate(roots):
+        if _spent():
+            prov.status = "budget_exhausted"
+            prov.notes.append(
+                f"probe budget of {budget:.0f}s spent after {i} of {len(roots)} "
+                f"root(s); {len(roots) - i} not tried. This is a statement about "
+                "the time the ladder was given, not about the service")
+            return None, "", prov
         body, detail = _probe(root + "/", cfg)
         prov.record(root + "/", body is not None, detail, 0)
         if body is not None:
@@ -396,6 +422,13 @@ def probe_svo_catalog(name: str, roots, cfg: dict) -> tuple[str | None, str, Pro
             if links:
                 prov.notes.append(f"links on {root}/: {links[:12]}")
         for url in _svo_urls(root, cfg, ra=180.0, dec=0.0, sr=5.0):
+            if _spent():
+                prov.status = "budget_exhausted"
+                prov.notes.append(
+                    f"probe budget of {budget:.0f}s spent inside root {i + 1} of "
+                    f"{len(roots)}. This is a statement about the time the "
+                    "ladder was given, not about the service")
+                return None, "", prov
             body, detail = _probe(url, cfg)
             ok = _looks_tabular(body) if body else False
             prov.record(url, ok, detail, 0)
@@ -586,6 +619,89 @@ def _solano_candidates(tables: pd.DataFrame) -> list[str]:
                 or "515/1380" in t or re.search(r"Solano E\.", d)):
             out.append(t)
     return out
+
+
+def probe_second_digitisation(cfg: dict) -> Provenance:
+    """Is an INDEPENDENT scan of the same POSS-I plates reachable?
+
+    The single strongest kill available to this channel is not astrophysical.
+    A POSS-I-red-only detection that a *second, independent digitisation of
+    the same glass* does not see is almost certainly a scan artefact of the
+    first digitisation rather than a source that was on the plate --- which is
+    precisely how Solano+2022 classified 3 592 of their 298 165 objects, using
+    SuperCOSMOS against the USNO-B1.0-era scans.  Hambly & Blair 2024 argue
+    the VASCO transients are emulsion artefacts, so a plate-level confirmation
+    is the difference between a candidate and a speck of dust.
+
+    This is a REACHABILITY probe only: it reports which of the candidate
+    routes answers, and touches no science.  The kill itself needs a route
+    that answers, and the answer has to be recorded before it can be used.
+
+    Note the asymmetry that governs how the result may ever be read.  Presence
+    in a second digitisation CONFIRMS a plate image.  Absence is informative
+    only where the second scan is demonstrably deeper than the magnitude
+    claimed for the source --- a source missing from a shallower catalogue is
+    not missing, and treating it as missing is the same depth error the
+    modern-optical kill already closes.
+    """
+    a = cfg.get("acquire", {})
+    s = a.get("second_digitisation", {})
+    prov = Provenance(route="second_digitisation_probe")
+    found: list[str] = []
+
+    kws = list(s.get("discovery_keywords",
+                     ["SuperCOSMOS", "Hambly", "MNRAS/326/1279"]))
+    clauses = []
+    for k in kws:
+        for variant in dict.fromkeys((k, k.lower(), k.upper())):
+            clauses.append(f"description LIKE '%{variant}%'")
+            clauses.append(f"table_name LIKE '%{variant}%'")
+    adql = ("SELECT TOP 100 table_name, description FROM TAP_SCHEMA.tables WHERE "
+            + " OR ".join(dict.fromkeys(clauses)))
+    df, url, detail = tap_sync(adql, cfg)
+    prov.record(url, len(df) > 0, detail, len(df))
+    if len(df) and "table_name" in df.columns:
+        names = [unquote_table(t) for t in df["table_name"]]
+        found.extend(names)
+        prov.notes.append("VizieR TAP_SCHEMA: " + "; ".join(
+            f"{t} ({str(d)[:60]})"
+            for t, d in zip(names, df.get("description", names), strict=False))[:1200])
+    else:
+        prov.notes.append("VizieR TAP_SCHEMA knows no SuperCOSMOS-like table")
+
+    # The WFAU SuperCOSMOS Science Archive is served from Edinburgh, not CDS,
+    # so it is probed on its own endpoints rather than assumed absent.
+    for base in s.get("ssa_tap_urls", []):
+        q = urllib.parse.urlencode(
+            {"REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv", "MAXREC": 1,
+             "QUERY": "SELECT TOP 1 table_name FROM TAP_SCHEMA.tables"})
+        full = f"{base}?{q}"
+        body, detail = http_get(full, int(s.get("probe_timeout_s", 25)),
+                                retries=1, backoff=3.0)
+        ok = bool(body) and _looks_tabular(body)
+        prov.record(full, ok, detail, 1 if ok else 0)
+        if ok:
+            found.append(base)
+            break
+
+    # Any literal VizieR id the keyword sweep cannot reach, asked by name.
+    for cat in s.get("candidate_tables", []):
+        table = str(cat.get("table", cat) if isinstance(cat, dict) else cat)
+        tabs, p_m = vizier_catalogue_meta(table, cfg)
+        prov.attempts.extend(p_m.attempts)
+        if tabs:
+            found.extend(tabs)
+            prov.notes.append(f"{table} is in VizieR as {tabs[:6]}")
+        else:
+            prov.notes.append(f"{table}: {p_m.status}")
+
+    prov.n_rows = len(dict.fromkeys(found))
+    prov.status = "ok" if found else "unreachable"
+    if not found:
+        prov.notes.append("no independent digitisation of the POSS-I plates "
+                          "answered; the plate-confirmation kill is NOT "
+                          "available and no source may be vetoed for lacking it")
+    return prov
 
 
 def vizier_catalogue_meta(cat: str, cfg: dict) -> tuple[list[str], Provenance]:
@@ -807,12 +923,17 @@ def usnob1_meta_url(cfg: dict) -> str:
 def usnob1_meta_probe(cfg: dict) -> dict:
     """Ask I/284/out for its own column list before believing any zero.
 
-    Returns ``{url, detail, columns, missing, body_head}``.  ``missing`` is the
-    subset of :data:`USNOB1_COLUMNS` the catalogue does not advertise --- if it
-    is non-empty, a column-list query is asking for a name that does not exist
-    and its empty answer says nothing about the sky.  A failed probe is
-    recorded and the sweep continues: the ladder's ``-out.all`` rung does not
-    name columns at all.
+    Returns ``{url, detail, columns, missing, body_head}``.
+
+    ``missing`` is the subset of :data:`USNOB1_COLUMNS` this body does not
+    mention.  Read it as a HINT, never as a fact about the catalogue: the
+    ``-meta.all`` + ``-out.form=TSV`` body carries ``#Column`` lines for the
+    catalogue's DEFAULT output columns, and I/284/out's defaults are the eight
+    astrometric ones, so run 35738062833's probe reported B1mag, R1mag, R2mag,
+    Imag and Ndet as "missing" from a catalogue that plainly has them.  That
+    probe then edited the request and every field came back as bare positions;
+    it now reports only.  A wrong column name is handled where it shows up ---
+    the ladder falls through to the ``-out.all`` rung, which names none.
     """
     url = usnob1_meta_url(cfg)
     r = cfg.get("acquire", {}).get("reconstruct", {})
@@ -872,10 +993,22 @@ def fetch_usnob1_field(ra: float, dec: float, radius_deg: float, cfg: dict,
             rec["asu_errors"] = [str(e)[:200] for e in errs[:5]]
         if not len(raw):
             rec["body_head"] = asu_body_head(txt, 1200)
+        rec["columns"] = [str(c) for c in raw.columns][:40]
+        # ROWS ARE NOT ENOUGH.  Run 35738062833 got 1380-5899 rows from every
+        # field and reconstructed ZERO sources, because the answer carried
+        # positions and no photometry at all: the POSS-I-red-only mask is a
+        # statement about which plate magnitudes are present, so a frame
+        # without them cannot express the selection and its "no survivors" is
+        # an artefact of the request, not of the sky.  A rung that answers
+        # without the columns the selection needs is not accepted; the ladder
+        # falls through to the ``-out.all`` rung, which names no columns.
+        need = [str(c) for c in r.get("required_columns", ("RAJ2000", "DEJ2000", "R1mag"))]
+        missing = [c for c in need if c not in raw.columns]
+        rec["missing_required"] = missing
         attempts.append(rec)
-        if len(raw):
+        if len(raw) and not missing:
             return raw, form, attempts
-    return raw, "", attempts
+    return pd.DataFrame(), "", attempts
 
 
 def normalise_usnob1_frame(df: pd.DataFrame, field_id: int = -1,
@@ -961,14 +1094,20 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     meta = usnob1_meta_probe(cfg)
     prov.notes.append(
         f"I/284/out -meta.all: {meta['detail']}; "
-        + (f"{len(meta['columns'])} column(s) reported"
+        + (f"{len(meta['columns'])} column(s) reported: {meta['columns'][:40]}"
            if meta["columns"] else "no column names parsed")
-        + (f"; MISSING from the catalogue: {sorted(meta['missing'])}"
-           if meta["missing"] else "; every requested column exists"))
-    # A name the catalogue does not advertise is dropped rather than sent: one
-    # bad ``-out=`` is enough for ASU to answer with a header and no rows.
-    columns = ([c for c in USNOB1_COLUMNS if c not in set(meta["missing"])]
-               if meta["columns"] else None)
+        + (f"; not mentioned by the probe: {sorted(meta['missing'])}"
+           if meta["missing"] else "; every requested column mentioned")
+        + " (reported only -- the request is not edited from this; the "
+          "-meta.all body lists the catalogue's DEFAULT output columns, so "
+          "'not mentioned' does NOT mean 'absent from the catalogue')")
+    # The probe REPORTS; it does not edit the request.  Run 35738062833 had it
+    # strip every name the -meta.all body failed to mention, and that body
+    # mentioned 8 columns out of ~30 --- so B1mag/R1mag/R2mag/Ndet were all
+    # dropped, the fields came back as bare positions, and the selection could
+    # not be expressed.  A bad column name is handled where it shows up: the
+    # ladder falls through to the ``-out.all`` rung.
+    columns = None
     for _, f in grid.iterrows():
         fid = int(f["field_id"])
         rec = {"field_id": fid, "ra_deg": float(f["ra_deg"]),
@@ -1303,6 +1442,44 @@ def join_xmatch_photometry(positions: pd.DataFrame,
     return out
 
 
+def modern_optical_depth(positions: pd.DataFrame, provs: dict, cfg: dict
+                         ) -> tuple[pd.Series, pd.Series]:
+    """Per source: the deepest modern-optical limit actually ESTABLISHED there.
+
+    ``(depth_mag, catalogues)``.  A catalogue contributes only if its X-Match
+    really answered (``ok``/``cached``) **and** the source lies inside that
+    survey's footprint --- Pan-STARRS stops at dec = -30, so a southern source
+    has only Gaia behind its "absence", three magnitudes shallower.
+
+    This exists because absence is the whole signature, and an absence is only
+    as good as the search that failed to find it.  Without this, a Pan-STARRS
+    X-Match that simply errored would hand every source in the run an empty
+    ``ps1_r`` --- and empty reads as *gone*.  A catalogue that was never
+    successfully queried has established nothing, so its sources get NaN here
+    and are excluded from the disappearance count rather than counted as
+    disappearances.
+    """
+    mo = cfg.get("modern_optical", {})
+    limits = mo.get("limits", {})
+    dec = pd.to_numeric(positions.get("dec_deg"), errors="coerce")
+    depth = pd.Series(np.nan, index=positions.index, dtype=float)
+    names = pd.Series("", index=positions.index, dtype=object)
+    for name, spec in limits.items():
+        st = str((provs.get(name) or {}).get("status", "")).lower()
+        if st not in ("ok", "cached"):
+            continue
+        inside = ((dec >= float(spec.get("dec_min_deg", -90.0)))
+                  & (dec <= float(spec.get("dec_max_deg", 90.0))))
+        mag = float(spec.get("mag", np.nan))
+        if not np.isfinite(mag):
+            continue
+        better = inside & (depth.isna() | (mag > depth))
+        depth = depth.where(~better, mag)
+        names = names.where(~inside, names.str.cat(pd.Series(
+            [name] * len(names), index=names.index), sep=",").str.strip(","))
+    return depth, names
+
+
 def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
                            ) -> tuple[pd.DataFrame, dict]:
     """Attach POSS-I, modern-optical and infrared photometry to a position list.
@@ -1349,6 +1526,24 @@ def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
         xmatches[name] = df
     merged = join_xmatch_photometry(positions, xmatches, cfg,
                                     phot_radius={"gaia": r_match})
+    # How deep the search that found nothing actually went, per source.  An
+    # absence is only as good as the search behind it.
+    depth, cats = modern_optical_depth(merged, provs, cfg)
+    merged["modern_depth_mag"] = depth.to_numpy()
+    merged["modern_depth_cats"] = cats.to_numpy()
+    plate = pd.to_numeric(merged.get("poss1_e"), errors="coerce")
+    if "poss1_o" in merged.columns:
+        plate = plate.fillna(pd.to_numeric(merged["poss1_o"], errors="coerce"))
+    merged["modern_depth_margin_mag"] = (depth.to_numpy()
+                                         - plate.to_numpy())
+    provs["_modern_optical_depth"] = {
+        "route": "derived", "status": "ok",
+        "n_rows": int(np.isfinite(depth.to_numpy()).sum()),
+        "catalogues_that_answered": sorted(
+            n for n in cfg.get("modern_optical", {}).get("limits", {})
+            if str((provs.get(n) or {}).get("status", "")).lower() in ("ok", "cached")),
+        "n_sources_with_no_modern_coverage": int((~np.isfinite(depth.to_numpy())).sum()),
+    }
     (out_dir / "acquire_provenance.json").write_text(
         json.dumps(provs, indent=2, default=str))
     return merged, provs
@@ -1404,7 +1599,14 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
             # A registry-published root is tried FIRST: it is the only one of
             # these that any service actually claims to be at.
             roots = list(dict.fromkeys(reg_roots + list(roots)))
-            root, _, p_probe = probe_svo_catalog(cat, roots, cfg)
+            # The probe ladder gets a bounded slice of the acquisition, never
+            # the whole of it: the route that follows it is the one that can
+            # restore the channel's scale.
+            budget = float(cfg.get("acquire", {}).get("svo_probe_budget_s", 600.0))
+            if deadline_s is not None:
+                left = deadline_s - (time.time() - t_start)
+                budget = max(60.0, min(budget, 0.25 * left))
+            root, _, p_probe = probe_svo_catalog(cat, roots, cfg, budget_s=budget)
             prov["routes"].append(p_probe.as_dict())
             if not root:
                 continue
@@ -1445,6 +1647,13 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     if len(df_v):
         got["vasco2020_surviving_candidates"] = len(df_v)
         frames.append(df_v)
+
+    # Route 2b: is a SECOND, independent digitisation of the same POSS-I glass
+    # reachable?  Reported, never assumed: the plate-confirmation kill is the
+    # strongest one this channel could have and it may only be applied on a
+    # route that has actually answered.
+    if cfg.get("acquire", {}).get("second_digitisation", {}).get("probe", True):
+        prov["routes"].append(probe_second_digitisation(cfg).as_dict())
 
     # Route 3: own the selection function — USNO-B1.0 POSS-I-red-only objects.
     if cfg.get("acquire", {}).get("reconstruct", {}).get("enabled", True):

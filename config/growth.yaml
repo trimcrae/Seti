@@ -624,6 +624,16 @@ direct:
     max_trials: 161
     min_snr: 3.0
     flag_offset_sigma: 5.0
+    # THE LOOK-ELSEWHERE NULL.  The search above takes the MAXIMUM fitted S/N
+    # over up to max_trials offsets and the depth is then fitted at the winner.
+    # A maximum over trials is biased upward and the bias grows as the signal
+    # weakens — precisely the regime that would manufacture a spuriously DEEPER
+    # TESS depth — and nothing in the depth's formal error knows about it.  The
+    # `control` stage repeats the identical search at these phases of the
+    # period, where the planet is not, so every planet that changed carries the
+    # depth its own star's noise yields under the same maximisation.  0 and 0.5
+    # are excluded: the transit and the secondary eclipse live there.
+    control_phases: [0.17, 0.27, 0.37, 0.63, 0.73, 0.83]
   duration:
     # The duration profile on the detrended fold: wider baseline window than
     # the depth fitter's, so a duration that GREW is not masked into the

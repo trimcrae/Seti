@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import threading
 import time as _time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -125,6 +126,14 @@ STAGE2_ROLE_EXTRA = {
 class Stage2Params:
     tiers: tuple[str, ...] = ("interest", "watch")
     missions: tuple[str, ...] = ("kepler", "tess")
+    # A hard veto is a SUSPICION the pixels can adjudicate, so a star above
+    # the conservative ceiling that one of these kept out of every tier is
+    # tested FIRST rather than not at all (see vetoed_excess_rows).
+    include_vetoed_excess: bool = True
+    vetoed_first_vetoes: tuple[str, ...] = ("companion_suspect", "blend", "catalogue_doubtful")
+    #: Stars tested ahead of everything else whatever tier they ended in
+    #: (star_key or bare id) -- see named_rows.
+    stars: tuple[str, ...] = ()
     max_stars: int = 40
     max_flares_per_star: int = 6
     # wall clocks
@@ -133,6 +142,9 @@ class Stage2Params:
     retries: int = 2
     retry_pause_s: float = 5.0
     max_products: int = 4
+    #: Wall clock on ONE light-curve / pixel-file fetch (see _fetch_products).
+    #: 0 or None restores the unbounded behaviour.
+    product_timeout_s: float = 600.0
     download_dir: str | None = None
     quality_bitmask: str = "default"
     # flare finder
@@ -175,11 +187,12 @@ class Stage2Params:
         c = dict((conf or {}).get("stage2") or {})
         phys = (conf or {}).get("physics") or {}
         d = cls()
-        for k in ("tiers", "missions"):
+        for k in ("tiers", "missions", "vetoed_first_vetoes", "stars"):
             if c.get(k):
                 setattr(d, k, tuple(str(x) for x in c[k]))
         for k in d.__dataclass_fields__:
-            if k in ("tiers", "missions", "param_tables"):
+            if k in ("tiers", "missions", "vetoed_first_vetoes", "stars",
+                     "param_tables"):
                 continue
             if c.get(k) is not None:
                 cur = getattr(d, k)
@@ -244,19 +257,91 @@ def _finite(v) -> bool:
 # ---------------------------------------------------------------------------
 # the shortlist
 # ---------------------------------------------------------------------------
-def load_shortlist(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
-    """Interest / candidate stars first, then watch, from ``candidates.json``."""
-    p = Path(arc_dir) / "candidates.json"
+def vetoed_excess_rows(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
+    """Stars with ``xi_conservative_max > 0`` that a HARD VETO kept out of
+    ``candidates.json``, read from stage 1's ``xi_table.csv``.
+
+    A ``companion_suspect`` / ``blend`` veto is a *suspicion* raised from
+    RUWE, NSS or a 12" neighbour, and the pixel centroid is the instrument
+    that can adjudicate it -- so those stars belong in stage 2 ahead of every
+    watch star, not outside it.  MEASURED (run 35738218021): the channel's
+    only star above the conservative ceiling on measured parameters, KIC
+    9418692 (xi = +0.462 on 4 flares), is vetoed ``companion_suspect`` and so
+    appears in no tier at all; without this it would never be tested.
+    """
+    p = Path(arc_dir) / "xi_table.csv"
     if not p.exists():
         return []
     try:
-        d = json.loads(p.read_text())
+        d = pd.read_csv(p, dtype={"star_id": str, "star_key": str, "record_key": str})
     except Exception:                                     # noqa: BLE001
         return []
-    order = {"candidate": 0, "interest": 1, "watch": 2}
-    rows = list(d.get("candidates") or []) + list(d.get("watch") or [])
-    rows = [r for r in rows if str(r.get("tier")) in set(params.tiers)
-            and str(r.get("mission", "")).lower() in set(params.missions)]
+    if not len(d) or "xi_conservative_max" not in d.columns:
+        return []
+    x = pd.to_numeric(d["xi_conservative_max"], errors="coerce")
+    hard = set(params.vetoed_first_vetoes)
+    keep = d[(x > 0) & d.get("first_veto", pd.Series([""] * len(d))).astype(str).isin(hard)]
+    rows = []
+    for r in keep.to_dict(orient="records"):
+        r = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in r.items()}
+        r["tier"] = "vetoed_excess"
+        rows.append(r)
+    rows.sort(key=lambda r: -_f(r.get("xi_conservative_max")))
+    return rows
+
+
+def named_rows(arc_dir: Path, keys) -> list[dict]:
+    """The ``xi_table.csv`` rows for named stars, whatever tier they ended in.
+
+    A star can leave every tier and still be worth putting on the pixels --
+    KIC 8487271 dropped out of ``interest`` the moment Berger+2020's radius
+    replaced the assumed one, and with it out of every shortlist, so the
+    centroid test that had failed on it could never be retried.  ``keys`` are
+    ``star_key`` (``kepler:8487271``) or bare ids; the record with the largest
+    ``xi_conservative_max`` wins when a star appears in several catalogues.
+    """
+    want = {str(k).strip() for k in keys if str(k).strip()}
+    if not want:
+        return []
+    p = Path(arc_dir) / "xi_table.csv"
+    if not p.exists():
+        return []
+    try:
+        d = pd.read_csv(p, dtype={"star_id": str, "star_key": str, "record_key": str})
+    except Exception:                                     # noqa: BLE001
+        return []
+    if not len(d) or "star_key" not in d.columns:
+        return []
+    m = d["star_key"].astype(str).isin(want) | d.get(
+        "star_id", pd.Series([""] * len(d))).astype(str).isin(want)
+    rows = []
+    for r in d[m].to_dict(orient="records"):
+        r = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in r.items()}
+        r["tier"] = "named"
+        rows.append(r)
+    rows.sort(key=lambda r: -_f(r.get("xi_conservative_max")))
+    return rows
+
+
+def load_shortlist(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
+    """Interest / candidate stars first, then watch, from ``candidates.json``,
+    with the explicitly named stars and then the hard-vetoed ceiling-excess
+    stars ahead of all of them."""
+    p = Path(arc_dir) / "candidates.json"
+    order = {"named": -2, "vetoed_excess": -1, "candidate": 0, "interest": 1, "watch": 2}
+    rows: list[dict] = []
+    if p.exists():
+        try:
+            d = json.loads(p.read_text())
+        except Exception:                                 # noqa: BLE001
+            d = {}
+        rows = list(d.get("candidates") or []) + list(d.get("watch") or [])
+        rows = [r for r in rows if str(r.get("tier")) in set(params.tiers)]
+    if params.include_vetoed_excess:
+        rows = vetoed_excess_rows(arc_dir, params=params) + rows
+    rows = [r for r in rows if str(r.get("mission", "")).lower() in set(params.missions)]
+    # A named star is tested whatever tier and whatever mission it ended in.
+    rows = named_rows(arc_dir, params.stars) + rows
     seen, out = set(), []
     for r in sorted(rows, key=lambda r: (order.get(str(r.get("tier")), 9),
                                          -_f(r.get("xi_conservative_max")))):
@@ -840,6 +925,51 @@ def lc_from_pixels(rec: dict) -> dict:
             "author": "aperture_sum_of_pixels"}
 
 
+class ArcProductTimeout(TimeoutError):
+    """One archive product fetch that did not answer inside its wall clock.
+
+    It is a FAILED fetch, never a statement that the archive holds nothing:
+    the caller records ``QUERY_FAILED`` with the elapsed time and the star
+    stays ``centroid_untestable`` with the reason.
+    """
+
+
+def _bounded_fetch(fn, *args, timeout_s: float | None, **kw):
+    """Run one product fetch on a daemon thread and abandon it when the clock
+    is spent.
+
+    MEASURED (run 35738785437): the stage-2 loop checks its 9,000 s budget
+    between stars, but the fetch itself had no clock of its own -- a MAST
+    request that never answers blocks the process for as long as the runner
+    lives.  That run sat in a single star's fetch from 16:51 (budget spent)
+    until the 240-minute job cap, so the budget check it was supposed to obey
+    was never reached.  ``lightkurve`` / ``astroquery`` offer no timeout on
+    the download path, so the bound is imposed here, exactly as
+    ``arc.acquire.timeout_query_fn`` does for the TAP queries.
+    """
+    limit = None if timeout_s in (None, "", 0) else float(timeout_s)
+    if limit is None or not np.isfinite(limit):
+        return fn(*args, **kw)
+    box: dict = {}
+
+    def _work():
+        try:
+            box["out"] = fn(*args, **kw)
+        except BaseException as exc:                       # noqa: BLE001
+            box["exc"] = exc
+
+    th = threading.Thread(target=_work, name="arc-stage2-product", daemon=True)
+    started = _time.monotonic()
+    th.start()
+    th.join(limit)
+    if th.is_alive():
+        raise ArcProductTimeout(f"no answer in {limit:.0f} s (abandoned after "
+                                f"{_time.monotonic() - started:.0f} s)")
+    if "exc" in box:
+        raise box["exc"]
+    return box.get("out")
+
+
 def _fetch_products(star_id, *, mission, segments, fn, default_fn, params: Stage2Params,
                     log: AcquisitionLog, deadline: Deadline | None, label: str, ra, dec
                     ) -> tuple[list[dict], str, str]:
@@ -857,10 +987,17 @@ def _fetch_products(star_id, *, mission, segments, fn, default_fn, params: Stage
         if attempt and float(params.retry_pause_s) > 0:
             _time.sleep(min(float(params.retry_pause_s) * attempt,
                             deadline.remaining() if deadline is not None else 60.0))
+        # The fetch gets its own wall clock, bounded by whatever is left of the
+        # stage budget: an archive that never answers costs one product, not
+        # the run.
+        cap = _f(params.product_timeout_s)
+        if deadline is not None:
+            cap = min(cap, deadline.remaining()) if np.isfinite(cap) else deadline.remaining()
         try:
-            recs = f(star_id, mission=mission, segments=tuple(segments),
-                     max_products=int(params.max_products), download_dir=params.download_dir,
-                     ra=ra, dec=dec, quality_bitmask=params.quality_bitmask)
+            recs = _bounded_fetch(
+                f, star_id, timeout_s=cap, mission=mission, segments=tuple(segments),
+                max_products=int(params.max_products), download_dir=params.download_dir,
+                ra=ra, dec=dec, quality_bitmask=params.quality_bitmask)
         except Exception as exc:                          # noqa: BLE001
             last = repr(exc)[:400]
             continue
@@ -916,8 +1053,20 @@ def _xi_block(entry: dict, rows: list[dict], prm: dict, amp_q: dict, remeasured:
     teff, rad = _f(prm.get("teff_k")), _f(prm.get("radius_rsun"))
     amp_cat = _f(entry.get("amplitude_frac"))
     src = str(entry.get("amplitude_source") or "")
+    # THE SCALE IS APPLIED ONCE, BY WHICHEVER STAGE HAS NOT APPLIED IT.
+    # Stage 1 multiplies a Santos Sph by 2 sqrt(2) itself and records the
+    # factor it used as `amplitude_scale` (and `amplitude_scaled`).  Applying
+    # it again here would raise the ceiling by 2.828^1.5 = 4.75, i.e. push xi
+    # DOWN by 0.68 dex on exactly the stars the channel exists to find -- a
+    # candidate quietly hidden, which is the worse direction to be wrong in.
+    # A record that carries neither field predates that stage-1 fix (the
+    # 2026-09-16 candidates.json), and only there is the source-name
+    # heuristic used.
+    recorded = _f(entry.get("amplitude_scale"))
+    stage1_scaled = bool(entry.get("amplitude_scaled", False)) or (np.isfinite(recorded)
+                                                                   and recorded > 0)
     scale = 1.0
-    if src == "santos2021" and not bool(entry.get("amplitude_scaled", False)):
+    if src == "santos2021" and not stage1_scaled:
         scale = float(params.sph_to_range)
     amp_cat_s = amp_cat * scale if np.isfinite(amp_cat) else float("nan")
     amp_rvar = _f(amp_q.get("rvar"))
@@ -945,7 +1094,9 @@ def _xi_block(entry: dict, rows: list[dict], prm: dict, amp_q: dict, remeasured:
         "xi_conservative_stage1": _f(entry.get("xi_conservative_max")),
         "teff_k": teff, "radius_rsun": rad, "params_measured": bool(prm.get("measured")),
         "amplitude_catalogue_frac": amp_cat, "amplitude_catalogue_source": src,
-        "amplitude_catalogue_scale_applied": scale, "amplitude_catalogue_as_range": amp_cat_s,
+        "amplitude_catalogue_scale_applied": scale,
+        "amplitude_scale_from_stage1": recorded if np.isfinite(recorded) else None,
+        "amplitude_catalogue_as_range": amp_cat_s,
         "amplitude_quarter_rvar": amp_rvar, "amplitude_quarter_sph": _f(amp_q.get("sph")),
         "amplitude_used": amp_max, "amplitude_used_source": amp_max_src,
         "n_catalogue_flares": int(len(rows)),
@@ -1391,15 +1542,24 @@ def main(argv=None):
     p.add_argument("--arc-dir", default="results/arc", help="stage 1 results directory")
     p.add_argument("--out-dir", default="results/arc/stage2")
     p.add_argument("--tiers", default="", help="comma-separated tiers (default from config)")
+    p.add_argument("--stars", default="",
+                   help="comma-separated star_key / id tested first whatever tier they are in "
+                        '(e.g. "kepler:9418692,8487271")')
     p.add_argument("--max-stars", type=int, default=-1)
+    p.add_argument("--no-vetoed-excess", action="store_true",
+                   help="do NOT shortlist hard-vetoed stars above the conservative ceiling")
     a = p.parse_args(argv)
     conf = load_arc_config()
     conf["_arc_dir"] = a.arc_dir
     params = Stage2Params.from_config(conf)
     if a.tiers:
         params.tiers = tuple(x.strip() for x in a.tiers.split(",") if x.strip())
+    if a.stars:
+        params.stars = tuple(x.strip() for x in a.stars.split(",") if x.strip())
     if a.max_stars >= 0:
         params.max_stars = int(a.max_stars)
+    if a.no_vetoed_excess:
+        params.include_vetoed_excess = False
     out = Path(a.out_dir)
     stage2_probe(conf, out, params=params)
     if a.stage == "all":

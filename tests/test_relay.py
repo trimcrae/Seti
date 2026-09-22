@@ -561,3 +561,84 @@ def test_no_pair_line_hit_verdict_when_hits_avoid_the_geometry(pipeline, conf):
     s = stage_assess(conf, pipeline["out"], hits_df=hits)
     assert s["assess_verdict"].startswith(V_PAIRLINE_OFF_PRIOR) or s["assess_verdict"].startswith(V_NO_PAIRLINE_HIT)
     assert s["candidates"] == []
+
+
+# ---------------------------------------------------------------------------
+# the wall clock: a beam the clock cuts short is recorded, never guessed at
+# ---------------------------------------------------------------------------
+def test_find_pairs_past_its_deadline_reports_partial_counts(sample):
+    import time as _t
+
+    xyz = geo.positions_pc(sample["ra"], sample["dec"], sample["parallax"])
+    full = geo.find_pairs(xyz, 5.0 * DEG, d_max_pc=100.0)
+    cut = geo.find_pairs(xyz, 5.0 * DEG, d_max_pc=100.0, chunk_candidates=1,
+                         deadline=_t.monotonic() - 1.0)
+    assert full.counts_complete and full.as_dict()["counts_complete"] is True
+    assert full.n_receivers_done == full.n_receivers == len(sample)
+    # nothing was searched, so nothing may be claimed
+    assert not cut.counts_complete
+    assert cut.n_spillover == 0 and cut.n_between == 0
+    assert cut.n_receivers_done == 0 and cut.n_receivers == len(sample)
+
+
+def test_geometry_beam_budget_records_the_beams_it_never_ran(tmp_path, conf, sample):
+    c = json.loads(json.dumps(conf))
+    c["geometry"]["budget_s"] = -1.0            # spent before the first beam
+    rep = stage_geometry(c, tmp_path, gaia_df=sample.copy())
+    assert rep["verdict"].startswith(V_GEOMETRY)
+    assert "BEAMS_INCOMPLETE" in rep["verdict"]
+    assert rep["n_beams_computed"] == 0
+    assert all(b["status"] == "NOT_COMPUTED" for b in rep["beams"].values())
+    # a beam that was never searched contributes no count and no scaling point
+    assert all("n_spillover" not in b for b in rep["beams"].values())
+    assert rep["scaling"]["n_spillover"]["n_points"] == 0
+
+
+def test_geometry_beams_run_narrowest_first(conf, sample, tmp_path):
+    rep = stage_geometry(conf, tmp_path, gaia_df=sample.copy())
+    order = [rep["beams"][k]["theta_rad"] for k in rep["beams"]]
+    assert order == sorted(order)
+    assert all(b.get("status") == "COMPUTED" for b in rep["beams"].values())
+
+
+# ---------------------------------------------------------------------------
+# a wedged archive call must not hold the stage
+# ---------------------------------------------------------------------------
+def test_a_hung_archive_call_is_abandoned_inside_its_clock():
+    import time as _t
+
+    def _hangs(adql, endpoint=None, maxrec=None):
+        _t.sleep(30)
+        return pd.DataFrame()
+
+    wrapped = acq.with_timeout(_hangs, 0.2)
+    t0 = _t.monotonic()
+    with pytest.raises(acq.QueryTimeout):
+        wrapped("SELECT 1", "http://example.invalid/tap")
+    assert _t.monotonic() - t0 < 5.0
+
+    # an in-time call and its exceptions pass straight through
+    assert len(acq.with_timeout(lambda a: pd.DataFrame({"n": [1]}), 5.0)("x")) == 1
+
+    def _raises(a):
+        raise ValueError("boom")
+
+    with pytest.raises(ValueError, match="boom"):
+        acq.with_timeout(_raises, 5.0)("x")
+    # a timeout of 0 means no clock: the function comes back unwrapped
+    assert acq.with_timeout(_raises, 0) is _raises
+
+
+def test_only_default_transports_are_clocked(conf):
+    from seti.relay.run import _transports
+
+    def fake_tap(*a, **k):
+        return None
+
+    def fake_query(*a, **k):
+        return None
+
+    tap, qry = _transports(conf, fake_tap, fake_query)
+    assert tap is fake_tap and qry is fake_query
+    tap, qry = _transports(conf, None, None)
+    assert tap is not acq.pyvo_tap and callable(tap) and callable(qry)

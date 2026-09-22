@@ -140,6 +140,14 @@ acquire:
     abs_glat_min_deg: 20.0
     ndet: 1
     r1_max_mag: 19.3
+    # A field's answer is only usable if it can EXPRESS the selection.  Run
+    # 35738062833 returned 1380-5899 rows from every field and reconstructed
+    # zero sources, because the rows carried positions and no plate magnitudes:
+    # "POSS-I red and nothing else" is a statement about which magnitudes are
+    # present, so a frame without them yields a guaranteed, meaningless zero.
+    # A query form whose answer lacks these is rejected and the next rung of
+    # the ladder is tried.
+    required_columns: ["RAJ2000", "DEJ2000", "R1mag"]
     max_rows_per_field: 200000
     field_timeout_s: 240
     field_retries: 2
@@ -162,6 +170,49 @@ acquire:
   http_timeout_s: 300
   retries: 2
   retry_backoff_s: 8.0
+
+  # Wall clock on the SVO probe ladder, per catalogue.  Each probe is short
+  # (probe_timeout_s), but the NUMBER of roots is not bounded by this channel:
+  # RegTAP contributes however many the registry publishes and the index
+  # scrape however many links it mines, so roots x 5 forms x 25 s grows without
+  # limit.  Run 35741075121 spent > 45 min in this step alone, and the route
+  # after it -- the USNO-B1.0 reconstruction, the only one that can restore the
+  # channel's scale -- gets whatever is left of the acquisition deadline.  A
+  # ladder that cannot find a service must not consume the run that would have
+  # worked without it.  Also capped at 25% of the remaining deadline.
+  svo_probe_budget_s: 600
+
+  # An INDEPENDENT digitisation of the same POSS-I glass is the strongest kill
+  # this channel could have: a detection that a second scan of the same plate
+  # does not see is a scan artefact, not a source that vanished.  Solano+2022
+  # classified 3,592 of their 298,165 objects exactly this way (SuperCOSMOS
+  # against the USNO-B1.0-era scans), and Hambly & Blair 2024 argue the whole
+  # VASCO transient class is emulsion artefacts.
+  #
+  # Reachability is PROBED and recorded; nothing is vetoed on a route that did
+  # not answer.  And the test is asymmetric: presence confirms a plate image,
+  # while absence means something only where the second scan is demonstrably
+  # DEEPER than the magnitude claimed for the source.  A source missing from a
+  # shallower catalogue is not missing.
+  second_digitisation:
+    probe: true
+    probe_timeout_s: 25
+    discovery_keywords: ["SuperCOSMOS", "Hambly", "MNRAS/326/1279",
+                         "MNRAS/326/1295", "MNRAS/326/1315", "SSS"]
+    # WFAU serves the SuperCOSMOS Science Archive from Edinburgh, not CDS.
+    ssa_tap_urls:
+      - "http://ssa.roe.ac.uk/TAP/tap/sync"
+      - "https://ssa.roe.ac.uk/TAP/tap/sync"
+    # Literal ids a keyword sweep cannot reach, asked by name via -meta.all.
+    # GSC 2.3.2 is STScI's own scan of the Palomar/UKST plate material; which
+    # of its magnitudes come from POSS-I is NOT assumed here and must be read
+    # off the catalogue's metadata before any kill is built on it.
+    candidate_tables:
+      - table: "I/305"
+      - table: "I/305/out"
+    # Absence only counts where the second scan is this much deeper.
+    min_depth_margin_mag: 0.5
+    match_radius_arcsec: 3.0
 
 epochs:
   # POSS-I plates: 1949-1958.  Mid-survey default when a plate date is absent.
@@ -194,6 +245,15 @@ crossmatch:
   # (spatial uniformity) that Watters et al. 2026 showed to be false.
   offset_null_arcsec: 45.0
   offset_null_realisations: 4
+  # The excess is also measured as a FUNCTION of radius, because one radius
+  # cannot separate a real counterpart population from the background: at 5"
+  # against AllWISE the matched subsample is chance-dominated by construction.
+  # Unrelated matches accumulate with the search area (chance fraction ~ r^2)
+  # while a genuine counterpart is already counted at the smallest radius, so
+  # a real population shows as an excess concentrated at small separation with
+  # a significance that PEAKS near the combined astrometric error.  Evidence
+  # only: the channel's selection radius stays radius_arcsec above.
+  excess_radii_arcsec: [1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
 
 proper_motion:
   # Largest proper motion searched for when testing "did it just move?".
@@ -219,6 +279,35 @@ plate:
   # Below this magnitude a POSS-I "detection" is brighter than the plate can
   # linearly record; saturation makes the photometry unusable for a budget.
   saturation_mag: 12.0
+
+# The depth kill.  Absence is the whole signature here, so an absence is only
+# as good as the search that failed to find it.  Two ways it goes wrong:
+#   * the modern catalogue was never successfully queried, so every source in
+#     the run gets an empty ps1_r / gaia_g -- and empty reads as GONE;
+#   * the source sits outside that survey's footprint (Pan-STARRS stops at
+#     dec = -30), so only the shallower all-sky catalogue is behind it.
+# A catalogue contributes its depth only if its X-Match actually answered AND
+# the source is inside its footprint; a source nothing covered is excluded
+# from the disappearance count rather than counted as a disappearance.
+modern_optical:
+  require_depth_margin: true
+  # The claim "it vanished" is only as strong as (limit - plate magnitude):
+  # POSS-I E ~ 20.0, so an R1 = 19.3 source absent from Pan-STARRS has faded
+  # by >= 3.9 mag, while the same source absent from Gaia alone has faded by
+  # >= 1.4 mag -- within ordinary stellar variability.  2.0 mag is a factor of
+  # 6.3 in flux and is not reachable by the plate's own photometric scatter.
+  min_depth_margin_mag: 2.0
+  limits:
+    ps1:
+      mag: 23.2            # PS1 DR1 stacked r, 5 sigma (Chambers+2016 Table 11)
+      band: "r"
+      dec_min_deg: -30.0
+      dec_max_deg: 90.0
+    gaia:
+      mag: 20.7            # Gaia DR3 G completeness limit
+      band: "G"
+      dec_min_deg: -90.0
+      dec_max_deg: 90.0
 
 sed:
   # Blackbody temperature grids for the two competing models.

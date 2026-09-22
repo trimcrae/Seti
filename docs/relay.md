@@ -22,8 +22,9 @@ network papers are design studies (Hippke; arXiv:2204.08296; Gertz; Forgan
 2019); `results/necrofrontier_lit/` group g10 found no star-pair spillover
 selection at catalogue scale.
 
-Status 2026-09-22: built and offline-tested; first runner dispatch pending (see
-`STATUS.md`).
+Status 2026-09-22: **measured on the runner.** The geometry is computed for the
+whole reachable 100 pc Gaia DR3 sample (264,973 stars, 5/5 beams, counts
+exact); see §8 for the numbers and for the one thing the sky did not supply.
 
 ## 1. Layout
 
@@ -31,9 +32,10 @@ Status 2026-09-22: built and offline-tested; first runner dispatch pending (see
 |---|---|
 | physics (pure, offline) | `src/seti/relay/geometry.py` |
 | archives (injectable transports) | `src/seti/relay/acquire.py` |
+| published event tables from e-prints | `src/seti/relay/papers.py` |
 | stages, verdicts, files | `src/seti/relay/run.py` |
 | thresholds, beams, sites, seeds | `config/relay.yaml` |
-| offline suite (CI gate) | `tests/test_relay.py` |
+| offline suite (CI gate) | `tests/test_relay.py`, `tests/test_relay_papers.py` |
 | workflow | `.github/workflows/relay.yml` |
 | results | `results/relay/` |
 
@@ -79,10 +81,13 @@ test suite sits at 0.8–1.0 of the coefficient. For the 100 pc Gaia sample
 | beam | θ | spillover | between |
 |---|---|---|---|
 | 10 m optical at 1 µm | 0.025″ | 3 × 10⁻⁵ | 3 × 10⁻⁴ |
-| 100 m at 1.42 GHz | 8.9′ | ~2 × 10⁴ | ~2 × 10⁵ |
-| 10 m at 8 GHz | 0.26° | ~2 × 10⁵ | ~2 × 10⁶ |
-| 10 m at 1.42 GHz | 1.47° | ~2 × 10⁶ | ~2 × 10⁷ |
-| over-filled 5° | 5° | ~3 × 10⁷ | ~3 × 10⁸ |
+| 100 m at 1.42 GHz | 8.9′ | ~1.5 × 10⁴ | ~1.5 × 10⁵ |
+| 10 m at 8 GHz | 0.26° | ~4.6 × 10⁴ | ~4.6 × 10⁵ |
+| 10 m at 1.42 GHz | 1.47° | ~1.5 × 10⁶ | ~1.5 × 10⁷ |
+| over-filled 5° | 5° | ~1.7 × 10⁷ | ~1.7 × 10⁸ |
+
+(at the N = 264,973 the runner actually reached; §8.1 has the measured counts
+beside these.)
 
 A large-aperture optical network leaves Earth outside every beam; the
 interceptable regime is radio with modest apertures or deliberately
@@ -158,6 +163,16 @@ enough to commit whole. Kinematics attached to every kept row. →
 `geometry.json`, `gaia_sample.json`, `pairs_full_<beam>.csv.gz`,
 `pairs_targets.csv.gz`; the parquet intermediates travel in the artifact.
 
+Beams run **narrowest first** under one wall clock (`geometry.budget_s`), so
+the diffraction-limited and 9′ beams always finish and the 5° beam — ~3 × 10⁸
+directed pairs on the full sample — can never eat the run and starve recut and
+assess. A beam the clock cuts short is `PARTIAL_COUNTS` with
+`n_receivers_done / n_receivers`; one never started is `NOT_COMPUTED` with the
+reason. Neither count is compared with the analytic expectation, neither
+enters the θ² slope fit, and the verdict carries `BEAMS_INCOMPLETE`. The recut
+stage records each beam's `geometry_status`, so a zero pair count on an
+unfinished beam reads as the absence of a *search*, not of a pair.
+
 **recut** — per resolved target: pair counts as transmitter per beam and
 geometry, in-beam neighbour pairs; then the BL files per target (telescope,
 band, epoch) grouped into pointings, and for each pointing × beam the pair
@@ -227,6 +242,15 @@ through fake transports finds the injected hit at the prior while a zero-drift
 hit, a recurrent frequency, a hit on a star on no pair line and a hit off the
 window are each rejected by the named rule.
 
+`tests/test_relay_papers.py` (13 tests, no socket) covers the e-print route on
+fixture bytes: a deluxetable with `$-$` signs and `\tablenotemark` glued to a
+number yields the right numbers; a target list with coordinates and no drift
+column is **not** a hit table; a GHz header and a plain `tabular` are read; an
+AAS machine-readable table parses by byte range; an `arxiv_id` that resolves to
+another paper's title is refused with both strings and falls back to a search;
+a failed e-print fetch is a recorded failure on both mirrors, not zero hits;
+and the discovery sweep does not re-fetch a paper the seed list already named.
+
 ## 7. What the runner has to settle (verify list)
 
 * the BL API's JSON shapes and the file record's key names (recorded in
@@ -234,5 +258,87 @@ window are each rejected by the named rule.
 * whether `query-files` needs a non-empty `target` for a MeerKAT/positional
   query;
 * which seed ids exist on VizieR and which of their tables carry a drift
-  column (Margot's UCLA tables are the most likely to);
-* the ESA TAP's behaviour on the 90–100 pc shell (~90 k rows).
+  column (Margot's UCLA tables are the most likely to) — **settled, §8.2: none
+  of them do**;
+* the ESA TAP's behaviour on the 90–100 pc shell (~90 k rows) — **settled**:
+  the widest shell returned 70,506 rows, no truncation, no error.
+
+## 8. What the runner measured
+
+### 8.1 The geometry (run 35740854882, branch `claude/goap-relay-geom`)
+
+Sample: ESA Gaia DR3 TAP, seven parallax shells, ϖ ≥ 10 mas, ϖ/σ_ϖ > 10,
+RUWE < 1.4 — **264,973 stars**, every shell `OK` and untruncated, 114,148 with
+a usable RV (43 %). That is the *clean* subset of the 331,312-star GCNS volume;
+the astrometric-quality cuts, not the archive, set the difference, and the
+counts below scale as N² if one prefers the looser sample.
+
+Directed pairs, counts **exact over the whole sample** (no row cap in the
+counting path), against the uniform-density expectation of §2:
+
+| beam | θ | spillover | analytic | between | analytic | meas/analytic (spill) |
+|---|---|---|---|---|---|---|
+| 10 m optical, 1 µm | 0.0252″ | **0** | 3.27 × 10⁻⁵ | **0** | 3.30 × 10⁻⁴ | — |
+| 100 m, 1.42 GHz | 8.85′ | **18,381** | 1.456 × 10⁴ | **145,734** | 1.470 × 10⁵ | 1.26 |
+| 10 m, 8 GHz | 15.7′ | **54,147** | 4.586 × 10⁴ | **461,277** | 4.632 × 10⁵ | 1.18 |
+| 10 m, 1.42 GHz | 1.48° | **1,586,109** | 1.456 × 10⁶ | **14,613,310** | 1.470 × 10⁷ | 1.09 |
+| over-filled 5° | 5° | **17,841,566** | 1.671 × 10⁷ | **167,627,412** | 1.688 × 10⁸ | 1.07 |
+
+Fitted slopes of log N vs log θ over the four computed beams: **1.954** for
+spillover and **2.000** for between. The θ² law is measured, not assumed, and
+the real sky sits 7–26 % *above* the uniform-density coefficient — the excess is
+largest at the narrowest beam, which is what local clustering does to a pair
+count whose yield is dominated by the nearest receivers.
+
+**The honest headline is the yield itself.** A diffraction-limited 10-m optical
+link at 1 µm gives **zero** qualifying pairs in this sample and 3 × 10⁻⁵
+expected: a large-aperture optical network leaves Earth outside every beam, and
+no amount of searching changes that. The interceptable regime is radio with
+modest apertures or deliberately over-filled beams. There the interception is
+*not* leakage: the spillover geometry delivers (|T−R|/|T|)² of what R receives,
+and the between geometry delivers **more** than R receives, so a qualifying pair
+is a strong-signal channel rather than a sidelobe one. The price is stated in
+the same breath — 1.8 × 10⁴ to 1.8 × 10⁷ qualifying pairs per beam is also
+1.8 × 10⁴ to 1.8 × 10⁷ trials, which is why every count in `hits.json` is
+printed beside its `n_expected_by_chance` and `n_trials`.
+
+The near-antipodal "Earth between the nodes" geometry is counted separately
+throughout and is the larger population by ~9–10× at every beam, exactly the
+0.3156/(1/32) ratio of §2. It is also the geometry whose pairs are *brighter*
+at Earth than at the intended receiver, and the one a single-target search
+(Tusay+2022 at the α Cen SGL antipode) has only ever sampled one line of.
+
+### 8.2 The hit catalogues: VizieR has the targets, not the events
+
+Run 35738937745 probed all 15 seed catalogue ids plus six keyword sweeps over
+VizieR's `TAP_SCHEMA`: **73 tables discovered, 0 of kind `hits`** — that is, not
+one exposed both a frequency and a drift-rate column. Margot+2021
+(`J/AJ/161/55`) and Choza+2024 (`J/AJ/167/103`) deposit *target* tables;
+Enriquez+2017, Price+2020, Sheikh+2020, Traas+2021, Gajjar+2021, Franz+2022,
+Margot+2023, Ma+2023, Sheikh+2021 and Tusay+2022/2024 returned zero rows under
+the asserted ids. The community deposits the observed-star lists and keeps the
+event lists in the papers.
+
+So the events are read from the papers: `src/seti/relay/papers.py` fetches the
+arXiv e-print source and parses `deluxetable`/`longtable`/`tabular`
+environments and any AAS machine-readable table shipped in the same tarball.
+Three rules keep that safe to run a search on:
+
+* an `arxiv_id` in the config is a **hint**, never an identification — the Atom
+  title is fetched and must contain every phrase the seed declares, and a
+  mismatch is recorded with both strings and falls back to a title search;
+* **every hit row carries its provenance**: arXiv id, resolved title, the file
+  inside the tarball, the table's caption, and the verbatim header text of the
+  frequency and drift columns it was read from, so any candidate is traceable
+  to a line of LaTeX;
+* a table is a **hit table only if it proves it** — a frequency column and a
+  drift column both resolve and at least one row parses as numbers. Frequency
+  units come from the header (`(MHz)`, `(GHz)`); a table with no unit is scaled
+  by magnitude and flagged `freq_unit_assumed`.
+
+A discovery sweep over the arXiv full-text index (`abs:"drift rate" AND
+abs:technosignature` and two siblings) covers the papers no seed list
+remembered, on identical rules. Every paper that fails to resolve, fails to
+download or yields no hit table is written to `hits.json` with the reason, and
+the verdict says so: an empty harvest is `NO_HIT_CATALOGUE_REACHED (…)`, which
+is a statement about what was reachable and never about the sky.

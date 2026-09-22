@@ -49,6 +49,14 @@ on:
         description: 'Comma-separated tiers to test, in order (default "interest,watch")'
         required: false
         default: ""
+      stars:
+        description: >-
+          Comma-separated star_key / id tested FIRST whatever tier stage 1
+          left them in, e.g. "kepler:9418692,8487271".  A star that drops out
+          of every tier when better parameters arrive leaves every shortlist
+          with it, and this is how it is put back on the pixels.
+        required: false
+        default: ""
       max_stars:
         description: "Cap on stars tested (-1 = config)"
         required: false
@@ -104,7 +112,11 @@ jobs:
           if [ -n "${{ github.event.inputs.tiers }}" ]; then
             TIERS="--tiers ${{ github.event.inputs.tiers }}"
           fi
-          python -m seti.arc.stage2 --stage all --max-stars "${{ github.event.inputs.max_stars || '-1' }}" $TIERS
+          STARS=""
+          if [ -n "${{ github.event.inputs.stars }}" ]; then
+            STARS="--stars ${{ github.event.inputs.stars }}"
+          fi
+          python -m seti.arc.stage2 --stage all --max-stars "${{ github.event.inputs.max_stars || '-1' }}" $TIERS $STARS
           echo "=== summary ==="
           python - <<'PY'
           import json

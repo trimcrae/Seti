@@ -59,8 +59,9 @@ WD 1214+032 (PEWDD serves it as `WD 1212-022`).
 
 **In flight: run 35747793625** on `claude/goap-slag`, `slag-solo.yml`,
 `stage=all`. The sharded `slag.yml` needs to win a runner slot six times in
-sequence and twice failed to start at all (35739746529's screen matrix, then
-35745205866, which sat 52 minutes without its first job); the solo workflow
+sequence and twice failed to get through it (35739746529's eight screen jobs
+were still queued 30 minutes after its acquire job finished; 35745205866 had
+not started a single job 22 minutes after dispatch); the solo workflow
 does the same work in one job on one slot, which is affordable because only
 168 of 3,547 panels reach the 5-element floor and carry the calibration cost.
 No `results/slag/summary.json` exists yet — the verdict line stays empty until

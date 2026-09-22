@@ -533,7 +533,7 @@ jobs:
           github-token: ${{ github.token }}
           path: results/metronome/
       - name: Offline gate — the vet must recover an injected EB and null a real clock
-        run: python -m pytest tests/test_metronome_vetstar.py -q -p no:cacheprovider
+        run: python -m pytest tests/test_metronome_vetstar.py -q -n auto -p no:cacheprovider
       - name: Vet the star
         run: |
           ls results/metronome/ | head -40

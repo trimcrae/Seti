@@ -1322,6 +1322,48 @@ def test_frequency_limited_species_are_rolled_up_into_the_summary(tmp_path):
 # ---------------------------------------------------------------------------
 # the LTE test lives or dies on the intensity column resolving
 # ---------------------------------------------------------------------------
+def test_an_all_unidentified_table_needs_no_identification_column():
+    """A table whose every row is a U-line has NO identification column,
+    because there is nothing to identify.
+
+    Run 35752177872 lost the comet C/2013 R1 (Lovejoy) U-line table to exactly
+    that contradiction: `J/A+A/564/L2/table4` resolved `Freq` and `T(MB)dv`
+    cleanly, was declared `all_unidentified: true` in the config, and was still
+    marked `usable: False` for want of a name column it cannot have.  It cost
+    the channel its tightest tolerance — a coma line is ~1.5 km/s wide against
+    IRC+10216's 30 — and its only non-stellar environment.
+    """
+    from seti.uline import acquire as A
+    from seti.uline.run import _column_patterns
+
+    cols = _column_patterns(load_uline_config())
+    # the comet table's real columns, from probe.json's scoreboard
+    comet = ["recno", "Freq", "T(MB)dv", "e_T(MB)dv", "Dv", "e_Dv", "SNR", "Note"]
+    roles = A.resolve_line_columns(comet, cols)
+    assert roles["freq"] == "Freq" and roles["intensity"] == "T(MB)dv"
+    assert not roles["ident"]          # there is none, and there cannot be
+
+    def query_fn(adql: str):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": ['"J/A+A/564/L2/table4"'],
+                                 "description": ["Unidentified lines in comet Lovejoy"]})
+        if "TAP_SCHEMA.columns" in adql:
+            return pd.DataFrame({"column_name": comet,
+                                 "description": ["" for _ in comet],
+                                 "unit": ["" for _ in comet]})
+        return pd.DataFrame({"Freq": [251766.0, 264753.0], "T(MB)dv": [0.1, 0.2]})
+
+    strict = A.discover_line_table("comet", "J/A+A/564/L2/", query_fn=query_fn,
+                                   column_patterns=cols, allow_non_tap=False)
+    assert strict.table is None        # the old behaviour: dropped
+
+    loose = A.discover_line_table("comet", "J/A+A/564/L2/", query_fn=query_fn,
+                                  column_patterns=cols, allow_non_tap=False,
+                                  ident_required=False)
+    assert loose.table == "J/A+A/564/L2/table4"
+    assert loose.roles["freq"] == "Freq" and loose.roles["intensity"] == "T(MB)dv"
+
+
 def test_two_views_of_one_table_are_not_two_U_line_samples(tmp_path):
     """Run 35752177872 read J/A+AS/142/181 table2 — whose `Mol` column flags 63
     lines unidentified — AND table3, which is those same 63 as a standalone

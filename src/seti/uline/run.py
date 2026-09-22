@@ -256,6 +256,10 @@ def _discover(conf: dict, name: str, spec: dict, *, query_fn, log, cols,
     return A.discover_line_table(
         name, spec["vizier_like"], query_fn=_clocked_query(query_fn, deadline), log=log,
         column_patterns=cols,
+        # A table whose every row is a U-line has no identification column,
+        # because there is nothing to identify.  Requiring one of a source
+        # declared `all_unidentified` rejects it for obeying its own config.
+        ident_required=not bool(spec.get("all_unidentified")),
         fallback_terms_all=spec.get("fallback_description_all")
         or [conf["archives"].get("discover_description_word") or "nidentified"],
         fallback_terms_any=spec.get("fallback_description_any") or [])

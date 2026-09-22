@@ -584,7 +584,7 @@ def traced_query(query_fn, trace: list[dict], stage: str):
 
 
 def non_tap_line_table(source: str, pattern: str, column_patterns=None, *, fetch_fn=None,
-                       log: AcquisitionLog | None = None
+                       log: AcquisitionLog | None = None, ident_required: bool = True
                        ) -> tuple[tuple | None, list[dict], list[dict]]:
     """Discovery WITHOUT TAP: the catalogue's own ASU metadata (ReadMe as backstop).
 
@@ -613,7 +613,8 @@ def non_tap_line_table(source: str, pattern: str, column_patterns=None, *, fetch
     for _, row in tabs.iterrows():
         cols = [str(c) for c in (row.get("columns") or [])]
         roles = resolve_line_columns(cols, column_patterns) if cols else {}
-        usable = bool(roles.get("freq") and roles.get("ident"))
+        usable = bool(roles.get("freq")) and (bool(roles.get("ident"))
+                                              or not ident_required)
         board.append({"table": str(row["table_name"]), "route": ROUTE_ASU,
                       "description": str(row.get("description", ""))[:200], "roles": roles,
                       "n_rows": row.get("n_rows"), "usable": usable, "columns": cols[:60]})
@@ -633,8 +634,19 @@ def non_tap_line_table(source: str, pattern: str, column_patterns=None, *, fetch
 def discover_line_table(source: str, pattern: str, *, query_fn=None,
                         log: AcquisitionLog | None = None, column_patterns=None,
                         fallback_terms_all=(), fallback_terms_any=(), limit: int = 60,
-                        fetch_fn=None, allow_non_tap: bool = True) -> LineTableDiscovery:
+                        fetch_fn=None, allow_non_tap: bool = True,
+                        ident_required: bool = True) -> LineTableDiscovery:
     """Pick the table under ``pattern`` that has a frequency and an identification column.
+
+    ``ident_required=False`` drops the identification requirement, which is
+    what a source declared ``all_unidentified`` needs: a table whose every row
+    is a U-line has **no** identification column, because there is nothing to
+    identify.  Run 35752177872 lost the comet C/2013 R1 (Lovejoy) U-line table
+    to exactly this contradiction — `J/A+A/564/L2/table4` resolved `Freq` and
+    `T(MB)dv` cleanly and was still marked unusable for want of a name column
+    it cannot have.  That cost the channel its tightest tolerance (a coma line
+    is ~1.5 km/s wide against IRC+10216's 30) and its only non-stellar
+    environment.
 
     Every candidate's roles and row count go on the scoreboard; the winner is
     the usable table with the most rows.  ``frame_hint`` records whether the
@@ -673,7 +685,8 @@ def discover_line_table(source: str, pattern: str, *, query_fn=None,
             log.record(f"columns_{source}", t, error=repr(exc))
             d.scoreboard.append({"table": t, "status": STATUS_FAILED, "error": repr(exc)[:2000]})
             continue
-        usable = bool(roles.get("freq") and roles.get("ident"))
+        usable = bool(roles.get("freq")) and (bool(roles.get("ident"))
+                                              or not ident_required)
         entry = {"table": t, "description": str(row.get("description", ""))[:200],
                  "roles": roles, "n_rows": n, "usable": usable,
                  "columns": [str(c) for c in cols["column_name"].tolist()][:60]}
@@ -689,7 +702,8 @@ def discover_line_table(source: str, pattern: str, *, query_fn=None,
         # DESCRIPTION search (which is also TAP), ask VizieR itself, without
         # TAP, whether this catalogue exists and what its tables look like.
         nt_best, nt_attempts, nt_board = non_tap_line_table(
-            source, pattern, column_patterns, fetch_fn=fetch_fn, log=log)
+            source, pattern, column_patterns, fetch_fn=fetch_fn, log=log,
+            ident_required=ident_required)
         d.routes.extend(nt_attempts)
         d.scoreboard.extend(nt_board)
         if nt_best is not None:

@@ -53,6 +53,19 @@ stars were fetched from MAST (run 35652897914's `redetect` job):
   catalogue cannot reject anything — which is exactly why §4.7b's
   threshold-free epoch stack exists.
 
+**And the channel's own calibration falsified one of its design assumptions.**
+`fraction_of_rotation_population_below_jitter_max` came back **0.857** — 24 of
+the 28 stars the run itself rejected as `rotation_alias` are inside *both*
+strict quality gates.  The fitted jitter is a function of the event count before it
+is a function of the star (median 0.030 at N = 8–11, 0.217 at N ≥ 80), because
+the period is free on a ~10⁴-point grid.  The nulls are not fooled — they
+maximise over the same grid, and the window null's own best fit is inside the
+strict gate for under 1% of stars — so `p_window` and the FDR remain honest.
+But the quality gate is a look-elsewhere floor rather than a clock criterion,
+worst of all at small N, and stars below 35 events now carry
+`quality_uninformative`.  13 of the 15 `interest`/`candidate` stars have
+N ≤ 33.  §5 carries the measured table.
+
 **Not yet answered, and named as such:** 13 of the 14 `interest` stars carry
 `variability_catalogue_unreached` (the 2026-09-21 run reached 45.3% of its
 shortlist with the KIC/TIC round trip, so the periodic-variable veto could
@@ -490,16 +503,52 @@ star), `flags_raised` (every flag) and `tiers`.
 | `jitter_too_large` | Not a clock: fails even the loose thresholds on both routes | (Q < 0.6 or jitter > 0.12) **and** (`f_in_window` < 0.4 or `jitter_core` > 0.12) |
 | `energy_incoherent` *(report)* | Energy depends on clock phase — visibility, not a beacon | Spearman p < 0.01 |
 | `rotation_unknown`, `variability_catalogue_unreached` *(report)* | A veto could not be applied | Caps the tier at `interest` |
+| `quality_uninformative` *(report)* | Fewer than 35 events, so the strict Q / jitter gates are a look-elsewhere floor rather than a clock criterion on this star (see below) and its case rests on the null alone | `n_events < n_quality_informative` |
 | `quantisation_limited` *(report)* | The measured jitter is at the floor `g/(P√12)` the catalogue's own time rounding forces: the tightness is a property of the time stamps, not of the star | jitter ≤ 1.5 × the floor from the **measured** lattice |
 | `pool_null_unreached` *(report)* | Fewer than 3N other-star times inside the windows, so null 3 could not run | Caps the tier at `interest` |
 | `p_extrapolated`, `null_truncated_by_budget` *(report)* | Statistical provenance | — |
 
-**Where the clock thresholds sit.**  The assess stage measures the jitter and
-Q distributions of the stars it *rejected* as `rotation_alias` — the natural
-quasi-periodic population — and reports the percentiles beside the thresholds
+**Where the clock thresholds sit — and the run's answer, which was not the
+expected one.**  The assess stage measures the jitter and Q distributions of
+the stars it *rejected* as `rotation_alias` — the natural quasi-periodic
+population — and reports the percentiles beside the thresholds
 (`summary.json["jitter_calibration"]`), with the fraction of that population
-below `jitter_max`.  The thresholds are chosen so that number is zero; the run
-reports whether it is.
+inside the strict gate.  The design intent was that the fraction be zero.
+
+**Run 35652897914 measured 0.857.**  24 of the 28 stars it rejected as
+`rotation_alias` are inside the strict gate on *both* Q and jitter.  The
+absolute quality gates do not separate a clock from rotational modulation in
+this data, and a large part of the reason is visible in one table — the fitted
+jitter falls steeply toward small N, because the period is free on a
+~10⁴-point grid and a handful of times phase up whatever they are:
+
+| N events | jitter (obs) | jitter (this star's own window null) | Q (obs) | Q (null) |
+|---|---|---|---|---|
+| 8–11 | 0.030 | 0.135 | 0.845 | 0.409 |
+| 12–15 | 0.039 | 0.163 | 0.801 | 0.320 |
+| 16–23 | 0.059 | 0.184 | 0.713 | 0.252 |
+| 24–39 | 0.079 | 0.208 | 0.626 | 0.179 |
+| 40–79 | 0.147 | 0.229 | 0.347 | 0.132 |
+| ≥ 80 | 0.217 | 0.247 | 0.157 | 0.081 |
+
+(The N-trend is a population median, not a per-star law: three of the 24
+rotation-alias stars inside the gate have N = 83, 83 and 115, and the four
+outside it have N = 13, 16, 28 and 30.  The gate is weak across the whole
+range; small N is where it is weakest.)
+
+The window null is **not** fooled by this — it maximises over the same grid,
+so it reproduces the same degeneracy: its own best fit reaches Q ≈ 0.25,
+jitter ≈ 0.18, and it lands inside the strict gate for 0.8% of stars on
+jitter and 0% on Q.  So `p_window` and the BH-FDR built on it remain honest,
+and they are what the tiers actually rest on.  The consequence is stated
+rather than papered over: **below `n_quality_informative` = 35 events the
+strict quality pass carries no discriminating power**, the star gets the
+report flag `quality_uninformative`, and its case rests on the null alone.
+Of the 15 `interest`/`candidate` stars from that run, 13 have N ≤ 33 and 14
+have N ≤ 55; only `tess:149573659` (N = 105) sits where the population's own
+fitted jitter (median 0.217 at N ≥ 80) is nowhere near the gate, so its
+jitter of 0.036 is the one quality number in the shortlist that is hard to
+get by fitting alone.
 
 ---
 

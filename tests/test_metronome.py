@@ -406,6 +406,9 @@ def _sig_record(**kw) -> dict:
            "jitter_floor": 1e-6, "phase_spacing": 1e-5,
            # the period ticked 300 times inside the windows: a real recurrence
            "cycles_span": 300.0, "cycles_hit": 40,
+           # enough events for the quality gates to carry information (see
+           # n_quality_informative); tests that care override it
+           "n_events": 120,
            "grid_days": KEPLER_LC_CADENCE_DAYS, "grid_source": "measured"}
     rec.update(kw)
     return rec
@@ -2165,6 +2168,43 @@ def test_redetect_is_never_part_of_stage_all():
     from seti.metronome.run import STAGE_REDETECT, STAGES
 
     assert STAGE_REDETECT not in STAGES
+
+
+def test_quality_gate_is_flagged_uninformative_at_small_n_but_never_vetoes():
+    """MEASURED on run 35652897914: 83% of the stars that run rejected as
+    `rotation_alias` pass BOTH strict quality gates, and every one of them has
+    N <= 34.  The gates are a look-elsewhere floor at small N.  The flag says
+    so; it does not change a tier, because the null already prices it."""
+    v = vet_star(_sig_record(n_events=12), FULL_CTX)
+    assert "quality_uninformative" in v["flags"] and v["tier"] == "candidate"
+    v = vet_star(_sig_record(n_events=200), FULL_CTX)
+    assert "quality_uninformative" not in v["flags"] and v["tier"] == "candidate"
+
+
+def test_calibration_reports_the_look_elsewhere_floor_the_run_measured():
+    from seti.metronome.vet import calibrate_jitter
+
+    rng = np.random.default_rng(31)
+    recs = []
+    for i in range(80):
+        n = int(rng.integers(8, 120))
+        # the fitted quality improves with a free period at small N, and the
+        # star's own null sees the same thing on times with no clock in them
+        recs.append(dict(_sig_record(n_events=n, jitter=0.03 + 0.0018 * n,
+                                     Q=max(0.05, 0.95 - 0.007 * n)),
+                         star_key=f"kepler:{i}", mission="kepler",
+                         wn_null_jitter_median=0.13 + 0.0009 * n,
+                         wn_null_Q_median=max(0.05, 0.42 - 0.003 * n),
+                         first_veto="rotation_alias" if n < 35 else None))
+    cal = calibrate_jitter(recs, VET)
+    assert cal["n_quality_informative"] == 35.0
+    small = cal["by_n_events"]["8-12"]
+    big = cal["by_n_events"]["80-inf"]
+    assert small["jitter_p50"] < big["jitter_p50"], (small, big)
+    assert small["jitter_p50"] < small["jitter_null_p50"]
+    wn = cal["window_null_own_best_fit"]
+    assert wn["n"] == 80 and wn["fraction_inside_strict_gate"] == 0.0, wn
+    assert np.isfinite(cal["fraction_of_rotation_population_inside_strict_gate"])
 
 
 def test_catalogue_epochs_that_are_real_brightenings_are_detected_as_such():

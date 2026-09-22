@@ -70,6 +70,32 @@ MAST only -- is the decisive one; 35745637197 re-assesses the same shards with
 the new vetoes; 35741300225 is a full re-run. All three check out the branch
 head when they start.
 
+**A design assumption the run falsified, and it is the most important number
+here.** The channel's own calibration reports
+`fraction_of_rotation_population_below_jitter_max` = **0.857**: 24 of the 28
+stars the run itself rejected as `rotation_alias` are inside BOTH strict
+quality gates (Q >= 0.85, jitter <= 0.05). The fitted jitter falls steeply
+toward small N -- population medians 0.030 at N = 8-11, 0.039 at 12-15, 0.059
+at 16-23, 0.079 at 24-39, 0.147 at 40-79, 0.217 at N >= 80 -- because the
+period is free on a ~1e4-point grid and a handful of times phase up whatever
+they are. That trend is a population median, not a per-star law: three of the
+24 inside the gate have N = 83, 83, 115 and the four outside it have N = 13,
+16, 28, 30. The gate is weak across the whole range and weakest at small N.
+
+The nulls are NOT fooled: they maximise over the same grid, so the window
+null's own best fit reaches Q ~ 0.25 and jitter ~ 0.18 and lands inside the
+strict gate for 0.8% of stars on jitter and 0% on Q. `p_window` and the
+BH-FDR on it are therefore honest, and they are what the tiers rest on. The
+consequence is now stated rather than papered over: below
+`n_quality_informative` = 35 events the strict quality pass carries no
+discriminating power, the star gets the report flag `quality_uninformative`,
+and its case rests on the null alone. 13 of the 15 interest/candidate stars
+have N <= 33; `tess:149573659` (N = 105) is the only one in the regime where
+the population's own fitted jitter is nowhere near the gate, so its 0.036 is
+the one quality number in the shortlist that is hard to get by fitting alone.
+`summary.json.jitter_calibration` now carries the by-N table and the null's
+own best fit beside the thresholds.
+
 **Runner-version gate (the repo-wide pandas 3 warning).** The sandbox venv
 holds pandas 2.3.3; the runner installs 3.0.6. METRONOME was checked against
 the real thing rather than audited: a `--system-site-packages` venv with

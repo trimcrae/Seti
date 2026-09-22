@@ -47,6 +47,9 @@ dullest one:
 
 Report-only flags never reject: ``energy_incoherent`` (flare energy depends
 on clock phase --- what visibility modulation does and a beacon should not),
+``quality_uninformative`` (fewer than ``n_quality_informative`` events, so the
+strict Q / jitter gates carry no discriminating power on this star and its
+case rests on the null alone -- see :func:`calibrate_jitter`),
 ``rotation_unknown``, ``variability_catalogue_unreached``, ``p_extrapolated``,
 ``null_truncated_by_budget``, ``quantisation_limited`` (the measured phase
 jitter is at the floor the catalogue's own time rounding imposes, so the
@@ -137,6 +140,17 @@ DEFAULT_VET: dict = {
     "pop_min_count": 4,
     "pop_alpha": 1e-3,
     "pop_min_stars": 50,
+    # MEASURED on run 35652897914: with the period free on a ~10^4-point grid
+    # the fitted jitter is a function of N before it is a function of the
+    # star -- median jitter 0.030 at N = 8-11 rising to 0.217 at N >= 80 --
+    # and 83% of the stars that run itself rejected as `rotation_alias`
+    # (every one of them N <= 34) pass BOTH strict quality gates.  The gates
+    # are a look-elsewhere floor at small N, not a clock criterion, so a star
+    # below this many events carries the report flag `quality_uninformative`
+    # and its case rests on the null alone.  The null itself is not fooled:
+    # the window null's own best fit reaches Q ~ 0.25, jitter ~ 0.18 and is
+    # inside the strict gate for under 1% of stars.
+    "n_quality_informative": 35,
     "instrumental_periods": {
         "kepler": {"long_cadence": 0.020434, "momentum_dump": 3.0,
                    "monthly_downlink": 31.0, "quarter": 93.0},
@@ -151,7 +165,7 @@ HARD_VETO_ORDER = ("pool_null_explains", "population_period", "few_cycles",
                    "periodic_variable", "bursty_random", "jitter_too_large")
 REPORT_FLAGS = ("energy_incoherent", "rotation_unknown", "variability_catalogue_unreached",
                 "p_extrapolated", "null_truncated_by_budget", "quantisation_limited",
-                "pool_null_unreached")
+                "pool_null_unreached", "quality_uninformative")
 
 
 def _close(a: float, b: float, tol: float) -> bool:
@@ -442,6 +456,8 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
         flags.append("p_extrapolated")
     if bool(rec.get("wn_truncated_by_budget", False)):
         flags.append("null_truncated_by_budget")
+    if int(rec.get("n_events", 0) or 0) < int(c["n_quality_informative"]):
+        flags.append("quality_uninformative")
 
     hard = [f for f in HARD_VETO_ORDER if f in flags]
     if hard:
@@ -553,6 +569,55 @@ def calibrate_jitter(vetted: list[dict], conf: dict | None = None) -> dict:
     jr = np.asarray([x for x in jr if np.isfinite(x)])
     out["fraction_of_rotation_population_below_jitter_max"] = (
         float((jr <= float(c["jitter_max"])).mean()) if len(jr) else float("nan"))
+    qr = np.asarray([float(r.get("Q", np.nan)) for r in rot], dtype=float)
+    both = np.isfinite(jr) if len(jr) == len(qr) else None
+    out["fraction_of_rotation_population_inside_strict_gate"] = (
+        float(((jr <= float(c["jitter_max"])) & (qr >= float(c["Q_min"]))).mean())
+        if both is not None and len(jr) else float("nan"))
+
+    # The measured look-elsewhere floor.  With a free period on a 10^4-point
+    # frequency grid, a handful of event times phase up whatever they are, so
+    # the fitted jitter is a function of N before it is a function of the
+    # star.  Two numbers say how badly, and the second is the honest one:
+    #   * the observed quality binned by N;
+    #   * the quality the star's OWN window null reaches at ITS best period
+    #     (wn_null_Q_median, wn_null_jitter_median) -- the same fit on times
+    #     that carry no clock at all.
+    # A gate the null routinely passes is not a gate.
+    def _med(sel, key):
+        v = np.asarray([_f(r, key) for r in sel], dtype=float)
+        v = v[np.isfinite(v)]
+        return float(np.median(v)) if len(v) else float("nan")
+
+    def _bin_stats(lo, hi):
+        sel = [r for r in allr if lo <= int(r.get("n_events", 0) or 0) < hi
+               and np.isfinite(_f(r, "wn_null_jitter_median"))]
+        if not sel:
+            return None
+        return {"n": len(sel), "jitter_p50": _med(sel, "jitter"),
+                "jitter_null_p50": _med(sel, "wn_null_jitter_median"),
+                "Q_p50": _med(sel, "Q"), "Q_null_p50": _med(sel, "wn_null_Q_median")}
+
+    edges = [8, 12, 16, 24, 40, 80, 10 ** 9]
+    out["by_n_events"] = {f"{a}-{b if b < 10 ** 9 else 'inf'}": _bin_stats(a, b)
+                          for a, b in zip(edges[:-1], edges[1:], strict=True)}
+    nulls_j = np.asarray([_f(r, "wn_null_jitter_median") for r in allr], dtype=float)
+    nulls_q = np.asarray([_f(r, "wn_null_Q_median") for r in allr], dtype=float)
+    ok = np.isfinite(nulls_j) & np.isfinite(nulls_q)
+    out["window_null_own_best_fit"] = {
+        "n": int(ok.sum()),
+        "jitter_p50": float(np.median(nulls_j[ok])) if ok.any() else float("nan"),
+        "Q_p50": float(np.median(nulls_q[ok])) if ok.any() else float("nan"),
+        "fraction_inside_strict_gate": float(
+            ((nulls_j[ok] <= float(c["jitter_max"]))
+             & (nulls_q[ok] >= float(c["Q_min"]))).mean()) if ok.any() else float("nan"),
+    }
+    out["n_quality_informative"] = float(c["n_quality_informative"])
+    out["note"] = (
+        "the fitted jitter falls with N because the period is free: read "
+        "by_n_events against window_null_own_best_fit before reading any "
+        "quality number as physics.  Stars below n_quality_informative carry "
+        "the report flag `quality_uninformative` and rest on the null alone")
     return out
 
 

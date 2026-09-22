@@ -120,15 +120,37 @@ def half_px_for(min_lat_deg: float = 80.0) -> int:
     return int(np.ceil(rho / PCP_SCALE_M))
 
 
-def read_pcp_tab(path, *, chunk_rows: int = 2_000_000) -> dict:
+def sniff_delimiter(path) -> str:
+    """The PCP records are fixed-length ASCII, but the label does not say how
+    the five fields are separated and the two possibilities read differently.
+
+    Run 35747661552 settled it on the real product: the fields are
+    COMMA-separated with padding spaces —
+
+        -0.017408,   0.003152,  169.74391,   89.42117,    41.230
+
+    — so splitting on whitespace yields ``'-0.017408,'`` and every one of the
+    twelve tables failed to parse.  The first data record is read and the
+    delimiter taken from it, rather than either spelling being assumed.
+    """
+    with open(path, "rb") as fh:
+        fh.readline()                      # record 1 is the text header
+        line = fh.readline().decode("latin-1", "replace")
+    return "," if "," in line else r"\s+"
+
+
+def read_pcp_tab(path, *, chunk_rows: int = 2_000_000, sep: str | None = None) -> dict:
     """Read one PCP table into (x, y, lon, lat, T) float arrays.
 
-    Read in chunks so a 262 MB table never doubles in memory.  The five
-    columns are whitespace-separated inside a fixed-length record, so the C
-    parser reads them without needing the column widths from DLRE_PCP.FMT.
+    Read in chunks so a 262 MB table never doubles in memory.  The delimiter
+    is sniffed from the first data record unless one is given; either
+    spelling is read by the C parser, so the column widths in DLRE_PCP.FMT
+    are not needed.
     """
+    sep = sep or sniff_delimiter(path)
     xs, ys, lons, lats, ts = [], [], [], [], []
-    reader = pd.read_csv(path, sep=r"\s+", header=None, skiprows=1, engine="c",
+    reader = pd.read_csv(path, sep=sep, header=None, skiprows=1, engine="c",
+                         skipinitialspace=True,
                          names=["x", "y", "lon", "lat", "t"],
                          dtype={"x": np.float64, "y": np.float64, "lon": np.float32,
                                 "lat": np.float32, "t": np.float32},
@@ -290,4 +312,4 @@ def parse_bin_spec(spec, n_bins: int = 96) -> list[int]:
 __all__ = ["LPSR_URL", "LPSR_URLS", "MOON_RADIUS_M", "PCP_NAME_RE", "PCP_SCALE_M",
            "PCP_URL_TEMPLATE", "available_bins", "crop_lpsr", "half_px_for", "index_pcp_files",
            "local_time_hours", "lpsr_url", "n_lpsr_routes", "parse_bin_spec", "pcp_georef",
-           "pcp_product_name", "pcp_url", "rasterise", "read_pcp_tab"]
+           "pcp_product_name", "pcp_url", "rasterise", "read_pcp_tab", "sniff_delimiter"]

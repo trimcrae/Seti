@@ -2,8 +2,11 @@
 
 *A sextant measures the angle between where a thing is and where it ought to be.*
 
-**Channel status:** residual computation and screen built and offline-tested (45
-tests); acquisition is a parallel workstream; nothing has been run on live data.
+**Channel status:** residual computation, screen, ephemeris layer, per-object
+fit and assessment built and offline-tested (128 tests); the acquisition probe
+has run on live data and settled four of §7's questions (§6b); the search
+itself runs as `.github/workflows/sextant.yml` — `probe` → N `fit` shards →
+`assess`.
 Rubin has been off sky since the night of 13/14 July 2026 (`docs/rubin-outage.md`,
 verdict `SKY_STOPPED`), and this is not a stopgap for it — see §1.
 
@@ -390,6 +393,52 @@ silently passing.
 
 ---
 
+## 6b. What the 2026-09-03 probe settled
+
+`results/sextant/probe.json`, verdict `OK`, 46,264,083 FPR rows reached. Four
+of §7's questions are no longer open, and the first is settled to the
+millisecond.
+
+### `epoch` is TCB. Not inferred — *derived*.
+
+The probe measured `epoch_utc − epoch` at both ends of the mission:
+
+| | MJD | measured `epoch_utc − epoch` | TCB − UTC, computed |
+|---|---|---|---|
+| start | 56864.28 | −85.564 s | **85.564 s** |
+| end | 58868.50 | −90.250 s | **90.249 s** |
+
+with `TCB − TDB = L_B (JD_TT − 2443144.5003725) × 86400`, `L_B =
+1.550519768×10⁻⁸`, and `TT − UTC = 32.184 + (TAI−UTC)` taking 35 s before the
+2015-06-30 leap second and 37 s after 2016-12-31. Both ends agree to under a
+millisecond, and the **4.686 s drift across the mission** decomposes as 2.685 s
+of secular `L_B` rate plus exactly 2 s of leap seconds. Nothing but TCB does
+that. So `epoch` is TCB days from JD 2455197.5 and `epoch_utc` is the same
+instant in UTC; `config/sextant.yaml` carries `epoch:TCB:2455197.5` and
+`stage probe` re-derives it from the residuals themselves rather than trusting
+this table.
+
+Why it had to be settled first: 87 s of time-tag error is ~0.7 arcsec of
+along-track offset on *every* object, in proportion to sky rate. That is not a
+subtle bias — it is a catalogue-wide fake detection with exactly the shape of
+the signal.
+
+### The other three
+
+| question | measured | consequence |
+|---|---|---|
+| state-vector frame | `max\|z_gaia\| = 0.4098 au` | **equatorial (ICRS)**. An L2 orbit confined to a thin ecliptic slab would give \|z\| ≲ 0.01 au; 0.41 au is `y_ecl·sin 23.44°`. The 23.44° that would have rotated along-scan into across-scan is not there |
+| `is_rejected` | 291,657 / 46,264,083 = **0.6304%** | against a published 0.58% DR3 outlier fraction, ratio 1.087: the column marks the documented astrometric outlier rejection, so the rejection-pattern observable of §6 reads what it is meant to read |
+| DR3 vs FPR | union deduplicates under **both** keys — `observation_id` and `transit_ccd` — 18 shared of 20+20, 2 unique each side | `reconcile_observations` no longer has to refuse. The releases are neither a clean superset nor disjoint; they are an overlapping union, and the dedup key survives the re-minting |
+| synchronous row cap | 5000 requested, 5000 returned; declared output limits 3,000,000 rows / 3600 s | the feared ~2000-row silent truncation is not there, and the hard 3M-row output limit is what bounds a chunk. At ~300 rows per object, 250 objects per chunk is ~75k rows — a factor of 40 inside the limit |
+
+`astrometric_outcome_ccd` / `astrometric_outcome_transit` remain **unsettled**:
+the `GROUP BY` on them errored on the service, and the per-object census that
+did return shows 5–7 distinct values per object with a strong mode at `1`
+(235/382 for Ceres, 369/548 for Pallas). Nothing is hard-coded as "good".
+
+---
+
 ## 7. Unsettled assumptions — the probe list
 
 These could not be settled offline. Every one of them is **loud in the code**,
@@ -474,7 +523,27 @@ Add arXiv:2605.22702's FPR candidate list when it is machine-readable.
 | `src/seti/sextant/residuals.py` | provenance gate, time scales, the astrometric chain, the scan frame and its verification, two-body propagation and state partials, the variational signal basis, block-correlated GLS, the six-model comparison, the convention resolver |
 | `src/seti/sextant/screen.py` | the rejection-pattern observable, the stratified quasi-binomial null, covariate robustness, binaries, the tier ladder, the population decision |
 | `src/seti/sextant/acquire.py` | Gaia TAP acquisition (runner-only; separate workstream) |
+| `src/seti/sextant/ephem.py` | Horizons `VECTORS` and SBDB clients, the 26-body perturber grid, the batched RK4 + Schwarzschild propagator, the interpolants |
+| `src/seti/sextant/controls.py` | the positive controls: the published Yarkovsky detections, and the scoring that says `RECOVERED` / `SIGN_WRONG` / `MAGNITUDE_OFF` / `INCONSISTENT_BELOW_SNR` |
+| `src/seti/sextant/run.py` | the three stages — `probe` (route + conventions, measured), `fit` (per shard: acquire, propagate, fit A1/A2/A3, screen, checkpoint per chunk), `assess` (controls first, then the A2 distribution, the ceiling exceedances and the population) |
+| `.github/workflows/sextant.yml` | `probe` → N `fit` shards (`fail-fast: false`) → `assess` |
 | `tests/test_sextant_residuals.py` | 45 offline tests, all on synthetic observations with a known injected signal |
+| `tests/test_sextant_run.py` | 25 tests: the propagator against an analytic Kepler orbit, the interpolants' convergence order, the fit on synthetic sky with a known injected `A2`, the screen against records built to trip each rule |
+| `tests/test_sextant_acquire.py` | 58 offline tests; no network |
+
+### Running it
+
+```
+python -m seti.cli sextant --stage probe                 # route + conventions, once
+python -m seti.cli sextant --stage fit --shard 3/16      # one shard
+python -m seti.cli sextant --stage assess                # gather, score, decide
+```
+
+The positive controls travel with any capped run: `choose_objects` takes every
+object carrying a JPL non-gravitational solution **first** and fills the
+remainder with a seeded random draw, so `--max-objects 800` is a small run that
+still exercises the estimator against the published Yarkovsky detections rather
+than a small run that quietly has nothing to check itself against.
 
 ## 10. Related channels
 

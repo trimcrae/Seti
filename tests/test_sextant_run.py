@@ -136,10 +136,14 @@ def test_cubic_hermite_error_is_fourth_order_and_negligible_for_perturbers():
     interpolant only ever carries the *perturbers*, since the target is
     integrated and densely output by :func:`E.hermite_quintic` --- but the
     target displacement that a perturber position error induces.  A 34 m error
-    in a planet's position perturbs a main-belt body by ``3 GM_p dr / d**3``,
-    which over the 2000-day mission window is far below a millimetre, i.e.
-    ~1e-13 of a milliarcsecond of sky.  A loosened threshold would hide a broken
-    interpolant; the convergence test would not.
+    in the Earth's position perturbs a main-belt body by ``3 GM_p dr / d**3``,
+    which even on the deliberately pessimistic assumption that the whole
+    interpolation error is a *constant* offset accumulating quadratically for
+    the entire 2000-day mission window comes to 2.3 cm --- 1.6e-5 mas of sky at
+    2 au, five orders of magnitude below Gaia's ~1 mas per-CCD sigma.  The
+    real error is far smaller than that, because it oscillates at the grid
+    period and averages to zero rather than accumulating.  A loosened threshold
+    would hide a broken interpolant; the convergence test would not.
     """
     e1, e_half, e_quarter = (_hermite_cubic_error_m(h) for h in (1.0, 0.5, 0.25))
     assert 20.0 < e1 < 60.0                       # measured 34 m; pinned, not assumed
@@ -147,14 +151,16 @@ def test_cubic_hermite_error_is_fourth_order_and_negligible_for_perturbers():
     assert 12.0 < e_half / e_quarter < 20.0
     assert e_quarter < 1.0                        # 0.25 d IS metre-accurate
 
-    # (2) what that error does to a main-belt target, in metres of displacement.
+    # (2) what that error does to a main-belt target, expressed where it has to
+    #     be compared: milliarcseconds of sky, against a ~1 mas per-CCD sigma.
     gm_earth = 3.986004418e5 * E.GM_KM3S2_TO_AU3D2      # AU^3/day^2
     dr_au = e1 / 1e3 / E.AU_KM                          # perturber position error
     d_au = 2.0                                          # target-planet separation
     da = 3.0 * gm_earth * dr_au / d_au ** 3             # AU/day^2
     span = 2000.0                                       # mission window, days
-    displacement_m = 0.5 * da * span ** 2 * E.AU_KM * 1e3
-    assert displacement_m < 1e-3, displacement_m
+    displacement_au = 0.5 * da * span ** 2              # pessimistic: error as DC
+    sky_mas = displacement_au / d_au * R.MAS_PER_RAD
+    assert sky_mas < 1e-4, sky_mas                      # measured 1.6e-5 mas
 
 
 # ---------------------------------------------------------------------------

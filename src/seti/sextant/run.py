@@ -630,6 +630,29 @@ def annotate_orbit(rec: dict, sbdb_row: dict | None, conf: dict) -> dict:
         for k in ("ceiling_hard", "ceiling_realistic", "a2_expected_yarkovsky",
                   "ratio_hard", "ratio_realistic", "ratio_expected", "epsilon_eff"):
             rec[k] = float("nan")
+    # A SECOND ceiling, from the MEASURED diameter where SBDB has one.
+    #
+    # The gate above is deliberately generous: H with a high albedo and a low
+    # density, so that exceeding it is a statement about the object and not
+    # about the assumptions.  That generosity costs a factor of several, and an
+    # object with a radiometric diameter does not need it --- H + albedo is a
+    # stand-in for a size that has, for those objects, actually been measured.
+    # So the measured-diameter ceiling is reported ALONGSIDE, never in place of,
+    # the generous one: it is what vets an exceedance, not what declares it.
+    # `rho` stays at the generous floor because a measured diameter says nothing
+    # about the interior.
+    d_km = _f(rec.get("diameter_km"))
+    if math.isfinite(d_km) and d_km > 0:
+        lvl = float(NG.momentum_ceiling_si(
+            NG.amr_sphere(NG.RHO_GENEROUS_KG_M3, d_km * 1e3), r_au=1.0,
+            epsilon=float(conf["epsilon_hard"])) * NG.SI_TO_AU_PER_DAY2)
+        rec["ceiling_measured_diameter"] = lvl
+        a2m = _f(rec.get("a2"))
+        rec["ratio_measured_diameter"] = (abs(a2m) / lvl
+                                          if math.isfinite(a2m) and lvl > 0 else float("nan"))
+    else:
+        rec["ceiling_measured_diameter"] = float("nan")
+        rec["ratio_measured_diameter"] = float("nan")
     return rec
 
 
@@ -1434,7 +1457,9 @@ def assess_frame(df, conf: dict, details: dict | None = None) -> dict:
                 & (fitted["ratio_hard"].astype(float) >= 1.0))
     exc = fitted[exc_mask].sort_values("ratio_hard", ascending=False)
     cols_keep = ["number_mp", "denomination", "tier", "a2", "a2_err", "a2_snr",
-                 "a2_snr_pessimistic", "ratio_hard", "h", "a", "e", "i", "n_transits",
+                 "a2_snr_pessimistic", "ratio_hard", "ratio_realistic",
+                 "ratio_measured_diameter", "diameter_km", "albedo",
+                 "h", "a", "e", "i", "n_transits",
                  "arc_days", "a2_absorbed_fraction", "excess_scatter", "model_verdict",
                  "best_model", "law_verdict", "best_law", "chi_al", "chi_ac",
                  "jpl_nongrav_fitted", "jpl_a2", "is_control", "known_binary",
@@ -1477,7 +1502,13 @@ def assess_frame(df, conf: dict, details: dict | None = None) -> dict:
         out["verdict"] = f"ALL_{out['n_exceedances']}_EXCEEDANCES_VETOED"
     else:
         out["verdict"] = "NO_CEILING_EXCEEDANCE"
-    if controls.get("verdict") in ("CONTROLS_FAILED_SIGN",):
+    # A control verdict that says the estimator is WRONG --- not merely
+    # insensitive --- is stamped onto the run's verdict, because a ceiling
+    # exceedance found by an estimator that cannot reproduce a known Yarkovsky
+    # A2 is a property of the estimator.  CONTROLS_BELOW_SENSITIVITY is not in
+    # this list: it says the controls were too faint to exercise, which is a
+    # statement about the sample and is carried in `controls` instead.
+    if controls.get("verdict") in ("CONTROLS_FAILED_SIGN", "CONTROLS_INCONSISTENT"):
         out["verdict"] = "ESTIMATOR_FAILS_CONTROLS__" + out["verdict"]
     return out
 

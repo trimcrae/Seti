@@ -12,41 +12,62 @@
 # roles it needs, and falls back to the keyword search when the seed is dead.
 # Nothing is queried by a column name that was not seen in TAP_SCHEMA.columns.
 
+# MEASURED column names (ARC's acquire, run of 2026-09-16, results/arc/probe.json)
+# — the first METRONOME dispatch (2026-09-06) saw none of them because
+# TAP_SCHEMA.columns hands names back double-quoted and every role pattern is
+# anchored; that is fixed at the source now.  Per-flare TIMES exist in:
+#   Yang & Liu 2019   J/ApJS/241/29/table2   KIC, Q, Begin, End, logE      (start+end, no peak)
+#   Okamoto+2021      J/ApJ/906/72/table2    KIC, Date, Dur, E, Prot, Amp   (Date = peak, BKJD)
+#   Shibayama+2013    J/ApJS/209/5/table7    KIC, Date, FAmp, Dur, E        (Date = peak, BKJD)
+#   Tu+2022           J/ApJ/935/90/table2    ID, Sector, PDate, Energy      (PDate = peak, BTJD)
+#   Günther+2020      J/AJ/159/60/table1     TIC, Sec, tpeak, Ebol, Prot    (tpeak, BJD)
+# and do NOT exist in Davenport 2016 (J/ApJ/829/23/table1 is a per-star FFD
+# summary: KIC, Prot, Nfl, alpha, beta — nothing per flare) — it is a rotation
+# source below, not an event catalogue.  Pietras+2022 (ApJ 935, 143) and the
+# brief's "Tu 2020" id (J/ApJS/253/35) returned ZERO rows from TAP_SCHEMA on
+# 2026-09-06; Pietras is re-tried by author keyword and recorded either way.
 catalogues:
   kepler_yang2019:
     mission: kepler
-    preferred: "J/ApJS/241/29"          # Yang & Liu 2019, ApJS 241, 29 (162,262 flares / 3,420 stars)
+    preferred: "J/ApJS/241/29/table2"   # Yang & Liu 2019, ApJS 241, 29 — 162,262 flares / 3,420 stars; Begin/End (BKJD)
     keywords: ["flare", "Kepler"]
     enabled: true
-  kepler_davenport2016:
+  kepler_okamoto2021:
     mission: kepler
-    preferred: "J/ApJ/829/23"           # Davenport 2016, ApJ 829, 23 — cross-check catalogue
-    keywords: ["flare", "Kepler"]
+    preferred: "J/ApJ/906/72/table2"    # Okamoto+2021, ApJ 906, 72 — 2,344 superflares / 266 solar-type stars; Date = peak
+    keywords: ["superflare", "solar-type"]
     enabled: true
-  tess_pietras2022:
-    mission: tess
-    preferred: "J/ApJ/935/143"          # Pietras et al. 2022, ApJ 935, 143 (~140k flares / ~25k stars)
-    keywords: ["flare", "TESS"]
+  kepler_shibayama2013:
+    mission: kepler
+    preferred: "J/ApJS/209/5/table7"    # Shibayama+2013, ApJS 209, 5 — 1,547 superflares / 279 G dwarfs; Date = peak
+    keywords: ["superflare", "Kepler"]
     enabled: true
   tess_gunther2020:
     mission: tess
-    preferred: "J/AJ/159/60"            # Günther et al. 2020, AJ 159, 60
+    preferred: "J/AJ/159/60/table1"     # Günther+2020, AJ 159, 60 — 8,695 flares / 1,228 stars, sectors 1-2; tpeak
     keywords: ["flare", "TESS"]
     enabled: true
-  tess_tu2020:
+  tess_tu2022:
     mission: tess
-    preferred: "J/ApJS/253/35"          # brief's id for Tu et al.; DISCOVERED at runtime, may resolve elsewhere
+    preferred: "J/ApJ/935/90/table2"    # Tu+2022, ApJ 935, 90 — 15,638 superflare candidates / 3,715 stars; PDate = peak
     keywords: ["superflare", "TESS"]
+    enabled: true
+  tess_pietras2022:
+    mission: tess
+    preferred: "J/ApJ/935/143"          # Pietras+2022, ApJ 935, 143 — ZERO rows in TAP_SCHEMA on 2026-09-06; re-tried by author
+    keywords: ["Pietras"]
     enabled: true
 
 rotation_catalogues:
   kepler:
-    - {name: mcquillan2014, preferred: "J/ApJS/211/24", keywords: ["rotation", "Kepler"]}
-    - {name: santos2021, preferred: "J/ApJS/255/17", keywords: ["rotation", "Kepler"]}
-    - {name: reinhold2013, preferred: "J/A+A/560/A4", keywords: ["rotation", "Kepler"]}
+    - {name: mcquillan2014, preferred: "J/ApJS/211/24/table1", keywords: []}   # KIC, Prot (34,030 stars)
+    - {name: santos2021, preferred: "J/ApJS/255/17/table1", keywords: []}      # KIC, Prot (39,591 stars)
+    - {name: reinhold2013, preferred: "J/A+A/560/A4", keywords: []}
+    - {name: yang2019_stars, preferred: "J/ApJS/241/29/table1", keywords: []}  # KIC, Prot — the flare catalogue's own
+    - {name: davenport2016_stars, preferred: "J/ApJ/829/23/table1", keywords: []}
   tess:
-    # No single dominant TESS rotation catalogue; discovery by keyword.
-    - {name: tess_rotation_discovered, preferred: "", keywords: ["rotation period", "TESS"]}
+    - {name: tu2022_stars, preferred: "J/ApJ/935/90/table1", keywords: []}     # ID, Per (71,732 stars)
+    - {name: gunther2020_stars, preferred: "J/AJ/159/60/table2", keywords: []} # TIC, Prot (1,228 stars)
 
 # Per-star positions for the cone crossmatches (shortlist only)
 position_tables:
@@ -91,6 +112,12 @@ windows:
   cadence_days:
     kepler: 0.020434       # 29.42-min long cadence
     tess: 0.0013889        # 2-min
+  # A catalogue that records the sector / quarter of every event states the
+  # span of everything it saw per sector; the density windows are intersected
+  # with those spans, so a sparse TESS catalogue no longer bridges sector
+  # boundaries it cannot resolve from density alone.
+  use_sector_spans: true
+  sector_pad_days: 0.0
 
 cross_star:
   # Epochs at which anomalously many DISTINCT stars have an event are
@@ -118,6 +145,11 @@ scan:
   gap_tol: 0.05            # waiting time counts as an integer number of periods within this
   harmonic_walk_tol: 0.02
   harmonic_walk_max: 12    # must exceed the small primes: a duty-0.25 clock can peak at P/7
+  # The CORE of the phase distribution: events within ±core_window cycle of
+  # the clock phase.  jitter_core and gap_integer_frac_core are measured over
+  # them, so a clock mixed with a natural flare background (a beacon on a
+  # star that also flares) is judged on its ticks, not on the background.
+  core_window: 0.15
 
 null:
   # Besag & Clifford (1991) sequential Monte Carlo: stop at h_stop exceedances
@@ -142,6 +174,7 @@ null:
   n_max_not_clock: 200
   Q_watch: 0.6
   jitter_watch: 0.12
+  f_core_watch: 0.4        # the core route to the watch quality (vet: below)
 
 vet:
   rotation_ratios: [1.0, 0.5, 0.33333, 0.25, 2.0, 3.0]
@@ -164,6 +197,17 @@ vet:
   # LOOSE quality (watch)
   Q_watch: 0.6
   jitter_watch: 0.12
+  # The CORE route to either quality, robust to a natural flare background:
+  # >= f_core_min of ALL events within ±phase_window of the clock phase AND
+  # the core's own jitter <= jitter_max over >= core_n_min core events
+  # (watch: f_core_watch / jitter_watch).  MEASURED offline: a strict clock
+  # with 30% random flares mixed in has Q = 0.49, jitter = 0.13 (fails even
+  # watch on the rms route) at p ~ 1e-64 with f_in_window = 0.75 and a core
+  # jitter of 0.002.  Rotational modulation (rate ∝ 1 + cos) has
+  # f_in_window ≈ 0.20 and core jitter ≈ 0.087: below both gates.
+  f_core_min: 0.6
+  f_core_watch: 0.4
+  core_n_min: 8
   energy_p_max: 0.01
   instrumental_periods:
     kepler:
@@ -186,6 +230,38 @@ acquire:
   chunk_rows: 50000
   max_rows: 0                       # 0 = no cap
   rotation_max_rows: 0
+
+# Flare RE-DETECTION on the shortlist's own MAST light curves
+# (src/seti/metronome/redetect.py; the `redetect` job of metronome.yml).  Every
+# star at watch or better after assess, plus the most flare-rich stars per
+# catalogue, gets its Kepler / TESS light curve fetched through GROWTH's bounded
+# MAST loop; a stated detector finds the brightenings again; the identical
+# clock statistic runs on the re-detected peaks with the windows read off the
+# light curve.  A catalogue clock is CONFIRMED only when the independent
+# detector finds it at the same period (or a low harmonic) with strict quality.
+redetect:
+  enabled: true
+  max_stars: 40
+  tiers: ["candidate", "interest", "watch"]
+  top_by_events: 12
+  # the detector: running-median baseline, MAD sigma, >= n_consecutive cadences
+  # above sigma_lo with the peak above sigma_hi (Chang+2015 / Yang+2019 shape)
+  detrend_window_days: 0.5
+  sigma_lo: 2.5
+  sigma_hi: 3.5
+  n_consecutive: 3
+  gap_days: 0.5
+  cadence: long                     # Kepler: long cadence only, as the catalogues used
+  budget_s: 5400.0
+  per_target_budget_s: 900.0
+  max_quarters: 60
+  retries: 2
+  match_tol_days: 0.1               # a catalogued flare is recovered within this
+  period_tol: 0.02
+  period_harmonics: [1.0, 0.5, 2.0, 0.33333, 3.0]
+  confirm_p_max: 0.05
+  confirm_Q_min: 0.85
+  confirm_jitter_max: 0.05
 
 # The VizieR ROUTE LADDER shared by every channel that imports
 # seti.metronome.acquire (METRONOME, ARC, ULINE).  On 2026-09-13 TAPVizieR

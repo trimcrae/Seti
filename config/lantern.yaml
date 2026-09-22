@@ -143,6 +143,11 @@ discriminant:
   # Cosmic-ray guard: removing the brightest N integrations must not kill the
   # time-averaged detection.
   cosmic_ray_top_n: 2
+  # Drift null for the difference search: the out-of-eclipse integrations
+  # BEFORE the eclipse minus those AFTER it span the same drift with no
+  # occultation in between, so a feature above this significance there is
+  # detector drift, not a source that went behind the star.
+  drift_control_sigma_max: 4.0
   # Transit consistency: the line must not change in transit beyond the
   # continuum's own change by more than this many sigma.
   transit_excess_sigma_max: 3.0
@@ -187,6 +192,12 @@ verify:
   min_depth_snr: 5.0
   depth_range: [1.0e-4, 2.0e-2]
   injection_amp: 0.02
+  # A phase curve is not a two-level light curve: over a whole visit the free
+  # step locks onto the transit (deeper than the eclipse) and the timing check
+  # fails on a perfectly well placed eclipse.  The continuum check runs inside
+  # +-this fraction of a period around one predicted eclipse (at least 2 x T14),
+  # which is still ~10x the timing tolerance, so a wrong ephemeris still fails.
+  window_fraction_of_period: 0.25
   cases:
     - name: WASP-43b_MIRI_LRS_phase_curve_jw01366-o011
       host: WASP-43

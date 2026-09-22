@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-09-22T14:54:31Z",
+ "generated_utc": "2026-09-22T15:08:04Z",
  "channel": "lantern",
  "verdict": "NO_DATA_REACHED",
  "checkpoint_version": 3,
@@ -16,13 +16,13 @@
   "units_scheduled": 467,
   "scheduled_bytes": 508723525440,
   "planned_by_predicted_class": {
-   "both": {
-    "units": 15,
-    "bytes": 42921236160
-   },
    "eclipse": {
     "units": 63,
     "bytes": 79798052160
+   },
+   "both": {
+    "units": 15,
+    "bytes": 42921236160
    },
    "transit": {
     "units": 265,
@@ -32,20 +32,18 @@
     "units": 124,
     "bytes": 104892981120
    },
-   "skipped_level3_product_holds_these_segments": {
-    "units": 632,
-    "bytes": 502422246720
-   },
    "skipped_proprietary": {
     "units": 182,
     "bytes": 106865475840
+   },
+   "skipped_level3_product_holds_these_segments": {
+    "units": 632,
+    "bytes": 502422246720
    }
   },
   "exposure_checkpoints": 0,
   "exposures_analysed": 0,
-  "exposure_statuses": {
-   "stale_checkpoint": 159
-  },
+  "exposure_statuses": {},
   "exposures_eclipse_class": 0,
   "exposures_transit_class": 0,
   "exposures_phase_unresolved": 0,
@@ -86,18 +84,42 @@
   "threshold": null
  },
  "verify": {
-  "verdict": "PHASE_NOT_VERIFIED",
-  "generated_utc": "2026-09-22T14:07:06Z",
+  "verdict": "PHASE_PARTIALLY_VERIFIED",
+  "phase_verdict": null,
+  "injection_verdict": null,
+  "generated_utc": "2026-09-22T14:52:32Z",
   "cases": {
    "WASP-43b_MIRI_LRS_phase_curve_jw01366-o011": {
     "passed": false,
+    "phase_passed": null,
+    "injection_passed": null,
     "phase_class": "both",
-    "depth": 0.006681468640189733,
-    "depth_snr": 15.360006116012674
+    "checks": {
+     "depth_positive_and_significant": true,
+     "depth_in_planetary_range": true,
+     "free_step_at_predicted_ingress": false,
+     "step_beats_flat": true,
+     "injected_line_recovered_clean": true
+    },
+    "injected_ew_over_5sigma_limit": null,
+    "ew_5sigma_limit_um": null,
+    "depth": 0.0042230780885959265,
+    "depth_snr": 7.000027493630707
    },
    "WASP-18b_NIRISS_SOSS_eclipse_jw01366-o021": {
-    "passed": false,
+    "passed": true,
+    "phase_passed": null,
+    "injection_passed": null,
     "phase_class": "eclipse",
+    "checks": {
+     "depth_positive_and_significant": true,
+     "depth_in_planetary_range": true,
+     "free_step_at_predicted_ingress": true,
+     "step_beats_flat": true,
+     "injected_line_recovered_clean": true
+    },
+    "injected_ew_over_5sigma_limit": null,
+    "ew_5sigma_limit_um": null,
     "depth": 0.0014506162725921245,
     "depth_snr": 23.107812259134683
    }

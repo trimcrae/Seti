@@ -1044,10 +1044,20 @@ def stage_litfetch(conf: dict, out: Path, *, fetch_fn=None, assets: dict | None 
     srcs = [s for s in literature_sources(assets)
             if not species or str(s.get("species")) in species]
     for sp in targets:
-        srcs.extend(species_query_sources(sp))
+        # The species' real names, not just its formula: a microwave paper on
+        # CF2Cl2 is indexed as "dichlorodifluoromethane" or "CFC-12".
+        names = list(((assets.get("species") or {}).get(sp) or {}).get("search_names") or [])
+        srcs.extend(species_query_sources(sp, names=names))
+    # The literature ladder is long (4 bibliographic services x 8 phrasings x 5
+    # species, plus the database pages), so it gets its own SHORT per-call
+    # timeout and a wall clock: a service that hangs must not spend the job's
+    # whole budget.  Unreached sources are recorded NOT_ATTEMPTED, never as a
+    # route that answered with nothing.
+    arc = conf["archives"]
     rep = run_litfetch(srcs, fetch_fn=fetch_fn, log=log,
-                       timeout=float(conf["archives"].get("fetch_timeout_s", 180)),
-                       retries=int(conf["archives"].get("fetch_retries", 3)))
+                       timeout=float(arc.get("litfetch_timeout_s", 30)),
+                       retries=int(arc.get("litfetch_retries", 1)),
+                       budget_s=float(arc.get("litfetch_budget_s", 1800)))
     rep["generated_utc"] = _now()
     rep["targets"] = targets
     rep["embedded"] = summarise_assets(assets)
@@ -1056,8 +1066,9 @@ def stage_litfetch(conf: dict, out: Path, *, fetch_fn=None, assets: dict | None 
                    "side by side and promoting one is a commit to "
                    "src/seti/data_assets/rotor_constants.yaml")
     _write(out / "literature.json", rep)
-    print(f"[uline] litfetch: {rep['n_ok']}/{rep['n_sources']} routes answered; constants found "
-          f"for {sorted(k for k, v in rep['by_species'].items() if v.get('constants'))}")
+    print(f"[uline] litfetch: {rep['n_ok']}/{rep['n_sources']} routes answered "
+          f"({rep.get('n_not_attempted', 0)} not attempted, {rep.get('elapsed_s')}s); constants "
+          f"found for {sorted(k for k, v in rep['by_species'].items() if v.get('constants'))}")
     return rep
 
 

@@ -338,17 +338,33 @@ def fetch_one(spec: dict, *, fetch_fn=None, timeout: float = 90.0, retries: int 
     return rec
 
 
+def species_queries(species: str, names=(), *, max_names: int = 3) -> list[str]:
+    """The search strings for one species: the formula **and its real names**.
+
+    A microwave paper on CF₂Cl₂ is indexed as *dichlorodifluoromethane* or
+    *CFC-12*, almost never as "CF2Cl2", so a ladder that searches the formula
+    alone asks a question the abstracts cannot answer.  The names come from the
+    assets (``search_names``).  Two phrasings each: "rotational spectrum", and
+    "centrifugal distortion constants millimeter wave" — the phrase a paper
+    that actually *reports the quartic constants* carries.
+    """
+    terms = [str(species)] + [str(n) for n in (names or [])][:int(max_names)]
+    out: list[str] = []
+    for t in terms:
+        for suffix in ("rotational spectrum",
+                       "centrifugal distortion constants millimeter wave"):
+            q = f"{t} {suffix}"
+            if q not in out:
+                out.append(q)
+    return out
+
+
 def species_query_sources(species: str, *, queries: list[str] | None = None,
+                          names=(),
                           kinds=("openalex", "europepmc", "crossref", "semanticscholar")
                           ) -> list[dict]:
-    """The bibliographic ladder for one species, as ``fetch_one`` specs.
-
-    Two queries per service: the species' own name with "rotational spectrum",
-    and the same with "centrifugal distortion", which is the phrase a paper that
-    *reports the quartic constants* almost always carries in its abstract.
-    """
-    qs = list(queries or [f"{species} rotational spectrum",
-                          f"{species} centrifugal distortion constants millimeter wave"])
+    """The bibliographic ladder for one species, as ``fetch_one`` specs."""
+    qs = list(queries or species_queries(species, names))
     out = []
     for kind in kinds:
         build = BIBLIO_BUILDERS.get(kind)
@@ -361,7 +377,8 @@ def species_query_sources(species: str, *, queries: list[str] | None = None,
 
 
 def run_litfetch(sources: list[dict], *, fetch_fn=None, log: AcquisitionLog | None = None,
-                 timeout: float = 90.0, retries: int = 2) -> dict:
+                 timeout: float = 90.0, retries: int = 2,
+                 budget_s: float | None = None) -> dict:
     """Every source in order; ``{"sources": [...], "by_species": {...}}``.
 
     ``by_species`` collects, per species and per constant, **every** value any
@@ -369,9 +386,24 @@ def run_litfetch(sources: list[dict], *, fetch_fn=None, log: AcquisitionLog | No
     decision.  Choosing between them is a commit to the assets file
     (:func:`seti.uline.rotorpred.merge_fetched_constants`), never something a
     fetch does on its own.
+
+    ``budget_s`` is a wall clock over the whole ladder.  The ladder is long by
+    design — four bibliographic services times eight phrasings times five
+    species, plus the database pages — and one service that hangs must not
+    take the job's whole timeout with it.  Sources not reached are recorded
+    ``status: NOT_ATTEMPTED`` with the reason, so an absence in the ledger is
+    never mistaken for a route that answered with nothing.
     """
-    recs = [fetch_one(s, fetch_fn=fetch_fn, log=log, timeout=timeout, retries=retries)
-            for s in (sources or [])]
+    t0 = time.time()
+    recs: list[dict] = []
+    for s in (sources or []):
+        if budget_s is not None and time.time() - t0 > float(budget_s):
+            recs.append({**{k: s.get(k) for k in ("name", "species", "kind", "url", "query")},
+                         "status": "NOT_ATTEMPTED",
+                         "error": f"litfetch wall-clock budget of {budget_s:g}s spent"})
+            continue
+        recs.append(fetch_one(s, fetch_fn=fetch_fn, log=log, timeout=timeout, retries=retries))
+    n_skipped = sum(1 for r in recs if r.get("status") == "NOT_ATTEMPTED")
     by_species: dict[str, dict] = {}
     for r in recs:
         sp = str(r.get("species") or "")
@@ -389,10 +421,12 @@ def run_litfetch(sources: list[dict], *, fetch_fn=None, log: AcquisitionLog | No
                     {"value_mhz": float(v), "from": r.get("name"), "url": r.get("url")})
         blk["measured_lines"] += int(r.get("n_measured_lines") or 0)
     n_ok = sum(1 for r in recs if r.get("status") == STATUS_OK)
-    return {"n_sources": len(recs), "n_ok": n_ok, "n_failed": len(recs) - n_ok,
-            "sources": recs, "by_species": by_species}
+    return {"n_sources": len(recs), "n_ok": n_ok, "n_failed": len(recs) - n_ok - n_skipped,
+            "n_not_attempted": n_skipped, "elapsed_s": round(time.time() - t0, 1),
+            "budget_s": budget_s, "sources": recs, "by_species": by_species}
 
 
 __all__ = ["BIBLIO_BUILDERS", "arxiv_url", "biblio_text", "crossref_url", "europepmc_url",
+           "species_queries",
            "fetch_one", "html_rows", "openalex_url", "parse_measured_lines", "run_litfetch",
            "scrape_constants", "semanticscholar_url", "species_query_sources"]

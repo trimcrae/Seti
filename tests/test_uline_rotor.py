@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 
 import numpy as np
 import pandas as pd
@@ -493,6 +494,41 @@ def test_species_query_sources_covers_every_service_twice():
     assert {s["kind"] for s in srcs} == {"openalex", "europepmc", "crossref", "semanticscholar"}
     assert all("CF2Cl2" in s["url"] for s in srcs)
     assert any("centrifugal" in s["query"] for s in srcs)
+
+
+def test_the_ladder_searches_the_species_real_names_not_only_its_formula():
+    """A microwave paper on CF2Cl2 is indexed as "dichlorodifluoromethane" or
+    "CFC-12", almost never as the formula, and it is the abstract that quotes
+    the quartic constants this channel is missing."""
+    from seti.uline.rotorpred import load_rotor_assets
+
+    names = load_rotor_assets()["species"]["CF2Cl2"]["search_names"]
+    assert "dichlorodifluoromethane" in names and "CFC-12" in names
+    qs = LF.species_queries("CF2Cl2", names)
+    assert "CF2Cl2 rotational spectrum" in qs
+    assert any("dichlorodifluoromethane" in q and "centrifugal" in q for q in qs)
+    srcs = LF.species_query_sources("CF2Cl2", names=names)
+    # every service gets every phrasing, and the name reaches the URL
+    assert len(srcs) == 4 * len(qs)
+    assert any("dichlorodifluoromethane" in s["url"] for s in srcs)
+
+
+def test_litfetch_stops_at_its_wall_clock_and_says_what_it_did_not_try():
+    """One hanging service must not spend the job's whole budget — and a source
+    that was never reached is NOT a route that answered with nothing."""
+    def slow(url, **kw):
+        time.sleep(0.05)
+        return "B = 1.0 MHz"
+
+    srcs = [{"name": f"s{i}", "species": "CF2", "kind": "text", "url": f"https://a/{i}"}
+            for i in range(20)]
+    rep = LF.run_litfetch(srcs, fetch_fn=slow, budget_s=0.12)
+    assert rep["n_not_attempted"] >= 1
+    assert rep["n_ok"] + rep["n_failed"] + rep["n_not_attempted"] == rep["n_sources"] == 20
+    skipped = [r for r in rep["sources"] if r["status"] == "NOT_ATTEMPTED"]
+    assert all("budget" in r["error"] for r in skipped)
+    # a skipped source never counts as a route that failed to find constants
+    assert all(not r.get("constants_mhz") for r in skipped)
 
 
 # ---------------------------------------------------------------------------

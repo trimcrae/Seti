@@ -79,6 +79,14 @@ archives:
   # 503 there is transient load, not a dead endpoint.
   tap_retries: 5
   max_rows: 200000
+  # The `litfetch` ladder is long by design (four bibliographic services x
+  # eight phrasings x five species, plus the database pages), so it gets its
+  # own short per-call timeout and a wall clock.  One service that hangs must
+  # not take the job's whole budget with it; unreached sources are recorded
+  # NOT_ATTEMPTED, never as a route that answered with nothing.
+  litfetch_timeout_s: 30
+  litfetch_retries: 1
+  litfetch_budget_s: 1800
   # Also list any VizieR table whose description mentions this word (recorded
   # in probe.json as further U-line inventories; screened only once they have
   # a `sources:` entry with v_LSR and linewidth).

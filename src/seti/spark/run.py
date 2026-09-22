@@ -70,6 +70,7 @@ DEFAULTS: dict = {
                "dispersion_neighbour_radius_arcsec": 140.0, "dispersion_neighbour_halfwidth_arcsec": 3.0,
                "recurrence_bin_resel": 1.0, "recurrence_min_stars": 3, "trials_alpha": 0.01,
                "vet_neighbour_flux_ratio": 0.1, "max_vet_survivors": 200,
+               "footprint_spatial": False, "slow_query_s": 900.0,
                "max_rows_per_strip": 400000, "time_budget_s": 15000},
     "spherex": {"obscore_table": "spherex.obscore", "plane_table": "spherex.plane",
                 "artifact_table": "spherex.artifact", "splices_table": "splices",
@@ -488,7 +489,9 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
         return led
     spec_table = (probe_rec.get("euclid") or {}).get("spectra_table") or (tables.get("spectra") or [None])[0]
     roles_spec = {}
-    if with_denominator and spec_table:
+    if not with_denominator:
+        spec_table = None                      # --no-denominator: never build the denominator query
+    elif spec_table:
         names, _ = E.discover_columns(spec_table, irsa_query)
         roles_spec = E.resolve_roles(names, E.SPECTRA_ROLES)
         if not roles_spec.get("object_id"):
@@ -504,6 +507,8 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
         units = units[:int(max_units)]
     led["n_units"] = len(units)
     maxrec = int(ec.get("max_rows_per_strip", 400000))
+    spatial = bool(ec.get("footprint_spatial", False))
+    probed_route = False
     gaia_cache: dict[str, pd.DataFrame] = {}
     for u in units:
         if _time.monotonic() - t0 > budget:
@@ -526,11 +531,37 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
             led["gaia"][u["field"]] = {k: grec.get(k) for k in ("route", "status", "n_rows")}
             if not len(gdf):
                 led["degraded"].append(f"Gaia cone for {u['field']} returned nothing ({grec.get('status')})")
-        # the line x MER strip
-        adql_fn = lambda unit, _t=tables, _rl=roles_line, _rm=roles_mer: E.strip_adql(  # noqa: E731
-            _t, _rl, _rm, unit, snr_min=float(ec["snr_acquire_min"]))
+        # the line x MER strip.  `spatial` picks the footprint clause; which one
+        # this archive answers faster is measured on the first strip, below.
+        adql_fn = lambda unit, _sp=spatial, _t=tables, _rl=roles_line, _rm=roles_mer: E.strip_adql(  # noqa: E731
+            _t, _rl, _rm, unit, snr_min=float(ec["snr_acquire_min"]), spatial=_sp)
         raw, r = E.fetch_strip(adql_fn, u, irsa_query, maxrec=maxrec, label="lines", log=led["queries"])
         urec["lines_status"] = r.get("status")
+        urec["footprint_clause"] = "spatial" if spatial else "range"
+        # first strip: if the range clause failed or crawled, try the spatial one once
+        if not probed_route:
+            probed_route = True
+            slow = float(ec.get("slow_query_s", 900.0))
+            if r.get("status") == "QUERY_FAILED" or float(r.get("seconds") or 0.0) > slow:
+                alt = not spatial
+                adql_alt = lambda unit, _sp=alt, _t=tables, _rl=roles_line, _rm=roles_mer: E.strip_adql(  # noqa: E731
+                    _t, _rl, _rm, unit, snr_min=float(ec["snr_acquire_min"]), spatial=_sp)
+                raw2, r2 = E.fetch_strip(adql_alt, u, irsa_query, maxrec=maxrec,
+                                         label="lines_alt_footprint", log=led["queries"])
+                led["footprint_probe"] = {"first": {"spatial": spatial, "status": r.get("status"),
+                                                    "seconds": r.get("seconds"), "n_rows": r.get("n_rows")},
+                                          "alternative": {"spatial": alt, "status": r2.get("status"),
+                                                          "seconds": r2.get("seconds"), "n_rows": r2.get("n_rows")}}
+                better = (r2.get("status") != "QUERY_FAILED"
+                          and (r.get("status") == "QUERY_FAILED"
+                               or float(r2.get("seconds") or 1e9) < float(r.get("seconds") or 1e9)))
+                if better:
+                    spatial = alt
+                    raw, r = raw2, r2
+                    urec["footprint_clause"] = "spatial" if spatial else "range"
+                    led["degraded"].append(f"switched the footprint clause to "
+                                           f"{'spatial' if spatial else 'range'} after the first strip")
+            led["footprint_clause"] = "spatial" if spatial else "range"
         urec["n_raw_rows"] = int(len(raw))
         if r.get("status") == "QUERY_FAILED":
             led["degraded"].append(f"strip {tag}: lines query failed")
@@ -539,8 +570,8 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
         feat.to_csv(strip_csv, index=False)
         # the denominator strip (objects with a spectrum) -> stars with spectra
         if spec_table:
-            adql_d = lambda unit, _s=spec_table, _rs=roles_spec, _t=tables, _rm=roles_mer: E.denominator_adql(  # noqa: E731
-                _s, _rs, _t, _rm, unit)
+            adql_d = lambda unit, _sp=spatial, _s=spec_table, _rs=roles_spec, _t=tables, _rm=roles_mer: E.denominator_adql(  # noqa: E731
+                _s, _rs, _t, _rm, unit, spatial=_sp)
             drow, rd = E.fetch_strip(adql_d, u, irsa_query, maxrec=maxrec, label="spectra", log=led["queries"])
             urec["spectra_status"] = rd.get("status")
             urec["n_objects_with_spectra"] = int(len(drow))

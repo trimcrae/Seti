@@ -514,9 +514,10 @@ class FakeIRSA:
     """An IRSA TAP that serves the Euclid Q1 schema, a joined strip, Gaia, and obscore."""
 
     def __init__(self, strip_rows: pd.DataFrame, spec_rows: pd.DataFrame, gaia: pd.DataFrame,
-                 products: pd.DataFrame | None = None, empty: bool = False, fail_lines: bool = False):
+                 products: pd.DataFrame | None = None, empty: bool = False, fail_lines: bool = False,
+                 fail_range: bool = False):
         self.strip_rows, self.spec_rows, self.gaia, self.products = strip_rows, spec_rows, gaia, products
-        self.empty, self.fail_lines = empty, fail_lines
+        self.empty, self.fail_lines, self.fail_range = empty, fail_lines, fail_range
         self.queries: list[str] = []
 
     def __call__(self, adql: str, maxrec=None):
@@ -558,6 +559,8 @@ class FakeIRSA:
         if "euclid_q1_spe_lines_line_features l join" in a:
             if self.fail_lines:
                 raise RuntimeError("statement timeout")
+            if self.fail_range and "contains(point" not in a:
+                raise RuntimeError("statement timeout on the range predicate")
             if self.empty:
                 return self.strip_rows.head(0)
             m = re.search(r"BETWEEN ([-\d.]+) AND ([-\d.]+)", adql)
@@ -660,6 +663,21 @@ def test_euclid_empty_and_failed_archives_are_not_null_results(tmp_path):
     s2 = R.assess(conf, out2)
     assert s2["verdict"].startswith("DEGRADED") or s2["verdict"] == R.VERDICT_NO_DATA
     assert s2["stage_counts"]["euclid_survivors"] == 0
+
+
+def test_euclid_switches_the_footprint_clause_when_the_range_query_fails(tmp_path):
+    """Which footprint clause the archive can answer is a property of the archive."""
+    rng = np.random.default_rng(13)
+    field, gaia, strip, spec = _euclid_world(rng)
+    conf = _conf_for(field)
+    irsa = FakeIRSA(strip, spec, gaia, fail_range=True)
+    led = R.euclid_stage(conf, tmp_path / "sw", shard=0, n_shards=1, irsa_query=irsa, with_denominator=False)
+    assert led["footprint_clause"] == "spatial"
+    assert led["footprint_probe"]["first"]["status"] == "QUERY_FAILED"
+    assert led["footprint_probe"]["alternative"]["status"] in ("OK", "QUERY_RETURNED_ZERO_ROWS")
+    assert led["status"] == "OK" and any("switched the footprint clause" in x for x in led["degraded"])
+    assert all(u.get("footprint_clause") == "spatial" for u in led["units"])
+    assert sum(u["n_raw_rows"] for u in led["units"]) == len(strip)
 
 
 class FakeSpherexArchive:

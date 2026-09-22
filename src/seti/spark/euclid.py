@@ -199,34 +199,48 @@ def _ra_clause(col: str, ra_lo: float, ra_hi: float) -> str:
     return f"{col} BETWEEN {ra_lo:.5f} AND {ra_hi:.5f}"
 
 
+def _unit_where(roles_mer: dict, unit: dict, spatial: bool) -> str:
+    """The strip's footprint clause.
+
+    Plain: two range predicates on the catalogue's own ra/dec columns.
+    ``spatial``: the field cone as an ADQL region (which a TAP service can
+    answer from its spatial index) plus the declination slice that makes it a
+    strip.  Which one the archive is faster at is a property of the archive,
+    so the stage measures the first strip and keeps the winner.
+    """
+    ra, dec = roles_mer["ra"], roles_mer["dec"]
+    dec_clause = f"m.{dec} BETWEEN {unit['dec_lo']:.5f} AND {unit['dec_hi']:.5f}"
+    if spatial and all(k in unit for k in ("ra0", "dec0", "radius_deg")):
+        return (f"1 = CONTAINS(POINT('ICRS', m.{ra}, m.{dec}), "
+                f"CIRCLE('ICRS', {float(unit['ra0']):.6f}, {float(unit['dec0']):.6f}, "
+                f"{float(unit['radius_deg']) + 0.02:.6f})) AND {dec_clause}")
+    return f"{dec_clause} AND {_ra_clause('m.' + ra, unit['ra_lo'], unit['ra_hi'])}"
+
+
 def strip_adql(tables: dict, roles_line: dict, roles_mer: dict, unit: dict, *,
-               snr_min: float, top: int | None = None) -> str:
+               snr_min: float, top: int | None = None, spatial: bool = False) -> str:
     """Line features joined to MER for one declination strip."""
     lcols = [f"l.{c} AS l_{r}" for r, c in roles_line.items() if c]
     mcols = [f"m.{c} AS m_{r}" for r, c in roles_mer.items() if c and r != "object_id"]
-    ra, dec = roles_mer["ra"], roles_mer["dec"]
     sel = ", ".join(lcols + mcols)
     top_s = f"TOP {int(top)} " if top else ""
     return (f"SELECT {top_s}{sel} FROM {tables['lines']} l JOIN {tables['mer']} m "
             f"ON l.{roles_line['object_id']} = m.{roles_mer['object_id']} "
-            f"WHERE m.{dec} BETWEEN {unit['dec_lo']:.5f} AND {unit['dec_hi']:.5f} "
-            f"AND {_ra_clause('m.' + ra, unit['ra_lo'], unit['ra_hi'])} "
+            f"WHERE {_unit_where(roles_mer, unit, spatial)} "
             f"AND l.{roles_line['snr']} >= {float(snr_min):.2f}")
 
 
 def denominator_adql(spectra_table: str, roles_spec: dict, tables: dict, roles_mer: dict,
-                     unit: dict, *, top: int | None = None) -> str:
+                     unit: dict, *, top: int | None = None, spatial: bool = False) -> str:
     """Every object WITH a spectrum in the strip (for the stars-with-spectra count)."""
     scols = [f"s.{c} AS s_{r}" for r, c in roles_spec.items() if c and r != "object_id"]
     mcols = [f"m.{c} AS m_{r}" for r, c in roles_mer.items()
              if c and r in ("ra", "dec", "point_like_prob", "spurious_flag", "flux_h")]
-    ra, dec = roles_mer["ra"], roles_mer["dec"]
     top_s = f"TOP {int(top)} " if top else ""
     sel = ", ".join([f"m.{roles_mer['object_id']} AS m_object_id"] + mcols + scols)
     return (f"SELECT {top_s}{sel} FROM {spectra_table} s JOIN {tables['mer']} m "
             f"ON s.{roles_spec['object_id']} = m.{roles_mer['object_id']} "
-            f"WHERE m.{dec} BETWEEN {unit['dec_lo']:.5f} AND {unit['dec_hi']:.5f} "
-            f"AND {_ra_clause('m.' + ra, unit['ra_lo'], unit['ra_hi'])}")
+            f"WHERE {_unit_where(roles_mer, unit, spatial)}")
 
 
 def fetch_strip(adql_fn, unit: dict, query_fn, *, maxrec: int, label: str,

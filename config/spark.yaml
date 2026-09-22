@@ -77,6 +77,11 @@ euclid:
   trials_alpha: 0.01
   max_rows_per_strip: 400000
   time_budget_s: 15000
+  # Footprint clause for the strip queries: false = range predicates on the
+  # catalogue's ra/dec, true = an ADQL CIRCLE the service can index. The first
+  # strip of a shard is measured and the faster clause is kept for the rest.
+  footprint_spatial: false
+  slow_query_s: 900
 
 # ---------------------------------------------------------------------------
 # S48 — SPHEREx QR2 spectral images (0.75–5 um, R 35–130, 6.15" pixels)

@@ -102,6 +102,31 @@ The join is written **inner-first** — every Gaia-only cut in a sub-select on
 lets the planner start from the 750-million-row AllWISE mirror and cannot
 return even `TOP 5`.
 
+### What the archive actually did — run 35741356662, shard 3, 11:46 a.m. EDT
+
+Measured, not assumed:
+
+```
+[cradle] s3of8 hp3_763: OK rows=53 parent=2541 shape=full 24.9s
+[cradle] acquire s3of8: units ok=86 zero=10 partial=0 failed=0 rows=4990 in 1906.3 s
+```
+
+The `full` shape answers — the inner-first join with 2MASS reached *directly*
+through `tmass_psc_xsc_best_neighbour.original_ext_source_id` (the spelling the
+config marked `verify`), plus `astrophysical_parameters` and
+`vari_rotation_modulation` — at **~25 s per level-3 pixel**. IGNITION's
+flat-join failure does not recur. 96 of 96 units returned; the 10 empty ones
+are the |b| > 10° cut removing Galactic-plane pixels. **4,990 parent stars from
+one eighth of the sky**, so the all-sky parent is of order 40,000, and a shard
+costs 31.8 minutes against its 300-minute budget.
+
+`screen` is not the bottleneck anyone would guess: timed on 40,000 synthetic
+rows, `select_parent` + `harmonise` + `fit_loci` + `excess_table` + `fit_disk`
+(the 400-point temperature grid with 300 Monte-Carlo draws per star) is **18
+seconds** end to end, against a 120-minute job cap. The expensive stage is
+`ages`, where a NEOWISE cone is ~90 s per star, and that is the one with the
+wall-clock budget and the priority-ordered shortlist.
+
 ## Ages — two indicators or nothing
 
 HD 15407A is the warning written into the mission: a **2.1 Gyr isochrone age

@@ -1124,6 +1124,14 @@ def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, po
                     r = PCP.rasterise(tab, pole, half_px)
                 except Exception as exc:  # noqa: BLE001
                     prec["outcome"] = f"PARSE_FAILED: {type(exc).__name__}: {exc}"[:300]
+                    # the first records VERBATIM, so the next correction is read
+                    # off the product rather than costing another runner hour
+                    try:
+                        with dest.open("rb") as fh:
+                            prec["head"] = fh.read(400).decode("latin-1", "replace")
+                        prec["sniffed_sep"] = PCP.sniff_delimiter(dest)
+                    except Exception:  # noqa: BLE001, S110
+                        pass
                     rep["products"][key] = prec
                     dest.unlink(missing_ok=True)
                     continue

@@ -1167,7 +1167,16 @@ so a system's planets share one download; each shard checkpoints its CSV after
 every star and commits it `if: always()`) → `assess` → `vet` (stage 2 both eras
 + stage 3 census and difference image on every survivor). A shard cut off by
 its budget is resumed by re-dispatching with `resume=true`, which skips the
-targets already committed. Planets with `koi_period > 30 d` are carried
+targets already committed.
+
+**`n_shards` must not change between a run and its resume.** Sharding is
+`kepid mod n_shards` and resume reads `shard_NN.csv` --- its OWN file only ---
+so re-dispatching 16 shards' worth of committed work as 4 shards would leave
+every committed row in a file no shard reads, silently redoing all of it and
+writing the results into differently-numbered files beside the old ones. Resume
+also deliberately does NOT skip a row flagged by `record_tic_is_unverified()`;
+those rows are redone however many times it takes to get a TIC the sky has
+confirmed. Planets with `koi_period > 30 d` are carried
 separately in `long_period.csv`: TESS's 27-day sectors give them few or no
 transits and their sensitivity is stated, not assumed.
 

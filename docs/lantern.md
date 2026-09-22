@@ -317,6 +317,23 @@ Both cases are recorded in `results/lantern/verify.json` with the full check
 dictionary, the HDU layout the reader saw, `CAL_VER`, the binning factor, the
 measured depth and its error, both χ² comparisons and both 5σ EW limits.
 
+**Measured (run 35745941769, 2026-09-22): `PHASE_VERIFIED` 2/2 and
+`SENSITIVITY_VERIFIED` 2/2** — all five checks true on both exposures.
+
+| | WASP-18 b NIRISS/SOSS | WASP-43 b MIRI/LRS |
+|---|---|---|
+| phase class | `eclipse` | `both` (phase curve) |
+| eclipse depth | 1 451 ppm at 23.1σ | 4 223 ppm at 7.0σ (in-window) |
+| free step vs predicted ingress | +0.0003 d (tol 0.0198 d) | −0.169 d, **Δχ² only 9.86** over the predicted step |
+| predicted step vs flat | Δχ² = 534 | Δχ² = 49 |
+| difference-spectrum noise | 2.59×10⁻⁴ | 1.84×10⁻³ |
+| 5σ EW limit (difference) | 1.80×10⁻⁶ µm | 1.83×10⁻⁴ µm |
+| injected amplitude / continuum | 0.0050 (the floor) | 0.0220 (= 12 × noise) |
+| injected EW / 5σ limit | 7.53× | 3.61× |
+| recovered | 16.8σ, `interest`, no veto | 12.7σ, `candidate`, no veto |
+| drift null / in-eclipse residual | 0.42σ / −0.13σ | 0.40σ / −0.32σ |
+| features on the un-injected baseline | 2 | 0 |
+
 ---
 
 ## 4. Contamination ledger

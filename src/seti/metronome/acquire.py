@@ -1616,7 +1616,32 @@ _ROLE_PATTERNS: dict[str, list[str]] = {
     "ra": [r"^ra_?icrs$", r"^raj2000$", r"^_?ra$", r"^ra_?deg$", r"^radeg$"],
     "dec": [r"^de_?icrs$", r"^dej2000$", r"^_?dec?$", r"^dec_?deg$", r"^dedeg$"],
     "duration": [r"^dur(ation)?$", r"^tdur$", r"^t_?dur$", r"^length$"],
+    # A per-event classification the catalogue itself carries (Tu+2022's
+    # ``Label``; a ``Flag``): kept so a shortlisted star's events can be read
+    # back by class instead of guessed at.
+    "label": [r"^label$", r"^flag$", r"^flags$", r"^class$", r"^type$", r"^note$", r"^qual(ity)?$"],
 }
+
+_TIME_OFFSET_RE = re.compile(r"(?:B?JD|TJD|BKJD|BTJD)\s*[-−–]\s*(2\s?4\d{5}(?:\.\d+)?)", re.I)
+
+
+def time_offset_from_description(desc: str) -> float | None:
+    """The offset a catalogue SAYS its time column carries (``BJD-2454833``,
+    ``BJD-2400000``, ``BJD - 2457000``), or ``None`` when it says nothing.
+
+    Okamoto+2021's and Shibayama+2013's ``Date`` are described as
+    ``BJD-2400000`` --- not MJD (``JD-2400000.5``), which the value-range
+    guess called them; the difference is a constant half day, harmless to
+    a clock inside one catalogue but wrong against the published quarter
+    windows.  The catalogue's own words win over the guess whenever present.
+    """
+    m = _TIME_OFFSET_RE.search(str(desc or ""))
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(" ", ""))
+    except ValueError:
+        return None
 
 
 def _canon(name: str) -> str:
@@ -1745,14 +1770,45 @@ def discover_event_table(catalogue: str, preferred: str, keywords=(), *, query_f
     board: list[dict] = []
     best: DiscoveredTable | None = None
     best_key: tuple = (-1, -1)
+    def _preferred_non_tap():
+        """The catalogue's OWN metadata, asked directly, when TAP_SCHEMA is
+        simply silent about it.
+
+        ``list_tables`` degrades to this route when TAP *fails*, but not when
+        TAP *answers with zero rows* --- and those are different facts.  A
+        catalogue that TAPVizieR does not index (large tables are not always
+        in its schema) is still served by ASU and still has a ReadMe, and
+        Pietras+2022 has returned zero TAP rows under its bibcode id and under
+        an author keyword on two separate dispatches.  Asking ASU costs one
+        HTTP request and turns "TAP does not list it" into either the table or
+        a recorded absence.
+        """
+        df, _ = asu_catalogue_tables(preferred, fetch_fn=None)
+        return df
+
     routes = [("preferred", lambda: list_tables(preferred, query_fn=query_fn))]
     if keywords:
         routes.append(("keyword", lambda: search_tables(keywords, query_fn=query_fn)))
+    routes.append(("preferred_non_tap", _preferred_non_tap))
     any_failed = False
     for route, lister in routes:
+        if route == "preferred_non_tap" and any_failed:
+            # TAP itself failed, and ``list_tables`` already fell through to
+            # the non-TAP route inside that failure.  Asking again would only
+            # re-walk endpoints the circuit breaker has just opened.
+            continue
         try:
             tabs = lister()
         except Exception as exc:                          # noqa: BLE001
+            if route == "preferred_non_tap":
+                # A supplementary route that could not be reached does not
+                # change what TAP said.  QUERY_RETURNED_ZERO_ROWS and
+                # QUERY_FAILED are different facts, and only the TAP routes
+                # decide between them, so this is a note and not an error.
+                if log:
+                    log.record(f"discover_{catalogue}_{route}", f"ASU metadata ~ {preferred!r}",
+                               rows=0, extra={"note": repr(exc)[:300]})
+                continue
             any_failed = True
             if log:
                 log.record(f"discover_{catalogue}_{route}", f"TAP_SCHEMA.tables ~ {preferred!r}",
@@ -1764,7 +1820,12 @@ def discover_event_table(catalogue: str, preferred: str, keywords=(), *, query_f
         for _, row in tabs.iterrows():
             t = unquote_table(row["table_name"])
             try:
-                cols = table_columns(t, query_fn=query_fn)
+                # the non-TAP listing already carries the real column names;
+                # handing them over stops a second round trip per table and
+                # lets discovery work at all when TAP_SCHEMA has no row for it
+                cols = table_columns(t, query_fn=query_fn,
+                                     known=list(row.get("columns") or [])
+                                     if "columns" in tabs.columns else None)
             except Exception as exc:                      # noqa: BLE001
                 board.append({"table": t, "route": route, "score": 0,
                               "reason": f"columns query failed: {exc!r}"[:200]})
@@ -1881,6 +1942,8 @@ def fetch_events(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | 
     for c in ("t_peak", "t_start", "t_end", "energy", "amplitude", "prot", "ra", "dec"):
         if c in out.columns:
             out[c] = pd.to_numeric(out[c], errors="coerce")
+    if "label" in out.columns:
+        out["label"] = out["label"].astype(str).str.strip()
     if "star_id" in out.columns:
         out["star_id"] = out["star_id"].map(clean_star_id)
     if "sector" in out.columns:
@@ -1930,7 +1993,13 @@ def discover_and_fetch_rotation(catalogue: str, preferred: str, keywords=(), *,
         return pd.DataFrame(), rec
     t, roles = best
     top = f"TOP {int(max_rows)} " if max_rows else ""
-    adql = f'SELECT {top}"{roles["star_id"]}", "{roles["prot"]}" FROM "{t}"'
+    # positions ride along when the table has them: the star tables of
+    # Tu+2022 and Guenther+2020 carry _RA/_DE, and a shortlist that already
+    # has a position does not need the TIC round trip that reached only 45%
+    # of the first run's shortlist
+    keep = ["star_id", "prot"] + [r for r in ("ra", "dec") if r in roles]
+    sel = ", ".join(f'"{roles[r]}"' for r in keep)
+    adql = f'SELECT {top}{sel} FROM "{t}"'
     try:
         df = query_fn(adql)
     except Exception as exc:                              # noqa: BLE001
@@ -1941,12 +2010,14 @@ def discover_and_fetch_rotation(catalogue: str, preferred: str, keywords=(), *,
     n = int(len(df)) if df is not None else 0
     if log:
         log.record(f"fetch_rot_{catalogue}", adql, rows=n)
-    rec.update({"table": t, "roles": {"star_id": roles["star_id"], "prot": roles["prot"]},
+    rec.update({"table": t, "roles": {r: roles[r] for r in keep},
                 "status": STATUS_OK if n else STATUS_ZERO, "n_rows": n})
     if not n:
         return pd.DataFrame(), rec
     out = pd.DataFrame({"star_id": df.iloc[:, 0].map(clean_star_id),
                         "prot": pd.to_numeric(df.iloc[:, 1], errors="coerce")})
+    for j, r in enumerate(keep[2:], start=2):
+        out[r] = pd.to_numeric(df.iloc[:, j], errors="coerce")
     out["prot_source"] = catalogue
     return out, rec
 
@@ -2088,4 +2159,5 @@ __all__ = ["BREAKER_LOG", "ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_
            "parse_asu_meta", "parse_asu_tsv", "parse_readme", "reset_route_state",
            "resolve_columns", "resolve_event_columns", "route_log_summary", "route_note",
            "score_event_table", "search_tables", "split_catalogue", "table_columns",
-           "tap_query", "translate_adql", "unquote_table", "vizier_table"]
+           "tap_query", "time_offset_from_description", "translate_adql", "unquote_table",
+           "vizier_table"]

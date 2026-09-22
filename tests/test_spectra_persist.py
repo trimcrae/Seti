@@ -758,6 +758,25 @@ def test_reduce_refuses_to_overwrite_a_real_summary_with_stale_checkpoints(tmp_p
     assert json.loads((out / "summary.json").read_text())["n_alive"] == 6
 
 
+def test_band_gap_context_names_the_heads_either_side():
+    """All six lines left standing sit between two molecular band heads in the
+    star's frame, where the flux of a cool star is a relative maximum -- the
+    one explanation that covers the whole surviving set and that neither the
+    per-exposure test nor a second epoch can see."""
+    from seti.spectra.linelist import band_gap_context
+    a = band_gap_context(6809.261, -0.000167)
+    assert a["between_band_heads"]
+    assert a["band_blue_label"].startswith("CaH head") and a["band_red_label"].startswith("CaH")
+    assert 50 < a["band_blue_dA"] < 70 and 90 < a["band_red_dA"] < 110
+    b = band_gap_context(8578.276, -0.000428)
+    assert b["between_band_heads"] and b["band_blue_label"].startswith("VO head")
+    # The blue, where there are no molecular bands to sit between.
+    assert not band_gap_context(4200.0, 0.0)["between_band_heads"]
+    # The star's own redshift moves the heads with it.
+    hi = band_gap_context(6809.261, 0.01)
+    assert hi["band_blue_dA"] != a["band_blue_dA"]
+
+
 def test_atmospheric_context_flags_a_telluric_band_and_an_oh_list_gap():
     """Five of the six lines left standing after the first run sit in the red,
     where the hand-kept OH list has gaps and the telluric bands are not listed

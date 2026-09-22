@@ -278,6 +278,50 @@ def atmospheric_context(lam_obs: float, window_A: float = 60.0) -> dict:
     return out
 
 
+_BAND_LABELS = ("TiO head", "VO head", "CaH head", "MgH head", "CN head", "C2 Swan",
+                "ZrO head", "YO head", "CH G band")
+_BAND_MASK = np.isin(_LABEL, list(_BAND_LABELS))
+
+
+def band_gap_context(lam_obs: float, z: float = 0.0, near_A: float = 150.0) -> dict:
+    """The molecular band heads either side of the candidate, in the star's frame.
+
+    In a cool star the flux between two band heads is a *relative maximum*, and
+    a matched filter run against a local linear continuum that is itself inside
+    the band structure reads that maximum as an unresolved emission line. The
+    feature is then in every exposure of the star and in every epoch of it, so
+    neither the per-exposure test nor a second epoch can see it -- which is why
+    the band heads either side have to be on the record next to the candidate.
+
+    Reported, never enforced: the empirical version is the same-type control
+    sample, and this is the reason to look at it.
+    """
+    lam = float(lam_obs)
+    z = float(z) if np.isfinite(z) else 0.0
+    shifted = _WAVE_VAC[_BAND_MASK] * (1.0 + z)
+    labels = _LABEL[_BAND_MASK]
+    out = {"band_blue_label": "", "band_blue_dA": float("nan"),
+           "band_red_label": "", "band_red_dA": float("nan"),
+           "between_band_heads": False}
+    if shifted.size == 0:
+        return out
+    d = lam - shifted
+    blue = np.where(d > 0)[0]           # heads at shorter wavelength than the line
+    red = np.where(d < 0)[0]
+    if blue.size:
+        k = blue[int(np.argmin(d[blue]))]
+        out["band_blue_label"] = f"{labels[k]} {shifted[k]:.1f}"
+        out["band_blue_dA"] = round(float(d[k]), 1)
+    if red.size:
+        k = red[int(np.argmax(d[red]))]
+        out["band_red_label"] = f"{labels[k]} {shifted[k]:.1f}"
+        out["band_red_dA"] = round(float(-d[k]), 1)
+    out["between_band_heads"] = bool(
+        np.isfinite(out["band_blue_dA"]) and np.isfinite(out["band_red_dA"])
+        and out["band_blue_dA"] <= near_A and out["band_red_dA"] <= near_A)
+    return out
+
+
 def n_lines() -> int:
     return int(_WAVE_VAC.size)
 

@@ -1956,7 +1956,13 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     """Merge checkpoints into the flat table + summary; add SIMBAD and line IDs."""
     import pandas as pd
 
-    from .linelist import atmospheric_context, build_nist_cache, identify_rest_frame, nist_context
+    from .linelist import (
+        atmospheric_context,
+        band_gap_context,
+        build_nist_cache,
+        identify_rest_frame,
+        nist_context,
+    )
     root = Path(root)
     out_dir = root / "results" / "spectra_persist"
     ckpt = out_dir / "ckpt"
@@ -2066,6 +2072,14 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     for k in atm[0].keys() if atm else []:
         tab[k] = [d[k] for d in atm]
 
+    # And where it sits relative to the star's own molecular band heads: the
+    # flux BETWEEN two heads in a cool star is a relative maximum, which a
+    # matched filter on a local linear continuum reads as an emission line --
+    # in every exposure and in every epoch, so nothing upstream can see it.
+    bg = [band_gap_context(w, z) for w, z in zip(tab["wavelength"], z_col, strict=True)]
+    for k in bg[0].keys() if bg else []:
+        tab[k] = [d[k] for d in bg]
+
     # SIMBAD for every unique position (refresh; the triage table has gaps).
     if do_simbad:
         try:
@@ -2126,7 +2140,8 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
                              "n_tested", "n_present", "simbad_otype", "simbad_sptype",
                              "n_lines_in_spectrum", "known_line_label", "known_line_dv_kms",
                              "telluric_band", "oh_gap_A", "oh_density_per_100A",
-                             "second_epoch")
+                             "between_band_heads", "band_blue_label", "band_blue_dA",
+                             "band_red_label", "band_red_dA", "second_epoch")
                             if c in alive.columns]].to_dict("records")],
         "verdict": ("PERSISTENT_UNIDENTIFIED_LINES_REMAIN" if len(alive)
                     else ("NO_DATA_REACHED" if not counts or set(counts) <= {"not_run", "untestable"}

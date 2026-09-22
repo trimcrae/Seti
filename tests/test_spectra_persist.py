@@ -717,6 +717,18 @@ class _EpochSparcl(_FakeSparcl):
         return out
 
 
+def test_control_sample_takes_an_explicit_constraint_for_the_same_plate():
+    """The same-plate sample is not about stars: it asks whether OTHER FIBRES
+    of the same exposure set show the feature at the same wavelength, which is
+    what a bad CCD column does and what nothing upstream can see."""
+    lam = 6809.26
+    got = persist.control_sample(_FakeSparcl(lam, amp_obs=1.0), "SDSS-DR17", lam,
+                                 "emission", z_cand=0.0, n=8,
+                                 extra_constraint={"plate": [412]}, label="plate=412")
+    assert got["constraint"] == "plate=412"
+    assert got["obs_frame"]["frac_ge5"] > 0.8, got
+
+
 def test_epoch_series_measures_every_epoch_not_just_the_best():
     """`second_epoch` keeps only the strongest detection, which answers "was it
     seen again" and nothing else.  A line of constant strength across years is

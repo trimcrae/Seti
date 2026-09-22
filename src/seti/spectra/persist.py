@@ -1413,7 +1413,8 @@ def survey_subclass(sptype: str | None) -> str:
 
 def control_sample(client, release: str, lam0: float, mode: str, z_cand: float,
                    subclass: str | None = None, n: int = 40,
-                   exclude_ids: tuple = (), seed: int = 0) -> dict:
+                   exclude_ids: tuple = (), seed: int = 0,
+                   extra_constraint: dict | None = None, label: str = "") -> dict:
     """Measure the same line in unrelated spectra of the same kind of star.
 
     The per-exposure test and a second epoch cannot reject a feature that the
@@ -1446,7 +1447,18 @@ def control_sample(client, release: str, lam0: float, mode: str, z_cand: float,
            "obs_frame": {"n_measured": 0}, "star_frame": {"n_measured": 0}}
     cons: dict = {"data_release": [release], "spectype": ["STAR"]}
     fields = ["sparcl_id", "data_release", "redshift", "spectype"]
-    tries = []
+    if extra_constraint:
+        # A same-plate sample is not about stars at all: it asks whether OTHER
+        # FIBRES of the same exposure set show the feature at the same
+        # wavelength, which is what a bad CCD column does and what nothing
+        # upstream can see, because it is in every exposure of that plate and
+        # in every repeat observation of it.
+        cons = {"data_release": [release], **extra_constraint}
+        out["constraint"] = label or str(extra_constraint)
+        tries = [(cons, out["constraint"])]
+        subclass = None
+    else:
+        tries = []
     if subclass:
         for key in ("subclass", "subtype"):
             tries.append(({**cons, key: [subclass]}, f"{key}={subclass}"))
@@ -1531,6 +1543,7 @@ def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
             continue
         when[sid] = str(_rget(r, "dateobs_center", ""))
         by_rel.setdefault(rel, []).append(sid)
+    seen_fibres: set = set()
     for rel, ids in by_rel.items():
         for got in (sparcl_retrieve(client, ids[:max_epochs], rel),):
             for r in got:
@@ -1546,9 +1559,21 @@ def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
                                  sky=r.get("sky"))
                 fit = fit_line_profile(w, np.asarray(r.get("flux", []), float),
                                        np.asarray(r.get("ivar", []), float), lam0, lsf, mode)
+                # WHICH fibre of which plate: SDSS repeat spectra of one object
+                # are very often the same plate and fibre on another night, i.e.
+                # the same CCD column.  Eight "independent epochs" that are all
+                # one fibre confirm a detector defect exactly as well as they
+                # confirm a source, and the summary's best-of number cannot say
+                # which.
+                ids_ = sdss_ids_from_record(r) or {}
+                fibre_key = (ids_.get("plate"), ids_.get("fiberid"))
+                if fibre_key != (None, None):
+                    seen_fibres.add(fibre_key)
                 out["epochs"].append(_json_safe({
                     "spec_id": sid, "is_self": sid == str(exclude_id),
                     "data_release": rel, "dateobs_center": when.get(sid, ""),
+                    "plate": ids_.get("plate"), "mjd": ids_.get("mjd"),
+                    "fiberid": ids_.get("fiberid"),
                     "testable": m.get("testable"), "reason": m.get("reason"),
                     "sig": m.get("sig"), "ew": m.get("ew"), "cont": m.get("cont"),
                     "sky_peak_sig": m.get("sky_peak_sig"),
@@ -1567,6 +1592,8 @@ def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
                                  if np.median(ew) else float("nan"))
         out["n_sig_ge4"] = int(np.sum(sg >= 4.0))
         out["sig_min"], out["sig_max"] = float(np.min(sg)), float(np.max(sg))
+    out["n_distinct_fibres"] = len(seen_fibres)
+    out["distinct_fibres"] = sorted(f"{p}-{f}" for p, f in seen_fibres)
     return out
 
 
@@ -1636,10 +1663,23 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
                 float(r["wavelength"]), str(r.get("search_mode", "emission")))
         except Exception as exc:  # noqa: BLE001
             e["epoch_series"] = {"error": repr(exc)[:300]}
-        # Two samples: stars of this object's own type, and stars of any type.
-        # A feature the spectral TYPE makes appears in the first and not the
-        # second; one the sky or the instrument makes appears in both.
-        for name, sc in (("same_type", sub), ("any_star", None)):
+        # Three samples.  Stars of this object's own type and stars of any type:
+        # a feature the spectral TYPE makes appears in the first and not the
+        # second; one the sky makes appears in both.  And other FIBRES of the
+        # same plate: a bad CCD column puts a narrow feature at one wavelength
+        # in every fibre of that exposure set, and it is in every exposure and
+        # in every repeat observation of the plate, so nothing upstream sees it.
+        plate = None
+        ident = str(r.get("identifier") or "")
+        m = re.match(r"^(\d{4})-(\d+)-(\d+)$", ident)
+        if m:
+            plate = int(m.group(1))
+        samples = [("same_type", sub, None, ""), ("any_star", None, None, "")]
+        if plate is not None:
+            samples.append(("same_plate", None, {"plate": [plate]}, f"plate={plate}"))
+        else:
+            e["same_plate"] = {"error": "no plate in the identifier (not an SDSS route)"}
+        for name, sc, extra, lbl in samples:
             if name == "same_type" and not sub:
                 e[name] = {"error": "no spectral type known for this object"}
                 continue
@@ -1647,12 +1687,14 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
                 e[name] = control_sample(client, rel, float(r["wavelength"]),
                                          str(r.get("search_mode", "emission")), z,
                                          subclass=sc, n=n,
-                                         exclude_ids=(str(r["spec_id"]),))
+                                         exclude_ids=(str(r["spec_id"]),),
+                                         extra_constraint=extra, label=lbl)
             except Exception as exc:  # noqa: BLE001
                 e[name] = {"error": repr(exc)[:300]}
             time.sleep(0.5)
         sa = (e.get("same_type", {}).get("obs_frame") or {})
         an = (e.get("any_star", {}).get("obs_frame") or {})
+        sp = (e.get("same_plate", {}).get("obs_frame") or {})
         es = e.get("epoch_series", {})
         print(f"[persist] control {e['identifier']} lam={e['wavelength']:.1f} "
               f"fwhm/lsf={e.get('fwhm_over_lsf')}+-{e.get('fwhm_over_lsf_err')} "
@@ -1661,7 +1703,8 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
               f"sig {es.get('sig_min')}..{es.get('sig_max')} "
               f"EW spread {es.get('ew_spread_frac')}; "
               f"same-type frac>=3: {sa.get('frac_ge3')} (n={sa.get('n_measured')}), "
-              f"any-star frac>=3: {an.get('frac_ge3')} (n={an.get('n_measured')})")
+              f"any-star frac>=3: {an.get('frac_ge3')} (n={an.get('n_measured')}), "
+              f"same-plate frac>=3: {sp.get('frac_ge3')} (n={sp.get('n_measured')})")
         entries.append(_json_safe(e))
         time.sleep(0.5)
     rep = {"n": len(entries), "n_control_requested": int(n), "entries": entries}

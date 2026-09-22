@@ -171,3 +171,12 @@ broadband:
 
 probe:
   budget_s: 1500.0
+  # A clock on ONE table's discovery, not just on the stage.  budget_s only
+  # decides whether to START a table; without this a single slow catalogue
+  # runs its whole route ladder (TAP mirrors, ASU, astroquery, each retrying)
+  # and then a column query plus a row count for every table it lists, and
+  # the cheap probe eats the job's 240 minutes.  Run 35744731075 sat in probe
+  # for over 50 minutes on a 25-minute stage budget for exactly this reason.
+  # A truncated discovery reports DISCOVERY_TRUNCATED_BY_BUDGET and is never
+  # read as "the catalogue holds nothing usable".
+  table_budget_s: 240.0

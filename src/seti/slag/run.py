@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import os
 import time as _time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -625,6 +626,7 @@ def _match_controls(cfg: dict, panels: list[dict]) -> list[dict]:
                               for p in best.get("pairs", [])],
                        flags=[{k: f.get(k) for k in ("flag", "fired", "z", "kills", "survives",
                                                      "note")} for f in best.get("flags", [])],
+                       per_element=((best.get("misfit") or {}).get("per_element") or {}),
                        max_abs_residual_sigma=(best.get("fit_restricted") or {}).get(
                            "max_abs_residual_sigma"))
         out.append(rec)
@@ -669,6 +671,39 @@ def _count_by(rows: list[dict], key: str) -> dict:
     for r in rows:
         v = str(r.get(key))
         out[v] = out.get(v, 0) + 1
+    return out
+
+
+
+def _code_provenance() -> dict:
+    """Which commit computed this, and on which runner.
+
+    A job that checks out a BRANCH rather than a commit runs whatever is at the
+    head when it starts, so a result that does not name its own commit cannot
+    be reproduced or compared with the next one.  (A sibling channel found two
+    shards of one dispatch measuring with two different estimators for exactly
+    this reason.)  Everything here is best effort: a missing repository is
+    recorded, never guessed.
+    """
+    import subprocess  # noqa: PLC0415  only ever called once, at assess time
+
+    out: dict = {"run_id": os.environ.get("GITHUB_RUN_ID"),
+                 "workflow": os.environ.get("GITHUB_WORKFLOW"),
+                 "dispatch_sha": os.environ.get("GITHUB_SHA"),
+                 "ref": os.environ.get("GITHUB_REF_NAME")}
+    try:
+        root = str(_repo_root())
+        r = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"],
+                           capture_output=True, text=True, timeout=30, check=False)
+        out["commit"] = r.stdout.strip() or None
+        if r.returncode != 0:
+            out["commit_error"] = (r.stderr or "")[:200]
+        d = subprocess.run(["git", "-C", root, "status", "--porcelain"],
+                           capture_output=True, text=True, timeout=30, check=False)
+        out["dirty"] = bool(d.stdout.strip())
+    except Exception as exc:                                  # noqa: BLE001
+        out["commit"] = None
+        out["commit_error"] = repr(exc)[:200]
     return out
 
 
@@ -748,6 +783,12 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
             "worst_element": best["elements"][int(np.argmax(np.abs(fr["residual_sigma"])))]
             if best["elements"] else "",
             "misfit_class": best.get("misfit_class"),
+            "per_element_worst": ((best.get("misfit") or {}).get("per_element") or {}
+                                  ).get("_worst", {}).get("element"),
+            "per_element_worst_p": ((best.get("misfit") or {}).get("per_element") or {}
+                                    ).get("_worst", {}).get("p"),
+            "per_element_worst_p_corrected": ((best.get("misfit") or {}).get("per_element") or {}
+                                              ).get("_worst", {}).get("p_min_corrected"),
             "n_sources": len(rows), "trace_measured": " ".join(best.get("trace_elements_measured", [])),
             "n_pairs_exceeding": sum(1 for p in best.get("pairs", []) if p.get("exceeds")),
             "n_flags_fired": sum(1 for f in best.get("flags", []) if f.get("fired")),
@@ -780,7 +821,8 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     pairs_df = pd.DataFrame(pair_rows)
     flags_df = pd.DataFrame(flag_rows)
     if len(pairs_df):
-        pairs_df.sort_values("z_pair", key=lambda s: -s.abs()).to_csv(out_dir / "pairs.csv", index=False)
+        pairs_df.sort_values("z_pair", key=lambda s: -s.abs()).to_csv(out_dir / "pairs.csv",
+                                                                     index=False)
     if len(flags_df):
         flags_df.to_csv(out_dir / "flags.csv", index=False)
     # candidates: anything that exceeded / fired and survives every kill
@@ -801,9 +843,13 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
                              "survives": f.get("survives"), "n_measured": r["n_measured"],
                              "p_misfit": r["misfit"]["p_misfit"], "atmosphere": r["atmosphere"],
                              "teff": r["teff"]})
-    cand_df = pd.DataFrame(cand)
-    if len(cand_df):
-        cand_df.to_csv(out_dir / "candidates.csv", index=False)
+    # Always written, header included: an ABSENT candidates.csv is ambiguous
+    # between "nothing exceeded" and "the assess stage never got here", and
+    # those are not the same statement.
+    cand_cols = ["name", "reference", "kind", "what", "z", "kills", "survives", "n_measured",
+                  "p_misfit", "atmosphere", "teff"]
+    cand_df = pd.DataFrame(cand, columns=cand_cols) if cand else pd.DataFrame(columns=cand_cols)
+    cand_df.to_csv(out_dir / "candidates.csv", index=False)
     survivors = [c for c in cand if c.get("survives")]
     controls = _match_controls(cfg, panels)
     _write_json(out_dir / "controls.json", {"generated_utc": _now(), "controls": controls})
@@ -845,6 +891,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         verdict = VERDICT_LIST
     summary = {
         "generated_utc": _now(), "verdict": verdict, "degraded": degraded,
+        "code": _code_provenance(),
         "acquisition": acq, "timescale_source": ts_source,
         "timescale_library": ts_library, "limit_bookkeeping": limit_book,
         "object_grouping": obj_grouping,

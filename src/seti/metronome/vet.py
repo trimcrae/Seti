@@ -9,6 +9,13 @@ dullest one:
                             is counted at event level in the screen stage)
 ``not_significant``         the window-resampled null explains the coherence
                             (BH-FDR across every star scanned)
+``pool_null_explains``      the coherence is not rarer than the same statistic
+                            on N times drawn from the OTHER stars' catalogued
+                            event times inside this star's own windows.  That
+                            null carries the catalogue's real time lattice and
+                            epoch structure without modelling either, so a
+                            period that only looks sharp because the catalogue
+                            quantises its peak times dies here
 ``cadence_alias``           P at a named instrumental period or its low
                             harmonics (Kepler cadence / momentum-dump / monthly
                             downlink / quarter; TESS orbit / sector / cadences)
@@ -20,6 +27,17 @@ dullest one:
                             Gaia DR3 vari / ZTF) and P sits at its period or a
                             low harmonic: a pulsator's cycles chopped into
                             "flares" by the flare finder
+``population_period``       unrelated stars of the same mission pile up at
+                            this period.  A clock is a property of ONE star;
+                            a period that many independent stars share is a
+                            property of the mission's sampling.  Measured
+                            from the run's own scanned population, so it
+                            needs no list of instrumental periods and catches
+                            the ones nobody wrote down
+``few_cycles``              the period repeated too few times inside the
+                            observing windows for "recurs" to mean anything
+                            --- the long-period tail where P approaches the
+                            span/3 grid edge and three sector groups phase up
 ``bursty_random``           the shuffle null does not beat the observed H
                             (coherence explained by the waiting-time
                             distribution) AND the waiting times are not
@@ -29,21 +47,31 @@ dullest one:
 
 Report-only flags never reject: ``energy_incoherent`` (flare energy depends
 on clock phase --- what visibility modulation does and a beacon should not),
+``quality_uninformative`` (fewer than ``n_quality_informative`` events, so the
+strict Q / jitter gates carry no discriminating power on this star and its
+case rests on the null alone -- see :func:`calibrate_jitter`),
 ``rotation_unknown``, ``variability_catalogue_unreached``, ``p_extrapolated``,
-``null_truncated_by_budget``.
+``null_truncated_by_budget``, ``quantisation_limited`` (the measured phase
+jitter is at the floor the catalogue's own time rounding imposes, so the
+tightness is a property of the time stamps rather than evidence about the
+star), ``pool_null_unreached`` (too few other-star times inside the windows to
+run null 3; the star is NOT credited with passing it).
 
 Tiers
 -----
 ``none``       not significant at the watch FDR, or a hard veto tripped
 ``watch``      significant at ``fdr_alpha_watch``, no hard veto, loose quality
 ``interest``   significant at ``fdr_alpha``, strict quality, but a veto could
-               not be applied (no P_rot, or a variability catalogue was not
-               reached) --- candidate-grade statistics with an incomplete vet
+               not be applied (no P_rot, a variability catalogue was not
+               reached, or the pool null could not be run) --- candidate-grade
+               statistics with an incomplete vet
 ``candidate``  significant at ``fdr_alpha``, strict quality, every veto
                applied and passed.  PENDING human/light-curve vet always.
 """
 
 from __future__ import annotations
+
+import math
 
 import numpy as np
 
@@ -76,6 +104,53 @@ DEFAULT_VET: dict = {
     "f_core_watch": 0.4,
     "core_n_min": 8,
     "energy_p_max": 0.01,
+    # Null 3.  A star must be rarer than `pool_alpha` against the catalogue's
+    # own event times resampled inside its windows.  The threshold is loose on
+    # purpose: with n_pool = 200 trials the smallest reachable p is ~0.005, and
+    # the job of this null is to kill lattice artefacts, not to re-rank real
+    # clocks that null 1 has already put at p ~ 1e-20.
+    "pool_alpha": 0.05,
+    # A catalogue that rounds its peak times to a lattice of spacing g forces
+    # an rms phase jitter of at least g / (P sqrt(12)) on ANY clock.  A star
+    # whose measured jitter is within `quantisation_factor` of that floor is as
+    # tight as its time stamps allow and no tighter, which is a fact about the
+    # catalogue, not about the star.  Report-only: it says where to look, the
+    # pool null says whether to believe.
+    "quantisation_factor": 1.5,
+    # ``few_cycles``.  The claim "the brightenings recur on a clock" is only
+    # as strong as the number of repeats behind it.  ``cycles_span`` counts
+    # the ticks whose phase window had any observing coverage, i.e. the
+    # opportunities the clock had; below ``cycles_min`` the star is vetoed.
+    # MEASURED on the 2026-09-21 run: every star whose best period exceeded
+    # ~span/4 had cycles_span <= 5, and those periods clustered at 243 d
+    # (TESS) and 372 d (Kepler) across unrelated stars -- window structure,
+    # not clocks.  This bounds the channel's reach to P < span / cycles_min
+    # and that bound is reported in the coverage block.
+    "cycles_min": 10.0,
+    # ``population_period``.  Per mission, over the log10 periods of every
+    # scanned star: a star is vetoed when at least ``pop_min_count`` OTHER
+    # stars sit within ``pop_tol_dex`` of it and that count is Poisson-rarer
+    # than ``pop_alpha`` against the local background density measured over
+    # ``pop_bg_dex``.  The tolerance is a fractional period tolerance (0.005
+    # dex ~ 1.2%), matched to the period resolution of the scan.
+    # ``pop_min_stars`` is the population below which the density estimate
+    # says nothing and the veto is not applied at all.
+    "pop_tol_dex": 0.005,
+    "pop_bg_dex": 0.25,
+    "pop_min_count": 4,
+    "pop_alpha": 1e-3,
+    "pop_min_stars": 50,
+    # MEASURED on run 35652897914: with the period free on a ~10^4-point grid
+    # the fitted jitter is a function of N before it is a function of the
+    # star -- median jitter 0.030 at N = 8-11 rising to 0.217 at N >= 80 --
+    # and 83% of the stars that run itself rejected as `rotation_alias`
+    # (every one of them N <= 34) pass BOTH strict quality gates.  The gates
+    # are a look-elsewhere floor at small N, not a clock criterion, so a star
+    # below this many events carries the report flag `quality_uninformative`
+    # and its case rests on the null alone.  The null itself is not fooled:
+    # the window null's own best fit reaches Q ~ 0.25, jitter ~ 0.18 and is
+    # inside the strict gate for under 1% of stars.
+    "n_quality_informative": 35,
     "instrumental_periods": {
         "kepler": {"long_cadence": 0.020434, "momentum_dump": 3.0,
                    "monthly_downlink": 31.0, "quarter": 93.0},
@@ -85,10 +160,12 @@ DEFAULT_VET: dict = {
     },
 }
 
-HARD_VETO_ORDER = ("cadence_alias", "rotation_alias", "periodic_variable",
-                   "bursty_random", "jitter_too_large")
+HARD_VETO_ORDER = ("pool_null_explains", "population_period", "few_cycles",
+                   "cadence_alias", "rotation_alias",
+                   "periodic_variable", "bursty_random", "jitter_too_large")
 REPORT_FLAGS = ("energy_incoherent", "rotation_unknown", "variability_catalogue_unreached",
-                "p_extrapolated", "null_truncated_by_budget")
+                "p_extrapolated", "null_truncated_by_budget", "quantisation_limited",
+                "pool_null_unreached", "quality_uninformative")
 
 
 def _close(a: float, b: float, tol: float) -> bool:
@@ -137,6 +214,66 @@ def periodic_variable(period: float, catalogued, harmonics=None, tol: float = 0.
             if _close(period, p * float(h), tol):
                 return True, f"{src}:{vtype}:P={p:.6g}x{h:.3g}"
     return False, None
+
+
+def population_period_stats(records, conf: dict | None = None) -> None:
+    """Annotate each scanned record with how crowded its best period is.
+
+    Sets ``pop_n_near`` (other scanned stars of the same mission within
+    ``pop_tol_dex``), ``pop_expected`` (the local background density scaled to
+    that tolerance) and ``pop_p`` (Poisson survival) **in place**.
+
+    The argument this makes is the one thing a per-star null cannot make: a
+    clock belongs to a star, so two unrelated stars agreeing on a period to
+    1% is either a coincidence with a computable probability or a property of
+    the instrument.  The background is measured locally in log period, so the
+    steep rise of the period distribution toward the grid floor is divided
+    out and only genuine *narrow* pile-ups are flagged.
+    """
+    c = dict(DEFAULT_VET, **(conf or {}))
+    tol, bg = float(c["pop_tol_dex"]), float(c["pop_bg_dex"])
+    by_mission: dict[str, list[dict]] = {}
+    for r in records:
+        if r.get("status") != "scanned":
+            continue
+        p = _f(r, "period")
+        if not (np.isfinite(p) and p > 0):
+            continue
+        by_mission.setdefault(str(r.get("mission", "") or "").lower(), []).append(r)
+    for _, group in by_mission.items():
+        if len(group) < int(c["pop_min_stars"]):
+            # too few stars for a density to mean anything; leave the keys
+            # unset so vet_star does not apply the veto rather than applying
+            # it with a meaningless background
+            continue
+        lp = np.log10(np.array([_f(r, "period") for r in group], dtype=float))
+        srt = np.sort(lp)
+        n_near = (np.searchsorted(srt, lp + tol, "right")
+                  - np.searchsorted(srt, lp - tol, "left") - 1)
+        n_bg = (np.searchsorted(srt, lp + bg, "right")
+                - np.searchsorted(srt, lp - bg, "left") - 1)
+        # the background band is wider than the test band by bg/tol, and the
+        # star itself is excluded from both
+        expected = n_bg * (tol / bg)
+        for r, k, lam in zip(group, n_near, expected, strict=True):
+            r["pop_n_near"] = int(k)
+            r["pop_expected"] = float(lam)
+            r["pop_p"] = float(_poisson_sf(int(k), float(lam)))
+
+
+def _poisson_sf(k: int, lam: float) -> float:
+    """P(X >= k) for X ~ Poisson(lam), without a SciPy dependency."""
+    if k <= 0:
+        return 1.0
+    lam = max(float(lam), 1e-12)
+    # sum the first k terms of the pmf; k is small (a handful to a few tens)
+    # and lam is small, so the direct sum is stable in double precision
+    term = math.exp(-lam)
+    cdf = term
+    for i in range(1, k):
+        term *= lam / i
+        cdf += term
+    return float(min(1.0, max(0.0, 1.0 - cdf)))
 
 
 def _f(rec: dict, key: str) -> float:
@@ -228,6 +365,46 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     mission = str(ctx.get("mission", rec.get("mission", ""))).lower()
     inst = (c.get("instrumental_periods") or {}).get(mission) or {}
 
+    # Null 3 first: it is the most mundane explanation available (the
+    # catalogue's own sampling reproduces the coherence), and unlike the
+    # window null it needs no model of the cadence to say so.
+    p_pool = _f(rec, "p_pool")
+    n_pool = int(rec.get("pn_n_trials", 0) or 0)
+    if n_pool > 0:
+        if np.isfinite(p_pool) and p_pool >= float(c["pool_alpha"]):
+            flags.append("pool_null_explains")
+            detail["pool_null_explains"] = {"p_pool": p_pool, "n_trials": n_pool}
+    else:
+        flags.append("pool_null_unreached")
+    floor, jit = _f(rec, "jitter_floor"), _f(rec, "jitter")
+    jit_used = jit if np.isfinite(jit) else _f(rec, "jitter_core")
+    if np.isfinite(floor) and floor > 0 and np.isfinite(jit_used) \
+            and jit_used <= float(c["quantisation_factor"]) * floor:
+        flags.append("quantisation_limited")
+        detail["quantisation_limited"] = {"jitter": jit_used, "jitter_floor": floor,
+                                          "grid_days": _f(rec, "grid_days"),
+                                          "grid_source": rec.get("grid_source")}
+
+    # Unrelated stars sharing a period: a property of the mission, not of any
+    # one star.  Needs population_period_stats to have run over every record.
+    pop_k = rec.get("pop_n_near")
+    if pop_k is not None:
+        pop_p = _f(rec, "pop_p")
+        if int(pop_k) >= int(c["pop_min_count"]) and np.isfinite(pop_p) \
+                and pop_p < float(c["pop_alpha"]):
+            flags.append("population_period")
+            detail["population_period"] = {"n_near": int(pop_k),
+                                           "expected": _f(rec, "pop_expected"),
+                                           "p": pop_p,
+                                           "tol_dex": float(c["pop_tol_dex"])}
+
+    # Too few repeats for "recurs" to mean anything.
+    cyc = _f(rec, "cycles_span")
+    if np.isfinite(cyc) and cyc < float(c["cycles_min"]):
+        flags.append("few_cycles")
+        detail["few_cycles"] = {"cycles_span": cyc, "cycles_min": float(c["cycles_min"]),
+                                "period": period, "span_days": _f(rec, "span_days")}
+
     hit, d = cadence_alias(period, inst, c["cadence_harmonics"], float(c["cadence_tol"]))
     if hit:
         flags.append("cadence_alias")
@@ -279,6 +456,8 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
         flags.append("p_extrapolated")
     if bool(rec.get("wn_truncated_by_budget", False)):
         flags.append("null_truncated_by_budget")
+    if int(rec.get("n_events", 0) or 0) < int(c["n_quality_informative"]):
+        flags.append("quality_uninformative")
 
     hard = [f for f in HARD_VETO_ORDER if f in flags]
     if hard:
@@ -290,7 +469,8 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     detail["strict_quality"] = why_strict
     if bool(rec.get("fdr_significant", False)) and ok_strict:
         complete = ("rotation_unknown" not in flags
-                    and "variability_catalogue_unreached" not in flags)
+                    and "variability_catalogue_unreached" not in flags
+                    and "pool_null_unreached" not in flags)
         out["tier"] = "candidate" if complete else "interest"
     else:
         out["tier"] = "watch"
@@ -308,6 +488,7 @@ def assign_tiers(records: list[dict], contexts: dict | None = None,
     c = dict(DEFAULT_VET, **(conf or {}))
     contexts = contexts or {}
     recs = [dict(r) for r in records]
+    population_period_stats(recs, c)
     scanned = [i for i, r in enumerate(recs) if r.get("status") == "scanned"]
     p = np.array([float(recs[i].get("p_window", np.nan)) for i in scanned], dtype=float)
     sig = bh_fdr(p, float(c["fdr_alpha"])) if len(p) else np.zeros(0, dtype=bool)
@@ -388,9 +569,59 @@ def calibrate_jitter(vetted: list[dict], conf: dict | None = None) -> dict:
     jr = np.asarray([x for x in jr if np.isfinite(x)])
     out["fraction_of_rotation_population_below_jitter_max"] = (
         float((jr <= float(c["jitter_max"])).mean()) if len(jr) else float("nan"))
+    qr = np.asarray([float(r.get("Q", np.nan)) for r in rot], dtype=float)
+    both = np.isfinite(jr) if len(jr) == len(qr) else None
+    out["fraction_of_rotation_population_inside_strict_gate"] = (
+        float(((jr <= float(c["jitter_max"])) & (qr >= float(c["Q_min"]))).mean())
+        if both is not None and len(jr) else float("nan"))
+
+    # The measured look-elsewhere floor.  With a free period on a 10^4-point
+    # frequency grid, a handful of event times phase up whatever they are, so
+    # the fitted jitter is a function of N before it is a function of the
+    # star.  Two numbers say how badly, and the second is the honest one:
+    #   * the observed quality binned by N;
+    #   * the quality the star's OWN window null reaches at ITS best period
+    #     (wn_null_Q_median, wn_null_jitter_median) -- the same fit on times
+    #     that carry no clock at all.
+    # A gate the null routinely passes is not a gate.
+    def _med(sel, key):
+        v = np.asarray([_f(r, key) for r in sel], dtype=float)
+        v = v[np.isfinite(v)]
+        return float(np.median(v)) if len(v) else float("nan")
+
+    def _bin_stats(lo, hi):
+        sel = [r for r in allr if lo <= int(r.get("n_events", 0) or 0) < hi
+               and np.isfinite(_f(r, "wn_null_jitter_median"))]
+        if not sel:
+            return None
+        return {"n": len(sel), "jitter_p50": _med(sel, "jitter"),
+                "jitter_null_p50": _med(sel, "wn_null_jitter_median"),
+                "Q_p50": _med(sel, "Q"), "Q_null_p50": _med(sel, "wn_null_Q_median")}
+
+    edges = [8, 12, 16, 24, 40, 80, 10 ** 9]
+    out["by_n_events"] = {f"{a}-{b if b < 10 ** 9 else 'inf'}": _bin_stats(a, b)
+                          for a, b in zip(edges[:-1], edges[1:], strict=True)}
+    nulls_j = np.asarray([_f(r, "wn_null_jitter_median") for r in allr], dtype=float)
+    nulls_q = np.asarray([_f(r, "wn_null_Q_median") for r in allr], dtype=float)
+    ok = np.isfinite(nulls_j) & np.isfinite(nulls_q)
+    out["window_null_own_best_fit"] = {
+        "n": int(ok.sum()),
+        "jitter_p50": float(np.median(nulls_j[ok])) if ok.any() else float("nan"),
+        "Q_p50": float(np.median(nulls_q[ok])) if ok.any() else float("nan"),
+        "fraction_inside_strict_gate": float(
+            ((nulls_j[ok] <= float(c["jitter_max"]))
+             & (nulls_q[ok] >= float(c["Q_min"]))).mean()) if ok.any() else float("nan"),
+    }
+    out["n_quality_informative"] = float(c["n_quality_informative"])
+    out["note"] = (
+        "the fitted jitter falls with N because the period is free: read "
+        "by_n_events against window_null_own_best_fit before reading any "
+        "quality number as physics.  Stars below n_quality_informative carry "
+        "the report flag `quality_uninformative` and rest on the null alone")
     return out
 
 
 __all__ = ["DEFAULT_VET", "HARD_VETO_ORDER", "REPORT_FLAGS", "assign_tiers",
            "cadence_alias", "calibrate_jitter", "core_pass", "periodic_variable",
-           "quality_pass", "rejection_counters", "rotation_alias", "vet_star"]
+           "population_period_stats", "quality_pass", "rejection_counters",
+           "rotation_alias", "vet_star"]

@@ -10,6 +10,466 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ULINE: both stated limits removed — the five uncatalogued species are now predicted, and the Crockett table is sought over four more doors, 2026-09-22
+
+S54 (`docs/uline.md`). The channel's previous verdict was `NO_PATTERN` over 80
+U-lines from two IRC+10216 surveys, bounded by two limits. Both are now
+addressed; run **35752177872** (`stage=full`, 2,000 shift trials, branch
+`claude/goap-uline`, head `597cb9dd`) is the dispatch that measures the
+result. Four earlier dispatches (35744910528, 35745307702, 35746448791,
+35748462805) were cancelled *by this session while still queued*, each
+superseded by a correctness fix below; no runner time was consumed by any of
+them. The last cancellation is the instructive one: the verdict split made
+`PATTERN_CANDIDATE` mean "on a catalogued line list", and the channel's own
+injected-signal test seeds a **CHF₃** pattern whose constants are the
+placeholder `verify` block — so that test, which is the *first* step of
+`uline.yml`, would have failed and killed the job in two minutes, before a
+single archive call. Same failure shape as CRADLE's pandas-3 death, reached
+by a different road: a local suite that was never run to completion under
+load is not a green gate either.
+
+**Limit 1 — five species were never searched.** CF₂Cl₂, CFCl₃, SO₂F₂, CHClF₂
+and CF₂ have no JPL or CDMS entry, and are the most diagnostic precisely
+because they are long-lived and purely artificial. `src/seti/uline/rotor.py`
+now predicts their spectra from a **Watson A-reduced asymmetric-top
+Hamiltonian** with quartic and sextic distortion, Wang-block diagonalisation,
+Clebsch–Gordan line strengths reducing exactly to the symmetric-top limit, and
+nuclear-spin weights; constants for all five (both Cl isotopologues where
+relevant), each `verify` with a citation and an uncertainty class, are in
+`src/seti/data_assets/rotor_constants.yaml`. Validation is a runner
+measurement, not a claim: SO₂, CH₂F₂ and COF₂ are compared line by line with
+their catalogue entries and then refitted, so `rotor_validation.json`
+separates the error of the *constants* from the floor of the *Hamiltonian*,
+and re-predicts with the quartic terms zeroed to measure the
+distortion-truncation error directly.
+
+**What that measurement already says.** The catalogue gap is closed; the
+**constants** gap is not. In the IRC+10216 2 mm band, against a 15 MHz
+linewidth, the median predicted-frequency error is CF₂Cl₂ 138 MHz (×9),
+SO₂F₂ 146 (×10), CF₂ 92 (×6), CHClF₂ 677 (×45), CFCl₃ 1,430 (×95) — the last
+two `FREQUENCY_LIMITED`. That is reported per pair as `searchability` and
+rolled up as `targets_frequency_limited`, with the remedy named: **the
+published quartic constants, not more data.** Those figures are after an
+audit that raised two recalled A/B/C uncertainties (CFCl₃ 0.5 → 21 MHz,
+CHClF₂ 0.5 → 13 MHz) to the disagreement with their own structure estimate —
+an error bound that is too small manufactures coincidences, because the match
+tolerance is max(linewidth, σ_pred, σ_U).
+
+**A `verify` line can no longer make a candidate.** A pattern resting only on
+reconstructed constants now yields `PATTERN_CANDIDATE_VERIFY_CONSTANTS`, with
+the pairs named; `PATTERN_CANDIDATE` is reserved for a catalogued line list.
+
+**Limit 2 — the one U-line list with intensities.** Crockett+2014 (Orion KL,
+~1,730 U-lines) is measured absent from VizieR on three routes. It is now
+sought over four more, each recorded with what it answered: the IOP CDN
+revision directory, the article's `suppdata` directory (which serves
+`*_ascii.txt` as well as `*_mrt.txt`), the CDS ftp mirror and IRSA's HEXOS
+delivery. Three ladder bugs that would have cost it were found and fixed: a
+short directory listing was discarded before its links were read (the 200-byte
+data-file floor applied to index pages); every failed door was logged as "no
+body after retries" instead of its own 403/404 text; and a row whose last
+column was blank — exactly the U-lines with no measured intensity — was
+dropped entirely, which would have biased the LTE test towards complete rows.
+New sources: Sgr B2(N)+(M) Belloche+2013 (`J/A+A/559/A47`). The U-line
+**census** was also asking the wrong question — it inherited each source's own
+description terms, so 78 tables came back of which ~70 were Orion *star*
+catalogues and Chandra "unidentified sources"; it now runs once over
+`TAP_SCHEMA.columns` on phrases only a spectral U-line table carries.
+
+**Re-reading the run costs no runner time.** It carries every stage in one
+job — probe → acquire → screen → assess → validate → litfetch → propose — in
+that order deliberately: `summary.json` is written *before* the literature
+ladder starts, so a hanging publisher can cost only its own output, never the
+verdict. If the code moves after the run, nothing has to be re-dispatched to
+benefit: `python -m seti.uline.run --stage assess` re-reduces the run's own
+committed `screen.json`, and `--stage propose` re-adjudicates its
+`literature.json`. Both are offline and free.
+
+**Next decisive action.** Read run 35752177872's `literature.json`: if it
+returns the published quartic sets for CHClF₂ and CFCl₃, promote them into
+`rotor_constants.yaml` (a commit, never an automatic overwrite) and re-run —
+that is the single step that turns two `FREQUENCY_LIMITED` species into
+searchable ones. Then enable whatever the U-line census names, each with its
+own v_LSR and linewidth.
+### IGNITION: the upload fix holds on IRSA — 846/846, and the zero point is gone, 2026-09-22
+
+Run **35738088082** (`stage=all mode=fields shards=8 route=upload
+sample_from_run_id=35039105536`) is the dispatch that tested the `unicodeChar`
+diagnosis against the real service. All three things it was meant to settle
+came back.
+
+**1. The upload works.** Every acquire shard logged the rung it used:
+`[ignition] upload[pyvo_sync/long] 83 stars -> 253114 rows in 100 s`,
+`upload[pyvo_sync/long] 80 stars -> 281058 rows in 93 s`, and
+`acquire s0of8: OK ok=106 zero=0 failed=0 route=upload`. `pyvo_sync/long` is
+the top rung with `sid` serialised as VOTable `long`. IRSA's TAP accepted it.
+No shard fell to the ASCII `char` rung, none took the one recorded 32-bit
+downgrade, and `Unimplemented data type: unicodeChar` appears nowhere in the
+run. Run 35740159635's probe says it independently from the other side:
+`neowise_upload[pyvo_sync]_2` OK over 7919 rows, `neowise_upload_transport =
+pyvo_sync`, `neowise_route_recommended = upload` — a route that had never
+before been recommended — and `verdict = ALL_ROUTES_REACHABLE`.
+
+**2. The 314 lost stars are back.** 846 of 846 parents attempted, 846 with
+NEOWISE rows, 846 screened, **0 acquire failures**, at two to three minutes of
+wall clock a shard. The previous dispatch reached 172. Reusing run
+35039105536's parent took 1 s in the `sample` job, against the 2 h 22 min that
+killed the dispatch before it.
+
+**3. The ensemble zero-point correction has now been run on real data — and
+the answer is split.** It *does* measure a real instrumental term: the eight
+shards are disjoint ~106-star sets, each fitting its own 44-bin offset curve
+over a 10.75-yr baseline, and they agree — mean pairwise correlation **+0.970**
+(W1) and **+0.989** (W2), median per-bin scatter between shards **0.4 / 0.9
+mmag** against excursions of **19 / 59 mmag**. Eight independent samples cannot
+reproduce one 44-point curve to under a millimagnitude unless the curve belongs
+to the instrument. NEOWISE drifts faint by **+0.019 mag (W1)** and **+0.056 mag
+(W2)** over the decade, and the correction subtracts it.
+
+But it is **not** what removed the 97 faders, and the run says so itself. The
+summary carries the uncorrected control `raw_two_band_fading_5sigma` — stars
+whose **uncorrected** bare slope is >= 5 sigma fading in *both* bands — and it
+is **18** over the 846, against **17** after correction. The correction moved
+one star. So `FADING` falling from 97 of 172 (56.4%) to 17 of 846 (2.0%) is a
+change of **sample**, not of method: the earlier 172 were the remnant a broken
+`field` route delivered, not a random 172 of the 846. The diagnosis that those
+97 were the survey zero point is **not confirmed**.
+
+The mechanism that would reconcile them is epoch count: the old 172 were the
+ecliptic-pole end, where NEOWISE stacks far more epochs, and a fixed 0.056 mag
+decade drift buys ~sqrt(N_epochs) of slope significance — harmless at ~100
+epochs, a 5-sigma two-band "fade" at ~1000. That is a hypothesis this run does
+not test. The decisive test is to re-screen the high-epoch tail with and
+without the correction and see `raw_two_band_fading_5sigma` and `FADING`
+finally diverge. `raw_two_band_rising_5sigma` is **0** uncorrected, so no
+candidate was created or destroyed either way.
+
+| verdict | prev (of 172) | now (of 846) |
+|---|---|---|
+| `NOT_RISING` | 37 | 780 |
+| `IMPULSIVE_SHAPE` | 12 | 25 |
+| `INSUFFICIENT_EPOCHS` | 26 | 23 |
+| `FADING` | 97 | 17 |
+| `SCAN_SYSTEMATIC` | — | 1 |
+| rise candidates | 0 | **0** |
+
+The five veto counts sum to 846 exactly; no star is unaccounted for. The two
+columns are not like for like.
+
+**Zero rise candidates over 846 stars**, with `verdict:
+NO_IGNITION_CANDIDATE`, `degraded: []` and 8 of 8 shards found in the committed
+`results/ignition/summary.json`. Injection sensitivity measured on this run's
+own 823 screened non-rising stars: **83.8 / 95.7 / 99.4 per cent** recovery of
+**0.10 / 0.20 / 0.40 mag** decade-long ramps, so a 0.2 mag born excess would
+have been found in 19 of every 20 stars carrying one. The channel now works end
+to end on real data — that is what this dispatch was for. 846 stars is a pilot,
+not an answer, and per `CLAUDE.md` a clean result widens the question rather than
+being written up. The scale axis is the `|b| > 15` tiles sweep, run
+**35740159635**, whose probe has landed and whose 12-shard sweep matrix is
+queued behind the account-wide Actions ceiling; continue it with
+`resume_run_id=35740159635` at the **same shard count (12)**.
+
+Also fixed this session: the offline gate now runs at the runner's library
+versions (pandas 3.0.6 / numpy 2.4.6 / astropy 8.0.1), not the sandbox's
+pandas 2.3.3. See `docs/ignition.md` §7.2 and §7.3.
+### METRONOME has its first real measurement — and its own output names the artefact, 2026-09-22
+
+The channel's brief said it had scanned nothing. That was true of the
+2026-09-06 run; **run 35652897914 (2026-09-21) read 1,523,888 catalogued
+flare times and scanned 3,131 stars**, from Yang+2019 (162,262 flares),
+Okamoto+2021, Shibayama+2013, Gunther+2020 and Tu+2022. Pietras+2022 returns
+`QUERY_RETURNED_ZERO_ROWS` under its bibcode and under an author keyword and
+is recorded as absent, not assumed. Davenport 2016 has no per-flare table and
+is a rotation source. Funnel: 3,131 scanned -> 225 at the watch FDR -> 141 at
+alpha 0.05 -> 53 watch, 14 interest, 1 candidate.
+
+**The channel's own output identified the dominant confounder.** 154 of 2,548
+Kepler stars put their best period in 355-389 d and 73 of 583 TESS stars in
+234-257 d. Unrelated stars cannot share a clock: the TESS group sits at
+period/span = 0.32 +- 0.02 against the span/3 search edge, the Kepler group at
+the 372.5 d spacecraft year, and every one of them had had 1-5 chances to
+repeat. Two new hard vetoes, both counted:
+
+* `population_period` -- per mission, >= 4 other scanned stars within 0.005 dex
+  and Poisson-rarer than 1e-3 against the local background density. It needs no
+  list of instrumental periods, which is the point.
+* `few_cycles` -- the period must have ticked >= 10 times inside the observing
+  windows. This bounds the believable long-period reach at span/10 (~145 d for
+  the median Kepler star, ~76 d for TESS), stated in `coverage`.
+
+Replayed offline on that run: **877 of 3,131 scanned stars and 20 of the 68
+survivors die**, every one of the 20 a watch star at 195-381 d with 1-5 cycles
+or in the 0.21-0.23 d Kepler grid-floor pile-up. The 14 interest stars and the
+candidate are untouched. Also fixed: `cycles_span` counted tick *instants*
+inside windows, which let occupancy read 2.0; it now counts ticks whose phase
+window had any coverage, so occupancy is a fraction.
+
+**What is hot.** `kepler:5879574`, P = 0.4232741 d, 21 catalogued flares over
+1,231 d. The `redetect` job fetched its Kepler light curve and an independent
+detector found **74 flares of its own** forming a clock at P = 0.4232819 d --
+agreement to 2e-5 -- at p ~ 1e-54 with strict quality. The clock is in the
+photometry, not only in the catalogue. **The open question is whether
+0.42327 d is the star's own dominant photometric period**: that is the
+contact-binary / fast-rotator range, the Kepler survivors pile up across
+0.21-0.83 d, and the 2026-09-21 run predates the photometric veto. It has no
+catalogued P_rot, so `rotation_alias` could not be applied either.
+
+**What is not yet a rejection.** The 14 interest stars are all `tess_tu2022`,
+and 13 of them recover **0.000** of their catalogued flares in their own light
+curves while the detector finds 8-51 flares of its own there. Median recovery
+over all 40 fetched stars is 0.064. A detector that misses 94% of a catalogue
+cannot reject anything, so a threshold-free test was added:
+`catalogue_epoch_response` stacks the detrended residual, in run sigmas, at the
+catalogue's own epochs against random epochs in the same windows, and scans
+time offsets (including +-2400000.5) so a wrong time system names itself.
+`reconcile_summary` folds the light curve back into summary.json and
+candidates.json and demotes on `catalogue_epochs_absent` or
+`photometric_oscillation`; demotion only ever removes a claim.
+
+**In flight** (2026-09-22, dispatched 10:35-11:23 EDT, all still QUEUED at
+11:40 EDT behind a saturated runner pool):
+
+* **35746944111** -- `stage=redetect`, `reduce_only_run_id=35652897914`. ONE
+  runner, MAST only, no archive and no screen matrix. This is the decisive
+  one: it runs the epoch stack and the photometric veto over the 40-star
+  shortlist and reconciles summary.json / candidates.json.
+* **35741300225** -- the full pipeline (probe+acquire, 48-shard screen,
+  assess, redetect, lit). Slowest but definitive: its acquire is the only one
+  that pulls the flare catalogues' own star positions, which is what lets the
+  `periodic_variable` veto reach the 13 interest stars that could not be
+  vetted at all.
+* 35745637197 (assess-only over the 2026-09-21 shards) was **cancelled**: its
+  shards predate the pool null, and had it landed after 35746944111 it would
+  have overwritten the reconciled summary.json with an unreconciled one.
+
+Every dispatch checks out the branch head when it starts, so all of the above
+run the current code, not the code they were dispatched at.
+
+**A design assumption the run falsified, and it is the most important number
+here.** The channel's own calibration reports
+`fraction_of_rotation_population_below_jitter_max` = **0.857**: 24 of the 28
+stars the run itself rejected as `rotation_alias` are inside BOTH strict
+quality gates (Q >= 0.85, jitter <= 0.05). The fitted jitter falls steeply
+toward small N -- population medians 0.030 at N = 8-11, 0.039 at 12-15, 0.059
+at 16-23, 0.079 at 24-39, 0.147 at 40-79, 0.217 at N >= 80 -- because the
+period is free on a ~1e4-point grid and a handful of times phase up whatever
+they are. That trend is a population median, not a per-star law: three of the
+24 inside the gate have N = 83, 83, 115 and the four outside it have N = 13,
+16, 28, 30. The gate is weak across the whole range and weakest at small N.
+
+The nulls are NOT fooled: they maximise over the same grid, so the window
+null's own best fit reaches Q ~ 0.25 and jitter ~ 0.18 and lands inside the
+strict gate for 0.8% of stars on jitter and 0% on Q. `p_window` and the
+BH-FDR on it are therefore honest, and they are what the tiers rest on. The
+consequence is now stated rather than papered over: below
+`n_quality_informative` = 35 events the strict quality pass carries no
+discriminating power, the star gets the report flag `quality_uninformative`,
+and its case rests on the null alone. 13 of the 15 interest/candidate stars
+have N <= 33; `tess:149573659` (N = 105) is the only one in the regime where
+the population's own fitted jitter is nowhere near the gate, so its 0.036 is
+the one quality number in the shortlist that is hard to get by fitting alone.
+`summary.json.jitter_calibration` now carries the by-N table and the null's
+own best fit beside the thresholds.
+
+**Runner-version gate (the repo-wide pandas 3 warning).** The sandbox venv
+holds pandas 2.3.3; the runner installs 3.0.6. METRONOME was checked against
+the real thing rather than audited: a `--system-site-packages` venv with
+`pandas==3.0.6` runs the **whole** 114-test metronome suite green
+(`python -m venv --system-site-packages <dir> && <dir>/bin/pip install
+pandas==3.0.6`, then `PYTHONPATH=src <dir>/bin/python -m pytest
+tests/test_metronome.py`). The package uses no `errors="ignore"`, no
+`applymap`, no `inplace=`, no chained assignment and no removed numpy alias.
+
+**Next decisive action.** Read 35746944111: `cat_epoch_sigma_median` vs
+`cat_control_sigma_median` and `phot_period` for kepler:5879574 and the 14
+Tu+2022 stars. If 0.42327 d is the star's photometric period it is a contact
+binary and dies honestly; if it is not, and the epoch stack is significant, it
+is the first object this channel has that the photometry, the catalogue and
+the timing statistic all agree on.
+### CRYPT: the screen changed because the archive said so — Tbol vs local time inside the PSRs, 2026-09-22
+
+S55 (`docs/crypt.md`). The channel was built but had **never produced a
+measurement**; `results/crypt/` held only a `NO_DATA_REACHED` record. The
+runner's own probe (run 35737908601) corrected the brief:
+
+- **There is no per-channel Diviner polar gridded product.** ODE lists 912
+  Polar Cumulative Products for LRO/DLRE and every one of them is `AVG TBOL`.
+  The multi-channel anisothermality of the original brief cannot be computed
+  from a level-3/4 map product at all. It is retained, not runnable.
+- **What the PCP does carry, and nobody has screened, is the axis it is
+  binned on**: average bolometric temperature per 240 m pixel in local-time
+  bins, separately for lunar summer and winter — a *diurnal curve inside
+  permanent shadow*. Products are PDS3 ASCII tables of ~4.4 M rows (empty
+  bins omitted), 262 MB each, at
+  `urn-nasa-pds-lro_diviner_derived1/data_derived_pcp/diurnal/ltim/pol{n,s}/`.
+
+**The screen.** Inside the LOLA mapped PSR (`LPSR_65{N,S}_240M`, same 240 m
+polar grid) ANDed with the Diviner cold-trap definition and eroded 2 px, the
+statistic is the pixel's **floor** temperature — the minimum over every
+loaded (season, local-time) bin — against a local square annulus with both
+the local level and the local *curvature* bias removed. Every passive
+heating term inside a PSR has a clock: scattered light off a sunlit rim and
+re-radiated IR from surrounding terrain rise and fall with the sun and
+collapse in winter. A minimum over the whole (season, local-time) grid is
+immune by construction to heating that switches off at any point in the
+year; an internal source is not. Flagging is on the floor **or** the all-bin
+mean, so a seasonal or diurnal confounder is *counted* as rejected instead of
+vanishing.
+
+Three corrections were needed before it could run, each read off evidence:
+the workflow still ran the anisothermal stages against products that do not
+exist; the local-time bin count was a guess (now read off ODE's own PCP file
+index, and a bin is used only if it exists in *both* seasons); and the PSR
+mask was cropped about the array centre when `LPSR_65N_240M` is 6420² with
+`LINE_PROJECTION_OFFSET = 3209.5`, a 240 m misregistration of the screened
+interior.
+
+Offline: **86 tests** across `tests/test_crypt.py` (40) and the new
+`tests/test_crypt_diurnal.py` (46) — the diurnal screen had no test suite at
+all. Re-run green against a pandas 3.0.6 / numpy 2.4.6 interpreter, which is
+what the runner installs, not the sandbox's pandas 2.3.3.
+
+**What the runner has established so far** (run `35747661552` shard 0, north,
+2026-09-22 11:51 EDT — every acquisition route worked and the reader then
+lost the data):
+
+| | |
+|---|---|
+| PCP index, ODE route | `route=ode`, 912 products / 5328 files / **768 LTIM files**; bins available **1–96 at both poles, both seasons** |
+| LOLA PSR raster | `lpsr_65n_240m.img`, 82,432,800 B, 6420 × 6420, `line_offset 3209.5`, **476,117 permanently-shadowed pixels**, `registration: label_offsets` |
+| PCP transfer | twelve 262 MB tables, **2,791,668,367 bytes in ≈20 s** — PDS serves these at >100 MB/s |
+| Parse | **all twelve failed**: `could not convert string to float: '-0.017408,'` |
+
+The label says `FIXED_LENGTH`, `ROW_BYTES = 59`, `COLUMNS = 5` and points at
+`DLRE_PCP.FMT`, which is not served beside the product; it does not say how
+the fields are separated. **They are comma-separated with padding spaces.**
+`read_pcp_tab` now sniffs the delimiter off the first data record, both
+spellings are tested, and a failed parse records the first 400 bytes of the
+product verbatim so the next correction costs no runner time.
+
+Two numbers the run settled: the local-time axis is **96 bins of 0.25 h**
+(not the 24 the first probe's truncated token histogram suggested), and
+bandwidth is not the constraint — so `ltim_bins` went from `every:16` to
+**`every:8`**: twelve bins three hours apart around the clock in each
+season, 24 layers of 2535 × 2535, ≈6.3 GB per pole with one table on disk at
+a time.
+
+**In flight:** run `35750745813` on `claude/goap-crypt` (dispatched
+2026-09-22 11:56 EDT), both poles. `results/crypt/summary.json` presently
+reads `NO_DATA_REACHED` with zero screened pixels — that is an access
+statement about this pipeline's reader, **not** a statement about the Moon.
+Run `35744896637` had failed earlier in two seconds because the free-disk
+step deleted `$AGENT_TOOLSDIRECTORY`, which is where `setup-python` had put
+the interpreter the package was installed into; fixed.
+
+The **radar axis** is now wired into the same pipeline and the same mask:
+Mini-RF polar stereographic mosaics `lsz_xxxxx_3cp/3s1_pfu_90{n,s}000_v1`,
+1294 × 1294 `PC_REAL` at 947.6 m/pix — 6.7 MB each, so the whole radar axis
+is tens of megabytes. Its floor is coarse and stated as such: at 948 m/pixel
+this constrains compact isolated reflectors at the mosaic's own scale, not
+metre-scale hardware.
+### CRADLE: the `full` join answers, 96/96 pixels, 4,990 stars from one shard of eight, 2026-09-22
+
+**The first real CRADLE measurement, and it settles the question the probe was
+built to answer.** Shard 3 of run 35741356662 finished at 11:46 a.m. EDT:
+
+```
+[cradle] s3of8 hp3_763: OK rows=53 parent=2541 shape=full 24.9s
+[cradle] acquire s3of8: units ok=86 zero=10 partial=0 failed=0 rows=4990 in 1906.3 s
+```
+
+* **`shape=full` works.** The inner-first join — Gaia-only cuts in a sub-select
+  on `gaia_source` alone, then `allwise_best_neighbour` -> the AllWISE mirror,
+  plus `astrophysical_parameters`, 2MASS *direct* through
+  `tmass_psc_xsc_best_neighbour.original_ext_source_id`, and
+  `vari_rotation_modulation` — returns a whole level-3 HEALPix pixel in **~25
+  seconds**. IGNITION's flat-join failure (run 34787803862: the planner starts
+  from the 750-million-row AllWISE mirror and cannot return even `TOP 5`) does
+  **not** recur, and the `tmass_xmatch_id` spelling that `config/cradle.yaml`
+  marked `verify` is correct. The probe was never needed for this; the acquire
+  log answered it.
+* **96 of 96 units, 0 failed, 0 partial, 0 split.** The 10 `zero` pixels are
+  the |b| > 10° cut removing Galactic-plane pixels, not failures.
+* **4,990 parent stars from one eighth of the sky** — Gaia DR3 FGK dwarfs,
+  G < 13.5, d < 500 pc, with AllWISE W3 **and** W4 each at >= 5 sigma. The
+  all-sky parent is therefore of order **40,000** stars, which is the number
+  the screen will work on.
+* **31.8 minutes per shard** against a 300-minute budget inside a 350-minute
+  job, so the remaining shards have ample headroom and the deadline guard
+  added this morning is not load-bearing here.
+
+Shard 3 ran the pre-fix code (it checked out at 15:13:45 UTC, seconds before
+the fix landed), so the shape-learning path was never exercised — it did not
+need to be, because `full` answered on the first unit. `results/cradle/` is
+still empty: `screen` waits on all eight shards.
+
+**The separate `stage=probe` run 35745911273 was cancelled at 11:59 a.m. EDT,
+deliberately.** It was dispatched at 11:14 to recover the read-order artifact
+the dead probe never wrote, but by 11:46 shard 3's own log had answered its
+headline question — `shape=full`, ~25 s a pixel — and its `plan` job was still
+queued 45 minutes later, competing for the scarce Actions slots that the five
+remaining acquire shards need. Its other answers are not on the critical path:
+the three controls come through **`acquire` shard 0**, which fetches them over
+the same join (`stage_acquire`, `if int(shard) == 0`), and `ages` degrades
+gracefully without `probe.json` — the VizieR block is wrapped in a `try`, so a
+missing file simply means no table is pre-skipped and each is tried live and
+recorded. What is genuinely lost is only the *pre-flight* inventory of IRSA's
+`irs_enhv211` columns and the VizieR table existence check. Re-dispatch
+`stage=probe` once the acquire matrix has drained; do not re-dispatch it while
+shards are queued.
+
+### CRADLE is on the sky: eight shards acquiring, and three ways the verdict could have been faked, 2026-09-22
+
+**State at 11:40 a.m. EDT.** Run **35741356662** (`stage=all`, 8 acquire shards
+over the 768 level-3 HEALPix pixels, 4 ages shards) has shards 0, 1 and 3
+querying the ESA Gaia mirror; 5 remain queued behind an Actions queue that
+reached 73 runs. Run **35745911273** (`stage=probe`, dispatched 11:14 a.m. on
+the fixed commit) is still queued. `results/cradle/summary.json` is **not
+written**: the channel's state is *measuring*, not `NO_CRADLE_CANDIDATE`.
+
+**The probe never touched an archive.** Its job reached a runner at 11:03 and
+died at 11:05 on its own offline gate — `pd.to_numeric(errors="ignore")`,
+removed in the pandas 3 the runner installs while the sandbox holds 2.3.3. The
+archive step was `skipped`, the artifact upload warned "No files were found",
+and the eight acquire shards therefore started with **no `probe.json` and no
+measured join shape**. (Now repo-wide as `channel-brief.md` §0.5.)
+
+Three further faults were found and fixed while the shards queued. None of them
+changes a number; each decides whether the number is honest or measured at all.
+
+* **A refused join shape cost one timeout per unit, not one per shard.** The
+  probe measures the shapes on *one* pixel and `acquire` took its answer as a
+  fixed order for all 96 units — and this run has no such answer. The loop now
+  promotes the shape that actually answered and records `shapes_planned`, the
+  running `shapes` and every `shape_relearned` event.
+* **One pathological pixel could outlast its job.** A timed-out unit splits to
+  level 6: unbounded, `1 + 4 + 16 + 64 = 85` queries at 1200 s each — 28 hours
+  inside a 350-minute job, losing every unit not yet reached. `fetch_unit` now
+  carries the shard's deadline through the recursion and reports
+  `deadline_exceeded`, which surfaces as `coverage.n_units_deadline_exceeded`
+  and a named `DEGRADED` reason.
+* **A star the locus will not place read as a star with no excess.** The
+  empirical photosphere refuses to extrapolate, so a star outside every
+  well-populated colour bin gets a NaN `chi` and fails `excess_significant` for
+  exactly the reason a quiet star does. On a partial sky the bins are thin, so
+  that silence would have read as a clean null. `screen` now counts
+  `n_photosphere_assigned` and `n_no_photosphere_locus_refused` apart, and
+  `assess` raises `DEGRADED (locus_refused_photosphere:n/m)` past a fifth.
+
+The suite is 30/30 under **both** pandas 2.3.3 and 3.0.6 (`pip install --target
+<dir> "pandas>=3"`, `PYTHONPATH=<dir>:src pytest`), ruff clean, merged to main.
+
+**What to read first when the runs land**, in this order: `probe.json` —
+which of the three Gaia×AllWISE join shapes answers (IGNITION's flat-join
+failure is the risk), whether BD+20 307, TYC 4479-3-1 and HD 15407A resolve and
+return *through the join*, and whether `irs_enhv211` and each VizieR table
+exist. Then `screen.json`'s funnel, where `n_no_photosphere_locus_refused`
+against `n_ks_present` says whether a thin result is the sky or the bins.
+Expect `IN_CELL_AGE_UNDETERMINED` to be the modal outcome for anything
+interesting: gyrochronology's catalogue coverage is two Kepler/K2 fields
+against an all-sky parent, and a star with one age indicator is never a
+candidate.
+
 ### RING dispatched at last, after the runner's pandas ate the pulsar leg, 2026-09-22
 
 Two things had to be true before S63 could produce anything, and neither was
@@ -241,15 +701,227 @@ WD 1214+032 (PEWDD serves it as `WD 1212-022`).
 
 **In flight: run 35747793625** on `claude/goap-slag`, `slag-solo.yml`,
 `stage=all`. The sharded `slag.yml` needs to win a runner slot six times in
-sequence and twice failed to start at all (35739746529's screen matrix, then
-35745205866, which sat 52 minutes without its first job); the solo workflow
+sequence and twice failed to get through it (35739746529's eight screen jobs
+were still queued 30 minutes after its acquire job finished; 35745205866 had
+not started a single job 22 minutes after dispatch); the solo workflow
 does the same work in one job on one slot, which is affordable because only
 168 of 3,547 panels reach the 5-element floor and carry the calibration cost.
 No `results/slag/summary.json` exists yet — the verdict line stays empty until
 that run commits one.
 
-Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
-the runner installs), per `docs/channel-brief.md` §0 item 5.
+Because that envelope finding blunts Tier 2, the same draws now also give a
+**calibrated per-element residual**: for each element, the fraction of natural
+draws left at least as badly fitted there as the data are. It does not depend
+on the envelope at all — it inherits the model's full freedom — and it says
+*which* element carries a panel's misfit. The Bonferroni-corrected minimum
+over the panel is reported beside the raw minimum and is what any claim must
+use. On the offline injection it recovers a 1.5 dex Ti excess as the worst
+element; a natural CI panel's corrected minimum stays above 0.05.
+
+Two record-keeping fixes came out of reading the acquisition rather than
+trusting it: all twelve PyllutedWD timescale grids downloaded OK and **parsed
+to nothing**, silently, so a file that does not parse now records why and
+keeps its raw text (the source actually in use, PEWDD's own per-star
+`SinTime*`, is the better one anyway); and `summary.json` now names the commit
+that computed it, because the job checks out a branch head rather than a
+commit.
+
+Offline: 42 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
+the runner installs), per `docs/channel-brief.md` §0 item 5, with the real
+PEWDD table giving identical numbers under each.
+
+### GROWTH direct: the TIC repair is confirmed on the runner, and the method recovers Kepler-1520 b, 2026-09-22
+
+Shard 12 of run 35738702139 ran with the fixes; shard 1 ran without them. Same
+pipeline, same target list, one shard apart:
+
+| | shard 01 (before) | shard 12 (after) |
+|---|---|---|
+| stars with TESS products | 115 of 213 — **54 %** | 178 of 203 — **88 %** |
+| stars serving nothing | 98 | 25 |
+| planets with a fitted depth (both families) | 3 | **19** |
+| `consistent` / `shallower_tess` | 3 / 0 | 16 / 3 |
+
+`n_tic_suspect_truncation = 85`, `n_tic_repaired = 79`. The route breakdown of
+shard 12's measured rows says how bad the catalogue id was: **98** rows came
+through `tic_kic_crossid_over_name_planet` — the sky disagreed with the
+catalogue TIC and won — against only **8** `_confirms_`. So of the suspect ids
+checked, 98 of 106 were in fact wrong. Every one of those was either a star
+that would have been recorded as a non-detection, or worse, a star whose light
+curve would have been fitted as the target's.
+
+**A positive control fell out of it.** `K03794.01` is **Kepler-1520 b**
+(KIC 12557548), the disintegrating planet whose dust tail makes its transit
+depth vary from transit to transit — the one KOI in the catalogue that is
+*known* to change depth. The stage found it unprompted: PDCSAP 3,529 ± 580 ppm
+and SAP 2,938 ± 414 ppm against a Kepler depth of 6,088 ppm in the TESS band,
+i.e. z = −3.17 and −4.87, shallower in **both** families. It is vetoed
+(`duration_not_fixed_b`: its duration tracks impact parameter) and it is a
+known natural mechanism, so it is not a candidate — but a depth-change search
+that could not see Kepler-1520 b would not be worth running, and this one sees
+it without being told where to look.
+
+**The Kepler-718 b discriminator holds across the population.** Shard 12:
+`background_direction` is **116 `PDC_DEEPER_THAN_SAP` against 21
+`SAP_DEEPER_THAN_PDC`** — crowding's direction, since a bigger aperture admits
+more contaminating light and raw SAP must read shallower. The three
+`shallower_tess` rows (`K00607.01`, `K03689.01`, `K00199.01`/Kepler-490 b) are
+that effect at its strongest: PDCSAP agrees with Kepler to within 0.1σ while
+SAP reads 8.7–18.5σ shallower. They are dilution, not shrinkage, and they are
+classed accordingly.
+
+**Zero growth candidates so far**, on any row: `would_be_candidate_without_vetoes`
+is False for all 255 of shard 12. Nothing is being claimed.
+
+### GROWTH direct: the scale step is running, and a format string was holding it to 40 %, 2026-09-22
+
+S57 (`docs/growth.md` §11, §11.9). Stage 1 reached **108 of 9,564 KOIs** because
+it joined through the TOI alert catalogue, where only 94 of 1,975 KOI TICs have
+any TOI at all. Stage `direct` skips the TOI table: for every confirmed or
+candidate KOI it fetches every TESS light-curve product MAST serves (SPOC 2-min,
+TESS-SPOC and QLP FFI, deduplicated per sector), folds on the KOI ephemeris
+propagated to the TESS epoch with its period error, and fits the depth on
+**both** raw SAP and corrected PDCSAP.
+
+**The target list is built and committed.** 9,564 KOIs → **4,725** confirmed or
+candidate, across **3,611 distinct stars**; 2,993 carry a TIC from the NASA `ps`
+routes (name_planet 2,697, name_host 257, position 39) and 1,732 are left to the
+shard's own TIC resolution. 1,481 have P > 30 d and are carried separately in
+`long_period.csv`, because TESS's 27-day sectors give them few or no transits.
+Run **35738702139** (16 measure shards) is in flight; `results/growth/direct/`
+holds the committed shards as they land.
+
+**What the first shards found was a defect in us, not in the sky.** `_write_csv`
+wrote every float with `float_format="%.8g"`. A TIC id is nine digits. TIC
+122785305 went to `targets.csv` as `1.227853e+08` and came back as TIC
+**122785300** — 2,686 of the 2,993 catalogue ids mangled. The signature, from
+the shards that finished before the fix:
+
+| TIC route | zero rows | products |
+|---|---|---|
+| `name_planet` (round-tripped through the float) | 68 | 13 |
+| `tic_kic_crossid` (resolved in memory, never written) | 4 | 36 |
+
+Light-curve coverage was 40 %; the missing 60 % was a format string. Shard 01,
+the first shard to complete, reached 115 of its 213 stars (54 %) on the old code.
+
+**The silent half of that bug is the dangerous one.** TIC 122785300 may itself be
+a real star with TESS data, in which case the depth fitted belongs to a
+*different star* and nothing downstream notices — the Kepler-718 b error (a
+source 29″ off target) moved out of the vet, where stage 3 catches it, and into
+the depth, where nothing does. It was not hypothetical: two of the three
+classified rows in shard 14 (`K05245.01`/Kepler-1627 b, `K04185.01`/Kepler-1946 b
+— the one `shallower_tess`) rest on a TIC ending in zero that nobody had checked.
+So: identifiers are written as `Int64`; a catalogue TIC ≥ 1e8 that is a multiple
+of ten is **never queried on its own authority** but re-resolved from the star's
+own position and magnitude first (agreement → `_confirms_`, disagreement → the
+sky wins, sky silent → `TIC_UNRESOLVED`, **not measured**); and resume refuses to
+inherit any committed row measured against such an id, so a bug cannot be frozen
+into the funnel as a non-detection. The resolver is retried, because refusing a
+star now depends on it.
+
+Two more defects from the same run, each of which cost a whole shard (6, 7 and
+14 all died): `detectable_depth_change_ppm = ref*(exp(n·σ)−1)` overflowed on a
+star with no sensitivity — the honest value there is `+inf`, not a crash — and
+any exception from `measure_direct_target` killed every star the shard had not
+yet reached. A raise is now a non-measurement (`lc_status=MEASURE_RAISED`, the
+exception verbatim), counted as `n_measure_failed`.
+
+**The Kepler-718 b discriminator is confirmed on real data.** Across shard 14's
+measured rows, `background_direction` is **22 `PDC_DEEPER_THAN_SAP` against 3
+`SAP_DEEPER_THAN_PDC`** — the direction crowding must have, since a bigger
+aperture admits more contaminating light and raw SAP must read *shallower* than
+Kepler. A star whose PDCSAP is deeper than its SAP is a crowding-correction case
+and is classed `crowding_correction`, not growth.
+
+**No candidate yet, and none is claimed.** The pre-fix shards (01, 06, 07, 14)
+carry 4 `consistent`, 1 `shallower_tess`, 4 `transit_not_recovered` and no
+`growth_candidate`; the great majority is `not_measured` (no products for a
+wrong TIC) or `not_measurable` (the transit is below TESS's noise on a Kp≈14.6
+Kepler-field star, with the per-planet detectable depth change stated on every
+row). Those rows are being redone, so none of them is a statement about the sky
+yet. **Next decisive action:** let 35738702139 drain, then re-dispatch
+`stage=measure, resume=true, n_shards=16` to finish the three shards that died
+and redo every unverified-TIC row, then `assess` → `control` → sharded `vet`
+(stage 2 both eras + stage 3 difference image on **every** survivor, not the top
+of the list).
+### GRAVE: a pandas-3 read-only array was about to eat the first screen, 2026-09-22
+
+S56 asks whether any horizon in Earth's sedimentary record carries a
+fission-product residue that no non-negative mixture of twelve natural
+reservoirs can build. The screen is per-sample, but nothing is a claim until
+the **age stack** says it recurs at one stratigraphic level across independent
+sections, the way the K–Pg iridium does. That makes the stack the only load
+path to a detection — and it was carrying an uncorrected p.
+
+Thirteen boundary windows were tested at once and any window with
+`p_hypergeom` < 0.01 was promoted. Family-wise that is 1 − 0.99¹³ = **0.122**:
+a spurious "stratigraphic cluster" somewhere in the catalogue about one run in
+eight. `p_hypergeom` is now **Holm-corrected** over the windows that were
+testable at all (those holding ≥ 1 sampled section — a boundary the corpus
+never sampled was never a test, and padding *m* with it only costs power), and
+the promotion rule reads the corrected `p_family` at a family-wise
+`cluster_p` = 0.05. Net of the change the channel is **stricter** than before:
+FWER 0.05, not 0.122. Both p values are reported per window; `summary.json`
+carries `multiple_testing`, `n_boundaries_tested`, `cluster_p_is_family_wise`.
+
+Both positive controls survive with margin — a correction that killed the K–Pg
+iridium would be the wrong correction:
+
+| control | sections | p_raw | p_Holm | m |
+|---|---|---|---|---|
+| injected six-section K–Pg fission cluster | 6 of 9 | 3.97e-4 | 5.16e-3 | 13 |
+| chondritic Ir-anchored impact layer | 5 of 10 | 7.76e-4 | 7.76e-3 | 10 |
+
+and a window that clears 0.01 raw but not the correction (2 candidate sections
+of 10 sampled, against 5 candidate sections in a 300-section corpus,
+p_raw = 9.5e-3 → p_Holm = 0.067 over 7 tested windows) is now held at
+`multi_section_at_background_rate`. The suite asserts that case explicitly.
+
+**The ash kill was also half-written.** The brief names both of volcanic ash's
+ratios, Zr/Hf *and* Nb/Ta; only Zr/Hf was on the fission path, and it fired
+solely when Zr was the driver. `tephra_signature` now tests the coherence an
+ash fall actually produces — all four of Zr, Hf, Nb, Ta up together by ≥ 2×
+with Zr/Hf in 25–60 *and* Nb/Ta in 5–40 — and vetoes `volcanic_ash` when the
+driver is an element the tephra itself carries. Written on coherence the kill
+is blind to a real fission residue: fission gives Zr with no Hf and has no
+path to Ta at all. The suite also *measured* something the doc had assumed — a
+plain ash bed never reaches the vet, because `rhyolite` is already one of the
+twelve reservoirs and the mixture absorbs it outright (LR = 0.0).
+
+29 offline tests pass, ruff clean.
+
+**The run that was in flight would have produced nothing.** Under pandas 3's
+copy-on-write `DataFrame.to_numpy()` returns a **read-only** view, and the
+screen stage masks non-positive concentrations to NaN on the very next line:
+`full[full <= 0] = np.nan` raises `ValueError: assignment destination is
+read-only`. Both the full element matrix (which every kill reads) and the
+design matrix (which every fit reads) were built that way, so run 35742065160
+was going to die at the top of the screen — *after* paying for the whole
+acquisition. The sandbox could not see it: this venv holds pandas 2.3.3, the
+runner installs 3.0.6. Reproduced in a scratch pandas-3.0.6 venv (three
+end-to-end tests fail), fixed with `copy=True`, and **29 tests now pass on
+both pandas 2.3.3 and 3.0.6**. `read_csv(low_memory=False)` and the
+python-engine `on_bad_lines="skip"` reader were checked against 3.0.6 too and
+are clear; there is no `to_numeric(errors="ignore")` in the channel.
+
+**Data state.** The SGP schema is established on the runner (runs 35738860553,
+35739776468): `POST sgp-search.io/api/frontend/post-paged`, 94 field codes
+accepted, **114,688 samples** behind the [0, 4000] Ma filter, pages of 5,000
+not capped. Ru and Rh are *not served*, so the light peak rests on Mo, Pd and
+Te. EarthChem's REST service is gone (ten-rung endpoint ladder recorded);
+GEOROC/DIGIS supplies the tephra reference. **No screen has run yet**: the
+full-corpus run `35742065160` was dispatched 10:41 EDT, waited 32 min in the
+queue, started 11:13 EDT and is expected to fail at the screen for the reason
+above (it will still commit `acquisition.json`, which is a real measurement of
+what SGP served). The replacement, `35747786123`, was dispatched 11:30 EDT on
+the fixed head. `results/grave/` holds `probe.json` only — **there is no
+verdict about the sedimentary record yet**, and nothing in the repo should be
+read as one.
+
+Next decisive action: land 35747786123 and read `summary.json` — the funnel,
+which of the twelve named vetoes fired and how often, and whether any boundary
+window reaches `STRATIGRAPHIC_CLUSTER` under the corrected p.
 
 ### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
 
@@ -440,11 +1112,22 @@ parallax shells returned OK and untruncated; 43 % carry a usable RV.
 Earth outside every one of the 7e10 directed pairs -- that channel is closed,
 and saying so is worth more than searching it. The interceptable regime is
 radio with modest apertures or deliberately over-filled beams, and there the
-intercepted flux is only slightly below (spillover) or above (between) what the
-intended receiver gets: a strong-signal channel, not leakage. The same numbers
-are the trials budget -- 1.8e4 to 1.8e7 qualifying pairs per beam -- so every
-hit count is printed beside `n_expected_by_chance` and `n_trials`, and RFI at
-non-zero drift stays an unexcluded systematic on any survivor.
+measured median flux ratio at Earth versus at the intended receiver is
+**0.52-0.62** for spillover (2.6 dB down, not a sidelobe) and **3.8-3.9** for
+the near-antipodal geometry (Earth is the nearer point on the same beam): a
+strong-signal channel, not leakage. The same numbers are the trials budget --
+1.8e4 to 1.8e7 qualifying pairs per beam -- so every hit count is printed
+beside `n_expected_by_chance` and `n_trials`, and RFI at non-zero drift stays
+an unexcluded systematic on any survivor.
+
+**The brief's own drift prior is dead, and measured dead.** Median |a_kin| over
+the kept pairs is 5.3e-10 m/s^2 and the p99 of |fdot_kin| at 1.42 GHz is
+5-7e-8 Hz/s -- five to six orders below the 0.0093 Hz/s resolution of the BL
+L-band product. The relative radial ACCELERATION carries no usable prior. What
+does: the unremoved topocentric Earth term (+/-0.16 Hz/s, sign set by hour
+angle), the small-angle leak of the transmitter's platform (<= 0.006 Hz/s), and
+the pair's radial VELOCITY difference, which Gaia measures well and which fixes
+where a de-drifted rest line lands for Earth.
 
 **What the sky did not supply, and the fix.** Run 35738937745 probed 15 seed
 VizieR ids plus six keyword sweeps: 73 tables, **0** carrying both a frequency
@@ -457,11 +1140,22 @@ table counted as a hit table only when a frequency column and a drift column
 both resolve and at least one row parses as numbers. 13 offline tests, no
 socket.
 
-**In flight:** run **35745111146**, `stage=all` on `claude/goap-relay`, the
-first full-scale pass with the e-print route: probe -> targets -> geometry ->
-recut -> assess -> `results/relay/summary.json`. The smoke pass
-(24,878-star debug cap) already committed a summary; this one replaces it at
-full scale.
+**In flight:** run **35745111146**, `stage=all` on `claude/goap-relay`,
+dispatched 11:07 a.m. EDT, executing since 11:11 a.m. and still in its Run step
+at 1:15 p.m. -- probe -> targets -> geometry -> recut -> assess ->
+`results/relay/summary.json`. The long pole is recut, which asks the BL
+open-data API for the files of all 1,959 in-sample targets under a 90-minute
+budget; assess then has a 30-minute budget for the e-prints. The in-job hard
+clock is 300 minutes and the commit-back runs `if: always()`, so whatever
+stages finish are committed to the branch either way. The smoke pass
+(24,878-star debug cap) already committed a summary.json; this run replaces it
+at full scale.
+
+Note for whoever reads it: this run carries `papers.py` but NOT the arXiv rate
+limiting (3 s between calls, retry on 429/503) or the rest-frequency test, both
+of which landed after it started. If `hits.json.arxiv.papers[]` shows HTTP
+refusals rather than parsed tables, that is the reason and a re-dispatch of
+`stage=all` on the current head fixes it.
 
 **Next decisive action:** read 35745111146's `hits.json` -- specifically
 `arxiv.papers[]` (which papers resolved, which e-prints downloaded, which
@@ -670,11 +1364,46 @@ NASA Exoplanet Archive TAP (4,738 transiting planets) and four MAST
 `query_criteria` calls (4,001 timeseries observations) — on the runner under
 pandas 3.0.6 and succeeded.
 
-Run **35745941769** (4 shards, eclipse-first, `require_verify=true`,
-`deadline_minutes=270`) is queued with all of this. Checkpoint version is 3 and
-deliberately unchanged, so a mid-flight assess cannot mark a running screen's
-checkpoints stale — which is how run 35737559234 reported 159 stale checkpoints
-and zero exposures. The honest limitation stands, in the contamination ledger:
+**Run 35745941769 (4 shards, eclipse-first, `deadline_minutes=270`) is the one
+that passed the gate.** `results/lantern/verify.json`, written 15:44 UTC
+(11:44 EDT):
+
+```
+verdict PHASE_VERIFIED (2/2) · injection SENSITIVITY_VERIFIED (2/2)
+```
+
+Every one of the five checks is true on both known eclipses. WASP-43 b's
+timing check passes on the corrected criterion (free step 0.169 d off but
+better by only Δχ² = 9.86, against the 25 threshold, while the predicted step
+beats flat by 49). The injection is now scaled to each exposure's own noise and
+its strength is stated in units of that exposure's sensitivity:
+
+| | WASP-18 b SOSS | WASP-43 b LRS |
+|---|---|---|
+| difference-spectrum noise | 2.59×10⁻⁴ | 1.84×10⁻³ |
+| injected amplitude / continuum | 0.0050 (floor) | 0.0220 (= 12 × noise) |
+| injected EW / 5σ limit | **7.53×** | **3.61×** |
+| recovered | 16.8σ, `interest`, no veto | 12.7σ, `candidate`, no veto |
+| drift null / in-eclipse residual | 0.42σ / −0.13σ | 0.40σ / −0.32σ |
+| features on the *un-injected* baseline | 2 | 0 |
+
+The four screen shards were released at 15:45 UTC (11:45 EDT); shard 3 started
+screening at 15:55 UTC (11:55 EDT) and shards 0–2 are waiting on runner
+concurrency. Each runs to a 270-minute deadline inside a 350-minute job cap, so
+the run's own `assess` job will commit `summary.json`, `candidates.json` and
+`exposures.json` several hours later. **When it lands, read in this order:**
+`funnel.exposure_statuses` (does `read_failed` collapse?),
+`funnel.exposures_eclipse_class` (is it non-zero — the thing the first screen
+could never do?), `funnel.dispatch_coverage.fraction_of_scheduled_bytes_downloaded`
+(what fraction of the 509 GB this dispatch reached), then `rejections`,
+`tiers` and `candidates`. To continue the sweep, re-dispatch `lantern.yml` with
+`reuse_inventory=true` and `prior_run_ids=35745941769`: checkpoints carry a
+version and accumulate, so successive dispatches add coverage instead of
+repeating it. Checkpoint version is 3
+and deliberately unchanged, so a mid-flight assess cannot mark a running
+screen's checkpoints stale — which is how run 35737559234 reported 159 stale
+checkpoints and zero exposures. The honest limitation stands, in the
+contamination ledger:
 an *unresolved* emission line from the planet's own atmosphere passes every
 veto this channel has, so a survivor is a target for higher-resolution
 follow-up, not a detection.
@@ -778,9 +1507,46 @@ sample size (~150 stars with any interferometric excess, far fewer with an
 N-band measurement). A star with no N-band measurement is `N_UNTESTED` and is
 never a candidate; `NO_PLANCK_CONSISTENT_OUTLIER` is a count, not a limit.
 
+**Two things the channel claimed but did not do, both now fixed.**
+
+1. *The polarimetric null was a field, not a capability.*
+   `StarContext.polarimetry_limit_ppm` was declared and never populated: the
+   acquire stage skipped every non-excess role as "recorded only". It is now
+   fetched from VizieR, keyed to the sample, and carried per star. It stays
+   **out** of the likelihood ratio on physical grounds — both families emit
+   thermally at H/K (1500 K peaks near 1.9 µm), so a polarisation limit
+   constrains the *scattered-light* fraction, a different axis from the
+   emissivity law, and folding it into χ² would let a constraint that cannot
+   separate the two families look like evidence that can. On a survivor it is
+   a real follow-up discriminant, which is where it is attached.
+2. *The ranked list — the actual deliverable — was not emitted.* The summary
+   carried a candidate subset and a tier histogram. Since nano-grain physics
+   is expected to win wherever K and N both constrain, that list is usually
+   empty on real data, and the channel would have read as having found
+   nothing when it had in fact placed the whole tested population between the
+   two families. `planck_ranking.csv` / `.json` now carry every
+   Planck-testable star ordered by Δχ². "Planck-testable" is both legs: an
+   H/K detection to extrapolate *from* **and** an N-band measurement. The
+   first cut ranked every star with an N band, which let ε Eri — N measured,
+   no NIR detection — into the list on a NaN. A star the test never applied
+   to must not appear in a list that reads as the test's output.
+
+**Version discipline** (per the repo-wide warning). The sandbox holds pandas
+2.3.3; the runner installs 3.0.6. FORGE was run in an isolated 3.0.6 / numpy
+2.4.6 / pyarrow 25.0.1 interpreter: **33/33 pass**, and 32/32 at the commit
+the dispatch is pinned to. No `errors="ignore"`, `DataFrame.append`,
+`iteritems` or `applymap` in the package. The runner's own offline gate then
+passed at 11:36 EDT, so the detector recovers the injected swarm *on the
+runner*, not just locally.
+
+Run 35744731075 started 11:36 EDT after 1 h 32 m queued behind a saturated
+runner pool, cleared its gate, and is in the probe stage against live VizieR.
+
 Next decisive action: read `results/forge/` from 35744731075 — `probe.json`
-first, for which of the nine VizieR ids actually resolved — then dispatch the
-broadband population leg (`skip_population=false`) separately.
+first, for which of the nine VizieR ids actually resolved — then re-dispatch
+on the current head (the run is pinned to a commit that predates the
+polarimetry fetch and the ranking), and run the broadband population leg
+(`skip_population=false`) separately.
 
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 

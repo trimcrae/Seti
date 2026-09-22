@@ -55,6 +55,9 @@ from .physics import BAND_WAVELENGTH_UM, Measurement
 from .tables import TargetTable, normalise_name
 
 STATUS_NOT_ATTEMPTED = "DISCOVERY_NOT_ATTEMPTED"
+#: discovery started but ran out of its own clock: not a statement about the
+#: archive, and never to be read as "the catalogue holds nothing usable"
+STATUS_TRUNCATED = "DISCOVERY_TRUNCATED_BY_BUDGET"
 
 ROLE_PATTERNS: dict[str, list[str]] = {
     "hd": [r"^hd$", r"^hd_?(id|num(ber)?)$", r"^hdn$"],
@@ -171,11 +174,28 @@ class DiscoveredTable:
 
 def discover_table(name: str, preferred: str, role: str = "excess", keywords=(), *,
                    query_fn=None, log: AcquisitionLog | None = None,
-                   overrides: dict | None = None, fetch_fn=None) -> DiscoveredTable:
+                   overrides: dict | None = None, fetch_fn=None,
+                   budget_s: float | None = None) -> DiscoveredTable:
     """List every table under ``preferred``, score each for ``role``, fall back
     to a keyword search of the table descriptions.  The listing degrades to
-    the ReadMe inventory when no TAP host answers (``list_tables``)."""
+    the ReadMe inventory when no TAP host answers (``list_tables``).
+
+    ``budget_s`` is a cooperative clock on THIS table's discovery, checked
+    between calls.  Without it one catalogue can eat a whole job: the route
+    ladder (TAP mirrors, then ASU, then astroquery, each retrying) runs once
+    per route, and then a column query plus a row count runs once per table in
+    the catalogue, so a slow VizieR turns a "cheap" probe into hours.  The
+    caller's overall budget only decides whether to START a table; this
+    decides when to stop one.  Whatever was scored before the clock ran out is
+    kept -- a partial scoreboard is a real result -- and the status says the
+    discovery was truncated rather than that the catalogue is empty.
+    """
     query_fn = query_fn or tap_query
+    t_start = time.monotonic()
+
+    def _out_of_time() -> bool:
+        return budget_s is not None and (time.monotonic() - t_start) > float(budget_s)
+
     board: list[dict] = []
     best: DiscoveredTable | None = None
     best_key: tuple = (-1, -1)
@@ -186,7 +206,11 @@ def discover_table(name: str, preferred: str, role: str = "excess", keywords=(),
     if keywords:
         routes.append(("keyword", lambda: search_tables(keywords, query_fn=query_fn)))
     any_failed = False
+    truncated = False
     for route, lister in routes:
+        if _out_of_time():
+            truncated = True
+            break
         try:
             tabs = lister()
         except Exception as exc:                          # noqa: BLE001
@@ -204,6 +228,9 @@ def discover_table(name: str, preferred: str, role: str = "excess", keywords=(),
                               "route_attempts": list(tabs.attrs.get("attempts", []))})
         listing_route = str(tabs.attrs.get("route", "tap"))
         for _, row in tabs.iterrows():
+            if _out_of_time():
+                truncated = True
+                break
             t = unquote_table(row["table_name"])
             raw = row["columns"] if "columns" in tabs.columns else None
             known = [str(c) for c in raw] if isinstance(raw, (list, tuple)) else []
@@ -235,15 +262,27 @@ def discover_table(name: str, preferred: str, role: str = "excess", keywords=(),
                     best_key = key
                     best = DiscoveredTable(name, role, t, cols, roles, entry.get("n_rows"),
                                            STATUS_OK, route=route)
-        if best is not None:
+        if best is not None or truncated:
             break
     if best is None:
+        # A truncated discovery is NOT "the catalogue holds nothing usable":
+        # it is "this run did not finish looking", and it must not read as a
+        # statement about the archive.
+        if truncated:
+            return DiscoveredTable(
+                name, role, None, [], {}, None, STATUS_TRUNCATED, route="none",
+                scoreboard=board,
+                note=f"discovery budget {budget_s:.0f}s exhausted after "
+                     f"{len(board)} table(s); not a statement about {preferred!r}")
         status = STATUS_FAILED if any_failed and not board else STATUS_ZERO
         return DiscoveredTable(name, role, None, [], {}, None, status, route="none",
                                scoreboard=board,
                                note=f"no table under {preferred!r} or the keyword search "
                                     f"exposes the roles a {role} table needs")
     best.scoreboard = board
+    if truncated:
+        best.note = (f"discovery budget {budget_s:.0f}s exhausted after {len(board)} "
+                     "table(s); a better-scoring table may not have been reached")
     if best.n_rows == 0:
         best.status = STATUS_ZERO
     return best

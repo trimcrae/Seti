@@ -1188,6 +1188,13 @@ def _cmd_sextant(args, cfg):
 # --- end SEXTANT ---
 
 
+# --- GRAVE ---
+def _cmd_grave(args, cfg):
+    from .grave.run import main as _grave_main
+
+    return _grave_main(list(args.rest))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2531,6 +2538,15 @@ def main(argv=None):
                         "per-chunk Gaia pulls; shared across shards on one runner")
     p.set_defaults(func=_cmd_sextant)
     # --- end SEXTANT ---
+
+    # --- GRAVE ---
+    p = sub.add_parser("grave",
+                       help="GRAVE (S56): the fission-product and refined-particulate vectors in "
+                            "Earth's sedimentary record (SGP / EarthChem / GEOROC), age-stacked "
+                            "across extinction boundaries; flags are passed through to seti.grave.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_grave)
+    # --- /GRAVE ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

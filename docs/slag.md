@@ -116,6 +116,24 @@ panel whose elements the compilation does not cover reports
 `SUITE_LACKS_ELEMENTS` or `TOO_FEW_BODIES_COVER_THE_PANEL` and is not
 calibrated this way — never silently given a p.
 
+### The calibrated per-element residual
+
+The same draws answer a sharper question at no extra cost. Each of the N
+refits leaves a residual at every element, so the distribution of *one
+element's* residual under the natural model is already in hand:
+`misfit["per_element"][el]["p"]` is the fraction of natural draws left at
+least as badly fitted at that element as the data are.
+
+This is the complement Tier 2 needs. The pair envelope asks whether a ratio
+lies outside everything nature has been *measured* to do, and §1 shows that
+envelope is wide — 2.95 dex for Ti/Al across real stones. The per-element p
+asks instead how unusual this element is *given the model's full freedom*, so
+it does not depend on the envelope at all. With a dozen elements per panel
+the smallest of a dozen p values is small by construction, so
+`_worst.p_min_corrected` (the Bonferroni-corrected minimum) is reported
+beside it and is what any claim must use. It is a diagnostic that points at
+*which element* carries a panel's misfit — never on its own a candidate rule.
+
 `p < 0.01` is `UNEXPLAINED`, `p < 0.05` is `WATCH`. **A low `p` is a
 measurement about the natural family's reach, not a technosignature** — that
 is what Tier 2 is for.
@@ -178,6 +196,19 @@ routes the value to the panel's one-sided limit list. The convention is not
 assumed: PEWDD publishes its own `total_detections`, and "error < 0 means not
 a detection" reproduces it on all 3475 rows. That agreement is recomputed
 every run (`summary.json["limit_bookkeeping"]`).
+
+**The PyllutedWD grids were fetched and silently ignored.** All twelve
+`data/timescales_*.csv` files downloaded with status OK, and
+`acquire.json["timescales"]["parsed"]` was `{}` — the parser recognised none
+of them and said nothing about why, so the run looked healthy while quietly
+using a different timescale source. A file that does not parse now records
+`parse_diagnosis` (its row keys, row widths, the temperature grid it found and
+which of the three conditions failed) and keeps its raw text under
+`results/slag/data/timescales_raw_*`, so the real layout is readable from the
+committed artifacts without refetching. This costs the channel nothing
+scientifically — the source actually used, PEWDD's own per-star `SinTime*`
+columns, is measured on these very stars and is the better one (below) — but
+an unexplained silent fallback is not acceptable in the record.
 
 **The sinking timescales are in the catalogue.** PEWDD publishes τ_Z per star
 per element (`SinTimeCa`, …) for that star's own structure. Where a row has
@@ -265,9 +296,11 @@ Counting *detections only* — upper limits excluded, per §5:
 |---|---|
 | 0–1 | 2723 |
 | 2–4 | 656 |
-| **≥ 5 (screened and calibrated)** | **168 panels / 137 objects** |
+| **≥ 5 (screened and calibrated)** | **168 panels / 123 objects** |
 
-187 panels carry at least one upper limit. (Before the negative-error
+(137 objects under the old name grouping; the sky reconciliation of §5 merges
+14 of those into another object's designations.) 187 panels carry at least one
+upper limit. (Before the negative-error
 convention was understood, 209 panels appeared to reach ≥ 5 elements — the
 extra 41 were limits read as detections.)
 

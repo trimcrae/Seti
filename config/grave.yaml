@@ -291,7 +291,12 @@ screen:
   unmeasured_floor_dex: 0.30            # sigma for an element whose control scatter could not be measured
   floor_max_rows: 4000
   null_max_rows: 2000
-  max_assess: 5000                      # above-threshold samples put through the full vet (highest LR first)
+  # Above-threshold samples put through the full vet, highest LR first.  The vet
+  # costs ~2 x n_elements refined fits per sample (leave-one-out), so this is a
+  # wall-clock cap, not a scientific one: the funnel records `above_threshold`
+  # in full alongside `assessed`, and a gap between them means the threshold is
+  # mis-calibrated, which is itself the finding.
+  max_assess: 2000
   min_age_ma: 0.0
   max_age_ma: 4000.0
   # site types whose samples carry a modern-contamination provenance flag (not a kill)

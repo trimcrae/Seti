@@ -385,7 +385,12 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
     vet_counts = dict.fromkeys(V.VETOES, 0)
     cands: list[dict] = []
     prov_re = sc.get("provenance_flag_regex", "")
-    for i in idx:
+    print(f"[grave] screen: {len(df)} samples, {len(D.elements)} design elements, "
+          f"threshold {threshold:.2f}, {int(df['above_threshold'].sum())} above it, vetting {len(idx)}",
+          flush=True)
+    for n_done, i in enumerate(idx):
+        if n_done and n_done % 100 == 0:
+            print(f"[grave]   vetted {n_done}/{len(idx)}", flush=True)
         # the kills see every element the sample carries, not only the design's
         row = {e: float(full[i, k]) for k, e in enumerate(all_elements) if np.isfinite(full[i, k])}
         for extra in ("TOC",):

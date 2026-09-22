@@ -511,14 +511,18 @@ through the exponential ramp. Dispatch via `.github/workflows/ignition.yml`
 
 ### 7.1 In flight, 2026-09-22 — and the next decisive action
 
-Two dispatches are queued behind an account-wide GitHub Actions ceiling (11
-runs in flight, 111 queued repo-wide across the parallel channels); neither
-had a runner after four hours, so **neither has yet corrected the brief**:
+Both dispatches have since run. **35738088082 is complete and its verdict is
+committed** — read §7.3, which supersedes items 1–3 of the read order below.
+**35740159635 is in flight**: its probe landed at 15:42 UTC (11:42 EDT) and
+its 12-shard sweep matrix began at 15:48 UTC (11:48 EDT) under a 150-minute
+per-shard wall clock, so the shards commit their own `sweep_s*of12` /
+`screen_s*of12` records from about 18:20 UTC (14:20 EDT), each shard as it
+finishes. Item 4 of the read order is the live one.
 
 | run | what it settles | inputs |
 |---|---|---|
-| **35738088082** | Step 1: do the 846 parents get full 10-year series now? | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
-| **35740159635** | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
+| **35738088082** ✅ | Step 1: do the 846 parents get full 10-year series now? **Yes — 846/846, see §7.3** | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
+| **35740159635** ⏳ | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers — *sweeping* | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
 
 `route=upload` with `upload_fallback_cone: true` is deliberate: it tests the
 `unicodeChar` fix on the real service, and a chunk no rung answers still goes

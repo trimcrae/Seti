@@ -480,6 +480,42 @@ def test_exposure_join_never_falls_back_to_the_series_alone():
     assert not np.isfinite(lc2.exptime_min).any()
 
 
+def test_exposure_table_survives_the_csv_round_trip(tmp_path):
+    """The table reaches the shards through plate_exptime.csv, not in memory.
+
+    A CSV column with one empty cell reads back as float64 while the light
+    curve's identifiers are Int64; merging those matches nothing, and the run
+    would report a DASCH coverage gap when what it had was a dtype mismatch.
+    """
+    from seti.century.lightcurve import attach_exptime
+    from seti.century.targets import exposure_table
+
+    et = exposure_table(to_frame(["series,platenum,mosnum,expnum,exptime",
+                                  "a,101,0,0,45.0",
+                                  "mc,900,0,0,75.0"]))
+    p = tmp_path / "plate_exptime.csv"
+    et.to_csv(p, index=False)
+    back = pd.read_csv(p)
+    df = pd.DataFrame({
+        "date_jd": [2415020.5, 2442000.5],
+        "magcal_magdep": [11.0, 11.1], "magcal_magdep_rms": [0.1, 0.1],
+        "limiting_mag_local": [14.0, 15.0], "series": ["a", "mc"],
+        "plate_number": [101, 900], "mosaic_number": [0, 0], "exposure_number": [0, 0],
+        "aflags": [0, 0], "bflags": [0, 0],
+    })
+    lc = from_api_frame(df)
+    prov = attach_exptime(lc, back)
+    assert prov["matched_det"] == 2
+    assert np.allclose(lc.exptime_min, [45.0, 75.0])
+    # And with a missing identifier somewhere in the file, which is what turns
+    # the column into a float in the first place.
+    back2 = back.copy()
+    back2.loc[0, "expnum"] = np.nan
+    lc2 = from_api_frame(df)
+    prov2 = attach_exptime(lc2, back2)
+    assert prov2["matched_det"] >= 1
+
+
 def test_margin_mask_is_keyed_to_the_star_not_the_point():
     rng = np.random.default_rng(3)
     lc = synth_plates(rng, lim_mean=13.0, lim_sd=1.0)
@@ -877,6 +913,103 @@ def test_screen_star_runs_all_three_and_serialises():
     assert row["fade_status"] in ("no_secular_change", "rejected")
     assert row["rust_status"] in ("no_rise", "rejected", "insufficient_data")
     assert row["annual"]["year"] and row["season"]["season_t"]
+    json.dumps(row, default=lambda o: None)
+
+
+def _dr7_lightcurve_lines(lc: CenturyLC, exptimes: dict[str, float]) -> list[str]:
+    """Render a synthetic star the way DR7 actually serves it.
+
+    An array of CSV lines, header first, with the exact column spellings of
+    ``_COLTYPES`` in ``daschlab/photometry.py``: ``date_jd`` on the JD scale,
+    ``magcal_magdep`` with ``magcal_magdep_rms`` beside it (99.0 where the
+    archive has no rms), ``limiting_mag_local``, ``series``/``plate_number``/
+    ``mosaic_number``/``exposure_number``, ``aflags``/``bflags``, and rows with
+    an EMPTY magnitude for the plates that did not detect the star.
+    """
+    cols = ["ref_number", "ra_deg", "dec_deg", "date_jd", "magcal_magdep",
+            "magcal_magdep_rms", "magcal_local", "magcal_local_rms",
+            "limiting_mag_local", "series", "plate_number", "mosaic_number",
+            "exposure_number", "solution_number", "sextractor_number",
+            "gsc_bin_index", "aflags", "bflags"]
+    lines = [",".join(cols)]
+
+    def _row(t, mag, err, lim, ser, pnum, detected):
+        jd = t + 2400000.5
+        return ",".join([
+            "42", "10.0", "20.0", f"{jd:.5f}",
+            f"{mag:.4f}" if detected else "",
+            f"{err:.4f}" if detected else "99.0",
+            f"{mag + 1.0:.4f}" if detected else "",
+            "0.5" if detected else "99.0",
+            f"{lim:.4f}", str(ser), str(pnum), "0", "0", "1",
+            "7" if detected else "0", "1234" if detected else "0", "0", "0"])
+
+    n = 0
+    for i in range(lc.n_det):
+        ser = str(lc.series[i])
+        lines.append(_row(lc.t[i], lc.mag[i], lc.err[i], lc.lim[i], ser, 1000 + i, True))
+        exptimes[f"{ser}:{1000 + i}"] = 45.0 if lc.year[i] < 1954.0 else 75.0
+        n += 1
+    for j in range(lc.n_nd):
+        ser = str(lc.series_nd[j])
+        lines.append(_row(lc.t_nd[j], 0.0, 0.0, lc.lim_nd[j], ser, 5000 + j, False))
+        exptimes[f"{ser}:{5000 + j}"] = 45.0 if lc.year_nd[j] < 1954.0 else 75.0
+        n += 1
+    assert n == lc.n_det + lc.n_nd
+    return lines
+
+
+def test_dr7_wire_format_runs_end_to_end_into_the_three_statistics():
+    """The column-name contract, proved from the wire format to the verdict.
+
+    Every other test in this file starts from a ``CenturyLC`` built in Python.
+    This one starts from the bytes DR7 actually sends --- an array of CSV lines
+    with ``daschlab``'s column spellings --- and carries them through
+    ``to_frame`` -> ``from_api_frame`` -> ``attach_exptime`` -> ``screen_star``.
+    A renamed column, a misread time scale or a mispaired error would pass
+    every synthetic test and fail only on the runner, an hour of queue later.
+    """
+    from seti.century.lightcurve import attach_exptime
+    from seti.century.targets import exposure_table
+
+    rng = np.random.default_rng(77)
+    truth = synth_plates(rng, period=0.57, amp=0.5, stop_year=1931.0, n_per_year=30,
+                         lim_mean=14.0, series_switch_year=1910.0)
+    exptimes: dict[str, float] = {}
+    lines = _dr7_lightcurve_lines(truth, exptimes)
+
+    df = to_frame(lines)
+    assert "magcal_magdep" in df.columns and "limiting_mag_local" in df.columns
+    assert len(df) == truth.n_det + truth.n_nd
+
+    lc = from_api_frame(df)
+    assert lc is not None
+    # The detections and non-detections come back split the way they went in.
+    assert lc.n_det == truth.n_det and lc.n_nd == truth.n_nd
+    assert np.allclose(np.sort(lc.t), np.sort(truth.t), atol=1e-3)
+    # date_jd was read as a JD, not swallowed as an MJD two centuries early.
+    assert 1885.0 < float(np.min(lc.year)) < 1900.0
+    assert 1985.0 < float(np.max(lc.year)) < 1995.0
+    # The error is magcal_magdep_rms, and the 99.0 sentinel never reaches a
+    # detection because the 99.0 rows are the non-detections.
+    assert np.allclose(np.sort(lc.err), np.sort(truth.err), atol=1e-3)
+    assert float(np.max(lc.err)) < 1.0
+
+    exps_lines = ["series,platenum,scannum,mosnum,expnum,solnum,exptime,epoch,limMagApass"]
+    for key, et in exptimes.items():
+        ser, pnum = key.split(":")
+        exps_lines.append(f"{ser},{pnum},0,0,0,1,{et:.1f},1900.0,14.5")
+    prov = attach_exptime(lc, exposure_table(to_frame(exps_lines)))
+    assert prov["matched_det"] == lc.n_det and prov["matched_nd"] == lc.n_nd
+    assert prov["exptime_min_pre"] == 45.0 and prov["exptime_min_post"] == 75.0
+
+    row = screen_star(lc, {"target_id": 1, "name": "dr7", "kind": "variable", "field": "f",
+                           "period_cat": 0.57, "amp_cat": 0.5, "mag_cat": 11.0,
+                           "vtype": "RRAB"}, _conf(), rng=rng)
+    assert row["usable"], row
+    assert row["cess_status"] == "cessation", (row["cess_status"], row["cess_flags"])
+    assert 1927 < row["cess_transition_year"] < 1935
+    assert not row["cess_transition_at_gap"]
     json.dumps(row, default=lambda o: None)
 
 

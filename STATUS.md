@@ -53,6 +53,18 @@ uploads what it screened and resumes rather than being killed with nothing; and
 which has no detection count (its `num_matches` counts catalogue cross-matches),
 rather than pretending to cut.
 
+**The runner's pandas is not the sandbox's.** The sandbox holds 2.3.3, the
+runner installs 3.0.6 from `pandas>=2.0`. The century package and the five
+sibling modules it imports (`knell.acquire/blocks/efficiency`,
+`rust.scatter/trend`) are clean of the removed APIs, and the offline suite is
+now run against 3.0.6 as well. (`knell/run.py:383` still calls
+`pd.to_numeric(..., errors="ignore")` — not on any century path, but it will
+kill a KNELL dispatch.) The version check surfaced one hazard that is not
+about pandas: the exposure table reaches the shards through a CSV, where one
+empty cell turns an identifier column into `float64` while the light curve's
+is `Int64` — a join that matches nothing and reads as a DASCH coverage gap.
+Both sides are now normalised, with a round-trip test.
+
 In flight: run **35745660073**, `stages=full`, 4 shards, 60 variables + 60
 bright per field over the six configured DASCH-dense fields (~720 stars),
 acquire budget 7200 s, screen budget 9000 s. Queued at 11:12 EDT. No

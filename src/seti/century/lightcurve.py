@@ -515,6 +515,14 @@ def attach_exptime(lc: CenturyLC, table: pd.DataFrame) -> dict:
         return prov
     tab = table.copy()
     tab["series"] = tab["series"].astype(str).str.strip().str.lower()
+    # The table makes a round trip through plate_exptime.csv, and a CSV column
+    # with one empty cell reads back as float64 while `plate_ids` produces
+    # Int64.  Merging those two dtypes matches nothing and would look like a
+    # DASCH coverage gap rather than a dtype mismatch, so both sides are
+    # normalised to Int64 here.
+    for c in ("platenum", "mosnum", "expnum"):
+        if c in tab.columns:
+            tab[c] = pd.to_numeric(tab[c], errors="coerce").astype("Int64")
     full = [c for c in ("series", "platenum", "mosnum", "expnum") if c in tab.columns]
     keys = [k for k in (full, ["series", "platenum"]) if len(k) > 1]
 

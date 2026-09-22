@@ -304,6 +304,27 @@ series-clustered smear history the channel exists to distinguish from a change
 in the star. Unmatched plates keep NaN and are left unsmeared, which
 `smear_modelled` reports.
 
+### 6.2 The runner's pandas is not the sandbox's
+
+The sandbox venv holds pandas 2.3.3; the runner installs **pandas 3.0.6** from
+`pandas>=2.0`. A sibling channel lost a whole dispatch to that gap, dying two
+minutes in — before a single archive call — on `pd.to_numeric(errors="ignore")`,
+which pandas 3 removed. So this channel's offline suite is run against
+3.0.6 as well as against the sandbox's 2.3.3, and the package is clean of the
+removed APIs (`errors="ignore"`, `applymap`, `iteritems`, `DataFrame.append`,
+`error_bad_lines`, `np.NaN`, `ndarray.ptp()`), as are the four sibling modules
+it imports (`knell.acquire`, `knell.blocks`, `knell.efficiency`, `rust.scatter`,
+`rust.trend`).
+
+One dtype hazard the version check surfaced is not about pandas at all: the
+exposure table reaches the shards through `plate_exptime.csv`, and a CSV column
+with a single empty cell reads back as `float64` while the light curve's
+identifiers are `Int64`. Merging those two dtypes matches nothing, and the run
+would have reported a DASCH coverage gap where it actually had a dtype
+mismatch. Both sides of the join are now normalised to `Int64`, with a test
+that takes the table through a real CSV round trip including a missing
+identifier.
+
 Two further schema facts that did *not* need a fix but are load-bearing:
 `magcal_magdep` is the preferred calibration and its error is
 `magcal_magdep_rms` (not `magcal_local_rms`, a different calibration's

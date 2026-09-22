@@ -37,11 +37,13 @@ from seti.metronome.vetstar import (
     gaia_neighbourhood,
     gaia_variability,
     harmonic_content,
+    neighbour_context,
     odd_even_minima,
     periodogram_at,
     phase_separation,
     propagate_position,
     rayleigh,
+    roll_season_test,
     vet_verdict,
     vizier_by_identifier,
     vizier_cone_report,
@@ -687,3 +689,116 @@ def test_stage_reports_a_catalogued_binary_from_a_cone(tmp_path):
     hits = rep["catalogued_binary_hits"]
     assert [h["source"] for h in hits] == ["vsx"]
     assert "CATALOGUED_ECLIPSING_BINARY:vsx" in rep["verdict"]
+
+
+# ---------------------------------------------------------------------------
+# the spacecraft-roll contamination test
+# ---------------------------------------------------------------------------
+def _segments_from(amps):
+    return [{"segment": i + 1, "amplitude_ptp": a} for i, a in enumerate(amps)]
+
+
+def test_roll_season_catches_an_amplitude_locked_to_quarter_mod_four():
+    """A neighbour's signal: the amplitude is a function of the aperture
+    orientation, which repeats every four Kepler quarters."""
+    rng = np.random.default_rng(31)
+    base = {0: 6.6e-4, 1: 6.0e-4, 2: 1.41e-3, 3: 1.18e-3}
+    amps = [base[(i + 1) % 4] * (1 + rng.normal(0, 0.12)) for i in range(17)]
+    out = roll_season_test(_segments_from(amps), mission="kepler", n_perm=4000)
+    assert out["status"] == STATUS_OK
+    assert out["n_seasons"] == 4
+    assert out["p_perm"] < 0.01
+    assert out["ratio_max_min"] > 1.5
+    assert out["f_stat"] > 1.0
+
+
+def test_roll_season_passes_an_intrinsic_signal():
+    """An intrinsic amplitude is diluted by crowding, which moves with the
+    mask but carries no roll periodicity: the test must not fire."""
+    rng = np.random.default_rng(32)
+    amps = [1.0e-3 * (1 + rng.normal(0, 0.15)) for _ in range(17)]
+    out = roll_season_test(_segments_from(amps), mission="kepler", n_perm=4000)
+    assert out["status"] == STATUS_OK
+    assert out["p_perm"] > 0.05
+
+
+def test_roll_season_is_not_fooled_by_a_secular_trend():
+    """Amplitude falling steadily across the mission is not a roll effect --
+    a trend spreads itself evenly over the four seasons."""
+    amps = [1.5e-3 - 5e-5 * i for i in range(17)]
+    out = roll_season_test(_segments_from(amps), mission="kepler", n_perm=4000)
+    assert out["status"] == STATUS_OK
+    assert out["p_perm"] > 0.05
+
+
+def test_roll_season_is_kepler_only_and_says_so():
+    amps = [1e-3] * 17
+    assert roll_season_test(_segments_from(amps), mission="tess")["status"] \
+        == "NOT_APPLICABLE"
+    assert roll_season_test(_segments_from([1e-3] * 3), mission="kepler")["status"] \
+        == "TOO_FEW_SEGMENTS"
+    assert roll_season_test([], mission="kepler")["status"] == "TOO_FEW_SEGMENTS"
+
+
+def test_the_roll_rule_is_trippable_and_needs_both_p_and_ratio():
+    rep = {"period": PERIOD, "catalogued_binary_hits": [],
+           "roll_season": {"status": STATUS_OK, "p_perm": 0.0005, "f_stat": 3.07,
+                           "ratio_max_min": 2.37}}
+    verdict, _ = vet_verdict(rep)
+    assert "AMPLITUDE_TRACKS_SPACECRAFT_ROLL" in verdict
+    # a significant but tiny season difference is not a contamination claim
+    rep["roll_season"] = {"status": STATUS_OK, "p_perm": 0.0005, "f_stat": 3.07,
+                          "ratio_max_min": 1.05}
+    assert "AMPLITUDE_TRACKS_SPACECRAFT_ROLL" not in vet_verdict(rep)[0]
+    # nor is a large difference that a relabelling reproduces
+    rep["roll_season"] = {"status": STATUS_OK, "p_perm": 0.4, "f_stat": 1.0,
+                          "ratio_max_min": 3.0}
+    assert "AMPLITUDE_TRACKS_SPACECRAFT_ROLL" not in vet_verdict(rep)[0]
+
+
+# ---------------------------------------------------------------------------
+# the neighbour census
+# ---------------------------------------------------------------------------
+def test_neighbour_context_asks_about_the_ones_that_could_be_the_source():
+    gaia = {"neighbours": [
+        {"source_id": "1", "sep_arcsec_at_epoch": 6.4, "phot_g_mean_mag": 18.0,
+         "phot_variable_flag": "NOT_AVAILABLE", "ra": 292.9, "dec": 41.1},
+        {"source_id": "2", "sep_arcsec_at_epoch": 13.3, "phot_g_mean_mag": 14.37,
+         "phot_variable_flag": "VARIABLE", "ra": 292.86, "dec": 41.13},
+        {"source_id": "3", "sep_arcsec_at_epoch": 40.0, "phot_g_mean_mag": 10.0,
+         "phot_variable_flag": "VARIABLE", "ra": 292.0, "dec": 41.0},
+    ]}
+    asked = []
+
+    def gq(adql):
+        asked.append(adql)
+        if "vari_summary" in adql:
+            return pd.DataFrame({"source_id": [2], "num_selected_g_fov": [40]})
+        return pd.DataFrame()
+
+    def cone(table, ra, dec, radius):
+        return pd.DataFrame()
+
+    out = neighbour_context(gaia, g_target=14.79, query_fn=gq, cone_fn=cone,
+                            max_sep_arcsec=20.0)
+    # the faint non-variable one is not worth asking about; the 40-arcsec one
+    # cannot be in a Kepler aperture
+    assert [n["source_id"] for n in out] == ["2"]
+    assert out[0]["why"] == "gaia_variable"
+    assert out[0]["gaia_variability"]["gaiadr3.vari_summary"]["status"] == STATUS_OK
+    assert out[0]["vizier_cones"]["vsx"]["status"] == STATUS_ABSENT
+    assert any("vari_summary" in a for a in asked)
+
+
+def test_neighbour_context_keeps_a_brighter_neighbour_even_when_not_flagged():
+    gaia = {"neighbours": [
+        {"source_id": "9", "sep_arcsec_at_epoch": 8.0, "phot_g_mean_mag": 12.0,
+         "phot_variable_flag": "NOT_AVAILABLE", "ra": 1.0, "dec": 2.0}]}
+    out = neighbour_context(gaia, g_target=14.79, query_fn=lambda a: pd.DataFrame(),
+                            cone_fn=lambda *a: pd.DataFrame())
+    assert [n["why"] for n in out] == ["brighter_than_target"]
+
+
+def test_neighbour_context_is_empty_without_a_gaia_answer():
+    assert neighbour_context({}, g_target=14.0) == []
+    assert neighbour_context({"neighbours": []}, g_target=14.0) == []

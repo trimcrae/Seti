@@ -554,6 +554,82 @@ def per_segment_amplitude(segments, period: float, *, cadence_days: float,
     return rows
 
 
+def roll_season_test(per_segment, *, mission: str = "kepler", key: str = "amplitude_ptp",
+                     n_perm: int = 2000, rng=None) -> dict:
+    """Is the folded amplitude a function of the SPACECRAFT ROLL, not of time?
+
+    Kepler rolls 90 degrees every quarter, so quarters sharing ``quarter % 4``
+    observe the field in the same orientation and put the same neighbours
+    inside the target's aperture.  That makes ``quarter % 4`` a label with no
+    astrophysical meaning whatever, and it is the sharpest contamination test
+    there is on Kepler photometry:
+
+    * a signal INTRINSIC to the target has a fractional amplitude diluted by
+      whatever else is in the mask, ``A_true x (1 - crowding)``.  Crowding
+      moves with the mask, but by tens of percent, not by factors;
+    * a signal belonging to a NEIGHBOUR has a fractional amplitude
+      proportional to how much of *that star's* flux the mask happens to
+      catch, which changes by factors as the field rotates.
+
+    So an amplitude locked to the roll season places the signal on another
+    star.  The statistic is the ratio of between-season to within-season
+    scatter, and its p-value is the fraction of ``n_perm`` random relabellings
+    of the segments into the same season sizes that reach it — no distribution
+    is assumed, and with four seasons and a dozen quarters none could be.
+
+    TESS sectors do not repeat an orientation this way, so the test is Kepler
+    only and reports ``NOT_APPLICABLE`` elsewhere.
+    """
+    out = {"status": "NOT_APPLICABLE", "mission": str(mission), "n_seasons": 0,
+           "season_means": {}, "season_n": {}, "f_stat": float("nan"),
+           "p_perm": float("nan"), "ratio_max_min": float("nan"), "n_perm": 0}
+    if not str(mission).lower().startswith("kep"):
+        return out
+    rows = [(int(r["segment"]), _f(r.get(key))) for r in (per_segment or [])
+            if r.get("segment") is not None and np.isfinite(_f(r.get(key)))
+            and _f(r.get(key)) > 0]
+    if len(rows) < 6:
+        out["status"] = "TOO_FEW_SEGMENTS"
+        return out
+    labels = np.array([q % 4 for q, _ in rows])
+    vals = np.array([a for _, a in rows], dtype=float)
+    seasons = sorted(set(labels.tolist()))
+    sized = [int(np.sum(labels == s)) for s in seasons]
+    if len(seasons) < 2 or sum(1 for n in sized if n >= 2) < 2:
+        out["status"] = "TOO_FEW_SEGMENTS"
+        return out
+
+    def f_ratio(lab):
+        means = np.array([vals[lab == s].mean() for s in seasons])
+        within = np.array([vals[lab == s].var(ddof=1) if int(np.sum(lab == s)) > 1
+                           else np.nan for s in seasons])
+        w = float(np.nanmean(within))
+        b = float(np.var(means, ddof=1)) if len(means) > 1 else float("nan")
+        return b / w if np.isfinite(w) and w > 0 else float("nan")
+
+    obs = f_ratio(labels)
+    rng = np.random.default_rng(20260922) if rng is None else rng
+    n_ge = 0
+    n_done = 0
+    for _ in range(int(n_perm)):
+        perm = rng.permutation(labels)
+        f = f_ratio(perm)
+        if np.isfinite(f):
+            n_done += 1
+            if f >= obs:
+                n_ge += 1
+    means = {int(s): float(vals[labels == s].mean()) for s in seasons}
+    out.update({"status": STATUS_OK, "n_seasons": len(seasons),
+                "season_means": means,
+                "season_n": {int(s): int(np.sum(labels == s)) for s in seasons},
+                "segments": {int(q): float(a) for q, a in rows},
+                "f_stat": obs, "n_perm": int(n_done),
+                "p_perm": float((n_ge + 1) / (n_done + 1)) if n_done else float("nan"),
+                "ratio_max_min": (max(means.values()) / min(means.values())
+                                  if min(means.values()) > 0 else float("nan"))})
+    return out
+
+
 def flare_mask(t, flares, *, pad_days: float = 0.0) -> np.ndarray:
     """Boolean mask over ``t`` covering every detected event (with padding)."""
     t = np.asarray(t, dtype=float)
@@ -728,6 +804,47 @@ def vizier_cone_report(ra: float, dec: float, tables=None, *, radius_arcsec: flo
         if log:
             log.record(f"vetstar_vizier_{name}", f"cone {table} r={radius_arcsec}\"", rows=n)
         out[name] = rec
+    return out
+
+
+def neighbour_context(gaia: dict, *, g_target: float = float("nan"),
+                      max_neighbours: int = 4, max_sep_arcsec: float = 20.0,
+                      query_fn=None, cone_fn=None, log: AcquisitionLog | None = None
+                      ) -> list[dict]:
+    """Ask the archives about the neighbours that could be the real source.
+
+    A Kepler pixel is 3.98 arcsec and the optimal aperture is several of them,
+    so a variable star a dozen arcseconds away puts its own signal into the
+    target's light curve.  The neighbours worth asking about are the ones that
+    are bright enough to matter --- brighter than the target, or flagged
+    VARIABLE by Gaia --- and each is put to the same variability tables and the
+    same VSX cone as the target, so "the signal belongs to that one instead"
+    is a checkable claim rather than a hand-wave.
+    """
+    out: list[dict] = []
+    for n in (gaia or {}).get("neighbours") or []:
+        if len(out) >= int(max_neighbours):
+            break
+        sep = _f(n.get("sep_arcsec_at_epoch"))
+        if not np.isfinite(sep) or sep > float(max_sep_arcsec):
+            continue
+        g = _f(n.get("phot_g_mean_mag"))
+        variable = str(n.get("phot_variable_flag") or "").upper() == "VARIABLE"
+        brighter = np.isfinite(g) and np.isfinite(g_target) and g <= g_target
+        if not (variable or brighter):
+            continue
+        rec = {"source_id": n.get("source_id"), "sep_arcsec": sep,
+               "phot_g_mean_mag": g, "phot_variable_flag": n.get("phot_variable_flag"),
+               "why": "gaia_variable" if variable else "brighter_than_target",
+               "ra": n.get("ra"), "dec": n.get("dec")}
+        rec["gaia_variability"] = gaia_variability(str(n.get("source_id")),
+                                                   query_fn=query_fn, log=log) \
+            if n.get("source_id") else {}
+        ra, dec = _f(n.get("ra")), _f(n.get("dec"))
+        rec["vizier_cones"] = vizier_cone_report(ra, dec, radius_arcsec=3.0,
+                                                 cone_fn=cone_fn, log=log) \
+            if np.isfinite(ra) and np.isfinite(dec) else {}
+        out.append(rec)
     return out
 
 
@@ -915,6 +1032,18 @@ def vet_verdict(report: dict) -> tuple[str, list[str]]:
         if ratio >= 5.0:
             reasons.append(f"AMPLITUDE_VARIES_BETWEEN_SEGMENTS:ratio={ratio:.1f}")
 
+    # The sharpest contamination test on Kepler photometry: `quarter % 4` is a
+    # label about the spacecraft, not about the sky, so an amplitude that
+    # tracks it puts the signal on a neighbouring star.
+    roll = report.get("roll_season") or {}
+    if roll.get("status") == STATUS_OK and np.isfinite(_f(roll.get("p_perm"))) \
+            and _f(roll.get("p_perm")) <= 0.01 \
+            and np.isfinite(_f(roll.get("ratio_max_min"))) \
+            and _f(roll.get("ratio_max_min")) >= 1.5:
+        reasons.append("AMPLITUDE_TRACKS_SPACECRAFT_ROLL:"
+                       f"F={_f(roll.get('f_stat')):.2f},p={_f(roll.get('p_perm')):.4f},"
+                       f"ratio={_f(roll.get('ratio_max_min')):.2f}")
+
     unreached = []
     for key in ("gaia_variability", "vizier_cones", "vizier_by_id"):
         for name, rec in (report.get(key) or {}).items():
@@ -947,6 +1076,7 @@ DEFAULT_VETSTAR = {
     "gaia_radius_arcsec": 20.0,
     "vizier_radius_arcsec": 5.0,
     "max_quarters": 20,
+    "max_neighbours": 4,
     "per_target_budget_s": 1800.0,
     "budget_s": 5400.0,
     "detector": {"detrend_window_days": 0.5, "sigma_lo": 2.5, "sigma_hi": 3.5,
@@ -1036,6 +1166,8 @@ def analyse_lightcurve(segments, period: float, *, conf: dict | None = None,
     out["per_segment"] = per_segment_amplitude(
         segments, period, cadence_days=cad,
         window_days=float(vc["detrend_window_days"]))
+    out["roll_season"] = roll_season_test(out["per_segment"],
+                                          mission=str(vc.get("mission", "kepler")))
     return out
 
 
@@ -1092,10 +1224,17 @@ def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
             if src else {}
         rep["vizier_cones"] = vizier_cone_report(
             ra, dec, radius_arcsec=float(vc["vizier_radius_arcsec"]), cone_fn=cone_fn, log=log)
+        rep["neighbours"] = neighbour_context(
+            rep["gaia"],
+            g_target=_f(((rep["gaia"] or {}).get("match") or {}).get("phot_g_mean_mag")),
+            max_neighbours=int(vc.get("max_neighbours", 4)),
+            max_sep_arcsec=float(vc["gaia_radius_arcsec"]),
+            query_fn=gaia_query_fn, cone_fn=cone_fn, log=log)
     else:
         rep["gaia"] = {"status": STATUS_UNREACHED, "error": "no position"}
         rep["gaia_variability"] = {}
         rep["vizier_cones"] = {}
+        rep["neighbours"] = []
     rep["vizier_by_id"] = vizier_by_identifier(sid, mission, query_fn=query_fn, log=log)
 
     merged = dict(rep.get("vizier_cones") or {})
@@ -1137,7 +1276,8 @@ def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
     rep["n_catalogue_epochs"] = int(len(ct))
 
     if status == "OK" and segs:
-        rep.update(analyse_lightcurve(segs, p, conf=vc, catalogue_times=ct))
+        rep.update(analyse_lightcurve(segs, p, conf=dict(vc, mission=mission),
+                                      catalogue_times=ct))
         rep["period"] = p
     else:
         rep["status"] = "NO_LIGHTCURVE"
@@ -1199,6 +1339,8 @@ __all__ = ["CATALOGUE_EPOCH", "DEFAULT_VETSTAR", "GAIA_EPOCH", "GAIA_SOURCE_COLU
            "analyse_lightcurve", "angular_separation_arcsec", "catalogued_binary_hits",
            "detrend_fractional", "flare_mask", "fold_amplitude_significance",
            "fold_profile", "gaia_neighbourhood",
-           "gaia_variability", "harmonic_content", "odd_even_minima", "per_segment_amplitude",
+           "gaia_variability", "harmonic_content", "neighbour_context", "odd_even_minima",
+           "per_segment_amplitude",
            "periodogram_at", "phase_separation", "propagate_position", "rayleigh",
+           "roll_season_test",
            "stage_vetstar", "vet_verdict", "vizier_by_identifier", "vizier_cone_report"]

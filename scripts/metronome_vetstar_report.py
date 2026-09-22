@@ -94,10 +94,24 @@ def main(argv=None) -> int:
     print("offset from photometric max", d.get("event_phase_offset_from_photometric_max"),
           "(binned)", d.get("event_phase_offset_from_photometric_max_binned"))
 
+    print("\n--- the neighbours that could be the real source ---")
+    for n in (d.get("neighbours") or []):
+        print(f"  {n.get('source_id')} sep={n.get('sep_arcsec')} G={n.get('phot_g_mean_mag')} "
+              f"flag={n.get('phot_variable_flag')} why={n.get('why')}")
+        for t, r in (n.get("gaia_variability") or {}).items():
+            print(f"     {t}: {r.get('status')} rows={r.get('n_rows')}")
+            if r.get("row"):
+                print("       ", json.dumps(r["row"])[:900])
+        for cn, r in (n.get("vizier_cones") or {}).items():
+            print(f"     vizier {cn}: {r.get('status')} rows={r.get('n_rows')}")
+            for row in (r.get("rows") or [])[:2]:
+                print("       ", json.dumps(row)[:700])
+
     print("\n--- per quarter ---")
     for r in (d.get("per_segment") or []):
         print("   ", r)
     print("amplitude ratio", d.get("per_segment_amplitude_ratio"))
+    print("roll_season", json.dumps(d.get("roll_season"))[:1500])
     print("unreached:", d.get("unreached"))
     print("surviving:", d.get("surviving_explanations"))
     print("elapsed_s", d.get("elapsed_s"))

@@ -93,6 +93,12 @@ on:
 
 permissions:
   contents: write
+  # A permissions block REPLACES the defaults, so without this every
+  # cross-run `actions/download-artifact` (reduce_only_run_id, in assess-only,
+  # redetect-only and vetstar) gets 403 and silently brings back nothing.
+  # MEASURED: run 35796061650's vetstar job reported n_catalogue_epochs = 0
+  # because the acquire artifact never arrived.
+  actions: read
 
 jobs:
   plan:

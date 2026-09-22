@@ -191,7 +191,12 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None) -> dict:
             rep["sources"][src] = {"reached": False, "error": repr(exc)[:300]}
     rep["reached"] = {k: bool(v.get("reached")) for k, v in rep["sources"].items()}
     sgp = rep["sources"].get("sgp") or {}
-    rep["sgp_show_recommended"] = sorted(set(conf["sgp"].get("base_show", [])) | set(sgp.get("accepted_codes", {})))
+    # ONLY codes the API individually accepted.  A single invalid code makes the
+    # whole request 400 ("... is not a valid attribute in this search type"), so
+    # the union with the published body would poison every page.
+    acc = sorted(sgp.get("accepted_codes", {}))
+    rep["sgp_show_recommended"] = acc or sorted(conf["sgp"].get("base_show", []))
+    rep["sgp_show_source"] = "probe_accepted_codes" if acc else "config_base_show_fallback"
     rep["verdict"] = "REACHED" if any(rep["reached"].values()) else VERDICT_NO_DATA
     _write(out / "probe.json", rep)
     print(f"[grave] probe: {rep['reached']}; SGP codes accepted: {len(sgp.get('accepted_codes', {}))}")
@@ -248,7 +253,8 @@ def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, max_rows: int | None 
                            for b in G.boundary_table(conf)]
                 raw, ledger = A.earthchem_acquire(conf, fetch=fetch, query_params=params,
                                                   max_rows=int(max_rows or conf["earthchem"].get("max_rows", 5000)),
-                                                  windows=windows, out_dir=out / "data")
+                                                  windows=windows, out_dir=out / "data",
+                                                  url=pec.get("url"))
             elif src == "georoc":
                 pg = (probe.get("sources") or {}).get("georoc") or {}
                 files = pg.get("files") or []

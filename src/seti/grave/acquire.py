@@ -413,7 +413,24 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
     ledger["rejected_codes"] = rejected
     ledger["silently_dropped"] = dropped
     ledger["n_candidates_tested"] = min(len(candidates), max_tests)
-    ledger["reached"] = bool(rows) or any(v["n_rows"] for v in ledger["type_variants"].values())
+    # The API answers the ANCHOR call and the per-code trials even when the
+    # published composite body is refused (run 35738860553: the Stockey body
+    # 400s on `fe_t_al`, "not a valid attribute in this search type", while 93
+    # codes are individually accepted).  "Reached" is therefore about rows, not
+    # about that one body.
+    ledger["reached"] = bool(rows) or bool(base_keys) or bool(accepted) \
+        or any(v["n_rows"] for v in ledger["type_variants"].values())
+    # the service's own attribute listings, if it publishes any
+    ledger["attribute_endpoints"] = {}
+    for host in s.get("hosts", []):
+        for path in s.get("attribute_paths", []):
+            for method, body in (("GET", None), ("POST", {"type": s.get("type", "samples")})):
+                fr3 = rec(fetch(f"{host}{path}", method=method, json_body=body, timeout=timeout),
+                          f"attribute listing {path} ({method})")
+                if fr3.ok and len(fr3.content) > 40:
+                    ledger["attribute_endpoints"][f"{method} {host}{path}"] = {
+                        "status": fr3.status, "bytes": len(fr3.content), "head": fr3.text[:4000]}
+                    break
     return ledger
 
 
@@ -476,12 +493,61 @@ def sgp_acquire(conf: dict, *, fetch=http_fetch, show: list[str], out_dir: Path 
 # ---------------------------------------------------------------------------
 # EarthChem
 # ---------------------------------------------------------------------------
-def earthchem_probe(conf: dict, *, fetch=http_fetch) -> dict:
-    """Count queries for every parameter spelling in the config; distinct-item listings."""
+def _ec_count(fr: FetchResult) -> int | None:
+    j = fr.json() if fr.ok else None
+    if isinstance(j, dict):
+        for k in ("Count", "count", "COUNT", "total", "totalResults", "numFound"):
+            if k in j:
+                try:
+                    return int(j[k])
+                except (TypeError, ValueError):
+                    return None
+    if isinstance(j, list):
+        return len(j)
+    if fr.ok and fr.text.strip().isdigit():
+        return int(fr.text.strip())
+    return None
+
+
+def earthchem_endpoint_ladder(conf: dict, *, fetch=http_fetch) -> dict:
+    """Which EarthChem base URL, if any, actually serves a search.
+
+    Run 35738860553 established that ``portal.earthchem.org/restsearchservice``
+    -- the path the brief asserts and the one every citation of the EarthChem
+    REST API gives -- now answers **404 from Apache** for every parameter
+    spelling.  The service moved.  This ladder asks each candidate base in turn
+    with the shape it expects, and records exactly what each served, so the
+    verdict is "this endpoint no longer exists", not "EarthChem has no shale".
+    """
     e = conf["earthchem"]
-    url = e["rest_url"]
     timeout = float(e.get("timeout_s", 120))
-    ledger: dict = {"generated_utc": _now(), "url": url, "counts": {}, "distinct": {}, "requests": []}
+    out: dict = {"tried": [], "working": None}
+    for cand in e.get("rest_url_candidates", []):
+        url = cand["url"] if isinstance(cand, dict) else str(cand)
+        params = dict((cand.get("params") if isinstance(cand, dict) else None) or
+                      {"searchtype": "count", "outputtype": "json", "keyword": "shale"})
+        method = (cand.get("method") if isinstance(cand, dict) else None) or "GET"
+        body = cand.get("json") if isinstance(cand, dict) else None
+        fr = fetch(url, method=method, params=(None if body else params), json_body=body, timeout=timeout)
+        cnt = _ec_count(fr)
+        rec = {"url": url, "method": method, "params": (body or params), "status": fr.status,
+               "bytes": len(fr.content), "count": cnt, "content_type": fr.content_type,
+               "head": fr.text[:300], "error": fr.error}
+        out["tried"].append(rec)
+        if fr.ok and (cnt or len(fr.content) > 200) and "text/html" not in (fr.content_type or ""):
+            out["working"] = url
+            break
+    return out
+
+
+def earthchem_probe(conf: dict, *, fetch=http_fetch) -> dict:
+    """Find a live EarthChem search endpoint, then count and shape it."""
+    e = conf["earthchem"]
+    timeout = float(e.get("timeout_s", 120))
+    ladder = earthchem_endpoint_ladder(conf, fetch=fetch)
+    url = ladder.get("working") or e["rest_url"]
+    ledger: dict = {"generated_utc": _now(), "url": url, "endpoint_ladder": ladder,
+                    "counts": {}, "distinct": {}, "requests": []}
     for name, params in (e.get("count_queries") or {}).items():
         p = dict(params)
         p.update({"searchtype": "count", "outputtype": "json"})
@@ -489,18 +555,7 @@ def earthchem_probe(conf: dict, *, fetch=http_fetch) -> dict:
         d = fr.record()
         d["query"] = name
         ledger["requests"].append(d)
-        j = fr.json() if fr.ok else None
-        cnt = None
-        if isinstance(j, dict):
-            for k in ("Count", "count", "COUNT"):
-                if k in j:
-                    try:
-                        cnt = int(j[k])
-                    except (TypeError, ValueError):
-                        cnt = None
-        if cnt is None and fr.ok:
-            m = re.search(r"\d+", fr.text[:100])
-            cnt = int(m.group()) if m and fr.text.strip().isdigit() else None
+        cnt = _ec_count(fr)
         ledger["counts"][name] = {"params": params, "status": fr.status, "count": cnt, "head": fr.text[:120]}
     for item in e.get("distinct_items", []):
         p = {"searchtype": "distinctitems", "outputtype": "json", "outputitems": item}
@@ -523,15 +578,16 @@ def earthchem_probe(conf: dict, *, fetch=http_fetch) -> dict:
         rows = j if isinstance(j, list) else (j.get("rows") if isinstance(j, dict) else None)
         ledger["row_keys"] = sorted(rows[0].keys()) if rows else []
         ledger["rowdata_head"] = fr.text[:300]
-    ledger["reached"] = any(v.get("count") for v in ledger["counts"].values())
+    ledger["reached"] = bool(any(v.get("count") for v in ledger["counts"].values()) or ledger.get("row_keys"))
     return ledger
 
 
 def earthchem_acquire(conf: dict, *, fetch=http_fetch, query_params: dict, max_rows: int,
-                      windows: list[dict] | None = None, out_dir: Path | None = None) -> tuple[pd.DataFrame, dict]:
+                      windows: list[dict] | None = None, out_dir: Path | None = None,
+                      url: str | None = None) -> tuple[pd.DataFrame, dict]:
     """Page rowdata in 50-row steps: boundary windows first, then the general pull."""
     e = conf["earthchem"]
-    url = e["rest_url"]
+    url = url or e["rest_url"]
     timeout = float(e.get("timeout_s", 120))
     page = int(e.get("page_size", 50))
     ledger: dict = {"generated_utc": _now(), "source": "earthchem", "url": url, "query_params": query_params,
@@ -624,13 +680,16 @@ def georoc_probe(conf: dict, *, fetch=http_fetch) -> dict:
         j = fr.json() if fr.ok else None
         files = ((((j or {}).get("data") or {}).get("latestVersion") or {}).get("files")) or []
         ds["n_files"] = len(files)
+        names = []
         for f in files:
             df = f.get("dataFile") or {}
             name = df.get("filename") or f.get("label") or ""
+            names.append(name)
             if f_re.search(name):
                 ledger["files"].append({"dataset": ds["name"], "doi": ds["doi"], "id": df.get("id"),
                                         "filename": name, "filesize": df.get("filesize"),
                                         "url": f"{api}/access/datafile/{df.get('id')}?format=original"})
+        ds["filenames"] = sorted(names)[: int(g.get("max_filenames_recorded", 150))]
     ledger["n_matching_files"] = len(ledger["files"])
     ledger["reached"] = ledger["n_datasets"] > 0
     return ledger

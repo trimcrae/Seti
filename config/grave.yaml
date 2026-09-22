@@ -21,12 +21,19 @@ sgp:
   # accepted only if a row comes back carrying its column, so a narrow window
   # that happens to hold no samples would silently reject the whole schema.
   probe_age_window: [0, 4000]
-  # the published Stockey body (known to work), used as the base call
-  base_show: [height_meters, section_name, fe, fe_hr_fe_t, fe_py_fe_hr, toc, alu, mo, u, fe_t_al,
-              site_type, coord_lat, coord_long, basin_type, meta_bin, strat_name, strat_name_long,
+  # The published Stockey body, minus the two codes the service refuses
+  # (run 35738860553: "filter error: fe_t_al is not a valid attribute in this
+  # search type"; strat_name_long likewise 400s).  One bad code fails the whole
+  # request, which is why acquire uses the probe's accepted list, never this.
+  base_show: [height_meters, section_name, fe, fe_hr_fe_t, fe_py_fe_hr, toc, alu, mo, u,
+              site_type, coord_lat, coord_long, basin_type, meta_bin, strat_name,
               environment_bin, interpreted_age, max_age, min_age, lithology_name]
   anchor_show: [interpreted_age, coord_lat]
-  max_code_tests: 220
+  max_code_tests: 240
+  # paths the app bundle names (run 35738860553); asked for their own listing of
+  # the valid attributes, which is the authoritative answer to "what can I ask for"
+  attribute_paths: ["/api/v1/post/attr", "/api/v1/get/info/samples", "/api/v1/get/info/results",
+                    "/api/defs/lithologies", "/api/v1/get/info/countries"]
   # candidate field codes, each tested on the runner; accepted ones are pulled
   show_candidates:
     # metadata
@@ -152,6 +159,21 @@ sgp:
     - bi
     - th
     - u
+    # spellings retried after run 35738860553 refused the obvious ones: `as`
+    # (arsenic) and `i` (iodine) 400 although Ge, Se, In and Te are served, so
+    # the code is probably not the bare symbol; Ru and Rh 400 outright, which
+    # costs the two strongest light-peak discriminants (+4.77 dex) and leaves
+    # the light peak resting on Mo, Pd and Te.
+    - ars
+    - arsenic
+    - as_
+    - iod
+    - iodine
+    - i_
+    - ru_
+    - ruthenium
+    - rh_
+    - rhodium
   # bulk pull: pages of page_count rows per age bin; a bin ends when a page is short
   page_count: 5000
   max_pages_per_bin: 60
@@ -163,7 +185,31 @@ sgp:
 # EarthChem Portal REST search service (50-row pages; sedimentary via level/keyword)
 # ---------------------------------------------------------------------------
 earthchem:
+  # The documented path is 404 from Apache for every parameter spelling
+  # (run 35738860553).  The ladder asks each candidate base in turn and the
+  # probe records exactly what each served.
   rest_url: "https://portal.earthchem.org/restsearchservice"
+  rest_url_candidates:
+    - url: "https://ecp.iedadata.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "http://ecp.iedadata.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://portal.earthchem.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://search.earthchem.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://www.earthchem.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://search.earthchem.org/api/v1/samples"
+      params: {keyword: shale, limit: 5}
+    - url: "https://api.earthchem.org/v1/samples"
+      params: {keyword: shale, limit: 5}
+    - url: "https://ecl.earthchem.org/api/datasets"
+      params: {keyword: shale, limit: 5}
+    - url: "https://portal.earthchem.org/api/search"
+      params: {keyword: shale, limit: 5}
+    - url: "https://amsearch.earthchem.org/api/search"
+      params: {keyword: shale, limit: 5}
   timeout_s: 120
   page_size: 50
   max_rows: 20000                       # general pull cap (400 requests)
@@ -191,8 +237,11 @@ georoc:
   subtree: digis
   search_q: "*"
   max_datasets: 500
-  dataset_regex: "(?i)rock types|sediment|ocean|volcanic"
-  file_regex: "(?i)sediment|tuff|tephra|ash|pyroclast|volcaniclast"
+  dataset_regex: "(?i)rock types|sediment|ocean|volcanic|intraplate|rift|plateau"
+  # widened after run 35738860553 matched one file in 30 datasets: what the ash
+  # reference actually needs is the silicic end (rhyolite, dacite, ignimbrite)
+  file_regex: "(?i)sediment|tuff|tephra|ash|pyroclast|volcaniclast|rhyolit|dacit|ignimbrit|obsidian"
+  max_filenames_recorded: 150
   max_files: 12
   max_total_bytes: 150000000
   timeout_s: 300

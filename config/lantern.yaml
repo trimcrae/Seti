@@ -143,6 +143,11 @@ discriminant:
   # Cosmic-ray guard: removing the brightest N integrations must not kill the
   # time-averaged detection.
   cosmic_ray_top_n: 2
+  # Drift null for the difference search: the out-of-eclipse integrations
+  # BEFORE the eclipse minus those AFTER it span the same drift with no
+  # occultation in between, so a feature above this significance there is
+  # detector drift, not a source that went behind the star.
+  drift_control_sigma_max: 4.0
   # Transit consistency: the line must not change in transit beyond the
   # continuum's own change by more than this many sigma.
   transit_excess_sigma_max: 3.0
@@ -159,7 +164,64 @@ fdr:
 acquire:
   instruments: ["NIRSPEC", "NIRISS", "NIRCAM", "MIRI"]
   match_radius_arcsec: 30.0
-  max_file_bytes: 3.0e9
+  # One product is on disk at a time (downloaded, read, deleted); the runner
+  # has ~25 GB free after the dotnet/android purge, and the reader only
+  # materialises the spectral columns it needs (astropy memmap).  The largest
+  # public product in the 2026-09 inventory is 10.3 GB (WASP-76, G395H).
+  max_file_bytes: 12.0e9
   product_batch: 15
   retries: 3
   retry_pause_s: 5.0
+  # In-memory cap on n_int x n_wl per grid; longer stacks are co-added in
+  # time first, never by more than max_bin_minutes nor a quarter of the
+  # shortest ingress of the host's planets (the bin is recorded per exposure).
+  max_samples_in_memory: 40.0e6
+  max_bin_minutes: 3.0
+  # Planner: the level-3 product (calwebb_tso3: every segment and detector of
+  # the visit in one file) supersedes its level-2 segments when it holds at
+  # least this fraction of their bytes; otherwise the segments are used.
+  level3_min_byte_fraction: 0.7
+  plan_cadence_minutes: 1.0
+  # A checkpoint is only safe once the shard's artifact uploads, so an exposure
+  # still running when the JOB times out costs the whole shard.  The shard's
+  # deadline is therefore predictive: it refuses to START a unit whose
+  # estimated cost would run past it.  This is the starting estimate, replaced
+  # by the shard's own measured minutes-per-GB after ~2 GB have gone through.
+  minutes_per_gb_estimate: 8.0
+
+verify:
+  # Known eclipses run through the real reader and labeller on the runner
+  # BEFORE the screen (docs/lantern.md section 3.7): the broad-band continuum
+  # must drop, significantly and by a planetary amount, exactly where the
+  # ephemeris puts the occultation; and a vanishing line injected at
+  # `injection_amp` of the local continuum must come back as a candidate.
+  min_depth_snr: 5.0
+  depth_range: [1.0e-4, 2.0e-2]
+  # FLOOR on the injected line's peak, as a fraction of the local continuum.
+  # The amplitude actually used is the larger of this and injection_snr_target
+  # times the exposure's OWN measured difference-spectrum noise: 2% of the
+  # continuum is below the 5-sigma equivalent-width limit of both verification
+  # exposures, so a fixed 2% injection tests nothing.  The check that results
+  # is "a vanishing line at N sigma of this exposure's sensitivity comes back
+  # clean", and verify.json records the injected equivalent width in units of
+  # the 5-sigma limit.
+  injection_amp: 0.005
+  injection_snr_target: 12.0
+  max_injection_amp: 0.5
+  # A phase curve is not a two-level light curve: over a whole visit the free
+  # step locks onto the transit (deeper than the eclipse) and the timing check
+  # fails on a perfectly well placed eclipse.  The continuum check runs inside
+  # +-this fraction of a period around one predicted eclipse (at least 2 x T14),
+  # which is still ~10x the timing tolerance, so a wrong ephemeris still fails.
+  window_fraction_of_period: 0.25
+  cases:
+    - name: WASP-43b_MIRI_LRS_phase_curve_jw01366-o011
+      host: WASP-43
+      exposure_key: jw01366-o011_t002_miri_p750l-slitlessprism
+      expect: eclipse          # a phase curve: 'both' is accepted
+      uris: ["mast:JWST/product/jw01366-o011_t002_miri_p750l-slitlessprism_x1dints.fits"]
+    - name: WASP-18b_NIRISS_SOSS_eclipse_jw01366-o021
+      host: WASP-18
+      exposure_key: jw01366-o021_t003_niriss_clear-gr700xd-substrip96
+      expect: eclipse
+      uris: ["mast:JWST/product/jw01366-o021_t003_niriss_clear-gr700xd-substrip96_x1dints.fits"]

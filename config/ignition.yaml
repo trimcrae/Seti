@@ -226,12 +226,31 @@ probe:
   vizier_timeout_s: 300.0     # the THIRD parent route (VizieR ASU), probed every run
 
 acquire:
-  route: auto                 # auto (from probe.json) | upload | field | cone
+  # WHAT RUN 35039105536 TAUGHT (2026-09-16, results/ignition/acquire_s*.json).
+  # The field route at 1 degree near the ecliptic poles is 2.4-4.7 M single
+  # exposures a cone (every source there has ~4,000 epochs): 1.5 GB VOTables,
+  # IncompleteRead / RemoteDisconnected / 502 on the transfer, 20-65 min per
+  # query that did complete, TOP-4M truncation, and two shards killed at the
+  # job limit with no checkpoint.  314 of 336 attempted stars were lost.  The
+  # upload join was refused with `QUERY must be set` -- pyvo's multipart form
+  # on the async queue, a TRANSPORT failure -- so it is now a ladder
+  # (src/seti/ignition/acquire.py UPLOAD_TRANSPORTS: pyvo_sync, http_sync,
+  # http_async, gator) that the probe walks on two stars and records.  The
+  # per-star cone (4,110 rows in 15.6 s on the probe star) is the fallback,
+  # per chunk and per shard, and runs `cone_workers` at a time.  `field` is
+  # only ever used when asked for explicitly.
+  route: auto                 # auto (from probe.json: upload if a rung answered, else cone) | upload | field | cone
   cone_radius_arcsec: 2.5
-  match_tol_arcsec: 2.5       # field route: KD-tree radius, widened by half the PM sweep
+  match_tol_arcsec: 2.5       # local row -> star assignment radius, widened by half the PM sweep
   field_w1_max: 13.0          # G < 14.5 FGKM dwarfs sit at W1 < ~13; bounds the row count
   field_max_rows: 4000000
-  upload_chunk: 200
+  upload_chunk: 200           # stars per upload query, the CEILING ...
+  upload_target_rows: 300000  # ... shrunk so a query returns about this many rows (NEP: ~60 stars)
+  upload_max_rows: 3000000    # TOP on the join; a chunk that hits it is halved and re-asked
+  upload_transport: auto      # auto (from probe.json) | pyvo_sync | http_sync | http_async | gator
+  upload_timeout_s: 900.0     # per upload query (the async rung polls up to this)
+  upload_fallback_cone: true  # a chunk no rung answered goes to per-star cones, never lost
+  cone_workers: 3             # concurrent per-star cones
   checkpoint_every: 50        # cone route: stars per CSV append
   epoch_gap_days: 90.0        # > 90 d gap starts a new epoch (visits are ~183 d apart)
   min_exp_per_epoch: 5
@@ -241,6 +260,45 @@ acquire:
   cc_flags_ok: ["0000"]
   ph_qual_ok: ["A", "B"]
   time_budget_s: 18000.0      # per shard; the workflow's timeout is longer
+
+# ALL-SKY TILING (mode=tiles; src/seti/ignition/tiles.py).  Boxes of
+# dec_step_deg on a side, ~equal in area, each queried as the smallest cone
+# that covers it and cut to the box, so every star is owned by exactly one
+# tile and a partial sweep is exact over the tiles that finished.  Tiles wholly
+# inside |b| < abs_b_min_deg are never queried.  The sweep order is a fixed
+# permutation, so a time-limited dispatch samples the sky uniformly.
+tiles:
+  dec_step_deg: 4.0           # ~2,600 boxes over the sky, ~1,900 at |b| > 15
+  cover_pad_deg: 0.02
+  seed: 20260921
+
+# The tiles-mode shard stage (`--stage sweep`): sample + acquire per tile under
+# one wall clock, tile-level checkpoints, resume from the shard's own artifact.
+sweep:
+  time_budget_s: 9000.0       # stop STARTING tiles after this (2.5 h); the job timeout is longer
+  sample_timeout_s: 300.0     # one tile's parent query, PER ATTEMPT
+  # And what one tile may cost across the WHOLE route ladder.  Run 35653615329's
+  # fields-mode sample step spent 2 h 22 min on 20 cones without finishing, and
+  # the acquire matrix never started; in the all-sky sweep the same stall is
+  # paid for in tiles never reached.  A tile that spends this is recorded
+  # QUERY_FAILED with the routes that were SKIPPED_ON_UNIT_BUDGET named, and the
+  # sweep moves on.  The ladder's ORDER is untouched -- ESA is still asked first
+  # and still answers first -- and every science cut is unchanged: this bounds
+  # only how long one tile may be chased.
+  sample_unit_budget_s: 600.0
+  max_tiles: 0                # 0 = every tile of the shard
+
+# The screen's ensemble zero-point correction (src/seti/ignition/ensemble.py).
+# Run 35039105536 labelled 97 of 172 stars FADING at 5 sigma in both bands: a
+# common drift is the survey's zero point, not the stars.  Per band and 0.25-yr
+# bin, the median of (mag - star median) over the shard's stars is subtracted
+# when the bin holds >= ensemble_min_stars; the offsets and the per-star RAW
+# slope significance are recorded, so the correction is auditable.  No rise
+# threshold changes.
+screen:
+  ensemble_correct: true
+  ensemble_bin_yr: 0.25
+  ensemble_min_stars: 8
 
 rise:
   min_epochs: 10

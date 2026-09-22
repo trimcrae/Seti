@@ -6,6 +6,19 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Only the newest commit on a branch needs its gate run. Parallel channel agents
+# push many small commits, and without this each push queues another full CI run
+# behind the last, starving the data-touching searches of runners. Superseded
+# runs are cancelled; the newest one still gates the branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  # On a feature branch only the newest commit needs its gate run, so supersede
+  # the older ones. On `main` never cancel: merges land faster than a run takes,
+  # so cancelling meant no run on `main` ever finished and the branch everything
+  # is merged into was the one branch that stopped being gated. Runs there queue
+  # and each one completes against the head it was raised for.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   offline:
     # Default job: fully offline, runs on the committed sample. Fast, <2 GB, no

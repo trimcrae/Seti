@@ -389,7 +389,9 @@ def _cmd_shroud(args, cfg):
     from .shroud.run import shroud_run
 
     shroud_run(cfg, stage=args.stage, allow_network=not args.offline,
-               max_sources=args.max_sources, input_parquet=args.input)
+               max_sources=args.max_sources, input_parquet=args.input,
+               n_fields=args.n_fields, field_radius_deg=args.field_radius_deg,
+               field_seed=args.field_seed, acquire_deadline_s=args.acquire_deadline_s)
 
 
 def _cmd_crosscorr(args, cfg):
@@ -995,6 +997,18 @@ def _cmd_spectra_triage(args, cfg):
                recur_tol=args.recur_tol, recur_min=args.recur_min)
 
 
+# --- SPECTRA-PERSIST ---
+def _cmd_spectra_persist(args, cfg):
+    """Per-exposure persistence of the narrow-line survivors; flags are passed
+    through to seti.spectra.persist (--stage probe|run|reduce, --shard, ...)."""
+    from .spectra.persist import main as persist_main
+
+    rest = list(args.rest)
+    if "--root" not in rest:
+        rest += ["--root", str(cfg.root)]
+    return persist_main(rest)
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -1078,6 +1092,14 @@ def _cmd_growth_centroid(args, cfg):
     return _growth_centroid_main(list(args.rest))
 
 
+# --- GROWTH-DIRECT ---
+def _cmd_growth_direct(args, cfg):
+    from .growth.direct import main as _growth_direct_main
+
+    return _growth_direct_main(list(args.rest))
+# --- end GROWTH-DIRECT ---
+
+
 def _cmd_arc(args, cfg):
     from .arc.run import main as _arc_main
 
@@ -1090,16 +1112,45 @@ def _cmd_ignition(args, cfg):
     return _ignition_main(list(args.rest))
 
 
+# --- FORGE ---
+def _cmd_forge(args, cfg):
+    from .forge.run import main as _forge_main
+
+    return _forge_main(list(args.rest))
+
+
 def _cmd_uline(args, cfg):
     from .uline.run import main as _uline_main
 
     return _uline_main(list(args.rest))
 
 
+# --- CRADLE ---
+def _cmd_cradle(args, cfg):
+    from .cradle.run import run_from_args as _cradle_run
+
+    return _cradle_run(args, cfg)
+# --- /CRADLE ---
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
     return _baffle_cmd(args, cfg)
+
+
+# --- SLAG ---
+def _cmd_slag(args, cfg):
+    from .slag.run import main as _slag_main
+
+    return _slag_main(list(args.rest))
+
+
+# --- RELAY ---
+def _cmd_relay(args, cfg):
+    from .relay.run import main as _relay_main
+
+    return _relay_main(list(args.rest))
 
 
 def _cmd_roman(args, cfg):
@@ -1114,6 +1165,27 @@ def _cmd_century(args, cfg):
 
     return _century_run(args)
 # --- CENTURY ---
+# --- CRYPT ---
+def _cmd_crypt(args, cfg):
+    from .crypt.run import main as _crypt_main
+
+    return _crypt_main(list(args.rest))
+# --- CRYPT ---
+# --- ARC stage 2 ---
+def _cmd_arc_stage2(args, cfg):
+    from .arc.stage2 import main as _arc_stage2_main
+
+    return _arc_stage2_main(list(args.rest))
+# --- SEXTANT ---
+def _cmd_sextant(args, cfg):
+    from .sextant.run import run as _sextant_run
+
+    _sextant_run(args.stage, shard=args.shard, cfg=cfg, out_dir=args.out_dir,
+                 work_dir=args.work_dir, route=args.route,
+                 max_objects=args.max_objects, release=args.release,
+                 budget_minutes=args.budget_minutes,
+                 n_shards_for_all=args.n_shards)
+# --- end SEXTANT ---
 
 
 def main(argv=None):
@@ -1909,6 +1981,15 @@ def main(argv=None):
                         "recorded in the run provenance")
     p.add_argument("--input", default=None,
                    help="analyse this parquet instead of acquiring")
+    p.add_argument("--n-fields", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: number of 0.5-deg fields "
+                        "(default from config/shroud.yaml)")
+    p.add_argument("--field-radius-deg", type=float, default=None,
+                   help="USNO-B1.0 reconstruction: cone radius per field")
+    p.add_argument("--field-seed", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: field-order seed")
+    p.add_argument("--acquire-deadline-s", type=float, default=None,
+                   help="stop starting new field fetches after this many seconds")
     p.set_defaults(func=_cmd_shroud)
 
     p = sub.add_parser(
@@ -2166,6 +2247,15 @@ def main(argv=None):
     p.add_argument("--recur-min", type=int, default=3)
     p.set_defaults(func=_cmd_spectra_triage)
 
+    # --- SPECTRA-PERSIST ---
+    p = sub.add_parser("spectra-persist",
+                       help="per-exposure persistence + second epoch + rest-frame ID of the "
+                            "narrow-line survivors; flags pass through to seti.spectra.persist "
+                            "(invoke as `seti spectra-persist -- --stage probe`, or call "
+                            "`python -m seti.spectra.persist` directly as the workflow does)")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_spectra_persist)
+
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)
     p.set_defaults(func=_cmd_contamination_budget)
@@ -2273,6 +2363,16 @@ def main(argv=None):
                             "through to seti.growth.centroid")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_growth_centroid)
+    # --- GROWTH-DIRECT ---
+    p = sub.add_parser("growth-direct",
+                       help="GROWTH direct (S57): the TESS-era depth of EVERY confirmed/candidate "
+                            "KOI with a TIC id, fitted from the SPOC / TESS-SPOC / QLP light "
+                            "curves on both SAP and PDCSAP against the KOI depth — sharded, "
+                            "checkpointed, per-planet sensitivity; flags are passed through to "
+                            "seti.growth.direct")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_growth_direct)
+    # --- end GROWTH-DIRECT ---
     p = sub.add_parser("arc",
                        help="ARC (S59): superflares above the starspot energy ceiling; "
                             "flags are passed through to seti.arc.run")
@@ -2327,6 +2427,110 @@ def main(argv=None):
     _century_args(p)
     p.set_defaults(func=_cmd_century)
     # --- CENTURY ---
+    # --- FORGE ---
+    p = sub.add_parser("forge",
+                       help="FORGE (S47): hot exozodis as ~1500 K swarm candidates — the "
+                            "outlier whose N-band excess matches the Planck extrapolation of "
+                            "its K excess; flags are passed through to seti.forge.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_forge)
+    # --- CRYPT ---
+    p = sub.add_parser("crypt",
+                       help="CRYPT (S55): anisothermal hot components and compact radar anomalies "
+                            "inside lunar permanently shadowed regions (Diviner PCP, Mini-RF, "
+                            "ShadowCam); --stage {probe,acquire,screen,assess,all} --shard i/n; "
+                            "flags are passed through to seti.crypt.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_crypt)
+    # --- CRYPT ---
+    # --- ARC stage 2 ---
+    p = sub.add_parser("arc-stage2",
+                       help="ARC stage 2 (S59): IS THE FLARE ON THE TARGET? Kepler/TESS pixel "
+                            "centroids per exceeding flare, the Gaia census, Berger+2020 / "
+                            "FLAME parameters and xi recomputed; flags pass to seti.arc.stage2")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_arc_stage2)
+
+    # --- SLAG ---
+    p = sub.add_parser("slag",
+                       help="SLAG-WD (S51): polluted white dwarfs beyond the natural family — "
+                            "calibrated misfit list and process-orthogonal pair residuals on "
+                            "PEWDD; flags are passed through to seti.slag.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_slag)
+    # --- SLAG ---
+
+    # --- RELAY ---
+    p = sub.add_parser("relay",
+                       help="RELAY (S60): intercepting node-to-node beams by geometry — "
+                            "Gaia pair cones, the BL open-data recut and the drift prior; "
+                            "flags are passed through to seti.relay.run "
+                            "(--stage {probe,targets,geometry,recut,assess,all})")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_relay)
+    # --- RELAY ---
+
+    # --- SPARK ---
+    from .spark.run import _add_arguments as _spark_args
+    from .spark.run import _cmd_spark
+    p = sub.add_parser("spark",
+                       help="SPARK (S48/S49): a single-spectral-element excess on a stellar point "
+                            "source — Euclid Q1 NISP line features x Gaia, SPHEREx QR2 forced "
+                            "spectrophotometry (probe/euclid/spherex/screen/assess/all)")
+    _spark_args(p)
+    p.set_defaults(func=_cmd_spark)
+    # --- SPARK ---
+
+    # --- CRADLE ---
+    from .cradle.run import add_arguments as _cradle_args
+    p = sub.add_parser("cradle",
+                       help="CRADLE (S52/S53): warm debris at the habitable-zone radius of a "
+                            "MATURE star, above the collisional steady-state maximum; "
+                            "same flags as seti.cradle.run")
+    _cradle_args(p)
+    p.set_defaults(func=_cmd_cradle)
+    # --- /CRADLE ---
+    # --- SEXTANT ---
+    p = sub.add_parser("sextant",
+                       help="SEXTANT: non-gravitational acceleration (A1/A2/A3) in "
+                            "Gaia's milliarcsecond minor-planet astrometry, gated on "
+                            "LOOM's radiation-momentum ceiling and decided on the "
+                            "POPULATION.  Stages: probe | fit | assess | all")
+    p.add_argument("--stage", default="fit",
+                   choices=["probe", "acquire", "fit", "screen", "assess", "all"],
+                   help="probe pulls the perturbers/SBDB and measures the ephemeris "
+                        "route and the archive's astrometric conventions on data; "
+                        "fit acquires+fits+screens one shard; assess gathers every "
+                        "shard, scores the Yarkovsky controls and decides")
+    p.add_argument("--shard", default="0/1",
+                   help="i/n, zero-based; the object list is split by a stable hash "
+                        "so a shard is reproducible and re-runnable on its own")
+    p.add_argument("--n-shards", type=int, default=1,
+                   help="only for --stage all: how many shards to run in-process")
+    p.add_argument("--route", default=None, choices=["integrator", "horizons", "auto"],
+                   help="override the ephemeris route the probe chose.  The local "
+                        "n-body propagator is the only route that scales to 10^5 "
+                        "objects; horizons is the reference it is measured against")
+    p.add_argument("--max-objects", type=int, default=None,
+                   help="0 = every numbered object in the release")
+    p.add_argument("--budget-minutes", type=float, default=None,
+                   help="stop the fit stage cleanly after this many minutes, "
+                        "between chunks, keeping every checkpointed chunk.  Set it "
+                        "below the job's own timeout: a job killed by the runner is "
+                        "cancelled and its artifact upload does not reliably run")
+    p.add_argument("--release", default=None, choices=["gaiafpr", "gaiadr3"],
+                   help="which Gaia SSO table (default from config/sextant.yaml: "
+                        "gaiafpr, the 66-month re-reduction, 46.3M observations of "
+                        "156,823 objects).  The 2026-09-03 probe measured that the "
+                        "two releases form an overlapping union that deduplicates "
+                        "under both candidate keys, so this picks one, it does not "
+                        "pool them")
+    p.add_argument("--out-dir", default=None)
+    p.add_argument("--work-dir", default=None,
+                   help="cache for the perturber grids, the SBDB catalogue and the "
+                        "per-chunk Gaia pulls; shared across shards on one runner")
+    p.set_defaults(func=_cmd_sextant)
+    # --- end SEXTANT ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

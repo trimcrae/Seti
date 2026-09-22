@@ -192,6 +192,57 @@ def chance_match_rate_from_null(n_real_matched: int, n_real: int,
             "significance_sigma": sig}
 
 
+def excess_by_radius(real_sep: np.ndarray, null_sep: np.ndarray, n_real: int,
+                     n_null: int, radii) -> list[dict]:
+    """The real-minus-chance match excess as a function of match radius.
+
+    A single radius cannot tell a genuine counterpart population from the
+    background: at 5" against AllWISE (~1.8x10^4 sources/deg^2 at high
+    latitude) roughly one sample source in nine picks up an unrelated match,
+    so the matched subsample is chance-dominated by construction and its
+    excess is consistent with zero however real the physics.
+
+    The discriminating fact is the *shape*.  Unrelated matches accumulate with
+    the search area, so the chance fraction grows like r^2; a genuine
+    counterpart sits at the source's own position and is already counted at
+    the smallest radius.  A real associated population therefore shows up as
+    an excess concentrated at small separation, and its significance PEAKS at
+    a radius of order the combined astrometric error instead of rising with
+    the sample's area.  Both curves are measured here --- real from the
+    sightlines, chance from the same sightlines displaced --- and neither is
+    modelled.
+
+    ``real_sep`` / ``null_sep`` are the per-match separations in arcsec (one
+    entry per matched source, nearest match only).
+    """
+    real_sep = np.asarray(real_sep, dtype=float)
+    null_sep = np.asarray(null_sep, dtype=float)
+    out: list[dict] = []
+    for r in radii:
+        r = float(r)
+        n_m = int(np.count_nonzero(np.isfinite(real_sep) & (real_sep <= r)))
+        n_c = int(np.count_nonzero(np.isfinite(null_sep) & (null_sep <= r)))
+        rec = {"radius_arcsec": r, "n_real_matched": n_m, "n_null_matched": n_c}
+        rec.update(chance_match_rate_from_null(n_m, n_real, n_c, n_null))
+        out.append(rec)
+    return out
+
+
+def best_radius(rows: list[dict]) -> dict:
+    """The radius at which the measured excess is most significant.
+
+    Returned as evidence, never as a threshold chosen after the fact: the
+    channel's selection radius stays the configured one, and this says whether
+    ANY radius shows an associated population at all.
+    """
+    cand = [r for r in rows
+            if r.get("significance_sigma") is not None
+            and np.isfinite(float(r["significance_sigma"]))]
+    if not cand:
+        return {}
+    return max(cand, key=lambda r: float(r["significance_sigma"]))
+
+
 # --- Forés-Toribio & Kochanek 2026 discriminant -----------------------------
 def ftk_verdict(eta: float, cfg: dict) -> tuple[str, str]:
     """Progenitor-to-remnant luminosity ratio verdict."""
@@ -257,6 +308,30 @@ def ledger_vetoes(row, cfg: dict, fit_dust=None) -> list[str]:
             flags.append("PLATE_LIMIT_PROXIMITY")
         if plate <= float(p.get("saturation_mag", 12.0)):
             flags.append("PLATE_SATURATED")
+
+    # Artefact flags carried by the catalogues themselves: the plate scan's
+    # diffraction-spike flag, AllWISE's contamination flags for W1/W2, and a
+    # bright Gaia star inside the wide pull (plate halo / spike footprint).
+    fl = str(row.get("usnob_flags", "") or "")
+    if v.get("reject_usnob_spike", True) and fl not in ("", "nan", "None") and "s" in fl:
+        flags.append("USNOB_SPIKE_FLAG")
+    ccf = str(row.get("wise_ccf", "") or "")
+    if (v.get("reject_wise_artifact_flags", True) and ccf not in ("", "nan", "None")
+            and any(ch in "DPHOdpho" for ch in ccf[:2])):
+        flags.append("WISE_ARTIFACT_FLAG")
+    bg = val("bright_nb_gmag")
+    if np.isfinite(bg) and bg <= float(v.get("bright_neighbour_gmag_max", 10.0)):
+        flags.append("BRIGHT_STAR_HALO")
+
+    # The depth kill.  A source "missing" from a search that never happened,
+    # or from one no deeper than the plate that found it, is not missing.
+    mo = cfg.get("modern_optical", {})
+    if mo.get("require_depth_margin", True):
+        margin = val("modern_depth_margin_mag")
+        if not np.isfinite(val("modern_depth_mag")):
+            flags.append("MODERN_OPTICAL_NOT_SEARCHED")
+        elif np.isfinite(margin) and margin < float(mo.get("min_depth_margin_mag", 2.0)):
+            flags.append("MODERN_DEPTH_INSUFFICIENT")
 
     p_chance = val("p_chance_match")
     if np.isfinite(p_chance):

@@ -1,0 +1,190 @@
+# CRADLE --- the shattered cradle (S52) and slag, not glass (S53); docs/cradle.md.
+#
+# Warm debris at the habitable-zone radius of a MATURE star, above the
+# collisional steady-state maximum (Wyatt et al. 2007).  The cell
+#   250 <= T_bb <= 350 K  AND  log10(f / f_max) > 3  AND  age > 1 Gyr (>= 2 indicators)
+# is empty in the literature.  Every threshold below is read by the offline
+# suite (tests/test_cradle.py); every archive spelling marked `verify` is
+# re-resolved by the probe stage on the runner.
+
+sample:
+  healpix_level: 3               # 768 units over the whole sky; unit k -> shard k mod n
+  healpix_split_max_level: 6     # a unit that times out is split into its 4 children
+  g_max: 13.5
+  parallax_min_mas: 2.0          # d < 500 pc
+  parallax_over_error_min: 10.0
+  abs_b_min_deg: 10.0
+  ruwe_max: 1.4
+  bp_rp_min: 0.45                # ~F2
+  bp_rp_max: 1.85                # ~K7
+  dwarf_cut: {intercept: 2.0, slope: 3.3, colour0: 0.6}   # M_G > a + s (bp_rp - c0)
+  w3_snr_min: 5.0                # spelled as w3mpro_error < 1.0857/5 in the ESA mirror
+  w4_snr_min: 5.0
+  inner_top: 400000
+  query_timeout_s: 1200.0
+  count_parent: true             # Gaia-only COUNT(*) per unit = the denominator
+  query_shape: auto              # full | full_via_join | lean | auto (probe.json seeds it)
+  # verify: ESA mirror column spellings (IGNITION's ESA run used these AllWISE names)
+  allwise_columns: {designation: designation, ra: ra, dec: dec, w1mpro: w1mpro,
+                    w1mpro_error: w1mpro_error, w2mpro: w2mpro, w2mpro_error: w2mpro_error,
+                    w3mpro: w3mpro, w3mpro_error: w3mpro_error, w4mpro: w4mpro,
+                    w4mpro_error: w4mpro_error, cc_flags: cc_flags, ext_flag: ext_flag,
+                    var_flag: var_flag, ph_qual: ph_qual}
+  tmass_columns: {designation: designation, j_m: j_m, j_msigcom: j_msigcom, h_m: h_m,
+                  h_msigcom: h_msigcom, ks_m: ks_m, ks_msigcom: ks_msigcom, ph_qual: ph_qual}
+  tmass_xmatch_id: original_ext_source_id   # verify: the `full` shape's direct 2MASS join key
+  rotation_table: gaiadr3.vari_rotation_modulation
+  rotation_period_column: best_rotation_period
+
+acquire:
+  time_budget_s: 18000.0
+  irsa_fallback: true            # gaia_only at ESA x AllWISE box at IRSA for a unit ESA cannot serve
+  max_units: 0                   # 0 = every unit of the shard
+
+excess:
+  locus_color_bin: 0.10
+  locus_min_per_bin: 20
+  locus_scatter_floor_mag: 0.03
+  locus_ks_max: 7.5              # a bare photosphere is >= 5 sigma in W4 below this K_s
+  locus_ks_w1_max: 0.2
+  sys_floor_mag: 0.03
+  chi_min: 3.0                   # W3 AND W4 excess significance
+  ks_w1_max: 0.2                 # the mission's photospheric cut
+  t_grid_k: [60.0, 2000.0, 400]
+  mc_draws: 300
+  t_cell_k: [250.0, 350.0]       # the cell
+  log_f_fmax_min: 3.0
+  fmax_prefactor: 0.00016        # Wyatt+2007 eq. 20 with dr/r=0.5, Dc=2000 km, Q=200 J/kg, e=0.05
+  fmax_age_floor_myr: 1000.0     # f_max at the youngest age the cell admits: a lower bound on the ratio
+  shortlist_t_k: [180.0, 450.0]  # enriched and reported; the strict cell is applied at assess
+
+ages:
+  age_threshold_gyr: 1.0
+  solar_motion_kms: [11.1, 12.24, 7.25]     # Schoenrich, Binney & Dehnen 2010
+  avr:                                      # Aumer & Binney 2009, sigma = v10 ((tau+tau1)/(10+tau1))^beta
+    U: {v10: 41.899, tau1: 0.001, beta: 0.307}
+    V: {v10: 28.000, tau1: 0.715, beta: 0.430}
+    W: {v10: 23.831, tau1: 0.001, beta: 0.445}
+  asymmetric_drift_k_kms: 80.0
+  age_grid_gyr: [0.02, 13.0, 260]
+  kin_log10_lr_old: 1.0          # the velocity itself argues for > 1 Gyr at 10:1
+  kin_log10_lr_young: -1.0
+  kin_min_components: 2
+  alpha_fe_thick_min: 0.15
+  alpha_mh_max: 0.0
+  gyro: {a: 0.407, b: 0.325, c: 0.495, n: 0.566, young_max_gyr: 0.7, old_min_gyr: 1.5, bv_min: 0.55}
+  activity_young_min_nm: 0.3     # ESP-CS Ca II IRT index; a veto only, never an OLD vote
+  young_group_vel_tol_kms: 6.0
+  young_group_pos_scale: 1.0
+  # Young moving groups and associations (XYZ heliocentric Galactic, pc; UVW km/s).
+  # Centroids are the BANYAN Sigma / Gagne+2018 values as compiled here (asserted,
+  # radii generous); the veto is conservative by design --- consistency in
+  # position and (projected) velocity removes a star, it never confirms one.
+  young_groups:
+    - {name: beta_Pic,     age_myr: 24,  xyz_pc: [4.0, -7.0, -14.0],    radius_pc: 40,  uvw_kms: [-10.9, -16.0, -9.0]}
+    - {name: AB_Dor,       age_myr: 149, xyz_pc: [-5.0, 4.0, -17.0],    radius_pc: 45,  uvw_kms: [-7.1, -27.2, -13.8]}
+    - {name: Tuc_Hor,      age_myr: 45,  xyz_pc: [11.0, -21.0, -36.0],  radius_pc: 35,  uvw_kms: [-9.9, -20.9, -1.0]}
+    - {name: TW_Hya,       age_myr: 10,  xyz_pc: [12.0, -43.0, 22.0],   radius_pc: 30,  uvw_kms: [-10.5, -18.0, -4.9]}
+    - {name: Columba,      age_myr: 42,  xyz_pc: [-28.0, -27.0, -30.0], radius_pc: 40,  uvw_kms: [-12.2, -21.3, -5.6]}
+    - {name: Carina,       age_myr: 45,  xyz_pc: [10.0, -50.0, -15.0],  radius_pc: 40,  uvw_kms: [-10.5, -22.4, -5.8]}
+    - {name: Argus,        age_myr: 45,  xyz_pc: [14.0, -100.0, -19.0], radius_pc: 50,  uvw_kms: [-22.0, -14.4, -5.0]}
+    - {name: Octans,       age_myr: 35,  xyz_pc: [11.0, -95.0, -70.0],  radius_pc: 50,  uvw_kms: [-14.5, -3.6, -11.2]}
+    - {name: Pleiades,     age_myr: 125, xyz_pc: [-121.0, 29.0, -54.0], radius_pc: 25,  uvw_kms: [-6.6, -27.6, -14.5]}
+    - {name: Hyades,       age_myr: 650, xyz_pc: [-44.0, 0.0, -17.0],   radius_pc: 20,  uvw_kms: [-42.1, -19.2, -1.4]}
+    - {name: Praesepe,     age_myr: 670, xyz_pc: [-141.0, -68.0, 101.0], radius_pc: 20, uvw_kms: [-42.6, -19.4, -9.6]}
+    - {name: Coma_Ber,     age_myr: 600, xyz_pc: [-7.0, -6.0, 85.0],    radius_pc: 15,  uvw_kms: [-2.3, -5.4, -1.0]}
+    - {name: Ursa_Major,   age_myr: 400, xyz_pc: [-8.0, 5.0, 21.0],     radius_pc: 20,  uvw_kms: [14.9, 1.0, -10.7]}
+    - {name: IC_2391,      age_myr: 50,  xyz_pc: [2.0, -146.0, -20.0],  radius_pc: 20,  uvw_kms: [-20.6, -15.7, -9.1]}
+    - {name: IC_2602,      age_myr: 46,  xyz_pc: [50.0, -136.0, -13.0], radius_pc: 20,  uvw_kms: [-8.1, -20.8, -0.5]}
+    - {name: Volans_Carina, age_myr: 90, xyz_pc: [25.0, -80.0, -25.0],  radius_pc: 30,  uvw_kms: [-14.0, -24.0, -1.0]}
+    - {name: Carina_Near,  age_myr: 200, xyz_pc: [-10.0, -20.0, -5.0],  radius_pc: 40,  uvw_kms: [-25.6, -18.3, -2.4]}
+    - {name: 32_Ori,       age_myr: 22,  xyz_pc: [-92.0, -24.0, -31.0], radius_pc: 30,  uvw_kms: [-11.9, -18.6, -8.9]}
+    - {name: Upper_Sco,    age_myr: 10,  xyz_pc: [134.0, -21.0, 50.0],  radius_pc: 50,  uvw_kms: [-5.1, -16.3, -7.5]}
+    - {name: UCL,          age_myr: 16,  xyz_pc: [122.0, -68.0, 28.0],  radius_pc: 60,  uvw_kms: [-5.5, -19.7, -5.5]}
+    - {name: LCC,          age_myr: 15,  xyz_pc: [58.0, -95.0, 16.0],   radius_pc: 55,  uvw_kms: [-8.9, -21.0, -6.0]}
+  # Sky boxes (Galactic l, b in degrees) with a parallax range: Sco-Cen and the
+  # star-forming regions, position + distance.  |b| > 10 already removes the plane.
+  young_regions:
+    - {name: Sco-Cen_US,  l: [343.0, 360.0], b: [10.0, 32.0],  parallax_mas: [5.0, 12.0]}
+    - {name: Sco-Cen_UCL, l: [312.0, 350.0], b: [0.0, 26.0],   parallax_mas: [5.0, 12.0]}
+    - {name: Sco-Cen_LCC, l: [285.0, 313.0], b: [-10.0, 24.0], parallax_mas: [5.0, 14.0]}
+    - {name: rho_Oph,     l: [350.0, 356.0], b: [12.0, 20.0],  parallax_mas: [5.0, 10.0]}
+    - {name: Taurus,      ra: [60.0, 75.0],  dec: [15.0, 32.0],  parallax_mas: [5.5, 9.0]}
+    - {name: Chamaeleon,  ra: [160.0, 172.0], dec: [-80.0, -74.0], parallax_mas: [4.5, 7.5]}
+    - {name: Lupus,       ra: [232.0, 246.0], dec: [-43.0, -33.0], parallax_mas: [5.0, 8.0]}
+    - {name: CrA,         ra: [283.0, 288.0], dec: [-39.0, -35.0], parallax_mas: [5.5, 8.5]}
+    - {name: Perseus,     ra: [50.0, 58.0],  dec: [29.0, 34.0],  parallax_mas: [2.5, 4.5]}
+
+vet:
+  ks_w1_max: 0.2
+  registration_max_arcsec: 1.0
+  w3_saturation_mag: 3.8
+  w4_saturation_mag: -0.5
+  beam_neighbour_radius_arcsec: 6.5      # W3 FWHM
+  beam_neighbour_dg_max: 4.0
+  w4_beam_radius_arcsec: 12.0            # W4 FWHM
+  w4_beam_dg_max: 2.0
+  wide_companion_au: 1000.0
+  wide_companion_plx_frac: 0.2
+  wide_companion_pm_tol_mas_yr: 5.0
+  wise_rchi2_max: 3.0
+  agn_w1w2_min: 0.5
+  galaxy_w2w3_min: 3.5
+  galaxy_w1w2_min: 0.3
+  ebv_kill: 0.2
+  ebv_flag: 0.1
+  bb_chi2_flag: 9.0
+
+mineralogy:
+  featured_min_contrast: 0.10
+  featured_min_sigma: 3.0
+  featureless_max_contrast: 0.05
+  featureless_max_err: 0.05
+
+enrich:
+  gaia_neighbours: true
+  irsa_rows: true
+  simbad: true
+  ebv: true
+  neowise: true
+  # A NEOWISE cone is ~90 s a star (IGNITION's measurement), so this is the
+  # number of stars whose variability actually gets measured: ~130 a shard.
+  # The ages job has 350 minutes and the rest of the enrichment costs ~4,000 s,
+  # so 12,000 s leaves headroom.  Stars past the budget are recorded
+  # BUDGET_EXHAUSTED, never silently "not variable"; shortlist.csv is written
+  # in priority order so the budget is spent on the stars in the cell first.
+  neowise_time_budget_s: 12000.0
+  vizier: true
+  irs: true
+  max_stars_per_shard: 0
+
+# verify: VizieR tables for the known-excess and rotation cross-identifications
+# (the probe records asu_table_exists for each; a missing one is skipped, not fabricated).
+vizier_tables:
+  known_disks:
+    cotten_song_2016: J/ApJS/225/15/table3
+    kennedy_wyatt_2013: J/MNRAS/433/2334/table1
+    mcdonald_2012: J/MNRAS/427/343/table3
+    # The extreme-debris-disk catalogue the cell is defined against: 17 EDDs,
+    # of which only BD+20 307 and TYC 4479-3-1 are mature and both are ~400 K.
+    # A candidate that matches THIS table is already known and is reported as
+    # such.  The identifier is asserted; the probe records whether it resolves
+    # and a table that does not is skipped, never fabricated.
+    moor_2021_edd: J/ApJ/910/27/table1
+  rotation:
+    # Both are Kepler/K2 fields, so gyrochronology has a few hundred square
+    # degrees of all-sky coverage and no more; Gaia's own
+    # vari_rotation_modulation (joined in the `full` shape) is all-sky but
+    # populated by active stars, so it detects YOUTH and rarely age.  The
+    # coverage is reported per star (prot_source), not assumed.
+    mcquillan_2014: J/ApJS/211/24/table1
+    santos_2021: J/ApJS/255/17/table1
+  match_radius_arcsec: 5.0
+
+probe:
+  unit_level: 3
+  unit_k: 0
+  top: 5
+  shape_timeout_s: 480.0
+  total_budget_s: 2400.0
+  control_radius_arcsec: 5.0

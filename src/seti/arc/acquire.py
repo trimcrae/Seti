@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import math
 import re
+import threading
+import time as _time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -40,6 +42,7 @@ from ..metronome.acquire import (
     AcquisitionLog,
     _canon,
     _vizier_cone,
+    clean_star_id,
     count_rows,
     list_tables,
     reset_route_state,
@@ -61,8 +64,13 @@ ROLE_PATTERNS: dict[str, list[str]] = {
                 r"^epic$", r"^id$", r"^star$", r"^name$", r"^kepler$"],
     "t_peak": [r"^t_?peak$", r"^tpk$", r"^peak_?time$", r"^bjd_?peak$", r"^peak$",
                r"^tmax$", r"^t_?max$", r"^time$", r"^bjd$", r"^tflare$", r"^t_?fl$"],
-    "t_start": [r"^t_?start$", r"^t_?beg(in)?$", r"^start$", r"^bjd_?start$", r"^tstart$",
-                r"^t_?ini$", r"^t1$", r"^t0$"],
+    # ``Begin`` / ``End`` are Yang & Liu 2019's spellings (J/ApJS/241/29/table2:
+    # recno, KIC, Q, Begin, End, logE).  The first pass matched ``End`` and
+    # not ``Begin``, so every Yang & Liu star carried ``no_peak_times`` and a
+    # null quarter in its stage-2 pull list while the start time sat in the
+    # table unread (run 35055720417).
+    "t_start": [r"^t_?start$", r"^t_?beg(in)?$", r"^start$", r"^begin$", r"^beg$",
+                r"^bjd_?start$", r"^tstart$", r"^t_?ini$", r"^t1$", r"^t0$"],
     "t_end": [r"^t_?end$", r"^t_?stop$", r"^end$", r"^stop$", r"^bjd_?end$", r"^t2$"],
     "energy": [r"^e$", r"^ebol$", r"^e_?bol$", r"^energy$", r"^e_?flare$", r"^log_?e$",
                r"^loge$", r"^log_?ebol$", r"^ekp$", r"^e_?kp$", r"^eflare$", r"^e_?tot$",
@@ -357,38 +365,139 @@ def fetch_table(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | N
     return out
 
 
-def _clean_id(v) -> str:
-    s = str(v).strip()
-    if re.fullmatch(r"\d+\.0", s):
-        s = s[:-2]
-    return re.sub(r"^(KIC|TIC|EPIC)\s*", "", s, flags=re.I).strip()
+#: One id spelling for every table (shared with METRONOME, which joins the same
+#: rotation tables to the same flare tables).
+_clean_id = clean_star_id
 
 
 # ---------------------------------------------------------------------------
 # stellar parameters and positions for the shortlist, by id
 # ---------------------------------------------------------------------------
-PARAM_TABLES = {"kepler": ["J/AJ/159/280/table1", "J/AJ/159/280", "V/133/kic"],
+#: Berger+2020 (J/AJ/159/280) is TWO tables: ``table1`` carries the Gaia
+#: cross-match (KIC, Gaia id, RUWE, positions) and ``table2`` the derived
+#: Teff / logg / [Fe/H] / R* / M* / evolutionary state.  Run 35055720417 asked
+#: only ``table1`` and the bare catalogue id, got positions and RUWE, and
+#: left every Yang & Liu star at ``stellar_params_assumed`` with a solar
+#: radius.  ``table2`` has no position columns, which is why the merge below
+#: no longer requires ``ra`` / ``dec`` of every table: positions come from the
+#: first table that has them, each parameter from the first table that has it.
+PARAM_TABLES = {"kepler": ["J/AJ/159/280/table2", "J/AJ/159/280/table1", "V/133/kic"],
                 "tess": ["IV/39/tic82", "IV/38/tic"]}
+PARAM_VALUE_COLS = ("ra", "dec", "teff", "radius", "logg", "mass", "flag", "gaia_id", "ruwe",
+                    "evol")
+_NEED = ("ra", "dec", "teff", "radius")
+
+
+class ArcQueryTimeout(TimeoutError):
+    """A query that did not answer inside its wall clock.
+
+    It is a FAILED query, not a statement about the table: the caller records
+    it as ``QUERY_FAILED`` with the elapsed time, never as
+    ``QUERY_RETURNED_ZERO_ROWS``.
+    """
+
+
+def timeout_query_fn(base_fn=None, *, timeout_s: float = 240.0):
+    """Wrap a ``query_fn(adql) -> DataFrame`` so it gives up after ``timeout_s``.
+
+    MEASURED (run 35675114711): the assess stage sat for 4 h 54 m and was
+    killed by the workflow cap with no summary written at all.  The shared
+    helper reaches VizieR over ``pyvo``'s ``run_async``, which polls a remote
+    job with NO time limit -- a wedged async job blocks the process for as
+    long as the runner lives, and everything the stage had already measured is
+    lost with it.  A query is run on a daemon thread here and abandoned when
+    the clock is spent; the thread cannot hold the interpreter open, and the
+    caller sees an ordinary query failure it already knows how to record.
+
+    ``timeout_s`` of 0 or None restores the unbounded behaviour.
+    """
+    base = base_fn or tap_query
+    limit = None if timeout_s in (None, "", 0) else float(timeout_s)
+    if limit is None:
+        return base
+
+    def _bounded(adql: str, **kw):
+        box: dict = {}
+
+        def _work():
+            try:
+                box["df"] = base(adql, **kw)
+            except BaseException as exc:                   # noqa: BLE001
+                box["exc"] = exc
+
+        th = threading.Thread(target=_work, name="arc-query", daemon=True)
+        started = _time.monotonic()
+        th.start()
+        th.join(limit)
+        if th.is_alive():
+            raise ArcQueryTimeout(
+                f"no answer in {limit:.0f} s (abandoned after "
+                f"{_time.monotonic() - started:.0f} s): {adql[:160]}")
+        if "exc" in box:
+            raise box["exc"]
+        return box.get("df")
+
+    return _bounded
+
+
+def timeout_cone_fn(base_fn=None, *, timeout_s: float = 240.0):
+    """The same wall clock for ``cone_fn(table, ra, dec, radius_arcsec)``."""
+    base = base_fn or _vizier_cone
+    limit = None if timeout_s in (None, "", 0) else float(timeout_s)
+    if limit is None:
+        return base
+
+    def _bounded(table, ra, dec, radius_arcsec, **kw):
+        box: dict = {}
+
+        def _work():
+            try:
+                box["df"] = base(table, ra, dec, radius_arcsec, **kw)
+            except BaseException as exc:                   # noqa: BLE001
+                box["exc"] = exc
+
+        th = threading.Thread(target=_work, name="arc-cone", daemon=True)
+        th.start()
+        th.join(limit)
+        if th.is_alive():
+            raise ArcQueryTimeout(
+                f"cone on {table} at ({ra}, {dec}) r={radius_arcsec}\" gave no answer "
+                f"in {limit:.0f} s")
+        if "exc" in box:
+            raise box["exc"]
+        return box.get("df")
+
+    return _bounded
 
 
 def fetch_star_params_by_id(ids, mission: str, *, query_fn=None,
                             log: AcquisitionLog | None = None, chunk: int = 200,
                             tables: dict | None = None) -> tuple[pd.DataFrame, list[dict]]:
-    """Positions and (where the table has them) Teff / radius / logg / flags /
-    Gaia id for a shortlist of KIC or TIC ids.  Kepler: Berger+2020
-    (``J/AJ/159/280``, the Gaia-Kepler stellar properties) first, the KIC as
-    the positional fallback; TESS: the TIC.  Every table's columns are read
-    from ``TAP_SCHEMA`` first."""
+    """Positions and Teff / radius / logg / mass / flags / Gaia id for a
+    shortlist of KIC or TIC ids, merged across the tables in priority order.
+
+    A table must expose ``star_id`` and either a position or a stellar
+    parameter.  Per star, the position comes from the first table that has
+    one and each parameter from the first table that has it, with
+    ``<col>_source`` naming the table; a later table is asked only about the
+    stars still missing a position, a Teff or a radius.  Kepler: Berger+2020
+    ``table2`` (parameters), ``table1`` (Gaia id, RUWE, positions), then the
+    KIC; TESS: the TIC.  Every table's columns are read from ``TAP_SCHEMA``
+    first."""
     query_fn = query_fn or tap_query
     tables = tables or PARAM_TABLES
     ids = [str(i).strip() for i in ids if str(i).strip()]
     record: list[dict] = []
     if not ids:
         return pd.DataFrame(columns=["star_id", "ra", "dec"]), record
-    frames = []
-    got: set[str] = set()
+    merged: dict[str, dict] = {}
+
+    def _done(sid: str) -> bool:
+        m = merged.get(sid)
+        return bool(m) and all(_is_finite(m.get(c)) for c in _NEED)
+
     for t in tables.get(mission, []):
-        want = [i for i in ids if i not in got]
+        want = [i for i in ids if not _done(i)]
         if not want:
             break
         try:
@@ -402,11 +511,12 @@ def fetch_star_params_by_id(ids, mission: str, *, query_fn=None,
             record.append({"table": t, "status": STATUS_ZERO, "note": "no columns"})
             continue
         roles = resolve_arc_columns(cols, "stars")
-        if not {"star_id", "ra", "dec"} <= set(roles):
+        has_pos = {"ra", "dec"} <= set(roles)
+        has_par = bool({"teff", "radius", "logg", "mass"} & set(roles))
+        if "star_id" not in roles or not (has_pos or has_par):
             record.append({"table": t, "status": "ROLES_UNRESOLVED", "roles": roles})
             continue
-        keep = [r for r in ("star_id", "ra", "dec", "teff", "radius", "logg", "mass", "flag",
-                            "gaia_id", "ruwe", "evol") if r in roles]
+        keep = [r for r in ("star_id",) + PARAM_VALUE_COLS if r in roles]
         sel = ", ".join(f'"{roles[r]}"' for r in keep)
         n_rows = 0
         for i in range(0, len(want), int(chunk)):
@@ -423,22 +533,59 @@ def fetch_star_params_by_id(ids, mission: str, *, query_fn=None,
             n = int(len(df)) if df is not None else 0
             if log:
                 log.record(f"params_{mission}", adql[:300], rows=n)
-            if n:
-                out = pd.DataFrame({r: df.iloc[:, j] for j, r in enumerate(keep)})
-                out["star_id"] = out["star_id"].map(_clean_id)
-                for c in ("ra", "dec", "teff", "radius", "logg", "mass", "ruwe"):
-                    if c in out:
-                        out[c] = pd.to_numeric(out[c], errors="coerce")
-                out["params_source"] = t
-                frames.append(out)
-                got.update(out["star_id"].tolist())
-                n_rows += n
+            if not n:
+                continue
+            out = pd.DataFrame({r: df.iloc[:, j] for j, r in enumerate(keep)})
+            out["star_id"] = out["star_id"].map(_clean_id)
+            for c in ("ra", "dec", "teff", "radius", "logg", "mass", "ruwe"):
+                if c in out:
+                    out[c] = pd.to_numeric(out[c], errors="coerce")
+            for _, row in out.iterrows():
+                sid = str(row["star_id"])
+                m = merged.setdefault(sid, {"star_id": sid})
+                for c in PARAM_VALUE_COLS:
+                    if c not in out.columns:
+                        continue
+                    v = row[c]
+                    if _is_null(v) or _is_finite(m.get(c)) or (m.get(c) not in (None, "")
+                                                               and c in ("flag", "gaia_id",
+                                                                         "evol")):
+                        continue
+                    if c in ("ra", "dec"):
+                        # a position is taken as a PAIR from one table
+                        if not (_is_finite(row.get("ra")) and _is_finite(row.get("dec"))):
+                            continue
+                    m[c] = v
+                    m[f"{c}_source"] = t
+                m.setdefault("params_source", t)
+            n_rows += n
         record.append({"table": t, "status": STATUS_OK if n_rows else STATUS_ZERO,
-                       "n_rows": n_rows, "roles": {r: roles[r] for r in keep}})
-    if not frames:
+                       "n_rows": n_rows, "roles": {r: roles[r] for r in keep},
+                       "has_positions": has_pos, "has_parameters": has_par})
+    if not merged:
         return pd.DataFrame(columns=["star_id", "ra", "dec"]), record
-    out = pd.concat(frames, ignore_index=True).drop_duplicates("star_id", keep="first")
+    out = pd.DataFrame(list(merged.values()))
+    for c in ("ra", "dec", "teff", "radius", "logg", "mass", "ruwe"):
+        out[c] = pd.to_numeric(out[c], errors="coerce") if c in out.columns else np.nan
     return out, record
+
+
+def _is_null(v) -> bool:
+    if v is None:
+        return True
+    try:
+        if isinstance(v, float) and math.isnan(v):
+            return True
+    except TypeError:
+        return False
+    return isinstance(v, str) and v.strip().lower() in ("", "nan", "none", "<na>")
+
+
+def _is_finite(v) -> bool:
+    try:
+        return bool(np.isfinite(float(v)))
+    except (TypeError, ValueError):
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -490,14 +637,20 @@ def parse_gaia_cone(df: pd.DataFrame, ra: float, dec: float, *, match_arcsec: fl
 
 def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog | None = None,
                  gaia_table: str = "I/355/gaiadr3", vari_table: str = "I/358/vclassre",
-                 radius_arcsec: float = 12.0, match_arcsec: float = 2.0) -> dict:
+                 radius_arcsec: float = 12.0, match_arcsec: float = 2.0,
+                 deadline=None) -> dict:
     """Per star: ``{gaia_reached, ruwe, nss, plx, gmag, neighbours, vari_class, ...}``.
     A star whose Gaia cone failed carries ``gaia_reached = False`` (the veto
     is then *unapplied*, not passed); a failed variability cone only leaves
-    ``vari_class`` as ``None`` with ``vari_reached = False``."""
+    ``vari_class`` as ``None`` with ``vari_reached = False``.
+
+    ``deadline`` is a zero-argument predicate that returns True when the
+    caller's wall clock is spent.  A star reached after that carries
+    ``gaia_reached = False`` and ``note = "budget spent"`` -- which is the
+    veto left UNAPPLIED, exactly as a failed cone is, and never a pass."""
     cone_fn = cone_fn or _vizier_cone
     out: dict[str, dict] = {}
-    n_ok = n_fail = n_vok = n_vfail = 0
+    n_ok = n_fail = n_vok = n_vfail = n_skipped = 0
     for _, r in positions.iterrows():
         sid = str(r["star_id"])
         ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
@@ -506,6 +659,11 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
                "gmag": float("nan"), "neighbours": [], "target_found": False}
         if not (np.isfinite(ra) and np.isfinite(dec)):
             ctx["note"] = "no position"
+            out[sid] = ctx
+            continue
+        if deadline is not None and deadline():
+            ctx["note"] = "budget spent"
+            n_skipped += 1
             out[sid] = ctx
             continue
         try:
@@ -519,7 +677,7 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
             if log and n_fail <= 3:
                 log.record("gaia_cone", f"cone {gaia_table} ({ra:.5f},{dec:.5f})",
                            error=repr(exc))
-        if vari_table:
+        if vari_table and not (deadline is not None and deadline()):
             try:
                 dv = cone_fn(vari_table, ra, dec, match_arcsec)
                 ctx["vari_reached"] = True
@@ -535,7 +693,8 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
     if log:
         log.record("gaia_cone", f"{n_ok + n_fail} cones on {gaia_table} r={radius_arcsec}\"",
                    rows=n_ok if n_ok else None, error=None if n_ok or not n_fail else
-                   "every cone failed", extra={"n_cones_ok": n_ok, "n_cones_failed": n_fail})
+                   "every cone failed", extra={"n_cones_ok": n_ok, "n_cones_failed": n_fail,
+                                               "n_cones_skipped_budget": n_skipped})
         if vari_table:
             log.record("vari_cone", f"{n_vok + n_vfail} cones on {vari_table} r={match_arcsec}\"",
                        rows=n_vok if n_vok else None,
@@ -545,7 +704,7 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
 
 
 __all__ = ["PARAM_TABLES", "ROLE_PATTERNS", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO",
-           "VIZIER_TAP", "AcquisitionLog", "DiscoveredTable", "discover_table",
-           "fetch_star_params_by_id", "fetch_table", "gaia_context", "parse_gaia_cone",
-           "reset_route_state", "resolve_arc_columns", "route_log_summary", "score_table",
-           "tap_query"]
+           "VIZIER_TAP", "AcquisitionLog", "ArcQueryTimeout", "DiscoveredTable",
+           "discover_table", "fetch_star_params_by_id", "fetch_table", "gaia_context",
+           "parse_gaia_cone", "reset_route_state", "resolve_arc_columns", "route_log_summary",
+           "score_table", "tap_query", "timeout_cone_fn", "timeout_query_fn"]

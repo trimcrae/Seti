@@ -1,0 +1,492 @@
+name: sextant
+
+# SEXTANT --- non-gravitational acceleration in Gaia's milliarcsecond
+# minor-planet astrometry (docs/sextant.md).  LOOM's question at 100x the
+# precision, decided on the POPULATION and not on one weird asteroid.
+#
+# Two paths through the same three stages, chosen by the `solo` input:
+#
+#   solo: true  (default)  one job, one runner:  probe ─▶ fit ─▶ assess
+#   solo: false            probe ──▶ fit (N parallel shards) ──▶ assess
+#
+# The sharded path is six separate scheduling events on a queue shared by 18
+# channels, and a run that never starts measures nothing; the solo path reaches
+# fewer objects and reaches them.  Because a shard fits its positive controls
+# first and then works a seeded shuffle, the solo run is a SMALLER UNBIASED
+# SAMPLE of the same catalogue, not a different sample --- which is what makes
+# the trade acceptable rather than merely cheaper.
+#
+# WHAT EACH JOB IS FOR, AND WHY IT IS A SEPARATE JOB (the sharded path).
+#
+# `probe` does the three things that must happen exactly once per run and that
+# every shard then depends on, so doing them per shard would both waste the
+# Horizons API budget and --- worse --- let two shards resolve the archive's
+# conventions DIFFERENTLY and pool the results:
+#   * pulls the 26 perturber grids from Horizons and JPL's numbered-asteroid
+#     catalogue from SBDB, and caches both in work/sextant/;
+#   * MEASURES the local n-body propagator against Horizons on a sample and
+#     picks the bulk ephemeris route from that measurement.  Horizons cannot
+#     serve 10^5 objects, so the integrator is the only route that scales; the
+#     point of the measurement is that the integrator's error is BOUNDED by a
+#     number this run recorded rather than asserted;
+#   * resolves the archive's astrometric conventions ON DATA --- which time
+#     scale `epoch` is in, and which of light time / stellar aberration / solar
+#     deflection the published positions already contain.  The 2026-09-03 probe
+#     measured epoch_utc - epoch = -85.6 s drifting by 4.686 s across the
+#     mission, which is TCB-UTC and its drift (L_B secular + 2 leap seconds) to
+#     the tenth of a second; config/sextant.yaml carries that as the default and
+#     this stage re-derives it from the residuals themselves.  Getting it wrong
+#     puts ~0.7 arcsec of along-track offset on EVERY object in proportion to
+#     sky rate --- i.e. it manufactures exactly the signal being searched for.
+#
+# `fit` is the sharded work: acquire this shard's objects from Gaia TAP in
+# chunks, propagate each chunk as one batch, fit A1/A2/A3 against the
+# archive's own two-part covariance with the six orbit-state partials carried
+# as nuisance regressors, screen, and CHECKPOINT AFTER EVERY CHUNK.  A shard
+# writes its own CSV and JSON, so a killed shard costs minutes and `assess`
+# aggregates whatever shards exist.  fail-fast is off for the same reason.
+#
+# `assess` is offline: it scores the POSITIVE CONTROLS first --- the objects
+# whose Yarkovsky A2 JPL has already fitted from decades of optical and radar
+# astrometry --- and if the Gaia-only fit does not return their A2 in sign and
+# magnitude, nothing else in the output is believed.  Then the A2 distribution
+# against the Yarkovsky expectation, the radiation-momentum ceiling
+# exceedances with their vetting, and LOOM's population tests against matched
+# draws of this same screened sample.
+#
+# CREDENTIALS: none.  gea.esac.esa.int/tap-server/tap (IVOA TAP),
+# ssd.jpl.nasa.gov (Horizons + SBDB) and VizieR are all public.
+
+on:
+  workflow_dispatch:
+    inputs:
+      n_shards:
+        description: "Parallel fit shards (few: 18 channels share one account's concurrency, and a wide matrix waits rather than finishing sooner)"
+        required: false
+        default: "4"
+      max_objects:
+        description: "Cap the object list (0 = every numbered object in the release). Capped runs take every JPL non-grav solution FIRST, so the positive controls are always in."
+        required: false
+        default: "0"
+      release:
+        description: "gaiafpr (66-month re-reduction, 46.3M rows) or gaiadr3 (23.3M)"
+        required: false
+        default: "gaiafpr"
+      route:
+        description: "Ephemeris route override: blank = whatever the probe measured, else integrator | horizons"
+        required: false
+        default: ""
+      probe_only:
+        description: "Run only the probe (measure the route and the conventions, then stop)"
+        required: false
+        default: "false"
+      assess_only_run_id:
+        description: "Skip probe+fit; assess from this prior run's shard artifacts"
+        required: false
+        default: ""
+      fit_timeout_minutes:
+        description: "Per-shard job timeout (<= 360)"
+        required: false
+        default: "330"
+      fit_budget_minutes:
+        description: "In-job clock for the fit stage: it stops itself between chunks this many minutes in, so an overrun still uploads its checkpointed chunks. Keep it ~20 min below fit_timeout_minutes."
+        required: false
+        default: "300"
+      solo:
+        description: "true = probe+fit+assess in ONE job on ONE runner (fewer objects, but only one scheduling wait instead of six). false = the sharded probe/fit-matrix/assess pipeline."
+        required: false
+        default: "true"
+      solo_fit_budget_minutes:
+        description: "In-job clock for the fit step of the solo job, inside its 350-minute cap; the probe and assess steps need the rest."
+        required: false
+        default: "230"
+
+permissions:
+  contents: write
+
+jobs:
+  # --- THE SOLO PATH --------------------------------------------------------
+  # Why this exists.  The sharded pipeline below is six separate scheduling
+  # events --- one probe slot, then four simultaneous fit slots, then an assess
+  # slot --- and on a queue that has reached 69 waiting runs across 18 channels
+  # that is six chances to wait hours.  A run that never starts measures
+  # nothing.  This job does the whole pipeline on ONE runner, as three steps so
+  # each one's output is committed before the next begins: it reaches perhaps a
+  # quarter of the objects, and it reaches them.  The work order makes that a
+  # fair trade --- the controls are fitted first either way, and the rest is a
+  # seeded shuffle, so a solo run is a smaller unbiased sample and not a
+  # different sample.
+  solo:
+    if: ${{ github.event.inputs.solo != 'false' && github.event.inputs.assess_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard outputs, and start the job clock
+        # Two things.  `assess` reads every shard_*.csv.gz it finds and the
+        # branch may carry a previous run's, which would silently pool two
+        # different samples into one verdict.
+        #
+        # And SOLO_T0: the fit step's budget has to be what is LEFT of the
+        # 350-minute job cap, not a fixed number.  The probe can take anywhere
+        # from twenty minutes to over an hour --- 26 Horizons perturber grids,
+        # the whole SBDB, a DISTINCT over 46M rows, and 60 Horizons ephemerides
+        # for the route measurement --- so a fixed 230-minute fit budget can
+        # overrun the cap, and a job killed by `timeout-minutes` is cancelled:
+        # its `if: always()` commit step does not reliably run, and every
+        # checkpointed chunk is lost.  That is precisely the failure the in-job
+        # clock exists to prevent, so the clock is set from the real remaining
+        # time rather than from an input.
+        run: |
+          rm -rf results/sextant/fits
+          echo "SOLO_T0=$(date +%s)" >> "$GITHUB_ENV"
+      - name: Probe --- perturbers, SBDB, the ephemeris route, the conventions
+        run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.route }}" ]; then
+            EXTRA="--route ${{ github.event.inputs.route }}"
+          fi
+          python -m seti.cli sextant --stage probe \
+            --release ${{ github.event.inputs.release || 'gaiafpr' }} $EXTRA
+      - name: Commit the probe record
+        if: always()
+        env:
+          # Results go to the branch the run is on, NOT to main.  Two reasons,
+          # and the second is the one that bites: commit_results.sh works by
+          # resetting the checkout hard to origin/$RESULTS_BRANCH and laying
+          # the generated files over the result, so with the default (main) the
+          # probe step's commit would replace this job's CHECKOUT with main's
+          # tree --- and the solo job's fit and assess steps would then run
+          # main's code rather than the branch's.  Pointing it at this branch
+          # makes that reset a no-op on the source tree.
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "sextant: measured ephemeris route and archive astrometric conventions" \
+            results/sextant || true
+      - name: Fit --- one shard, on the clock
+        if: ${{ github.event.inputs.probe_only != 'true' }}
+        run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.route }}" ]; then
+            EXTRA="--route ${{ github.event.inputs.route }}"
+          fi
+          # Whatever is left of the 350-minute cap, less 25 minutes for assess
+          # and the two commits, and never more than the requested budget.
+          ELAPSED=$(( ( $(date +%s) - SOLO_T0 ) / 60 ))
+          REMAIN=$(( 350 - ELAPSED - 25 ))
+          WANT=${{ github.event.inputs.solo_fit_budget_minutes || '230' }}
+          BUDGET=$(( REMAIN < WANT ? REMAIN : WANT ))
+          echo "probe took ${ELAPSED} min; fit budget ${BUDGET} min (requested ${WANT}, remaining ${REMAIN})"
+          if [ "$BUDGET" -lt 5 ]; then
+            echo "::error::no time left for the fit step after a ${ELAPSED}-minute probe"
+            exit 1
+          fi
+          python -m seti.cli sextant --stage fit --shard 0/1 \
+            --release ${{ github.event.inputs.release || 'gaiafpr' }} \
+            --budget-minutes "$BUDGET" \
+            --max-objects ${{ github.event.inputs.max_objects || '0' }} $EXTRA
+      - name: Assess --- controls FIRST, then the A2 distribution and the population
+        if: ${{ always() && github.event.inputs.probe_only != 'true' }}
+        run: |
+          ls -la results/sextant/fits/ || true
+          python -m seti.cli sextant --stage assess
+      - name: The verdict
+        if: always()
+        run: |
+          echo "=== summary.json ==="
+          cat results/sextant/summary.json || true
+          echo ""
+          echo "=== POSITIVE CONTROLS (if these fail, nothing else is believed) ==="
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/sextant/controls.json")
+          if not p.exists():
+              print("(no controls.json)")
+          else:
+              c = json.loads(p.read_text())
+              print("verdict:", c.get("verdict"), "| n_controls:", c.get("n_controls"),
+                    "| n_measured:", c.get("n_measured"),
+                    "| recovered_fraction:", c.get("recovered_fraction"))
+              print("verdicts:", c.get("verdicts"))
+              for s in (c.get("scored") or [])[:40]:
+                  print(f"  {s.get('number_mp')} {s.get('name','')}: {s.get('verdict')} "
+                        f"fitted={s.get('fitted_a2')} +- {s.get('fitted_err')} "
+                        f"jpl={s.get('jpl_a2')} +- {s.get('jpl_sigma')} "
+                        f"ratio={s.get('ratio')} dsigma={s.get('difference_sigma')}")
+          print("\n=== CEILING EXCEEDANCES ===")
+          q = pathlib.Path("results/sextant/exceedances.json")
+          if q.exists():
+              e = json.loads(q.read_text())
+              print("n:", e.get("n"))
+              for r in (e.get("rows") or [])[:40]:
+                  print(" ", json.dumps(r, default=str)[:500])
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          # Results go to the branch the run is on, NOT to main.  Two reasons,
+          # and the second is the one that bites: commit_results.sh works by
+          # resetting the checkout hard to origin/$RESULTS_BRANCH and laying
+          # the generated files over the result, so with the default (main) the
+          # probe step's commit would replace this job's CHECKOUT with main's
+          # tree --- and the solo job's fit and assess steps would then run
+          # main's code rather than the branch's.  Pointing it at this branch
+          # makes that reset a no-op on the source tree.
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "sextant: A1/A2/A3 fits over Gaia SSO astrometry (controls + population)" \
+            results/sextant
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sextant-solo
+          path: results/sextant/
+          if-no-files-found: warn
+
+  # --- THE SHARDED PATH (solo: false) --------------------------------------
+  probe:
+    if: ${{ github.event.inputs.solo == 'false' && github.event.inputs.assess_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Probe --- perturbers, SBDB, the ephemeris route, the conventions
+        run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.route }}" ]; then
+            EXTRA="--route ${{ github.event.inputs.route }}"
+          fi
+          python -m seti.cli sextant --stage probe \
+            --release ${{ github.event.inputs.release || 'gaiafpr' }} $EXTRA
+      - name: Show what the probe measured
+        if: always()
+        run: |
+          for f in results/sextant/conventions.json results/sextant/probe_ephemeris.json; do
+            echo "=== $f ==="
+            python -c "import json,sys;d=json.load(open('$f'));print(json.dumps(d,indent=1,default=str)[:6000])" 2>/dev/null || echo "(absent)"
+          done
+      - name: Commit the probe record
+        if: always()
+        env:
+          # Results go to the branch the run is on, NOT to main.  Two reasons,
+          # and the second is the one that bites: commit_results.sh works by
+          # resetting the checkout hard to origin/$RESULTS_BRANCH and laying
+          # the generated files over the result, so with the default (main) the
+          # probe step's commit would replace this job's CHECKOUT with main's
+          # tree --- and the solo job's fit and assess steps would then run
+          # main's code rather than the branch's.  Pointing it at this branch
+          # makes that reset a no-op on the source tree.
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "sextant: measured ephemeris route and archive astrometric conventions" \
+            results/sextant || true
+      - name: Pack the work cache for the shards
+        if: always()
+        run: |
+          # Built from whatever EXISTS, one path at a time.  A single missing
+          # file must not fail the pack: the probe checkpoints after every
+          # query, so a partial cache is still worth handing to the shards
+          # (they re-fetch what is absent), while an empty artifact would make
+          # every shard re-pull 26 Horizons grids and the whole SBDB.  The
+          # per-chunk Gaia parquet under work/sextant/obs is deliberately NOT
+          # packed: it is this shard's own data, and it is large.
+          mkdir -p work/sextant results/sextant
+          : > pack.list
+          for f in work/sextant/perturbers.npz \
+                   work/sextant/sbdb.parquet \
+                   work/sextant/sbdb_meta.json \
+                   work/sextant/objects_gaiafpr.json \
+                   work/sextant/objects_gaiadr3.json \
+                   results/sextant/conventions.json \
+                   results/sextant/probe_ephemeris.json \
+                   results/sextant/controls_greenberg2020.json \
+                   results/sextant/binaries_liberato2024.json; do
+            [ -f "$f" ] && echo "$f" >> pack.list
+          done
+          # GNU tar refuses to create an empty archive, and an absent artifact
+          # would fail every shard's download instead of letting them re-fetch.
+          echo "probe produced: $(wc -l < pack.list) cache files" > work/sextant/PACK_MANIFEST.txt
+          cat pack.list >> work/sextant/PACK_MANIFEST.txt
+          echo work/sextant/PACK_MANIFEST.txt >> pack.list
+          echo "packing:"; cat pack.list
+          tar -czf sextant-work.tar.gz -T pack.list
+          ls -la sextant-work.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sextant-work
+          path: sextant-work.tar.gz
+          if-no-files-found: error
+
+  plan:
+    if: ${{ github.event.inputs.solo == 'false' && github.event.inputs.assess_only_run_id == '' && github.event.inputs.probe_only != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.mk.outputs.shards }}
+    steps:
+      - id: mk
+        run: |
+          python3 -c "import json; print('shards=' + json.dumps(list(range(int('${{ github.event.inputs.n_shards || '4' }}')))))" >> "$GITHUB_OUTPUT"
+
+  fit:
+    needs: [probe, plan]
+    if: ${{ needs.probe.result == 'success' && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(github.event.inputs.fit_timeout_minutes || '330') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard outputs
+        # A shard must never aggregate a PREVIOUS run's fits that the branch
+        # happens to carry: `assess` reads every shard_*.csv.gz it finds.
+        run: rm -rf results/sextant/fits
+      - uses: actions/download-artifact@v4
+        with:
+          name: sextant-work
+          run-id: ${{ github.run_id }}
+          github-token: ${{ github.token }}
+      - name: Unpack the shared perturber/SBDB/conventions cache
+        run: |
+          tar -xzf sextant-work.tar.gz
+          ls -la work/sextant/ results/sextant/ || true
+      - name: Fit shard ${{ matrix.shard }} of ${{ github.event.inputs.n_shards || '4' }}
+        run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.route }}" ]; then
+            EXTRA="--route ${{ github.event.inputs.route }}"
+          fi
+          python -m seti.cli sextant --stage fit \
+            --shard ${{ matrix.shard }}/${{ github.event.inputs.n_shards || '4' }} \
+            --release ${{ github.event.inputs.release || 'gaiafpr' }} \
+            --budget-minutes ${{ github.event.inputs.fit_budget_minutes || '300' }} \
+            --max-objects ${{ github.event.inputs.max_objects || '0' }} $EXTRA
+      - name: Shard verdict
+        if: always()
+        run: |
+          for f in results/sextant/fits/shard_*.json; do
+            echo "=== $f ==="
+            python -c "import json;d=json.load(open('$f'));d.pop('details',None);print(json.dumps(d,indent=1,default=str)[:4000])" 2>/dev/null || true
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sextant-fits-${{ matrix.shard }}
+          path: results/sextant/fits/
+          if-no-files-found: warn
+
+  assess:
+    needs: fit
+    if: ${{ always() && github.event.inputs.solo == 'false' && github.event.inputs.probe_only != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/sextant/fits
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sextant-fits-*
+          merge-multiple: true
+          path: results/sextant/fits/
+          run-id: ${{ github.event.inputs.assess_only_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+      - name: Assess --- controls FIRST, then the A2 distribution and the population
+        run: |
+          ls -la results/sextant/fits/ || true
+          python -m seti.cli sextant --stage assess
+      - name: The verdict
+        if: always()
+        run: |
+          echo "=== summary.json ==="
+          cat results/sextant/summary.json || true
+          echo ""
+          echo "=== POSITIVE CONTROLS (if these fail, nothing else is believed) ==="
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/sextant/controls.json")
+          if not p.exists():
+              print("(no controls.json)")
+          else:
+              c = json.loads(p.read_text())
+              print("verdict:", c.get("verdict"), "| n_controls:", c.get("n_controls"),
+                    "| n_measured:", c.get("n_measured"),
+                    "| recovered_fraction:", c.get("recovered_fraction"))
+              print("verdicts:", c.get("verdicts"))
+              for s in (c.get("scored") or [])[:40]:
+                  print(f"  {s.get('number_mp')} {s.get('name','')}: {s.get('verdict')} "
+                        f"fitted={s.get('fitted_a2')} +- {s.get('fitted_err')} "
+                        f"jpl={s.get('jpl_a2')} +- {s.get('jpl_sigma')} "
+                        f"ratio={s.get('ratio')} dsigma={s.get('difference_sigma')}")
+          print("\n=== CEILING EXCEEDANCES ===")
+          q = pathlib.Path("results/sextant/exceedances.json")
+          if q.exists():
+              e = json.loads(q.read_text())
+              print("n:", e.get("n"))
+              for r in (e.get("rows") or [])[:40]:
+                  print(" ", json.dumps(r, default=str)[:500])
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          # Results go to the branch the run is on, NOT to main.  Two reasons,
+          # and the second is the one that bites: commit_results.sh works by
+          # resetting the checkout hard to origin/$RESULTS_BRANCH and laying
+          # the generated files over the result, so with the default (main) the
+          # probe step's commit would replace this job's CHECKOUT with main's
+          # tree --- and the solo job's fit and assess steps would then run
+          # main's code rather than the branch's.  Pointing it at this branch
+          # makes that reset a no-op on the source tree.
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "sextant: A1/A2/A3 fits over Gaia SSO astrometry (controls + population)" \
+            results/sextant
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sextant-final
+          path: results/sextant/
+          if-no-files-found: warn

@@ -389,7 +389,9 @@ def _cmd_shroud(args, cfg):
     from .shroud.run import shroud_run
 
     shroud_run(cfg, stage=args.stage, allow_network=not args.offline,
-               max_sources=args.max_sources, input_parquet=args.input)
+               max_sources=args.max_sources, input_parquet=args.input,
+               n_fields=args.n_fields, field_radius_deg=args.field_radius_deg,
+               field_seed=args.field_seed, acquire_deadline_s=args.acquire_deadline_s)
 
 
 def _cmd_crosscorr(args, cfg):
@@ -993,6 +995,18 @@ def _cmd_spectra_triage(args, cfg):
 
     triage_run(cfg.root, v_window_kms=args.v_window,
                recur_tol=args.recur_tol, recur_min=args.recur_min)
+
+
+# --- SPECTRA-PERSIST ---
+def _cmd_spectra_persist(args, cfg):
+    """Per-exposure persistence of the narrow-line survivors; flags are passed
+    through to seti.spectra.persist (--stage probe|run|reduce, --shard, ...)."""
+    from .spectra.persist import main as persist_main
+
+    rest = list(args.rest)
+    if "--root" not in rest:
+        rest += ["--root", str(cfg.root)]
+    return persist_main(rest)
 
 
 def _cmd_paper_numbers(args, cfg):
@@ -1908,6 +1922,15 @@ def main(argv=None):
                         "recorded in the run provenance")
     p.add_argument("--input", default=None,
                    help="analyse this parquet instead of acquiring")
+    p.add_argument("--n-fields", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: number of 0.5-deg fields "
+                        "(default from config/shroud.yaml)")
+    p.add_argument("--field-radius-deg", type=float, default=None,
+                   help="USNO-B1.0 reconstruction: cone radius per field")
+    p.add_argument("--field-seed", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: field-order seed")
+    p.add_argument("--acquire-deadline-s", type=float, default=None,
+                   help="stop starting new field fetches after this many seconds")
     p.set_defaults(func=_cmd_shroud)
 
     p = sub.add_parser(
@@ -2164,6 +2187,15 @@ def main(argv=None):
     p.add_argument("--recur-tol", type=float, default=3.0)
     p.add_argument("--recur-min", type=int, default=3)
     p.set_defaults(func=_cmd_spectra_triage)
+
+    # --- SPECTRA-PERSIST ---
+    p = sub.add_parser("spectra-persist",
+                       help="per-exposure persistence + second epoch + rest-frame ID of the "
+                            "narrow-line survivors; flags pass through to seti.spectra.persist "
+                            "(invoke as `seti spectra-persist -- --stage probe`, or call "
+                            "`python -m seti.spectra.persist` directly as the workflow does)")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_spectra_persist)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

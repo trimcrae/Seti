@@ -40,6 +40,7 @@ from ..metronome.acquire import (
     AcquisitionLog,
     _canon,
     _vizier_cone,
+    clean_star_id,
     count_rows,
     list_tables,
     reset_route_state,
@@ -362,11 +363,9 @@ def fetch_table(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | N
     return out
 
 
-def _clean_id(v) -> str:
-    s = str(v).strip()
-    if re.fullmatch(r"\d+\.0", s):
-        s = s[:-2]
-    return re.sub(r"^(KIC|TIC|EPIC)\s*", "", s, flags=re.I).strip()
+#: One id spelling for every table (shared with METRONOME, which joins the same
+#: rotation tables to the same flare tables).
+_clean_id = clean_star_id
 
 
 # ---------------------------------------------------------------------------

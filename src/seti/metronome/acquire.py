@@ -1770,14 +1770,45 @@ def discover_event_table(catalogue: str, preferred: str, keywords=(), *, query_f
     board: list[dict] = []
     best: DiscoveredTable | None = None
     best_key: tuple = (-1, -1)
+    def _preferred_non_tap():
+        """The catalogue's OWN metadata, asked directly, when TAP_SCHEMA is
+        simply silent about it.
+
+        ``list_tables`` degrades to this route when TAP *fails*, but not when
+        TAP *answers with zero rows* --- and those are different facts.  A
+        catalogue that TAPVizieR does not index (large tables are not always
+        in its schema) is still served by ASU and still has a ReadMe, and
+        Pietras+2022 has returned zero TAP rows under its bibcode id and under
+        an author keyword on two separate dispatches.  Asking ASU costs one
+        HTTP request and turns "TAP does not list it" into either the table or
+        a recorded absence.
+        """
+        df, _ = asu_catalogue_tables(preferred, fetch_fn=None)
+        return df
+
     routes = [("preferred", lambda: list_tables(preferred, query_fn=query_fn))]
     if keywords:
         routes.append(("keyword", lambda: search_tables(keywords, query_fn=query_fn)))
+    routes.append(("preferred_non_tap", _preferred_non_tap))
     any_failed = False
     for route, lister in routes:
+        if route == "preferred_non_tap" and any_failed:
+            # TAP itself failed, and ``list_tables`` already fell through to
+            # the non-TAP route inside that failure.  Asking again would only
+            # re-walk endpoints the circuit breaker has just opened.
+            continue
         try:
             tabs = lister()
         except Exception as exc:                          # noqa: BLE001
+            if route == "preferred_non_tap":
+                # A supplementary route that could not be reached does not
+                # change what TAP said.  QUERY_RETURNED_ZERO_ROWS and
+                # QUERY_FAILED are different facts, and only the TAP routes
+                # decide between them, so this is a note and not an error.
+                if log:
+                    log.record(f"discover_{catalogue}_{route}", f"ASU metadata ~ {preferred!r}",
+                               rows=0, extra={"note": repr(exc)[:300]})
+                continue
             any_failed = True
             if log:
                 log.record(f"discover_{catalogue}_{route}", f"TAP_SCHEMA.tables ~ {preferred!r}",
@@ -1789,7 +1820,12 @@ def discover_event_table(catalogue: str, preferred: str, keywords=(), *, query_f
         for _, row in tabs.iterrows():
             t = unquote_table(row["table_name"])
             try:
-                cols = table_columns(t, query_fn=query_fn)
+                # the non-TAP listing already carries the real column names;
+                # handing them over stops a second round trip per table and
+                # lets discovery work at all when TAP_SCHEMA has no row for it
+                cols = table_columns(t, query_fn=query_fn,
+                                     known=list(row.get("columns") or [])
+                                     if "columns" in tabs.columns else None)
             except Exception as exc:                      # noqa: BLE001
                 board.append({"table": t, "route": route, "score": 0,
                               "reason": f"columns query failed: {exc!r}"[:200]})

@@ -118,6 +118,27 @@ second independent identification.  The period is the identification.)  The
 signal in KIC 5879574's aperture has the period, and to within the band
 difference the harmonic shape, of the RR Lyrae 13.3″ away.
 
+**And the arithmetic closes.**  The RR Lyrae's catalogued amplitude is 0.575
+mag peak-to-peak, which is **51.8%** in flux, and Gaia makes it 0.419 mag
+brighter than the target (G = 14.373 against 14.792), so
+F_neighbour / F_target = 1.471.  For that to appear as the **0.084%** folded
+amplitude actually measured in the target's light curve, the fraction of the
+RR Lyrae's flux falling inside the target's aperture must be
+
+    f = A_obs / [ (F_nb/F_tgt) x (A_nb - A_obs) ] = 0.00110,
+
+**0.11% of the neighbour's flux** — and per roll season, 0.083% (seasons 0
+and 1) to 0.171% (seasons 2 and 3).  At 13.3″, 3.3 Kepler pixels, the PRF
+wings are at exactly that level, and a factor of 2.1 between the two mask
+orientations is ordinary.  So the contamination hypothesis is not merely
+consistent in period and shape; it requires a leakage fraction that is the one
+the geometry actually provides.  (Stated approximations: Gaia G stands in for
+Kepler's band on both stars, the aperture's third-party flux is ignored, and
+PDC's own crowding correction — which would raise the apparent fractional
+amplitude and so lower f — is not undone.  Each is a tens-of-percent effect on
+f, not an order of magnitude.)
+
+
 A 0.575 mag pulsator diluted into a neighbouring Kepler aperture is an 0.084%
 oscillation; its crests clear the flare detector's running-median σ on some
 cycles; the result is a catalogue of "flares" on a perfect clock.  That is the

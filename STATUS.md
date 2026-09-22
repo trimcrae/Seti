@@ -108,7 +108,18 @@ Kepler data anyway. The two are the same period to the precision either
 measurement has. ZTF also publishes that star's Fourier shape, R21 = 0.326,
 against **A2/A1 = 0.3168** measured in the fold of the *target's* light curve
 -- different passbands (ZTF r vs Kepler's broad band), so corroboration rather
-than a second independent identification; the period is the identification. A 0.575 mag pulsator
+than a second independent identification; the period is the identification.
+
+**The arithmetic closes too.** 0.575 mag peak-to-peak is 51.8% in flux, and
+Gaia makes the RR Lyrae 0.419 mag brighter than the target (G 14.373 vs
+14.792), so F_nb/F_tgt = 1.471. To show up as the measured 0.084% folded
+amplitude, the fraction of the neighbour's flux inside the target's aperture
+must be f = A_obs / [(F_nb/F_tgt)(A_nb - A_obs)] = **0.00110** -- 0.11% of the
+RR Lyrae, and 0.083% to 0.171% across the roll seasons. At 3.3 Kepler pixels
+the PRF wings are at exactly that level and a factor 2.1 between mask
+orientations is ordinary. (Approximations: Gaia G stands in for Kepler's band
+on both stars; third-party aperture flux ignored; PDC's crowding correction
+not undone. Tens of percent on f, not orders of magnitude.) A 0.575 mag pulsator
 diluted into a neighbouring Kepler aperture is an 0.084% oscillation; its
 crests clear the flare detector's running-median sigma on some cycles; the
 result is a catalogue of "flares" on a perfect clock.

@@ -85,6 +85,65 @@ Tu+2022 stars. If 0.42327 d is the star's photometric period it is a contact
 binary and dies honestly; if it is not, and the epoch stack is significant, it
 is the first object this channel has that the photometry, the catalogue and
 the timing statistic all agree on.
+### SLAG-WD: the natural family was too small, and the objects were the wrong objects, 2026-09-22
+
+SLAG-WD (S51) asks, per polluted white dwarf, how badly the best *natural*
+parcel reproduces its photospheric abundance vector — the calibrated misfit
+list that has never been published — and then whether a process-orthogonal
+element pair sits outside the natural envelope while the rest of its panel is
+natural. The acquisition has been green since 14:36 EDT minus 4 (3,547 PEWDD
+rows over VizieR TAP in 14.2 s, run 35739746529); what did not exist was a
+verdict. Three things had to be corrected first, each found by looking at the
+served data rather than at the brief.
+
+**The objects were the wrong objects.** PEWDD is one row per star per paper,
+and each paper uses its own designation: `GD 378` and `WD 1822+410` are one
+star, `PG 0843+516` / `PG 0843+517` / `WD0843+516` are one star. Grouping on
+the (qualifier-stripped) name gave 2,441 "objects" for 3,547 rows and silently
+disabled every check that compares an object's own sources — the
+multi-reference disagreement kill above all. All 3,547 rows carry coordinates,
+so objects are now built by single-linkage **on the sky** within 5″: **1,576
+objects**, 633 of them merging more than one designation. The name deliberately
+does not link two sky positions — PEWDD has rows called `WD1202-232` 40° apart
+and rows called `L745-46A` carrying Ross 640's position, and joining on the
+name chained those into blobs of up to 27 rows over ten unrelated
+designations.
+
+**The natural family was 18 compiled vectors; it is now 1,227 measured
+bodies.** PEWDD's own repository ships the meteorite compilations it compares
+against, and the acquire stage had already fetched them. Read as log₁₀ number
+ratios and de-duplicated across their three reference elements, they say the
+brief's premise is wrong: **Ti/Al spans 2.95 dex across 1,096 real stones
+against 0.31 dex across the compiled end-members**; Ca/Al reaches +2.97 in
+pallasites (compiled maximum +0.04) because Al is a trace element in an
+olivine–metal rock; Mn/Cr 3.21, Ni/Co 3.53. A Tier 2 exceedance measured
+against the compiled end-members alone would have been an artefact of the
+compilation. The two pairs that stay narrow, Sc/Ca and Sr/Ca, are narrow only
+in coverage — 8 and 0 measured bodies carry both elements — and the record now
+says so instead of trading on it. The same bodies also provide a second,
+harder misfit calibration: the draw is a real meteorite, so a small posterior p
+beside a large meteorite p is a statement about the star, and two small p
+values are a statement about the model.
+
+**Two of the seven literature controls cannot be candidates here.**
+WD 0106−328 (served as `HE 0106-3253`) and NLTT 19868 reach only **four**
+measured elements in their best published PEWDD panel, so both are
+`INFORMATION_LIMITED` by construction. Two alias corrections came with that:
+NLTT 19868 is not WD/PG 0843+516 (a different DA 62° away) and LHS 2534 is not
+WD 1214+032 (PEWDD serves it as `WD 1212-022`).
+
+**In flight: run 35747793625** on `claude/goap-slag`, `slag-solo.yml`,
+`stage=all`. The sharded `slag.yml` needs to win a runner slot six times in
+sequence and twice failed to start at all (35739746529's screen matrix, then
+35745205866, which sat 52 minutes without its first job); the solo workflow
+does the same work in one job on one slot, which is affordable because only
+168 of 3,547 panels reach the 5-element floor and carry the calibration cost.
+No `results/slag/summary.json` exists yet — the verdict line stays empty until
+that run commits one.
+
+Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
+the runner installs), per `docs/channel-brief.md` §0 item 5.
+
 ### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
 
 SEXTANT asks LOOM's question — is a minor planet accelerating in a way

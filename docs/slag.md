@@ -280,10 +280,37 @@ recorded per row.
 ## 7. Controls
 
 The literature outliers run as controls and their landing is reported in
-`results/slag/controls.json` whatever it is. Their PEWDD names, found on the
-runner: `PG 1225-079` (+ `Updated`, + `Model 1/2/3`), `LHS 2534`,
-`GALEXJ2339`, `GD 378`, `NLTT 19868`, `HE 0106-3253` (= WD 0106−328),
-`GD 362` (+ `Updated`, + `GD362`).
+`results/slag/controls.json` whatever it is. Every alias list in
+`config/slag.yaml` is now the set of designations PEWDD *actually serves at
+that object's position*, read off the acquired table rather than guessed from
+the literature, and the matched position, Teff and atmosphere travel with each
+control so a wrong match is visible:
+
+| control | served position | rows | best panel | served designations |
+|---|---|---|---|---|
+| GD 362 | 262.8931 +37.0881 | 5 | **16** | GD 362, GD 362 Updated, GD362, J1731+3705 |
+| GD 378 | 275.9042 +41.0679 | 8 | 13 | GD 378, WD 1822+410, WD1822+410 |
+| PG 1225−079 | 186.9473 −8.2439 | 8 | 11 | PG 1225-079 (+ Updated, Model 1/2/3), K 789-37 |
+| GALEX J2339−0424 | 354.8210 −4.4069 | 1 | 9 | GALEXJ2339 |
+| LHS 2534 | 183.7349 −2.5675 | 4 | 7 | LHS 2534, WD 1212-022, SDSS J121456.39-023402.7, J1214-0234 |
+| WD 0106−328 | 17.1501 −32.6287 | 5 | **4** | HE 0106-3253, HE0106-3253 |
+| NLTT 19868 | 129.0070 −10.1021 | 1 | **4** | NLTT 19868 |
+
+Two alias corrections came out of this, each of which would have pointed a
+control at the wrong star or at nothing:
+
+* **NLTT 19868 is not WD/PG 0843+516.** That is a different polluted DA at
+  131.7595 +51.4815, 62° away. PEWDD serves NLTT 19868 at 129.0070 −10.1021.
+* **LHS 2534 is not WD 1214+032.** PEWDD serves it as `WD 1212-022` /
+  `SDSS J121456.39-023402.7` at 183.7349 −2.5675.
+
+Two of the seven are below the information floor in PEWDD: **WD 0106−328 and
+NLTT 19868 reach only 4 measured elements** in their best published panel, so
+they are `INFORMATION_LIMITED` by construction and can never be candidates
+here. That is a statement about what has been published for them, not about
+the stars — the Fe-as-pure-metal claim for WD 0106−328 (Farihi 2026) and the
+extreme Fe-depletion of NLTT 19868 (Kawka & Vennes 2016) rest on panels PEWDD
+does not carry at ≥ 5 elements.
 
 ## 8. Verdicts
 

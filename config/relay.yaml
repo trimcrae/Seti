@@ -219,3 +219,10 @@ assess:
   match_window_sigma: 3.0        # a hit matches the prior within this many half-widths (tight)
   recurrence_khz: 1.0            # a frequency seen on >= 3 unrelated sightlines within this is instrumental
   recurrence_min_sightlines: 3
+  # the supplementary rest-frequency test (drift.magic_lines_mhz): a relay
+  # de-drifted so the RECEIVER sees a chosen rest line puts it, for Earth, at
+  # f_rest (1 + (v_TR - v_TE)/c).  It needs both radial velocities, so it runs
+  # only on pair lines with complete kinematics (~43 % of the sample), and its
+  # trials are counted and priced separately from the drift test's.
+  magic_line_window_kms: 5.0        # RV tolerance on the offset, both stars (Gaia DR3 envelope)
+  magic_search_bandwidth_mhz: 800.0 # the 1.1-1.9 GHz span a BL L-band hit could have landed in

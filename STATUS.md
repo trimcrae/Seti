@@ -53,6 +53,16 @@ blocks straddle it. On the synthetic star the verdict went from
 `faded_or_brightened` with the transition at 1972 to `transition_at_gap` with
 the 0.287 mag shift correctly flagged `mean_flux_gap_uncorrected` and deferred.
 
+**A second defect, found by reading the units.** The consistency test between
+the base fade slope and its robustness refits compared a difference in mag per
+century against a combination of *significances*. A base slope of 1.0 ± 0.2
+mag/century against a deeper-plate refit of 0.05 ± 0.2 — a 3.4σ disagreement —
+came out "consistent", because the threshold was 2.5 × hypot(5.0, 0.25) = 12.5
+instead of 2.5 × hypot(0.2, 0.2) = 0.71. So `depends_on_shallow_plates` and
+`depends_on_series` could not fire and two of the three robustness guards were
+guards in name only. Both now use the fit's own slope error. A refit that can
+never disagree is worse than no refit, because it is reported as one.
+
 **Next decisive action:** the probe stage on a runner. Nothing in this
 repository has ever posted to the DR7 API — `results/necrofrontier/` recorded
 the endpoints as reachable, which is not the same as knowing their payload

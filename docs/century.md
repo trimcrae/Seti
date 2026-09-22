@@ -173,6 +173,24 @@ and the cessation is re-run inside a series common to the pre and post blocks
 (`same_series_check`). A candidate that does not survive all three is not a
 candidate.
 
+#### 3.3.1 Two of these guards were inert, and the units are why
+
+Also found during this build. The consistency test between the base slope and
+a refit compared the difference `|s − s_refit|`, which is in mag per century,
+against `2.5 × hypot` of the two **significances**, which are dimensionless.
+Worked example: a base slope of 1.0 ± 0.2 mag/century against a deeper-plate
+refit of 0.05 ± 0.2 — a 3.4σ disagreement — was declared consistent, because
+the test compared 0.95 against 2.5 × hypot(5.0, 0.25) = 12.5 instead of
+against 2.5 × hypot(0.2, 0.2) = 0.71. The threshold was tens of mag per
+century, so `depends_on_shallow_plates` and `depends_on_series` could not
+fire: the plate-depth guard and the emulsion guard were guards in name only.
+
+The slope errors are now taken straight off the fit (`StepFit.slope_err`)
+rather than reconstructed from the significance, and an unusable error counts
+as a *failure to establish* consistency rather than as consistency. The
+lesson generalises past this channel: a robustness refit that can never
+disagree is worse than no refit, because it is reported as one.
+
 ## 4. The three statistics
 
 Per star, from one DASCH light curve:

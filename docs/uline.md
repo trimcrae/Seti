@@ -255,7 +255,20 @@ orders of magnitude wider than any survey's matching tolerance.  Measured on
 the embedded constants in the IRC+10216 2 mm band (129–172 GHz), the median
 predicted-frequency error is **CF₂Cl₂ 138, CFCl₃ 60, SO₂F₂ 146, CHClF₂ 150,
 CF₂ 92 MHz**, against a 30 km s⁻¹ linewidth that is ~15 MHz there and an Orion
-KL linewidth of ~2 MHz.  When σ_pred exceeds the linewidth the "tolerance" the
+KL linewidth of ~2 MHz.  Those figures are *after* an audit of the embedded
+A, B, C uncertainties: a `recalled` constant is known only as well as the
+independent check available for it, and where the r0 structure in the same
+block disagreed by more than the stated uncertainty the uncertainty was raised
+to the disagreement (CFCl₃ 0.5 → 21 MHz, CHClF₂ 0.5 → 13 MHz, and the
+isotopologues scaled from them with it).  That moves CFCl₃ to 1.43 GHz and
+CHClF₂ to 677 MHz — honest widths for numbers that were recalled rather than
+read.  It matters in the dangerous direction: the tolerance is
+max(linewidth, σ_pred, σ_U), so an error bound that is too small manufactures
+coincidences.  The current statuses are CF₂Cl₂ ×9 **DEGRADED**, SO₂F₂ ×10
+DEGRADED, CF₂ ×6 DEGRADED, CHClF₂ ×45 **FREQUENCY_LIMITED**, CFCl₃ ×95
+FREQUENCY_LIMITED, against the IRC+10216 tolerance.
+
+When σ_pred exceeds the linewidth the "tolerance" the
 pattern test uses is the prediction's own ignorance, chance alignments rise
 with it, and the rigid-shift FAP can never reach its gate.  That is reported
 per species × source as `searchability`

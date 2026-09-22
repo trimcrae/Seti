@@ -125,7 +125,12 @@ def read_fixed_width(spec: list[dict], text: str, *, min_line_len: int | None = 
     for c in spec:
         vals = [ln[c["start"]:c["stop"]].strip() if len(ln) > c["start"] else "" for ln in rows]
         if _is_numeric_format(c["format"]):
-            out[c["label"]] = pd.to_numeric(pd.Series(vals).replace("", np.nan), errors="coerce")
+            # No `.replace("", np.nan)` first: `to_numeric(errors="coerce")`
+            # already sends an empty field to NaN, and replacing into a
+            # pandas-3 `str` column (which holds pd.NA, not np.nan) is exactly
+            # the kind of dtype-dependent step that works on the sandbox's
+            # pandas 2 and fails on the runner's pandas 3.
+            out[c["label"]] = pd.to_numeric(pd.Series(vals), errors="coerce")
         else:
             out[c["label"]] = pd.Series(vals)
     df = pd.DataFrame(out)

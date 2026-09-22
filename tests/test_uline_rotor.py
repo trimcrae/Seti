@@ -513,6 +513,46 @@ def test_the_ladder_searches_the_species_real_names_not_only_its_formula():
     assert any("dichlorodifluoromethane" in s["url"] for s in srcs)
 
 
+def test_every_recalled_constant_is_bounded_by_its_own_corroboration():
+    """An error bound that is too small manufactures coincidences.
+
+    The match tolerance is max(linewidth, sigma_pred, sigma_U), so understating
+    sigma_pred lets chance alignments in under the name of a detection.  A
+    ``recalled`` value is known only as well as the independent check available
+    for it — offline, the r0 structure in the same block — so wherever the two
+    disagree the stated uncertainty must cover the disagreement.
+    """
+    from seti.uline.rotorpred import load_rotor_assets
+
+    assets = load_rotor_assets()
+    checked = 0
+    for sp, blk in (assets.get("species") or {}).items():
+        for iso in (blk.get("isotopologues") or []):
+            corr = iso.get("corroboration")
+            if not corr:
+                continue
+            checked += 1
+            dis = corr.get("disagreement_mhz")
+            worst = max(dis) if isinstance(dis, list) else float(dis)
+            # B and C drive an R-branch frequency; A enters only through Ka^2
+            # differences, so the scalar covers the B/C disagreement.
+            bc = min(dis[1:]) if isinstance(dis, list) else worst
+            assert float(iso["abc_uncertainty_mhz"]) >= bc, f"{sp} {iso['name']}"
+            assert float(iso["abc_uncertainty_mhz"]) > 1.0, f"{sp} {iso['name']}"
+    assert checked >= 2, "the audited blocks lost their corroboration records"
+    # the two species the audit moved, and the isotopologues scaled from them
+    assert load_rotor_assets()["species"]["CFCl3"]["isotopologues"][0][
+        "abc_uncertainty_mhz"] >= 21.0
+    assert load_rotor_assets()["species"]["CHClF2"]["isotopologues"][0][
+        "abc_uncertainty_mhz"] >= 13.0
+    for sp in ("CFCl3", "CHClF2"):
+        isos = load_rotor_assets()["species"][sp]["isotopologues"]
+        parent = float(isos[0]["abc_uncertainty_mhz"])
+        for child in isos[1:]:
+            if child.get("scale_from"):
+                assert float(child["abc_uncertainty_mhz"]) >= parent, f"{sp} {child['name']}"
+
+
 def test_litfetch_stops_at_its_wall_clock_and_says_what_it_did_not_try():
     """One hanging service must not spend the job's whole budget — and a source
     that was never reached is NOT a route that answered with nothing."""

@@ -2165,3 +2165,59 @@ def test_redetect_is_never_part_of_stage_all():
     from seti.metronome.run import STAGE_REDETECT, STAGES
 
     assert STAGE_REDETECT not in STAGES
+
+
+def test_reconcile_demotes_a_candidate_whose_clock_is_its_photometric_period(tmp_path):
+    """The light curve has the last word on the headline verdict."""
+    from seti.metronome.redetect import reconcile_summary
+
+    (tmp_path / "summary.json").write_text(json.dumps({
+        "verdict": "CLOCK_CANDIDATES_PENDING_VET", "n_candidates": 1, "n_interest": 1,
+        "funnel": {"stars_candidate": 1, "stars_interest": 1}}))
+    (tmp_path / "candidates.json").write_text(json.dumps({
+        "candidates": [{"star_key": "kepler:1", "tier": "candidate", "flags": ""},
+                       {"star_key": "kepler:2", "tier": "interest", "flags": "p_extrapolated"}],
+        "watch": [{"star_key": "kepler:3", "tier": "watch", "flags": ""}]}))
+    records = [
+        {"star_key": "kepler:1", "status": "scanned", "period_is_photometric": True,
+         "phot_period": 0.4233, "rd_period": 0.4233, "n_flares": 74},
+        {"star_key": "kepler:2", "status": "scanned", "period_is_photometric": False,
+         "confirms_catalogue_clock": True, "rd_period": 3.137, "n_flares": 40},
+    ]
+    res = reconcile_summary(tmp_path, records, verdict="REDETECT_CONFIRMS_1")
+    assert res["status"] == "OK" and res["demoted"] == ["kepler:1"]
+
+    cj = json.loads((tmp_path / "candidates.json").read_text())
+    c1, c2 = cj["candidates"]
+    assert c1["tier"] == "none" and c1["first_veto"] == "photometric_oscillation"
+    assert "photometric_oscillation" in c1["flags"]
+    assert c1["redetect"]["phot_period"] == 0.4233
+    # the star the photometry did not explain keeps its tier and its evidence
+    assert c2["tier"] == "interest" and c2["redetect"]["confirms_catalogue_clock"]
+    # a star the budget never reached says so rather than being scored
+    assert cj["watch"][0]["redetect"] == {"status": "not_attempted"}
+
+    sj = json.loads((tmp_path / "summary.json").read_text())
+    assert sj["n_candidates"] == 0 and sj["n_interest"] == 1
+    assert sj["funnel"]["stars_demoted_photometric"] == 1
+    assert "REDETECT_DEMOTED_1_PHOTOMETRIC" in sj["verdict"]
+    assert sj["redetect"]["verdict"] == "REDETECT_CONFIRMS_1"
+
+
+def test_reconcile_never_promotes_and_survives_a_missing_summary(tmp_path):
+    from seti.metronome.redetect import reconcile_summary
+
+    # no summary at all: a recorded fact, not a crash
+    assert reconcile_summary(tmp_path, [])["status"] == "NO_SUMMARY"
+    (tmp_path / "summary.json").write_text(json.dumps({"verdict": "NO_CLOCK_CANDIDATES",
+                                                       "n_candidates": 0}))
+    (tmp_path / "candidates.json").write_text(json.dumps({
+        "candidates": [], "watch": [{"star_key": "k:9", "tier": "watch", "flags": ""}]}))
+    res = reconcile_summary(tmp_path, [{"star_key": "k:9", "status": "scanned",
+                                        "confirms_catalogue_clock": True,
+                                        "clock_in_lightcurve": True}])
+    assert res["demoted"] == []
+    cj = json.loads((tmp_path / "candidates.json").read_text())
+    assert cj["watch"][0]["tier"] == "watch"        # confirmation does not promote
+    sj = json.loads((tmp_path / "summary.json").read_text())
+    assert sj["verdict"] == "NO_CLOCK_CANDIDATES"   # and does not rewrite the verdict

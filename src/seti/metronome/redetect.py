@@ -546,6 +546,7 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
     scanned = [r for r in records if r.get("status") == "scanned"]
     confirmed = [r for r in records if r.get("confirms_catalogue_clock")]
     lc_clocks = [r for r in records if r.get("clock_in_lightcurve")]
+    photometric = [r for r in records if r.get("period_is_photometric")]
     if not targets:
         verdict = "NO_TARGETS"
     elif n_fetched == 0:
@@ -556,6 +557,8 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
         verdict = f"LIGHTCURVE_CLOCK_WITHOUT_CATALOGUE_AGREEMENT_{len(lc_clocks)}"
     else:
         verdict = "REDETECT_CONFIRMS_NONE"
+    if photometric:
+        verdict += f"; PHOTOMETRIC_OSCILLATION_{len(photometric)}"
     rec_frac = [float(r.get("catalogue_recovery_frac", np.nan)) for r in records]
     rec_frac = [x for x in rec_frac if np.isfinite(x)]
     rep = {"stage": "redetect", "generated_utc": _now(), "verdict": verdict,
@@ -574,6 +577,12 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
                "rd_n_core", "rd_p_window", "rd_p_window_source",
                "rd_gap_integer_frac", "rd_gap_integer_frac_core", "rd_strict_quality_why",
                "period_agrees_with_catalogue",
+               # the photometric-oscillation answer is the whole reason the
+               # light curve was fetched; it belongs in the report, not only
+               # in stars_redetect.csv
+               "phot_period", "phot_power", "phot_amplitude_frac",
+               "period_is_photometric", "period_photometric_harmonic",
+               "rd_duty_cycle", "rd_rise_frac_median", "rd_duration_days_median",
                "clock_in_lightcurve", "confirms_catalogue_clock", "lc_n_segments",
                "lc_observed_days", "fetch_route")} for r in records],
            "elapsed_s": round(_time.monotonic() - t_start, 1),
@@ -582,10 +591,105 @@ def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
                     "star's own light curve finds a clock at the same period (or a low "
                     "harmonic) with strict quality; a light-curve clock the catalogue did not "
                     "show is reported separately and is not a candidate until vetted")}
+    rep["reconciliation"] = reconcile_summary(out, records, verdict=verdict)
     (out / "redetect.json").write_text(json.dumps(rep, indent=2, default=_json_default))
     print(f"[metronome/redetect] {verdict}: {n_fetched}/{len(targets)} fetched, "
           f"{len(scanned)} scanned, {len(confirmed)} confirmed")
+    if rep["reconciliation"].get("demoted"):
+        print("[metronome/redetect] demoted by the light curve: "
+              + ", ".join(rep["reconciliation"]["demoted"]))
     return rep
+
+
+# ---------------------------------------------------------------------------
+# reconciliation: the light curve has the last word on the channel verdict
+# ---------------------------------------------------------------------------
+#: What the light curve says about a shortlisted star, carried into
+#: ``summary.json`` and ``candidates.json`` so the headline verdict cannot
+#: claim a candidate the photometry has already explained.
+RECONCILE_KEYS = ("status", "n_flares", "catalogue_recovery_frac", "rd_period",
+                  "rd_p_window", "period_agrees_with_catalogue", "clock_in_lightcurve",
+                  "confirms_catalogue_clock", "period_is_photometric", "phot_period",
+                  "phot_amplitude_frac", "rd_duty_cycle", "rd_rise_frac_median")
+
+
+def reconcile_summary(out: Path, records, *, verdict: str = "") -> dict:
+    """Fold the light-curve answer back into the channel's own verdict files.
+
+    The assess stage runs before any light curve is fetched, so a star can be
+    called ``candidate`` in ``summary.json`` while its own photometry says the
+    "clock" is the star's dominant flux oscillation re-detected as a flare
+    train.  Left alone, the headline verdict would overclaim -- the redetect
+    answer would sit in a second file nobody read.  So:
+
+    * every shortlisted star at ``candidate`` or ``interest`` gets a
+      ``redetect`` block in ``candidates.json``, including the honest
+      ``not_attempted`` for stars the budget never reached;
+    * a star whose re-detected period IS its photometric period is demoted to
+      ``none`` with the named flag ``photometric_oscillation``, and the counts
+      and the verdict string are recomputed from the demoted tiers.
+
+    Demotion only ever removes a claim.  Nothing here can promote a star: the
+    light curve confirming a clock is reported (``confirms_catalogue_clock``)
+    and left for the vet, because confirmation is not the same as having
+    passed the contamination gauntlet.
+    """
+    res: dict = {"status": "NO_SUMMARY", "n_annotated": 0, "demoted": []}
+    sp, cp = out / "summary.json", out / "candidates.json"
+    if not sp.exists():
+        return res
+    by_key = {str(r.get("star_key")): {k: r.get(k) for k in RECONCILE_KEYS}
+              for r in records}
+    try:
+        summary = json.loads(sp.read_text())
+    except (OSError, ValueError) as exc:                  # noqa: BLE001
+        res["status"] = f"SUMMARY_UNREADABLE:{exc!r}"[:200]
+        return res
+    demoted: list[str] = []
+    cands: list[dict] = []
+    if cp.exists():
+        try:
+            cj = json.loads(cp.read_text())
+        except (OSError, ValueError):
+            cj = None
+        if isinstance(cj, dict):
+            for bucket in ("candidates", "watch"):
+                for row in cj.get(bucket) or []:
+                    key = str(row.get("star_key"))
+                    rd = by_key.get(key)
+                    row["redetect"] = rd or {"status": "not_attempted"}
+                    if rd and rd.get("period_is_photometric") \
+                            and str(row.get("tier")) in ("candidate", "interest"):
+                        row["tier"] = "none"
+                        row["first_veto"] = "photometric_oscillation"
+                        row["flags"] = ";".join(
+                            [f for f in str(row.get("flags") or "").split(";") if f]
+                            + ["photometric_oscillation"])
+                        demoted.append(key)
+                    if bucket == "candidates":
+                        cands.append(row)
+            cp.write_text(json.dumps(cj, indent=2, default=_json_default))
+            res["n_annotated"] = sum(len(cj.get(b) or []) for b in ("candidates", "watch"))
+    if demoted:
+        summary["n_candidates"] = int(sum(1 for r in cands if r.get("tier") == "candidate"))
+        summary["n_interest"] = int(sum(1 for r in cands if r.get("tier") == "interest"))
+        f = summary.get("funnel") or {}
+        f["stars_candidate"] = summary["n_candidates"]
+        f["stars_interest"] = summary["n_interest"]
+        f["stars_demoted_photometric"] = len(demoted)
+        summary["funnel"] = f
+        base = str(summary.get("verdict") or "")
+        summary["verdict"] = f"{base}; REDETECT_DEMOTED_{len(demoted)}_PHOTOMETRIC"
+    summary["redetect"] = {
+        "verdict": str(verdict), "n_demoted_photometric": len(demoted), "demoted": demoted,
+        "per_star": by_key,
+        "note": ("the light curve has the last word: a star whose re-detected period is its "
+                 "own dominant photometric period is a detrending residual, not a flare "
+                 "clock, and is demoted here whatever the catalogue statistics said"),
+    }
+    sp.write_text(json.dumps(summary, indent=2, default=_json_default))
+    res.update({"status": "OK", "demoted": demoted})
+    return res
 
 
 def _json_default(o):
@@ -602,4 +706,5 @@ def _json_default(o):
 
 __all__ = ["DEFAULT_REDETECT", "STATUS_NO_LC", "STATUS_TOO_FEW", "contiguous_runs",
            "detrend_residuals", "find_flares", "lightcurve_windows", "photometric_period",
-           "redetect_star", "select_targets", "stage_redetect", "stitch_segments"]
+           "reconcile_summary", "redetect_star", "select_targets", "stage_redetect",
+           "stitch_segments"]

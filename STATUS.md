@@ -1145,6 +1145,18 @@ with the condensation and sinking levers), LHS 2534 p = 0.086,
 GALEX J2339−0424 p = 0.020, and WD 0106−328 and NLTT 19868
 `INFORMATION_LIMITED` at four measured elements each.
 
+**Run 35762339225 is a confirming re-run, and it is optional.** Dispatched
+1:41 PM EDT at `e861d103`, still queued behind the shared runner backlog. It
+changes no science and supersedes nothing: it only writes into `summary.json`
+three checks that were computed after 35747793625 had already committed its
+verdict — the upper-limit convention (**3,465 of 3,475 rows** reproduce
+PEWDD's own count, checked against the database's own CSV because VizieR does
+not serve the count columns at all), the sinking-lever cross-check (the
+fetched Koester grids against PEWDD's per-star `SinTime*`: median **+0.014
+dex**, rms 0.104), and the smaller screen output (6.6 MB → 3.8 MB). If it has
+not started when you read this, let it land or cancel it; nothing depends on
+it, and the numbers above are already in `docs/slag.md`.
+
 **Why it ran in one job.** The sharded `slag.yml` has to win a runner slot six
 times in sequence and twice failed to get through it: 35739746529's eight
 screen jobs were still queued 30 minutes after its acquire job finished, and

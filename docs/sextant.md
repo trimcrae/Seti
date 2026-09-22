@@ -3,7 +3,7 @@
 *A sextant measures the angle between where a thing is and where it ought to be.*
 
 **Channel status:** residual computation, screen, ephemeris layer, per-object
-fit and assessment built and offline-tested (128 tests); the acquisition probe
+fit and assessment built and offline-tested (135 tests); the acquisition probe
 has run on live data and settled four of §7's questions (§6b); the search
 itself runs as `.github/workflows/sextant.yml` — `probe` → N `fit` shards →
 `assess`.
@@ -553,7 +553,7 @@ Add arXiv:2605.22702's FPR candidate list when it is machine-readable.
 | `src/seti/sextant/run.py` | the three stages — `probe` (route + conventions, measured), `fit` (per shard: acquire, propagate, fit A1/A2/A3, screen, checkpoint per chunk), `assess` (controls first, then the A2 distribution, the ceiling exceedances and the population) |
 | `.github/workflows/sextant.yml` | `probe` → N `fit` shards (`fail-fast: false`) → `assess` |
 | `tests/test_sextant_residuals.py` | 45 offline tests, all on synthetic observations with a known injected signal |
-| `tests/test_sextant_run.py` | 25 tests: the propagator against an analytic Kepler orbit, the interpolants' convergence order, the fit on synthetic sky with a known injected `A2`, the screen against records built to trip each rule |
+| `tests/test_sextant_run.py` | 32 tests: the propagator against an analytic Kepler orbit, the interpolants' convergence order, the fit on synthetic sky with a known injected `A2`, the screen against records built to trip each rule, the work order and the in-job clock |
 | `tests/test_sextant_acquire.py` | 58 offline tests; no network |
 
 ### Running it

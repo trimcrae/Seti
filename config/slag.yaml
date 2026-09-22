@@ -17,6 +17,12 @@ sources:
     # data-availability statement; reached by necrofrontier-probe 2026-09-13).
     github_repo: "jamietwilliams/PEWDD"
     max_rows: 20000
+    # The repository also ships the meteorite compilations PEWDD itself
+    # compares against.  They are fetched and described so the natural
+    # family can later be anchored to measured meteorites rather than to
+    # fifteen literature end-members alone.
+    meteorite_patterns: ["(?i)meteorite[^/]*\\.csv$", "(?i)mass_fractions\\.csv$"]
+    max_meteorite_files: 8
   pyllutedwd:
     # The natural forward model's repository; its diffusion-timescale files, if
     # any are found by name, are parsed and used in place of the embedded
@@ -76,13 +82,16 @@ thresholds:
 # names in the table so the alias list can be corrected from the record.
 controls:
   - name: "PG 1225-079"
-    aliases: ["PG1225-079", "WD 1225-079", "WD1225-079", "WDJ122752.86-081537.5", "J1227-0815"]
+    aliases: ["PG1225-079", "WD 1225-079", "WD1225-079", "WDJ122752.86-081537.5", "J1227-0815",
+               "PG 1225-079 Updated", "PG1225-079 Model 1", "PG1225-079 Model 2",
+               "PG1225-079 Model 3"]
     expectation: "Ca/Sc/Ti/V x2-3 at bulk-Earth Fe-peak; 'no single meteorite' (Xu+2013, Klein+2011)"
   - name: "LHS 2534"
-    aliases: ["LHS2534", "WD 1214+032", "WD1214+032", "J1215+0303"]
+    aliases: ["LHS2534", "WD 1214+032", "WD1214+032", "J1215+0303", "LHS 2534"]
     expectation: "Li/Na/K cool DZ; 'defies all three hypotheses' (Kaiser+2024) -- COOL_HE_LINE_PHYSICS kill expected"
   - name: "GALEX J2339-0424"
-    aliases: ["GALEXJ2339-0424", "GALEX J233917.0-042425", "J2339-0424", "WD 2336-046", "WDJ233917.0-042425"]
+    aliases: ["GALEXJ2339", "GALEXJ2339-0424", "GALEX J233917.0-042425", "J2339-0424",
+               "WD 2336-046", "WDJ233917.0-042425"]
     expectation: "Be +2 dex (Klein+2021); spallation with Li/B partners (Doyle+2021) -> BE flag must NOT fire if Li/B present"
   - name: "GD 378"
     aliases: ["GD378", "WD 1822+410", "WD1822+410", "J1823+4104"]
@@ -91,10 +100,11 @@ controls:
     aliases: ["NLTT19868", "WD 0843+516", "J0843+5158"]
     expectation: "extreme Fe-poor (Kawka & Vennes 2016) -> FE_MG_BELOW_MANTLE probe"
   - name: "WD 0106-328"
-    aliases: ["WD0106-328", "J0108-3233", "WDJ010857.51-323329.0"]
+    aliases: ["WD0106-328", "HE 0106-3253", "HE0106-3253", "J0108-3233",
+               "WDJ010857.51-323329.0"]
     expectation: "Fe delivered as pure metal (Farihi 2026) -> core end-member should fit"
   - name: "GD 362"
-    aliases: ["GD362", "WD 1729+371", "WD1729+371", "J1730+3705"]
+    aliases: ["GD362", "GD 362 Updated", "WD 1729+371", "WD1729+371", "J1730+3705"]
     expectation: "richest panel (17 elements); natural; the Tier 2 calibration anchor"
 
 run:

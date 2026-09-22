@@ -332,38 +332,62 @@ def difference_image(time, cube, in_mask, base_mask, *, err_cube=None, trend_ord
     the in-flare residual is averaged.  The error is the baseline residual
     scatter over ``sqrt(n_in)``, floored at the propagated photon error when
     ``err_cube`` is supplied.  Returns ``image``, ``err``, ``n_in``, ``n_base``,
-    ``snr_peak`` and the baseline mean image.
+    ``snr_peak``, ``n_pixels_used`` and the baseline mean image.
+
+    A NaN PIXEL DOES NOT VETO ITS CADENCE.  A Kepler postage stamp routinely
+    carries pixels that are NaN for the whole quarter (columns outside the
+    downloaded mask, collateral); requiring every pixel of a cadence to be
+    finite threw the whole cadence away and, when such a pixel existed at all,
+    left the star with no difference image.  MEASURED (run 35675114711's
+    stage-2 companion, results/arc/stage2/flares.csv): 11 of 30 shortlisted
+    stars came back "no difference image (too few in-flare or baseline
+    cadences)" while the SAME flares had n_in = 5-7 and n_base = 68-82 in the
+    aperture centroid, which masks per pixel and was unaffected.  Here the
+    pixels that are not finite across the cadences in use are dropped instead
+    and carried as NaN in the image; the centroid already ignores them.
     """
     t = np.asarray(time, dtype=float)
     c = np.asarray(cube, dtype=float)
     inm, bm = np.asarray(in_mask, dtype=bool), np.asarray(base_mask, dtype=bool)
-    fin = np.isfinite(c).all(axis=(1, 2)) & np.isfinite(t)
-    inm, bm = inm & fin, bm & fin
+    fin_t = np.isfinite(t)
+    sel = (inm | bm) & fin_t
+    finite = np.isfinite(c)
+    pix_ok = (finite[sel].all(axis=0) if sel.any() else finite.all(axis=0))
+    cad_ok = fin_t & (finite[:, pix_ok].all(axis=1) if pix_ok.any()
+                      else np.zeros(c.shape[0], dtype=bool))
+    inm, bm = inm & cad_ok, bm & cad_ok
     n_in, n_b = int(inm.sum()), int(bm.sum())
     out = {"image": None, "err": None, "n_in": n_in, "n_base": n_b, "snr_peak": float("nan"),
-           "baseline_image": None, "ok": False}
+           "baseline_image": None, "n_pixels_used": int(pix_ok.sum()), "ok": False}
     if n_in < 1 or n_b < 4:
         return out
     tb, t0 = t[bm], float(np.mean(t[bm]))
     order = int(trend_order) if n_b >= 2 * (trend_order + 1) + 2 else 0
     a_mat = np.vander(tb - t0, order + 1)
-    fb = c[bm].reshape(n_b, -1)
+    fb = c[bm][:, pix_ok]
     coef, *_ = np.linalg.lstsq(a_mat, fb, rcond=None)
     resid_b = fb - a_mat @ coef
     a_in = np.vander(t[inm] - t0, order + 1)
-    resid_in = c[inm].reshape(n_in, -1) - a_in @ coef
+    resid_in = c[inm][:, pix_ok] - a_in @ coef
     shape = c.shape[1:]
-    d = resid_in.mean(axis=0).reshape(shape)
-    sd = resid_b.std(axis=0, ddof=1).reshape(shape) / math.sqrt(n_in)
+
+    def _scatter(flat) -> np.ndarray:
+        full = np.full(shape, np.nan)
+        full[pix_ok] = flat
+        return full
+
+    d = _scatter(resid_in.mean(axis=0))
+    sd = _scatter(resid_b.std(axis=0, ddof=1) / math.sqrt(n_in))
     if err_cube is not None:
         e = np.asarray(err_cube, dtype=float)
         if e.shape == c.shape:
             with np.errstate(invalid="ignore"):
                 phot = np.sqrt(np.nanmean(e[inm] ** 2, axis=0) / n_in)
-            sd = np.where(np.isfinite(phot), np.maximum(sd, phot), sd)
+            sd = np.where(np.isfinite(phot) & np.isfinite(sd), np.maximum(sd, phot), sd)
     with np.errstate(divide="ignore", invalid="ignore"):
         snr = d / sd
-    out.update({"image": d, "err": sd, "baseline_image": c[bm].mean(axis=0),
+    base_img = _scatter(c[bm][:, pix_ok].mean(axis=0))
+    out.update({"image": d, "err": sd, "baseline_image": base_img,
                 "snr_peak": float(np.nanmax(snr)) if np.isfinite(snr).any() else float("nan"),
                 "snr_image": snr, "trend_order": order, "ok": True})
     return out
@@ -432,7 +456,13 @@ def attribute_flare(diff: dict, sources: list[dict], *, target_index: int,
            "consistent_neighbours": [], "excluded_neighbours": [], "nearest_source": None,
            "n_pixels": 0, "sources": []}
     if not diff or not diff.get("ok"):
-        out["reason"] = "no difference image (too few in-flare or baseline cadences)"
+        # name the count that failed: "too few cadences" was reported for
+        # stars whose aperture centroid had 5 in-flare and 76 baseline
+        # cadences, which sent the diagnosis in entirely the wrong direction.
+        out["reason"] = ("no difference image (in-flare cadences "
+                         f"{(diff or {}).get('n_in', 0)}, baseline "
+                         f"{(diff or {}).get('n_base', 0)}, usable pixels "
+                         f"{(diff or {}).get('n_pixels_used', 0)})")
         return out
     out["snr_peak"] = float(diff.get("snr_peak", np.nan))
     if not (np.isfinite(out["snr_peak"]) and out["snr_peak"] >= float(min_snr)):

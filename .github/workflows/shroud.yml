@@ -246,6 +246,48 @@ jobs:
           echo "=== REPORT ==="
           cat results/shroud/REPORT.md 2>/dev/null || true
 
+      - name: An empty analyze must never overwrite a committed measurement
+        if: always()
+        run: |
+          # `analyze` runs with `if: always()`, so it also runs when `acquire`
+          # was cancelled or failed and no sample artifact was downloaded.  It
+          # then legitimately writes verdict NO_DATA_REACHED / n_sample 0 --- a
+          # statement about THIS run's archive access, never about the sky ---
+          # and the commit step below would push that over a real measurement
+          # already in the branch.  That happened on 2026-09-22T14:58Z: the
+          # analyze job of cancelled run 35740203590 replaced the 127-source
+          # VIZIER_FALLBACK summary with an empty one.
+          #
+          # Rule: a summary with no sample may be committed only when the branch
+          # holds no sampled summary of its own.  The empty attempt is kept
+          # beside it as summary_attempt.json and in the run artifact, so the
+          # failed access is still on the record.
+          python - <<'EOF'
+          import json, pathlib, subprocess
+          d = pathlib.Path("results/shroud")
+          def n_sample(text):
+              try:
+                  return int(json.loads(text).get("n_sample", 0) or 0)
+              except Exception:
+                  return 0
+          new_p = d / "summary.json"
+          new_n = n_sample(new_p.read_text()) if new_p.exists() else 0
+          head = subprocess.run(["git", "show", f"HEAD:{new_p.as_posix()}"],
+                                capture_output=True, text=True)
+          old_n = n_sample(head.stdout) if head.returncode == 0 else 0
+          print(f"summary n_sample: this run {new_n}, branch HEAD {old_n}")
+          if new_n == 0 and old_n > 0:
+              if new_p.exists():
+                  (d / "summary_attempt.json").write_text(new_p.read_text())
+              keep = ["summary.json", "REPORT.md", "population.csv",
+                      "survivors.csv", "null_stats.json"]
+              for name in keep:
+                  subprocess.run(["git", "checkout", "HEAD", "--",
+                                  (d / name).as_posix()], check=False)
+              print("REFUSED to overwrite the committed measurement with an "
+                    "empty one; restored " + ", ".join(keep))
+          EOF
+
       - name: Commit results
         if: always()
         run: |
@@ -256,6 +298,7 @@ jobs:
           for p in results/shroud/summary.json results/shroud/REPORT.md \
                    results/shroud/population.csv results/shroud/survivors.csv \
                    results/shroud/null_stats.json \
+                   results/shroud/summary_attempt.json \
                    results/shroud/acquire_verdict.json \
                    results/shroud/field_ledger.json \
                    results/shroud/photometry_provenance.json; do

@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-09-06T13:40:45Z",
+ "generated_utc": "2026-09-22T14:30:15Z",
  "cases": {
   "planet_line_vanishes": {
    "expected": "candidate",
@@ -7,6 +7,11 @@
    "phase_class": "eclipse",
    "n_features": 3,
    "ok": true,
+   "found_in": "both",
+   "n_features_out_spectrum": 3,
+   "n_features_difference": 1,
+   "ew_5sigma_limit_out_um": 4.47581186479119e-06,
+   "ew_5sigma_limit_diff_um": 8.010808250634286e-06,
    "vetoes": []
   },
   "stellar_line_constant": {
@@ -15,6 +20,11 @@
    "phase_class": "eclipse",
    "n_features": 3,
    "ok": true,
+   "found_in": "out_spectrum",
+   "n_features_out_spectrum": 3,
+   "n_features_difference": 0,
+   "ew_5sigma_limit_out_um": 4.47581186479119e-06,
+   "ew_5sigma_limit_diff_um": 7.586333652340602e-06,
    "vetoes": [
     "low_snr",
     "tracks_continuum"
@@ -26,6 +36,11 @@
    "phase_class": "eclipse",
    "n_features": 2,
    "ok": true,
+   "found_in": null,
+   "n_features_out_spectrum": 2,
+   "n_features_difference": 0,
+   "ew_5sigma_limit_out_um": 4.47581186479119e-06,
+   "ew_5sigma_limit_diff_um": 7.586333652340602e-06,
    "vetoes": null
   },
   "line_ramp_late_eclipse": {
@@ -34,7 +49,13 @@
    "phase_class": "eclipse",
    "n_features": 2,
    "ok": true,
+   "found_in": "both",
+   "n_features_out_spectrum": 2,
+   "n_features_difference": 1,
+   "ew_5sigma_limit_out_um": 4.604572751594194e-06,
+   "ew_5sigma_limit_diff_um": 7.908291097804052e-06,
    "vetoes": [
+    "present_in_drift_control",
     "ramp_correlated",
     "drop_not_at_eclipse"
    ]
@@ -45,8 +66,69 @@
    "phase_class": "transit",
    "n_features": 3,
    "ok": true,
+   "found_in": "out_spectrum",
+   "n_features_out_spectrum": 3,
+   "n_features_difference": 0,
+   "ew_5sigma_limit_out_um": 3.916857068470207e-06,
+   "ew_5sigma_limit_diff_um": 7.639697709314678e-06,
    "vetoes": [
     "insufficient_phase_coverage"
+   ]
+  },
+  "pattern_planet_line_vanishes": {
+   "expected": "candidate",
+   "got": "candidate",
+   "phase_class": "eclipse",
+   "n_features": 1,
+   "ok": true,
+   "found_in": "difference",
+   "n_features_out_spectrum": 0,
+   "n_features_difference": 1,
+   "ew_5sigma_limit_out_um": 0.00027847604223164824,
+   "ew_5sigma_limit_diff_um": 8.02839950385702e-06,
+   "vetoes": []
+  },
+  "pattern_stellar_line_constant": {
+   "expected": null,
+   "got": null,
+   "phase_class": "eclipse",
+   "n_features": 0,
+   "ok": true,
+   "found_in": null,
+   "n_features_out_spectrum": 0,
+   "n_features_difference": 0,
+   "ew_5sigma_limit_out_um": 0.00027847604223164824,
+   "ew_5sigma_limit_diff_um": 7.644575956029877e-06,
+   "vetoes": null
+  },
+  "pattern_no_line": {
+   "expected": null,
+   "got": null,
+   "phase_class": "eclipse",
+   "n_features": 0,
+   "ok": true,
+   "found_in": null,
+   "n_features_out_spectrum": 0,
+   "n_features_difference": 0,
+   "ew_5sigma_limit_out_um": 0.0002718222316531084,
+   "ew_5sigma_limit_diff_um": 7.644575956029877e-06,
+   "vetoes": null
+  },
+  "pattern_line_ramp": {
+   "expected": "none",
+   "got": "none",
+   "phase_class": "eclipse",
+   "n_features": 1,
+   "ok": true,
+   "found_in": "difference",
+   "n_features_out_spectrum": 0,
+   "n_features_difference": 1,
+   "ew_5sigma_limit_out_um": 0.000280471578815449,
+   "ew_5sigma_limit_diff_um": 7.994228295562937e-06,
+   "vetoes": [
+    "present_in_drift_control",
+    "ramp_correlated",
+    "drop_not_at_eclipse"
    ]
   }
  },

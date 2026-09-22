@@ -54,7 +54,7 @@ from .pairs import (
     pair_residuals,
     refinery_flags,
 )
-from .sinking import SOURCE_SCALING, TimescaleModel
+from .sinking import SOURCE_SCALING, TimescaleModel, relative_timescale_library
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_INFO_LIMITED = "INFORMATION_LIMITED_ONLY"
@@ -64,7 +64,10 @@ VERDICT_CANDIDATE = "REFINERY_VECTOR_CANDIDATE"
 DEFAULTS: dict = {
     "sources": {
         "pewdd": {"vizier_catalogue": "J/A+A/691/A352", "vizier_table": "J/A+A/691/A352/pewdd",
-                  "github_repo": "jamietwilliams/PEWDD", "max_rows": 20000},
+                  "github_repo": "jamietwilliams/PEWDD", "max_rows": 20000,
+                  "meteorite_patterns": [r"(?i)meteorite[^/]*\.csv$",
+                                         r"(?i)mass_fractions\.csv$"],
+                  "max_meteorite_files": 8},
         "pyllutedwd": {"github_repo": "andrewmbuchan4/PyllutedWD_Public", "max_files": 12,
                        "koester_urls": []},
     },
@@ -186,6 +189,7 @@ def stage_acquire(cfg: dict, out_dir: Path, *, fetch_fn=None, tap_fn=None) -> di
     t0 = _time.time()
     pew = A.fetch_pewdd(cfg, out_dir, fetch_fn=fetch_fn, tap_fn=tap_fn, log=log)
     ts = A.discover_timescale_tables(cfg, out_dir, fetch_fn=fetch_fn, log=log)
+    met = A.fetch_meteorite_tables(cfg, out_dir, fetch_fn=fetch_fn, log=log)
     roles = None
     if pew.get("columns"):
         # descriptions travel from the probe when it ran in this checkout
@@ -202,7 +206,7 @@ def stage_acquire(cfg: dict, out_dir: Path, *, fetch_fn=None, tap_fn=None) -> di
         roles = A.resolve_roles(pew["columns"], cfg["elements"]["all"], units=units,
                                 descriptions=descs)
     out = {"generated_utc": _now(), "elapsed_s": round(_time.time() - t0, 1), "pewdd": pew,
-           "timescales": ts, "roles": roles,
+           "timescales": ts, "meteorites": met, "roles": roles,
            "status": pew["status"] if pew.get("n_rows") else A.STATUS_FAILED}
     _write_json(out_dir / "acquire.json", out)
     log.write(out_dir / "acquisition_log.json")
@@ -238,9 +242,25 @@ def _load_table(out_dir: Path, cfg: dict, input_csv: str | None = None) -> tuple
     return df, roles, prov
 
 
-def _timescale_model(fam, out_dir: Path) -> TimescaleModel:
-    """The fetched timescale tables when acquire parsed any, the embedded law otherwise."""
+def _timescale_model(fam, out_dir: Path, *, df=None, roles: dict | None = None) -> TimescaleModel:
+    """The sinking lever, from the best source this run reached.
+
+    Priority, highest first: the object's OWN published timescales (per panel,
+    applied inside :class:`~seti.slag.misfit.PanelModel`); a timescale table
+    that was fetched and parsed; the relative-timescale library built from
+    every catalogue row that publishes timescales; the embedded mass-scaling
+    law.  The library is built here because it needs the acquired table.
+    """
     tsm = TimescaleModel(fam)
+    if df is not None and roles:
+        lib = relative_timescale_library(df, roles.get("sinking_time_columns") or {},
+                                         reference=tsm.reference,
+                                         atmosphere_column=roles.get("atm"))
+        if lib.get("elements"):
+            tsm.library = lib["elements"]
+            tsm.library_beta = lib.get("beta")
+            tsm.source = "pewdd_relative_library"
+            tsm.library_meta = lib
     ap = out_dir / "acquire.json"
     if not ap.exists():
         return tsm
@@ -261,6 +281,39 @@ def _timescale_model(fam, out_dir: Path) -> TimescaleModel:
                 tsm.source = "fetched_table"
                 break
     return tsm
+
+
+def _limit_bookkeeping(panels: list[Panel]) -> dict:
+    """Check the parsed detections/limits against the catalogue's own counts.
+
+    PEWDD marks an upper limit with a negative error and separately publishes
+    ``total_detections`` / ``total_upper_limits``.  Agreement is the proof
+    that the convention was read correctly; a disagreement is reported, never
+    silently absorbed.  (Rows whose limits fall on elements outside the
+    channel's element list disagree by construction, so the DETECTION count is
+    the strict test and the limit count is informational.)
+    """
+    n_det_checked = n_det_agree = n_lim_checked = n_lim_agree = 0
+    examples = []
+    for p in panels:
+        sd = p.meta.get("stated_n_detections")
+        if sd is not None:
+            n_det_checked += 1
+            if int(sd) == p.n_measured:
+                n_det_agree += 1
+            elif len(examples) < 10:
+                examples.append({"name": p.name, "reference": p.reference, "stated": int(sd),
+                                 "parsed": p.n_measured, "kind": "detections"})
+        sl = p.meta.get("stated_n_upper_limits")
+        if sl is not None:
+            n_lim_checked += 1
+            if int(sl) == len(p.limit_elements):
+                n_lim_agree += 1
+    return {"detections_checked": n_det_checked, "detections_agree": n_det_agree,
+            "upper_limits_checked": n_lim_checked, "upper_limits_agree": n_lim_agree,
+            "disagreements": examples,
+            "note": "the catalogue publishes its own detection/limit counts; these are the "
+                    "cross-check on the negative-error upper-limit convention"}
 
 
 def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | None = None,
@@ -285,6 +338,12 @@ def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | Non
                  "trace_elements_measured": [e for e in cfg["elements"]["trace_panel"]
                                              if e in panel.elements],
                  "information_limited": bool(panel.n_measured < min_el),
+                 "star_raw": panel.meta.get("star_raw"),
+                 "n_row_sinking_times": len(panel.meta.get("sinking_times_s") or {}),
+                 "provenance": {k: panel.meta.get(k) for k in
+                                ("identifier", "binary", "binary_sep", "ir_excess", "gas_disc",
+                                 "bfield", "t_since_acc", "comment")
+                                if panel.meta.get(k) is not None},
                  "status": "INFORMATION_LIMITED" if panel.n_measured < min_el else "SCREENED"}
     if panel.n_measured < 2:
         rec["status"] = "INFORMATION_LIMITED"
@@ -296,6 +355,7 @@ def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | Non
     ff = fit_panel(fam, panel, tsm, s_full, rng=rng)
     rec["fit_restricted"] = fr.as_dict(fam.endmembers)
     rec["fit_full"] = ff.as_dict(fam.endmembers)
+    rec["timescale_source"] = fr.timescale_source
     rec["fit_restricted"]["p_naive"] = naive_p(fr.chi2, fr.n_measured - 1)
     rec["fit_full"]["p_naive"] = naive_p(ff.chi2, ff.n_measured - 1)
     rec["misfit"] = None
@@ -362,8 +422,8 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
                  n_cal: int | None = None, names: list[str] | None = None,
                  max_panels: int | None = None) -> dict:
     fam = load_family()
-    tsm = _timescale_model(fam, out_dir)
     df, roles, prov = _load_table(out_dir, cfg, input_csv)
+    tsm = _timescale_model(fam, out_dir, df=df, roles=roles)
     i, n = (int(x) for x in shard.split("/"))
     out: dict = {"generated_utc": _now(), "shard": shard, "provenance": prov,
                  "timescale_source": tsm.source, "panels": [], "status": A.STATUS_FAILED}
@@ -373,10 +433,13 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
         return out
     panels, diag = A.build_panels(df, roles, default_error_dex=float(cfg["panels"]["default_error_dex"]),
                                   error_floor_dex=float(cfg["panels"]["error_floor_dex"]),
-                                  elements=cfg["elements"]["all"])
+                                  elements=cfg["elements"]["all"],
+                                  sinking=roles.get("sinking_time_columns") or {})
     out["n_rows"] = len(panels)
     out["roles"] = {k: v for k, v in roles.items() if k != "elements"}
     out["element_columns"] = {e: r["value"] for e, r in roles["elements"].items()}
+    out["timescale_library"] = tsm.library_meta
+    out["limit_bookkeeping"] = _limit_bookkeeping(panels)
     by_key: dict[str, list[Panel]] = {}
     for p in panels:
         by_key.setdefault(p.meta["name_key"], []).append(p)
@@ -464,11 +527,21 @@ def _match_controls(cfg: dict, panels: list[dict]) -> list[dict]:
     return out
 
 
+def _count_by(rows: list[dict], key: str) -> dict:
+    out: dict = {}
+    for r in rows:
+        v = str(r.get(key))
+        out[v] = out.get(v, 0) + 1
+    return out
+
+
 def stage_assess(cfg: dict, out_dir: Path) -> dict:
     shards = sorted(glob.glob(str(out_dir / "screen_*of*.json")))
     panels: list[dict] = []
     shard_meta = []
     ts_source = None
+    ts_library: dict = {}
+    limit_book: dict = {}
     for s in shards:
         try:
             d = json.loads(Path(s).read_text())
@@ -479,6 +552,13 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
                            "n_panels": d.get("n_panels"), "n_objects": d.get("n_objects"),
                            "provenance": d.get("provenance"), "error": d.get("error")})
         ts_source = d.get("timescale_source", ts_source)
+        ts_library = d.get("timescale_library") or ts_library
+        if d.get("limit_bookkeeping"):
+            lb = d["limit_bookkeeping"]
+            for k in ("detections_checked", "detections_agree", "upper_limits_checked",
+                      "upper_limits_agree"):
+                limit_book[k] = limit_book.get(k, 0) + int(lb.get(k, 0))
+            limit_book.setdefault("disagreements", []).extend(lb.get("disagreements", [])[:5])
         panels.extend(d.get("panels", []))
     acq = {}
     ap = out_dir / "acquire.json"
@@ -620,6 +700,10 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     summary = {
         "generated_utc": _now(), "verdict": verdict, "degraded": degraded,
         "acquisition": acq, "timescale_source": ts_source,
+        "timescale_library": ts_library, "limit_bookkeeping": limit_book,
+        "timescale_source_per_panel": _count_by(screened, "timescale_source"),
+        "panels_with_own_timescales": sum(1 for r in screened
+                                          if int(r.get("n_row_sinking_times") or 0) > 0),
         "funnel": {"panels_total": n_panels, "objects_total": n_objects,
                    "objects_with_ge_min_elements": n_obj_ge_min,
                    "panels_screened_and_calibrated": len(screened),

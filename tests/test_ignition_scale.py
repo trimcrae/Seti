@@ -128,6 +128,52 @@ def test_uploaded_table_carries_no_unicodechar_column():
     assert _ascii_string_columns(t3)["lbl"].dtype.kind == "S"
     assert "unicodeChar" not in _votable_bytes(t3).decode("utf-8", "replace")
 
+    # pyvo does NOT use `_votable_bytes`: it serialises an uploaded astropy
+    # Table with `Table.write(format="votable")` (pyvo/dal/query.py), so that
+    # path is pinned too -- it is the rung IRSA parsed and refused.
+    from io import BytesIO
+    fo = BytesIO()
+    _ascii_string_columns(tbl).write(output=fo, format="votable")
+    pyvo_xml = fo.getvalue().decode("utf-8", "replace")
+    assert "unicodeChar" not in pyvo_xml and 'datatype="long"' in pyvo_xml
+    # The old spelling, for the record: this is exactly what was refused.
+    old = Table.from_pandas(pd.DataFrame({"sid": stars["source_id"].astype(str)}))
+    fo2 = BytesIO()
+    old.write(output=fo2, format="votable")
+    assert 'datatype="unicodeChar"' in fo2.getvalue().decode("utf-8", "replace")
+
+
+def test_the_ladder_downgrades_the_id_column_once_on_a_datatype_refusal():
+    """If the service will not take `long` either, the id is expendable.
+
+    Rows are assigned to stars locally by exact separation, so a 32-bit row
+    index serves the query as well as the Gaia id.  The downgrade is tried
+    ONCE, only on that specific refusal, and never on an ordinary failure.
+    """
+    stars = _gaia_rows(3)
+    seen: list[str] = []
+
+    def picky(q, tbl, timeout_s, **_k):
+        seen.append(str(tbl["sid"].dtype))
+        if tbl["sid"].dtype.kind != "i" or tbl["sid"].dtype.itemsize > 4:
+            raise RuntimeError("INTERNAL_SERVER_ERROR: Unimplemented data type: long")
+        return _rows_at(stars)
+
+    r = fetch_neowise_upload(stars, transports={"pyvo_sync": picky})
+    assert r.status == "OK" and len(seen) == 2
+    assert seen[0] == "int64" and seen[1] == "int32"
+    assert "Unimplemented data type" in r.error      # the refusal is kept on the record
+
+    # An ordinary failure is NOT retried with a different column type.
+    tries = {"n": 0}
+
+    def plain_dead(q, tbl, timeout_s, **_k):
+        tries["n"] += 1
+        raise RuntimeError("HTTP 503 from the service")
+
+    r2 = fetch_neowise_upload(stars, transports={"pyvo_sync": plain_dead})
+    assert r2.status == "QUERY_FAILED" and tries["n"] == 1
+
 
 def test_uws_job_url_is_found_when_there_is_no_location_header():
     """IRSA answered the async submission ``200`` with no ``Location``."""
@@ -268,6 +314,49 @@ def test_upload_chunks_shrink_toward_the_ecliptic_poles():
     assert max(len(c) for c in c_nep) < 100 < max(len(c) for c in c_eq) <= 200
     assert sum(len(c) for c in c_nep) == n and sum(len(c) for c in c_eq) == n
     assert set(pd.concat(c_nep)["source_id"]) == set(nep["source_id"])
+
+
+def test_each_mode_keeps_its_own_summary_beside_the_channel_verdict(tmp_path):
+    """Two dispatches in flight must not overwrite each other's verdict."""
+    import json as _json
+
+    from seti.ignition.run import _write_summary
+
+    f = {"verdict": "NO_IGNITION_CANDIDATE", "denominators": {"sample_mode": "fields"}}
+    t = {"verdict": "IGNITION_CANDIDATES", "denominators": {"sample_mode": "tiles"}}
+    _write_summary(tmp_path, f)
+    _write_summary(tmp_path, t)
+    # summary.json is the CURRENT verdict, and each mode's own record survives.
+    assert _json.loads((tmp_path / "summary.json").read_text())["verdict"] == t["verdict"]
+    assert _json.loads((tmp_path / "summary_fields.json").read_text())["verdict"] == f["verdict"]
+    assert _json.loads((tmp_path / "summary_tiles.json").read_text())["verdict"] == t["verdict"]
+    # An unknown mode gets no tagged copy rather than a file named after nothing.
+    _write_summary(tmp_path, {"verdict": "X", "denominators": {}})
+    assert not (tmp_path / "summary_.json").exists()
+
+
+def test_a_tiles_shard_never_screens_the_fields_mode_parent(tmp_path):
+    """A shard whose every tile failed must screen NOTHING, not somebody else's stars.
+
+    `parent.parquet` is a fields/allsky sample over different sky.  A tiles
+    shard is identified by its own ``sweep_{tag}.json``, and for such a shard
+    that file is not a fallback: an empty frame is the honest answer.
+    """
+    import json as _json
+
+    from seti.ignition.run import _shard_parent
+
+    out = tmp_path
+    _gaia_rows(8).to_parquet(out / "parent.parquet", index=False)
+    # No sweep record: this is a fields-mode shard, and it takes its rows.
+    assert len(_shard_parent(out, 0, 2)) == 4
+    # Its own tiles-mode parent wins when it exists.
+    _gaia_rows(3).to_parquet(out / "parent_s0of2.parquet", index=False)
+    assert len(_shard_parent(out, 0, 2)) == 3
+    # And a tiles shard that produced no parent of its own gets nothing.
+    (out / "parent_s1of2.parquet").unlink(missing_ok=True)
+    (out / "sweep_s1of2.json").write_text(_json.dumps({"stage": "sweep", "tiles": []}))
+    assert len(_shard_parent(out, 1, 2)) == 0
 
 
 def test_group_by_star_is_exact_at_high_declination():

@@ -1056,7 +1056,20 @@ So `classify_direct` requires, for `growth_candidate`:
 
 A PDCSAP-only rise with `sap_minus_pdcsap_z ≤ −3` and direction
 `PDC_DEEPER_THAN_SAP` is classed **`crowding_correction`** — Kepler-718 b's
-class — and is not a candidate. `deeper_tess` / `shallower_tess` hold the
+class — and is not a candidate.
+
+**What the SAP rule does *not* buy, stated plainly.** Dilution can only make a
+depth shallower, so a raw SAP depth *deeper* than Kepler's is not dilution of
+the target's own transit. It is **not** proof that the signal is on the target:
+a blended eclipsing binary contributes a fractional depth of (its eclipse depth
+× its flux) / (total aperture flux), and if the binary is deep and bright
+enough that product can exceed the target's own Kepler depth in the raw
+photometry too. The SAP rule kills the *crowding-correction* artefact — the
+specific way Kepler-718 b was manufactured — and nothing more. The test that
+settles where the signal is remains stage 3's difference image, which is why
+`vet` runs it on every survivor. A TIC resolved only by the weakest route
+(nearest source in the cone with a compatible Tmag) carries
+`tic_identified_by_position_only` for the same reason. `deeper_tess` / `shallower_tess` hold the
 one-family changes; `consistent` is only ever written where the sensitivity was
 sufficient to see the change.
 
@@ -1071,6 +1084,19 @@ failed. Both numbers, and the counts above ±3 and ±5, are in `summary.json`.
 
 ### 11.5 Bookkeeping that is never a statement about the sky
 
+**How much of the phase the search can actually cover.** Computed on the
+committed `targets.csv` (4,604 of 4,725 targets carry the full ephemeris
+arithmetic; TESS mid-epoch BTJD 2600): the median planet is propagated over
+**353 epochs** (maximum 17,839) and arrives with **σ_T0 = 38 min**; p90 is
+168 min and p99 is 692 min. Against that, the search half-width
+`3σ_T0 + 0.25 T14` capped at `min(0.6 d, 0.3 P)` is 180 min at the median.
+The cap bites for **269 targets (5.8 %)** — 204 of them long-period — where the
+window is narrower than 3σ (median shortfall a factor 1.6, worst 73), and for
+**6 short-period targets σ_T0 exceeds P/2**, so their phase is unconstrained
+outright. A `transit_not_recovered` on any of those is a statement about the
+*ephemeris*, not about the sky, and `epoch_search_halfwidth_minutes` next to
+`ephemeris_sigma_minutes` says which case each planet is.
+
 `not_measured` keeps `QUERY_FAILED`, `QUERY_RETURNED_ZERO_ROWS`,
 `TIC_UNRESOLVED`, `EPHEMERIS_UNAVAILABLE`, `NO_USABLE_TRANSIT`,
 `BUDGET_EXHAUSTED` and `NOT_REACHED` apart. A shard the clock killed leaves its
@@ -1078,7 +1104,45 @@ targets `NOT_REACHED` — absent from the shard CSV, marked by the aggregate —
 and never `consistent`. `not_measurable` says TESS could not have seen the KOI
 depth at all. None of these is a null result and none is written up.
 
-### 11.6 Running it
+### 11.6 The look-elsewhere null (`control` stage)
+
+The epoch search of §11.2 step 2 takes the **maximum** fitted signal-to-noise
+over up to 161 offsets, and the depth is then fitted *at the winning offset*. A
+maximum over trials is biased upward, and the bias grows as the signal weakens
+— which is exactly the regime that would manufacture a spuriously **deeper**
+TESS depth, the direction a growth candidate lives in. Nothing in the depth's
+bootstrap error, the reduction-ensemble spread or the population scaling knows
+about it.
+
+So the `control` stage re-opens every planet whose class was
+`growth_candidate`, `shrink_candidate`, `deeper_tess` or `crowding_correction`
+— `consistent` needs no null, since the bias can only push a depth up and
+therefore cannot manufacture agreement — re-fetches the star, and repeats the
+**identical** search (same half-width, same coarse and fine steps, same fitter,
+same deduplicated segments) centred on `epoch_search.control_phases` of the
+period, where the planet is not. What it finds there is what the search
+produces from that star's own noise:
+
+* `control_snr_max` — the best signal-to-noise the search reached off-transit;
+* `control_depth_max_ppm` — the deepest depth it fitted there;
+* `snr_excess = epoch_search_snr_best − control_snr_max`;
+* `depth_excess_over_control_ppm = (D_TESS − D_ref) − max(control_depth_max, 0)`
+  — a "growth" smaller than this is not a growth, it is the search.
+
+The verdict per family is `ABOVE_CONTROL` or `WITHIN_SEARCH_NOISE`, and the
+planet takes the **weaker** of its two families: a change the search can
+manufacture in either reduction is not a change. A star the stage could not
+reach is `CONTROL_UNAVAILABLE` — never a pass. `direct_vet` requires the
+survivor not be `WITHIN_SEARCH_NOISE`, and a survivor whose null has not been
+run carries `CONTROL_NOT_RUN` as an open systematic, counted in
+`n_control_not_run`.
+
+Two caveats are on the record rather than buried: in a multi-planet system a
+control phase can land on a **sibling's** transit, which makes the null
+conservative rather than permissive; and a control phase that lands in a data
+gap returns nothing and is not counted (`control_n_phases_measured`).
+
+### 11.7 Running it
 
 `growth_direct.yml`: `targets` → `measure` (sharded **by star**, `kepid mod n`,
 so a system's planets share one download; each shard checkpoints its CSV after

@@ -570,10 +570,19 @@ def _resolve_route(conf: dict, out: Path, route: str | None) -> tuple[str, str |
 
 
 def _shard_parent(out: Path, shard: int, n_shards: int) -> pd.DataFrame:
-    """The shard's stars: its own tiles-mode parent if present, else its rows of the run's."""
+    """The shard's stars: its own tiles-mode parent if present, else its rows of the run's.
+
+    A shard that swept tiles is identified by its ``sweep_{tag}.json``, and for
+    such a shard the run-level ``parent.parquet`` is **not** a fallback: that
+    file belongs to a fields/allsky sample over different sky, and a shard whose
+    every tile failed must screen *nothing*, not somebody else's stars.  An
+    empty frame here is the honest answer and the screen reports ``NO_EPOCHS``.
+    """
     tag = _tag(shard, n_shards)
     if (out / f"parent_{tag}.parquet").exists():
         return _load_parent(out, tag)
+    if (out / f"sweep_{tag}.json").exists():
+        return pd.DataFrame()
     return shard_rows(_load_parent(out), shard, n_shards)
 
 
@@ -999,6 +1008,23 @@ def _coverage(sweeps: list[dict], conf: dict) -> dict:
                      "area covered and says nothing about the rest of the sky")}
 
 
+def _write_summary(out: Path, summary: dict) -> None:
+    """``summary.json`` plus a mode-tagged copy that a later dispatch cannot erase.
+
+    The channel is run in two modes against different sky --- ``fields`` over
+    the 20 ecliptic-pole cones, ``tiles`` over the whole ``|b| > 15`` sky ---
+    and both write the channel's one ``summary.json``.  Two dispatches in
+    flight at once would therefore overwrite each other's verdict with a
+    verdict about a different sample.  ``summary.json`` stays the channel's
+    current verdict (that is where every reader looks), and
+    ``summary_<mode>.json`` keeps each mode's own record beside it.
+    """
+    _write(out / "summary.json", summary)
+    mode = str(((summary.get("denominators") or {}).get("sample_mode")) or "")
+    if mode in ("fields", "allsky", "tiles"):
+        _write(out / f"summary_{mode}.json", summary)
+
+
 def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
                  optical_dir: Path | str | None = None, offline: bool = True) -> dict:
     vc = conf["vet"]
@@ -1172,7 +1198,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
                    "sensitivity": _aggregate_sensitivity(screens),
                    "note": ("nothing was screened, so nothing about ignitions was measured; "
                             "this is NOT a null result and must not be reported as one")}
-        _write(out / "summary.json", summary)
+        _write_summary(out, summary)
         pd.DataFrame(columns=["source_id"]).to_csv(out / "candidates.csv", index=False)
         print(f"[ignition] assess: {VERDICT_NO_DATA} ({reason})")
         return summary
@@ -1239,7 +1265,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
                  "over n_stars_screened, not an occurrence limit, and is not written up "
                  "(CLAUDE.md)"),
     }
-    _write(out / "summary.json", summary)
+    _write_summary(out, summary)
     print(f"[ignition] assess: {verdict} — {len(survivors)} survivors of {len(cands)} rise "
           f"candidates from {n_screened} screened")
     return summary

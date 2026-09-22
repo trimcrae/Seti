@@ -807,12 +807,17 @@ def usnob1_meta_url(cfg: dict) -> str:
 def usnob1_meta_probe(cfg: dict) -> dict:
     """Ask I/284/out for its own column list before believing any zero.
 
-    Returns ``{url, detail, columns, missing, body_head}``.  ``missing`` is the
-    subset of :data:`USNOB1_COLUMNS` the catalogue does not advertise --- if it
-    is non-empty, a column-list query is asking for a name that does not exist
-    and its empty answer says nothing about the sky.  A failed probe is
-    recorded and the sweep continues: the ladder's ``-out.all`` rung does not
-    name columns at all.
+    Returns ``{url, detail, columns, missing, body_head}``.
+
+    ``missing`` is the subset of :data:`USNOB1_COLUMNS` this body does not
+    mention.  Read it as a HINT, never as a fact about the catalogue: the
+    ``-meta.all`` + ``-out.form=TSV`` body carries ``#Column`` lines for the
+    catalogue's DEFAULT output columns, and I/284/out's defaults are the eight
+    astrometric ones, so run 35738062833's probe reported B1mag, R1mag, R2mag,
+    Imag and Ndet as "missing" from a catalogue that plainly has them.  That
+    probe then edited the request and every field came back as bare positions;
+    it now reports only.  A wrong column name is handled where it shows up ---
+    the ladder falls through to the ``-out.all`` rung, which names none.
     """
     url = usnob1_meta_url(cfg)
     r = cfg.get("acquire", {}).get("reconstruct", {})
@@ -872,10 +877,22 @@ def fetch_usnob1_field(ra: float, dec: float, radius_deg: float, cfg: dict,
             rec["asu_errors"] = [str(e)[:200] for e in errs[:5]]
         if not len(raw):
             rec["body_head"] = asu_body_head(txt, 1200)
+        rec["columns"] = [str(c) for c in raw.columns][:40]
+        # ROWS ARE NOT ENOUGH.  Run 35738062833 got 1380-5899 rows from every
+        # field and reconstructed ZERO sources, because the answer carried
+        # positions and no photometry at all: the POSS-I-red-only mask is a
+        # statement about which plate magnitudes are present, so a frame
+        # without them cannot express the selection and its "no survivors" is
+        # an artefact of the request, not of the sky.  A rung that answers
+        # without the columns the selection needs is not accepted; the ladder
+        # falls through to the ``-out.all`` rung, which names no columns.
+        need = [str(c) for c in r.get("required_columns", ("RAJ2000", "DEJ2000", "R1mag"))]
+        missing = [c for c in need if c not in raw.columns]
+        rec["missing_required"] = missing
         attempts.append(rec)
-        if len(raw):
+        if len(raw) and not missing:
             return raw, form, attempts
-    return raw, "", attempts
+    return pd.DataFrame(), "", attempts
 
 
 def normalise_usnob1_frame(df: pd.DataFrame, field_id: int = -1,
@@ -961,14 +978,20 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     meta = usnob1_meta_probe(cfg)
     prov.notes.append(
         f"I/284/out -meta.all: {meta['detail']}; "
-        + (f"{len(meta['columns'])} column(s) reported"
+        + (f"{len(meta['columns'])} column(s) reported: {meta['columns'][:40]}"
            if meta["columns"] else "no column names parsed")
-        + (f"; MISSING from the catalogue: {sorted(meta['missing'])}"
-           if meta["missing"] else "; every requested column exists"))
-    # A name the catalogue does not advertise is dropped rather than sent: one
-    # bad ``-out=`` is enough for ASU to answer with a header and no rows.
-    columns = ([c for c in USNOB1_COLUMNS if c not in set(meta["missing"])]
-               if meta["columns"] else None)
+        + (f"; not mentioned by the probe: {sorted(meta['missing'])}"
+           if meta["missing"] else "; every requested column mentioned")
+        + " (reported only -- the request is not edited from this; the "
+          "-meta.all body lists the catalogue's DEFAULT output columns, so "
+          "'not mentioned' does NOT mean 'absent from the catalogue')")
+    # The probe REPORTS; it does not edit the request.  Run 35738062833 had it
+    # strip every name the -meta.all body failed to mention, and that body
+    # mentioned 8 columns out of ~30 --- so B1mag/R1mag/R2mag/Ndet were all
+    # dropped, the fields came back as bare positions, and the selection could
+    # not be expressed.  A bad column name is handled where it shows up: the
+    # ladder falls through to the ``-out.all`` rung.
+    columns = None
     for _, f in grid.iterrows():
         fid = int(f["field_id"])
         rec = {"field_id": fid, "ra_deg": float(f["ra_deg"]),
@@ -1303,6 +1326,44 @@ def join_xmatch_photometry(positions: pd.DataFrame,
     return out
 
 
+def modern_optical_depth(positions: pd.DataFrame, provs: dict, cfg: dict
+                         ) -> tuple[pd.Series, pd.Series]:
+    """Per source: the deepest modern-optical limit actually ESTABLISHED there.
+
+    ``(depth_mag, catalogues)``.  A catalogue contributes only if its X-Match
+    really answered (``ok``/``cached``) **and** the source lies inside that
+    survey's footprint --- Pan-STARRS stops at dec = -30, so a southern source
+    has only Gaia behind its "absence", three magnitudes shallower.
+
+    This exists because absence is the whole signature, and an absence is only
+    as good as the search that failed to find it.  Without this, a Pan-STARRS
+    X-Match that simply errored would hand every source in the run an empty
+    ``ps1_r`` --- and empty reads as *gone*.  A catalogue that was never
+    successfully queried has established nothing, so its sources get NaN here
+    and are excluded from the disappearance count rather than counted as
+    disappearances.
+    """
+    mo = cfg.get("modern_optical", {})
+    limits = mo.get("limits", {})
+    dec = pd.to_numeric(positions.get("dec_deg"), errors="coerce")
+    depth = pd.Series(np.nan, index=positions.index, dtype=float)
+    names = pd.Series("", index=positions.index, dtype=object)
+    for name, spec in limits.items():
+        st = str((provs.get(name) or {}).get("status", "")).lower()
+        if st not in ("ok", "cached"):
+            continue
+        inside = ((dec >= float(spec.get("dec_min_deg", -90.0)))
+                  & (dec <= float(spec.get("dec_max_deg", 90.0))))
+        mag = float(spec.get("mag", np.nan))
+        if not np.isfinite(mag):
+            continue
+        better = inside & (depth.isna() | (mag > depth))
+        depth = depth.where(~better, mag)
+        names = names.where(~inside, names.str.cat(pd.Series(
+            [name] * len(names), index=names.index), sep=",").str.strip(","))
+    return depth, names
+
+
 def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
                            ) -> tuple[pd.DataFrame, dict]:
     """Attach POSS-I, modern-optical and infrared photometry to a position list.
@@ -1349,6 +1410,24 @@ def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
         xmatches[name] = df
     merged = join_xmatch_photometry(positions, xmatches, cfg,
                                     phot_radius={"gaia": r_match})
+    # How deep the search that found nothing actually went, per source.  An
+    # absence is only as good as the search behind it.
+    depth, cats = modern_optical_depth(merged, provs, cfg)
+    merged["modern_depth_mag"] = depth.to_numpy()
+    merged["modern_depth_cats"] = cats.to_numpy()
+    plate = pd.to_numeric(merged.get("poss1_e"), errors="coerce")
+    if "poss1_o" in merged.columns:
+        plate = plate.fillna(pd.to_numeric(merged["poss1_o"], errors="coerce"))
+    merged["modern_depth_margin_mag"] = (depth.to_numpy()
+                                         - plate.to_numpy())
+    provs["_modern_optical_depth"] = {
+        "route": "derived", "status": "ok",
+        "n_rows": int(np.isfinite(depth.to_numpy()).sum()),
+        "catalogues_that_answered": sorted(
+            n for n in cfg.get("modern_optical", {}).get("limits", {})
+            if str((provs.get(n) or {}).get("status", "")).lower() in ("ok", "cached")),
+        "n_sources_with_no_modern_coverage": int((~np.isfinite(depth.to_numpy())).sum()),
+    }
     (out_dir / "acquire_provenance.json").write_text(
         json.dumps(provs, indent=2, default=str))
     return merged, provs

@@ -389,12 +389,34 @@ results/century/          probe/, targets.csv, shards/, summary.json
 ## 9. Running it
 
 ```
-# learn the API on a runner first — one cheap job
-gh workflow run century.yml --ref <branch> -f stages=probe
+# the sweep: targets ──▶ sweep (N shards) ──▶ assess
+gh workflow run century.yml --ref <branch> -f stages=full -f n_shards=4 \
+   -f max_variables=60 -f max_bright=60 \
+   -f time_budget_s=7200 -f screen_budget_s=9000
 
-# then the sweep
-gh workflow run century.yml --ref <branch> -f stages=full -f n_shards=6
+# reconnaissance, only when the schema is in doubt — NOT part of `full`
+gh workflow run century.yml --ref <branch> -f stages=probe
 ```
+
+**Runner slots, not runner minutes, are the scarce resource.** On a busy
+account each job waits for a runner *separately*, so a `needs:` edge costs a
+whole queue wait — measured at 70–105 minutes on 2026-09-22, during which a
+`full` run never started its first job. Two consequences are built into the
+workflow and should not be undone casually:
+
+* `full` is `targets → sweep → assess`, three waits. The probe is
+  reconnaissance — it reads documentation and the `daschlab` source and writes
+  nothing a later job consumes — so it runs only when named, and in parallel
+  with everything else. The flag parse is still verified on real data every
+  run, because `acquire` logs `flag_definitions` with its source per shard.
+* A run's **workflow file is fixed when it is dispatched**; only the *code*
+  each job checks out follows the branch tip. So editing `century.yml` does
+  not change a run already in flight — which is why `stage_acquire` rebuilds
+  the exposure table itself when `plate_exptime.csv` (an artifact named in the
+  workflow) does not arrive, instead of depending on the passthrough.
+
+Shard counts above four are a false economy: they take slots from the other
+channels and, on a starved queue, finish no sooner.
 
 Locally (offline, synthetic only):
 
@@ -402,9 +424,14 @@ Locally (offline, synthetic only):
 python -m seti.cli century --stage screen --shard 0/1
 ```
 
-The acquire stage checkpoints per star (`acquire.jsonl` plus a rewritten
-`lightcurves.npz` every `checkpoint_every` stars) and **resumes from both**, so
-a killed shard loses minutes rather than a run.
+Both heavy stages checkpoint per star and resume: `acquire` from
+`acquire.jsonl` plus a `lightcurves.npz` rewritten every `checkpoint_every`
+stars, `screen` from `screen.jsonl`. Both carry a wall clock inside the job's
+`timeout-minutes` (`time_budget_s`, `screen_budget_s`), so an overrun uploads
+what it has and the next dispatch continues, rather than being killed by the
+runner with nothing written. The screen clock always lets one star through,
+whatever the budget: a clock that can stop a run before its first star is a
+shard that never finishes.
 
 ## 10. Verdicts
 
@@ -442,5 +469,22 @@ no-data codes — a run that reached nothing must never print as a science null.
 * **B < 13.** The deeper the star, the fewer series can see it and the more
   the plate-limit confounder dominates. The bright cut is a decision to trade
   sample size for interpretability.
+* **The exposure time is joined, not measured.** DR7 light curves carry none,
+  so the smear correction rests on matching each detection to a `queryexps`
+  row by `(series, platenum, mosnum, expnum)`. A plate the join misses keeps
+  NaN and is left unsmeared — honest, but it means the smear model's coverage
+  is a number to read (`exptime.matched_det` per star,
+  `exptime.n_matched_stars` per shard) and not an assumption.
+* **No detection count before the fetch.** The DR7 refcat has no such column
+  (`num_matches` counts catalogue cross-matches), so bright-star selection
+  cannot prefer stars with many plates; `targets.min_ndet_bright` is inert and
+  logged as such, and the real cut is `lightcurve.min_detections` after the
+  light curve is in hand.
+* **The field ensemble needs a populated field.** The common mode is a median
+  over ≥ `ensemble.min_stars` stars per field, magnitude bin and year. Where it
+  does not form, the fade is judged against the star's own history alone and
+  the gap step is not subtracted — which makes a gap-straddling cessation
+  *harder* to pass, not easier, but it is a different test.
+  `funnel.n_ensemble_applied` says how many stars got the corrected one.
 * **A null here changes the question, it is not a result.** Per `CLAUDE.md`,
   this channel does not produce an occurrence-limit paper.

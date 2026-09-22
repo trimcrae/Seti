@@ -192,6 +192,74 @@ def test_to_frame_accepts_columnar_and_row_json():
     assert len(to_frame(None)) == 0 and len(to_frame("junk")) == 0
 
 
+class _FakeResponse:
+    def __init__(self, status: int, payload=None, text: str = ""):
+        self.status_code = status
+        self._payload = payload
+        self.text = text or json.dumps(payload or {})
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("not json")
+        return self._payload
+
+
+class _FakeSession:
+    """Answers by (method, frozenset of payload keys); records every call."""
+
+    def __init__(self, table: dict):
+        self.table = table
+        self.calls: list[tuple[str, tuple]] = []
+
+    def _answer(self, method, payload):
+        key = tuple(sorted(payload))
+        self.calls.append((method, key))
+        return self.table.get((method, key), _FakeResponse(422, {"detail": "unknown field"}))
+
+    def post(self, url, json=None, **kw):          # noqa: A002
+        return self._answer("POST", json or {})
+
+    def get(self, url, params=None, **kw):
+        return self._answer("GET", params or {})
+
+
+def test_payload_variants_advance_on_a_validation_error():
+    """A 422 names the wrong key, so the next spelling is tried, not abandoned."""
+    from seti.century.api import querycat
+
+    ok = _FakeResponse(200, {"ra_deg": [1.0], "dec_deg": [2.0], "gsc_bin_index": [7],
+                             "ref_number": [3]})
+    sess = _FakeSession({("POST", ("dec_deg", "ra_deg", "radius_deg", "refcat")): ok})
+    r = querycat(1.0, 2.0, 30.0, refcat="apass", session=sess, retries=1, backoff_s=0.0)
+    assert r.ok and r.n_rows == 1 and r.method == "POST"
+    assert "radius_deg" in r.payload and len(sess.calls) == 3
+
+
+def test_a_wrong_verb_retries_the_whole_variant_list_as_get():
+    """404/405/415 is a verb error, not a key error: the run must not be lost."""
+    from seti.century.api import queryexps
+
+    sess = _FakeSession({
+        ("POST", ("dec_deg", "ra_deg")): _FakeResponse(405, None, "Method Not Allowed"),
+        ("GET", ("dec_deg", "ra_deg")): _FakeResponse(200, [{"series": "a", "date_jd": 2.4e6}]),
+    })
+    r = queryexps(1.0, 2.0, session=sess, retries=1, backoff_s=0.0)
+    assert r.ok and r.method == "GET" and r.n_rows == 1
+    assert sess.calls[0][0] == "POST" and any(c[0] == "GET" for c in sess.calls)
+
+
+def test_a_refusal_is_not_retried_as_a_shape_problem():
+    """403/429 is the service saying no; renaming keys cannot cure it."""
+    from seti.century.api import lightcurve
+
+    sess = _FakeSession({})
+    sess.table = {k: _FakeResponse(403, None, "forbidden") for k in
+                  [("POST", ("gsc_bin_index", "ref_number", "refcat"))]}
+    r = lightcurve("apass", 1, 2, session=sess, retries=1, backoff_s=0.0)
+    assert not r.ok and r.status == 403 and len(sess.calls) == 1
+    assert "403" in r.error
+
+
 def test_flag_parsing_from_source_text_and_config_fallback():
     src = (
         "from enum import IntFlag\n"

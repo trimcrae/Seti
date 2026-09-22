@@ -324,6 +324,8 @@ class CenturyCessation:
     post_detect_rate_deep: float = float("nan")
     post_deep_plates: int = 0
     post_blind_periodic: int = -1
+    post_blind_adjacent: bool = False
+    post_blind_max_false_alarms: int = 0
     is_cessation: bool = False
     flags: list[str] = field(default_factory=list)
     blocks: list[BlockDetection] = field(default_factory=list)
@@ -674,13 +676,25 @@ def analyze_century(
     pattern_ok = (res.n_pre_detected >= min_pre_detected
                   and res.n_pre_miss_unexplained == 0
                   and res.n_post_informative >= min_post_informative)
+    # A blind search over many post blocks at a per-block false-alarm rate
+    # `fap` produces false alarms by construction: demanding EXACTLY zero over
+    # thirty blocks fails a genuine cessation about 1 - (1 - fap)^30 of the
+    # time, which is 26 % at fap = 0.01.  The test is therefore whether the
+    # count is consistent with the false-alarm rate, and whether the
+    # detections cluster --- a star that really switched mode is periodic in
+    # consecutive blocks, not in one block scattered among thirty.
     if blind_check and pattern_ok and informative:
-        n_blind = 0
+        blind_at: list[int] = []
         for i in informative:
             bp = block_periodogram(blocks[i].as_knell_block(), fap=fap, n_null=n_null, rng=rng,
                                    min_period=0.2, max_period=100.0, oversample=oversample)
-            n_blind += int(bp.detected)
-        res.post_blind_periodic = n_blind
+            if bp.detected:
+                blind_at.append(i)
+        res.post_blind_periodic = len(blind_at)
+        res.post_blind_max_false_alarms = max(1, int(np.ceil(3.0 * float(fap) * len(informative))))
+        order = {b: k for k, b in enumerate(informative)}
+        res.post_blind_adjacent = any(order[b] - order[a] == 1
+                                      for a, b in zip(blind_at, blind_at[1:], strict=False))
 
     # -- adjudicate
     mean_flux_ok = (np.isfinite(res.mean_shift_mag)
@@ -710,7 +724,8 @@ def analyze_century(
         "blend_stable": (not (np.isfinite(res.blend_frac_pre) and np.isfinite(res.blend_frac_post))
                          or abs(res.blend_frac_post - res.blend_frac_pre) <= float(blend_jump_max)),
         "series_overlap": (np.isfinite(res.series_overlap_frac) and res.series_overlap_frac > 0),
-        "no_mode_switch": res.post_blind_periodic <= 0,
+        "no_mode_switch": (res.post_blind_periodic <= res.post_blind_max_false_alarms
+                           and not res.post_blind_adjacent),
     }
     res.flags.extend(f"fail_{k}" for k, v in checks.items() if not v)
     if res.mean_shift_across_gap and not mean_flux_ok:

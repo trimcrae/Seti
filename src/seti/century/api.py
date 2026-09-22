@@ -88,6 +88,7 @@ class ApiResponse:
     n_rows: int = 0
     columns: list[str] = field(default_factory=list)
     frame: pd.DataFrame | None = None
+    method: str = "POST"
 
     def as_dict(self) -> dict:
         d = {k: v for k, v in self.__dict__.items() if k != "frame"}
@@ -137,9 +138,9 @@ def to_frame(obj) -> pd.DataFrame:
 
 
 def _post(url: str, payload: dict, timeout_s: float, retries: int, backoff_s: float,
-          session=None) -> tuple[int | None, object, str, float]:
-    """POST JSON; retry 5xx / transport errors, never 4xx.  Returns
-    ``(status, parsed_or_None, body_head, elapsed)``."""
+          session=None, method: str = "POST") -> tuple[int | None, object, str, float]:
+    """Send JSON (or query params for GET); retry 5xx / transport errors, never
+    4xx.  Returns ``(status, parsed_or_None, body_head, elapsed)``."""
     import requests
 
     sess = session or requests
@@ -147,8 +148,12 @@ def _post(url: str, payload: dict, timeout_s: float, retries: int, backoff_s: fl
     last_err = ""
     for attempt in range(int(max(retries, 1))):
         try:
-            resp = sess.post(url, json=payload, timeout=timeout_s,
-                             headers={"Accept": "application/json"})
+            if str(method).upper() == "GET":
+                resp = sess.get(url, params=payload, timeout=timeout_s,
+                                headers={"Accept": "application/json"})
+            else:
+                resp = sess.post(url, json=payload, timeout=timeout_s,
+                                 headers={"Accept": "application/json"})
         except Exception as exc:                          # noqa: BLE001
             last_err = repr(exc)[:300]
             _time.sleep(backoff_s * (2 ** attempt))
@@ -169,24 +174,40 @@ def _post(url: str, payload: dict, timeout_s: float, retries: int, backoff_s: fl
 
 def post_variants(endpoint: str, variants: list[dict], *, timeout_s: float = 120.0,
                   retries: int = 3, backoff_s: float = 2.0, session=None,
-                  base: str = API_BASE) -> ApiResponse:
-    """Try each payload variant in order; return the first 200 (or the last failure)."""
+                  base: str = API_BASE, methods=("POST", "GET")) -> ApiResponse:
+    """Try each payload variant in order; return the first 200 (or the last failure).
+
+    A 400/422 is a *shape* error --- a FastAPI validation body names the fields
+    it wanted --- so the next key spelling is tried.  A 404/405/415 says the
+    route does not accept this **verb**, so the whole variant list is retried
+    with the next method rather than abandoned; a first run must not be lost to
+    a POST-vs-GET guess when the queue for a runner is twenty minutes.
+    """
     url = base + ENDPOINTS[endpoint]
     last: ApiResponse | None = None
-    for payload in variants:
-        status, parsed, head, dt = _post(url, payload, timeout_s, retries, backoff_s, session)
-        if status == 200:
-            df = to_frame(parsed)
-            return ApiResponse(endpoint, status, True, dt, payload, "", head[:300],
-                               int(len(df)), [str(c) for c in df.columns], df)
-        err = ("no response" if status is None else f"HTTP {status}")
-        last = ApiResponse(endpoint, status, False, dt, payload, err, head, 0, [], None)
-        # A validation error means the *shape* was wrong: try the next variant.
-        # Anything else (404 route, 403, 429) will not be cured by renaming keys.
-        if status not in (400, 422):
+    for method in methods:
+        wrong_verb = False
+        for payload in variants:
+            status, parsed, head, dt = _post(url, payload, timeout_s, retries, backoff_s,
+                                             session, method)
+            if status == 200:
+                df = to_frame(parsed)
+                return ApiResponse(endpoint, status, True, dt, payload, "", head[:300],
+                                   int(len(df)), [str(c) for c in df.columns], df, method)
+            err = ("no response" if status is None else f"HTTP {status}")
+            last = ApiResponse(endpoint, status, False, dt, payload, err, head, 0, [], None,
+                               method)
+            if status in (404, 405, 415):
+                wrong_verb = True
+                break
+            # Anything that is not a shape error (403, 429, no response) will
+            # not be cured by renaming keys or by changing the verb.
+            if status not in (400, 422):
+                return last
+        if not wrong_verb:
             break
     return last if last is not None else ApiResponse(endpoint, None, False, 0.0, {},
-                                                     "no variants", "", 0, [], None)
+                                                     "no variants", "", 0, [], None, "POST")
 
 
 def querycat(ra: float, dec: float, radius_arcsec: float, *, refcat: str = "apass",

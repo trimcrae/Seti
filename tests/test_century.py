@@ -1166,6 +1166,35 @@ def test_empty_api_gives_no_data_reached(tmp_path):
     assert (tmp_path / "summary.json").exists()
 
 
+def test_no_shard_directory_is_not_a_statement_about_the_archive(tmp_path):
+    """A reduce with no shard at all has not failed to reach DASCH.
+
+    It happens when the sweep was cancelled or never ran, or when a
+    reduce-only re-run is pointed at a run whose artifacts are gone.  Saying
+    NO_LIGHTCURVES_RETURNED there would read as "DASCH returned nothing for
+    these targets" — a claim about the archive that no request was ever made
+    to support.  Observed on run 35748748365, cancelled between its targets
+    and sweep jobs, whose `assess` job was still scheduled by ``if: always()``.
+    """
+    targets = pd.DataFrame([{"target_id": i, "name": f"s{i}", "ra": 10.0 + i, "dec": 20.0,
+                             "kind": "bright", "vtype": "", "period_cat": np.nan,
+                             "mag_cat": 11.0, "amp_cat": 0.0, "source": "apass",
+                             "field": "f", "gsc_bin_index": 1, "ref_number": i,
+                             "pm_total_masyr": np.nan, "colour": np.nan,
+                             "n_det_cat": np.nan} for i in range(5)])
+    targets.to_csv(tmp_path / "targets.csv", index=False)
+    (tmp_path / "targets_summary.json").write_text(json.dumps({"n_targets": len(targets),
+                                                               "fields": {}}))
+    # No shards/ directory at all.
+    s = stage_assess(_conf(), tmp_path, confirm=False, gaia=False)
+    assert s["verdict_code"] == "NO_SHARDS_PRESENT", s["verdict_code"]
+    # Targets were selected, so this is NOT "no targets"; and nothing was
+    # fetched, but that is not the archive's answer.
+    assert s["funnel"]["n_targets"] == 5
+    assert s["funnel"]["n_lc_fetched"] == 0 and s["funnel"]["n_usable"] == 0
+    assert (tmp_path / "summary.json").exists()
+
+
 def test_shard_roundtrip_screen_and_assess_end_to_end(tmp_path):
     lcs, trows = {}, []
     for i in range(10):

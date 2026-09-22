@@ -534,5 +534,12 @@ no-data codes — a run that reached nothing must never print as a science null.
   the gap step is not subtracted — which makes a gap-straddling cessation
   *harder* to pass, not easier, but it is a different test.
   `funnel.n_ensemble_applied` says how many stars got the corrected one.
+* **`NO_SHARDS_PRESENT` is not a null.** A reduce that finds no shard
+  directory has not failed to reach DASCH — nobody asked it to. It happens
+  when the sweep was cancelled or never ran, or when a reduce-only re-run is
+  pointed at a run whose artifacts have expired. It is kept distinct from
+  `NO_DATA_REACHED` (the archive was asked and answered nothing) and from
+  `NO_LIGHTCURVES_RETURNED`, either of which would read as a statement about
+  the archive that no request was ever made to support.
 * **A null here changes the question, it is not a result.** Per `CLAUDE.md`,
   this channel does not produce an occurrence-limit paper.

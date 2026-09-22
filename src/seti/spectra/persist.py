@@ -555,6 +555,96 @@ def parse_sdss_spec(hdul) -> dict:
     return {"coadd": coadd, "exposures": exposures}
 
 
+def stack_exposures(parsed: dict, lam0: float | None = None,
+                    half_width_A: float = 120.0) -> dict | None:
+    """Inverse-variance mean of the per-exposure HDUs, on the coadd's own grid.
+
+    The archive coadd is *supposed to be* this.  Measuring the same line in the
+    stack and in the archive's coadd separates two very different verdicts that
+    a per-exposure table alone cannot tell apart:
+
+    * the stack reproduces the coadd  -> the per-exposure *measurement* is what
+      disagrees, i.e. our estimator, the window, or the masking;
+    * the stack reproduces the exposures -> the coadd does not agree with its
+      own inputs, which is the artefact this whole channel exists to catch.
+
+    Only the arms that cover ``lam0`` contribute; the exposures keep their own
+    native wavelength solutions and are interpolated onto the coadd grid, so a
+    wavelength zero-point difference shows up here as a shifted feature rather
+    than as a missing one.
+    """
+    co = parsed.get("coadd")
+    exps = parsed.get("exposures") or []
+    if co is None or not exps:
+        return None
+    w = np.asarray(co["wave"], float)
+    if lam0 is not None:
+        sel = np.abs(w - float(lam0)) <= half_width_A
+        if int(sel.sum()) < 20:
+            return None
+        w = w[sel]
+    num = np.zeros(w.size)
+    den = np.zeros(w.size)
+    n_used = 0
+    for e in exps:
+        ew = np.asarray(e["wave"], float)
+        ef = np.asarray(e["flux"], float)
+        ei = np.asarray(e["ivar"], float)
+        ok = np.isfinite(ew) & np.isfinite(ef) & np.isfinite(ei) & (ei > 0)
+        if int(ok.sum()) < 20:
+            continue
+        order = np.argsort(ew[ok])
+        ewo, efo, eio = ew[ok][order], ef[ok][order], ei[ok][order]
+        inside = (w >= ewo[0]) & (w <= ewo[-1])
+        if int(inside.sum()) < 10:
+            continue
+        num[inside] += np.interp(w[inside], ewo, eio) * np.interp(w[inside], ewo, efo)
+        den[inside] += np.interp(w[inside], ewo, eio)
+        n_used += 1
+    if n_used == 0:
+        return None
+    flux = np.full(w.size, np.nan)
+    good = den > 0
+    flux[good] = num[good] / den[good]
+    return {"wave": w, "flux": flux, "ivar": den, "n_used": n_used}
+
+
+def wave_lag(co: dict, e: dict, lam0: float, half_width_A: float = 150.0,
+             max_shift_A: float = 4.0, step_A: float = 0.05) -> float:
+    """Wavelength shift (A) that best aligns one exposure with the coadd.
+
+    A non-zero lag is the ordinary case -- the coadd carries a heliocentric
+    correction the native exposure frames do not -- and a lag comparable to the
+    line window is on its own enough to move a real line out of the window and
+    into the continuum annulus, which turns a line into a *deficit*.
+    """
+    cw = np.asarray(co["wave"], float)
+    cf = np.asarray(co["flux"], float)
+    ew = np.asarray(e["wave"], float)
+    ef = np.asarray(e["flux"], float)
+    ok = np.isfinite(ew) & np.isfinite(ef)
+    if int(ok.sum()) < 50:
+        return float("nan")
+    order = np.argsort(ew[ok])
+    ewo, efo = ew[ok][order], ef[ok][order]
+    sel = (np.abs(cw - lam0) <= half_width_A) & np.isfinite(cf)
+    sel &= (cw >= ewo[0] + max_shift_A) & (cw <= ewo[-1] - max_shift_A)
+    if int(sel.sum()) < 50:
+        return float("nan")
+    a = cf[sel] - np.mean(cf[sel])
+    if not np.std(a) > 0:
+        return float("nan")
+    best, best_c = float("nan"), -2.0
+    for s in np.arange(-max_shift_A, max_shift_A + 0.5 * step_A, step_A):
+        b = np.interp(cw[sel] + s, ewo, efo)
+        if not np.std(b) > 0:
+            continue
+        c = float(np.corrcoef(a, b - np.mean(b))[0, 1])
+        if np.isfinite(c) and c > best_c:
+            best_c, best = c, float(s)
+    return best
+
+
 def sdss_exposure_measurements(parsed: dict, lam0: float, mode: str) -> tuple[dict | None, list[dict]]:
     """Measure the line in the file coadd and, per EXPOSURE (arms combined)."""
     fwhm = lsf_fwhm_A(lam0, "SDSS-DR17")
@@ -1047,9 +1137,25 @@ def load_survivors(root: Path):
     return df
 
 
+_BULK_KEYS = ("wave", "flux", "ivar", "mask", "sky")
+
+
+def _is_bulk(v) -> bool:
+    """A whole spectrum, as opposed to a short hand-picked excerpt of one."""
+    if isinstance(v, np.ndarray):
+        return True
+    if isinstance(v, (list, tuple)):
+        return len(v) > 64
+    return False
+
+
 def _json_safe(o):
     if isinstance(o, dict):
-        return {k: _json_safe(v) for k, v in o.items() if k not in ("wave", "flux", "ivar", "mask", "sky")}
+        # Whole spectra are dropped (they would be megabytes per record); a short
+        # excerpt stored under the same key -- the pixel window a diagnostic dumps
+        # around a line -- is exactly the evidence that is wanted and is kept.
+        return {k: _json_safe(v) for k, v in o.items()
+                if not (k in _BULK_KEYS and _is_bulk(v))}
     if isinstance(o, (list, tuple)):
         return [_json_safe(v) for v in o]
     if isinstance(o, (np.integer,)):
@@ -1636,6 +1742,36 @@ def diagnose(root: Path, n: int = 8, release: str = "SDSS") -> dict:
                                           "cont", "F", "err", "n_line_pix", "n_cosmic",
                                           "err_scale", "mjd")}
                 for e in ex]
+            # The coadd IS supposed to be the stack of the exposure HDUs.  Measure
+            # the line in that stack with the very same estimator: it decides
+            # whether a coadd/exposure disagreement lives in our measurement or in
+            # the archive's own data.
+            st = stack_exposures(parsed, lam0)
+            if st is not None:
+                finfo["stack_n_used"] = st["n_used"]
+                finfo["stack_coadd"] = _json_safe(
+                    measure_line(st["wave"], st["flux"], st["ivar"], lam0, fwhm, mode))
+                k = int(np.argmin(np.abs(st["wave"] - lam0)))
+                lo, hi = max(k - 10, 0), min(k + 11, st["wave"].size)
+                finfo["stack_window"] = {
+                    "wave": [round(float(x), 3) for x in st["wave"][lo:hi]],
+                    "flux": [round(float(x), 4) for x in st["flux"][lo:hi]]}
+            # A wavelength zero-point difference between the coadd and the native
+            # exposure frames moves a real line off the window centre; measure it
+            # rather than assume it away.
+            if co is not None:
+                for e_rec in parsed["exposures"][:6]:
+                    ew = np.asarray(e_rec["wave"], float)
+                    k2 = int(np.argmin(np.abs(ew - lam0)))
+                    lo, hi = max(k2 - 10, 0), min(k2 + 11, ew.size)
+                    finfo.setdefault("exposure_windows", []).append({
+                        "extname": e_rec.get("extname"),
+                        "lag_A": round(float(wave_lag(co, e_rec, lam0)), 3),
+                        "d_pix_A": round(float(np.median(np.abs(np.diff(ew[lo:hi])))), 4)
+                        if hi - lo > 2 else None,
+                        "wave": [round(float(x), 3) for x in ew[lo:hi]],
+                        "flux": [round(float(x), 4) for x in
+                                 np.asarray(e_rec["flux"], float)[lo:hi]]})
             files.append(_json_safe(finfo))
             if finfo.get("n_exposures"):
                 break
@@ -1679,5 +1815,6 @@ if __name__ == "__main__":
 
 __all__ = ["measure_line", "combine_measurements", "classify_persistence", "decode_specobjid",
            "sdss_spec_urls", "parse_sdss_spec", "sdss_exposure_measurements",
+           "stack_exposures", "wave_lag",
            "desi_bands_for", "desi_coadd_url", "desi_exposure_rows", "process_spectrum",
            "run_shard", "reduce_results", "final_verdict", "probe", "diagnose", "main"]

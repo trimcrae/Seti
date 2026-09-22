@@ -448,3 +448,64 @@ def test_second_epoch_kill_requires_sensitivity():
     assert persist.final_verdict(r) == "KILLED_second_epoch_absent"
     r["other_best_err_rel"] = 5.0            # other epoch too noisy to have seen it
     assert persist.final_verdict(r) == "ALIVE_persistent_unidentified"
+
+
+# ---------------------------------------------------------------------------
+# Attributing a coadd/exposure disagreement: the stack of the exposure HDUs
+# ---------------------------------------------------------------------------
+
+def _measure_stack(parsed, lam=LAM0, mode="emission"):
+    st = persist.stack_exposures(parsed, lam)
+    assert st is not None, "no stack built from the exposure HDUs"
+    m = persist.measure_line(st["wave"], st["flux"], st["ivar"], lam,
+                             persist.lsf_fwhm_A(lam, "SDSS-DR17"), mode)
+    return st, m
+
+
+def test_stack_of_exposures_does_not_show_a_coadd_only_line():
+    """The attribution test.  A feature in the coadd and in none of its inputs
+    must be absent from the inverse-variance stack of those inputs too --
+    otherwise a coadd/exposure disagreement could be blamed on the per-exposure
+    measurement rather than on the data."""
+    parsed, fc, _ex, _cls = _run(make_spec_file([0.0] * 4, coadd_amp=1.0))
+    st, m = _measure_stack(parsed)
+    assert st["n_used"] >= 4
+    assert fc["testable"] and fc["sig"] > 5.0          # the coadd has the feature
+    assert m["testable"] and abs(m["sig"]) < 3.0       # the stack of its inputs does not
+
+
+def test_stack_of_exposures_reproduces_a_real_line():
+    """The control: a line that IS in every exposure must come back out of the
+    stack at the coadd's strength, so a null from the stack means something."""
+    parsed, fc, _ex, _cls = _run(make_spec_file([1.0] * 4))
+    _st, m = _measure_stack(parsed)
+    assert m["testable"] and m["sig"] > 5.0
+    assert abs(m["ew"] - fc["ew"]) < 0.3 * abs(fc["ew"])
+
+
+def test_wave_lag_recovers_an_injected_wavelength_offset():
+    """A coadd carries a heliocentric correction the native exposure frames do
+    not; a lag of order the line window would move a real line into the
+    continuum annulus and read out as a deficit in every exposure at once."""
+    rng = np.random.default_rng(11)
+    _lc, wc = _grid(6600.0, 6950.0)
+    f = 10.0 + rng.normal(0, 0.3, wc.size)
+    for lam in (6700.0, 6765.5, 6820.0, 6880.0):
+        f = f - _gauss(wc, lam, 3.0, 1.4)
+    shift = 1.5
+    got = persist.wave_lag({"wave": wc, "flux": f},
+                           {"wave": wc - shift, "flux": f}, LAM0)
+    assert abs(got + shift) < 0.15
+    same = persist.wave_lag({"wave": wc, "flux": f}, {"wave": wc, "flux": f}, LAM0)
+    assert abs(same) < 0.1
+
+
+def test_json_safe_keeps_a_pixel_window_but_drops_a_whole_spectrum():
+    """The diagnose stage dumps pixel windows under the same key names the bulk
+    arrays use; stripping by name alone silently emptied exactly the evidence
+    the stage exists to produce."""
+    big = np.arange(4000.0)
+    out = persist._json_safe({"window": {"wave": [1.0, 2.0], "flux": [3.0, 4.0]},
+                              "spectrum": {"wave": big, "flux": big.tolist()}})
+    assert out["window"] == {"wave": [1.0, 2.0], "flux": [3.0, 4.0]}
+    assert out["spectrum"] == {}

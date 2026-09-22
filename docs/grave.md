@@ -643,7 +643,127 @@ targeted**, not broader:
 
 ---
 
-## 9. Files
+## 9. What the first full run measured (run 35747786123, 2026-09-22)
+
+The channel's first real screen. Committed in `results/grave/`; the canonical
+tables and the per-sample CSV travel as the run's artifact.
+
+**Verdict:** `DEGRADED_SOURCE (earthchem:NO_DATA_REACHED); NO_FISSION_VECTOR`,
+with `REFINED_PARTICULATE_CANDIDATES_PENDING_VET`.
+
+### 9.1 What was reached
+
+| source | rows | requests | state |
+|---|---|---|---|
+| SGP | 101,618 | 80 | OK — all 36 age bins `complete` |
+| GEOROC / DIGIS | 53,686 | 10 | OK — the silicic + Parnaíba reference |
+| EarthChem | 0 | 14 | `NO_DATA_REACHED` — the ten-rung ladder is in `probe.json` |
+
+155,304 analyses entered the screen: 101,618 candidate-source (SGP) and 53,686
+reference-only (GEOROC, which cannot produce a candidate, only constrain the
+design and the ash reference). Every SGP bin returned exactly the row count the
+service itself declared for that bin, and a 5,000-row page came back in full,
+so the pull is not truncated. **But** the summed bin counts are 103,585 against
+the 114,688 the service reports for the whole [0, 4000] Ma filter — the binned
+pull reaches **90.3 %** of the corpus, and the missing 11,103 are an open
+coverage item, not a statement about the rock.
+
+### 9.2 The funnel, and what killed every survivor
+
+| stage | n |
+|---|---|
+| samples | 155,304 |
+| with an interpreted age | 101,618 |
+| sufficient panel (≥ 8 elements) | 116,515 |
+| fission LR > 0 | 54,814 |
+| above threshold | 63 |
+| fully vetted | 63 |
+| **survivors** | **0** |
+
+The threshold is **ln LR = 555.0**, and it is bound by the *control
+population* — non-boundary samples of the same lithologies — not by the
+nominal `lr_min` = 8. The shuffled null independently gives 509.1. Both
+empirical nulls sit ~65× above the nominal floor, and 4.7 % of shuffled samples
+clear `lr_min`, which says plainly that the real scatter of sedimentary
+chemistry is much larger than any per-element error model: the LR is inflated
+for everyone, and the channel refuses to read that inflation as signal. This
+is the error model behaving as designed (§5.2, §5.3), and it is why a
+fixed-LR threshold would have produced thousands of false candidates.
+
+All 63 above-threshold samples were killed, and the veto counts say how:
+`unexplained_by_all_reservoirs` 63, `single_element_driver` 63,
+`peak_incoherent` 23, and **every other veto zero**. That is the honest
+reading: none of the 63 is fission-shaped. Each one is a sample whose reduced
+χ² is still bad *with* the fission column in the design (so the residue is not
+this residue), and whose preference collapses when one element is dropped
+(so it is a one-element anomaly, which this channel rejects by construction).
+No sample got far enough to need the redox, Fe–Mn, zircon, tephra, monazite,
+barite or impact kills.
+
+**0 candidate sections at every one of the thirteen boundaries**, out of 16,408
+sections and 1,270 K–Pg-window analyses in 312 sections. The age stack has
+nothing to correct.
+
+### 9.3 The positive control could not run, and that is the headline caveat
+
+`impact_positive_control` is **null**. Not one of the 155,304 analyses classes
+as `impact`, because the corpus does not carry the elements the class is made
+of:
+
+| element | analyses carrying it | |
+|---|---|---|
+| I | 21 | |
+| Ru | 25 | the +4.77 dex discriminant |
+| Rh | 29 | the +4.77 dex discriminant |
+| **Ir** | **33** | *the K–Pg marker itself* |
+| Os | 224 | |
+| Pt | 1,037 | |
+| Pd | 1,120 | +3.57 dex |
+| Te | 6,788 | +3.03 dex |
+| Mo | 54,650 | +1.43 dex |
+
+154,679 of 155,304 analyses are `pge_insufficient`. **This run therefore did
+not demonstrate that the channel recognises the K–Pg iridium in this corpus —
+the corpus has no iridium.** The offline suite still shows the age stack
+recovering a chondritic Ir-anchored layer at p_Holm = 7.8 × 10⁻³, but that is
+a statement about the code, not about SGP. The honest position: the light peak
+here rests on Mo, Pd and Te alone, and the impact veto (`impact_pge` = 0) was
+never exercised on real data.
+
+### 9.4 The refined-particulate population is diffuse, and a quarter of it was drilled
+
+568 analyses carry a refined-particulate class: 550 `refined_w` (W enriched
+with its hydrothermal partners Sn, Mo, Bi at background), 253 `refined_ta` (Ta
+without Nb), 2 `refined_pge`. None of it is a horizon. Across the thirteen
+boundaries the refined stack returns `multi_section_at_background_rate` or
+`single_section` **everywhere**, at p_Holm = 1.0 in every window — 272
+candidate sections scattered through 16,408.
+
+And the provenance flag does what it was put there to do. In the committed
+2,000-record sample: **65 % of `refined_ta` records (24 of 37) and 25 % of
+`refined_w` (77 of 310) come from drilled core or cuttings.** Tungsten-carbide
+drill bits and Ta-bearing hardware are precisely the modern contamination
+§5.4 names. A diffuse, unclustered, drill-enriched population is what
+contamination plus analytical scatter looks like; it is not a candidate, and
+`REFINED_PARTICULATE_CANDIDATES_PENDING_VET` should be read as "these 568 rows
+are waiting for a provenance vet", not as a finding.
+
+### 9.5 What this changes
+
+Per `CLAUDE.md`, a clean null changes the question rather than becoming a
+paper, and this null is **coverage-limited, not sensitivity-limited**. The
+elemental route on this corpus cannot be pushed further by screening more
+rows: the two strongest discriminants are measured on 25 and 29 analyses out
+of 155,304, and the marker that validates the whole method is measured on 33.
+The decisive escalation is the isotopic and targeted one already set out in
+§8 — ²³⁵U/²³⁸U in boundary shales, the Fe–Mn crust ¹²⁹I and ²³⁶U profiles,
+and published Nd and Ru isotope data at the boundaries — plus, on the
+elemental side, a *targeted* pull of the PGE literature rather than a
+compilation that was assembled to study redox.
+
+---
+
+## 10. Files
 
 ```
 src/seti/grave/references.py   reservoir vectors, atomic masses, oxide factors, citations

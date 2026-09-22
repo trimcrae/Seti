@@ -10,6 +10,88 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### OSSUARY ran at last — and its 121 survivors have no W1/W2 excess at all, 2026-09-22
+
+`results/ossuary/` existed nowhere on `main` until today. Three things had to
+be fixed to get a number out of the 6.2 M-star sample that run 30203264572
+acquired back on 2026-07-26 (its artifacts are still alive, so no refetch was
+needed):
+
+1. The assemble script crashed on `pd.to_numeric(df.get('row_limit_hit'))` —
+   `DataFrame.get` of a missing column returns `None`, which `to_numeric`
+   collapses to a scalar `np.float64`, and `.fillna` then raises. Already
+   fixed on the branch by the previous builder; run **35652126514** died on it,
+   run **35737257465** (14:00 ET) got past it.
+2. That run then reported `verdict: OK`, `n_candidates: 0` — and **every one
+   of the 1,764 rows that reached the cirrus gate was rejected as
+   `galactic_cirrus`**. That was not the sky. `ebv_sfd` is a *per-candidate*
+   lookup that only `stage_followup` performs, so at the gauntlet the column
+   is null for all 17,211 flagged rows (verified in the committed
+   `excess_flagged.csv`), and `(ebv <= max).fillna(False)` rejected the whole
+   funnel for a value nobody had looked up. `vet.cirrus_gate` now takes
+   `untested_ok`: the gauntlet defers, follow-up stays strict, so a candidate
+   still cannot be called surviving with its reddening unchecked.
+3. `vet()` fell over the same `DataFrame.get` trap on `feh`; now `_num`.
+
+**The measurement** (run **35738190057**, 10:33 ET; `results/ossuary/`):
+6,192,472 stars → 17,211 excess-flagged → funnel `wise_quality` −6,112,
+`ledger` −9,106, `unresolved_companion` −8, `astrometric_registration` −26,
+`background_source` −195, `galactic_cirrus` −1,032 (latitude, the part that
+*is* testable at that stage), `lambda_boo_or_blue_straggler` −98,
+`giant_or_unclassified` −5, `not_a_null_reservoir_host` −45 → **584
+surviving**. Follow-up on the top 200 by significance: 121 surviving, 79
+rejected (189 isolated beams, 6 blends, 5 clean).
+
+**Do not read that as 121 candidates.** Tracing them: of the 121,
+**0 have a significant W1 or W2 excess** (median χ_W1 = −0.26, χ_W2 = +0.63,
+none above 3σ), while **121/121 are significant in W3** and 105/121 in W4. The
+fits land at T ≈ 185 K with τ ≈ 0.32 — a fractional luminosity a third of the
+star, around metal-poor dwarfs. That is the inherited ledger's artefact
+signature (a long-band-only excess) one band over from the W4-only rule, and
+τ ~ 0.3 at 185 K is diffuse emission in the WISE beam, not a reservoir. The
+population-level cirrus correlation could not be run at all on the lean path
+("flagged rows only"), so the statistical leak is untested.
+
+*Next decisive action for OSSUARY:* extend the ledger's long-band rule from
+W4-only to **W3/W4-only without a W1/W2 counterpart**, and carry E(B-V) for
+the flagged rows into the gauntlet so `cirrus_correlation_test` can run on the
+population rather than on 200 rows. A re-run with `max_followup 600` (to cover
+all 584 rather than 200) is queued.
+
+### RING (S63) built and green: rings around the dead, 2026-09-22
+
+`docs/ring.md`. The novelty is the **host class**, not the statistic: every
+warm-dust technosignature search on record ran over main-sequence stars, where
+an IR excess always has a natural reading. RING asks the Osmanov (2016, 2018)
+**300–700 K ring** question — a W1/W2 excess, above the frozen W3/W4 ceiling —
+of hosts that cannot have made the dust and cannot be inhabited: Gaia EDR3
+white dwarfs × AllWISE, ATNF pulsars × AllWISE/CatWISE2020 with
+offset-position controls, Kirkpatrick+2021 Y/late-T dwarfs in NEOWISE
+per-epoch W2, and Faherty+2016 free-floating planetary-mass objects.
+
+Two red tests on the branch were fixed on their merits rather than relaxed:
+
+- **The companion was invisible.** A 2500–3000 K companion lifts W1 and W2
+  almost together, so it failed the colour test that guards against an
+  SED-anchor error and was never flagged, fitted or *named* — a contaminant
+  that cannot be counted. There is now a second admission route on amplitude
+  (both bands ≥ χ_min and excess/photosphere ≥ 0.5, far beyond the 0.02–0.1
+  mag anchor error the colour test exists to catch), recorded as
+  `excess_route = "achromatic"`. It can only add contaminants: a 250–800 K
+  ring has W1−W2 > 1.3 mag by construction, so `ring_candidate` now also
+  requires `excess_route == "colour"`. Verified end to end — an injected
+  500 K/τ=0.02 ring, a 1300 K debris disk and a 2800 K companion in one sample
+  come out as `ring_band` (fit 480 K, the only candidate), `debris_disk`, and
+  `companion` (fit 2801 K, rejected `unresolved_companion`).
+- **The brown-dwarf population floor ate its own signal.** The NEOWISE
+  systematic floor is the population's median reduced χ², which only estimates
+  the error-underestimate when the sample is large enough that a genuine
+  variable cannot *be* the median. Below `pop_floor_min_n` (8) tested objects
+  the floor is not applied and the threshold falls back to `chi2_red_min`; the
+  summary records which applied.
+
+24/24 ring tests and 32/32 ossuary tests green, ruff clean.
+
 ### CRYPT built: the thermal and radar axes of the lunar-PSR artifact search, 2026-09-22
 
 S55 (`docs/crypt.md`). Every executed search for artifacts in permanently

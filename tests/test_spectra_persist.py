@@ -819,6 +819,51 @@ def test_recurrence_counts_other_sightlines_at_the_same_wavelength(tmp_path):
     assert empty["n_other_candidates_within_3A"] == [0]
 
 
+def _write_triage(tmp_path, rows):
+    tri = tmp_path / "results" / "spectra_triage"
+    tri.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(tri / "triaged_candidates.csv", index=False)
+
+
+def test_pixel_coincidence_finds_a_same_pixel_excess_and_not_a_false_one(tmp_path):
+    """A survey coadd is one common grid, so 'the same wavelength' is 'the same
+    PIXEL' for every spectrum in the release.  A detector or reduction feature
+    puts spikes at a fixed pixel; a source does not care which pixel it lands
+    on.  The test calibrates itself against pair separations of 3-10 pixels,
+    which carry the same clustering of sensitivity and none of the effect."""
+    rng = np.random.default_rng(4)
+    grid = 10.0 ** (np.arange(35500, 39500) * 1e-4)     # the SDSS coadd grid
+
+    # Scattered candidates: no excess at zero separation.
+    idx = rng.choice(grid.size, 160, replace=False)
+    _write_triage(tmp_path, [{"spec_id": f"s{k}", "wavelength": grid[i],
+                              "data_release": "SDSS-DR17", "ra": 10.0 + k * 0.5,
+                              "dec": 1.0 + k * 0.01} for k, i in enumerate(idx)])
+    clean = persist.pixel_coincidence(tmp_path)
+    assert clean["n_candidates"] == 160
+    assert abs(clean.get("z_0px", 0.0)) < 3.0, clean
+
+    # Twenty unrelated sightlines spiking on one pixel: a large excess.
+    rows = [{"spec_id": f"s{k}", "wavelength": grid[int(i)], "data_release": "SDSS-DR17",
+             "ra": 10.0 + k * 0.5, "dec": 1.0 + k * 0.01}
+            for k, i in enumerate(rng.choice(grid.size, 140, replace=False))]
+    rows += [{"spec_id": f"bad{k}", "wavelength": grid[2000], "data_release": "SDSS-DR17",
+              "ra": 200.0 + k, "dec": 20.0 + k} for k in range(20)]
+    _write_triage(tmp_path, rows)
+    dirty = persist.pixel_coincidence(tmp_path)
+    assert dirty["pairs_by_offset"][0] >= 190          # C(20,2) = 190
+    assert dirty["z_0px"] > 10.0, dirty
+
+    # Two spectra of the SAME object land on one pixel honestly: not counted.
+    _write_triage(tmp_path, rows[:140] + [
+        {"spec_id": "twinA", "wavelength": grid[2500], "data_release": "SDSS-DR17",
+         "ra": 123.4560, "dec": 5.6780},
+        {"spec_id": "twinB", "wavelength": grid[2500], "data_release": "SDSS-DR17",
+         "ra": 123.4561, "dec": 5.6780}])
+    twins = persist.pixel_coincidence(tmp_path)
+    assert twins["n_pairs_same_object_excluded"] >= 1
+
+
 def test_band_gap_context_names_the_heads_either_side():
     """All six lines left standing sit between two molecular band heads in the
     star's frame, where the flux of a cool star is a relative maximum -- the

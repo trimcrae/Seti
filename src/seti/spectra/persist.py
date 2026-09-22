@@ -2070,6 +2070,82 @@ def _recurrence_counts(root: Path, waves, spec_ids, tol_A: float = 3.0) -> dict:
                                            for x in d_near]}
 
 
+def pixel_coincidence(root: Path, release: str = "SDSS-DR17", max_offset: int = 10,
+                      baseline_from: int = 3) -> dict:
+    """Do unrelated sightlines put candidates on the SAME PIXEL more than chance?
+
+    A survey coadd lives on one common wavelength grid, so "the same
+    wavelength" means "the same pixel index" for every spectrum in the release.
+    A detector or reduction feature that produces narrow spikes does so at a
+    fixed pixel; a real source does not care which pixel it lands on.
+
+    The test calibrates itself: the number of pairs of candidates from
+    DIFFERENT sightlines separated by 0 pixels is compared with the number at
+    3-10 pixels, which carries the same clustering of the search's sensitivity
+    with wavelength but none of the same-pixel effect.  An excess at 0 (and at
+    1, for a feature that straddles two pixels) is instrumental.
+    """
+    import pandas as pd
+    out = {"release": release, "n_candidates": 0, "pairs_by_offset": {}, "baseline": None}
+    p = Path(root) / "results" / "spectra_triage" / "triaged_candidates.csv"
+    if not p.exists():
+        out["error"] = "no triaged_candidates.csv"
+        return out
+    try:
+        t = pd.read_csv(p)
+    except (OSError, ValueError) as exc:
+        out["error"] = repr(exc)[:200]
+        return out
+    t = t[t["data_release"].astype(str) == release].drop_duplicates(["spec_id", "wavelength"])
+    w = pd.to_numeric(t["wavelength"], errors="coerce").to_numpy(float)
+    sid = t["spec_id"].astype(str).to_numpy()
+    ra = pd.to_numeric(t.get("ra"), errors="coerce").to_numpy(float) \
+        if "ra" in t.columns else np.full(w.shape, np.nan)
+    dec = pd.to_numeric(t.get("dec"), errors="coerce").to_numpy(float) \
+        if "dec" in t.columns else np.full(w.shape, np.nan)
+    ok = np.isfinite(w) & (w > 0)
+    w, sid, ra, dec = w[ok], sid[ok], ra[ok], dec[ok]
+    if w.size < 20:
+        out["error"] = f"only {w.size} candidates for {release}"
+        return out
+    if release.upper().startswith(("SDSS", "BOSS")):
+        pix = np.round(np.log10(w) * 1e4).astype(np.int64)     # 1e-4 dex grid
+        out["grid"] = "log10 step 1e-4"
+    else:
+        pix = np.round(w / 0.8).astype(np.int64)               # DESI 0.8 A grid
+        out["grid"] = "linear step 0.8 A"
+    out["n_candidates"] = int(w.size)
+    # Two spectra of the SAME OBJECT land on the same pixel for an honest
+    # reason, so only genuinely different sightlines count.  2 arcsec, the same
+    # tolerance the second-epoch search uses.
+    tol = 2.0 / 3600.0
+    counts = np.zeros(max_offset + 1, np.int64)
+    n_same_object = 0
+    for i in range(w.size - 1):
+        diff = np.abs(pix[i + 1:] - pix[i])
+        near = np.zeros(diff.shape, bool)
+        if np.isfinite(ra[i]) and np.isfinite(dec[i]):
+            cosd = max(np.cos(np.radians(dec[i])), 1e-3)
+            near = (np.abs(dec[i + 1:] - dec[i]) <= tol) & \
+                   (np.abs(ra[i + 1:] - ra[i]) * cosd <= tol)
+        keep = (sid[i + 1:] != sid[i]) & ~near & (diff <= max_offset)
+        n_same_object += int(np.sum(near & (diff <= max_offset)))
+        diff = diff[keep]
+        if diff.size:
+            counts += np.bincount(diff, minlength=max_offset + 1)
+    out["n_pairs_same_object_excluded"] = n_same_object
+    out["pairs_by_offset"] = {int(k): int(v) for k, v in enumerate(counts)}
+    base = float(np.mean(counts[baseline_from:max_offset + 1]))
+    out["baseline"] = round(base, 2)
+    out["baseline_offsets"] = f"{baseline_from}-{max_offset}"
+    if base > 0:
+        for k in (0, 1):
+            out[f"excess_{k}px"] = int(counts[k] - round(base))
+            out[f"z_{k}px"] = round(float((counts[k] - base) / np.sqrt(base)), 2)
+        out["excess_0_or_1px"] = int(counts[0] + counts[1] - round(2 * base))
+    return out
+
+
 def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> dict:
     """Merge checkpoints into the flat table + summary; add SIMBAD and line IDs."""
     import pandas as pd
@@ -2252,6 +2328,8 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
         "verdict_counts": {k: int(v) for k, v in vcounts.items()},
         "route_counts": {k: int(v) for k, v in
                          tab["route"].astype(object).fillna("").value_counts().items()},
+        "pixel_coincidence": {rel: pixel_coincidence(root, rel)
+                              for rel in sorted(set(df["data_release"].astype(str)))},
         "n_with_another_candidate_within_3A": int(
             (pd.to_numeric(tab["n_other_candidates_within_3A"],
                            errors="coerce").fillna(0) > 0).sum()),

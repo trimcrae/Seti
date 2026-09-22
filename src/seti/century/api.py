@@ -25,6 +25,7 @@ The sandbox has no egress; every function here runs on a GitHub Actions runner.
 
 from __future__ import annotations
 
+import io
 import json
 import time as _time
 from dataclasses import dataclass, field
@@ -97,13 +98,43 @@ class ApiResponse:
         return d
 
 
+def csv_lines_to_frame(lines) -> pd.DataFrame:
+    """DR7's actual wire format: a JSON **array of CSV lines**, header first.
+
+    Verified on the runner, 2026-09-22 (run 35738717013): ``querycat`` answers
+    ``["ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,...", "N0303...,...",
+    ...]`` and ``queryexps`` answers
+    ``["series,platenum,...,exptime,expdate,epoch,...,limMagApass,...", ...]``.
+    Read as plain JSON this is a single column of strings called ``value``,
+    which is exactly what the first probe reported --- 18,429 plates and not
+    one usable column.
+    """
+    txt = "\n".join(str(x) for x in lines)
+    try:
+        df = pd.read_csv(io.StringIO(txt), engine="python", on_bad_lines="skip")
+    except Exception:                                     # noqa: BLE001
+        return pd.DataFrame({"value": list(lines)})
+    if not len(df.columns):
+        return pd.DataFrame({"value": list(lines)})
+    return df
+
+
+def _looks_like_csv(lines) -> bool:
+    if not lines or not isinstance(lines[0], str):
+        return False
+    head = lines[0]
+    return head.count(",") >= 2 and "\n" not in head
+
+
 def to_frame(obj) -> pd.DataFrame:
     """Coerce a JSON answer into a DataFrame, whatever its orientation.
 
-    Accepts a dict of equal-length column arrays, a list of row dicts, a list of
-    lists with a ``columns`` sibling, or a ``{"data": ...}`` / ``{"rows": ...}``
-    wrapper.  Anything else becomes an empty frame --- and the caller records
-    the head of the body so the shape can be read off the artefact.
+    Accepts a **list of CSV lines with a header first** (what DR7 actually
+    returns), a dict of equal-length column arrays, a list of row dicts, a list
+    of lists with a ``columns`` sibling, or a ``{"data": ...}`` /
+    ``{"rows": ...}`` wrapper.  Anything else becomes an empty frame --- and
+    the caller records the head of the body so the shape can be read off the
+    artefact.
     """
     if obj is None:
         return pd.DataFrame()
@@ -131,6 +162,8 @@ def to_frame(obj) -> pd.DataFrame:
             return pd.DataFrame()
         if isinstance(obj[0], dict):
             return pd.DataFrame(obj)
+        if _looks_like_csv(obj):
+            return csv_lines_to_frame(obj)
         if isinstance(obj[0], list):
             return pd.DataFrame(obj)
         return pd.DataFrame({"value": obj})
@@ -302,6 +335,6 @@ def dumps(obj, **kw) -> str:
 
 
 __all__ = ["API_BASE", "ApiResponse", "DASCHLAB_FILES", "DASCHLAB_RAW", "DOC_URLS",
-           "ENDPOINTS", "dumps", "fetch_text", "html_to_text", "jsonable",
+           "ENDPOINTS", "csv_lines_to_frame", "dumps", "fetch_text", "html_to_text", "jsonable",
            "lightcurve", "numeric", "pick_column", "post_variants", "querycat",
            "queryexps", "to_frame"]

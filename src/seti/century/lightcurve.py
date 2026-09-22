@@ -58,8 +58,32 @@ def year_to_mjd(year) -> np.ndarray:
     return MJD_J2000 + (np.asarray(year, dtype=float) - 2000.0) * 365.25
 
 
+def any_time_to_year(vals) -> np.ndarray:
+    """Decimal year from a column that may be a JD, an MJD or already a year.
+
+    DR7 speaks all three: ``queryexps`` returns ``epoch`` as a decimal year
+    (verified on the runner, run 35738717013) while the light curves carry a
+    JD-scale ``date``.  The scales are two and four orders of magnitude apart,
+    so the median decides without ambiguity --- and a column that is none of
+    them comes back as NaN rather than as a plausible wrong century.
+    """
+    v = np.asarray(vals, dtype=float)
+    finite = v[np.isfinite(v)]
+    if not finite.size:
+        return np.full(v.shape, np.nan)
+    med = float(np.nanmedian(finite))
+    if med > 2.0e6:                       # Julian Date
+        return mjd_to_year(v - JD_MJD_OFFSET)
+    if 1.0e4 < med < 1.0e6:               # Modified Julian Date
+        return mjd_to_year(v)
+    if 1700.0 < med < 2200.0:             # already a decimal year
+        return v
+    return np.full(v.shape, np.nan)
+
+
 def _time_to_mjd(vals: np.ndarray, colname: str) -> np.ndarray:
-    """Interpret a time column: JD-scale numbers (> 2.3e6) become MJD."""
+    """Interpret a time column: JD-scale numbers (> 2.3e6) become MJD, and a
+    decimal year (1700--2200) becomes an MJD too."""
     v = np.asarray(vals, dtype=float)
     name = colname.lower()
     finite = v[np.isfinite(v)]
@@ -67,6 +91,8 @@ def _time_to_mjd(vals: np.ndarray, colname: str) -> np.ndarray:
         return v
     if finite.size and np.nanmedian(finite) > 2.0e6:
         return v - JD_MJD_OFFSET
+    if finite.size and 1700.0 < float(np.nanmedian(finite)) < 2200.0:
+        return year_to_mjd(v)
     return v
 
 
@@ -429,5 +455,5 @@ def smear_factor(freq_per_day, exptime_min) -> np.ndarray:
     return out
 
 
-__all__ = ["CenturyBlock", "CenturyLC", "annual_table", "calendar_blocks", "from_api_frame",
-           "mjd_to_year", "smear_factor", "year_to_mjd"]
+__all__ = ["CenturyBlock", "CenturyLC", "annual_table", "any_time_to_year", "calendar_blocks",
+           "from_api_frame", "mjd_to_year", "smear_factor", "year_to_mjd"]

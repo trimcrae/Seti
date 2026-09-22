@@ -192,6 +192,49 @@ def test_to_frame_accepts_columnar_and_row_json():
     assert len(to_frame(None)) == 0 and len(to_frame("junk")) == 0
 
 
+def test_to_frame_reads_dr7s_array_of_csv_lines():
+    """DR7's real wire format, verified on the runner (run 35738717013).
+
+    Read as plain JSON this is one column of strings called ``value``, and the
+    first probe duly reported 18,429 plates with not one usable column.
+    """
+    from seti.century.lightcurve import any_time_to_year
+    from seti.century.targets import normalise_refcat, plate_density  # noqa: F401
+
+    cat = ["ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,"
+           "pm_ra_masyr,pm_dec_masyr",
+           "N030330195374,11030330195374,141878532,291.355448,42.79008,2000.0,15.54,-1.48,0,0",
+           "N030330195375,11030330195375,141878533,291.366310,42.78435,2000.0,7.60,0.30,3,4"]
+    df = to_frame(cat)
+    assert list(df.columns)[:5] == ["ref_text", "ref_number", "gsc_bin_index", "ra_deg",
+                                    "dec_deg"]
+    n = normalise_refcat(df)
+    assert len(n) == 2 and int(n["gsc_bin_index"].iloc[1]) == 141878533
+    assert abs(float(n["mag_cat"].iloc[1]) - 7.60) < 1e-9
+    assert abs(float(n["pm_total_masyr"].iloc[1]) - 5.0) < 1e-9
+
+    exps = ["series,platenum,scannum,exptime,expdate,epoch,limMagApass",
+            "a,1,0,45.0,1899-07-04T00:00:00,1899.50,14.2",
+            "mc,2,0,60.0,1975-07-04T00:00:00,1975.50,15.1"]
+    e = to_frame(exps)
+    assert "epoch" in e.columns and "limMagApass" in e.columns
+    yr = any_time_to_year(e["epoch"].to_numpy(dtype=float))
+    assert abs(yr[0] - 1899.5) < 1e-6 and abs(yr[1] - 1975.5) < 1e-6
+    # A wrapper around the same lines is unwrapped first.
+    assert list(to_frame({"data": cat}).columns) == list(df.columns)
+
+
+def test_any_time_to_year_tells_jd_mjd_and_year_apart():
+    from seti.century.lightcurve import any_time_to_year, year_to_mjd
+
+    mjd = year_to_mjd(np.array([1899.5, 1975.5]))
+    assert np.allclose(any_time_to_year(mjd), [1899.5, 1975.5], atol=1e-6)
+    assert np.allclose(any_time_to_year(mjd + 2400000.5), [1899.5, 1975.5], atol=1e-6)
+    assert np.allclose(any_time_to_year(np.array([1899.5, 1975.5])), [1899.5, 1975.5])
+    # Something that is none of the three is NaN, not a plausible wrong century.
+    assert not np.isfinite(any_time_to_year(np.array([3.0, 4.0]))).any()
+
+
 class _FakeResponse:
     def __init__(self, status: int, payload=None, text: str = ""):
         self.status_code = status

@@ -26,7 +26,7 @@ import pandas as pd
 
 from ..knell.acquire import AcquisitionLog, fetch_gcvs_region, fetch_vsx_region
 from .api import numeric, pick_column, querycat, queryexps
-from .lightcurve import mjd_to_year
+from .lightcurve import any_time_to_year
 from .step import MENZEL_GAP_END, MENZEL_GAP_START
 from .vet import is_lpv_type, is_periodic_type
 
@@ -40,7 +40,14 @@ REF_COLS_NDET = ("n_detections", "ndet", "ndets", "nobs", "n_obs", "num_detectio
 REF_COLS_PMRA = ("pm_ra_masyr", "pmra", "pm_ra")
 REF_COLS_PMDEC = ("pm_dec_masyr", "pmdec", "pm_dec")
 REF_COLS_COLOR = ("color", "colour", "b_v", "bv")
-EXP_TIME_COLS = ("date_jd", "jd", "time", "date", "hjd", "mjd")
+# Verified against a live ``queryexps`` answer on the runner (run 35738717013):
+#   series,platenum,scannum,mosnum,expnum,solnum,class,ra,dec,exptime,expdate,
+#   epoch,wcssource,scandate,mosdate,centerdist,edgedist,limMagApass,
+#   limMagAtlas,medianColortermApass,medianColortermAtlas,nMagd...
+# ``epoch`` is a decimal year; ``expdate`` is a timestamp string.  ``epoch``
+# comes first because it is numeric and unambiguous.
+EXP_TIME_COLS = ("epoch", "date_jd", "jd", "mjd", "hjd", "time", "expdate", "date")
+EXP_LIM_COLS = ("limmagapass", "limmagatlas", "limiting_mag", "limmag")
 
 
 def field_tag(ra: float, dec: float, radius_deg: float) -> str:
@@ -62,15 +69,23 @@ def plate_density(ra: float, dec: float, log: AcquisitionLog | None = None, **kw
     df = r.frame
     out["n_plates"] = int(len(df))
     tcol = pick_column(df, EXP_TIME_COLS)
+    out["time_column"] = str(tcol) if tcol is not None else None
     if tcol is not None:
-        t = numeric(df, tcol)
-        t = t[np.isfinite(t)]
-        if t.size:
-            jd = t - 2400000.5 if np.nanmedian(t) > 2.0e6 else t
-            yr = mjd_to_year(jd)
+        yr = any_time_to_year(numeric(df, tcol))
+        yr = yr[np.isfinite(yr)]
+        if yr.size:
             out["year_min"], out["year_max"] = float(np.min(yr)), float(np.max(yr))
             out["n_pre_gap"] = int(np.sum(yr < MENZEL_GAP_START))
             out["n_post_gap"] = int(np.sum(yr >= MENZEL_GAP_END))
+            out["n_in_gap"] = int(np.sum((yr >= MENZEL_GAP_START) & (yr < MENZEL_GAP_END)))
+    lcol = pick_column(df, EXP_LIM_COLS)
+    out["lim_column"] = str(lcol) if lcol is not None else None
+    if lcol is not None:
+        lm = numeric(df, lcol)
+        lm = lm[np.isfinite(lm)]
+        if lm.size:
+            out["lim_median"] = float(np.median(lm))
+            out["lim_p90"] = float(np.percentile(lm, 90))
     scol = pick_column(df, ("series",))
     if scol is not None:
         vals, cnt = np.unique(df[scol].astype(str).to_numpy(), return_counts=True)

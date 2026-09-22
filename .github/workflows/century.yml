@@ -158,6 +158,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f -- results/century/probe/probe.json || echo "no probe.json"
           git add -f -- results/century/probe/flag_bits.json || echo "no flag_bits.json"
+          git add -f -- results/century/probe/flag_bit_evidence.json || echo "no flag evidence"
           git diff --cached --name-only
           if git diff --cached --quiet; then
             echo "No probe changes to commit."

@@ -284,6 +284,26 @@ def stage_probe(conf: dict, out_root: Path) -> dict:
     a, b = resolve_flagdefs(conf, src.get("lightcurves.py"))
     rep["flag_bits"] = {"aflags": a.as_dict(), "bflags": b.as_dict()}
     _write_json(out_dir / "flag_bits.json", rep["flag_bits"])
+    # When the bits did not parse, commit the EVIDENCE rather than a silent
+    # degradation: the flag-bearing lines of every daschlab file fetched, and
+    # of the DR7 light-curve column documentation.  The bits can then be read
+    # off the artefact and put into config/century.yaml as the fallback,
+    # instead of guessing them from memory.
+    if not (a.available or b.available):
+        ev: dict = {}
+        for fn, text in src.items():
+            hits = [ln.rstrip()[:200] for ln in text.splitlines()
+                    if re.search(r"(?i)flag", ln)]
+            if hits:
+                ev[f"daschlab::{fn}"] = hits[:200]
+        doc_txt_path = out_dir / "docs" / "lc_columns.txt"
+        if doc_txt_path.exists():
+            dt = doc_txt_path.read_text()
+            ev["doc::lc_columns"] = [ln.rstrip()[:200] for ln in dt.splitlines()
+                                     if re.search(r"(?i)flag", ln)][:200]
+        rep["flag_bit_evidence"] = ev
+        rep["flag_bits_degraded"] = True
+        _write_json(out_dir / "flag_bit_evidence.json", ev)
     if "lightcurves.py" in src:
         api_lines = [ln.strip() for ln in src["lightcurves.py"].splitlines()
                      if re.search(r"(?i)api|url|requests\.|payload|json=|refcat", ln)]

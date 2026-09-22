@@ -65,12 +65,14 @@ empty cell turns an identifier column into `float64` while the light curve's
 is `Int64` — a join that matches nothing and reads as a DASCH coverage gap.
 Both sides are now normalised, with a round-trip test.
 
-In flight: run **35745660073**, `stages=full`, 4 shards, 60 variables + 60
+In flight: run **35748748365**, `stages=full`, 4 shards, 60 variables + 60
 bright per field over the six configured DASCH-dense fields (~720 stars),
-acquire budget 7200 s, screen budget 9000 s. Dispatched 11:12 EDT and **still
-queued 80 minutes later** — its `probe` job has never started. No
-`results/century/summary.json` exists yet; the channel has produced no sky
-statement.
+acquire budget 7200 s, screen budget 9000 s, dispatched 11:38 EDT. It replaces
+run 35745660073, which was dispatched at 11:12 EDT and was **still queued 105
+minutes later** without its `probe` job ever starting — a slot that would have
+been spent re-learning a schema already committed. The new run's first job is
+`targets`. No `results/century/summary.json` exists yet; the channel has
+produced no sky statement.
 
 **A `needs:` edge costs a whole queue wait, not a job.** On a starved queue
 every job waits for a runner separately, so `full` (probe → targets → sweep →

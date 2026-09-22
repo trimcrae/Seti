@@ -10,15 +10,34 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
-### SEXTANT: the search is built and dispatched, 2026-09-22
+### SEXTANT: dispatched uncapped over all 156,823 objects, 2026-09-22
 
 SEXTANT asks LOOM's question — is a minor planet accelerating in a way
 sunlight cannot supply — on Gaia's SSO astrometry, where the residual is
 milliarcseconds rather than arcseconds. Until today only the acquisition probe
 had ever run. Now the whole pipeline exists and is on a runner:
 `.github/workflows/sextant.yml`, `probe` → N `fit` shards → `assess`, wired to
-`python -m seti.cli sextant`. First dispatch: run **35739803943** on
-`claude/goap-sextant`, 8 shards, capped at 800 objects.
+`python -m seti.cli sextant`.
+
+**In flight: run 35744966028** on `claude/goap-sextant` — `gaiafpr`,
+`max_objects: 0` (every numbered object in the release), 4 shards, a 290-minute
+in-job clock inside a 330-minute job. It supersedes run 35739803943 (8 shards,
+capped at 800 objects), which was cancelled: it had sat queued for 45 minutes
+at a commit that predated the independent Greenberg+2020 control, and 16
+concurrent shards would have starved the other 17 channels for no gain.
+
+Uncapped is now the *safer* choice, not the riskier one, because of two
+changes made before the dispatch. A shard works its **positive controls
+first** and then the rest in a seeded shuffle, so a shard that never finishes
+still has a complete control set — ascending `number_mp` would have reached the
+NEAs last and left the `A2` distribution with nothing to check itself against
+— and any truncation is an unbiased random subsample rather than a sample of
+large main-belt bodies. And the fit stage runs on a clock *inside* the job's
+cap, stopping between chunks, because a job killed by `timeout-minutes` is
+cancelled and a cancelled job does not reliably upload its artifacts. A
+stopped shard reports `OK_PARTIAL_BUDGET` with the chunks it did not attempt,
+and `summary.json`'s `coverage` block says how much of the assigned sample was
+reached, so unmeasured objects can never be read as a null.
 
 **The probe's decisive finding, written down.** `epoch` is **TCB**, and it is
 derived rather than assumed. The probe measured `epoch_utc − epoch` as
@@ -45,10 +64,14 @@ the Gaia-only fit does not return these in sign and magnitude, nothing else in
 the output is believed, and `assess` stamps `ESTIMATOR_FAILS_CONTROLS` onto the
 run verdict rather than reporting the exceedances.
 
-**What to do next:** read run 35739803943's `results/sextant/controls.json`
-before anything else in `summary.json`. If the controls recover, re-dispatch
-uncapped (`max_objects: 0`, 16 shards) over all 156,823 objects in
-`gaiafpr.sso_observation`.
+**What to do next:** read run 35744966028's `results/sextant/controls.json`
+before anything else in `summary.json` — `verdict`, `n_measured` and
+`recovered_fraction`. If it reads `CONTROLS_FAILED_SIGN` or
+`CONTROLS_INCONSISTENT`, the exceedance list is a property of the estimator and
+`assess` will already have stamped `ESTIMATOR_FAILS_CONTROLS` on the run
+verdict; fix the fit before reading anything else. Only if the controls recover
+does `coverage` (how many of the assigned objects were actually reached),
+`a2_distribution` and the population verdict mean anything.
 
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 

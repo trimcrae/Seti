@@ -437,6 +437,31 @@ the `GROUP BY` on them errored on the service, and the per-object census that
 did return shows 5–7 distinct values per object with a strong mode at `1`
 (235/382 for Ceres, 369/548 for Pallas). Nothing is hard-coded as "good".
 
+Two things about *why* it errored, both worth carrying forward because both
+are facts about the service and the tables rather than about this code.
+
+**The error was the `ORDER BY`, not the column.** Every failed query ends
+`ORDER BY COUNT(*) DESC`, and the parser's message points at the `COUNT` token
+("Encountered \" \"COUNT\" \" at line 1, column 127. Was expecting one of:
+`<REGULAR_IDENTIFIER>`, `<UNSIGNED_INTEGER>` …"). The Gaia TAP ADQL parser will
+not take an aggregate *expression* in `ORDER BY`; it wants a column alias or an
+ordinal. The census queries that carried no `ORDER BY` returned normally on the
+same columns of the same tables. So the distributions are one `ORDER BY n`
+away, not blocked.
+
+**The column is array-valued in DR3 and scalar in FPR, and that is not
+cosmetic.** `GROUP BY number_mp, astrometric_outcome_ccd` returns, from
+`gaiadr3.sso_observation`, groups whose `flag_value` is a **ten-element list**
+(`[12, 1, 1, 1, 1, 1, 1, 1, 1, 11]` and so on — one entry per AF CCD of the
+transit), with group counts of 5–16. From `gaiafpr.sso_observation` the same
+query returns **scalars** (`1`, `11`, `12`, `32`, `35`, `39`) with group counts
+of 2–568. The schema calls both `int`, so only the data show it. The
+consequence is that §6's rejection-pattern observable can be read directly from
+FPR and only after unpacking the array from DR3 — which is a further reason,
+beyond the 66-month arc, that `release: gaiafpr` is the default. `is_rejected`
+and `fov` exist in FPR alone, so the rejection observable is an FPR observable
+either way.
+
 ---
 
 ## 7. Unsettled assumptions — the probe list
@@ -544,6 +569,37 @@ object carrying a JPL non-gravitational solution **first** and fills the
 remainder with a seeded random draw, so `--max-objects 800` is a small run that
 still exercises the estimator against the published Yarkovsky detections rather
 than a small run that quietly has nothing to check itself against.
+
+### What an unfinished shard leaves behind
+
+An uncapped run is ~1.6×10⁵ objects and will not finish inside one job however
+it is sliced, so the design question is not whether a shard completes but what
+it has already paid for when it stops. Two mechanisms, and both are about
+that.
+
+`order_objects` fixes the **work order** inside a shard: the controls first,
+then the rest in a seeded shuffle. Ascending `number_mp` — the obvious order —
+fails twice. The controls are overwhelmingly NEAs and therefore carry high
+numbers, so they would be reached last, and a truncated shard would report an
+`A2` distribution with *no control on it*; by this channel's own rule nothing
+in such an output is believed, which makes the whole run worthless rather than
+partial. Ascending number is also, to a good approximation, descending size,
+so a truncated run in that order returns a sample of large main-belt bodies
+whose element and pole distributions are not the catalogue's — the population
+tests in §6 would then be run on a sample selected by the very thing that ran
+out of time. The shuffle makes any prefix an unbiased random subsample. It is
+seeded on `seed + shard`, so a re-run does the same work in the same order and
+hits the per-chunk parquet cache.
+
+`--budget-minutes` is a clock **inside** the job's own cap. A job killed by
+`timeout-minutes` is *cancelled*, and a cancelled job does not reliably run its
+`if: always()` artifact upload — so an overrun would discard every chunk the
+shard had already fitted and checkpointed. The fit stage therefore stops itself
+between chunks, records `budget_stop` (`after_chunks`, `of_chunks`,
+`elapsed_minutes`) and returns `OK_PARTIAL_BUDGET`. `assess` carries that into
+`summary.json`'s `coverage` block as `n_assigned`, `n_shards_budget_stopped`
+and `shard_verdicts`, so the objects never reached read as **unmeasured** and
+never as a null. The workflow default is 290 minutes inside a 330-minute job.
 
 ## 10. Related channels
 

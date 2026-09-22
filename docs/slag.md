@@ -211,18 +211,41 @@ element it carries, including H, He and elements outside this channel's list,
 so a row with a detection of one of those is undercounted here by
 construction (2,381 of 3,475 agree exactly, the rest low by 1–4).
 
-**The PyllutedWD grids were fetched and silently ignored.** All twelve
-`data/timescales_*.csv` files downloaded with status OK, and
-`acquire.json["timescales"]["parsed"]` was `{}` — the parser recognised none
-of them and said nothing about why, so the run looked healthy while quietly
-using a different timescale source. A file that does not parse now records
-`parse_diagnosis` (its row keys, row widths, the temperature grid it found and
-which of the three conditions failed) and keeps its raw text under
-`results/slag/data/timescales_raw_*`, so the real layout is readable from the
-committed artifacts without refetching. This costs the channel nothing
-scientifically — the source actually used, PEWDD's own per-star `SinTime*`
-columns, is measured on these very stars and is the better one (below) — but
-an unexplained silent fallback is not acceptable in the record.
+**The PyllutedWD grids were fetched and silently ignored — and they key their
+rows by atomic number.** All twelve `data/timescales_*.csv` files downloaded
+with status OK, and `acquire.json["timescales"]["parsed"]` was `{}`: the
+parser recognised none of them and said nothing about why, so the run looked
+healthy while quietly using a different timescale source. A file that does not
+parse now records `parse_diagnosis` and keeps its raw text under
+`results/slag/data/timescales_raw_*` — and that diagnosis named the cause at
+once. The grids are written
+
+```
+T:,5000,5250,...          the temperature grid
+qcvz:,-6.257,...          the convection-zone mass fraction
+2,5.63,5.426,...          then ONE ROW PER ATOMIC NUMBER, 2 (He) through 30 (Zn)
+```
+
+not one row per element symbol. With `Z_SYMBOL` the parser reads all 29
+elements from each of the ten grids (H and He atmospheres, log g 7.5/8.0/8.5,
+with and without convective overshoot).
+
+**The two sources of the sinking lever agree.** That gives the channel an
+independent check it has never had: the fetched grids against the per-star
+`SinTime*` columns PEWDD publishes *for these very stars*
+(`summary.json["timescale_cross_check"]`). Over the 43 served rows that carry
+Teff, log g and a Ca timescale:
+
+| grid family | comparisons | median offset | rms | IQR |
+|---|---|---|---|---|
+| with overshoot | 406 | **+0.014 dex** | 0.104 | 0.087 |
+| without overshoot | 53 | **−0.029 dex** | 0.131 | 0.054 |
+
+Neither family is preferred by the data, and both reproduce the catalogue's
+own numbers to well inside the 0.15 dex systematic this channel already
+carries. The source in use stays PEWDD's own columns and the library built
+from them — now because that was measured to be as good as the models, not
+because it happened to come first in a priority list.
 
 **The sinking timescales are in the catalogue.** PEWDD publishes τ_Z per star
 per element (`SinTimeCa`, …) for that star's own structure. Where a row has

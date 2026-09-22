@@ -910,3 +910,48 @@ def test_limit_convention_check_verifies_and_refuses_to_pretend(tmp_path):
     none = acq.verify_limit_convention(bare)
     assert none["checked"] is False and none["status"] == "COUNT_COLUMNS_NOT_SERVED"
     assert acq.verify_limit_convention(tmp_path / "does_not_exist.csv")["checked"] is False
+
+
+def test_timescale_grid_rows_keyed_by_atomic_number_parse():
+    """PyllutedWD writes one row per ELEMENT NUMBER, not per symbol."""
+    from seti.slag.sinking import parse_timescale_table
+    header = "T:," + ",".join(str(t) for t in range(5000, 5000 + 250 * 5, 250))
+    lines = [header, "qcvz:," + ",".join(["-7.0"] * 5)]
+    for z, base in ((12, 5.2), (14, 5.1), (20, 5.0), (26, 4.9)):   # Mg Si Ca Fe
+        lines.append(f"{z}," + ",".join(str(base - 0.1 * k) for k in range(5)))
+    tab = parse_timescale_table("\n".join(lines))
+    assert tab is not None
+    assert {"Teff", "Mg", "Si", "Ca", "Fe"} <= set(tab.columns)
+    assert len(tab) == 5
+    # values were log10 and come back linear
+    assert tab["Ca"].iloc[0] == pytest.approx(10.0 ** 5.0, rel=1e-6)
+    assert np.log10(tab["Mg"].iloc[0] / tab["Ca"].iloc[0]) == pytest.approx(0.2, abs=1e-6)
+    # a grid with no element-like and no numeric rows still refuses
+    assert parse_timescale_table("T:,1,2,3,4\nqcvz:,1,2,3,4\n") is None
+
+
+def test_grid_vs_published_timescales_recovers_a_known_offset():
+    from seti.slag.sinking import grid_tag, grid_vs_published_timescales, parse_timescale_table
+    teffs = list(range(10000, 14001, 1000))
+    lines = ["T:," + ",".join(str(t) for t in teffs),
+             "qcvz:," + ",".join(["-7.0"] * len(teffs))]
+    # Ca, Mg, Fe: the grid says Mg/Ca = +0.2 (three rows, the parser's minimum)
+    for z, base in ((20, 5.0), (12, 5.2), (26, 4.9)):
+        lines.append(f"{z}," + ",".join([str(base)] * len(teffs)))
+    tab = parse_timescale_table("\n".join(lines))
+    grids = {("H", 8.0, 0): tab}
+    # the catalogue publishes Mg/Ca = +0.25 for every star: a +0.05 dex offset
+    n = 12
+    df = pd.DataFrame({"Teff": [12000.0] * n, "logg": [8.0] * n, "atmosphere": ["H"] * n,
+                       "SinTimeCa": [1.0e12] * n, "SinTimeMg": [10.0 ** 0.25 * 1.0e12] * n})
+    roles = {"teff": "Teff", "logg": "logg", "atm": "atmosphere",
+             "sinking_time_columns": {"Ca": "SinTimeCa", "Mg": "SinTimeMg"}}
+    got = grid_vs_published_timescales(grids, df, roles)
+    assert got["compared"] and got["n_rows_compared"] == n
+    assert got["overshoot_0"]["n"] == n
+    assert got["overshoot_0"]["median_offset_dex"] == pytest.approx(0.05, abs=1e-6)
+    assert got["overshoot_0"]["rms_dex"] == pytest.approx(0.05, abs=1e-6)
+    # no grids at all is reported, not silently skipped
+    assert grid_vs_published_timescales({}, df, roles)["compared"] is False
+    assert grid_tag("data/timescales_He_g850_ov1.csv") == {
+        "atmosphere": "He", "logg": 8.5, "overshoot": 1, "file": "timescales_He_g850_ov1.csv"}

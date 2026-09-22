@@ -60,7 +60,14 @@ from .pairs import (
     pair_residuals,
     refinery_flags,
 )
-from .sinking import SOURCE_SCALING, TimescaleModel, relative_timescale_library
+from .sinking import (
+    SOURCE_SCALING,
+    TimescaleModel,
+    grid_tag,
+    grid_vs_published_timescales,
+    parse_timescale_table,
+    relative_timescale_library,
+)
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_INFO_LIMITED = "INFORMATION_LIMITED_ONLY"
@@ -315,6 +322,28 @@ def _check_limit_convention(out_dir: Path, cfg: dict) -> dict:
 
 
 
+def _load_fetched_grids(out_dir: Path) -> dict:
+    """Every PyllutedWD timescale grid this run has on disk, tagged by its name.
+
+    Both the parsed copies and the raw ones the diagnosis kept are read, so a
+    run whose acquire stage predates the Z-keyed parser can still be checked
+    from its committed artifacts.
+    """
+    grids: dict = {}
+    for p in sorted(glob.glob(str(out_dir / "data" / "timescales_*.csv"))):
+        try:
+            text = Path(p).read_text()
+        except Exception:                                     # noqa: BLE001
+            continue
+        tab = parse_timescale_table(text)
+        if tab is None or "Teff" not in tab.columns:
+            continue
+        tag = grid_tag(p)
+        grids[(tag["atmosphere"], tag["logg"], tag["overshoot"])] = tab
+    return grids
+
+
+
 def _timescale_model(fam, out_dir: Path, *, df=None, roles: dict | None = None) -> TimescaleModel:
     """The sinking lever, from the best source this run reached.
 
@@ -532,6 +561,15 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
     out["timescale_library"] = tsm.library_meta
     out["limit_bookkeeping"] = _limit_bookkeeping(panels)
     out["limit_convention_check"] = _check_limit_convention(out_dir, cfg)
+    # The sinking lever's two independent sources, checked against each other:
+    # the fetched Koester/PyllutedWD grids, and the per-star SinTime* columns
+    # PEWDD publishes for these very stars.
+    grids = _load_fetched_grids(out_dir)
+    out["timescale_grids"] = [{"atmosphere": k[0], "logg": k[1], "overshoot": k[2],
+                               "n_teff": int(len(v)),
+                               "elements": [c for c in v.columns if c != "Teff"]}
+                              for k, v in sorted(grids.items(), key=lambda kv: str(kv[0]))]
+    out["timescale_cross_check"] = grid_vs_published_timescales(grids, df, roles)
     # The shard unit and the "other sources for this object" set are the
     # reconciled OBJECT (sky position), not the name a given paper used.
     by_key: dict[str, list[Panel]] = {}
@@ -730,6 +768,8 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     ts_source = None
     ts_library: dict = {}
     obj_grouping: dict = {}
+    ts_cross: dict = {}
+    ts_grids: list = []
     measured_rep: dict = {}
     limit_book: dict = {}
     limit_convention: dict = {}
@@ -743,6 +783,8 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
                            "n_panels": d.get("n_panels"), "n_objects": d.get("n_objects"),
                            "provenance": d.get("provenance"), "error": d.get("error")})
         ts_source = d.get("timescale_source", ts_source)
+        ts_cross = d.get("timescale_cross_check") or ts_cross
+        ts_grids = d.get("timescale_grids") or ts_grids
         obj_grouping = d.get("object_grouping") or obj_grouping
         measured_rep = d.get("measured_meteorites") or measured_rep
         ts_library = d.get("timescale_library") or ts_library
@@ -914,6 +956,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         "code": _code_provenance(),
         "acquisition": acq, "timescale_source": ts_source,
         "timescale_library": ts_library, "limit_bookkeeping": limit_book,
+        "timescale_cross_check": ts_cross, "timescale_grids": ts_grids,
         "limit_convention_check": limit_convention,
         "object_grouping": obj_grouping,
         "measured_meteorites": measured_rep,

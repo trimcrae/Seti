@@ -55,6 +55,9 @@ from .physics import BAND_WAVELENGTH_UM, Measurement
 from .tables import TargetTable, normalise_name
 
 STATUS_NOT_ATTEMPTED = "DISCOVERY_NOT_ATTEMPTED"
+#: discovery started but ran out of its own clock: not a statement about the
+#: archive, and never to be read as "the catalogue holds nothing usable"
+STATUS_TRUNCATED = "DISCOVERY_TRUNCATED_BY_BUDGET"
 
 ROLE_PATTERNS: dict[str, list[str]] = {
     "hd": [r"^hd$", r"^hd_?(id|num(ber)?)$", r"^hdn$"],
@@ -74,7 +77,7 @@ ROLE_PATTERNS: dict[str, list[str]] = {
     "flag": [r"^n_?f_?cse$", r"^flag$", r"^det(ection)?$", r"^f_?det$", r"^note$", r"^n_?f$",
              r"^l_?f_?cse$", r"^l_?excess$", r"^l_?null$", r"^status$", r"^class$", r"^exc_?flag$"],
     "limit_flag": [r"^l_?f_?cse$", r"^l_?f$", r"^l_?excess$", r"^l_?null$", r"^l_?fdisk$",
-                   r"^l_?exc$"],
+                   r"^l_?exc$", r"^l_?p$", r"^l_?pol$", r"^l_?p_?ppm$"],
     "polarisation": [r"^p$", r"^pol$", r"^p_?pct$", r"^ppm$", r"^p_?ppm$", r"^q$", r"^u$",
                      r"^pol_?deg$", r"^p_?bar$"],
     "zodi": [r"^z$", r"^zodi$", r"^n_?zodi$", r"^zodis$", r"^z_?level$"],
@@ -171,11 +174,28 @@ class DiscoveredTable:
 
 def discover_table(name: str, preferred: str, role: str = "excess", keywords=(), *,
                    query_fn=None, log: AcquisitionLog | None = None,
-                   overrides: dict | None = None, fetch_fn=None) -> DiscoveredTable:
+                   overrides: dict | None = None, fetch_fn=None,
+                   budget_s: float | None = None) -> DiscoveredTable:
     """List every table under ``preferred``, score each for ``role``, fall back
     to a keyword search of the table descriptions.  The listing degrades to
-    the ReadMe inventory when no TAP host answers (``list_tables``)."""
+    the ReadMe inventory when no TAP host answers (``list_tables``).
+
+    ``budget_s`` is a cooperative clock on THIS table's discovery, checked
+    between calls.  Without it one catalogue can eat a whole job: the route
+    ladder (TAP mirrors, then ASU, then astroquery, each retrying) runs once
+    per route, and then a column query plus a row count runs once per table in
+    the catalogue, so a slow VizieR turns a "cheap" probe into hours.  The
+    caller's overall budget only decides whether to START a table; this
+    decides when to stop one.  Whatever was scored before the clock ran out is
+    kept -- a partial scoreboard is a real result -- and the status says the
+    discovery was truncated rather than that the catalogue is empty.
+    """
     query_fn = query_fn or tap_query
+    t_start = time.monotonic()
+
+    def _out_of_time() -> bool:
+        return budget_s is not None and (time.monotonic() - t_start) > float(budget_s)
+
     board: list[dict] = []
     best: DiscoveredTable | None = None
     best_key: tuple = (-1, -1)
@@ -186,7 +206,11 @@ def discover_table(name: str, preferred: str, role: str = "excess", keywords=(),
     if keywords:
         routes.append(("keyword", lambda: search_tables(keywords, query_fn=query_fn)))
     any_failed = False
+    truncated = False
     for route, lister in routes:
+        if _out_of_time():
+            truncated = True
+            break
         try:
             tabs = lister()
         except Exception as exc:                          # noqa: BLE001
@@ -204,6 +228,9 @@ def discover_table(name: str, preferred: str, role: str = "excess", keywords=(),
                               "route_attempts": list(tabs.attrs.get("attempts", []))})
         listing_route = str(tabs.attrs.get("route", "tap"))
         for _, row in tabs.iterrows():
+            if _out_of_time():
+                truncated = True
+                break
             t = unquote_table(row["table_name"])
             raw = row["columns"] if "columns" in tabs.columns else None
             known = [str(c) for c in raw] if isinstance(raw, (list, tuple)) else []
@@ -235,15 +262,27 @@ def discover_table(name: str, preferred: str, role: str = "excess", keywords=(),
                     best_key = key
                     best = DiscoveredTable(name, role, t, cols, roles, entry.get("n_rows"),
                                            STATUS_OK, route=route)
-        if best is not None:
+        if best is not None or truncated:
             break
     if best is None:
+        # A truncated discovery is NOT "the catalogue holds nothing usable":
+        # it is "this run did not finish looking", and it must not read as a
+        # statement about the archive.
+        if truncated:
+            return DiscoveredTable(
+                name, role, None, [], {}, None, STATUS_TRUNCATED, route="none",
+                scoreboard=board,
+                note=f"discovery budget {budget_s:.0f}s exhausted after "
+                     f"{len(board)} table(s); not a statement about {preferred!r}")
         status = STATUS_FAILED if any_failed and not board else STATUS_ZERO
         return DiscoveredTable(name, role, None, [], {}, None, status, route="none",
                                scoreboard=board,
                                note=f"no table under {preferred!r} or the keyword search "
                                     f"exposes the roles a {role} table needs")
     best.scoreboard = board
+    if truncated:
+        best.note = (f"discovery budget {budget_s:.0f}s exhausted after {len(board)} "
+                     "table(s); a better-scoring table may not have been reached")
     if best.n_rows == 0:
         best.status = STATUS_ZERO
     return best
@@ -379,6 +418,102 @@ def fetch_excess_table(disc: DiscoveredTable, spec: dict, targets: TargetTable, 
             origin="archive", survey=disc.name))
         record["n_measurements"] += 1
     record["unmatched"] = record["unmatched"][:20]
+    return out, record
+
+
+def fetch_polarimetry_table(disc: DiscoveredTable, spec: dict, targets: TargetTable, *,
+                            query_fn=None, log: AcquisitionLog | None = None,
+                            max_rows: int = 5000) -> tuple[dict[str, dict], dict]:
+    """Rows of a discovered polarimetry table as per-star records.
+
+    The polarimetric null is context, NOT a term in the likelihood ratio, and
+    the distinction is physical rather than a convenience.  Both families the
+    statistic compares -- a grey body at ~1500 K and sub-micron grains at their
+    sublimation temperature -- emit THERMALLY at H and K (1500 K peaks at
+    ~1.9 um), and thermal emission from an optically thin, randomly oriented
+    swarm is essentially unpolarised in both cases.  A polarisation limit
+    therefore constrains the SCATTERED-light fraction, which is a different
+    axis from the emissivity law, and folding it into chi^2 would let a
+    constraint that does not discriminate between the families masquerade as
+    evidence that does.  It is carried per star so it can be attached to any
+    survivor, where a scattering constraint is genuinely informative.
+
+    Unlike the sample, stars this table lists that the targets asset does not
+    are NOT added: a polarimetric null on a star with no measured infrared
+    excess says nothing this channel can use.
+    """
+    query_fn = query_fn or tap_query
+    record = {"name": disc.name, "table": disc.table, "role": "polarimetry",
+              "status": STATUS_FAILED, "n_rows": 0, "n_matched": 0, "n_values": 0}
+    if disc.table is None or not disc.roles:
+        record["status"] = disc.status
+        return {}, record
+    roles = dict(disc.roles)
+    want = [r for r in ("hd", "hip", "name", "polarisation", "polarisation_err", "band",
+                        "limit_flag", "flag") if r in roles]
+    if "polarisation" not in want:
+        record["status"] = STATUS_ZERO
+        record["note"] = "no polarisation column"
+        return {}, record
+    sel = ", ".join(f'"{roles[r]}"' for r in dict.fromkeys(want))
+    adql = f'SELECT TOP {int(max_rows)} {sel} FROM "{disc.table}"'
+    try:
+        df = query_fn(adql)
+    except Exception as exc:                              # noqa: BLE001
+        if log:
+            log.record(f"fetch_{disc.name}", adql, error=repr(exc))
+        record["error"] = repr(exc)[:300]
+        return {}, record
+    n = int(len(df)) if df is not None else 0
+    if log:
+        log.record(f"fetch_{disc.name}", adql, rows=n)
+    record["n_rows"] = n
+    record["status"] = STATUS_OK if n else STATUS_ZERO
+    if not n:
+        return {}, record
+    colmap = {}
+    for r in want:
+        for c in df.columns:
+            if str(c) == roles[r] or _canon(c) == _canon(roles[r]):
+                colmap[r] = c
+                break
+    # ppm unless the table says otherwise; a fraction or percent is scaled up
+    unit = str(spec.get("unit", "ppm")).lower()
+    scale = {"fraction": 1e6, "percent": 1e4, "ppm": 1.0}.get(unit, 1.0)
+    out: dict[str, dict] = {}
+    for _, row in df.iterrows():
+        key = None
+        for r, kind in (("hd", "hd"), ("hip", "hip"), ("name", "name")):
+            if r in colmap:
+                v = row[colmap[r]]
+                if kind in ("hd", "hip"):
+                    pref = kind.upper()
+                    key = targets.key_for(f"{pref} {v}") \
+                        if re.fullmatch(r"\s*\d+(\.0)?\s*", str(v)) else targets.key_for(v)
+                else:
+                    key = targets.key_for(v)
+                if key:
+                    break
+        if key is None:
+            continue
+        record["n_matched"] += 1
+        raw = row[colmap["polarisation"]]
+        val = _to_float(raw) * scale
+        if not math.isfinite(val):
+            continue
+        err = (_to_float(row[colmap["polarisation_err"]]) * scale
+               if "polarisation_err" in colmap else float("nan"))
+        limit = _is_limit(raw, row[colmap["limit_flag"]] if "limit_flag" in colmap else None)
+        prev = out.get(key)
+        rec = {"key": key, "p_ppm": float(val),
+               "e_p_ppm": float(err) if math.isfinite(err) else None,
+               "kind": "upper" if limit else "meas",
+               "instrument": str(spec.get("instrument", "")),
+               "epoch": str(spec.get("epoch", "")), "source": disc.name, "verified": True}
+        # keep the TIGHTEST constraint when a star is listed more than once
+        if prev is None or rec["p_ppm"] < prev["p_ppm"]:
+            out[key] = rec
+        record["n_values"] = len(out)
     return out, record
 
 
@@ -783,7 +918,8 @@ def population_photometry(conf: dict, out_dir: Path, *, run_query=None,
 
 __all__ = ["DiscoveredTable", "ROLE_PATTERNS", "SIMBAD_TAP", "STATUS_FAILED",
            "STATUS_NOT_ATTEMPTED", "STATUS_OK", "STATUS_ZERO", "AcquisitionLog",
-           "companion_context", "discover_table", "fetch_excess_table", "parse_wds",
+           "companion_context", "discover_table", "fetch_excess_table",
+           "fetch_polarimetry_table", "parse_wds",
            "population_photometry", "population_query", "probe_columns", "resolve_excess_columns",
            "resolve_positions", "sample_photometry", "score_excess_table", "tap_query",
            "verify_embedded"]

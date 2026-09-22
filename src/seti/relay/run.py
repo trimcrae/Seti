@@ -724,6 +724,15 @@ def pointing_windows(pairs: pd.DataFrame, t_indices, *, freq_hz: float, mjd: flo
         "alpha_rad_min": float(sub[alpha_col].min()),
         "flux_ratio_max": float(sub["flux_ratio_earth_over_receiver"].max()),
     })
+    # the rest-frequency offset: a transmitter de-drifted so R sees a chosen
+    # rest line puts that line at f_rest (1 + (v_TR - v_TE)/c) for EARTH.  The
+    # offset is a velocity, so it needs both RVs; pairs without them are
+    # excluded rather than folded in at zero.
+    kin = sub[sub["kinematics_complete"].astype(bool)] if "kinematics_complete" in sub else sub.iloc[:0]
+    dv = pd.to_numeric(kin.get("dv_offset_kms"), errors="coerce").dropna() if len(kin) else pd.Series(dtype=float)
+    if len(dv):
+        rec["dv_offset_kms_min"] = float(dv.min())
+        rec["dv_offset_kms_max"] = float(dv.max())
     return rec
 
 
@@ -1033,10 +1042,13 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
         p = pairs[name]
         on, match, cand = [], [], []
         centres, halfs = [], []
+        magic: list[str | None] = []
+        n_magic_tested = 0
         for _, h in hits.iterrows():
             gi = int(h["gaia_idx"])
             if gi < 0 or not len(p):
                 _append(on, match, cand, centres, halfs, False, False, False, np.nan, np.nan)
+                magic.append(None)
                 continue
             tel = _telescope_key(h.get("telescope") or h.get("catalogue_telescope"), tconf)
             band = h.get("band") if isinstance(h.get("band"), str) else h.get("catalogue_band")
@@ -1049,7 +1061,11 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
             is_on = w["n_pairs"] > 0
             if not is_on:
                 _append(on, match, cand, centres, halfs, False, False, False, np.nan, np.nan)
+                magic.append(None)
                 continue
+            hit_line, tested = _magic_line_match(h, w, conf, aconf)
+            magic.append(hit_line)
+            n_magic_tested += tested
             # the window for this hit: centre range and the widest tight half-width
             c_lo, c_hi = w["drift_centre_hz_s_min"], w["drift_centre_hz_s_max"]
             hw = w["halfwidth_tight_hz_s_max"]
@@ -1062,6 +1078,7 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
         hits[f"{name}:candidate"] = cand
         hits[f"{name}:drift_centre_hz_s"] = centres
         hits[f"{name}:halfwidth_tight_hz_s"] = halfs
+        hits[f"{name}:magic_line"] = magic
         n_on = int(sum(on))
         n_match = int(sum(match))
         n_cand = int(sum(cand))
@@ -1074,10 +1091,14 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
             c_med = float(np.nanmedian(centres)) if np.isfinite(centres).any() else 0.0
             frac = float(np.mean(np.abs(off["drift_hz_s"].to_numpy(float) - c_med) <= k_sig * hw_med))
             exp_chance = frac * n_on
+        n_magic = int(sum(1 for m in magic if m))
         rep["beams"][name] = {"theta_label": b["theta_label"], "n_hits_on_pair_line": n_on,
                               "n_drift_match": n_match, "n_candidates_after_rfi": n_cand,
                               "n_expected_by_chance": exp_chance,
-                              "n_trials": n_on}
+                              "n_trials": n_on,
+                              "n_magic_line_match": n_magic,
+                              "n_magic_line_tests": n_magic_tested,
+                              "n_magic_expected_by_chance": _magic_chance(n_magic_tested, conf, aconf)}
     hits = hits.drop(columns=["_fbin"])
     hits.to_csv(out / "hits_crossmatch.csv", index=False)
     rep["n_rfi_zero_drift"] = int(hits["rfi_zero_drift"].sum())
@@ -1092,6 +1113,7 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
                           "mjd": h["mjd"], "table": h.get("table"),
                           "drift_centre_hz_s": h[f"{name}:drift_centre_hz_s"],
                           "halfwidth_tight_hz_s": h[f"{name}:halfwidth_tight_hz_s"],
+                          "magic_line": h.get(f"{name}:magic_line"),
                           "systematics_not_excluded": [
                               "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
                               "drift window widened by unknown observation epoch" if not np.isfinite(h["mjd"]) else None,
@@ -1107,6 +1129,61 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
     rep["acquisition"] = log.as_dict()
     _write(out / "hits.json", rep)
     return _finish(conf, out, rep, geom, recut, beams, started)
+
+
+C_KMS = 299792.458
+
+
+def _magic_window_mhz(f_rest_mhz: float, w: dict, tol_kms: float) -> tuple[float, float] | None:
+    """Observed-frequency interval a rest line would occupy for THIS pair line.
+
+    A relay that de-drifts its carrier so the receiver sees the rest frequency
+    ``f_rest`` puts the line, for Earth, at ``f_rest (1 + (v_TR - v_TE)/c)``.
+    The offset is the ``dv_offset_kms`` of the pair, so the test needs BOTH
+    radial velocities; a pointing whose pairs have no kinematics returns None
+    and is not counted as a test.
+    """
+    lo, hi = w.get("dv_offset_kms_min"), w.get("dv_offset_kms_max")
+    if lo is None or hi is None or not (np.isfinite(lo) and np.isfinite(hi)):
+        return None
+    return (f_rest_mhz * (1.0 + (lo - tol_kms) / C_KMS),
+            f_rest_mhz * (1.0 + (hi + tol_kms) / C_KMS))
+
+
+def _magic_line_match(h, w: dict, conf: dict, aconf: dict) -> tuple[str | None, int]:
+    """Which magic rest line this hit's frequency sits on, and how many were tested.
+
+    Supplementary to the drift test and reported apart from it: three lines per
+    pair-line hit is three more trials, and `_magic_chance` prices them.
+    """
+    lines = (conf.get("drift") or {}).get("magic_lines_mhz") or {}
+    f = float(h.get("freq_mhz", np.nan))
+    if not lines or not np.isfinite(f):
+        return None, 0
+    tol = float(aconf.get("magic_line_window_kms", 5.0))
+    tested = 0
+    for label, f_rest in lines.items():
+        win = _magic_window_mhz(float(f_rest), w, tol)
+        if win is None:
+            continue
+        tested += 1
+        if win[0] <= f <= win[1]:
+            return label, tested
+    return None, tested
+
+
+def _magic_chance(n_tests: int, conf: dict, aconf: dict) -> float | None:
+    """Expected magic-line matches by chance: window width over searched bandwidth."""
+    lines = (conf.get("drift") or {}).get("magic_lines_mhz") or {}
+    band = float(aconf.get("magic_search_bandwidth_mhz", 0.0))
+    if not n_tests or not lines or band <= 0:
+        return None
+    tol = float(aconf.get("magic_line_window_kms", 5.0))
+    # width per line is dominated by the RV tolerance; the dv spread of a
+    # pointing adds to it and is ignored here, so this is a LOWER bound on the
+    # chance rate and the honest direction to err in.
+    width = float(np.mean([2.0 * f * tol / C_KMS for f in lines.values()]))
+    return n_tests * width / band
 
 
 def _append(on, match, cand, centres, halfs, o, m, c, ce, hw) -> None:
@@ -1145,7 +1222,11 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
                           "n_pointings_on_pair_line": r.get("n_pointings_on_pair_line"),
                           "n_hits_on_pair_line": a.get("n_hits_on_pair_line"),
                           "n_candidates": a.get("n_candidates_after_rfi"),
-                          "n_expected_by_chance": a.get("n_expected_by_chance")}
+                          "n_expected_by_chance": a.get("n_expected_by_chance"),
+                          "n_trials": a.get("n_trials"),
+                          "n_magic_line_match": a.get("n_magic_line_match"),
+                          "n_magic_line_tests": a.get("n_magic_line_tests"),
+                          "n_magic_expected_by_chance": a.get("n_magic_expected_by_chance")}
     verdict = " | ".join(v for v in (geom.get("verdict"), targets.get("verdict"),
                                      recut.get("verdict"), assess_rep.get("verdict")) if v)
     summary = {"channel": "relay", "signature": "S60", "generated_utc": _now(),

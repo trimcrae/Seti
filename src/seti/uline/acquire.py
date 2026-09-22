@@ -124,8 +124,17 @@ def http_text(url: str, *, timeout: float = 180.0) -> str:
 
 
 def fetch_text(url: str, *, fetch_fn=None, retries: int = 3, timeout: float = 180.0,
-               log: AcquisitionLog | None = None, stage: str = "fetch") -> str | None:
-    """Fetch with retries; ``None`` (and a logged failure) when every attempt fails."""
+               log: AcquisitionLog | None = None, stage: str = "fetch",
+               errors: list | None = None) -> str | None:
+    """Fetch with retries; ``None`` (and a logged failure) when every attempt fails.
+
+    ``errors``, when given, receives the ``repr`` of the **last** exception.
+    Without it the caller learns only that the fetch returned ``None``, and
+    this channel's whole absence discipline is that a door that did not open
+    is recorded with the reason it gave — "403" and "404" and "connection
+    reset" are three different statements about an archive, and collapsing
+    them into "no body" throws the diagnosis away.
+    """
     fn = fetch_fn or (lambda u: http_text(u, timeout=timeout))
     last = None
     for attempt in range(max(int(retries), 1)):
@@ -145,6 +154,8 @@ def fetch_text(url: str, *, fetch_fn=None, retries: int = 3, timeout: float = 18
                 _time.sleep(2.0 * (attempt + 1))
     if log is not None:
         log.record(stage, url, error=repr(last))
+    if errors is not None:
+        errors.append(repr(last))
     return None
 
 

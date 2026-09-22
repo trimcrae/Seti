@@ -134,6 +134,16 @@ jobs:
           print(json.dumps({k: s[k] for k in s if k not in ("candidates", "coverage")}, indent=2)[:6000])
           for c in s.get("candidates", []):
               print("CANDIDATE", c["key"], c["tier"], c["reason"])
+          # the deliverable: the ranked Planck-consistency list, best-grey first
+          print(f"=== Planck ranking: {s.get('n_planck_ranked')} testable, "
+                f"{s.get('n_planck_consistent')} Planck-consistent ===")
+          for r in s.get("planck_ranking_top", []):
+              print("  {:>3} {:<14} {:<22} dchi2={:>8} N={} +/- {} vs grey {} ({} sigma over nano)".format(
+                  r["rank"], r["key"], str(r["tier"]),
+                  ("%.1f" % r["delta_chi2"]) if r.get("delta_chi2") is not None else "-",
+                  r.get("n_obs_pct"), r.get("n_err_pct"),
+                  ("%.2f" % r["n_grey_pred_pct"]) if r.get("n_grey_pred_pct") is not None else "-",
+                  ("%.1f" % r["n_separation_sigma"]) if r.get("n_separation_sigma") is not None else "-"))
           PY
       # A verdict must never read as a science null when no data was assessed.
       - name: Assert the verdict is not a disguised no-data run
@@ -177,7 +187,10 @@ jobs:
             results/forge/broadband_population.json \
             results/forge/broadband_population_flagged.csv \
             results/forge/summary.json \
-            results/forge/candidates.json
+            results/forge/candidates.json \
+            results/forge/planck_ranking.csv \
+            results/forge/planck_ranking.json \
+            results/forge/data/polarimetry.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

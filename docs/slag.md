@@ -37,11 +37,44 @@ diffusion timescales — has a narrow natural envelope. Six such pairs are
 tested: Ti/Al, Sc/Ca, Ca/Al, Sr/Ca, Mn/Cr, Ni/Co.
 
 The channel does **not** assume the brief's claim that all six stay inside
-~0.3 dex. Each envelope is computed from the family and reported
-(`summary.json["pair_statistics"]`). Ti/Al, Ca/Al and Sc/Ca are genuinely
-tight; Sr/Ca, Mn/Cr and Ni/Co open by 1–1.5 dex once continental crust and
-core-formation residues are in the family. A wide envelope makes a pair a
-weak test, not a wrong one, and the number is in the record.
+~0.3 dex. Each envelope is computed and reported
+(`summary.json["pair_statistics"]`, `["measured_meteorites"]["pairs"]`), from
+two sources:
+
+* the **compiled end-members** (18 averaged vectors) moved by the
+  condensation lever — the envelope the brief's claim describes;
+* the **measured meteorites**: 1,227 individually analysed bodies from the
+  compilations PEWDD itself ships (`jamietwilliams/PEWDD`,
+  `meteorite_database_{Si,Fe,Mg}.csv`, the same analyses against three
+  reference elements, merged), read as log₁₀ number ratios.
+
+They do not agree, and the measured ones are what the envelope uses, because
+they can only widen it:
+
+| pair | end-members | measured (n bodies) | total | widest single class |
+|---|---|---|---|---|
+| Ti/Al | 0.31 dex | 2.95 (1096) | 2.95 | EUC 2.04 |
+| Ca/Al | 0.79 | 3.63 (1200) | 3.72 | CH 0.91 |
+| Mn/Cr | 2.91 | 3.21 (1038) | 3.86 | EUC 1.68 |
+| Ni/Co | 1.43 | 3.53 (737) | 3.53 | CL 1.18 |
+| Sc/Ca | 0.77 | 0.08 (8) | 0.77 | — |
+| Sr/Ca | 1.23 | — (0) | 1.23 | — |
+
+**The brief's process-orthogonality premise does not survive the measured
+meteorites.** Ti/Al is 0.31 dex across the compiled end-members and 2.95 dex
+across real stones; Ca/Al reaches +2.97 in pallasites, where Al is a trace
+element in an olivine–metal rock, against a compiled maximum of +0.04. Even
+inside one class Ti/Al spans ~1 dex. Part of that width is real chemistry in
+metal-rich bodies and part is analytical scatter on trace elements in single
+small samples — and both belong in the envelope, because both are what a
+"natural meteorite" is allowed to look like when one falls onto a white
+dwarf. Tier 2 exceedances computed against the compiled end-members alone
+would have been artefacts of the compilation.
+
+The two pairs that stay narrow, Sc/Ca and Sr/Ca, are narrow *in the
+compilation only*: 8 and 0 measured bodies carry both elements. Their
+narrowness is a statement about coverage, not about nature, and the record
+says so rather than trading on it.
 
 ---
 
@@ -69,6 +102,37 @@ Two details are load-bearing:
   the fraction of draws whose minimum objective is at least the observed one.
   A low `p` therefore means: the natural family, with all its freedom,
   reproduces this star worse than it reproduces its own draws.
+
+There is a **second, harder calibration** with the same machinery and a
+different null (`misfit_meteorite`, `fit.n_cal_meteorite` draws): the draw is
+a *real measured meteorite* from the compilation above, given a random
+sinking phase and this panel's own errors, refitted with the compiled
+end-member model. No condensation lever is applied to it — a stone already
+carries its own volatile depletion. It separates the two readings of a small
+`p`: small posterior `p` **and** large meteorite `p` says the star is unlike
+the model *and* the model handles real rocks, so the star is odd; both small
+says the model cannot fit a rock either, and the misfit is the model's. A
+panel whose elements the compilation does not cover reports
+`SUITE_LACKS_ELEMENTS` or `TOO_FEW_BODIES_COVER_THE_PANEL` and is not
+calibrated this way — never silently given a p.
+
+### The calibrated per-element residual
+
+The same draws answer a sharper question at no extra cost. Each of the N
+refits leaves a residual at every element, so the distribution of *one
+element's* residual under the natural model is already in hand:
+`misfit["per_element"][el]["p"]` is the fraction of natural draws left at
+least as badly fitted at that element as the data are.
+
+This is the complement Tier 2 needs. The pair envelope asks whether a ratio
+lies outside everything nature has been *measured* to do, and §1 shows that
+envelope is wide — 2.95 dex for Ti/Al across real stones. The per-element p
+asks instead how unusual this element is *given the model's full freedom*, so
+it does not depend on the envelope at all. With a dozen elements per panel
+the smallest of a dozen p values is small by construction, so
+`_worst.p_min_corrected` (the Bonferroni-corrected minimum) is reported
+beside it and is what any claim must use. It is a diagnostic that points at
+*which element* carries a panel's misfit — never on its own a candidate rule.
 
 `p < 0.01` is `UNEXPLAINED`, `p < 0.05` is `WATCH`. **A low `p` is a
 measurement about the natural family's reach, not a technosignature** — that
@@ -128,10 +192,60 @@ none spurious. (Run 35737518217.)
 column for the metals. An upper limit is a row whose error column holds −1.
 Read as a detection with an assumed 0.2 dex error, such a value is a fake
 depletion — on 126 of the 221 panels with ≥ 5 elements. A negative error now
-routes the value to the panel's one-sided limit list. The convention is not
-assumed: PEWDD publishes its own `total_detections`, and "error < 0 means not
-a detection" reproduces it on all 3475 rows. That agreement is recomputed
-every run (`summary.json["limit_bookkeeping"]`).
+routes the value to the panel's one-sided limit list.
+
+The convention is not assumed, but *where* it can be checked is not where the
+channel first looked. PEWDD publishes `total_detections` and
+`total_upper_limits` per row — **in the database's own CSV only**. The VizieR
+service serves 200 columns and neither of those two, so the check ran against
+nothing and reported zeros that read like agreement. It now runs against
+whichever fetched copy carries the counts
+(`summary.json["limit_convention_check"]`), and on the served data it says:
+
+> **3,465 of 3,475 rows** reproduce PEWDD's own upper-limit count exactly from
+> "error < 0 means an upper limit", over this channel's 26 elements.
+
+The *upper-limit* count is the strict test. The detection count cannot agree
+and is reported only for completeness: PEWDD counts detections over every
+element it carries, including H, He and elements outside this channel's list,
+so a row with a detection of one of those is undercounted here by
+construction (2,381 of 3,475 agree exactly, the rest low by 1–4).
+
+**The PyllutedWD grids were fetched and silently ignored — and they key their
+rows by atomic number.** All twelve `data/timescales_*.csv` files downloaded
+with status OK, and `acquire.json["timescales"]["parsed"]` was `{}`: the
+parser recognised none of them and said nothing about why, so the run looked
+healthy while quietly using a different timescale source. A file that does not
+parse now records `parse_diagnosis` and keeps its raw text under
+`results/slag/data/timescales_raw_*` — and that diagnosis named the cause at
+once. The grids are written
+
+```
+T:,5000,5250,...          the temperature grid
+qcvz:,-6.257,...          the convection-zone mass fraction
+2,5.63,5.426,...          then ONE ROW PER ATOMIC NUMBER, 2 (He) through 30 (Zn)
+```
+
+not one row per element symbol. With `Z_SYMBOL` the parser reads all 29
+elements from each of the ten grids (H and He atmospheres, log g 7.5/8.0/8.5,
+with and without convective overshoot).
+
+**The two sources of the sinking lever agree.** That gives the channel an
+independent check it has never had: the fetched grids against the per-star
+`SinTime*` columns PEWDD publishes *for these very stars*
+(`summary.json["timescale_cross_check"]`). Over the 43 served rows that carry
+Teff, log g and a Ca timescale:
+
+| grid family | comparisons | median offset | rms | IQR |
+|---|---|---|---|---|
+| with overshoot | 406 | **+0.014 dex** | 0.104 | 0.087 |
+| without overshoot | 53 | **−0.029 dex** | 0.131 | 0.054 |
+
+Neither family is preferred by the data, and both reproduce the catalogue's
+own numbers to well inside the 0.15 dex systematic this channel already
+carries. The source in use stays PEWDD's own columns and the library built
+from them — now because that was measured to be as good as the models, not
+because it happened to come first in a priority list.
 
 **The sinking timescales are in the catalogue.** PEWDD publishes τ_Z per star
 per element (`SinTimeCa`, …) for that star's own structure. Where a row has
@@ -142,7 +256,32 @@ agreeing to ~0.01 dex), so those rows build a relative library used for every
 other panel. The library shows the embedded mass-scaling law was ~60 % too
 shallow (Mg +0.171 measured against +0.098 assumed), which biased every
 steady-state and declining-phase correction. The source actually used is
-recorded per panel.
+recorded per panel. The library, measured on 95 rows:
+
+| element | log10(τ/τ_Ca) | σ | n |
+|---|---|---|---|
+| Ni | −0.140 | 0.113 | 25 |
+| Mn | −0.128 | 0.091 | 25 |
+| Fe | −0.120 | 0.094 | 39 |
+| V | −0.112 | 0.058 | 14 |
+| Cr | −0.079 | 0.074 | 28 |
+| Ti | −0.076 | 0.039 | 30 |
+| Sc | −0.064 | 0.016 | 13 |
+| S | +0.076 | 0.110 | 12 |
+| P | +0.089 | 0.046 | 7 |
+| Si | +0.118 | 0.047 | 36 |
+| Al | +0.128 | 0.044 | 37 |
+| Na | +0.163 | 0.035 | 28 |
+| Mg | +0.171 | 0.023 | 38 |
+| O | +0.275 | 0.093 | 33 |
+| C | +0.334 | 0.114 | 13 |
+| N | +0.334 | 0.111 | 8 |
+| Li | +0.541 | 0.132 | 8 |
+
+Monotonic in atomic mass, as diffusion requires. The mass-scaling exponent
+refitted to it is **β = 0.713**, against the 0.45 the offline build assumed.
+Elements the library cannot reach (Be, K, Co, Cu, Zn, Sr, Sn, Ba) use that
+refitted exponent rather than the literature guess.
 
 **One star, several rows.** PEWDD distinguishes alternative solutions for one
 star by a name suffix — `PG1225-079 Model 2`, `GD 362 Updated`,
@@ -150,17 +289,57 @@ star by a name suffix — `PG1225-079 Model 2`, `GD 362 Updated`,
 and never saw its own object's other panels, so the multi-reference kill could
 not fire. Qualifiers are stripped before grouping.
 
+**One star, several designations — the object is a position, not a name.**
+Stripping qualifiers is not enough: PEWDD is one row per star per paper, and
+each paper writes the star the way its own field does. `GD 378` and
+`WD 1822+410` are one He-atmosphere DBZ; `PG 0843+516`, `PG 0843+517` and
+`WD0843+516` are one DA. Name grouping gave 2441 objects for 3547 rows.
+
+All 3547 rows carry `RAJ2000`/`DEJ2000`, so objects are built by
+single-linkage **on the sky** within 5″: **1576 objects**, 633 of which merge
+more than one designation. The radius is on a plateau (1610 at 1″, 1594 at
+2″, 1588 at 3″, 1576 at 5″, 1566 at 8″, 1559 at 12″); 5″ rather than 3″
+because PEWDD's positions are per-paper transcriptions at different epochs
+and these stars have large proper motions — GD 362's two served positions are
+3.5″ apart and were split at 3″. A false 5″ pair among ~1600 objects over the
+whole sky is ~10⁻³.
+
+The name deliberately does **not** link two sky positions. PEWDD carries rows
+whose designation belongs to a different star from their coordinates — two
+rows called `WD1202-232` sit 40° apart, and rows called `L745-46A` carry Ross
+640's position. Joining on the name as well as the sky chained those into
+single-linkage blobs, one of them 27 rows over ten unrelated designations,
+which would have pooled unrelated stars' abundances into one object. Names
+link only rows with no coordinate at all, and a designation PEWDD reuses for
+two positions keeps two object keys, each tagged by its position. The count
+of such reuses is in `summary.json["object_grouping"]`.
+
+This matters beyond bookkeeping: the shard unit, the misfit list's
+one-row-per-object choice, and above all the `MULTI_REFERENCE_DISAGREEMENT`
+kill all compare an object's own sources, and under name grouping 633
+objects' sources were never compared.
+
 ---
 
 ## 6. The population
 
-From the served table (3547 rows, 2778 distinct stars, VizieR TAP):
+From the served table: 3547 rows, 2778 distinct star strings, 2441 distinct
+name keys once PEWDD's per-solution qualifiers are stripped, and **1576
+objects** once those names are reconciled on the sky (§5).
 
-| n measured elements | rows |
+Counting *detections only* — upper limits excluded, per §5:
+
+| n measured elements | panels (rows) |
 |---|---|
 | 0–1 | 2723 |
-| 2–4 | 615 |
-| **≥ 5 (screened and calibrated)** | **209 rows / 178 stars** |
+| 2–4 | 656 |
+| **≥ 5 (screened and calibrated)** | **168 panels / 123 objects** |
+
+(137 objects under the old name grouping; the sky reconciliation of §5 merges
+14 of those into another object's designations.) 187 panels carry at least one
+upper limit. (Before the negative-error
+convention was understood, 209 panels appeared to reach ≥ 5 elements — the
+extra 41 were limits read as detections.)
 
 Atmospheres: 3033 He, 514 H, resolved from PEWDD's own `atmosphere` column.
 Abundances are `log(Z/H(e))` throughout — H in a hydrogen atmosphere, He in a
@@ -171,10 +350,37 @@ recorded per row.
 ## 7. Controls
 
 The literature outliers run as controls and their landing is reported in
-`results/slag/controls.json` whatever it is. Their PEWDD names, found on the
-runner: `PG 1225-079` (+ `Updated`, + `Model 1/2/3`), `LHS 2534`,
-`GALEXJ2339`, `GD 378`, `NLTT 19868`, `HE 0106-3253` (= WD 0106−328),
-`GD 362` (+ `Updated`, + `GD362`).
+`results/slag/controls.json` whatever it is. Every alias list in
+`config/slag.yaml` is now the set of designations PEWDD *actually serves at
+that object's position*, read off the acquired table rather than guessed from
+the literature, and the matched position, Teff and atmosphere travel with each
+control so a wrong match is visible:
+
+| control | served position | rows | best panel | served designations |
+|---|---|---|---|---|
+| GD 362 | 262.8931 +37.0881 | 5 | **16** | GD 362, GD 362 Updated, GD362, J1731+3705 |
+| GD 378 | 275.9042 +41.0679 | 8 | 13 | GD 378, WD 1822+410, WD1822+410 |
+| PG 1225−079 | 186.9473 −8.2439 | 8 | 11 | PG 1225-079 (+ Updated, Model 1/2/3), K 789-37 |
+| GALEX J2339−0424 | 354.8210 −4.4069 | 1 | 9 | GALEXJ2339 |
+| LHS 2534 | 183.7349 −2.5675 | 4 | 7 | LHS 2534, WD 1212-022, SDSS J121456.39-023402.7, J1214-0234 |
+| WD 0106−328 | 17.1501 −32.6287 | 5 | **4** | HE 0106-3253, HE0106-3253 |
+| NLTT 19868 | 129.0070 −10.1021 | 1 | **4** | NLTT 19868 |
+
+Two alias corrections came out of this, each of which would have pointed a
+control at the wrong star or at nothing:
+
+* **NLTT 19868 is not WD/PG 0843+516.** That is a different polluted DA at
+  131.7595 +51.4815, 62° away. PEWDD serves NLTT 19868 at 129.0070 −10.1021.
+* **LHS 2534 is not WD 1214+032.** PEWDD serves it as `WD 1212-022` /
+  `SDSS J121456.39-023402.7` at 183.7349 −2.5675.
+
+Two of the seven are below the information floor in PEWDD: **WD 0106−328 and
+NLTT 19868 reach only 4 measured elements** in their best published panel, so
+they are `INFORMATION_LIMITED` by construction and can never be candidates
+here. That is a statement about what has been published for them, not about
+the stars — the Fe-as-pure-metal claim for WD 0106−328 (Farihi 2026) and the
+extreme Fe-depletion of NLTT 19868 (Kawka & Vennes 2016) rest on panels PEWDD
+does not carry at ≥ 5 elements.
 
 ## 8. Verdicts
 
@@ -189,7 +395,97 @@ Degradation (a failed route, an assumed error, an unresolved atmosphere, an
 embedded rather than catalogued timescale law) is a separate first-class
 field, never folded into the verdict string.
 
-## 9. Running it
+---
+
+## 9. The first measurement — run 35747793625, 2026-09-22
+
+`slag-solo.yml`, `stage=all`, one job, 49 minutes of screen on one runner;
+code at `7c519163`, recorded in `summary.json["code"]`.
+
+**Verdict `MISFIT_LIST_PRODUCED`.** The funnel:
+
+| stage | count |
+|---|---|
+| served rows | 3,547 |
+| objects (sky-reconciled, 5″) | 1,576 |
+| objects with a ≥ 5-element panel | 123 |
+| panels screened and calibrated | 168 |
+| panels `INFORMATION_LIMITED` | 3,379 |
+| `UNEXPLAINED` (p < 0.01) | **4** |
+| `WATCH` (p < 0.05) | **6** |
+| pair residuals tested | 121 |
+| pair exceedances (\|z\| > 4) | 1 |
+| refinery flags fired | 0 |
+| candidates surviving every kill | **0** |
+
+**The calibrated p is itself calibrated.** Across the 123 objects the misfit p
+is close to uniform — KS distance 0.130, 3.3 % below 0.01 against 1 % expected,
+8.1 % below 0.05 against 5 %, median 0.61. The natural family is therefore
+neither too rigid for the population (which would pile p at zero and make the
+list a statement about the model) nor too loose to reject anything.
+
+**The one pair exceedance is killed.** HS 0209+0832 (Wolff 2000) has Ti/Al at
+z = +6.5, and `REST_OF_PANEL_NOT_NATURAL` kills it: the whole panel misfits at
+χ²/dof = 36.7, so the pair is not a process-orthogonal residual on an
+otherwise natural vector. Envelope widths, now including the measured
+meteorites, are 3.3 dex for Ti/Al, 4.0 for Ca/Al, 4.0 for Mn/Cr.
+
+**The meteorite calibration does the job it was added for.** Three of the four
+`UNEXPLAINED` objects — HS 0209+0832, L119-34, WD 1622+587 — also have a small
+*meteorite* p (0.020–0.059): the natural model cannot fit real stones on those
+element sets either, so their misfit is a statement about the model's reach,
+not about the star. One object separates cleanly:
+
+| object | n | p | p(meteorite) | worst element | corrected |
+|---|---|---|---|---|---|
+| **GALEX J2339−0424** | 9 | 0.020 | **0.98** | **Be**, 3.3σ | 0.060 |
+
+The model reproduces real meteorites on this element set essentially always
+(p = 0.98) and still cannot reproduce this star. Its worst element is
+beryllium — which is what GALEX J2339−0424 is known for (Klein et al. 2021,
+Be enriched by ~2 dex). The channel recovered it without being told, and it is
+a **control landing correctly, not a discovery**.
+
+**And the per-element statistic is sharper than the envelope.** On that same
+panel the `BE_WITHOUT_LI_B` flag did *not* fire: the global Be/lithophile
+envelope, widened by the condensation lever, comfortably contains the observed
+Be. The calibrated per-element residual — which asks how unusual Be is *given
+the best fit to the rest of this panel* — puts it at p = 0.0066, the worst of
+its nine elements. The envelope test misses the known anomaly; the
+conditioned test finds it. That is the argument for §2's per-element
+calibration in one object.
+
+**Controls.** All seven were found at the right positions.
+
+| control | n | p | p(meteorite) | class |
+|---|---|---|---|---|
+| GD 362 | 16 | 0.21 | 0.76 | NATURAL |
+| GD 378 | 13 | 0.32 | 1.00 | NATURAL |
+| PG 1225−079 | 11 | 0.50 | 0.92 | NATURAL |
+| GALEX J2339−0424 | 9 | 0.020 | 0.98 | **WATCH** |
+| LHS 2534 | 7 | 0.086 | 0.31 | NATURAL |
+| WD 0106−328 | 4 | — | — | `INFORMATION_LIMITED` |
+| NLTT 19868 | 4 | — | — | `INFORMATION_LIMITED` |
+
+PG 1225−079's "no single meteorite" (Klein 2011, Xu 2013) does not survive a
+*mixture* with the condensation and sinking levers: p = 0.50. LHS 2534, which
+"defies all three hypotheses" (Kaiser 2024), sits inside this model's reach at
+p = 0.086. Both are honest negatives for Tier 1, and both were the point of
+running them.
+
+**Degradation, stated.** 77 of the 168 calibrated panels have no served error
+column and carry the 0.2 dex default, which is why
+`SDSS J153642.53+420519.2` — every one of its six errors assumed — should not
+be read as strongly as the rest of the `UNEXPLAINED` list.
+
+**What would decide the one open object.** GALEX J2339−0424 has a single
+published panel and no Li or B measurement, so the spallation alternative
+(Doyle et al. 2021) is untested rather than excluded: Be made by cosmic-ray
+spallation arrives with Li and B at order-unity ratios. A Li/B measurement is
+the decisive next observation, and until it exists this object is a WATCH with
+a named alternative, not a candidate.
+
+## 10. Running it
 
 ```
 python -m seti.slag.run --stage probe      # what VizieR and GitHub hold, and the column roles
@@ -199,4 +495,6 @@ python -m seti.slag.run --stage assess     # misfit_list.csv, pairs.csv, flags.c
 ```
 
 or `seti slag --stage all`. On the runner: dispatch `slag.yml` with
-`stage=all`, `shards=8`.
+`stage=all`, `shards=4` — four is enough (168 panels carry the calibration
+cost; the other 3379 are seconds) and eight takes eight runner slots from the
+other channels for no wall-clock gain.

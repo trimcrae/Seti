@@ -711,3 +711,160 @@ def test_parse_shard_and_config_and_files_exist():
     assert STAGES == ("probe", "acquire", "screen", "ages", "assess")
     for p in ("config/cradle.yaml", ".github/workflows/cradle.yml", "docs/cradle.md"):
         assert Path(p).exists(), p
+
+
+# ---------------------------------------------------------------------------
+# shard economics: a wrong shape must cost one unit, and one pathological unit
+# must not cost the whole job
+# ---------------------------------------------------------------------------
+class _ShapePickyArchive(FakeArchive):
+    """Refuses the ``full`` shape (its 2MASS join key does not exist here)."""
+
+    def gaia(self, adql: str):
+        if "xt.original_ext_source_id" in adql:
+            self.calls.append("FULL-REFUSED")
+            raise GaiaQueryFailed({"status": "QUERY_FAILED",
+                                   "error": "column xt.original_ext_source_id not found"})
+        return super().gaia(adql)
+
+
+def test_a_shape_the_archive_refuses_is_paid_for_once_not_once_per_unit(tmp_path):
+    """The probe measures ONE pixel; if its answer is wrong (or probe.json never
+    reached the job) the ladder would re-pay the failing shape on every unit."""
+    rng = np.random.default_rng(41)
+    arch = _ShapePickyArchive(make_archive(rng, n_clean=40))
+    conf = _conf(tmp_path)
+    conf["sample"]["count_parent"] = False
+    out = tmp_path / "cradle"
+    roll = cradle_run("acquire", out_dir=out, shard=0, n_shards=128, conf=conf,
+                      backends=_backends(arch), max_units=6)
+    assert roll["n_units_done"] == 6, roll
+    # the refused shape is tried on the first unit and never again
+    assert arch.calls.count("FULL-REFUSED") == 1, arch.calls.count("FULL-REFUSED")
+    assert roll["shapes"][0] != SHAPE_FULL and roll["shapes_planned"][0] == SHAPE_FULL
+    assert roll["shape_relearned"] and roll["shape_relearned"][0]["shape"] == roll["shapes"][0]
+    # and the sky still came back
+    assert roll["n_ok"] + roll["n_zero"] == 6 and roll["n_failed"] == 0
+
+
+def test_a_unit_that_times_out_at_every_level_is_bounded_by_the_deadline():
+    """Without a deadline one level-3 pixel costs 1+4+16+64 queries at the full
+    query timeout each --- longer than the job it runs in."""
+    import time as _t
+
+    units = healpix_units(3)
+    u = units[5]
+    timeouts = {(3, 5)} | {(lev, k) for lev in (4, 5, 6)
+                           for k in range(u["k"] * 4 ** (lev - 3), (u["k"] + 1) * 4 ** (lev - 3))}
+
+    unbounded = FakeArchive(make_archive(np.random.default_rng(42), n_clean=10), timeout_units=timeouts)
+    _df, rec = acq.fetch_unit(DEFAULT_SAMPLE, u, unbounded.gaia, count=False)
+    assert rec["status"] == acq.STATUS_FAILED and rec.get("split")
+    n_unbounded = len(unbounded.calls)
+    assert n_unbounded >= 85, n_unbounded          # 1 + 4 + 16 + 64, the whole recursion
+
+    arch = FakeArchive(make_archive(np.random.default_rng(42), n_clean=10), timeout_units=timeouts)
+    df, rec = acq.fetch_unit(DEFAULT_SAMPLE, u, arch.gaia, count=False,
+                             deadline=_t.monotonic() - 1.0)
+    assert rec["deadline_exceeded"] is True
+    assert rec["status"] == acq.STATUS_FAILED and len(df) == 0
+    assert arch.calls == [], arch.calls             # not one query was sent past the deadline
+
+
+def test_ipac_parser_survives_the_pandas_3_removal_of_errors_ignore():
+    """Run 35741356662's probe died on the offline gate, before one archive call:
+    ``pd.to_numeric(errors="ignore")`` is deprecated in pandas 2 and RAISES in
+    pandas 3, and the runner installs the current pandas while the sandbox had
+    2.3.  Numeric columns must convert (IPAC nulls included), text columns must
+    stay text."""
+    from seti.cradle.mineralogy import spectrum_from_table
+
+    text = (
+        "\\ a comment\n"
+        "|wavelength|flux_density|error|module|\n"
+        "|   double |   double   |double|  char|\n"
+        "|     um   |     Jy     |  Jy  |      |\n"
+        " 8.0  1.00  0.01  SL1\n"
+        " 9.0  null  0.02  SL1\n"
+        "10.0  1.20  0.03  LL2\n"
+    )
+    df = parse_ipac_table(text)
+    assert list(df.columns) == ["wavelength", "flux_density", "error", "module"]
+    assert len(df) == 3
+    assert pd.api.types.is_numeric_dtype(df["wavelength"])
+    assert pd.api.types.is_numeric_dtype(df["flux_density"])
+    assert df["wavelength"].tolist() == [8.0, 9.0, 10.0]
+    assert np.isnan(df["flux_density"].iloc[1])          # the IPAC null, not a string
+    assert df["flux_density"].iloc[0] == 1.0
+    # a text column with one numeric-looking entry stays text: converting it
+    # would silently replace every name with NaN
+    assert not pd.api.types.is_numeric_dtype(df["module"])
+    assert df["module"].tolist() == ["SL1", "SL1", "LL2"]
+    w, f, e = spectrum_from_table(df)
+    assert w.tolist() == [8.0, 9.0, 10.0]
+    assert f[0] == 1.0 and np.isnan(f[1]) and f[2] == 1.2
+    assert e[0] == 0.01
+
+
+def test_a_bytes_cc_flags_column_vetoes_exactly_as_the_text_one_does():
+    """A VOTable ``char`` column reaches pandas as ``bytes`` on some
+    astropy/pyvo paths, and cc_flags is read BY POSITION (0,1 = W1,W2;
+    2,3 = W3,W4).  If those bytes ever rendered as ``"b'00HO'"`` -- seven
+    characters -- every position would shift by two, the W3/W4 veto would read
+    the W1/W2 characters, and a genuinely contaminated ``00HO`` would come out
+    clean and reach the candidate list.  Measured: pandas 2.3.3 and 3.0.6 both
+    DECODE bytes in ``astype(str)``, so this passes today; it is pinned because
+    the failure is silent and the rule is positional."""
+    rows = [
+        {"cc_flags": "0000", "expect_w34": False, "expect_w12": False},   # clean
+        {"cc_flags": "00HO", "expect_w34": True, "expect_w12": False},    # W3 and W4 dirty
+        {"cc_flags": "DH00", "expect_w34": False, "expect_w12": True},    # only W1/W2 dirty
+        {"cc_flags": "000P", "expect_w34": True, "expect_w12": False},    # W4 only
+    ]
+    base = pd.DataFrame([{k: v for k, v in r.items() if k == "cc_flags"} for r in rows])
+    as_text, _ = apply_rules(base.copy(), DEFAULT_VET)
+    as_bytes_df = base.copy()
+    as_bytes_df["cc_flags"] = [s.encode() for s in base["cc_flags"]]
+    assert as_bytes_df["cc_flags"].map(type).eq(bytes).all()
+    as_bytes, _ = apply_rules(as_bytes_df, DEFAULT_VET)
+
+    for i, r in enumerate(rows):
+        assert bool(as_text["rule_cc_flags_w3w4"].iloc[i]) is r["expect_w34"], (i, "text")
+        assert bool(as_bytes["rule_cc_flags_w3w4"].iloc[i]) is r["expect_w34"], (i, "bytes")
+        assert bool(as_text["flag_cc_flags_w1w2"].iloc[i]) is r["expect_w12"], (i, "text w12")
+        assert bool(as_bytes["flag_cc_flags_w1w2"].iloc[i]) is r["expect_w12"], (i, "bytes w12")
+
+
+def test_a_star_the_locus_will_not_place_is_counted_apart_from_one_with_no_excess(tmp_path):
+    """The locus refuses to extrapolate.  A star outside every well-populated
+    colour bin gets no predicted photosphere and a NaN chi, so it fails
+    `excess_significant` for exactly the reason a star with no excess does.
+    On a partial sky the bins are thin, and "nothing was significant" must not
+    be readable as a clean null when it is a coverage statement."""
+    rng = np.random.default_rng(51)
+    # the clean sample spans bp_rp 0.50-1.45; this star is inside the archive
+    # cut (0.45-1.85) but outside every well-populated colour bin
+    odd = make_star(990, rng, ks=6.5, bp_rp=1.80, plx=_plx_for_dwarf(6.5, 1.80),
+                    noise=0.0, v_tan_kms=40.0)
+    arch = FakeArchive(make_archive(rng, extra=[odd]))
+    conf = _conf(tmp_path)
+    b = _backends(arch)
+    out = tmp_path / "cradle"
+    cradle_run("acquire", out_dir=out, conf=conf, backends=b)
+    rep = cradle_run("screen", out_dir=out, conf=conf, backends=b)
+
+    f = rep["funnel"]
+    assert f["n_no_photosphere_locus_refused"] >= 1, f
+    assert f["n_photosphere_assigned"] + f["n_no_photosphere_locus_refused"] <= f["n_parent"]
+    # the counts are disjoint and the refused star is NOT hiding inside
+    # "not significant"
+    assert f["n_photosphere_assigned"] >= f["n_excess_significant"]
+
+    # and it is the red star: its W3/W4 photosphere is NaN, not merely quiet
+    screened = pd.read_csv(out / "parent_screened.csv")
+    red = screened[pd.to_numeric(screened["bp_rp"], errors="coerce") > 1.6]
+    assert len(red) == 1, len(red)
+    assert red["excess_significant"].astype(str).str.lower().isin(["false", "0"]).all()
+    assert rep["loci"], "the loci were fitted; the refusal is the bin edge, not a failure"
+    # the same run must still place the ordinary stars
+    assert f["n_photosphere_assigned"] >= 0.9 * (f["n_parent"] - 1)

@@ -307,9 +307,12 @@ def stage_acquire(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     if cap:
         units = units[:cap]
     shapes = _shape_order(conf, out)
+    shapes_planned = list(shapes)
+    shape_relearned: list[dict] = []
     n_ok = n_zero = n_fail = n_partial = n_rows = 0
     n_parent = 0
     parent_measured = 0
+    n_deadline = 0
     stopped = False
     for u in units:
         label = unit_label(u)
@@ -318,7 +321,17 @@ def stage_acquire(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         if _time.monotonic() - t0 > budget:
             stopped = True
             break
-        df, rec = acq.fetch_unit(sc, u, gaia, shapes=shapes, count=bool(sc.get("count_parent", True)))
+        df, rec = acq.fetch_unit(sc, u, gaia, shapes=shapes, count=bool(sc.get("count_parent", True)),
+                                 deadline=t0 + budget)
+        # Learn the shape: the probe measures one pixel, and if its answer is
+        # wrong (or probe.json never reached this job) the ladder would re-pay
+        # the failing shape's timeout on EVERY unit of the shard.  The shape
+        # that actually answered goes to the front for the units that follow,
+        # so a bad order costs one unit, not ninety-six.
+        got = rec.get("shape")
+        if got in shapes and shapes[0] != got:
+            shapes = [got] + [s for s in shapes if s != got]
+            shape_relearned.append({"unit": label, "shape": got})
         if rec.get("status") in (acq.STATUS_FAILED, acq.STATUS_TIMED_OUT) and ac.get("irsa_fallback", True):
             idf, irec = acq.fetch_unit_irsa(sc, u, gaia, irsa)
             rec["irsa_fallback"] = {k: irec.get(k) for k in ("status", "n_rows", "gaia", "allwise")}
@@ -333,6 +346,8 @@ def stage_acquire(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
             n_partial += 1
         else:
             n_fail += 1
+        if rec.get("deadline_exceeded"):
+            n_deadline += 1
         if rec.get("n_parent") is not None:
             n_parent += int(rec["n_parent"])
             parent_measured += 1
@@ -357,6 +372,8 @@ def stage_acquire(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
             "n_ok": n_ok, "n_zero": n_zero, "n_partial": n_partial, "n_failed": n_fail,
             "n_rows_this_run": n_rows, "n_parent_gaia_only": n_parent,
             "n_units_parent_measured": parent_measured, "shapes": shapes,
+            "shapes_planned": shapes_planned, "shape_relearned": shape_relearned[:20],
+            "n_units_deadline_exceeded": n_deadline,
             "stopped_on_budget": stopped, "controls": controls,
             "elapsed_s": round(_time.monotonic() - t0, 1)}
     store.flush({"rollup": roll})
@@ -375,7 +392,8 @@ def _read_parents(out: Path) -> tuple[pd.DataFrame, dict]:
     df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
     acq_files = sorted(glob.glob(str(out / "acquire_s*of*.json")))
     cov = {"n_parent_files": len(files), "n_acquire_files": len(acq_files), "n_units_done": 0,
-           "n_units_planned": 0, "n_units_failed": 0, "n_parent_gaia_only": 0, "shards": []}
+           "n_units_planned": 0, "n_units_failed": 0, "n_units_deadline_exceeded": 0,
+           "n_parent_gaia_only": 0, "shards": []}
     for f in acq_files:
         try:
             r = json.loads(Path(f).read_text()).get("rollup") or {}
@@ -384,9 +402,12 @@ def _read_parents(out: Path) -> tuple[pd.DataFrame, dict]:
         cov["n_units_done"] += int(r.get("n_units_done") or 0)
         cov["n_units_planned"] += int(r.get("n_units_planned") or 0)
         cov["n_units_failed"] += int(r.get("n_failed") or 0)
+        cov["n_units_deadline_exceeded"] += int(r.get("n_units_deadline_exceeded") or 0)
         cov["n_parent_gaia_only"] += int(r.get("n_parent_gaia_only") or 0)
         cov["shards"].append({k: r.get(k) for k in ("shard", "n_shards", "n_units_planned", "n_units_done",
-                                                    "n_failed", "n_rows_this_run", "stopped_on_budget")})
+                                                    "n_failed", "n_rows_this_run", "stopped_on_budget",
+                                                    "n_units_deadline_exceeded", "shapes",
+                                                    "shape_relearned")})
     if len(df) and "source_id" in df:
         df["source_id"] = df["source_id"].astype(str)
         if "is_control" in df:
@@ -459,8 +480,21 @@ def stage_screen(conf: dict, out: Path, *, backends: acq.Backends | None = None)
     ctrl = _as_bool(fit["is_control"])
     short = (sig & above & ks_w1_ok & t.between(slo, shi)) | ctrl
     fit["shortlisted"] = short
+    # The locus REFUSES to extrapolate: a star bluer or redder than any
+    # well-populated colour bin gets no predicted photosphere, and its chi is
+    # NaN, so `excess_significant` is False for exactly the same reason a star
+    # with no excess is.  Counted apart, because on a partial sky the bins are
+    # thin and "nothing was significant" would otherwise read as a clean null
+    # when it is really a coverage statement.
+    has_phot = pd.Series(True, index=fit.index)
+    for b in ("W3", "W4"):
+        col = f"{b}_pred_mag"
+        has_phot &= pd.to_numeric(fit[col], errors="coerce").notna() \
+            if col in fit.columns else False
     rep["funnel"] = {
         "n_parent": int(len(fit)), "n_ks_present": int(d["ks_present"].sum()),
+        "n_photosphere_assigned": int(has_phot.sum()),
+        "n_no_photosphere_locus_refused": int((d["ks_present"].to_numpy() & ~has_phot).sum()),
         "n_ks_w1_photospheric": int((ks_w1_ok & d["ks_present"]).sum()),
         "n_excess_significant": int((sig & ks_w1_ok).sum()),
         "n_above_fmax_3dex": int((sig & above & ks_w1_ok).sum()),
@@ -497,7 +531,10 @@ def stage_screen(conf: dict, out: Path, *, backends: acq.Backends | None = None)
     rep["verdict"] = "SCREENED"
     rep["elapsed_s"] = round(_time.monotonic() - t0, 1)
     _write(out / "screen.json", rep)
-    print(f"[cradle] screen: parent={len(fit)} sig={rep['funnel']['n_excess_significant']} "
+    print(f"[cradle] screen: parent={len(fit)} "
+          f"photosphere={rep['funnel']['n_photosphere_assigned']} "
+          f"no_photosphere={rep['funnel']['n_no_photosphere_locus_refused']} "
+          f"sig={rep['funnel']['n_excess_significant']} "
           f"above_fmax={rep['funnel']['n_above_fmax_3dex']} in_cell={rep['funnel']['n_in_t_cell_photometric']} "
           f"shortlist={rep['n_shortlist']} in {rep['elapsed_s']} s")
     return rep
@@ -689,6 +726,17 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None)
     cov = screen.get("coverage") or {}
     if cov.get("n_units_failed"):
         degraded.append(f"acquire_units_failed:{cov['n_units_failed']}/{cov.get('n_units_planned')}")
+    sf = screen.get("funnel") or {}
+    n_noph = int(sf.get("n_no_photosphere_locus_refused") or 0)
+    n_ksp = int(sf.get("n_ks_present") or 0)
+    if n_ksp and n_noph > 0.2 * n_ksp:
+        # More than a fifth of the K_s-bearing stars never got a photosphere,
+        # so "nothing was significant" is partly a statement about the colour
+        # bins, not about the sky.  Named, not buried.
+        degraded.append(f"locus_refused_photosphere:{n_noph}/{n_ksp}")
+    if cov.get("n_units_deadline_exceeded"):
+        degraded.append(f"acquire_units_deadline_exceeded:{cov['n_units_deadline_exceeded']}"
+                        f"/{cov.get('n_units_planned')}")
     if cov.get("n_units_planned") and cov.get("n_units_done", 0) < cov["n_units_planned"]:
         degraded.append(f"acquire_units_incomplete:{cov.get('n_units_done')}/{cov['n_units_planned']}")
 

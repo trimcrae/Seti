@@ -3,26 +3,96 @@
     {
       "stage": "discover_kepler_yang2019_preferred",
       "status": "OK",
-      "rows": 2,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29'"
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table2'"
     },
     {
-      "stage": "discover_kepler_yang2019_keyword",
+      "stage": "fetch_kepler_yang2019",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29'"
+      "rows": 50000,
+      "query": "SELECT \"KIC\", \"Begin\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 1 AND 50000",
+      "chunk": [
+        1,
+        50000
+      ]
     },
     {
-      "stage": "discover_kepler_davenport2016_preferred",
+      "stage": "fetch_kepler_yang2019",
+      "status": "OK",
+      "rows": 50000,
+      "query": "SELECT \"KIC\", \"Begin\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 50001 AND 100000",
+      "chunk": [
+        50001,
+        100000
+      ]
+    },
+    {
+      "stage": "fetch_kepler_yang2019",
+      "status": "OK",
+      "rows": 50000,
+      "query": "SELECT \"KIC\", \"Begin\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 100001 AND 150000",
+      "chunk": [
+        100001,
+        150000
+      ]
+    },
+    {
+      "stage": "fetch_kepler_yang2019",
+      "status": "OK",
+      "rows": 12262,
+      "query": "SELECT \"KIC\", \"Begin\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 150001 AND 162262",
+      "chunk": [
+        150001,
+        162262
+      ]
+    },
+    {
+      "stage": "discover_kepler_okamoto2021_preferred",
       "status": "OK",
       "rows": 1,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/829/23'"
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72/table2'"
     },
     {
-      "stage": "discover_kepler_davenport2016_keyword",
+      "stage": "fetch_kepler_okamoto2021",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/829/23'"
+      "rows": 2344,
+      "query": "SELECT \"KIC\", \"Date\", \"E\", \"Amp\", \"Prot\", \"_RA\", \"_DE\", \"Dur\" FROM \"J/ApJ/906/72/table2\""
+    },
+    {
+      "stage": "discover_kepler_shibayama2013_preferred",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5/table7'"
+    },
+    {
+      "stage": "fetch_kepler_shibayama2013",
+      "status": "OK",
+      "rows": 1547,
+      "query": "SELECT \"KIC\", \"Date\", \"E\", \"Dur\" FROM \"J/ApJS/209/5/table7\""
+    },
+    {
+      "stage": "discover_tess_gunther2020_preferred",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table1'"
+    },
+    {
+      "stage": "fetch_tess_gunther2020",
+      "status": "OK",
+      "rows": 8695,
+      "query": "SELECT \"TIC\", \"tpeak\", \"Ebol\", \"Amp\", \"Sec\", \"Prot\" FROM \"J/AJ/159/60/table1\""
+    },
+    {
+      "stage": "discover_tess_tu2022_preferred",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table2'"
+    },
+    {
+      "stage": "fetch_tess_tu2022",
+      "status": "OK",
+      "rows": 15638,
+      "query": "SELECT \"ID\", \"PDate\", \"Energy\", \"Sector\", \"Duration\" FROM \"J/ApJ/935/90/table2\""
     },
     {
       "stage": "discover_tess_pietras2022_preferred",
@@ -32,45 +102,33 @@
     },
     {
       "stage": "discover_tess_pietras2022_keyword",
-      "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/143'"
-    },
-    {
-      "stage": "discover_tess_gunther2020_preferred",
-      "status": "OK",
-      "rows": 2,
-      "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60'"
-    },
-    {
-      "stage": "discover_tess_gunther2020_keyword",
-      "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60'"
-    },
-    {
-      "stage": "discover_tess_tu2020_preferred",
       "status": "QUERY_RETURNED_ZERO_ROWS",
       "rows": 0,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/253/35'"
-    },
-    {
-      "stage": "discover_tess_tu2020_keyword",
-      "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/253/35'"
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/143'"
     },
     {
       "stage": "discover_rot_mcquillan2014",
       "status": "OK",
-      "rows": 2,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/211/24'"
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/211/24/table1'"
+    },
+    {
+      "stage": "fetch_rot_mcquillan2014",
+      "status": "OK",
+      "rows": 34030,
+      "query": "SELECT \"KIC\", \"Prot\" FROM \"J/ApJS/211/24/table1\""
     },
     {
       "stage": "discover_rot_santos2021",
       "status": "OK",
-      "rows": 2,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/255/17'"
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/255/17/table1'"
+    },
+    {
+      "stage": "fetch_rot_santos2021",
+      "status": "OK",
+      "rows": 39591,
+      "query": "SELECT \"KIC\", \"Prot\" FROM \"J/ApJS/255/17/table1\""
     },
     {
       "stage": "discover_rot_reinhold2013",
@@ -79,16 +137,102 @@
       "query": "TAP_SCHEMA.tables ~ 'J/A+A/560/A4'"
     },
     {
-      "stage": "discover_rot_tess_rotation_discovered",
+      "stage": "fetch_rot_reinhold2013",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ ''"
+      "rows": 28,
+      "query": "SELECT \"Name\", \"Per\" FROM \"J/A+A/560/A49/stars\""
+    },
+    {
+      "stage": "discover_rot_yang2019_stars",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table1'"
+    },
+    {
+      "stage": "fetch_rot_yang2019_stars",
+      "status": "OK",
+      "rows": 3420,
+      "query": "SELECT \"KIC\", \"Prot\" FROM \"J/ApJS/241/29/table1\""
+    },
+    {
+      "stage": "discover_rot_davenport2016_stars",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/829/23/table1'"
+    },
+    {
+      "stage": "fetch_rot_davenport2016_stars",
+      "status": "OK",
+      "rows": 4041,
+      "query": "SELECT \"KIC\", \"Prot\" FROM \"J/ApJ/829/23/table1\""
+    },
+    {
+      "stage": "discover_rot_tu2022_stars",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table1'"
+    },
+    {
+      "stage": "fetch_rot_tu2022_stars",
+      "status": "OK",
+      "rows": 71732,
+      "query": "SELECT \"ID\", \"Per\" FROM \"J/ApJ/935/90/table1\""
+    },
+    {
+      "stage": "discover_rot_gunther2020_stars",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table2'"
+    },
+    {
+      "stage": "fetch_rot_gunther2020_stars",
+      "status": "OK",
+      "rows": 1228,
+      "query": "SELECT \"TIC\", \"Prot\" FROM \"J/AJ/159/60/table2\""
     }
   ],
-  "n_stages": 14,
-  "n_ok": 12,
+  "n_stages": 29,
+  "n_ok": 27,
   "n_query_failed": 0,
   "n_query_returned_zero_rows": 2,
   "any_query_failed": false,
-  "total_rows": 375
+  "total_rows": 344573,
+  "routes": {
+    "routes": {
+      "tap": {
+        "n_ok": 51,
+        "n_failed": 0,
+        "endpoints": [
+          "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+        ]
+      }
+    },
+    "n_attempts": 51,
+    "served_by": "tap",
+    "breaker": {
+      "fail_limit": 2,
+      "cooldown_s": 45.0,
+      "endpoints": {
+        "https://tapvizier.cds.unistra.fr/TAPVizieR/tap": {
+          "state": "closed",
+          "consecutive_failures": 0,
+          "ever_ok": true
+        }
+      },
+      "n_transitions": 0
+    }
+  },
+  "breaker": {
+    "fail_limit": 2,
+    "cooldown_s": 45.0,
+    "endpoints": {
+      "https://tapvizier.cds.unistra.fr/TAPVizieR/tap": {
+        "state": "closed",
+        "consecutive_failures": 0,
+        "ever_ok": true
+      }
+    },
+    "transitions": [],
+    "n_transitions": 0
+  }
 }

@@ -377,15 +377,42 @@ def _looks_tabular(body: bytes) -> bool:
     return len(lines) >= 2 and any(sep in lines[0] for sep in (",", "|", "\t"))
 
 
-def probe_svo_catalog(name: str, roots, cfg: dict) -> tuple[str | None, str, Provenance]:
+def probe_svo_catalog(name: str, roots, cfg: dict, budget_s: float | None = None
+                      ) -> tuple[str | None, str, Provenance]:
     """Find the live root for one named SVO catalogue.
 
     Probes the index page and a small cone with SHORT timeouts, records the
     HTTP status of every form and mines the index for bulk-download links.
     Returns ``(root, working_url_form, provenance)``.
+
+    **The ladder runs under a clock.** Each probe is short, but the number of
+    roots is not bounded by this channel: the RegTAP route contributes however
+    many the registry publishes, and the index scrape contributes however many
+    links it mines, so *roots x 5 URL forms x 25 s* grows without limit ---
+    200 roots is seven hours. The route that follows it, the USNO-B1.0
+    reconstruction, is handed ``max(deadline - elapsed, 60)``, so the only
+    route that can restore the channel's scale gets whatever the ladder
+    leaves it. A probe ladder that cannot find a service must not be able to
+    consume the run that would have worked without it. This is a bound on a
+    cost that has none, not a fix for an overrun that was observed.
     """
     prov = Provenance(route=f"probe_svo:{name}")
-    for root in roots:
+    t0 = time.time()
+    budget = float(budget_s if budget_s is not None
+                   else cfg.get("acquire", {}).get("svo_probe_budget_s", 600.0))
+
+    def _spent() -> bool:
+        return budget > 0 and (time.time() - t0) >= budget
+
+    roots = list(roots)
+    for i, root in enumerate(roots):
+        if _spent():
+            prov.status = "budget_exhausted"
+            prov.notes.append(
+                f"probe budget of {budget:.0f}s spent after {i} of {len(roots)} "
+                f"root(s); {len(roots) - i} not tried. This is a statement about "
+                "the time the ladder was given, not about the service")
+            return None, "", prov
         body, detail = _probe(root + "/", cfg)
         prov.record(root + "/", body is not None, detail, 0)
         if body is not None:
@@ -396,6 +423,13 @@ def probe_svo_catalog(name: str, roots, cfg: dict) -> tuple[str | None, str, Pro
             if links:
                 prov.notes.append(f"links on {root}/: {links[:12]}")
         for url in _svo_urls(root, cfg, ra=180.0, dec=0.0, sr=5.0):
+            if _spent():
+                prov.status = "budget_exhausted"
+                prov.notes.append(
+                    f"probe budget of {budget:.0f}s spent inside root {i + 1} of "
+                    f"{len(roots)}. This is a statement about the time the "
+                    "ladder was given, not about the service")
+                return None, "", prov
             body, detail = _probe(url, cfg)
             ok = _looks_tabular(body) if body else False
             prov.record(url, ok, detail, 0)
@@ -1566,7 +1600,14 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
             # A registry-published root is tried FIRST: it is the only one of
             # these that any service actually claims to be at.
             roots = list(dict.fromkeys(reg_roots + list(roots)))
-            root, _, p_probe = probe_svo_catalog(cat, roots, cfg)
+            # The probe ladder gets a bounded slice of the acquisition, never
+            # the whole of it: the route that follows it is the one that can
+            # restore the channel's scale.
+            budget = float(cfg.get("acquire", {}).get("svo_probe_budget_s", 600.0))
+            if deadline_s is not None:
+                left = deadline_s - (time.time() - t_start)
+                budget = max(60.0, min(budget, 0.25 * left))
+            root, _, p_probe = probe_svo_catalog(cat, roots, cfg, budget_s=budget)
             prov["routes"].append(p_probe.as_dict())
             if not root:
                 continue

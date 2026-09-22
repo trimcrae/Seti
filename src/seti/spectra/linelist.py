@@ -231,6 +231,97 @@ EMISSION_ONLY = {"[Fe II]", "[O II]", "[O III]", "[O I]", "[N II]", "[S II]", "[
                  "city Hg I", "city Na (HPS)"}
 
 
+# --- observed-frame BANDS ---------------------------------------------------------
+# The atmosphere's absorption bands are intervals, not lines.  Their edges are
+# where an imperfect telluric correction leaves a narrow residual that a
+# matched-filter line search reads as emission, and inside them the airglow is
+# dense enough that no hand-kept list of individual lines can be trusted to be
+# complete.  Air intervals, converted to vacuum at use.  These are REPORTED, not
+# enforced: the empirical test is the control sample (the same wavelength in
+# unrelated stars), and a band flag is the reason to look at it.
+TELLURIC_BANDS_AIR = [
+    ("O2 gamma", 6270.0, 6330.0),
+    ("H2O 6500", 6450.0, 6600.0),
+    ("O2 B", 6860.0, 6950.0),
+    ("H2O 7200", 6940.0, 7400.0),
+    ("O2 A", 7590.0, 7700.0),
+    ("H2O 8200", 8100.0, 8400.0),
+    ("H2O 9000", 8900.0, 9800.0),
+]
+_OH_VAC = np.sort(air_to_vacuum(np.array(
+    [w for w, lbl, _ in _LINES_AIR if lbl == "sky OH"], float)))
+
+
+def atmospheric_context(lam_obs: float, window_A: float = 60.0) -> dict:
+    """Where this observed wavelength sits relative to the atmosphere.
+
+    ``telluric_band`` names the absorption band it falls in, if any.
+    ``oh_gap_A`` is how far the nearest *listed* OH line is, and
+    ``oh_density_per_100A`` how many listed OH lines lie within ``window_A``:
+    a wavelength with no OH line within a few Angstrom but a dozen within 60 A
+    is in a gap of the LIST inside the forest, which is a much weaker statement
+    than being genuinely clear of airglow.
+    """
+    lam = float(lam_obs)
+    band = ""
+    for name, lo, hi in TELLURIC_BANDS_AIR:
+        if float(air_to_vacuum(np.array([lo]))[0]) <= lam <= \
+                float(air_to_vacuum(np.array([hi]))[0]):
+            band = name
+            break
+    out = {"telluric_band": band, "oh_gap_A": float("nan"),
+           "oh_density_per_100A": 0.0}
+    if _OH_VAC.size:
+        out["oh_gap_A"] = round(float(np.min(np.abs(_OH_VAC - lam))), 2)
+        n = int(np.sum(np.abs(_OH_VAC - lam) <= window_A))
+        out["oh_density_per_100A"] = round(100.0 * n / (2.0 * window_A), 2)
+    return out
+
+
+_BAND_LABELS = ("TiO head", "VO head", "CaH head", "MgH head", "CN head", "C2 Swan",
+                "ZrO head", "YO head", "CH G band")
+_BAND_MASK = np.isin(_LABEL, list(_BAND_LABELS))
+
+
+def band_gap_context(lam_obs: float, z: float = 0.0, near_A: float = 150.0) -> dict:
+    """The molecular band heads either side of the candidate, in the star's frame.
+
+    In a cool star the flux between two band heads is a *relative maximum*, and
+    a matched filter run against a local linear continuum that is itself inside
+    the band structure reads that maximum as an unresolved emission line. The
+    feature is then in every exposure of the star and in every epoch of it, so
+    neither the per-exposure test nor a second epoch can see it -- which is why
+    the band heads either side have to be on the record next to the candidate.
+
+    Reported, never enforced: the empirical version is the same-type control
+    sample, and this is the reason to look at it.
+    """
+    lam = float(lam_obs)
+    z = float(z) if np.isfinite(z) else 0.0
+    shifted = _WAVE_VAC[_BAND_MASK] * (1.0 + z)
+    labels = _LABEL[_BAND_MASK]
+    out = {"band_blue_label": "", "band_blue_dA": float("nan"),
+           "band_red_label": "", "band_red_dA": float("nan"),
+           "between_band_heads": False}
+    if shifted.size == 0:
+        return out
+    d = lam - shifted
+    blue = np.where(d > 0)[0]           # heads at shorter wavelength than the line
+    red = np.where(d < 0)[0]
+    if blue.size:
+        k = blue[int(np.argmin(d[blue]))]
+        out["band_blue_label"] = f"{labels[k]} {shifted[k]:.1f}"
+        out["band_blue_dA"] = round(float(d[k]), 1)
+    if red.size:
+        k = red[int(np.argmax(d[red]))]
+        out["band_red_label"] = f"{labels[k]} {shifted[k]:.1f}"
+        out["band_red_dA"] = round(float(-d[k]), 1)
+    out["between_band_heads"] = bool(
+        np.isfinite(out["band_blue_dA"]) and np.isfinite(out["band_red_dA"])
+        and out["band_blue_dA"] <= near_A and out["band_red_dA"] <= near_A)
+    return out
+
+
 def n_lines() -> int:
     return int(_WAVE_VAC.size)
 

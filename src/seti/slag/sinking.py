@@ -257,6 +257,20 @@ def _interp_table(tab: pd.DataFrame, elements: list[str], reference: str, teff: 
     return np.array(out, dtype=float)
 
 
+
+#: Atomic number -> element symbol, for grids that key their rows by Z.
+#: PyllutedWD's ``data/timescales_*.csv`` are written ``T:,<grid>`` then
+#: ``qcvz:,<...>`` then one row per ELEMENT NUMBER, 2 through 30 -- not per
+#: symbol.  Reading them needs nothing more than this table, and without it the
+#: files parse to nothing while reporting success (run 35747793625).
+ATM_UNKNOWN_TAG = "unknown"
+
+Z_SYMBOL = {1: "H", 2: "He", 3: "Li", 4: "Be", 5: "B", 6: "C", 7: "N", 8: "O", 9: "F",
+            10: "Ne", 11: "Na", 12: "Mg", 13: "Al", 14: "Si", 15: "P", 16: "S", 17: "Cl",
+            18: "Ar", 19: "K", 20: "Ca", 21: "Sc", 22: "Ti", 23: "V", 24: "Cr", 25: "Mn",
+            26: "Fe", 27: "Co", 28: "Ni", 29: "Cu", 30: "Zn", 38: "Sr", 50: "Sn",
+            56: "Ba", 82: "Pb"}
+
 def _parse_transposed(text: str) -> pd.DataFrame | None:
     """``T:,5000,5250,...`` / ``Ca:,...`` grids (PyllutedWD's ``data/timescales_*.csv``)."""
     rows: dict[str, list[float]] = {}
@@ -282,6 +296,10 @@ def _parse_transposed(text: str) -> pd.DataFrame | None:
             continue
         if re.fullmatch(r"[A-Z][a-z]?", key):
             rows[key] = vals
+            continue
+        # rows keyed by ATOMIC NUMBER, which is how PyllutedWD writes them
+        if re.fullmatch(r"\d{1,2}", key) and int(key) in Z_SYMBOL:
+            rows[Z_SYMBOL[int(key)]] = vals
     if grid is None or len(rows) < 3:
         return None
     n = len(grid)
@@ -296,6 +314,49 @@ def _parse_transposed(text: str) -> pd.DataFrame | None:
     if len(out) < 4:
         return None
     return pd.DataFrame(out)
+
+
+def describe_timescale_text(text: str, *, max_keys: int = 25) -> dict:
+    """Why a timescale file did not parse, in terms of what it actually holds.
+
+    A file that is fetched and then silently ignored is the worst kind of
+    degradation: the run looks healthy and quietly uses a different timescale
+    source.  This reports the row keys, the row widths and the temperature
+    grid it found, which is enough to see the real layout from the committed
+    JSON without refetching anything.
+    """
+    lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    keys, widths, grid_n = [], [], None
+    n_numeric_rows = 0
+    for ln in lines:
+        if ln.startswith("#"):
+            continue
+        cells = [c.strip() for c in ln.split(",")]
+        if len(cells) < 4:
+            continue
+        key = cells[0].rstrip(":").strip()
+        try:
+            vals = [float(c) for c in cells[1:] if c not in ("", "--")]
+        except ValueError:
+            keys.append(key + " (non-numeric)")
+            continue
+        n_numeric_rows += 1
+        if key and re.fullmatch(r"(?i)t|teff|temp", key) and grid_n is None:
+            grid_n = len(vals)
+        keys.append(key)
+        widths.append(len(vals))
+    element_keys = [k for k in keys if re.fullmatch(r"[A-Z][a-z]?", k)]
+    return {"n_lines": len(lines), "n_numeric_rows": n_numeric_rows,
+            "row_keys": keys[:max_keys], "n_row_keys": len(keys),
+            "element_like_keys": element_keys[:max_keys],
+            "n_element_like_keys": len(element_keys),
+            "temperature_grid_n": grid_n,
+            "distinct_row_widths": sorted(set(widths))[:10],
+            "reason": ("no T:/Teff row found" if grid_n is None else
+                       "fewer than 3 element-named rows" if len(element_keys) < 3 else
+                       "element rows do not match the temperature grid width"
+                       if all(w != grid_n for w in widths) else
+                       "recognised rows, but fewer than 3 matched the grid width")}
 
 
 #: Above this an element's tabulated value is a timescale in seconds or years;
@@ -358,6 +419,87 @@ def parse_timescale_table(text: str) -> pd.DataFrame | None:
     return None
 
 
+
+def grid_tag(path: str) -> dict:
+    """The (atmosphere, log g, overshoot) a PyllutedWD grid filename declares."""
+    name = str(path).split("/")[-1]
+    atm = "H" if re.search(r"(?i)(^|[_.])h([_.]|$)|_H_|_H\.", name) else None
+    if atm is None:
+        atm = "He" if re.search(r"(?i)he", name) else ATM_UNKNOWN_TAG
+    m = re.search(r"g(\d)\.(\d)", name) or re.search(r"g(\d)(\d)0", name)
+    logg = float(f"{m.group(1)}.{m.group(2)}") if m else float("nan")
+    ov = 1 if ("ov1" in name or "overshoot" in name) else 0
+    return {"atmosphere": atm, "logg": logg, "overshoot": ov, "file": name}
+
+
+def grid_vs_published_timescales(grids: dict, df, roles: dict, *, reference: str = "Ca",
+                                 max_rows: int = 4000) -> dict:
+    """Do the fetched grids reproduce the catalogue's OWN per-star timescales?
+
+    The sinking lever has two independent sources here: the grids Koester's
+    models produce (fetched from PyllutedWD) and the per-star ``SinTime*``
+    columns PEWDD publishes for these very stars.  Agreement between them is
+    the only check either one can get, and it decides which the channel should
+    use rather than leaving that to the order of a priority list.
+
+    ``grids`` maps a tag dict's key ``(atmosphere, logg, overshoot)`` to a
+    parsed table.  Returns the offset distribution of
+    log10(tau_Z/tau_ref)_published - log10(tau_Z/tau_ref)_grid, per overshoot
+    family.
+    """
+    sink = roles.get("sinking_time_columns") or {}
+    if not grids or reference not in sink:
+        return {"compared": False, "reason": "no grids or no reference timescale column"}
+    teff = pd.to_numeric(df[roles["teff"]], errors="coerce") if roles.get("teff") else None
+    logg = pd.to_numeric(df[roles["logg"]], errors="coerce") if roles.get("logg") else None
+    if teff is None or logg is None:
+        return {"compared": False, "reason": "no Teff or logg column"}
+    atm_c = df[roles["atm"]].astype(str) if roles.get("atm") else None
+    ref = pd.to_numeric(df[sink[reference]], errors="coerce")
+    cols = {e: pd.to_numeric(df[c], errors="coerce") for e, c in sink.items() if e != reference}
+    out: dict = {}
+    n_rows = 0
+    for i in range(min(len(df), int(max_rows))):
+        r0 = ref.iloc[i]
+        t, g = teff.iloc[i], logg.iloc[i]
+        if not (np.isfinite(r0) and r0 > 0 and np.isfinite(t) and np.isfinite(g)):
+            continue
+        a = "He"
+        if atm_c is not None:
+            u = atm_c.iloc[i].strip().upper()
+            a = "H" if (u.startswith("H") and u != "HE") else "He"
+        used = False
+        for el, ser in cols.items():
+            v = ser.iloc[i]
+            if not (np.isfinite(v) and v > 0):
+                continue
+            obs = float(np.log10(v / r0))
+            for key, tab in grids.items():
+                atm_k, logg_k, ov_k = key
+                if atm_k != a or el not in tab.columns or reference not in tab.columns:
+                    continue
+                same = [k for k in grids if k[0] == a and k[2] == ov_k
+                        and np.isfinite(k[1])]
+                if same:
+                    nearest = min(same, key=lambda k: abs(k[1] - g))
+                    if nearest != key:
+                        continue
+                x = tab["Teff"].to_numpy(dtype=float)
+                y = np.log10(tab[el].to_numpy(dtype=float)
+                             / tab[reference].to_numpy(dtype=float))
+                out.setdefault(f"overshoot_{ov_k}", []).append(obs - float(np.interp(t, x, y)))
+                used = True
+        n_rows += int(used)
+    rep = {"compared": bool(out), "n_rows_compared": n_rows, "reference": reference,
+           "n_grids": len(grids)}
+    for k, vals in out.items():
+        a = np.asarray(vals, dtype=float)
+        rep[k] = {"n": int(a.size), "median_offset_dex": float(np.median(a)),
+                  "rms_dex": float(np.sqrt(np.mean(a ** 2))),
+                  "iqr_dex": float(np.percentile(a, 75) - np.percentile(a, 25))}
+    return rep
+
+
 # ---------------------------------------------------------------------------
 # the three phases
 # ---------------------------------------------------------------------------
@@ -397,5 +539,7 @@ def phase_grid(t_acc_range=(0.01, 30.0), t_dec_range=(0.0, 5.0), n_acc: int = 7,
 
 
 __all__ = ["PHASE_DECLINING", "PHASE_EARLY", "PHASE_STEADY", "SCALING", "SIGMA_ROW_DEX",
-           "SOURCE_ROW", "SOURCE_SCALING", "SOURCE_TABLE", "TABULATED", "TimescaleModel", "parse_timescale_table", "phase_grid",
+           "SOURCE_ROW", "SOURCE_SCALING", "SOURCE_TABLE", "TABULATED", "TimescaleModel",
+           "Z_SYMBOL", "grid_tag", "grid_vs_published_timescales",
+           "describe_timescale_text", "parse_timescale_table", "phase_grid",
            "phase_label", "phase_log_factor"]

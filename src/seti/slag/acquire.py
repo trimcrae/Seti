@@ -48,7 +48,7 @@ from ..metronome.acquire import (
     vizier_table,
 )
 from .misfit import Panel
-from .sinking import parse_timescale_table
+from .sinking import describe_timescale_text, parse_timescale_table
 
 STATUS_OK = "OK"
 STATUS_FAILED = "QUERY_FAILED"
@@ -496,9 +496,131 @@ def normalise_name(name: str) -> str:
     return s.replace("?", "")
 
 
+OBJECT_MATCH_ARCSEC = 5.0
+
+
+def assign_object_keys(panels: list[Panel], *, arcsec: float = OBJECT_MATCH_ARCSEC) -> dict:
+    """Reconcile PEWDD's star–paper rows into objects ON THE SKY, not on the name.
+
+    PEWDD is one row per star per publication, and the same star is written
+    under whatever designation its paper used: GD 378 and WD 1822+410 are one
+    He-atmosphere DBZ; PG 0843+516, PG 0843+517 and WD0843+516 are one DA.
+    Grouping on the (qualifier-stripped, case- and space-normalised) name
+    leaves those as separate objects, which silently disables every check that
+    compares an object's own sources -- the multi-reference disagreement kill
+    above all -- and inflates the object count.
+
+    Every served row carries RAJ2000/DEJ2000, so objects are built by
+    single-linkage on the sky within ``arcsec`` (3" by default; the count is on
+    a plateau there -- 1610 objects at 1", 1588 at 3", 1576 at 5", 1560 at 10"
+    for the 3547 served rows, against 2441 name groups).  A panel with no
+    usable coordinate keeps its name key, so nothing is lost when the
+    coordinate columns are absent.  The chosen label is the most frequent
+    stripped name in the group, and every designation is kept on the panel.
+
+    5" is the default because PEWDD's positions are transcribed per paper at
+    different epochs and white dwarfs have large proper motions: GD 362's two
+    served positions differ by 3.5".  The object count is flat across the
+    choice (1610 at 1", 1594 at 2", 1588 at 3", 1576 at 5", 1566 at 8", 1559
+    at 12" for the 3547 served rows, against 2441 name groups), and the chance
+    of a false 5" pair among ~1600 objects over the whole sky is ~1e-3.
+    """
+    ra = np.array([p.meta.get("ra", np.nan) for p in panels], dtype=float)
+    dec = np.array([p.meta.get("dec", np.nan) for p in panels], dtype=float)
+    ok = np.isfinite(ra) & np.isfinite(dec)
+    parent = list(range(len(panels)))
+
+    def find(a: int) -> int:
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    n_pairs = 0
+    if ok.sum() >= 2:
+        from scipy.spatial import cKDTree
+
+        idx = np.flatnonzero(ok)
+        r, d = np.radians(ra[idx]), np.radians(dec[idx])
+        xyz = np.c_[np.cos(d) * np.cos(r), np.cos(d) * np.sin(r), np.sin(d)]
+        chord = 2.0 * np.sin(np.radians(float(arcsec) / 3600.0) / 2.0)
+        for a, b in cKDTree(xyz).query_pairs(chord):
+            ia, ib = find(int(idx[a])), find(int(idx[b]))
+            if ia != ib:
+                parent[ia] = ib
+                n_pairs += 1
+    # The name is the UNRELIABLE key and must never link two sky positions.
+    # PEWDD carries rows whose designation belongs to a different star from
+    # their coordinates (two rows called "WD1202-232" sit 40 degrees apart;
+    # rows called "Ross 640" appear at both 16h28m+36 and 07h40m-17).  Joining
+    # on the name as well as the sky chains those into single-linkage blobs of
+    # up to 27 rows and ten unrelated designations.  So rows are joined on the
+    # name ONLY when neither has a usable coordinate.
+    name_groups: dict[str, int] = {}
+    for i, p in enumerate(panels):
+        k = p.meta.get("name_key") or normalise_name(p.name)
+        name_groups.setdefault(k, i)
+        if ok[i]:
+            continue
+        j = name_groups[k]
+        if ok[j]:
+            continue
+        ia, ib = find(j), find(i)
+        if ia != ib:
+            parent[ia] = ib
+    by_name = name_groups
+    groups: dict[int, list[int]] = {}
+    for i in range(len(panels)):
+        groups.setdefault(find(i), []).append(i)
+    n_merged_by_sky = 0
+    used_keys: dict[str, int] = {}
+    for members in sorted(groups.values(), key=lambda m: (-len(m), m[0])):
+        names = [strip_name_qualifiers(panels[i].meta.get("star_raw") or panels[i].name)
+                 for i in members]
+        keys = sorted({panels[i].meta.get("name_key") or normalise_name(panels[i].name)
+                       for i in members})
+        if len(keys) > 1:
+            n_merged_by_sky += 1
+        label = max(sorted(set(names)), key=lambda s: (names.count(s), -len(s)))
+        okey = normalise_name(label) or keys[0]
+        ras = [panels[i].meta.get("ra") for i in members
+               if np.isfinite(panels[i].meta.get("ra", np.nan))]
+        des = [panels[i].meta.get("dec") for i in members
+               if np.isfinite(panels[i].meta.get("dec", np.nan))]
+        # A designation PEWDD reuses for two different sky positions must not
+        # re-merge them downstream: the object key stays unique, tagged by
+        # position, and the clash is visible in the key itself.
+        if okey in used_keys:
+            tag = (f"@{np.mean(ras):.4f}{np.mean(des):+.4f}" if ras
+                   else f"#{used_keys[okey] + 1}")
+            used_keys[okey] += 1
+            okey = okey + tag
+        used_keys.setdefault(okey, 0)
+        for i in members:
+            panels[i].meta["object_key"] = okey
+            panels[i].meta["object_label"] = label
+            panels[i].meta["object_designations"] = keys
+            panels[i].meta["object_n_rows"] = len(members)
+            if ras:
+                panels[i].meta["object_ra"] = float(np.mean(ras))
+                panels[i].meta["object_dec"] = float(np.mean(des))
+    per_name: dict[str, set] = {}
+    for p in panels:
+        per_name.setdefault(p.meta.get("name_key") or "", set()).add(p.meta["object_key"])
+    reused = sorted(k for k, v in per_name.items() if len(v) > 1)
+    return {"match_arcsec": float(arcsec), "n_rows": len(panels),
+            "n_rows_with_coordinates": int(ok.sum()),
+            "n_name_groups": len(by_name), "n_objects": len(groups),
+            "n_objects_merging_designations": n_merged_by_sky,
+            "n_sky_links": n_pairs,
+            "n_designations_reused_across_objects": len(reused),
+            "designations_reused_across_objects": reused[:20]}
+
+
 def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.2,
                  error_floor_dex: float = 0.02, elements=None,
-                 sinking=None) -> tuple[list[Panel], list[dict]]:
+                 sinking=None, match_arcsec: float = OBJECT_MATCH_ARCSEC,
+                 grouping_out: dict | None = None) -> tuple[list[Panel], list[dict]]:
     """One panel per table row (one white dwarf, one source) from the resolved roles.
 
     Upper limits
@@ -545,7 +667,9 @@ def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.
         meta = {"row": int(i), "atmosphere_how": how, "atmosphere_raw": atm,
                 "errors_assumed_for": assumed,
                 "spt": str(row.get(roles["spt"], "")) if roles.get("spt") else "",
-                "star_raw": name, "name_key": normalise_name(name)}
+                "star_raw": name, "name_key": normalise_name(name),
+                "ra": _to_float(row.get(roles["ra"])) if roles.get("ra") else np.nan,
+                "dec": _to_float(row.get(roles["dec"])) if roles.get("dec") else np.nan}
         meta.update(_provenance_of_row(row, roles))
         meta["stated_n_detections"] = _stated_count(row, roles, "n_detections")
         meta["stated_n_upper_limits"] = _stated_count(row, roles, "n_upper_limits")
@@ -562,6 +686,14 @@ def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.
                      "n_errors_assumed": len(assumed),
                      "stated_n_detections": meta["stated_n_detections"],
                      "n_sinking_times": len(tau)})
+    grouping = assign_object_keys(panels, arcsec=match_arcsec)
+    diag_by_row = {d["row"]: d for d in diag}
+    for p in panels:
+        d = diag_by_row.get(p.meta["row"])
+        if d is not None:
+            d["object_key"] = p.meta.get("object_key")
+    if grouping_out is not None:
+        grouping_out.update(grouping)
     return panels, diag
 
 
@@ -765,6 +897,73 @@ def fetch_meteorite_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
     return out
 
 
+
+def verify_limit_convention(path, elements=None) -> dict:
+    """Check "a negative error means an upper limit" against PEWDD's own counts.
+
+    This is the single most consequential reading decision in the channel: a
+    negative-error value read as a detection is a fabricated depletion of
+    whatever size the error column holds.  PEWDD publishes ``total_detections``
+    and ``total_upper_limits`` per row, so the convention is checkable rather
+    than assumed --- but ONLY in the database's own CSV.  The VizieR service
+    does not serve those two columns at all (200 columns, neither present), so
+    on the VizieR route the check has nothing to compare and must say so
+    instead of reporting zeros that read like agreement.
+
+    The UPPER-LIMIT count is the strict test.  The detection count cannot
+    agree: PEWDD counts detections over every element it carries, including H
+    and He and elements outside this channel's list, so a row whose extra
+    elements are detections is undercounted here by construction.  Both are
+    reported, and which one is the test is stated.
+    """
+    out: dict = {"path": str(path), "checked": False}
+    try:
+        df = pd.read_csv(path, low_memory=False)
+    except Exception as exc:                                  # noqa: BLE001
+        return {**out, "status": f"unreadable:{exc!r}"[:160]}
+    if "total_detections" not in df.columns or "total_upper_limits" not in df.columns:
+        return {**out, "status": "COUNT_COLUMNS_NOT_SERVED",
+                "note": "the VizieR table does not carry total_detections / "
+                        "total_upper_limits; only the database's own CSV does"}
+    pairs = []
+    for c in df.columns:
+        m = re.fullmatch(r"log\(([A-Z][a-z]?)/H\(e\)\)", str(c))
+        if not m:
+            continue
+        el = m.group(1)
+        if el in ("H", "He"):
+            continue
+        if elements is not None and el not in elements:
+            continue
+        for ec in (str(c) + "e", "e_" + str(c)):
+            if ec in df.columns:
+                pairs.append((el, str(c), ec))
+                break
+    if len(pairs) < 3:
+        return {**out, "status": "NO_VALUE_ERROR_PAIRS", "n_pairs": len(pairs)}
+    det = pd.to_numeric(df["total_detections"], errors="coerce")
+    lim = pd.to_numeric(df["total_upper_limits"], errors="coerce")
+    n_det = np.zeros(len(df), dtype=int)
+    n_lim = np.zeros(len(df), dtype=int)
+    for _el, vc, ec in pairs:
+        v = pd.to_numeric(df[vc], errors="coerce")
+        e = pd.to_numeric(df[ec], errors="coerce")
+        ok = v.notna().to_numpy()
+        n_det += (ok & (e > 0).to_numpy()).astype(int)
+        n_lim += (ok & (e < 0).to_numpy()).astype(int)
+    m_lim = lim.notna().to_numpy()
+    m_det = det.notna().to_numpy()
+    lim_agree = int((n_lim[m_lim] == lim[lim.notna()].to_numpy()).sum())
+    det_agree = int((n_det[m_det] == det[det.notna()].to_numpy()).sum())
+    return {**out, "checked": True, "status": STATUS_OK, "n_rows": int(len(df)),
+            "n_element_columns": len(pairs),
+            "upper_limits_checked": int(m_lim.sum()), "upper_limits_agree": lim_agree,
+            "detections_checked": int(m_det.sum()), "detections_agree": det_agree,
+            "strict_test": "upper_limits",
+            "note": ("the detection count cannot agree: PEWDD counts detections over every "
+                     "element it carries, this channel over its own element list")}
+
+
 def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
                               log: AcquisitionLog | None = None) -> dict:
     """PyllutedWD's (or Koester's) diffusion-timescale files, fetched and parsed if they exist."""
@@ -787,7 +986,22 @@ def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
         rec["status"] = STATUS_OK
         rec["head"] = text[:600]
         tab = parse_timescale_table(text)
+        if tab is None:
+            # Fetched and then silently ignored is the worst degradation: the
+            # run looks healthy and quietly falls back to another timescale
+            # source.  Say what the file actually holds, and keep the raw text
+            # so the layout can be read from the committed artifacts.
+            rec["parsed"] = False
+            rec["parse_diagnosis"] = describe_timescale_text(text)
+            raw = out_dir / "data" / ("timescales_raw_"
+                                      + re.sub(r"[^A-Za-z0-9_.-]", "_", e["path"]))
+            try:
+                raw.write_text(text[:400_000])
+                rec["raw_local"] = str(raw)
+            except Exception as exc:                          # noqa: BLE001
+                rec["raw_local_error"] = repr(exc)[:200]
         if tab is not None:
+            rec["parsed"] = True
             rec["parsed_columns"] = [str(c) for c in tab.columns]
             rec["parsed_rows"] = int(len(tab))
             local = out_dir / "data" / ("timescales_" + re.sub(r"[^A-Za-z0-9_.-]", "_", e["path"]))
@@ -810,6 +1024,7 @@ def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
 __all__ = ["ATM_H", "ATM_HE", "ATM_UNKNOWN", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO",
            "VIZIER_ASU", "AcquisitionLog", "atmosphere_from_spt", "atmosphere_of_row",
            "build_panels", "companion_column", "discover_timescale_tables",
+           "verify_limit_convention",
            "element_value_column", "fetch_meteorite_tables", "fetch_pewdd", "fetch_text",
            "github_raw_url",
            "github_tree", "http_text", "normalise_name", "pick_pewdd_csv",

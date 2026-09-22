@@ -135,6 +135,18 @@ So the prior per pointing is `centre = (f/c)(a_kin + a_Earth)`,
 term's bound is added to the width and the centre carries the kinematic part
 only (`earth_term_known = false` on the row).
 
+**The supplementary rest-frequency test.** The pair's *velocity* difference,
+unlike its acceleration, is large and measured: a relay de-drifted so R sees a
+chosen rest line puts that line, for Earth, at `f_rest (1 + (v_TR − v_TE)/c)`.
+`assess` tests every pair-line hit against HI 1420.4058, OH 1665.4018 and
+OH 1667.3590 shifted by that pair's own `dv_offset_kms`, with a ±5 km/s RV
+tolerance (≈ ±24 kHz at HI). It is a second, independent discriminant, and it
+is priced as such: a pointing whose pairs lack either radial velocity is
+recorded as **not tested** rather than as a non-match, so the trials count
+(`n_magic_line_tests`) counts only real tests, and `n_magic_expected_by_chance`
+= tests × window / searched band (~7 × 10⁻⁴ per 100 tests over an 800 MHz band)
+is printed beside every match. Only ~43 % of the sample has the RVs this needs.
+
 ## 4. Stages and files
 
 **probe** — `api/list-targets`, `api/list-telescopes`, `api/list-file-types`
@@ -242,6 +254,26 @@ through fake transports finds the injected hit at the prior while a zero-drift
 hit, a recurrent frequency, a hit on a star on no pair line and a hit off the
 window are each rejected by the named rule.
 
+**Run the suite under both pandas majors before dispatching.** The sandbox venv
+holds pandas 2.3.3 and the runner's `pip install -e ".[dev]"` fetches 3.0.6;
+CRADLE lost a whole dispatch to an API pandas 3 removed, dying on its own
+offline gate before one archive call (`docs/channel-brief.md` §0 item 5). All
+50 RELAY tests were run under 3.0.6 as well as 2.3.3 on 2026-09-22, without
+touching the shared venv:
+
+    pip install --target <dir> --no-deps "pandas>=3"
+    PYTHONPATH=<dir>:src pytest tests/test_relay*.py -q
+
+RELAY's only `errors="ignore"` is on `DataFrame.drop`, where the argument
+survives; the numeric conversions all use `errors="coerce"`.
+
+`tests/test_relay_magic.py` (7 tests) pins the rest-frequency test: the window
+is the offset plus the RV tolerance and moves with the pair's velocity; a
+pointing without radial velocities is **not tested** rather than counted as a
+miss; a hit on the shifted line matches while the *unshifted* line at 42 km/s
+does not; the OH lines are told apart; and the chance rate is the window over
+the searched band and is small but not negligible.
+
 `tests/test_relay_papers.py` (13 tests, no socket) covers the e-print route on
 fixture bytes: a deluxetable with `$-$` signs and `\tablenotemark` glued to a
 number yields the right numbers; a target list with coordinates and no drift
@@ -294,13 +326,40 @@ count whose yield is dominated by the nearest receivers.
 link at 1 µm gives **zero** qualifying pairs in this sample and 3 × 10⁻⁵
 expected: a large-aperture optical network leaves Earth outside every beam, and
 no amount of searching changes that. The interceptable regime is radio with
-modest apertures or deliberately over-filled beams. There the interception is
-*not* leakage: the spillover geometry delivers (|T−R|/|T|)² of what R receives,
-and the between geometry delivers **more** than R receives, so a qualifying pair
-is a strong-signal channel rather than a sidelobe one. The price is stated in
-the same breath — 1.8 × 10⁴ to 1.8 × 10⁷ qualifying pairs per beam is also
-1.8 × 10⁴ to 1.8 × 10⁷ trials, which is why every count in `hits.json` is
-printed beside its `n_expected_by_chance` and `n_trials`.
+modest apertures or deliberately over-filled beams.
+
+There the interception is **not** leakage, and the measurement says so rather
+than the argument. Over the kept pairs of every radio beam the *median* flux
+ratio at Earth versus at the intended receiver — `(|T-R|/|T|)^2`, below 1 for
+spillover and above 1 for the between geometry — is
+
+| beam | spillover | between |
+|---|---|---|
+| 100 m, 1.42 GHz | **0.547** | **3.89** |
+| 10 m, 8 GHz | 0.517 | 3.82 |
+| 10 m, 1.42 GHz | 0.600 | 3.86 |
+| over-filled 5° | 0.624 | 3.85 |
+
+— Earth gets about **55 % of what the receiver gets** in the spillover geometry
+(2.6 dB down, not a sidelobe) and about **4× more than the receiver** in the
+near-antipodal one, because Earth is then the nearer point on the same beam.
+The median transmitter angle sits at 0.67–0.71 of the cone half-width, i.e. the
+qualifying pairs fill the cone rather than hugging its axis.
+
+The price is stated in the same breath — 1.8 × 10⁴ to 1.8 × 10⁷ qualifying
+pairs per beam is also 1.8 × 10⁴ to 1.8 × 10⁷ trials, which is why every count
+in `hits.json` is printed beside its `n_expected_by_chance` and `n_trials`.
+
+**And the kinematic drift prior is dead, measured.** Over the same pairs the
+median |a_kin| is **5.3 × 10⁻¹⁰ m/s²** and the p99 of |ḟ_kin| at 1.42 GHz is
+**5–7 × 10⁻⁸ Hz/s** — five to six orders below the 0.0093 Hz/s resolution of a
+2.79 Hz × 300 s turboSETI product. The brief's "relative radial acceleration
+gives a Doppler-drift prior" is therefore *false as stated*, and §3 already
+replaced it with the two terms that do carry information: the unremoved
+topocentric Earth term (±0.16 Hz/s at L band, sign set by hour angle) and the
+small-angle leak of the transmitter's own platform acceleration (≤ 0.006 Hz/s),
+plus the rest-frequency offset test, which uses the pair's *velocity* — a
+quantity Gaia measures well — instead of its acceleration.
 
 The near-antipodal "Earth between the nodes" geometry is counted separately
 throughout and is the larger population by ~9–10× at every beam, exactly the

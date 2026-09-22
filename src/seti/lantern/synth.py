@@ -17,6 +17,8 @@ def synthesise_timeseries(n_int: int = 300, n_wl: int = 600, wl_range=(2.9, 5.2)
                           noise: float = 2e-3, ramp_amp: float = 0.0, ramp_tau: float = 20.0,
                           line_ramp_amp: float = 0.0, centre_shift_h: float = 0.0,
                           cosmic_ray: tuple | None = None, rp_rs: float = 0.1,
+                          fixed_pattern_amp: float = 0.0, pattern_drift: float = 0.0,
+                          fixed_pattern_seed: int = 7,
                           seed: int = 1) -> dict:
     """Stellar continuum + noise (+ eclipse/transit) (+ optional planet line).
 
@@ -28,7 +30,10 @@ def synthesise_timeseries(n_int: int = 300, n_wl: int = 600, wl_range=(2.9, 5.2)
     persistence-like artefact whose decay can mimic a drop when the eclipse
     sits late in the window -- shift it with ``centre_shift_h``);
     ``cosmic_ray=(integration, amplitude)`` adds a one-integration spike at the
-    line wavelength.  Returns wavelength, flux (n_int, n_wl), flux_err, times
+    line wavelength; ``fixed_pattern_amp`` a static per-pixel multiplicative
+    pattern (the flat-field/extraction residual that limits a real time-averaged
+    x1d spectrum), and ``pattern_drift`` a linear change of that pattern across
+    the visit.  Returns wavelength, flux (n_int, n_wl), flux_err, times
     (BJD_TDB) and the :class:`Ephemeris`.
     """
     rng = np.random.default_rng(seed)
@@ -68,6 +73,19 @@ def synthesise_timeseries(n_int: int = 300, n_wl: int = 600, wl_range=(2.9, 5.2)
             if line_ramp_amp:
                 a *= 1.0 + line_ramp_amp * np.exp(-i / ramp_tau)
             flux[i] += a * cont[j] * prof
+    # Static per-pixel pattern: the flat-field / extraction residual that on
+    # real JWST x1d products holds the time-averaged spectrum's noise floor at
+    # ~1% of the continuum however long the exposure.  It is identical in every
+    # integration, so it cancels in an out-minus-in difference; with
+    # ``pattern_drift`` it does not, and the drift null must catch it.
+    if fixed_pattern_amp:
+        g = np.random.default_rng(fixed_pattern_seed).normal(size=n_wl)
+        # The drift settles exponentially (a persistence-like decay), so it is
+        # NOT symmetric about the eclipse and does not cancel in the difference
+        # by construction -- which is exactly the case the drift null exists for.
+        s = (pattern_drift * np.exp(-np.arange(n_int) / max(ramp_tau, 1e-9))
+             if pattern_drift else np.zeros(n_int))
+        flux *= 1.0 + fixed_pattern_amp * g[None, :] * (1.0 + s[:, None])
     if cosmic_ray is not None and line_wl is not None:
         k, amp = cosmic_ray
         j = np.argmin(np.abs(wl - line_wl))

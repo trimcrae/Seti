@@ -599,3 +599,46 @@ def test_geometry_beams_run_narrowest_first(conf, sample, tmp_path):
     order = [rep["beams"][k]["theta_rad"] for k in rep["beams"]]
     assert order == sorted(order)
     assert all(b.get("status") == "COMPUTED" for b in rep["beams"].values())
+
+
+# ---------------------------------------------------------------------------
+# a wedged archive call must not hold the stage
+# ---------------------------------------------------------------------------
+def test_a_hung_archive_call_is_abandoned_inside_its_clock():
+    import time as _t
+
+    def _hangs(adql, endpoint=None, maxrec=None):
+        _t.sleep(30)
+        return pd.DataFrame()
+
+    wrapped = acq.with_timeout(_hangs, 0.2)
+    t0 = _t.monotonic()
+    with pytest.raises(acq.QueryTimeout):
+        wrapped("SELECT 1", "http://example.invalid/tap")
+    assert _t.monotonic() - t0 < 5.0
+
+    # an in-time call and its exceptions pass straight through
+    assert len(acq.with_timeout(lambda a: pd.DataFrame({"n": [1]}), 5.0)("x")) == 1
+
+    def _raises(a):
+        raise ValueError("boom")
+
+    with pytest.raises(ValueError, match="boom"):
+        acq.with_timeout(_raises, 5.0)("x")
+    # a timeout of 0 means no clock: the function comes back unwrapped
+    assert acq.with_timeout(_raises, 0) is _raises
+
+
+def test_only_default_transports_are_clocked(conf):
+    from seti.relay.run import _transports
+
+    def fake_tap(*a, **k):
+        return None
+
+    def fake_query(*a, **k):
+        return None
+
+    tap, qry = _transports(conf, fake_tap, fake_query)
+    assert tap is fake_tap and qry is fake_query
+    tap, qry = _transports(conf, None, None)
+    assert tap is not acq.pyvo_tap and callable(tap) and callable(qry)

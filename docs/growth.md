@@ -1084,6 +1084,19 @@ failed. Both numbers, and the counts above ±3 and ±5, are in `summary.json`.
 
 ### 11.5 Bookkeeping that is never a statement about the sky
 
+**How much of the phase the search can actually cover.** Computed on the
+committed `targets.csv` (4,604 of 4,725 targets carry the full ephemeris
+arithmetic; TESS mid-epoch BTJD 2600): the median planet is propagated over
+**353 epochs** (maximum 17,839) and arrives with **σ_T0 = 38 min**; p90 is
+168 min and p99 is 692 min. Against that, the search half-width
+`3σ_T0 + 0.25 T14` capped at `min(0.6 d, 0.3 P)` is 180 min at the median.
+The cap bites for **269 targets (5.8 %)** — 204 of them long-period — where the
+window is narrower than 3σ (median shortfall a factor 1.6, worst 73), and for
+**6 short-period targets σ_T0 exceeds P/2**, so their phase is unconstrained
+outright. A `transit_not_recovered` on any of those is a statement about the
+*ephemeris*, not about the sky, and `epoch_search_halfwidth_minutes` next to
+`ephemeris_sigma_minutes` says which case each planet is.
+
 `not_measured` keeps `QUERY_FAILED`, `QUERY_RETURNED_ZERO_ROWS`,
 `TIC_UNRESOLVED`, `EPHEMERIS_UNAVAILABLE`, `NO_USABLE_TRANSIT`,
 `BUDGET_EXHAUSTED` and `NOT_REACHED` apart. A shard the clock killed leaves its

@@ -491,14 +491,32 @@ def analyze_century(
     #
     # The split is now the one that leaves the fewest unexplained blocks:
     #
-    #     cost(s) = #{detected blocks after s} + #{undetected blocks up to s}
+    #     cost(s) = excess_late(s) + #{undetected blocks up to s}
     #
-    # Both terms are things a true transition at s does not produce.  For the
-    # case above, s = 1932 costs 2 (the two false alarms) while s = 1952 costs
-    # 10 (one false alarm plus nine real misses), so 1932 wins.  For a single
-    # isolated post-gap false alarm --- the Hippke/Lund failure mode --- the
-    # true end costs 1 and the false alarm costs one per undetected block
-    # between, so the true end still wins, and ties go to the EARLIER split.
+    # Both terms are things a true transition at s does not produce.
+    #
+    # ``excess_late`` is the detections after s that the false-alarm rate
+    # CANNOT account for: ``len(late) - max_fa``, or all of them when two are
+    # adjacent, since two adjacent late detections are a clock that came back
+    # (Blazhko-like) and not noise.  Charging the raw count instead reopens the
+    # Hippke/Lund trap from the other side, and the suite catches it: the
+    # Menzel gap contains NO BLOCKS, so between the last pre-gap detection and
+    # a false alarm in the first post-gap block there are zero undetected
+    # blocks.  A raw count gives that post-gap false alarm a cost of 0 against
+    # the true pre-gap end's 1, and the split crosses the gap --- which is
+    # exactly the failure
+    # ``test_cessation_across_gap_is_flagged_and_mean_flux_deferred`` exists to
+    # forbid.  With the allowance subtracted both score 0 and the tie goes to
+    # the earlier split, so the transition stays at the gap.
+    #
+    # The three cases the rule has to separate, all in the suite:
+    #   * two false alarms after a 1932 stop --- s=1932 costs 1 (one excess
+    #     late), s=1951 costs 9 (nine real misses): 1932 wins;
+    #   * one false alarm in the first post-gap block --- both cost 0, the
+    #     earlier wins, and the transition stays AT the gap;
+    #   * a genuine post-gap cessation in 1980 --- s=1980 costs 0 while a
+    #     pre-gap split costs the post-gap detections it cannot explain, so
+    #     the rule still crosses the gap when detections justify it.
     #
     # Whether the detections after the chosen split are consistent with noise
     # is then a separate question, answered by the same test as before: at
@@ -514,20 +532,29 @@ def analyze_century(
     def _late(s_try: int) -> list[int]:
         return [i for i in range(s_try + 1, nb) if det[i]]
 
+    def _max_fa(s_try: int) -> int:
+        n_post_try = max(nb - s_try - 1, 1)
+        return max(1, int(np.ceil(3.0 * float(fap) * n_post_try)))
+
     def _late_ok(s_try: int) -> tuple[bool, list[int]]:
         late = _late(s_try)
-        n_post_try = max(nb - s_try - 1, 1)
-        max_fa = max(1, int(np.ceil(3.0 * float(fap) * n_post_try)))
         adjacent = any(b - a == 1 for a, b in zip(late, late[1:], strict=False))
-        return (len(late) <= max_fa and not adjacent), late
+        return (len(late) <= _max_fa(s_try) and not adjacent), late
+
+    def _excess_late(s_try: int) -> int:
+        """Detections after ``s_try`` the false-alarm rate cannot account for."""
+        late = _late(s_try)
+        if any(b - a == 1 for a, b in zip(late, late[1:], strict=False)):
+            return len(late)             # adjacent: a clock that came back
+        return max(0, len(late) - _max_fa(s_try))
 
     s, best_cost = s_last, None
     for s_try in range(nb):
         if not det[s_try]:
             continue                     # a transition begins after a DETECTION
-        cost = len(_late(s_try)) + int(np.sum(~det[:s_try + 1]))
+        cost = _excess_late(s_try) + int(np.sum(~det[:s_try + 1]))
         if best_cost is None or cost < best_cost:
-            s, best_cost = s_try, cost
+            s, best_cost = s_try, cost   # strict <: ties go to the EARLIER split
     res.split_cost = int(best_cost) if best_cost is not None else -1
     ok, late_det = _late_ok(s)
     if not ok:

@@ -175,7 +175,38 @@ the core route: `rate ∝ 1 + cos φ` puts 0.20 of its events inside ±0.05
 cycle and has a core jitter of ≈ 0.087 over ±0.15, below both gates, and
 the rotator test still lands on `jitter_too_large`.
 
-### 4.3 Two nulls, and what each is for
+### 4.2b The catalogue's own time lattice, MEASURED
+
+A published peak time is not a real number: it is the time stamp of a cadence,
+so every time in a catalogue sits on a lattice, and the spacing of that lattice
+is **not reliably the mission cadence**.  `windows.infer_time_grid` measures it
+from the catalogue's own distinct times (candidate spacings built from the
+smallest observed gaps and their integer divisors; the largest spacing on which
+≥ 97% of distinct times sit within 12% of an integer step wins, then a
+least-squares refinement).  It is recorded per catalogue in
+`summary.json["coverage"]["time_grid"]` with the fraction on the lattice, so a
+reader can see whether one was found at all.
+
+Why it matters, concretely: Tu+2022's TESS peak times are spaced by **0.0069 d**
+(9.94 min) — every one of the 30 cross-star epochs in the 2026-09-21 run is an
+exact multiple of it — while the configured TESS cadence is 0.0013889 d (2 min).
+The window null snaps its draws to `Windows.cadence_days`; a null quantised five
+times finer than the data is a null that cannot reproduce the data's own
+sampling.  The measured grid now sets that cadence, and with it the shortest
+period the scan will entertain (`n_cadences_min` *real* steps rather than
+assumed ones).
+
+`windows.lattice_phase_limits` turns the same number into the two limits it
+implies at a given period P: a **jitter floor** `g / (P √12)` — the rms phase
+jitter the rounding forces on *any* clock, however perfect — and a phase-comb
+spacing `g/P`.  A star whose measured jitter sits at that floor is as tight as
+its time stamps allow and no tighter, and is flagged `quantisation_limited`
+(report-only).  What is *not* claimed: a low-denominator rational P/g is not by
+itself a problem.  With P/g = a/b in lowest terms the comb has **a** teeth, not
+b, so the only resonances that bite are short periods, and for the catalogues
+in hand that means P ≲ 30 g — below or at the scan's own floor.
+
+### 4.3 Three nulls, and what each is for
 1. **Window-resampled** (`clock.window_null`): N times uniform in the star's
    own observed time, snapped to the mission cadence, scanned identically.
    Quarter gaps, sector gaps, orbit gaps and 30-min quantisation are inside
@@ -202,6 +233,29 @@ the rotator test still lands on `jitter_too_large`.
    `gap_integer_frac < 0.6`* is the `bursty_random` rejection: coherence
    explained by the waiting-time distribution *without* the waiting times being
    clock-like.
+
+3. **Pool-resampled** (`clock.pool_null`), the empirical one: N times drawn,
+   without replacement, from the **other stars' catalogued event times** that
+   fall inside this star's own windows.  Nulls 1 and 2 model the sampling —
+   the windows, and a cadence.  This one models nothing.  It resamples the
+   catalogue's real time lattice, its sector duty cycle and whatever epochs
+   its detector preferred, exactly as they are, without anyone having to know
+   what they are.  The star's own times are excluded; cross-star coincidences
+   are already removed, so a shared instrumental epoch cannot be laundered
+   through the pool.  200 trials, so the smallest reachable p is ~0.005; it
+   exists to kill sampling artefacts, not to re-rank clocks that null 1 has
+   already put at p ~ 10⁻²⁰.  `pool_null_explains` (p_pool ≥ 0.05) is a hard
+   veto, ordered **first** because it is the most mundane explanation there
+   is.  A pool of fewer than 3N times inside the windows cannot support the
+   draw; that is `pool_null_unreached`, which caps the tier at `interest` —
+   never a silent pass.
+
+   Measured offline (`test_pool_null_kills_a_lattice_artefact_...`): a
+   catalogue of stars whose events are placed **at random on one coarse
+   lattice** — nothing periodic anywhere — is called a perfect clock
+   (jitter < 10⁻⁶, Q > 0.999, p_window < 0.05) by a window null snapped to a
+   finer cadence, and is killed by the pool null (p_pool > 0.05).  A genuine
+   clock on the same lattice beats both.
 
 **Calibration of the extrapolation** (measured in the sandbox, 300 Poisson
 stars in Q2–Q8 Kepler windows, N = 30, 200-trial nulls): fraction of stars
@@ -266,7 +320,37 @@ fraction of the *catalogue's* flares the detector recovered
 period / Q / jitter / core numbers / p, whether the period agrees with the
 catalogue's (or a low harmonic), and `confirms_catalogue_clock`: a catalogue
 clock is **confirmed** only when the independent detector finds it at the
-same period with the same strict quality gate the tiers use.  A light-curve
+same period with the same strict quality gate the tiers use **and** the
+period is not the star's own dominant photometric periodicity (below).
+
+**The re-detection's own confounder, measured rather than assumed.**  A
+running median over 0.5 d cannot flatten a photometric oscillation of
+comparable period, so the worry is that its maxima become a train of "flares"
+at exactly the photometric period — with the phase stability of the
+oscillation rather than of any flare mechanism.  Two synthetic light curves
+containing **no flares at all** settle what the detector actually does
+(`test_a_sinusoid_does_not_manufacture_flares_but_a_sharp_pulsator_does`):
+
+* a pure **sinusoid** does *not* do it.  The residual is a sinusoid too and
+  the MAD sigma is set by that same sinusoid, so its maxima sit at ~1.4σ,
+  under the 2.5σ / 3.5σ gates.  Zero flares are found.
+* a **sharp-peaked** periodic signal does.  A pulsator's sawtooth maximum, a
+  heartbeat brightening, a contact binary: the bulk of the cycle sets the MAD,
+  the narrow peak clears it every cycle, and out comes a perfect clock at the
+  photometric period.
+
+So `redetect` measures the Lomb–Scargle peak of the star's own (unmasked)
+flux — `phot_period`, `phot_amplitude_frac` — and `clock_in_lightcurve` is
+False when the re-detected period *is* that dominant photometric periodicity
+or a low harmonic of it.  The flux is used unmasked deliberately: masking the
+detected events would punch a hole at exactly the period under test and
+imprint it on the window function.  The price is that a genuine flare clock
+also contributes some power at its own period, bounded by the events' duty
+cycle — which is reported beside it, with the median event duration and the
+rise fraction `(t_peak − t_start)/duration`.  A flare rises in about a cadence
+and decays over several (rise fraction well under 0.5); a symmetric
+photometric maximum has ~0.5.  Those two are **reported, not vetoed on**: at
+30-min cadence a three-point event cannot resolve the asymmetry.  A light-curve
 clock the catalogue did not show is reported separately
 (`LIGHTCURVE_CLOCK_WITHOUT_CATALOGUE_AGREEMENT_n`) and is not a candidate
 until vetted.  A dead MAST is `NO_DATA_REACHED`, an empty one
@@ -288,10 +372,13 @@ star), `flags_raised` (every flag) and `tiers`.
 | `cadence_alias` | P at a named instrumental period or its 2×, 3×, ½, ⅓: Kepler long cadence, ~3 d momentum dumps, ~31 d downlinks, ~93 d quarters; TESS 2-min / 10-min / 200-s / 30-min cadences, ~3.5 d early-sector momentum dumps, 13.7 d orbit, 27.4 d sector | 2% tolerance.  The brief's "6.02 h" Kepler figure could not be verified and is **not** applied. |
 | `rotation_alias` | Rotational modulation of flare visibility — the dominant natural quasi-periodicity | P within 3% of P_rot, P_rot/2, /3, /4, 2P_rot, 3P_rot, from McQuillan/Santos/Reinhold or the flare catalogue's own P_rot |
 | `periodic_variable` | A pulsator's or eclipsing binary's cycles chopped into "flares" by the flare finder (RR Lyrae, δ Sct, EBs) | VSX / Gaia DR3 vari / ZTF cone at 3″; P within 3% of the catalogued period or its ½, ⅓, 2×, 3× |
+| `pool_null_explains` | The catalogue's own sampling — its time lattice, its sector duty cycle, its preferred epochs — reproduces the coherence, with nothing modelled | `p_pool ≥ 0.05` against 200 draws from the other stars' event times inside this star's windows |
 | `bursty_random` | Clustered-but-random flaring whose coherence the waiting-time shuffle reproduces | `p_shuffle ≥ 0.05` **and** neither `gap_integer_frac` nor `gap_integer_frac_core` ≥ 0.6 |
 | `jitter_too_large` | Not a clock: fails even the loose thresholds on both routes | (Q < 0.6 or jitter > 0.12) **and** (`f_in_window` < 0.4 or `jitter_core` > 0.12) |
 | `energy_incoherent` *(report)* | Energy depends on clock phase — visibility, not a beacon | Spearman p < 0.01 |
 | `rotation_unknown`, `variability_catalogue_unreached` *(report)* | A veto could not be applied | Caps the tier at `interest` |
+| `quantisation_limited` *(report)* | The measured jitter is at the floor `g/(P√12)` the catalogue's own time rounding forces: the tightness is a property of the time stamps, not of the star | jitter ≤ 1.5 × the floor from the **measured** lattice |
+| `pool_null_unreached` *(report)* | Fewer than 3N other-star times inside the windows, so null 3 could not run | Caps the tier at `interest` |
 | `p_extrapolated`, `null_truncated_by_budget` *(report)* | Statistical provenance | — |
 
 **Where the clock thresholds sit.**  The assess stage measures the jitter and
@@ -381,8 +468,8 @@ the sky, and the workflow refuses to let either read as a science null.
 ## 9. Layout
 
 ```
-src/seti/metronome/windows.py   observing-window model (Kepler quarters, TESS sectors, data-driven)
-src/seti/metronome/clock.py     H-test scan, clock quality, two nulls, cross-star removal, BH  [pure]
+src/seti/metronome/windows.py   observing-window model + the MEASURED time lattice (infer_time_grid)
+src/seti/metronome/clock.py     H-test scan, clock quality, three nulls, cross-star removal, BH [pure]
 src/seti/metronome/vet.py       the gauntlet and the tiers (rms and core quality routes)        [pure]
 src/seti/metronome/redetect.py  flare detector on light curves, lightcurve windows, the redetect stage
 src/seti/metronome/acquire.py   runner-only VizieR access, runtime schema discovery, AcquisitionLog

@@ -72,6 +72,15 @@ DOMINANT_FRAC = 0.7        # one exposure carrying >= this share of the flux = s
 SKY_LINE_SIG = 5.0         # sky model peak at the wavelength above this = on a sky line
 CHI2_P_INCONSISTENT = 0.01
 
+# Bumped whenever a change alters the NUMBERS a checkpoint holds.  run_shard
+# reuses a checkpoint only if it carries the current value, so a corrected
+# estimator re-measures instead of silently inheriting the superseded run's
+# answer -- the failure mode that would have frozen the 2026-09-22 median
+# continuum bias into every result committed afterwards.
+#   1: median continuum, photon-only error
+#   2: sigma-clipped linear continuum fit, continuum error propagated
+CKPT_VERSION = 2
+
 # SDSS SPPIXMASK bits (per-exposure spCFrame masks).
 SDSS_BAD_BITS = (1 << 16) | (1 << 18) | (1 << 22) | (1 << 24) | (1 << 25)
 SDSS_REJECT_BITS = (1 << 18) | (1 << 25)          # FULLREJECT | COMBINEREJ
@@ -1020,6 +1029,16 @@ def second_epoch(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
 # Orchestration
 # ---------------------------------------------------------------------------
 
+def _ckpt_current(path: Path) -> bool:
+    """True only for a checkpoint written by the current estimator version."""
+    if not path.exists():
+        return False
+    try:
+        return int(json.loads(path.read_text()).get("ckpt_version", 1)) == CKPT_VERSION
+    except (OSError, ValueError, TypeError):
+        return False
+
+
 def load_survivors(root: Path):
     import pandas as pd
     p = root / "results" / "spectra_triage" / "priority_targets.csv"
@@ -1187,8 +1206,9 @@ def run_shard(root: Path, shard: int = 0, n_shards: int = 1, top: int = 0,
     spec_ids = sorted(df["spec_id"].astype(str).unique())
     mine = [s for k, s in enumerate(spec_ids) if k % max(n_shards, 1) == shard]
     print(f"[persist] shard {shard}/{n_shards}: {len(mine)} spectra of {len(spec_ids)}")
-    todo = [s for s in mine if not (ckpt / f"{s}.json").exists()]
-    print(f"[persist] {len(mine) - len(todo)} already checkpointed; {len(todo)} to do")
+    todo = [s for s in mine if not _ckpt_current(ckpt / f"{s}.json")]
+    print(f"[persist] {len(mine) - len(todo)} already checkpointed at v{CKPT_VERSION}; "
+          f"{len(todo)} to do")
     stats = {"n_assigned": len(mine), "n_done_before": len(mine) - len(todo), "n_processed": 0,
              "n_failed": 0}
     if not todo:
@@ -1238,6 +1258,7 @@ def run_shard(root: Path, shard: int = 0, n_shards: int = 1, top: int = 0,
                                              "basis": f"exception: {exc!r}", "exposures": []})
                     stats["n_failed"] += 1
             res["elapsed_s"] = round(time.time() - t0, 1)
+            res["ckpt_version"] = CKPT_VERSION
             (ckpt / f"{s}.json").write_text(json.dumps(_json_safe(res)))
             stats["n_processed"] += 1
             for ln in res.get("lines", []):
@@ -1259,8 +1280,14 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     df = load_survivors(root)
     rows = []
     per_exp = {}
+    n_stale = 0
     for p in sorted(ckpt.glob("*.json")):
         r = json.loads(p.read_text())
+        # A checkpoint from a superseded estimator is not evidence; it is a
+        # stale number that would otherwise be merged in as though it were.
+        if int(r.get("ckpt_version", 1)) != CKPT_VERSION:
+            n_stale += 1
+            continue
         prov = r.get("provenance", {}) or {}
         for ln in r.get("lines", []):
             se = ln.get("second_epoch", {}) or {}
@@ -1350,6 +1377,8 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     summary = {
         "n_survivors_in": int(len(df)), "n_spectra_in": int(df["spec_id"].nunique()),
         "n_checkpointed_spectra": int(len(list(ckpt.glob("*.json")))),
+        "ckpt_version": CKPT_VERSION,
+        "n_checkpoints_stale_ignored": int(n_stale),
         "persistence_class_counts": {k: int(v) for k, v in counts.items()},
         "verdict_counts": {k: int(v) for k, v in vcounts.items()},
         "route_counts": {k: int(v) for k, v in tab["route"].fillna("").value_counts().items()},

@@ -371,6 +371,15 @@ def test_shard_and_reduce_end_to_end(tmp_path, monkeypatch):
     # Re-running is a no-op thanks to checkpoints.
     st2 = persist.run_shard(root, shard=0, n_shards=1, offline_records=recs, workdir=tmp_path / "w")
     assert st2["n_processed"] == 0 and st2["n_done_before"] == 3
+    # ... but a checkpoint written by a SUPERSEDED estimator is not evidence and
+    # must be re-measured, never silently inherited.
+    stale = ck / f"{ids[0]}.json"
+    d = json.loads(stale.read_text())
+    d["ckpt_version"] = persist.CKPT_VERSION - 1
+    stale.write_text(json.dumps(d))
+    st3 = persist.run_shard(root, shard=0, n_shards=1, offline_records=recs, workdir=tmp_path / "w")
+    assert st3["n_processed"] == 1 and st3["n_done_before"] == 2
+    assert json.loads(stale.read_text())["ckpt_version"] == persist.CKPT_VERSION
 
     summ = persist.reduce_results(root, do_simbad=False, do_nist=False)
     tab = pd.read_csv(root / "results" / "spectra_persist" / "persistence.csv")

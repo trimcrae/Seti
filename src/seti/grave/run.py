@@ -55,7 +55,7 @@ REFINED_CANDS = "REFINED_PARTICULATE_CANDIDATES_PENDING_VET"
 
 META_COLS = ("source", "sample_id", "section", "site_type", "lat", "lon", "age", "min_age", "max_age",
              "lithology", "strat", "basin", "environment", "meta_bin", "height", "reference", "country",
-             "analytical_method")
+             "analytical_method", "collector", "state_province")
 
 
 def _now() -> str:
@@ -371,9 +371,24 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
     D = V.apply_floors(D0, floors, unmeasured_dex=float(sc.get("unmeasured_floor_dex", 0.30)))
     null = V.shuffled_null(conc[control.to_numpy()] if control.any() else conc, D, cfg,
                            max_rows=int(sc.get("null_max_rows", 2000)))
-    threshold = max(cfg.lr_min, float(null.get("lr_quantile") or 0.0))
     fit = V.fit_mixture(conc, D, cfg)
     df = pd.concat([df, fit], axis=1)
+    # Second, empirical null: the SAME lithology away from every boundary, which
+    # is the comparison the brief asks for.  The shuffled null destroys element
+    # identity and so does not carry sediments' real correlated deviations; the
+    # control population does, at the cost of being contaminated if a residue
+    # exists off-boundary too.  The threshold takes whichever is higher, and
+    # both are reported so it is visible which one bound it.
+    ctrl_lr = pd.to_numeric(df.loc[control, "fission_lr"], errors="coerce").dropna()
+    control_null = {"n": int(len(ctrl_lr)), "quantile": cfg.null_quantile,
+                    "lr_quantile": round(float(ctrl_lr.quantile(cfg.null_quantile)), 3) if len(ctrl_lr) >= 200 else None,
+                    "lr_max": round(float(ctrl_lr.max()), 3) if len(ctrl_lr) else None,
+                    "note": "non-boundary samples of the candidate sources; None when fewer than 200"}
+    threshold = max(cfg.lr_min, float(null.get("lr_quantile") or 0.0),
+                    float(control_null.get("lr_quantile") or 0.0))
+    df["threshold_bound_by"] = ("lr_min" if threshold == cfg.lr_min else
+                                ("control_population" if threshold == (control_null.get("lr_quantile") or -1)
+                                 else "shuffled_null"))
     df["above_threshold"] = (df["fission_lr"] >= threshold) & ~df["is_reference_only"]
     df["ambiguous"] = (df["fission_lr"] >= cfg.ambiguity_margin) & ~df["above_threshold"] & ~df["is_reference_only"]
     df["class"] = np.where(df["n_measured"] < cfg.min_elements, V.INSUFFICIENT, V.NORMAL)
@@ -430,7 +445,9 @@ def stage_screen(conf: dict, out: Path, *, table: pd.DataFrame | None = None) ->
            "n_reference_only": int(df["is_reference_only"].sum()),
            "elements_in_design": D.elements, "n_elements": len(D.elements),
            "elements_measured": {e: n_meas.get(e, 0) for e in all_elements},
-           "design": D.to_dict(), "error_floors": floors, "shuffled_null": null, "threshold": threshold,
+           "design": D.to_dict(), "error_floors": floors, "shuffled_null": null,
+           "control_population_null": control_null, "threshold": threshold,
+           "threshold_bound_by": str(df["threshold_bound_by"].iat[0]) if len(df) else "",
            "detection_limits": dl_ledger,
            "funnel": {"samples": int(len(df)), "with_age": int(pd.to_numeric(df["age"], errors="coerce").notna().sum()),
                       "sufficient_panel": int((df["n_measured"] >= cfg.min_elements).sum()),
@@ -570,6 +587,8 @@ def stage_assess(conf: dict, out: Path) -> dict:
         "n_samples": int(scr.get("n_samples", 0)), "n_candidate_source_samples": int(len(main)),
         "funnel": scr.get("funnel"), "vetoes": scr.get("vetoes"), "class_counts": scr.get("class_counts"),
         "threshold": scr.get("threshold"), "shuffled_null": scr.get("shuffled_null"),
+        "control_population_null": scr.get("control_population_null"),
+        "threshold_bound_by": scr.get("threshold_bound_by"),
         "lr_distribution": scr.get("lr_distribution"), "elements_in_design": scr.get("elements_in_design"),
         "error_floors": scr.get("error_floors"), "detection_limits": scr.get("detection_limits"),
         "age_stack": stack, "impact_positive_control": impact_stack, "refined_stack": refined_stack,

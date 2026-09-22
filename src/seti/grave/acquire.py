@@ -156,6 +156,10 @@ META_ROLES: dict[str, list[str]] = {
                   r"^original[_ ]source$", r"^doi$"],
     "country": [r"^country$"],
     "analytical_method": [r"^method$", r"^analytical[_ ]method$", r"^analysis[_ ]type$"],
+    # SGP serves no citation, DOI or method field (run 35738860553), so these
+    # two are most of what provenance there is and they are kept as roles.
+    "collector": [r"^collector$", r"^collected[_ ]by$"],
+    "state_province": [r"^state/province$", r"^state[_ ]province$", r"^state$", r"^province$"],
 }
 
 
@@ -441,7 +445,8 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
     for host in s.get("hosts", []):
         for path in s.get("attribute_paths", []):
             for method, body in (("GET", None), ("POST", {"type": s.get("type", "samples")})):
-                fr3 = rec(fetch(f"{host}{path}", method=method, json_body=body, timeout=timeout),
+                fr3 = rec(fetch(f"{host}{path}", method=method, json_body=body,
+                                timeout=min(timeout, 30.0), retries=0),
                           f"attribute listing {path} ({method})")
                 if fr3.ok and len(fr3.content) > 40:
                     ledger["attribute_endpoints"][f"{method} {host}{path}"] = {
@@ -569,7 +574,10 @@ def earthchem_endpoint_ladder(conf: dict, *, fetch=http_fetch) -> dict:
                       {"searchtype": "count", "outputtype": "json", "keyword": "shale"})
         method = (cand.get("method") if isinstance(cand, dict) else None) or "GET"
         body = cand.get("json") if isinstance(cand, dict) else None
-        fr = fetch(url, method=method, params=(None if body else params), json_body=body, timeout=timeout)
+        # one attempt, short timeout: a ladder rung that does not resolve must
+        # cost seconds, not the three-attempt retry ladder of a real request
+        fr = fetch(url, method=method, params=(None if body else params), json_body=body,
+                   timeout=min(timeout, float(e.get("ladder_timeout_s", 25))), retries=0)
         cnt = _ec_count(fr)
         rec = {"url": url, "method": method, "params": (body or params), "status": fr.status,
                "bytes": len(fr.content), "count": cnt, "content_type": fr.content_type,

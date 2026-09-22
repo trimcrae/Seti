@@ -657,12 +657,14 @@ the sky, and the workflow refuses to let either read as a science null.
 src/seti/metronome/windows.py   observing-window model + the MEASURED time lattice (infer_time_grid)
 src/seti/metronome/clock.py     H-test scan, clock quality, three nulls, cross-star removal, BH [pure]
 src/seti/metronome/vet.py       the gauntlet and the tiers (rms and core quality routes)        [pure]
-src/seti/metronome/redetect.py  flare detector on light curves, lightcurve windows, the redetect stage
+src/seti/metronome/redetect.py  flare detector on light curves, the photometric veto, the
+                                catalogue-epoch stack, the redetect stage and reconcile_summary
 src/seti/metronome/acquire.py   runner-only VizieR access, runtime schema discovery, AcquisitionLog
 src/seti/metronome/run.py       stages probe / acquire / screen / assess (+ redetect) -> results/metronome/
 config/metronome.yaml           every threshold, every table seed
 tests/test_metronome.py         offline suite (the CI gate)
-.github/workflows/metronome.yml probe+acquire -> screen matrix -> assess -> commit-back; lit job
+.github/workflows/metronome.yml probe+acquire -> screen matrix -> assess -> commit-back; lit job;
+                                assess-only and redetect-only over a prior run's artifacts
 scripts/metronomelit_fetch.py   prior-art sweep, verbatim abstracts -> results/metronomelit/
 ```
 
@@ -676,4 +678,6 @@ Outputs: `probe.json`, `acquire.json`, `acquisition_log.json`, `screen_<cat>[_s<
 `stars_<cat>[...].csv` (every star scanned), `stars_vetted.csv`, `summary.json`
 (verdict, funnel, rejection counters, jitter calibration, coverage, `generated_utc`,
 per-catalogue acquisition log), `candidates.json` (interest + candidate, and the watch list),
-`redetect.json` + `stars_redetect.csv` (the light-curve re-detection of the shortlist).
+`redetect.json` + `stars_redetect.csv` (the light-curve re-detection of the shortlist,
+including the catalogue-epoch stack), and the `redetect` block reconciliation writes back
+into `summary.json` / `candidates.json`.

@@ -350,6 +350,11 @@ def test_acquire_end_to_end_with_a_dead_svo_and_a_live_vizier(sc, tmp_path, monk
     routes = {r["route"]: r["status"] for r in prov["routes"]}
     assert routes["vizier_tap_schema_discovery"] == "ok"
     assert routes["usnob1_reconstruction"] == "ok"
+    # every route is recorded even when it returns nothing: a dead registry and
+    # an absent catalogue are findings, not silence
+    assert routes["registry_regtap_discovery"] == "unreachable"
+    for cat in sc["acquire"]["vizier_direct_catalogues"]:
+        assert f"vizier_meta:{cat}" in routes, routes
     assert prov["vizier_tables_discovered"][0]["table_name"] == "J/AJ/159/8/table2"
     # A second call reuses the checkpointed fields instead of refetching them.
     # (The one-off -meta.all probe is not a field fetch and is not counted.)
@@ -377,3 +382,82 @@ def test_solano_candidates_exclude_the_villarroel_table():
                                          "POSS I vanishing sources (Solano+ 2022)"]})
     assert acq._solano_candidates(tabs) == ["J/MNRAS/515/1380/vanish"]
     assert acq.unquote_table('"J/AJ/159/8"') == "J/AJ/159/8"
+
+
+# --- route 0: the IVOA registry ---------------------------------------------
+_REGTAP_CSV = (
+    b"ivoid,short_name,res_title,access_url,standard_id\n"
+    b"ivo://cab.inta-csic.es/vanish-possi,vanish-possi,POSS I vanishing sources,"
+    b"http://svocats.cab.inta-csic.es/vanish-possi/cs.php?,"
+    b"ivo://ivoa.net/std/ConeSearch\n"
+    b"ivo://cab.inta-csic.es/vanish-neowise,vanish-neowise,VASCO NEOWISE counterparts,"
+    b"http://example.org/vanish-neowise/cs.php?,ivo://ivoa.net/std/ConeSearch\n"
+    b"ivo://cab.inta-csic.es/vasco-web,vasco,VASCO project page,"
+    b"http://example.org/vasco/,ivo://ivoa.net/std/TAP\n"
+)
+
+
+def test_root_of_access_url_strips_the_script_and_query():
+    f = acq._root_of_access_url
+    assert f("http://svocats.cab.inta-csic.es/vanish-possi/cs.php?") == \
+        "http://svocats.cab.inta-csic.es/vanish-possi"
+    assert f("http://h/x/conesearch?RA=1&DEC=2") == "http://h/x"
+    assert f("http://h/vanish-neowise/") == "http://h/vanish-neowise"
+    assert f("") == ""
+
+
+def test_registry_discovery_returns_cone_services_first(sc, monkeypatch):
+    seen = []
+
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        seen.append(url)
+        if "reg.g-vo.org" in url:
+            return _REGTAP_CSV, "HTTP 200"
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    roots, prov = acq.discover_registry_services(sc)
+    assert prov.status == "ok"
+    # the two ConeSearch interfaces come before the TAP one
+    assert roots[:2] == ["http://svocats.cab.inta-csic.es/vanish-possi",
+                         "http://example.org/vanish-neowise"]
+    assert "http://example.org/vasco" in roots
+    # the first mirror that answered was enough: no second mirror was queried
+    assert sum(1 for u in seen if "g-vo.org" in u or "euro-vo" in u) == 1
+    # the ADQL asked the registry, not a guessed path
+    assert "rr.resource" in urllib.parse.unquote(seen[0])
+
+
+def test_registry_discovery_is_honest_when_every_mirror_is_dead(sc, monkeypatch):
+    monkeypatch.setattr(acq, "http_get",
+                        lambda *a, **k: (None, "URLError: connection refused"))
+    roots, prov = acq.discover_registry_services(sc)
+    assert roots == []
+    assert prov.status == "unreachable"
+    assert len(prov.attempts) == len(sc["acquire"]["regtap_endpoints"])
+    assert all(not a["ok"] for a in prov.attempts)
+
+
+# --- looking a VizieR catalogue up BY NAME ----------------------------------
+def test_vizier_catalogue_meta_separates_absent_from_present(sc, monkeypatch):
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        if "J%2FMNRAS%2F515%2F1380" in url or "J/MNRAS/515/1380" in url:
+            return (b"#RESOURCE=J/MNRAS/515/1380\n"
+                    b"#Table\tJ/MNRAS/515/1380/vanish\tthe by-product\n"
+                    b"#Table\tJ/MNRAS/515/1380/table1\tsummary\n"), "HTTP 200"
+        return b"#***Nothing found in the metadata\n", "HTTP 200"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    tabs, prov = acq.vizier_catalogue_meta("J/MNRAS/515/1380", sc)
+    assert prov.status == "ok"
+    assert tabs == ["J/MNRAS/515/1380/table1", "J/MNRAS/515/1380/vanish"]
+    tabs2, prov2 = acq.vizier_catalogue_meta("J/NOPE/1/1", sc)
+    assert tabs2 == [] and prov2.status == "asu_error"
+    assert any("Nothing found" in n for n in prov2.notes)
+
+
+def test_vizier_catalogue_meta_records_an_unreachable_service(sc, monkeypatch):
+    monkeypatch.setattr(acq, "http_get", lambda *a, **k: (None, "HTTP 503"))
+    tabs, prov = acq.vizier_catalogue_meta("J/MNRAS/515/1380", sc)
+    assert tabs == [] and prov.status == "unreachable"
+    assert prov.attempts[0]["detail"] == "HTTP 503"

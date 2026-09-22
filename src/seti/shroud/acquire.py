@@ -197,6 +197,103 @@ def unquote_table(name: str) -> str:
     return str(name).strip().strip("\"'").strip("\"'").strip()
 
 
+# --- route 0: ask the IVOA registry where the service actually is -----------
+#: RegTAP mirrors.  The registry is the authoritative index of every published
+#: VO service, so it answers "where is the VASCO cone search" without guessing
+#: URL paths --- which is all runs 30203741898 and 35653059591 could do, and
+#: they spent themselves on 404s from ``svo2`` and TCP timeouts from
+#: ``svocats``.  A moved or renamed service is found here or nowhere.
+REGTAP_ENDPOINTS = (
+    "https://reg.g-vo.org/tap/sync",
+    "http://dc.g-vo.org/tap/sync",
+    "https://registry.euro-vo.org/regtap/tap/sync",
+)
+
+#: The RegTAP idiom: resource, its capabilities, their interfaces.  Matching is
+#: on title/description/ivoid because the SVO publishes under names this
+#: channel cannot predict.
+REGTAP_ADQL = (
+    "SELECT DISTINCT ivoid, short_name, res_title, access_url, standard_id "
+    "FROM rr.resource NATURAL JOIN rr.capability NATURAL JOIN rr.interface "
+    "WHERE res_title LIKE '%anish%' OR res_title LIKE '%VASCO%' "
+    "OR res_description LIKE '%VASCO%' OR res_description LIKE '%anishing%' "
+    "OR ivoid LIKE '%vanish%' OR ivoid LIKE '%vasco%'"
+)
+
+
+def tap_sync_at(base: str, adql: str, cfg: dict, timeout: int | None = None
+                ) -> tuple[pd.DataFrame, str, str]:
+    """One synchronous ADQL query against an arbitrary TAP ``/sync``."""
+    a = cfg.get("acquire", {})
+    q = urllib.parse.urlencode({"REQUEST": "doQuery", "LANG": "ADQL",
+                                "FORMAT": "csv", "MAXREC": 2000, "QUERY": adql})
+    full = f"{base}?{q}"
+    body, detail = http_get(full, int(timeout or a.get("tap_timeout_s", 120)),
+                            retries=1, backoff=5.0)
+    if body is None:
+        return pd.DataFrame(), full, detail
+    try:
+        df = pd.read_csv(io.StringIO(body.decode("utf-8", "replace")))
+    except Exception as e:                                     # noqa: BLE001
+        return pd.DataFrame(), full, f"{detail}; parse: {e}"
+    return df, full, detail
+
+
+def _root_of_access_url(url: str) -> str:
+    """A VO ``access_url`` reduced to the root :func:`_svo_urls` expects.
+
+    A cone-search access URL is a base that already ends at the query string
+    (``.../vanish-possi/cs.php?``); the probe builds its own query, so the
+    trailing ``?``/``&`` and the script name come off again.
+    """
+    u = str(url).split("#")[0].rstrip("&?")
+    if "?" in u:
+        u = u.split("?")[0]
+    u = re.sub(r"/(cs|cs\.php|conesearch|scs\.php|search|query)$", "", u, flags=re.I)
+    return u.rstrip("/")
+
+
+def discover_registry_services(cfg: dict) -> tuple[list[str], Provenance]:
+    """Roots for anything the IVOA registry knows about VASCO / vanishing.
+
+    Returns ``(roots, provenance)``; cone-search interfaces come first because
+    those are the ones :func:`probe_svo_catalog` can actually exercise.  Every
+    mirror tried and every error is recorded verbatim --- an unreachable
+    registry is a statement about the registry, never about the sky.
+    """
+    a = cfg.get("acquire", {})
+    prov = Provenance(route="registry_regtap_discovery")
+    endpoints = list(a.get("regtap_endpoints", REGTAP_ENDPOINTS))
+    cone: list[str] = []
+    other: list[str] = []
+    for base in endpoints:
+        df, url, detail = tap_sync_at(base, a.get("regtap_adql", REGTAP_ADQL), cfg)
+        prov.record(url, len(df) > 0, detail, len(df))
+        if not len(df) or "access_url" not in df.columns:
+            continue
+        for _, row in df.iterrows():
+            std = str(row.get("standard_id", "")).lower()
+            root = _root_of_access_url(row.get("access_url", ""))
+            if not root:
+                continue
+            (cone if "conesearch" in std else other).append(root)
+        prov.notes.append("registry rows: " + "; ".join(
+            f"{str(r.get('short_name') or r.get('ivoid'))[:40]} "
+            f"[{str(r.get('standard_id', '')).split('/')[-1][:20]}] "
+            f"{str(r.get('access_url'))[:90]}"
+            for _, r in df.head(12).iterrows())[:1500])
+        break                     # the first mirror that answers is enough
+    roots = list(dict.fromkeys(cone + other))
+    # "empty" only if a mirror actually ANSWERED and knew of no such service;
+    # if none answered, the verdict is about the registry, not about the sky.
+    answered = any(a["ok"] for a in prov.attempts)
+    prov.status = "ok" if roots else ("empty" if answered else "unreachable")
+    prov.n_rows = len(roots)
+    if not roots:
+        prov.notes.append("no VO registry mirror returned a vanishing/VASCO service")
+    return roots, prov
+
+
 # --- route 1: the Solano+2022 VO archive ------------------------------------
 def discover_vo_archive(cfg: dict, catalog: str = "vanish_neowise",
                         out_dir: Path | None = None
@@ -489,6 +586,40 @@ def _solano_candidates(tables: pd.DataFrame) -> list[str]:
                 or "515/1380" in t or re.search(r"Solano E\.", d)):
             out.append(t)
     return out
+
+
+def vizier_catalogue_meta(cat: str, cfg: dict) -> tuple[list[str], Provenance]:
+    """Does VizieR hold ``cat`` at all, and under what table names?
+
+    ``-meta.all`` returns the catalogue's tables and columns instead of rows.
+    This separates the two answers a bare row query confuses: *the catalogue
+    is not in VizieR* and *the catalogue is there but the query was wrong*.
+    Used for the literal ids keyword discovery cannot reach --- the
+    Solano+2022 by-product tables are published under a bibcode-derived name
+    whose description carries neither 'vanish' nor a bare 'VASCO', so the
+    TAP_SCHEMA keyword sweep of run 35653059591 returned only 'Vasco D.' and
+    'Vasconcelos' and never looked the catalogue up by name.
+    """
+    a = cfg.get("acquire", {})
+    prov = Provenance(route=f"vizier_meta:{cat}")
+    url = (f"{a.get('vizier_asu', VIZIER_ASU)}?"
+           f"-source={urllib.parse.quote(cat, safe='/')}&-meta.all&-out.form=TSV")
+    body, detail = http_get(url, int(a.get("tap_timeout_s", 120)), retries=1, backoff=5.0)
+    prov.record(url, body is not None, detail)
+    if body is None:
+        prov.status = "unreachable"
+        return [], prov
+    txt = body.decode("utf-8", "replace")
+    errs = [ln.strip() for ln in txt.splitlines()
+            if ln.startswith("#***") or ln.startswith("****")]
+    tables = sorted({unquote_table(m) for m in
+                     re.findall(rf"{re.escape(cat)}/[A-Za-z0-9_.+-]+", txt)})
+    if errs:
+        prov.notes.append("ASU: " + " | ".join(errs)[:400])
+    prov.status = "ok" if tables else ("asu_error" if errs else "absent")
+    prov.n_rows = len(tables)
+    prov.notes.append(f"tables reported for {cat}: {tables[:20] or 'none'}")
+    return tables, prov
 
 
 def fetch_vizier_table_asu(table: str, cfg: dict, out_dir: Path,
@@ -1256,12 +1387,23 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     got: dict[str, int] = {}
     routes_ok: list[str] = []
 
+    # Route 0: the IVOA registry — where the service says it lives, rather
+    # than where this channel guessed it lived.
+    reg_roots: list[str] = []
+    if cfg.get("acquire", {}).get("try_registry", True):
+        reg_roots, p_reg = discover_registry_services(cfg)
+        prov["routes"].append(p_reg.as_dict())
+        prov["registry_roots"] = reg_roots[:40]
+
     # Route 1: the published SVO catalogues (short probes; long fetch only if live).
     if cfg.get("acquire", {}).get("try_svo", True):
         for cat, sample in (("vanish_neowise", "solano2022_ir_present"),
                             ("vanish_possi", "solano2022_no_counterpart")):
             roots, p_disc = discover_vo_archive(cfg, cat, out_dir)
             prov["routes"].append(p_disc.as_dict())
+            # A registry-published root is tried FIRST: it is the only one of
+            # these that any service actually claims to be at.
+            roots = list(dict.fromkeys(reg_roots + list(roots)))
             root, _, p_probe = probe_svo_catalog(cat, roots, cfg)
             prov["routes"].append(p_probe.as_dict())
             if not root:
@@ -1280,7 +1422,16 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     tables, p_tap = discover_vizier_tables(cfg)
     prov["routes"].append(p_tap.as_dict())
     prov["vizier_tables_discovered"] = tables.to_dict("records") if len(tables) else []
-    for t in _solano_candidates(tables)[:4]:
+    # Look the literal ids up by NAME as well: a keyword sweep can only find a
+    # catalogue whose description happens to carry the keyword.
+    named: list[str] = []
+    for cat in cfg.get("acquire", {}).get("vizier_direct_catalogues", []):
+        found, p_m = vizier_catalogue_meta(str(cat), cfg)
+        prov["routes"].append(p_m.as_dict())
+        named.extend(found)
+    candidates = list(dict.fromkeys(_solano_candidates(tables) + named))
+    prov["vizier_direct_tables_found"] = named
+    for t in candidates[:8]:
         df_t, p_t = fetch_vizier_table_asu(t, cfg, out_dir)
         prov["routes"].append(p_t.as_dict())
         if len(df_t):

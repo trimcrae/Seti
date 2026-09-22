@@ -1250,6 +1250,72 @@ def test_assess_stops_at_its_budget_and_still_writes_the_summary(tmp_path):
     assert s["n_candidates"] == 0
 
 
+def test_the_measured_param_table_replaces_a_catalogue_star_table_not_only_the_fallback(tmp_path):
+    """Berger+2020 beats a flare catalogue's own KIC-era Teff / radius.
+
+    MEASURED (run 35738218021): KIC 9418692, the one star above the
+    conservative ceiling, kept Shibayama's Teff 5378 K / R 1.300 Rsun because
+    `params_assumed` was False, so Berger's 5677.4 K / 1.089 Rsun -- and the
+    0.25 dex HIGHER xi they give -- never reached the record.
+    """
+    from seti.arc.run import stage_assess
+
+    rec = {"record_key": "c:kepler:9418692", "star_key": "kepler:9418692",
+           "star_id": "9418692", "catalogue": "c", "mission": "kepler",
+           "amplitude_frac": 2.007879999999e-4, "amplitude_source": "santos2021",
+           "amplitude_scale": 2.828, "amplitude_scaled": True,
+           "teff_k": 5378.0, "radius_rsun": 1.3, "logg": 4.23,
+           "teff_source": "shibayama2013_stars", "radius_source": "shibayama2013_stars",
+           "params_assumed": False, "assessable": True, "n_flares": 1, "n_independent": 1,
+           "energies_json": json.dumps([9.77912505721236e34]), "t_peaks_json": "",
+           "flares_above": "[]", "catalogue_flag": "",
+           "xi_conservative_max": 0.462301635880209, "xi_nominal_max": 1.177983517959703,
+           "n_above_conservative": 1, "n_above_nominal": 1}
+
+    params = pd.DataFrame([{"star_id": "9418692", "ra": 297.20212, "dec": 45.971088,
+                            "teff": 5677.4, "radius": 1.089, "logg": 4.341, "ruwe": 1.5562,
+                            "teff_source": "J/AJ/159/280/table2",
+                            "radius_source": "J/AJ/159/280/table2"}])
+
+    def fake_fetch(ids, mission, **kw):
+        return params, [{"table": "J/AJ/159/280/table2", "status": "OK", "n_rows": 1}]
+
+    def cone(table, ra, dec, r):
+        return pd.DataFrame()
+
+    import seti.arc.acquire as aacq
+    orig = aacq.fetch_star_params_by_id
+    aacq.fetch_star_params_by_id = fake_fetch
+    try:
+        conf = dict(_conf(), assess={"budget_s": 600.0, "query_timeout_s": 0})
+        out = tmp_path / "arc"
+        out.mkdir(parents=True)
+        s = stage_assess(conf, out, offline=False, query_fn=lambda a: None, cone_fn=cone,
+                         records=[dict(rec)], acquire_report={"catalogues": {"c": {"status": "OK"}}})
+        xi = pd.read_csv(out / "xi_table.csv", dtype={"star_id": str}).iloc[0]
+        assert xi["radius_rsun"] == pytest.approx(1.089)
+        assert xi["teff_k"] == pytest.approx(5677.4)
+        assert xi["radius_source"] == "J/AJ/159/280/table2"
+        # the excess GREW on the better parameters, and what it replaced is kept
+        assert xi["xi_conservative_max"] > 0.7
+        assert xi["radius_rsun_before"] == pytest.approx(1.3)
+        assert xi["params_source_before"] == "shibayama2013_stars"
+        assert xi["xi_conservative_max_before"] == pytest.approx(0.4623, abs=1e-3)
+        assert s["n_stars_assessable"] == 1
+
+        # and the switch restores the old, assumed-only behaviour
+        conf_off = dict(conf, assess=dict(conf["assess"], prefer_measured_params=False))
+        out2 = tmp_path / "arc2"
+        out2.mkdir(parents=True)
+        stage_assess(conf_off, out2, offline=False, query_fn=lambda a: None, cone_fn=cone,
+                     records=[dict(rec)], acquire_report={"catalogues": {"c": {"status": "OK"}}})
+        xi2 = pd.read_csv(out2 / "xi_table.csv", dtype={"star_id": str}).iloc[0]
+        assert xi2["radius_rsun"] == pytest.approx(1.3)
+        assert xi2["xi_conservative_max"] == pytest.approx(0.4623, abs=1e-3)
+    finally:
+        aacq.fetch_star_params_by_id = orig
+
+
 def test_the_assess_budget_is_configured_with_its_measurement():
     import pathlib as _pl
 
@@ -1258,4 +1324,6 @@ def test_the_assess_budget_is_configured_with_its_measurement():
     raw = _pl.Path("config/arc.yaml").read_text()
     conf = yaml.safe_load(raw)
     assert conf["assess"]["budget_s"] > 0 and conf["assess"]["query_timeout_s"] > 0
+    assert conf["assess"]["prefer_measured_params"] is True
     assert "35675114711" in raw                   # the run the bound was measured on
+    assert "9418692" in raw                       # the star the parameter preference was measured on

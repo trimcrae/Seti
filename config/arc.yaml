@@ -163,6 +163,14 @@ assess:
   # is degraded with assess_context:budget_spent -- never silently clean.
   budget_s: 2400.0              # 40 min for the whole parameter + cone block
   query_timeout_s: 240.0        # one TAP query / one cone; 0 = unbounded
+  # The param_tables above (Berger+2020 table2 for Kepler) are a homogeneous
+  # Gaia-parallax radius scale and beat a flare catalogue's own KIC-era star
+  # table, so for a SHORTLISTED star they replace it -- not only the solar
+  # fallback.  MEASURED (run 35738218021): KIC 9418692 kept Shibayama's
+  # Teff 5378 K / R 1.300 Rsun and xi_conservative = +0.462, where Berger
+  # gives 5677.4 K / 1.089 Rsun and xi = +0.715.  The replaced values stay on
+  # the record as teff_k_before / radius_rsun_before / params_source_before.
+  prefer_measured_params: true
 
 probe:
   # MEASURED (run 35038502122): the probe stage ran for FIFTY MINUTES and was

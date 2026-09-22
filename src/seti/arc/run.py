@@ -625,8 +625,12 @@ def _apply_stage2_verdicts(vetted: list[dict], stars_json: Path) -> dict:
     return applied
 
 
-def _recompute(rec: dict, teff: float, rad: float, phys: dict) -> dict:
-    """Re-run the ceiling for one record with better stellar parameters."""
+def _recompute(rec: dict, teff: float, rad: float, phys: dict, *, table: str = "") -> dict:
+    """Re-run the ceiling for one record with better stellar parameters.
+
+    The values it replaces are kept as ``teff_k_before`` / ``radius_rsun_before``
+    with ``params_source_before``, so the move is auditable rather than silent.
+    """
     if not rec.get("energies_json"):
         return rec
     try:
@@ -641,10 +645,14 @@ def _recompute(rec: dict, teff: float, rad: float, phys: dict) -> dict:
                                                        DEFAULT_GEOMETRIC_FACTOR)),
                        independent_gap_days=float(phys.get("independent_gap_days", 0.5)))
     out = dict(rec)
+    out["teff_k_before"] = rec.get("teff_k")
+    out["radius_rsun_before"] = rec.get("radius_rsun")
+    out["params_source_before"] = rec.get("radius_source")
+    out["xi_conservative_max_before"] = rec.get("xi_conservative_max")
     for k, v in new.items():
         out[k] = json.dumps(v) if k == "flares_above" else v
     out["params_assumed"] = False
-    out["teff_source"] = out["radius_source"] = "assess_params"
+    out["teff_source"] = out["radius_source"] = table or "assess_params"
     return out
 
 
@@ -751,6 +759,7 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     # clock (pyvo's run_async has none), and the block as a whole has one.
     # What the clock did not reach is an UNAPPLIED veto, never a pass.
     aconf = conf.get("assess") or {}
+    prefer_measured = bool(aconf.get("prefer_measured_params", True))
     budget_s = aconf.get("budget_s", 3600.0)
     budget = None if budget_s in (None, "", 0) else float(budget_s)
     t0 = time.monotonic()
@@ -823,8 +832,21 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                     ctx["logg"] = lg
                 if np.isfinite(rad):
                     ctx["radius_rsun"] = rad
-                if bool(rec.get("params_assumed")) and np.isfinite(teff) and np.isfinite(rad):
-                    rec = _recompute(rec, teff, rad, phys)
+                # THE MEASURED TABLE WINS, not only over the solar fallback.
+                # Berger+2020 table2 (Gaia-DR2 parallaxes, homogeneous) is a
+                # better radius than a flare catalogue's own KIC-era star
+                # table, and until now it replaced only `params_assumed`
+                # values.  MEASURED (run 35738218021): KIC 9418692 kept
+                # Shibayama's Teff 5378 K / R 1.30 Rsun and xi = +0.462 while
+                # Berger gives 5677.4 K / 1.089 Rsun, i.e. xi = +0.715 -- the
+                # excess was being UNDERSTATED by 0.25 dex on the channel's
+                # one surviving star.  `prefer_measured_params: false`
+                # restores the old behaviour.
+                if np.isfinite(teff) and np.isfinite(rad) and (
+                        bool(rec.get("params_assumed")) or prefer_measured):
+                    rec = _recompute(rec, teff, rad, phys,
+                                     table=str(h.get("radius_source") or h.get("teff_source")
+                                               or "assess_params"))
                 flag = str(h.get("flag", "") or "")
                 if flag and flag.lower() not in ("nan", "none"):
                     rec["catalogue_flag"] = ";".join(x for x in (rec.get("catalogue_flag", ""),

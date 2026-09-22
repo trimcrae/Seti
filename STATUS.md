@@ -419,11 +419,34 @@ NASA Exoplanet Archive TAP (4,738 transiting planets) and four MAST
 `query_criteria` calls (4,001 timeseries observations) — on the runner under
 pandas 3.0.6 and succeeded.
 
-Run **35745941769** (4 shards, eclipse-first, `require_verify=true`,
-`deadline_minutes=270`) is queued with all of this. Checkpoint version is 3 and
-deliberately unchanged, so a mid-flight assess cannot mark a running screen's
-checkpoints stale — which is how run 35737559234 reported 159 stale checkpoints
-and zero exposures. The honest limitation stands, in the contamination ledger:
+**Run 35745941769 (4 shards, eclipse-first, `deadline_minutes=270`) is the one
+that passed the gate.** `results/lantern/verify.json`, written 15:44 UTC
+(11:44 EDT):
+
+```
+verdict PHASE_VERIFIED (2/2) · injection SENSITIVITY_VERIFIED (2/2)
+```
+
+Every one of the five checks is true on both known eclipses. WASP-43 b's
+timing check passes on the corrected criterion (free step 0.169 d off but
+better by only Δχ² = 9.86, against the 25 threshold, while the predicted step
+beats flat by 49). The injection is now scaled to each exposure's own noise and
+its strength is stated in units of that exposure's sensitivity:
+
+| | WASP-18 b SOSS | WASP-43 b LRS |
+|---|---|---|
+| difference-spectrum noise | 2.59×10⁻⁴ | 1.84×10⁻³ |
+| injected amplitude / continuum | 0.0050 (floor) | 0.0220 (= 12 × noise) |
+| injected EW / 5σ limit | **7.53×** | **3.61×** |
+| recovered | 16.8σ, `interest`, no veto | 12.7σ, `candidate`, no veto |
+| drift null / in-eclipse residual | 0.42σ / −0.13σ | 0.40σ / −0.32σ |
+| features on the *un-injected* baseline | 2 | 0 |
+
+The four screen shards began at 15:53 UTC (11:53 EDT). Checkpoint version is 3
+and deliberately unchanged, so a mid-flight assess cannot mark a running
+screen's checkpoints stale — which is how run 35737559234 reported 159 stale
+checkpoints and zero exposures. The honest limitation stands, in the
+contamination ledger:
 an *unresolved* emission line from the planet's own atmosphere passes every
 veto this channel has, so a survivor is a target for higher-resolution
 follow-up, not a detection.

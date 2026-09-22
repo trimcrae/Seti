@@ -95,6 +95,17 @@ SPH_TO_RANGE = 2.0 * math.sqrt(2.0)   # verify: sinusoid peak-to-peak / standard
 
 VERDICT_S2_NO_DATA = "STAGE2_NO_DATA_REACHED"
 VERDICT_S2_ON_TARGET = "CEILING_EXCESS_ON_TARGET_PENDING_SPECTROSCOPY"
+#: On target, above the ceiling -- and the star's stage-1 hard veto is a
+#: suspicion of an UNRESOLVED companion, which is the one thing the centroid
+#: cannot touch.  MEASURED (run 35744902798): KIC 9418692 came back
+#: flare_on_target with xi = +0.292 and Gaia RUWE = 1.5562, and the run-level
+#: verdict read CEILING_EXCESS_ON_TARGET_PENDING_SPECTROSCOPY -- which sounds
+#: like a clearance.  The pixels cleared the two RESOLVED neighbours at 3.2"
+#: and 5.2"; RUWE is about a companion inside ~0.1", unresolved by Gaia and by
+#: the pixels alike, and an M dwarf there is the standard mundane explanation
+#: for a superflare on a solar-type star.  The veto stands until spectroscopy
+#: or a non-single-star solution settles it, and the verdict now says so.
+VERDICT_S2_ON_TARGET_COMPANION = "CEILING_EXCESS_ON_TARGET_BUT_COMPANION_UNRESOLVED"
 VERDICT_S2_NEIGHBOUR = "CEILING_EXCESS_TRACED_TO_NEIGHBOUR"
 VERDICT_S2_DISSOLVED = "CEILING_EXCESS_DISSOLVED_ON_MEASURED_PARAMETERS"
 VERDICT_S2_UNTESTABLE = "CEILING_EXCESS_CENTROID_UNTESTABLE"
@@ -145,6 +156,9 @@ class Stage2Params:
     #: Wall clock on ONE light-curve / pixel-file fetch (see _fetch_products).
     #: 0 or None restores the unbounded behaviour.
     product_timeout_s: float = 600.0
+    #: Wall clock on ONE TAP query / Gaia cone, as stage 1 uses.  0 or None
+    #: restores pyvo's unbounded run_async.
+    query_timeout_s: float = 240.0
     download_dir: str | None = None
     quality_bitmask: str = "default"
     # flare finder
@@ -1149,6 +1163,11 @@ def analyse_star(entry: dict, *, conf: dict, params: Stage2Params, query_fn=None
     ctx = entry.get("context") or {}
     rec: dict = {"star_key": key, "star_id": sid, "mission": mission, "catalogue": cat,
                  "tier": entry.get("tier"), "xi_conservative_stage1": _f(entry.get("xi_conservative_max")),
+                 # WHY STAGE 1 VETOED IT TRAVELS WITH THE STAR.  Without this the
+                 # stage-2 record cannot tell that its own flare_on_target does not
+                 # clear a companion_suspect, and the run verdict reads as a
+                 # clearance (see companion_unresolved).
+                 "first_veto": entry.get("first_veto"), "stage1_flags": entry.get("flags"),
                  "generated_utc": _now(), "statuses": {}, "degraded": [], "flares": [],
                  "census": {}, "verdict": VERDICT_UNTESTABLE, "verdict_reason": "",
                  "route": {}}
@@ -1425,7 +1444,28 @@ def stage2_probe(conf: dict, out: Path, *, params: Stage2Params | None = None) -
     return rep
 
 
-def _overall_verdict(stars: list[dict]) -> tuple[str, str]:
+def companion_unresolved(star: dict, *, ruwe_max: float = 1.4) -> tuple[bool, str]:
+    """Is this star's blend veto one the CENTROID CANNOT SETTLE?
+
+    ``flare_on_target`` is a statement about which *Gaia-resolved* source
+    brightened.  A companion inside ~0.1" is unresolved by Gaia and by a 4"
+    Kepler pixel alike, so it survives the pixel test untouched -- and an M
+    dwarf there is the standard mundane explanation for a superflare on a
+    solar-type star.  Gaia RUWE above ``ruwe_max`` (stage 1's own threshold)
+    and stage 1's ``companion_suspect`` / ``blend`` veto both mean exactly
+    that suspicion, so neither may be reported as cleared.
+    """
+    why = []
+    r = _f((star.get("params") or {}).get("gaia_ruwe"))
+    if np.isfinite(r) and r > float(ruwe_max):
+        why.append(f"Gaia RUWE {r:.4g} > {ruwe_max}")
+    fv = str(star.get("first_veto") or "")
+    if fv in ("companion_suspect", "blend"):
+        why.append(f"stage-1 first_veto {fv}")
+    return bool(why), "; ".join(why)
+
+
+def _overall_verdict(stars: list[dict], *, ruwe_max: float = 1.4) -> tuple[str, str]:
     prime = [s for s in stars if s.get("tier") in ("interest", "candidate")] or stars
     if not stars:
         return VERDICT_S2_NO_DATA, "no star was shortlisted"
@@ -1437,9 +1477,20 @@ def _overall_verdict(stars: list[dict]) -> tuple[str, str]:
     on_t = [s for s in prime if s.get("verdict") == VERDICT_ON_TARGET
             and (s.get("xi") or {}).get("xi_status") == "above_ceiling"]
     if on_t:
-        return VERDICT_S2_ON_TARGET, (f"{len(on_t)} star(s) with every attributable flare on the "
+        # An on-target excess whose blend veto the pixels CANNOT settle is not
+        # a clearance, and must not be worded like one.
+        flagged = [(s, companion_unresolved(s, ruwe_max=ruwe_max)[1]) for s in on_t]
+        unres = [(s, w) for s, w in flagged if w]
+        if len(unres) == len(on_t):
+            return VERDICT_S2_ON_TARGET_COMPANION, (
+                f"{len(on_t)} star(s) on target with xi > 0 on measured parameters, and EVERY one "
+                "still carries an unresolved-companion suspicion the centroid cannot settle "
+                "(the pixels clear only Gaia-RESOLVED neighbours): "
+                + ", ".join(f"{s['star_key']} ({w})" for s, w in unres))
+        clear = [s for s, w in flagged if not w]
+        return VERDICT_S2_ON_TARGET, (f"{len(clear)} star(s) with every attributable flare on the "
                                       "target AND xi > 0 on measured parameters: "
-                                      + ", ".join(s["star_key"] for s in on_t))
+                                      + ", ".join(s["star_key"] for s in clear))
     on_n = [s for s in prime if s.get("verdict") == VERDICT_ON_NEIGHBOUR]
     if on_n and all(s.get("verdict") in (VERDICT_ON_NEIGHBOUR, VERDICT_UNTESTABLE)
                     or (s.get("xi") or {}).get("xi_status") != "above_ceiling" for s in prime):
@@ -1455,6 +1506,98 @@ def _overall_verdict(stars: list[dict]) -> tuple[str, str]:
     return VERDICT_S2_AMBIGUOUS, "the pixel test neither confirmed nor excluded the target"
 
 
+def summarise_stars(stars: list[dict], *, n_shortlisted: int | None = None,
+                    params: Stage2Params | None = None, flare_rows: list[dict] | None = None,
+                    log: AcquisitionLog | None = None, budget_exhausted: bool = False,
+                    elapsed_s: float | None = None, source: str = "") -> dict:
+    """Build ``summary.json`` from the per-star records.
+
+    Split out of ``stage2_run`` so a run that was CANCELLED can still be
+    summarised from its checkpoint.  MEASURED: runs 35738785437 and
+    35744902798 were both cancelled, and a cancelled run writes ``stars.json``
+    after every star but never reaches the end of ``stage2_run`` -- so
+    ``summary.json`` stayed behind from an older run and described 30 stars
+    that the newer per-star file contradicted.  A summary that does not
+    describe the star records next to it is worse than no summary, because it
+    is the file a reader trusts first.
+    """
+    params = params or Stage2Params()
+    if flare_rows is None:
+        flare_rows = [{"star_key": s.get("star_key"), "tier": s.get("tier"),
+                       **{k: v for k, v in f.items() if k not in ("sources", "census_summary")}}
+                      for s in stars for f in (s.get("flares") or [])]
+    verdict, reason = _overall_verdict(stars)
+    counts: dict = {}
+    for s in stars:
+        counts[s["verdict"]] = counts.get(s["verdict"], 0) + 1
+    xi_counts: dict = {}
+    for s in stars:
+        xi_counts.setdefault((s.get("xi") or {}).get("xi_status", "not_recomputed"), 0)
+        xi_counts[(s.get("xi") or {}).get("xi_status", "not_recomputed")] += 1
+    ratios = [_f(f.get("e_ratio_remeasured_over_catalogue")) for f in flare_rows]
+    ratios = [x for x in ratios if np.isfinite(x) and x > 0]
+    summary = {
+        "verdict": verdict, "reason": reason, "generated_utc": _now(),
+        "summary_source": source or "stage2_run",
+        "n_shortlisted": int(n_shortlisted if n_shortlisted is not None else len(stars)),
+        "n_stars": len(stars),
+        "n_interest": int(sum(1 for s in stars if s.get("tier") in ("interest", "candidate"))),
+        "n_watch": int(sum(1 for s in stars if s.get("tier") == "watch")),
+        "verdict_counts": counts, "xi_status_counts": xi_counts,
+        "n_flares_examined": len(flare_rows),
+        "flare_outcome_counts": _count([f.get("outcome") for f in flare_rows]),
+        "n_params_measured": int(sum(1 for s in stars
+                                     if (s.get("xi") or {}).get("params_measured"))),
+        "budget_exhausted": bool(budget_exhausted),
+        "elapsed_s": elapsed_s, "budget_s": params.budget_s,
+        # THE FLARE-ENERGY SCALE IS THE DOMINANT SYSTEMATIC ON xi AND IS
+        # REPORTED, NOT ASSUMED AWAY.  xi = log E_flare - log E_mag, so a
+        # factor in the energy is a dex in xi one-for-one.  MEASURED (run
+        # 35744902798): re-measuring the catalogued flares from the same light
+        # curves gives ratios 0.16-3.30 over 10 flares (median 0.55), i.e. the
+        # energy scale is uncertain at -0.26 dex with 0.3-0.8 dex excursions.
+        # Any |xi| below that is not a measurement of anything.
+        "flare_energy_scale": {
+            "n": len(ratios),
+            "remeasured_over_catalogue_median": float(np.median(ratios)) if ratios else None,
+            "remeasured_over_catalogue_min": float(np.min(ratios)) if ratios else None,
+            "remeasured_over_catalogue_max": float(np.max(ratios)) if ratios else None,
+            "median_dex": float(np.log10(np.median(ratios))) if ratios else None,
+            "note": ("xi moves one-for-one with log10 of this ratio; an |xi| smaller than the "
+                     "spread here is inside the energy systematic and is not a detection"),
+        },
+        "stars": [{k: s.get(k) for k in ("star_key", "tier", "verdict", "verdict_reason",
+                                         "n_flares_tested", "outcomes", "statuses", "degraded",
+                                         "first_veto")}
+                  | {"xi_conservative_stage1": (s.get("xi") or {}).get("xi_conservative_stage1"),
+                     "xi_conservative_measured": (s.get("xi") or {}).get("xi_conservative_measured"),
+                     # the SAME star with the flare energies re-measured from its
+                     # own light curve rather than taken from the catalogue
+                     "xi_conservative_remeasured_energy": (
+                         v if np.isfinite(v := _f(((s.get("xi") or {}).get(
+                             "with_max_amplitude_remeasured_energy") or {}).get(
+                                 "xi_conservative_max"))) else None),
+                     "xi_status": (s.get("xi") or {}).get("xi_status"),
+                     "companion_unresolved": companion_unresolved(s)[1] or None,
+                     "teff_k": (s.get("params") or {}).get("teff_k"),
+                     "radius_rsun": (s.get("params") or {}).get("radius_rsun"),
+                     "radius_source": (s.get("params") or {}).get("radius_source"),
+                     "gaia_ruwe": (s.get("params") or {}).get("gaia_ruwe"),
+                     "amplitude_used": (s.get("xi") or {}).get("amplitude_used"),
+                     "amplitude_used_source": (s.get("xi") or {}).get("amplitude_used_source")}
+                  for s in stars],
+        "degraded": sorted({d for s in stars for d in (s.get("degraded") or [])}),
+        "acquisition": log.as_dict() if log is not None else None,
+        "mast": mast_probe() if log is not None else None,
+        "note": ("flare_on_target is a PIXEL-LEVEL statement about which Gaia-resolved source "
+                 "brightened; a companion inside ~0.1\" (unresolved by Gaia and by the pixels "
+                 "alike) is not excluded by it, and only spectroscopy or the flare colour "
+                 "could; STAGE2_NO_DATA_REACHED is not a null result and is not written up "
+                 "(CLAUDE.md)"),
+    }
+    return summary
+
+
 def stage2_run(conf: dict, out: Path, *, params: Stage2Params | None = None, query_fn=None,
                cone_fn=None, lc_fn=None, tpf_fn=None, shortlist: list[dict] | None = None,
                log: AcquisitionLog | None = None) -> dict:
@@ -1465,6 +1608,20 @@ def stage2_run(conf: dict, out: Path, *, params: Stage2Params | None = None, que
     arc_dir = Path(conf.get("_arc_dir", "results/arc"))
     short = shortlist if shortlist is not None else load_shortlist(arc_dir, params=params)
     deadline = Deadline(budget_s=float(params.budget_s) if params.budget_s else None)
+    # THE TAP QUERIES GET THE SAME WALL CLOCK THE PRODUCT FETCHES DO.  Stage 1
+    # wraps its query / cone callables (arc.acquire.timeout_query_fn, after run
+    # 35675114711 sat 4 h 54 m in one pyvo async job); stage 2 was reaching
+    # pyvo's unbounded run_async directly whenever nothing was injected, so a
+    # wedged catalogue, parameter or Gaia query held the loop past its own
+    # budget with the per-star checkpoint frozen at the last star that finished.
+    # An injected callable is left exactly as the caller passed it.
+    if params.query_timeout_s:
+        from .acquire import timeout_cone_fn, timeout_query_fn
+        qt = float(params.query_timeout_s)
+        if query_fn is None:
+            query_fn = timeout_query_fn(timeout_s=qt)
+        if cone_fn is None:
+            cone_fn = timeout_cone_fn(timeout_s=qt)
     stars: list[dict] = []
     flare_rows: list[dict] = []
     census_rows: list[dict] = []
@@ -1500,45 +1657,11 @@ def stage2_run(conf: dict, out: Path, *, params: Stage2Params | None = None, que
         print(f"[arc-stage2] {rec['star_key']} ({rec.get('tier')}): {rec['verdict']} — "
               f"{rec.get('verdict_reason', '')[:120]}; xi_measured="
               f"{(rec.get('xi') or {}).get('xi_conservative_measured')}")
-    verdict, reason = _overall_verdict(stars)
-    counts = {}
-    for s in stars:
-        counts[s["verdict"]] = counts.get(s["verdict"], 0) + 1
-    xi_counts = {}
-    for s in stars:
-        k = (s.get("xi") or {}).get("xi_status", "not_recomputed")
-        xi_counts[k] = xi_counts.get(k, 0) + 1
-    summary = {
-        "verdict": verdict, "reason": reason, "generated_utc": _now(),
-        "n_shortlisted": len(short), "n_stars": len(stars),
-        "n_interest": int(sum(1 for s in stars if s.get("tier") in ("interest", "candidate"))),
-        "n_watch": int(sum(1 for s in stars if s.get("tier") == "watch")),
-        "verdict_counts": counts, "xi_status_counts": xi_counts,
-        "n_flares_examined": len(flare_rows),
-        "flare_outcome_counts": _count([f.get("outcome") for f in flare_rows]),
-        "n_params_measured": int(sum(1 for s in stars if (s.get("xi") or {}).get("params_measured"))),
-        "budget_exhausted": bool(budget_hit or deadline.expired()),
-        "elapsed_s": round(deadline.elapsed(), 1), "budget_s": params.budget_s,
-        "stars": [{k: s.get(k) for k in ("star_key", "tier", "verdict", "verdict_reason",
-                                         "n_flares_tested", "outcomes", "statuses", "degraded")}
-                  | {"xi_conservative_stage1": (s.get("xi") or {}).get("xi_conservative_stage1"),
-                     "xi_conservative_measured": (s.get("xi") or {}).get("xi_conservative_measured"),
-                     "xi_status": (s.get("xi") or {}).get("xi_status"),
-                     "teff_k": (s.get("params") or {}).get("teff_k"),
-                     "radius_rsun": (s.get("params") or {}).get("radius_rsun"),
-                     "radius_source": (s.get("params") or {}).get("radius_source"),
-                     "amplitude_used": (s.get("xi") or {}).get("amplitude_used"),
-                     "amplitude_used_source": (s.get("xi") or {}).get("amplitude_used_source")}
-                  for s in stars],
-        "degraded": sorted({d for s in stars for d in (s.get("degraded") or [])}),
-        "acquisition": log.as_dict(),
-        "mast": mast_probe(),
-        "note": ("flare_on_target is a PIXEL-LEVEL statement about which Gaia-resolved source "
-                 "brightened; a companion inside ~0.1\" (unresolved by Gaia and by the pixels "
-                 "alike) is not excluded by it, and only spectroscopy or the flare colour "
-                 "could; STAGE2_NO_DATA_REACHED is not a null result and is not written up "
-                 "(CLAUDE.md)"),
-    }
+    summary = summarise_stars(stars, n_shortlisted=len(short), params=params,
+                              flare_rows=flare_rows, log=log,
+                              budget_exhausted=bool(budget_hit or deadline.expired()),
+                              elapsed_s=round(deadline.elapsed(), 1))
+    verdict, reason = summary["verdict"], summary["reason"]
     _write(out / "summary.json", summary)
     _write(out / "stars.json", {"generated_utc": summary["generated_utc"], "stars": stars})
     pd.DataFrame(flare_rows).to_csv(out / "flares.csv", index=False)
@@ -1558,7 +1681,7 @@ def _count(values) -> dict:
 def main(argv=None):
     p = argparse.ArgumentParser(prog="seti arc-stage2",
                                 description="ARC stage 2: is the flare on the target?")
-    p.add_argument("--stage", default="all", choices=["probe", "all"])
+    p.add_argument("--stage", default="all", choices=["probe", "all", "summarise"])
     p.add_argument("--arc-dir", default="results/arc", help="stage 1 results directory")
     p.add_argument("--out-dir", default="results/arc/stage2")
     p.add_argument("--tiers", default="", help="comma-separated tiers (default from config)")
@@ -1566,6 +1689,8 @@ def main(argv=None):
                    help="comma-separated star_key / id tested first whatever tier they are in "
                         '(e.g. "kepler:9418692,8487271")')
     p.add_argument("--max-stars", type=int, default=-1)
+    p.add_argument("--source-run", default="",
+                   help="with --stage summarise: the run id the star records came from")
     p.add_argument("--no-vetoed-excess", action="store_true",
                    help="do NOT shortlist hard-vetoed stars above the conservative ceiling")
     a = p.parse_args(argv)
@@ -1581,6 +1706,20 @@ def main(argv=None):
     if a.no_vetoed_excess:
         params.include_vetoed_excess = False
     out = Path(a.out_dir)
+    if a.stage == "summarise":
+        # Rebuild summary.json from a CANCELLED run's per-star checkpoint, so
+        # the summary and the star records describe the same run.
+        d = json.loads((out / "stars.json").read_text())
+        stars = list(d.get("stars") or [])
+        s = summarise_stars(stars, source=f"rebuilt from stars.json ({d.get('generated_utc')})"
+                                          + (f" — {a.source_run}" if a.source_run else ""))
+        _write(out / "summary.json", s)
+        pd.DataFrame([{"star_key": x.get("star_key"), "tier": x.get("tier"),
+                       **{k: v for k, v in f.items() if k not in ("sources", "census_summary")}}
+                      for x in stars for f in (x.get("flares") or [])]
+                     ).to_csv(out / "flares.csv", index=False)
+        print(f"[arc-stage2] summarise: {s['verdict']}: {s['reason']}")
+        return 0
     stage2_probe(conf, out, params=params)
     if a.stage == "all":
         stage2_run(conf, out, params=params)
@@ -1593,6 +1732,8 @@ if __name__ == "__main__":                                # pragma: no cover
 
 __all__ = ["Deadline", "Stage2Params", "VERDICT_S2_AMBIGUOUS", "VERDICT_S2_DISSOLVED",
            "VERDICT_S2_NEIGHBOUR", "VERDICT_S2_NO_DATA", "VERDICT_S2_ON_TARGET",
+           "VERDICT_S2_ON_TARGET_COMPANION", "companion_unresolved", "named_rows",
+           "summarise_stars",
            "VERDICT_S2_UNTESTABLE", "analyse_star", "default_pixels_fn", "fetch_flare_rows",
            "fetch_gaia_flame", "gaia_sources", "lc_from_pixels", "lightkurve_lc_fn",
            "lightkurve_pixels_fn", "load_shortlist", "main", "mast_fits_pixels_fn", "mast_probe",

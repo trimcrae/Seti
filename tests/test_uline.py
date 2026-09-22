@@ -4,8 +4,9 @@ No network anywhere (``conftest.py`` raises on any socket).  Per
 ``docs/channel-brief.md`` §5 the suite:
 
 * recovers an injected CHF₃ K-ladder pattern seeded into a synthetic U-line
-  list (``PATTERN_CANDIDATE``) and returns ``NO_PATTERN`` on the same list
-  with the pattern removed;
+  list, and — because CHF₃'s constants are placeholders — reports it as
+  ``PATTERN_CANDIDATE_VERIFY_CONSTANTS`` rather than ``PATTERN_CANDIDATE``,
+  while returning ``NO_PATTERN`` on the same list with the pattern removed;
 * shows that Poisson-random U-lines give a false-alarm probability consistent
   with the number of shift trials;
 * checks the ``.cat`` / ``catdir`` / CDMS partition-table parsers on synthetic
@@ -383,11 +384,19 @@ def test_injected_chf3_pattern_is_recovered(tmp_path):
     assert best["p_false"] == pytest.approx(1.0 / 201.0)
     assert best["tests"] == {"count": True, "lte": True, "top5": True, "p_false": True}
     s = stage_assess(conf, tmp_path, screen=rep, acquire_report={})
-    assert s["verdict"] == "PATTERN_CANDIDATE" and s["n_pattern_candidates"] == 1
+    # The signal is recovered — and CHF3's constants are placeholders carrying
+    # `verify: true`, so the verdict says the pattern rests on them.  That is
+    # the point of the split: the search must find an injected pattern, and it
+    # must not dress a reconstructed frequency up as a catalogued one.
+    assert s["verdict"] == "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
+    assert s["n_pattern_candidates"] == 0
+    assert s["n_pattern_candidates_verify_constants"] == 1
+    assert s["pattern_candidates_verify_constants"] == ["CHF3|synth"]
     assert "CHF3" in s["targets_with_predicted_frequencies"]
     assert any("PREDICTED" in d for d in s["degraded"])
     c = pd.read_csv(tmp_path / "candidates.csv")
     assert bool(c.iloc[0]["pattern"]) and c.iloc[0]["species"] == "CHF3"
+    assert bool(c.iloc[0]["verify_constants"])
 
 
 def test_same_list_without_the_pattern_is_no_pattern(tmp_path):
@@ -746,8 +755,13 @@ def test_probe_reports_inventory_and_frame_hint(tmp_path):
     assert inv["NF3"]["jpl"] == ["NF3"] and inv["NF3"]["predictable"]
     assert inv["CHF3"]["jpl"] == [] and inv["CHF3"]["cdms"] == ["CHF3, v=0"] and inv["CHF3"]["predictable"]
     assert inv["CH3Cl"]["jpl"] == ["CH3Cl-35"] and inv["CH3Cl"]["group"] == "baseline"
-    assert inv["SO2F2"] == {"group": "targets", "jpl": [], "cdms": [], "predictable": False,
-                            "jpl_near_miss_names": [], "cdms_near_miss_names": []}
+    # SO2F2 is in neither catalogue, and is now PREDICTABLE from the rotor
+    # assets (src/seti/data_assets/rotor_constants.yaml) rather than
+    # unsearchable: the probe names the constants it would use.
+    assert inv["SO2F2"]["jpl"] == [] and inv["SO2F2"]["cdms"] == []
+    assert inv["SO2F2"]["group"] == "targets" and inv["SO2F2"]["predictable"]
+    assert inv["SO2F2"]["rotor_constants"]["role"] == "target"
+    assert [i["name"] for i in inv["SO2F2"]["rotor_constants"]["isotopologues"]] == ["SO2F2 v=0"]
     v = rep["vizier"]["orion_kl_hifi"]
     assert v["status"] == "OK" and v["table"] == "J/ApJ/787/112/table2"
     assert v["roles"]["freq"] == "Freq" and v["units"]["freq"] == "GHz"
@@ -787,22 +801,46 @@ def test_acquire_screen_assess_end_to_end_with_scripted_archives(tmp_path):
     assert st["NF3"]["line_source"] == "jpl" and not st["NF3"]["predicted"]
     assert st["CHF3"]["line_source"] == "cdms"             # cdms preferred over predicted
     assert st["CF3Cl"]["line_source"] == "predicted" and st["CF3Cl"]["verify"]
-    assert st["SO2F2"]["line_source"] is None
+    assert st["SO2F2"]["line_source"] == "rotor" and st["SO2F2"]["verify"]
     o = sc["sources"]["orion_kl_hifi"]
     assert o["n_ulines"] == 300 and o["contaminants_applied"] == ["CH3Cl", "CH3F", "CH3OH"]
     assert o["frame"] == "rest" and o["v_unc_km_s"] == 4.0
-    assert sc["results"]["SO2F2|orion_kl_hifi"]["status"] == "NO_LINE_LIST"
+    assert sc["results"]["SO2F2|orion_kl_hifi"]["status"] == "OK"
+    assert sc["results"]["SO2F2|orion_kl_hifi"]["line_source"] == "rotor"
+    # and it says, in the same record, that the prediction is not sharp enough
+    # to be matched at this source's linewidth - the quartic constants are
+    # unknown, and that is the limit, not the absence of a catalogue entry
+    assert sc["results"]["SO2F2|orion_kl_hifi"]["searchability"]["status"] in (
+        "DEGRADED", "FREQUENCY_LIMITED")
     assert (out / "coincidences.csv").exists()
 
     s = stage_assess(conf, out)
     assert s["verdict"] == "NO_PATTERN"
-    assert s["targets_unsearchable"] == ["CH2F2", "CF2Cl2", "CFCl3", "COF2", "SO2F2", "CHClF2", "CF2"]
-    assert s["targets_with_predicted_frequencies"] == ["CF3Cl", "CF3CN"]
+    # NOTHING is unsearchable any more: the five species with no catalogue
+    # entry are predicted from the rotor assets, and CH2F2/COF2 from the
+    # validation blocks of the same file.
+    assert s["targets_unsearchable"] == []
+    assert set(s["targets_with_predicted_frequencies"]) == {
+        "CH2F2", "CF3Cl", "CF2Cl2", "CFCl3", "CF3CN", "COF2", "SO2F2", "CHClF2", "CF2"}
     assert s["species_inventory"]["CF3Cl"]["constants"]["B_mhz"] == 3335.6
     assert s["pairs"]["NF3|orion_kl_hifi"]["line_source"] == "jpl"
     c = pd.read_csv(out / "candidates.csv")
     assert len(c) == len(conf["species"]["targets"]) and not c["pattern"].any()
-    assert set(c["line_source"].dropna()) == {"jpl", "cdms", "predicted"}
+    # `rotor` is the fourth line source, and its presence is the point: the five
+    # species with no catalogue entry (CF2Cl2, CFCl3, SO2F2, CHClF2, CF2) are
+    # predicted from src/seti/data_assets/rotor_constants.yaml rather than
+    # reported unsearchable.  A candidates.csv with only the old three would
+    # mean the asymmetric-top predictor had silently stopped reaching them.
+    assert set(c["line_source"].dropna()) == {"jpl", "cdms", "predicted", "rotor"}
+    rotor_rows = c[c["line_source"] == "rotor"]
+    # The five species no catalogue carries must ALL be there.  CH2F2 and COF2
+    # may join them: the assets hold validation blocks for both, and in this
+    # scripted archive their JPL entries come back empty, so the predictor is
+    # the correct fallback rather than `unsearchable`.
+    assert {"CF2Cl2", "CFCl3", "SO2F2", "CHClF2", "CF2"} <= set(rotor_rows["species"])
+    assert set(rotor_rows["species"]) <= {"CF2Cl2", "CFCl3", "SO2F2", "CHClF2", "CF2",
+                                          "CH2F2", "COF2"}
+    assert rotor_rows["verify_constants"].all()   # never a catalogued line list
 
 
 def test_end_to_end_recovers_a_seeded_pattern_through_the_acquire_path(tmp_path):
@@ -823,12 +861,16 @@ def test_end_to_end_recovers_a_seeded_pattern_through_the_acquire_path(tmp_path)
     assert s["verdict"] == "NO_PATTERN"
     assert s["pairs"]["CHF3|orion_kl_hifi"]["line_source"] == "cdms"
     assert s["pairs"]["NF3|orion_kl_hifi"]["line_source"] == "predicted"
-    assert s["targets_with_predicted_frequencies"] == ["NF3", "CF3Cl", "CF3CN"]
+    assert set(s["targets_with_predicted_frequencies"]) >= {"NF3", "CF3Cl", "CF3CN"}
     # the pattern is only reachable through the predictor: prefer it and re-screen
     conf["archives"]["prefer_line_list"] = ["predicted", "cdms", "jpl"]
     stage_screen(conf, out, species=["CHF3"])
     s = stage_assess(conf, out)
-    assert s["verdict"] == "PATTERN_CANDIDATE"
+    # found, and flagged: the predictor's CHF3 block is `verify`, so this is a
+    # reason to obtain the laboratory line list, not a candidate
+    assert s["verdict"] == "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
+    assert s["n_pattern_candidates"] == 0
+    assert "CHF3|orion_kl_hifi" in s["pattern_candidates_verify_constants"]
     p = s["pairs"]["CHF3|orion_kl_hifi"]
     assert p["line_source"] == "predicted" and p["pattern"] and p["n_coincident"] >= 8
     rows = pd.read_csv(out / "coincidences.csv")
@@ -1173,3 +1215,306 @@ def test_the_config_says_a_same_formula_alias_must_be_declared():
     raw = Path("config/uline.yaml").read_text()
     assert "MUST BE DECLARED HERE" in raw
     assert "glycolaldehyde" in raw and "isomer" in raw.lower()
+
+
+# ---------------------------------------------------------------------------
+# a `verify` line list may never, on its own, make a candidate
+# ---------------------------------------------------------------------------
+def _verify_screen(verify: bool) -> dict:
+    """A minimal screen report with exactly one PASSING species x source pair."""
+    best = {"tex_k": 50.0, "n_features_tested": 40, "n_coincident": 5,
+            "n_coincident_vetoed": 0, "spearman_rho": 0.8, "lte_testable": True,
+            "lte_pass": True, "top5_fraction_any": 1.0, "top5_fraction_uline": 1.0,
+            "p_false": 0.001, "p_false_full": 0.001, "n_trials": 1000, "pattern": True,
+            "tests": {"count": True, "lte": True, "top5": True, "p_false": True},
+            "coincident_freq_mhz": [1.0e5]}
+    return {"sources": {"synth": {"status": "OK", "n_ulines": 40, "has_intensity": True}},
+            "species_tables": {"SO2F2": {"group": "targets", "line_source": "rotor",
+                                         "databases": [], "n_lines": 400,
+                                         "predicted": True, "verify": verify}},
+            "results": {"SO2F2|synth": {"species": "SO2F2", "source": "synth",
+                                        "line_source": "rotor", "status": "OK",
+                                        "predicted": True, "verify": verify,
+                                        "records": [{"status": "OK"}], "best": best}},
+            "match": {}}
+
+
+def test_a_pattern_on_verify_constants_is_not_a_pattern_candidate(tmp_path):
+    """A predicted frequency is only as good as its constants.
+
+    Every rotor block in ``src/seti/data_assets/rotor_constants.yaml`` is
+    ``verify``: reconstructed from the literature, not read off a laboratory
+    line list.  A pattern resting on those frequencies alone is a reason to
+    obtain the laboratory list; it must never be counted alongside a candidate
+    found on a catalogued list.
+    """
+    conf = synth_conf()
+    s = stage_assess(conf, tmp_path, screen=_verify_screen(True), acquire_report={})
+    assert s["verdict"] == "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
+    assert s["n_pattern_candidates"] == 0
+    assert s["n_pattern_candidates_verify_constants"] == 1
+    assert s["pattern_candidates_verify_constants"] == ["SO2F2|synth"]
+    assert "reconstructed" in s["note"]
+    # the same pattern on a laboratory list IS a candidate
+    s2 = stage_assess(conf, tmp_path, screen=_verify_screen(False), acquire_report={})
+    assert s2["verdict"] == "PATTERN_CANDIDATE" and s2["n_pattern_candidates"] == 1
+    assert s2["n_pattern_candidates_verify_constants"] == 0
+
+
+# ---------------------------------------------------------------------------
+# the U-line census asks for U-LINES, not for everything unidentified
+# ---------------------------------------------------------------------------
+def test_the_uline_census_runs_once_on_its_own_phrases(tmp_path):
+    """Run 35039345593's census inherited the SOURCE's description terms
+    ("Orion", "IRC+10216", "line survey") and came back with 78 tables of which
+    ~70 were Orion star catalogues and Chandra "unidentified sources".  The
+    census now carries its own phrase list and runs once, not per source."""
+    conf = load_uline_config()
+    terms = conf["archives"]["uline_column_census_terms"]
+    assert "unidentified line" in terms and not any("rion" in t for t in terms)
+
+    seen: list[str] = []
+    base = _FakeTAP("ok", _raw_rows())
+
+    def query_fn(adql: str):
+        seen.append(adql)
+        if "TAP_SCHEMA.columns" in adql and "unidentified line" in adql:
+            return pd.DataFrame({
+                "table_name": ['"J/ApJ/787/112/table3"'],
+                "column_name": ["Note"],
+                "description": ["Unidentified line, peak T(MB)"]})
+        return base(adql)
+
+    rep = stage_probe(conf, tmp_path, fetch_fn=_FakeWeb(), query_fn=query_fn,
+                      sources=["orion_kl_hifi"])
+    census = rep["uline_column_census"]
+    assert census["status"] == "OK" and census["n_tables"] == 1
+    assert census["tables"][0]["table_name"] == "J/ApJ/787/112/table3"
+    # exactly ONE census query, and it asked TAP_SCHEMA.columns
+    asked = [a for a in seen if "unidentified line" in a]
+    assert len(asked) == 1 and "TAP_SCHEMA.columns" in asked[0]
+
+
+# ---------------------------------------------------------------------------
+# a species whose quartic constants are unknown is not searchable, and says so
+# ---------------------------------------------------------------------------
+def test_frequency_limited_species_are_rolled_up_into_the_summary(tmp_path):
+    """The predicted error of a rotor with unknown quartic constants is tens to
+    hundreds of MHz, while an Orion linewidth at 150 GHz is ~2 MHz.  The match
+    tolerance is then the prediction's own ignorance, chance alignments rise
+    with it, and the FAP gate can never be reached.  That is a property of the
+    CONSTANTS and no amount of data repairs it, so the summary names it."""
+    conf = synth_conf()
+    screen = _verify_screen(True)
+    screen["results"]["SO2F2|synth"]["best"]["pattern"] = False
+    screen["results"]["SO2F2|synth"]["searchability"] = {
+        "status": "FREQUENCY_LIMITED", "median_err_mhz": 146.0, "tolerance_mhz": 2.0,
+        "err_over_tolerance": 73.0, "quartic_known": False,
+        "remedy": "the quartic centrifugal-distortion constants are unknown"}
+    s = stage_assess(conf, tmp_path, screen=screen, acquire_report={})
+    assert s["verdict"] == "NO_PATTERN"
+    lim = s["targets_frequency_limited"]
+    assert set(lim) == {"SO2F2"} and lim["SO2F2"]["err_over_tolerance"] == 73.0
+    assert any("FREQUENCY-LIMITED" in d and "quartic" in d for d in s["degraded"])
+    assert s["pairs"]["SO2F2|synth"]["searchability"]["status"] == "FREQUENCY_LIMITED"
+
+
+# ---------------------------------------------------------------------------
+# the LTE test lives or dies on the intensity column resolving
+# ---------------------------------------------------------------------------
+def test_an_all_unidentified_table_needs_no_identification_column():
+    """A table whose every row is a U-line has NO identification column,
+    because there is nothing to identify.
+
+    Run 35752177872 lost the comet C/2013 R1 (Lovejoy) U-line table to exactly
+    that contradiction: `J/A+A/564/L2/table4` resolved `Freq` and `T(MB)dv`
+    cleanly, was declared `all_unidentified: true` in the config, and was still
+    marked `usable: False` for want of a name column it cannot have.  It cost
+    the channel its tightest tolerance — a coma line is ~1.5 km/s wide against
+    IRC+10216's 30 — and its only non-stellar environment.
+    """
+    from seti.uline import acquire as A
+    from seti.uline.run import _column_patterns
+
+    cols = _column_patterns(load_uline_config())
+    # the comet table's real columns, from probe.json's scoreboard
+    comet = ["recno", "Freq", "T(MB)dv", "e_T(MB)dv", "Dv", "e_Dv", "SNR", "Note"]
+    roles = A.resolve_line_columns(comet, cols)
+    assert roles["freq"] == "Freq" and roles["intensity"] == "T(MB)dv"
+    assert not roles["ident"]          # there is none, and there cannot be
+
+    def query_fn(adql: str):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": ['"J/A+A/564/L2/table4"'],
+                                 "description": ["Unidentified lines in comet Lovejoy"]})
+        if "TAP_SCHEMA.columns" in adql:
+            return pd.DataFrame({"column_name": comet,
+                                 "description": ["" for _ in comet],
+                                 "unit": ["" for _ in comet]})
+        return pd.DataFrame({"Freq": [251766.0, 264753.0], "T(MB)dv": [0.1, 0.2]})
+
+    strict = A.discover_line_table("comet", "J/A+A/564/L2/", query_fn=query_fn,
+                                   column_patterns=cols, allow_non_tap=False)
+    assert strict.table is None        # the old behaviour: dropped
+
+    loose = A.discover_line_table("comet", "J/A+A/564/L2/", query_fn=query_fn,
+                                  column_patterns=cols, allow_non_tap=False,
+                                  ident_required=False)
+    assert loose.table == "J/A+A/564/L2/table4"
+    assert loose.roles["freq"] == "Freq" and loose.roles["intensity"] == "T(MB)dv"
+
+
+def test_two_views_of_one_table_are_not_two_U_line_samples(tmp_path):
+    """Run 35752177872 read J/A+AS/142/181 table2 — whose `Mol` column flags 63
+    lines unidentified — AND table3, which is those same 63 as a standalone
+    U-line table.  Summing per source reported 143 U-lines where there are 80.
+
+    The sample size is the one number a reader quotes, so it is counted on the
+    frequencies themselves and the overlap is named rather than hidden.
+    """
+    shared = [float(100000 + 7 * i) for i in range(63)]
+    other = [float(150000 + 11 * i) for i in range(17)]
+    conf = synth_conf()
+    screen = {
+        "sources": {
+            "cernicharo_table2": {"status": "OK", "n_ulines": 63, "has_intensity": True,
+                                  "uline_freqs_mhz": list(shared)},
+            "cernicharo_table3": {"status": "OK", "n_ulines": 63, "has_intensity": True,
+                                  "uline_freqs_mhz": list(shared)},
+            "he2008": {"status": "OK", "n_ulines": 17, "has_intensity": True,
+                       "uline_freqs_mhz": list(other)},
+        },
+        "species_tables": {}, "results": {}, "match": {}}
+    s = stage_assess(conf, tmp_path, screen=screen, acquire_report={})
+    assert s["n_ulines_per_source_sum"] == 143      # what the naive sum said
+    assert s["n_ulines_total"] == 80                # what is actually there
+    ov = s["uline_source_overlaps"]
+    assert len(ov) == 1
+    assert sorted(ov[0]["sources"]) == ["cernicharo_table2", "cernicharo_table3"]
+    assert ov[0]["n_shared"] == 63 and ov[0]["fraction_of_smaller"] == 1.0
+
+
+def test_a_diverged_refit_is_never_published_as_a_hamiltonian_floor():
+    """Run 35752177872 fitted every parseable SO2 line — including the excited
+    states a ground-state Hamiltonian does not model — and reported a 4 GHz
+    post-fit rms beside a MEASURED 2.7 MHz median residual on the lines that
+    did match.  Quoting that as "the Hamiltonian's floor" says the predictor is
+    worthless when it is good to a few MHz."""
+    from seti.uline.run import partition_refits
+
+    good, bad = partition_refits([
+        # SO2 exactly as run 35752177872 had it: the refit IMPROVED (15 GHz ->
+        # 4 GHz) yet landed three orders of magnitude above the 2.7 MHz the
+        # unfitted constants already reach line by line.  Improvement on a
+        # polluted starting point is not a floor.
+        {"comparison": {"residual_mhz": {"median_abs": 2.7}},
+         "refit": {"rms_before_mhz": 15126.0, "rms_after_mhz": 4015.0, "n_fit_lines": 4317}},
+        # a genuine floor: comparable to the measured residual
+        {"comparison": {"residual_mhz": {"median_abs": 3.0}},
+         "refit": {"rms_before_mhz": 90.0, "rms_after_mhz": 0.9}},
+        {"comparison": {}, "refit": {"rms_after_mhz": 5.0}},     # no reference: taken as given
+        {"comparison": {"residual_mhz": {"median_abs": 2.0}},
+         "refit": {"error": "scipy missing"}},                   # not a fit at all
+    ])
+    assert good == [0.9, 5.0]
+    assert len(bad) == 1
+    assert bad[0]["rms_after_mhz"] == 4015.0
+    assert bad[0]["measured_median_abs_mhz"] == 2.7
+    assert "not this Hamiltonian's floor" in bad[0]["why"]
+    assert partition_refits([]) == ([], [])
+
+
+def test_the_probe_clock_stops_a_slow_source_and_names_the_ones_it_skipped(tmp_path):
+    """A budget checked only BETWEEN sources decides whether to *start* the next
+    one and can never stop the one already running.
+
+    One slow catalogue runs its whole route ladder — four TAP hosts, each
+    retried, then ASU, then astroquery — plus a column query and a row count
+    for every table it lists.  ULINE walks ten sources, so against a loaded
+    VizieR that is how a job reaches its `timeout-minutes`, and a job killed
+    that way skips the `if: always()` commit-back and leaves NO results.
+    """
+    import time as _t
+
+    conf = load_uline_config()
+    conf["archives"]["probe_budget_s"] = 0.6
+    calls = {"n": 0}
+
+    def slow_tap(adql: str):
+        calls["n"] += 1
+        _t.sleep(0.25)
+        return pd.DataFrame()
+
+    names = ["orion_kl_hifi", "irc10216_he2008", "sgrb2_nummelin1998"]
+    t0 = _t.monotonic()
+    rep = stage_probe(conf, tmp_path, fetch_fn=_FakeWeb(), query_fn=slow_tap, sources=names)
+    elapsed = _t.monotonic() - t0
+
+    # it stopped rather than running the full ladder for every source
+    assert elapsed < 20.0
+    statuses = {k: v.get("status") for k, v in rep["vizier"].items()}
+    assert set(statuses) == set(names)
+    stopped = [k for k, s in statuses.items()
+               if s in ("DISCOVERY_TIMED_OUT", "DISCOVERY_NOT_ATTEMPTED")]
+    assert stopped, f"no source was stopped by the clock: {statuses}"
+    for k in stopped:
+        assert rep["vizier"][k]["error"]            # the reason, always
+    # a clock is not a sky result
+    assert all(s != "OK" or rep["vizier"][k].get("table") for k, s in statuses.items())
+
+
+def test_a_species_whose_hamiltonian_is_wrong_says_so_in_the_summary(tmp_path):
+    """SO2F2 is accidentally near-spherical (A ~ B ~ C), and Sarka, Demaison,
+    Margules et al. found Watson's A-REDUCTION FAILS for it — an unreduced
+    Hamiltonian with all six quartic constants was needed.  This predictor is
+    A-reduced, so for SO2F2 alone the published quartic set would not make the
+    prediction right.  A model limit is not a constants limit and must not be
+    reported as one."""
+    from seti.uline.rotorpred import load_rotor_assets
+
+    cav = load_rotor_assets()["species"]["SO2F2"]["hamiltonian_caveat"]
+    assert "A-reduction fails" in cav["reduction"]
+    assert "model-limited" in cav["consequence"]
+
+    conf = synth_conf()
+    screen = _verify_screen(True)
+    screen["results"]["SO2F2|synth"]["best"]["pattern"] = False
+    screen["species_tables"]["SO2F2"]["rotor"] = {"hamiltonian_caveat": cav}
+    s = stage_assess(conf, tmp_path, screen=screen, acquire_report={})
+    assert s["targets_hamiltonian_caveats"]["SO2F2"]["reduction"] == cav["reduction"]
+    assert any("HAMILTONIAN CAVEAT SO2F2" in d for d in s["degraded"])
+
+
+def test_the_real_column_sets_of_the_acquired_surveys_resolve_an_intensity():
+    """Runs 35039822190 and 35041128720 reported `lte_testable: false` for every
+    pair, and the channel recorded "no intensity column" as a property of the
+    SURVEYS.  It was a column-matching failure: probe.json shows Cernicharo+2000
+    tables 2 and 3 carrying `T(MB)dv` and He+2008 table 4 carrying `Iint`, both
+    integrated line intensities — exactly the quantity the Spearman test wants,
+    since it is what the column is proportional to in the optically thin LTE
+    limit.  These are the archive's OWN column names, read off the probe's
+    scoreboard, pinned so the regex list cannot silently lose them again.
+    """
+    from seti.uline.acquire import resolve_line_columns
+    from seti.uline.run import _column_patterns
+
+    cols = _column_patterns(load_uline_config())
+    cases = {
+        "J/A+AS/142/181/table2": (
+            ["Mol", "Trans", "n_Freq", "Freq", "e_Freq", "nFreq", "Freqc", "u_Freqc",
+             "T(MB)dv", "e_T(MB)dv", "Vexp", "e_Vexp", "Notes"],
+            {"freq": "Freq", "ident": "Mol", "intensity": "T(MB)dv"}),
+        "J/A+AS/142/181/table3": (
+            ["Name", "Trans", "Freq", "e_Freq", "Freqc", "u_Freqc", "T(MB)dv", "e_T(MB)dv",
+             "Vexp", "e_Vexp", "Notes"],
+            {"freq": "Freq", "ident": "Name", "intensity": "T(MB)dv"}),
+        "J/ApJS/177/275/table4": (
+            ["Species", "Trans", "Freq", "e_Freq", "Iint", "e_Iint", "Vexp", "Notes"],
+            {"freq": "Freq", "ident": "Species", "intensity": "Iint"}),
+    }
+    for table, (columns, want) in cases.items():
+        got = resolve_line_columns(columns, cols)
+        for role, col in want.items():
+            assert got[role] == col, f"{table}: {role} resolved to {got[role]!r}, want {col!r}"
+        # and the ERROR column never masquerades as the intensity
+        assert not str(got["intensity"]).startswith("e_"), table

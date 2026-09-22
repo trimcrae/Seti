@@ -724,6 +724,40 @@ def test_a_hung_archive_fetch_is_abandoned_inside_its_own_clock(tmp_path):
     del world
 
 
+def test_the_default_tap_and_cone_callables_are_wrapped_in_a_wall_clock(tmp_path, monkeypatch):
+    """Stage 2's TAP path was reaching pyvo's unbounded run_async directly.
+
+    MEASURED (run 35744902798): the stage sat in the run step for half an hour
+    past its own 9,000 s budget, which is only checked BETWEEN stars, with the
+    per-star checkpoint frozen at the last star that finished.
+    """
+    seen = {}
+
+    def fake_query(base_fn=None, *, timeout_s):
+        seen["query"] = timeout_s
+        return lambda adql, **kw: pd.DataFrame()
+
+    def fake_cone(base_fn=None, *, timeout_s):
+        seen["cone"] = timeout_s
+        return lambda table, ra, dec, r, **kw: pd.DataFrame()
+
+    monkeypatch.setattr(acq, "timeout_query_fn", fake_query)
+    monkeypatch.setattr(acq, "timeout_cone_fn", fake_cone)
+    conf = _conf(tmp_path)
+    params = S.Stage2Params.from_config(conf)
+    params.budget_s = 1e-9                                # stop before any star
+    S.stage2_run(conf, tmp_path / "s2", params=params, shortlist=[_entry()])
+    assert seen == {"query": params.query_timeout_s, "cone": params.query_timeout_s}
+    assert params.query_timeout_s > 0
+
+    # an injected callable is left exactly as passed
+    seen.clear()
+    S.stage2_run(conf, tmp_path / "s2b", params=params, shortlist=[_entry()],
+                 query_fn=lambda adql, **kw: pd.DataFrame(),
+                 cone_fn=lambda *a, **kw: pd.DataFrame())
+    assert seen == {}
+
+
 def test_an_in_time_fetch_and_its_exception_pass_straight_through():
     def ok(star_id, **kw):
         return [{"star_id": star_id, "kw": kw}]
@@ -819,6 +853,86 @@ def test_a_hard_vetoed_ceiling_excess_star_is_tested_first_not_dropped(tmp_path)
     assert conf["stage2"]["include_vetoed_excess"] is True
     assert "companion_suspect" in conf["stage2"]["vetoed_first_vetoes"]
     assert S.Stage2Params.from_config(conf).include_vetoed_excess is True
+
+
+def _on_target_star(**kw):
+    s = {"star_key": "kepler:9418692", "tier": "vetoed_excess",
+         "verdict": P.VERDICT_ON_TARGET, "verdict_reason": "all 5 on the target",
+         "n_flares_tested": 5, "outcomes": {"on_target": 5}, "statuses": {}, "degraded": [],
+         "params": {"teff_k": 5677.4, "radius_rsun": 1.089, "gaia_ruwe": 1.5562,
+                    "measured": True},
+         "xi": {"xi_conservative_stage1": 0.715, "xi_conservative_measured": 0.292,
+                "xi_status": "above_ceiling", "params_measured": True,
+                "with_max_amplitude_remeasured_energy": {"xi_conservative_max": 0.045}},
+         "flares": [{"outcome": "on_target", "e_ratio_remeasured_over_catalogue": 0.472},
+                    {"outcome": "on_target", "e_ratio_remeasured_over_catalogue": 0.566}]}
+    s.update(kw)
+    return s
+
+
+def test_an_on_target_excess_with_an_unresolved_companion_is_not_reported_as_cleared():
+    """The centroid clears only Gaia-RESOLVED neighbours.
+
+    MEASURED (run 35744902798): KIC 9418692 came back flare_on_target with
+    xi = +0.292 and Gaia RUWE = 1.5562, and the run verdict read
+    CEILING_EXCESS_ON_TARGET_PENDING_SPECTROSCOPY — which sounds like a
+    clearance. A companion inside ~0.1" is invisible to Gaia and to a 4"
+    Kepler pixel alike, and an M dwarf there is the standard mundane reading
+    of a superflare on a solar-type star.
+    """
+    ruwe = _on_target_star()
+    hit, why = S.companion_unresolved(ruwe)
+    assert hit and "RUWE" in why
+    v, r = S._overall_verdict([ruwe])
+    assert v == S.VERDICT_S2_ON_TARGET_COMPANION
+    assert "cannot settle" in r and "kepler:9418692" in r
+
+    # the stage-1 veto alone is enough, with no RUWE measured at all
+    vetoed = _on_target_star(params={"measured": True}, first_veto="companion_suspect")
+    assert S.companion_unresolved(vetoed)[0]
+    assert S._overall_verdict([vetoed])[0] == S.VERDICT_S2_ON_TARGET_COMPANION
+
+    # a clean star still gets the plain on-target verdict
+    clean = _on_target_star(star_key="kepler:1", first_veto="below_ceiling",
+                            params={"teff_k": 5700.0, "radius_rsun": 1.0, "gaia_ruwe": 1.02,
+                                    "measured": True})
+    assert not S.companion_unresolved(clean)[0]
+    assert S._overall_verdict([clean])[0] == S.VERDICT_S2_ON_TARGET
+    # and one clean star among flagged ones still reports as on target
+    assert S._overall_verdict([ruwe, clean])[0] == S.VERDICT_S2_ON_TARGET
+
+
+def test_a_cancelled_run_can_be_summarised_from_its_checkpoint(tmp_path):
+    """A cancelled run writes stars.json after every star but never reaches
+    the end of stage2_run, so summary.json stayed behind from an older run."""
+    stars = [_on_target_star(),
+             {"star_key": "kepler:2", "tier": "watch", "verdict": P.VERDICT_UNTESTABLE,
+              "verdict_reason": "no light curve", "statuses": {}, "degraded": ["x"],
+              "params": {}, "xi": {"xi_status": "not_recomputed"}, "flares": []}]
+    out = tmp_path / "s2"
+    out.mkdir()
+    (out / "stars.json").write_text(json.dumps({"generated_utc": "2026-09-22T15:26:18Z",
+                                                "stars": stars}))
+    assert S.main(["--stage", "summarise", "--out-dir", str(out),
+                   "--source-run", "run 35744902798"]) == 0
+    s = json.loads((out / "summary.json").read_text())
+    # the summary describes THESE stars, and says where it came from
+    assert s["n_stars"] == 2 and s["verdict"] == S.VERDICT_S2_ON_TARGET_COMPANION
+    assert "15:26:18" in s["summary_source"] and "35744902798" in s["summary_source"]
+    assert s["verdict_counts"] == {P.VERDICT_ON_TARGET: 1, P.VERDICT_UNTESTABLE: 1}
+    # the energy scale that xi rides on is reported, not assumed away
+    e = s["flare_energy_scale"]
+    assert e["n"] == 2 and e["remeasured_over_catalogue_median"] == pytest.approx(0.519)
+    assert e["median_dex"] == pytest.approx(math.log10(0.519), abs=1e-6)
+    # and both readings of xi are side by side
+    row = s["stars"][0]
+    assert row["xi_conservative_measured"] == pytest.approx(0.292)
+    assert row["xi_conservative_remeasured_energy"] == pytest.approx(0.045)
+    assert row["companion_unresolved"] and row["gaia_ruwe"] == pytest.approx(1.5562)
+    # a star with no re-measurement writes null, not NaN (NaN is not valid JSON)
+    assert s["stars"][1]["xi_conservative_remeasured_energy"] is None
+    assert "NaN" not in (out / "summary.json").read_text()
+    assert (out / "flares.csv").exists()
 
 
 def test_a_named_star_is_tested_whatever_tier_it_ended_in(tmp_path):

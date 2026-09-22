@@ -446,3 +446,110 @@ Verdicts are first-class: `NO_DATA_REACHED` when no archive track returned rows,
 `NO_LOCUS` when no colour bin reached minimum occupancy, `OK` otherwise. A
 degraded run reports its degradation rather than emitting an empty candidate list
 that would read like a result.
+
+---
+
+## 9. What the first catalogue-scale run actually produced (2026-09-22)
+
+Run **30203264572** acquired 6,192,472 stars on 2026-07-26; runs
+**35738190057** and **35741248499** analysed that sample and committed the
+first `results/ossuary/summary.json` this repository has ever held. The funnel
+is real work — 17,211 excess-flagged rows reduced to 584 by a ten-stage
+gauntlet, a 96.6% rejection — and the 584 are **not a candidate list**. Every
+number below is measured from the committed `candidates.csv` by
+`seti.ossuary.run.audit_candidates`, which writes `survivor_audit.json` beside
+it; none of it requires re-acquiring the sample.
+
+### The conjunction the claim needs
+
+The funnel applies a **disjunction** — a host is admitted if it is metal-poor
+**or** halo-kinematic — but the claim needs a conjunction, plus a fit that is
+self-consistent as optically thin dust:
+
+| requirement | surviving |
+|---|---|
+| gauntlet survivors | 584 |
+| … and metal-poor ([Fe/H] < −1) | 574 |
+| … and halo-kinematic | **15** |
+| … and an optically thin fit (τ ≤ 0.1) | **0** |
+| … and a W1/W2 excess at 3σ | **0** |
+
+Dropping the kinematic requirement does not help: 574 metal-poor → **0** at
+the same τ step.
+
+### Three things the funnel had no way to say
+
+**The fits are not self-consistent.** `tau` is the fitted fractional
+luminosity from an *optically thin* blackbody, so it only means anything while
+τ ≪ 1. The survivors have a **median τ of 0.389**; **576 of 576** fitted rows
+are above 0.1 and **39** are at or above 1.0 — reprocessing more light than
+the star emits. Real debris disks sit at τ ~ 10⁻⁵–10⁻³ (Wyatt 2008); a few
+10⁻² is already an extreme disk. A fractional luminosity of 0.4 around a field
+dwarf is an enshrouded object, a blend, or a broken SED anchor. There was no
+gate on this; `optical_depth_gate` is now one, and the τ distribution itself
+is the diagnostic.
+
+**The selection rested on one unconfirmed estimator.** All **584/584**
+metallicities are Gaia GSP-Phot, with **no spectroscopic confirmation
+anywhere**, in a regime where that estimator is least reliable: median
+G = 17.6 (range 14.2–18.0), 28.6% of rows redder than bp_rp = 1.4, and 2.6%
+below [Fe/H] = −3 (minimum −4.09). **582 of 584** were classified from a
+tangential-velocity *lower bound* rather than a space velocity, so the
+kinematic leg carried 4% of the sample and only **2** rows have a full UVW.
+§4 of this document already requires a headline candidate to be *either*
+spectroscopically metal-poor *or* halo-kinematic — 559 of the 584 are
+**neither**. The rule was written and not enforced; `vet()` now records
+`feh_spectroscopic`, `kinematics_is_full_space_velocity` and
+`two_independent_arguments` per row, and the summary reports
+`survivor_provenance` beside `n_candidates`.
+
+**The excesses are long-band.** 583/584 are significant in W3 and 478/584 in
+W4, but only **22/584** in W1 and **24/584** in W2. The fitted temperatures
+have a median of **182 K** (IQR 162–201 K). `require_bands` includes W3, so
+the ledger's W4-only rule never reached one band inwards and a W3-only excess
+passed unnamed. It is now flagged `long_band_only` — **named, not rejected**,
+because a genuine ~180 K reservoir is W3/W4-only too and that is inside this
+channel's own sensitivity band.
+
+### The 584 and Theissen & West's 584
+
+§2 credits Theissen & West (2014/2017) with 584 extreme excesses, and this
+funnel outputs exactly 584 survivors. That doc line was committed three days
+before the result, so it did not influence the pipeline, and 584 is an
+arithmetic consequence of ten cuts rather than a chosen number. What can be
+checked offline says the two populations are **not** the same: T&W select
+proper-motion-verified **M dwarfs**, while only 28.6% of these rows are redder
+than bp_rp = 1.4, and these sit at G = 14.2–18.0. The coincidence is recorded
+as a coincidence.
+
+It is worth stating what the alternative would mean. Silverberg et al. (2018)
+found **all thirteen** T&W candidates with W4 S/N > 3 to be spurious — a fact
+this channel already cites in `vet.funnel_counts`. So if a cross-match did
+show we had rediscovered their population, that would be a **confirmation of
+the contamination reading**, not a candidate list. The decisive test is a
+positional cross-match of the 584 against T&W's published table, which needs
+VizieR and is therefore a runner step; it is not yet done and is not claimed.
+
+### What this changes
+
+Per `CLAUDE.md` a clean null changes the question rather than becoming a
+result, and this one points somewhere specific. The census OSSUARY produced is
+**cold and long-band**: ~182 K, W3/W4-driven, with essentially nothing in
+W1/W2. The Osmanov ring prior that S63 (`docs/ring.md`) tests lives at
+300–700 K — a **W1/W2** excess, two bands away from everything here, and over
+hosts where the biological alternative does not exist at all. That is the
+question this null changes into.
+
+### The next decisive actions, in order
+
+1. **Cross-match the 584 to a spectroscopic metallicity** (LAMOST DR12,
+   APOGEE DR17, GALAH DR4, SDSS/SEGUE) and report what fraction of the
+   GSP-Phot [Fe/H] values survive. Runner step; no re-acquisition needed.
+2. **Cross-match to Theissen & West's published table** and say whether these
+   are their objects.
+3. **Carry E(B−V) for the flagged rows into the gauntlet** so
+   `cirrus_correlation_test` runs on the population rather than on the
+   shortlist — at τ ~ 0.4 and 182 K, diffuse emission in the WISE beam is the
+   leading hypothesis and it is currently untested at population level.
+4. Re-run the analysis with `tau_gate_rejects: true` to see the census the
+   optically thin model can actually carry.

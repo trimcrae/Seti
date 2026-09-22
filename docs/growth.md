@@ -981,3 +981,110 @@ Run: `python -m seti.growth.centroid --stage {probe,census,difference,assess,all
   `koi_fpflag_co` centroid flag, which is 0 for this target) is a separate
   statement.
 * `centroid_sys_floor_arcsec` is **asserted**, not measured on real TESS data.
+
+---
+
+## 11. Stage `direct` — the TESS depth of EVERY Kepler planet, from the light curves (`src/seti/growth/direct.py`, BUILT)
+
+### 11.1 Why this stage exists
+
+Stage 1 measured **108 of 9,564 KOIs** — 1.1 %. The bottleneck is not TESS
+coverage; it is the *join*. Stage 1 reached the TESS era through the **TOI
+alert catalogue**, and 3,055 KOIs resolve a TIC id while only **94 of their
+1,975 distinct stars ever had a TOI at all**. TOI is an alert list, not a
+systematic re-measurement of Kepler's planets, so leaning on it cost 99 % of
+the sample *and* imported whichever pipeline produced each alert — the same
+heterogeneity that broke stage 1's error model (31 of 108 planets above 5σ of
+the population median; a third of a sample cannot be five-sigma outliers).
+
+This stage removes the catalogue from the measurement entirely. For every
+confirmed or candidate KOI with a TIC id it fetches **every TESS light-curve
+product MAST serves** and fits the depth itself, with the same code that fits
+the Kepler era in stage 2A. Sample and error model are fixed by the same move.
+
+### 11.2 What it does, per star
+
+1. **Fetch, once per star.** `search_lightcurve("TIC …", mission="TESS")`
+   through `lightkurve`, falling back to `astroquery.mast` + FITS. Authors
+   `SPOC` (2-min), `TESS-SPOC` and `QLP` (FFI) — the author filter is
+   **strict**: a request that matches nothing returns nothing, never another
+   pipeline's products. (The `AUTHOR_NOT_SERVED` lesson: a dropped author
+   filter once returned SPOC's products under a QLP request and put a phantom
+   duplicate into the reduction ensemble, shrinking the very error the ensemble
+   exists to size.) 20-second products are skipped; every flux column of a
+   downloaded product is read, so the SAP and PDCSAP families cost **one**
+   fetch, not two. A multi-planet system's planets share the download.
+2. **Propagate the ephemeris and search phase.** `t0` is carried from
+   `koi_time0bk` over the ~2,000 epochs to the TESS window; the accumulated
+   `σ_T0 = n · σ_P ⊕ σ_T0` is often larger than the transit. A window of
+   `3 σ_T0 + 0.25 T14` (capped) is scanned coarsely then finely, ≤ 161 trials;
+   the offset, its significance and the trial count are all on the record. The
+   transit is `ephemeris_recovered` only when the best-offset depth reaches
+   S/N ≥ 3 — otherwise the planet is `transit_not_recovered`, **never**
+   `consistent`.
+3. **Fit both families with the stage-2 fitter.** Same masked baseline, same
+   exposure-shrunk core, same bootstrap, same `dedupe_sectors`, run over the
+   **raw** `SAP_FLUX` family and the **corrected** `PDCSAP_FLUX`/`KSPSAP`/`DET`
+   family. The spread over pipeline *authors* within a family is the
+   reduction-ensemble systematic and enters `total_err_ppm`.
+4. **Profile the duration** on the detrended fold (wider baseline window than
+   the depth fitter's, so a duration that *grew* is not masked into the
+   baseline) and test `T14` against the fixed-impact-parameter prediction.
+5. **Compare like for like** against `koi_depth` carried into the TESS band by
+   the limb-darkening ratio, and state **per planet what change could have been
+   seen**: `detectable_ln_ratio = n_candidate · σ_expected` and
+   `detectable_depth_change_ppm`. A non-detection on a star is then an honest
+   statement about that star's TESS precision, not silence.
+
+### 11.3 The Kepler-718 b rule, as a gate
+
+A bigger aperture admits more contaminating light, so on the same star the
+**raw SAP depth must read shallower than Kepler, never deeper**. Kepler-718 b
+read SAP 11,196 ppm against PDCSAP 29,255 ppm — a factor 2.61 between raw and
+corrected photometry of the *same photons* — and the difference image put the
+transit source 29.25 ± 4.18″ off target. The "growth" was PDC dividing the raw
+depth by a crowding factor the TIC got wrong.
+
+So `classify_direct` requires, for `growth_candidate`:
+
+* **both** families up at `n_candidate` = 5σ on the **total** error, the SAP on
+  its own raw `z` (a deeper-than-Kepler raw depth is never dilution) and the
+  PDCSAP on its population-corrected, scatter-scaled `z`;
+* `duration_verdict == fixed_b`; no odd-even signature at 3σ; the transit
+  recovered at its ephemeris; no `koi_fpflag_*`; disposition still
+  CONFIRMED/CANDIDATE; neither family's depth a lower bound.
+
+A PDCSAP-only rise with `sap_minus_pdcsap_z ≤ −3` and direction
+`PDC_DEEPER_THAN_SAP` is classed **`crowding_correction`** — Kepler-718 b's
+class — and is not a candidate. `deeper_tess` / `shallower_tess` hold the
+one-family changes; `consistent` is only ever written where the sensitivity was
+sufficient to see the change.
+
+### 11.4 The error model, corrected in the population's own units
+
+`population_offsets` measures, per family, the median `ln(D/D_ref)` (the band
+and aperture offset that must be removed before anything is compared) and the
+**robust scatter of z about it** (`1.4826 · MAD`). When that scatter exceeds
+one, every `z` is divided by it before the gate: a candidate has to be 5σ in
+the units the population's own scatter defines, which is the check stage 1
+failed. Both numbers, and the counts above ±3 and ±5, are in `summary.json`.
+
+### 11.5 Bookkeeping that is never a statement about the sky
+
+`not_measured` keeps `QUERY_FAILED`, `QUERY_RETURNED_ZERO_ROWS`,
+`TIC_UNRESOLVED`, `EPHEMERIS_UNAVAILABLE`, `NO_USABLE_TRANSIT`,
+`BUDGET_EXHAUSTED` and `NOT_REACHED` apart. A shard the clock killed leaves its
+targets `NOT_REACHED` — absent from the shard CSV, marked by the aggregate —
+and never `consistent`. `not_measurable` says TESS could not have seen the KOI
+depth at all. None of these is a null result and none is written up.
+
+### 11.6 Running it
+
+`growth_direct.yml`: `targets` → `measure` (sharded **by star**, `kepid mod n`,
+so a system's planets share one download; each shard checkpoints its CSV after
+every star and commits it `if: always()`) → `assess` → `vet` (stage 2 both eras
++ stage 3 census and difference image on every survivor). A shard cut off by
+its budget is resumed by re-dispatching with `resume=true`, which skips the
+targets already committed. Planets with `koi_period > 30 d` are carried
+separately in `long_period.csv`: TESS's 27-day sectors give them few or no
+transits and their sensitivity is stated, not assumed.

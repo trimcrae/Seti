@@ -1053,6 +1053,33 @@ def assess(out_dir: Path, conf: dict) -> dict:
         recs.append(r)
     inv_path = out_dir / "inventory.json"
     inv = json.loads(inv_path.read_text()) if inv_path.exists() else {}
+    # What the dispatch actually reached, from the shard logs: the answer to
+    # "what fraction of the archive did this run cover?" is measured, not
+    # inferred from the checkpoint count.
+    shard_logs = []
+    for f in sorted(glob.glob(str(out_dir / "screen_shard*.json"))):
+        try:
+            shard_logs.append(json.loads(Path(f).read_text()))
+        except Exception as exc:  # noqa: BLE001
+            print(f"[lantern] unreadable shard log {f}: {exc!r}")
+    coverage = None
+    if shard_logs:
+        ck = {}
+        for s in shard_logs:
+            for k, v in (s.get("counts") or {}).items():
+                ck[k] = ck.get(k, 0) + int(v)
+        dl = int(sum(int(s.get("bytes_downloaded") or 0) for s in shard_logs))
+        defer = int(sum(int(s.get("deferred_bytes") or 0) for s in shard_logs))
+        coverage = {
+            "n_shards": len(shard_logs), "shard_counts": ck,
+            "bytes_downloaded": dl, "bytes_deferred_at_deadline": defer,
+            "units_offered_to_shards": int(sum(int(s.get("n_units") or 0) for s in shard_logs)),
+            "shard_elapsed_minutes": [s.get("elapsed_minutes") for s in shard_logs],
+            "minutes_per_gb_measured": [s.get("minutes_per_gb_measured") for s in shard_logs],
+        }
+        sb = int((inv.get("plan") or {}).get("scheduled_bytes") or 0)
+        if sb:
+            coverage["fraction_of_scheduled_bytes_downloaded"] = round(dl / sb, 4)
     rcfg, fcfg, dcfg = conf["recurrence"], conf["fdr"], conf.get("discriminant", {})
     analysed = [r for r in recs if r.get("status") == "analysed"]
     status_counts = {}
@@ -1239,7 +1266,7 @@ def assess(out_dir: Path, conf: dict) -> dict:
             "scheduled_bytes": plan.get("scheduled_bytes"),
             "planned_by_predicted_class": plan.get("by_class"),
             "exposure_checkpoints": len(recs), "exposures_analysed": len(analysed),
-            "exposure_statuses": status_counts,
+            "exposure_statuses": status_counts, "dispatch_coverage": coverage,
             "exposures_eclipse_class": n_ecl, "exposures_transit_class": n_tr,
             "exposures_phase_unresolved": n_unres,
             "predicted_vs_found_class": pred_vs,

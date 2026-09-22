@@ -1933,18 +1933,35 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         route = _s(rows[0].get("tic_route"))
 
         def _resolve_tic(why: str, _kepid=kepid, _row=rows[0]):
-            """The position+magnitude route to this star's TIC.  ``(tic, route)``."""
+            """The position+magnitude route to this star's TIC.  ``(tic, route)``.
+
+            Retried, because a suspect catalogue id is now REFUSED when the sky
+            cannot name the star: one flaky TIC query must not turn into a
+            non-measurement that reads like a fact about TESS coverage.
+            """
             fn = tic_fn or astroquery_tic_fn
-            try:
-                t, r = fn(_kepid, _f(_row.get("ra")), _f(_row.get("dec")),
-                          _f(_row.get("koi_kepmag")),
-                          radius_arcsec=float(fp.tic_radius_arcsec),
-                          mag_tolerance=float(fp.tic_mag_tolerance))
-                log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}",
-                           rows=1 if np.isfinite(_f(t)) else 0, extra={"route": r})
-            except Exception as exc:                      # noqa: BLE001
-                log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}", error=repr(exc)[:300])
+            t, r, last = float("nan"), "", ""
+            for attempt in range(max(int(fp.retries), 1)):
+                if deadline.expired():
+                    last = "budget_exhausted"
+                    break
+                if attempt and float(fp.retry_pause_s) > 0:
+                    _time.sleep(min(float(fp.retry_pause_s) * attempt, deadline.remaining()))
+                try:
+                    t, r = fn(_kepid, _f(_row.get("ra")), _f(_row.get("dec")),
+                              _f(_row.get("koi_kepmag")),
+                              radius_arcsec=float(fp.tic_radius_arcsec),
+                              mag_tolerance=float(fp.tic_mag_tolerance))
+                except Exception as exc:                  # noqa: BLE001
+                    last, t, r = repr(exc)[:300], float("nan"), ""
+                    continue
+                last = ""
+                break
+            if last:
+                log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}", error=last)
                 return float("nan"), ""
+            log.record(f"tic_{why}_{int(_kepid)}", f"KIC {int(_kepid)}",
+                       rows=1 if np.isfinite(_f(t)) else 0, extra={"route": r})
             t = _f(t)
             if np.isfinite(t):
                 tic_fallback_by_route[r] = tic_fallback_by_route.get(r, 0) + 1

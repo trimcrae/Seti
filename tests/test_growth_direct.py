@@ -965,3 +965,33 @@ def test_resume_refuses_a_row_measured_against_an_unverified_tic(tmp_path):
     assert int(pd.to_numeric(df.loc[names[1], "tic_id"])) == 122785300
     assert df.loc[names[1], "lc_status"] == D.REASON_ZERO_ROWS
     assert rep["n_measured_this_run"] == 4      # everything but the kept row
+
+
+def test_a_flaky_tic_query_is_retried_before_a_star_is_refused(tmp_path):
+    """Refusing a suspect id makes the resolver load-bearing, so one bad call
+    must not become a non-measurement that reads as TESS coverage."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    good = 122785305.0
+    targets = targets.copy()
+    targets["tic_id"] = targets["tic_id"].where(targets["tic_id"].isna(), 122785300.0)
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    tries: list[int] = []
+
+    def tf(kepid, *a, **k):
+        tries.append(int(kepid))
+        if tries.count(int(kepid)) == 1:
+            raise TimeoutError("MAST timed out")
+        return good, "tic_kic_crossid"
+
+    def pf(tic, **_kw):
+        assert int(tic) == int(good)               # the suspect id is never queried
+        return _products(ref, ref, n_transits=10, sectors=(41,))
+    conf = _conf(fetch={"retries": 3, "retry_pause_s": 0.0})
+    rep = D.direct_measure(conf, out, shard=0, n_shards=1, products_fn=pf, tic_fn=tf)
+    assert rep["n_tic_suspect_truncation"] >= 1
+    df = D._read_csv(D._shard_paths(out, 0)["csv"])
+    assert (df["lc_status"] == "OK").any()         # the retry rescued it
+    assert not (df["lc_status"] == D.REASON_TIC_UNRESOLVED).all()

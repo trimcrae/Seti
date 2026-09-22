@@ -139,10 +139,22 @@ several sigma to −0.4 — but the number quoted on top of them was not what it
 be. `median_exposure_sig` is now reported beside it, and the `absent_in_exposures` basis
 string no longer asserts "the coadd feature is not in its inputs".
 
-The stack — same exposures, one continuum fit on their combined spectrum, so neither the
-low-S/N continuum bias nor the √N factor — is the statistic the classification should turn
-on. Rebuilding the rules around it is the next substantive change, deliberately not made
-at the end of the session that found it, on a rule that decides what gets killed.
+**And a second correction, an hour after the first.** I wrote here that the stack is
+therefore the statistic to turn the classification on. That is wrong, and a synthetic
+check I should have run before writing it says so: a continuum error *shared by all the
+exposures* hits the stack **harder**, because its errors are √N smaller and the same flux
+bias is √N more significant. Injecting one into every exposure of a file with a real line
+takes the combined significance from 9.84 to 8.57 (−13 %, the null absorbs most of it) and
+the stack from 12.84 to **2.52** (−80 %). The stack is the stronger statistic on clean
+data and the more fragile one under a shared systematic. Pinned as a test.
+
+So what remains is an *unexplained* disagreement: on real data the stack was positive in
+24 of 24 while the combination was negative, and a shared continuum error would have
+driven both negative. Something distinguishes N noisy continuum fits from one clean fit on
+the same pixels that neither the null nor the synthetic reproduces. Finding it is now the
+first next action; neither statistic is promoted until it is found. Every verdict the
+current rules issue on these lines is a kill either way, so the candidate list does not
+move on the answer.
 
 **In flight, and a correction.** I cancelled run 35747997902 — the calibrated full run —
 believing it had sat queued for 98 minutes without a single job starting. That was wrong.

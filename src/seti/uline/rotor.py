@@ -95,6 +95,17 @@ from .lines import (
 #: h / (8 π² c) in amu Å² MHz: B[MHz] = ROT_CONST_AMU_A2 / I[amu Å²]  (CODATA 2018)
 ROT_CONST_AMU_A2 = 505379.0096
 
+#: Conservative estimator of an unmeasured ΔJ as a fraction of (B+C)/2.  The
+#: rigid-rotor scaling ΔJ ≈ 4B̄³/ω² with a generic ω = 400 cm⁻¹ overshoots by
+#: ~two orders of magnitude for the molecules of this channel; the ratio is
+#: measured instead on the species whose ΔJ *is* known (SO₂ 6.4e-7, CH₂F₂
+#: 9.7e-7, CF₂ ~1.4e-6 of (B+C)/2), and 3e-6 is a factor ~2–5 upper bound on
+#: that set.  Used only as an ERROR TERM for a species whose quartic constants
+#: are unknown — never as a distortion constant in the Hamiltonian.  The
+#: ``validate`` stage re-measures the ratio on the catalogued species and
+#: reports it next to this number.
+DISTORTION_SCALE_REL = 3.0e-6
+
 QUARTIC = ("DJ", "DJK", "DK", "dJ", "dK")
 SEXTIC = ("HJ", "HJK", "HKJ", "HK", "hJ", "hJK", "hK")
 REPRESENTATIONS = {"Ir": ("a", "b", "c"), "IIr": ("b", "c", "a"), "IIIr": ("c", "a", "b")}
@@ -200,12 +211,19 @@ def spin_weight(rule: dict, ka: int, kc: int) -> float:
 
     ``ka_kc_sum``: the C₂ axis is *b* (the exchange operation is C₂ᵇ, whose
     character is (−1)^{Ka+Kc}); ``ka``: the C₂ axis is *a* ((−1)^{Ka});
-    ``kc``: the C₂ axis is *c* ((−1)^{Kc}); ``none``: every level weight 1.
-    A weight of 0 removes the level (SO₂: only Ka+Kc even exists).
+    ``kc``: the C₂ axis is *c* ((−1)^{Kc}); ``k_mod3``: a C₃ᵥ top with three
+    equivalent nuclei, where the levels with K ≡ 0 (mod 3) carry the A
+    spin weight and the rest the E weight (``axis`` names the symmetry axis,
+    ``a`` for a prolate top and ``c`` for an oblate one); ``none``: every
+    level weight 1.  A weight of 0 removes the level (SO₂: only Ka+Kc even
+    exists).
     """
     r = str((rule or {}).get("rule", "none"))
     if r == "none":
         return 1.0
+    if r == "k_mod3":
+        k = ka if str(rule.get("axis", "a")) == "a" else kc
+        return float(rule.get("multiple", 1.0)) if k % 3 == 0 else float(rule.get("other", 1.0))
     if r == "ka_kc_sum":
         par = (ka + kc) % 2
     elif r == "ka":
@@ -505,6 +523,7 @@ def _qn_string(j: int, ka: int, kc: int) -> str:
 def predict_lines(c: RotorConstants, *, fmin_mhz: float = 0.0, fmax_mhz: float = 2.0e6,
                   j_max: int | None = None, lgint_floor: float = -9.0, temps=CATDIR_TEMPS,
                   tag: int = 0, err_base_mhz: float = 0.5, err_rel: float = 1e-5,
+                  err_per_j_mhz: float = 0.0,
                   hyperfine: dict | None = None, distortion_scale_mhz: float | None = None,
                   abundance: float = 1.0) -> tuple[pd.DataFrame, Entry]:
     """Every allowed rotational line of the species in ``[fmin, fmax]`` MHz.
@@ -514,12 +533,21 @@ def predict_lines(c: RotorConstants, *, fmin_mhz: float = 0.0, fmax_mhz: float =
     :class:`Entry` carrying the explicit partition function on ``temps``.
 
     ``err_mhz`` is the model's *own* statement of how far the frequency is
-    trusted: ``err_base + err_rel·ν`` for known constants, plus — when the
-    quartic constants are unknown — the size of the unmodelled distortion
-    ``distortion_scale·[J'²(J'+1)² − J²(J+1)²]`` (``distortion_scale`` defaults
-    to the rigid-rotor estimate ``4 B̄³/ω²`` with ω = 400 cm⁻¹), plus the
-    hyperfine blend width when ``hyperfine = {"eQq_mhz": …, "n_nuclei": …}``.
-    ``abundance`` scales the intensities (an isotopologue's fraction).
+    trusted: ``err_base + err_rel·ν + err_per_j·(J_up+1)`` (the last term
+    propagates the uncertainty of A, B, C into an R-branch line, which grows
+    linearly with J), plus — when the quartic constants are unknown — the size
+    of the unmodelled distortion ``distortion_scale·[J'²(J'+1)² − J²(J+1)²]``
+    (``distortion_scale`` defaults to
+    :data:`DISTORTION_SCALE_REL`·(B+C)/2), plus the hyperfine blend width when
+    ``hyperfine = {"eQq_mhz": …, "n_nuclei": …}``.  ``abundance`` scales the
+    intensities (an isotopologue's fraction).
+
+    That distortion term is not a formality.  For a heavy rotor with
+    ΔJ ~ 10⁻² MHz an R-branch line at J ≈ 30 is displaced by ~4ΔJ(J+1)³ ≈ 10³
+    MHz, which is two orders of magnitude wider than any survey's matching
+    tolerance: **a species whose quartic constants are unknown is not
+    searchable at survey precision, however well its A, B, C are known.**  The
+    error column says so rather than hiding it.
     """
     mu_z, mu_x, mu_y = c.dipole_xyz()
     if mu_z == mu_x == mu_y == 0.0:
@@ -536,58 +564,77 @@ def predict_lines(c: RotorConstants, *, fmin_mhz: float = 0.0, fmax_mhz: float =
     q300 = 10.0 ** float(np.interp(np.log10(300.0), np.log10(np.asarray(temps, float))[::-1],
                                    np.asarray(qlog, float)[::-1]))
     if distortion_scale_mhz is None:
-        bbar = (c.A + c.B + c.C) / 3.0 / MHZ_PER_CM          # cm⁻¹
-        distortion_scale_mhz = 4.0 * bbar ** 3 / 400.0 ** 2 * MHZ_PER_CM
-    rows = []
+        distortion_scale_mhz = DISTORTION_SCALE_REL * 0.5 * (c.B + c.C)
+    chunks: list[dict] = []
     z_axis = REPRESENTATIONS[c.representation][0]
+    lg_min = float(lgint_floor)
     for j in range(0, j_max + 1):
         lo = cache[j]
+        w_lo = np.array([spin_weight(c.spin_weights, int(a), int(b))
+                         for a, b in zip(lo.ka, lo.kc, strict=True)])
         for jp in (j, j + 1):
             up = cache[jp]
+            w_up = np.array([spin_weight(c.spin_weights, int(a), int(b))
+                             for a, b in zip(up.ka, up.kc, strict=True)])
             s = line_strengths(lo, up)
+            # ν, the lower-state energy and the Boltzmann factor are the same for
+            # every dipole component; only S and μ change.  (n_up × n_lo) arrays.
+            nu = up.energy[:, None] - lo.energy[None, :]
+            el_cm = np.repeat((lo.energy / MHZ_PER_CM)[None, :], len(up.energy), axis=0)
+            eu_cm = el_cm + nu / MHZ_PER_CM
+            with np.errstate(over="ignore", under="ignore"):
+                pop = (np.exp(-C2_CM_K * el_cm / 300.0) - np.exp(-C2_CM_K * eu_cm / 300.0))
+            allowed = (nu > 0) & (nu >= fmin_mhz) & (nu <= fmax_mhz)
+            allowed &= (w_up[:, None] > 0) & (w_lo[None, :] > 0)
+            if jp == j:                       # each ΔJ = 0 pair once, upper above lower
+                allowed &= np.greater.outer(np.arange(len(up.energy)), np.arange(len(lo.energy)))
+            if not allowed.any():
+                continue
+            base = JPL_INTENSITY_CONST * nu * w_up[:, None] * pop / q300 * abundance
             for g, mu in (("z", mu_z), ("x", mu_x), ("y", mu_y)):
                 if mu == 0.0:
                     continue
                 sg = s[g]
-                for iu in range(len(up.energy)):
-                    for il in range(len(lo.energy)):
-                        if jp == j and iu <= il:
-                            continue                    # each ΔJ = 0 pair once, upper above lower
-                        st = float(sg[iu, il])
-                        if st < 1e-12:
-                            continue
-                        nu = float(up.energy[iu] - lo.energy[il])
-                        if nu <= 0 or nu < fmin_mhz or nu > fmax_mhz:
-                            continue
-                        gu = spin_weight(c.spin_weights, int(up.ka[iu]), int(up.kc[iu]))
-                        gl = spin_weight(c.spin_weights, int(lo.ka[il]), int(lo.kc[il]))
-                        if gu <= 0 or gl <= 0:
-                            continue
-                        el = float(lo.energy[il]) / MHZ_PER_CM
-                        eu = el + nu / MHZ_PER_CM
-                        pop = math.exp(-C2_CM_K * el / 300.0) - math.exp(-C2_CM_K * eu / 300.0)
-                        inten = JPL_INTENSITY_CONST * nu * st * mu * mu * gu * pop / q300 * abundance
-                        lg = math.log10(inten) if inten > 0 else -math.inf
-                        if lg < lgint_floor:
-                            continue
-                        err = err_base_mhz + err_rel * nu
-                        if not c.quartic_known:
-                            jj_u, jj_l = jp * (jp + 1), j * (j + 1)
-                            err += float(distortion_scale_mhz) * abs(jj_u ** 2 - jj_l ** 2)
-                        if hyperfine:
-                            k_lo = int(lo.ka[il] if z_axis != "c" else lo.kc[il])
-                            k_up = int(up.ka[iu] if z_axis != "c" else up.kc[iu])
-                            err = math.hypot(err, hyperfine_width_mhz(
-                                float(hyperfine.get("eQq_mhz", 0.0)),
-                                int(hyperfine.get("n_nuclei", 1)), j, k_lo, jp, k_up))
-                        rows.append((nu, err, lg, 3, el, int(round(gu * (2 * jp + 1))), int(tag),
-                                     False, 303, _qn_string(jp, int(up.ka[iu]), int(up.kc[iu])),
-                                     _qn_string(j, int(lo.ka[il]), int(lo.kc[il])),
-                                     jp, int(up.ka[iu]), int(up.kc[iu]), j, int(lo.ka[il]),
-                                     int(lo.kc[il]), {"z": "z", "x": "x", "y": "y"}[g], st, gu))
+                inten = base * sg * mu * mu
+                keep = allowed & (sg >= 1e-12) & (inten > 0)
+                if keep.any():
+                    with np.errstate(divide="ignore", invalid="ignore"):
+                        keep &= np.log10(np.where(keep, inten, 1.0)) >= lg_min
+                if not keep.any():
+                    continue
+                iu, il = np.nonzero(keep)
+                n = len(iu)
+                f = nu[iu, il]
+                err = err_base_mhz + err_rel * f + err_per_j_mhz * (jp + 1)
+                if not c.quartic_known:
+                    jj_u, jj_l = jp * (jp + 1), j * (j + 1)
+                    err = err + float(distortion_scale_mhz) * abs(jj_u ** 2 - jj_l ** 2)
+                if hyperfine:
+                    k_lo = (lo.ka if z_axis != "c" else lo.kc)[il]
+                    k_up = (up.ka if z_axis != "c" else up.kc)[iu]
+                    hw = np.array([hyperfine_width_mhz(float(hyperfine.get("eQq_mhz", 0.0)),
+                                                       int(hyperfine.get("n_nuclei", 1)),
+                                                       j, int(a), jp, int(b))
+                                   for a, b in zip(k_lo, k_up, strict=True)])
+                    err = np.hypot(err, hw)
+                gu = w_up[iu]
+                chunks.append({
+                    "freq_mhz": f, "err_mhz": err, "lgint_300": np.log10(inten[iu, il]),
+                    "dr": np.full(n, 3), "elo_cm": el_cm[iu, il],
+                    "gup": np.rint(gu * (2 * jp + 1)).astype(int), "tag": np.full(n, int(tag)),
+                    "lab": np.zeros(n, dtype=bool), "qnfmt": np.full(n, 303),
+                    "qn_up": [_qn_string(jp, int(a), int(b)) for a, b in zip(up.ka[iu], up.kc[iu], strict=True)],
+                    "qn_lo": [_qn_string(j, int(a), int(b)) for a, b in zip(lo.ka[il], lo.kc[il], strict=True)],
+                    "j_up": np.full(n, jp), "ka_up": up.ka[iu], "kc_up": up.kc[iu],
+                    "j_lo": np.full(n, j), "ka_lo": lo.ka[il], "kc_lo": lo.kc[il],
+                    "dipole": [g] * n, "strength": sg[iu, il], "gns": gu})
     cols = list(LINE_COLUMNS) + ["j_up", "ka_up", "kc_up", "j_lo", "ka_lo", "kc_lo", "dipole",
                                  "strength", "gns"]
-    df = pd.DataFrame(rows, columns=cols)
+    if chunks:
+        df = pd.DataFrame({k: np.concatenate([np.asarray(ch[k]) for ch in chunks])
+                           for k in chunks[0]}).reindex(columns=cols)
+    else:
+        df = pd.DataFrame(columns=cols)
     axis_of = dict(zip(("z", "x", "y"), REPRESENTATIONS[c.representation], strict=True))
     if len(df):
         df["dipole"] = df["dipole"].map(axis_of)
@@ -809,7 +856,8 @@ def fit_constants(c0: RotorConstants, observed: list[tuple[tuple[int, int, int],
     return fitted, rep
 
 
-__all__ = ["QUARTIC", "REPRESENTATIONS", "ROT_CONST_AMU_A2", "SEXTIC", "SPFIT_CODES", "Levels",
+__all__ = ["DISTORTION_SCALE_REL", "QUARTIC", "REPRESENTATIONS", "ROT_CONST_AMU_A2", "SEXTIC",
+           "SPFIT_CODES", "Levels",
            "RotorConstants", "compare_with_cat", "fit_constants", "hamiltonian_matrix",
            "hyperfine_width_mhz", "isotopologue_constants", "levels", "line_strengths",
            "moments_of_inertia", "parse_jpl_doc", "partition_function", "predict_lines",

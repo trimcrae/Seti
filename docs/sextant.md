@@ -3,7 +3,7 @@
 *A sextant measures the angle between where a thing is and where it ought to be.*
 
 **Channel status:** residual computation, screen, ephemeris layer, per-object
-fit and assessment built and offline-tested (135 tests); the acquisition probe
+fit and assessment built and offline-tested (137 tests, on pandas 2.3.3 and on the runner's 3.0.6); the acquisition probe
 has run on live data and settled four of §7's questions (§6b); the search
 itself runs as `.github/workflows/sextant.yml` — `probe` → N `fit` shards →
 `assess`.
@@ -553,8 +553,25 @@ Add arXiv:2605.22702's FPR candidate list when it is machine-readable.
 | `src/seti/sextant/run.py` | the three stages — `probe` (route + conventions, measured), `fit` (per shard: acquire, propagate, fit A1/A2/A3, screen, checkpoint per chunk), `assess` (controls first, then the A2 distribution, the ceiling exceedances and the population) |
 | `.github/workflows/sextant.yml` | `probe` → N `fit` shards (`fail-fast: false`) → `assess` |
 | `tests/test_sextant_residuals.py` | 45 offline tests, all on synthetic observations with a known injected signal |
-| `tests/test_sextant_run.py` | 32 tests: the propagator against an analytic Kepler orbit, the interpolants' convergence order, the fit on synthetic sky with a known injected `A2`, the screen against records built to trip each rule, the work order and the in-job clock |
+| `tests/test_sextant_run.py` | 34 tests: the propagator against an analytic Kepler orbit, the interpolants' convergence order, the fit on synthetic sky with a known injected `A2`, the screen against records built to trip each rule, the work order and the in-job clock |
 | `tests/test_sextant_acquire.py` | 58 offline tests; no network |
+
+**The runner's pandas is not this machine's pandas.** The sandbox venv holds
+pandas 2.3.3; `pip install -e ".[dev]"` with `pandas>=2.0` gets the runner
+3.0.6, and a sibling channel lost a whole dispatch to a removed API two minutes
+into a job. Every pandas-touching path in `run.py` — the parquet round trip,
+nullable / arrow / datetime nulls, the `is_rejected` dtype forms, the shard CSV
+round trip, the stratification, `assess_frame` on a populated and on an empty
+table — was run against **3.0.6 with numpy 2.4.6** before the dispatch, and
+passes on both majors. `read_csv(low_memory=False)` is still accepted by 3.0.6.
+Two defects surfaced, neither pandas-3-specific: `frame_to_rows` nulled only
+floats and so passed `pd.NA` and `pd.NaT` through untouched, and
+`group_observations` sent `is_rejected` through the content-aware `_truthy`
+only for `object` dtype — a column of Python strings is numpy `'<U5'`, which
+took the numeric branch and raised on `'false'`. Covering the bytes form then
+exposed a third: `str(b'true')` is `"b'true'"`, which matched none of
+`_truthy`'s words, so a VOTable `char` column would have read every row as
+not-rejected.
 
 ### Running it
 

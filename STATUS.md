@@ -75,6 +75,15 @@ the Gaia-only fit does not return these in sign and magnitude, nothing else in
 the output is believed, and `assess` stamps `ESTIMATOR_FAILS_CONTROLS` onto the
 run verdict rather than reporting the exceedances.
 
+**Checked against the runner's pandas, not the sandbox's.** The venv here
+holds pandas 2.3.3 and the runner installs 3.0.6; every pandas-touching path in
+`run.py` was exercised against 3.0.6 + numpy 2.4.6 before this dispatch and
+passes on both. It found two latent defects — `frame_to_rows` passed `pd.NA`
+and `pd.NaT` through untouched, and `is_rejected` took the numeric branch for a
+numpy `'<U5'` string column and raised on `'false'` — plus a third, that
+`_truthy` read a bytes `b'true'` as not-rejected, which would have silently
+disabled the rejection flag on a VOTable `char` column.
+
 **What to do next:** read run 35746692260's `results/sextant/controls.json`
 before anything else in `summary.json` — `verdict`, `n_measured` and
 `recovered_fraction`. If it reads `CONTROLS_FAILED_SIGN` or

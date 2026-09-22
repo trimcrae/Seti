@@ -20,6 +20,8 @@ built the way the contract requires:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -50,6 +52,8 @@ from seti.metronome.vetstar import (
     vizier_by_identifier,
     vizier_cone_report,
 )
+
+_REPO = Path(__file__).resolve().parents[1]
 
 CADENCE = 0.0204340          # Kepler long cadence, days
 PERIOD = 0.42328185409991    # the clock under test
@@ -958,3 +962,76 @@ def test_the_contaminating_variable_rule_is_what_the_verdict_leads_with():
     rep2 = {"period": PERIOD, "catalogued_binary_hits": [], "neighbours": []}
     assert "CONTAMINATING_VARIABLE_AT_P" not in vet_verdict(rep2)[0]
     assert surviving is not None
+
+
+# ---------------------------------------------------------------------------
+# the stale-commit guard (scripts/metronome_stale_guard.py)
+# ---------------------------------------------------------------------------
+def _guard(monkeypatch, tmp_path, mine, theirs, name="summary.json"):
+    """Run the guard with `git show` stubbed to return `theirs`."""
+    import json as _json
+    import subprocess
+    import sys
+
+    sys.path.insert(0, str(_REPO / "scripts"))
+    import metronome_stale_guard as g
+
+    p = tmp_path / name
+    if mine is not None:
+        p.write_text(_json.dumps({"generated_utc": mine}))
+
+    class _R:
+        def __init__(self, out):
+            self.stdout = out
+
+    def fake_run(cmd, **kw):
+        if cmd[:2] == ["git", "show"]:
+            if theirs is None:
+                raise subprocess.CalledProcessError(128, cmd)
+            return _R(_json.dumps({"generated_utc": theirs}))
+        return _R("")
+
+    monkeypatch.setattr(g.subprocess, "run", fake_run)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    g.main(["some-branch", str(p)])
+    # GITHUB_OUTPUT is append-only, as the runner's is: read the last line
+    return out.read_text().strip().splitlines()[-1]
+
+
+def test_guard_blocks_a_run_older_than_the_branch(monkeypatch, tmp_path):
+    """Run 35741300225's failure mode: dispatched at 14:34, committed at 23:37,
+    over results generated at 21:42 by a newer run."""
+    assert _guard(monkeypatch, tmp_path,
+                  mine="2026-09-22T23:37:03Z",
+                  theirs="2026-09-22T23:42:31Z") == "stale=true"
+
+
+def test_guard_passes_a_run_newer_than_the_branch(monkeypatch, tmp_path):
+    assert _guard(monkeypatch, tmp_path,
+                  mine="2026-09-22T23:42:31Z",
+                  theirs="2026-09-22T21:37:03Z") == "stale=false"
+
+
+def test_guard_passes_when_the_branch_has_no_copy_yet(monkeypatch, tmp_path):
+    assert _guard(monkeypatch, tmp_path,
+                  mine="2026-09-22T23:42:31Z", theirs=None) == "stale=false"
+
+
+def test_guard_passes_when_this_run_wrote_nothing(monkeypatch, tmp_path):
+    assert _guard(monkeypatch, tmp_path,
+                  mine=None, theirs="2026-09-22T23:42:31Z") == "stale=false"
+
+
+def test_guard_passes_when_a_timestamp_is_unparseable(monkeypatch, tmp_path):
+    """No comparison is possible, so it must not block -- a guard that fires on
+    ignorance would stop every run whose artefact schema changed."""
+    assert _guard(monkeypatch, tmp_path, mine="not-a-date",
+                  theirs="2026-09-22T23:42:31Z") == "stale=false"
+
+
+def test_guard_accepts_the_timestamp_spellings_the_channel_writes(monkeypatch, tmp_path):
+    assert _guard(monkeypatch, tmp_path, mine="2026-09-22T23:37:03Z",
+                  theirs="2026-09-22T23:42:31.500Z") == "stale=true"
+    assert _guard(monkeypatch, tmp_path, mine="2026-09-22T23:37:03+00:00",
+                  theirs="2026-09-22T23:42:31Z") == "stale=true"

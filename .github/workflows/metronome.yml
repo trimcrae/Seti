@@ -284,8 +284,17 @@ jobs:
           if "CLOCK_CANDIDATES_PENDING_VET" in v:
               print(f"::notice::{s.get('n_candidates')} candidate / {s.get('n_interest')} interest stars — PENDING light-curve vet, see results/metronome/candidates.json")
           PY
-      - name: Commit results
+      # A run that queued for hours commits at the code it was DISPATCHED
+      # from, and commit_results.sh is last-writer-wins by design, so a late
+      # arrival silently overwrites newer results (measured: run 35741300225,
+      # 2026-09-22 — see scripts/metronome_stale_guard.py).  The artefact's
+      # own generated_utc is what distinguishes it; an ancestry test cannot.
+      - name: Guard — do not overwrite newer results
+        id: guard
         if: always()
+        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/summary.json results/metronome/probe.json
+      - name: Commit results
+        if: ${{ always() && steps.guard.outputs.stale != 'true' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
@@ -361,8 +370,17 @@ jobs:
                     "is_phot", t.get("period_is_photometric"), "duty", t.get("rd_duty_cycle"),
                     "rise", t.get("rd_rise_frac_median"))
           PY
-      - name: Commit results
+      # A run that queued for hours commits at the code it was DISPATCHED
+      # from, and commit_results.sh is last-writer-wins by design, so a late
+      # arrival silently overwrites newer results (measured: run 35741300225,
+      # 2026-09-22 — see scripts/metronome_stale_guard.py).  The artefact's
+      # own generated_utc is what distinguishes it; an ancestry test cannot.
+      - name: Guard — do not overwrite newer results
+        id: guard
         if: always()
+        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/redetect.json results/metronome/summary.json
+      - name: Commit results
+        if: ${{ always() && steps.guard.outputs.stale != 'true' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
@@ -449,8 +467,17 @@ jobs:
           PY
           echo "=== summary after reconciliation ==="
           python -c "import json;d=json.load(open('results/metronome/summary.json'));print(d['verdict']);print(json.dumps(d.get('redetect',{}).get('demoted'),indent=1));print(json.dumps(d.get('funnel'),indent=1))"
-      - name: Commit results
+      # A run that queued for hours commits at the code it was DISPATCHED
+      # from, and commit_results.sh is last-writer-wins by design, so a late
+      # arrival silently overwrites newer results (measured: run 35741300225,
+      # 2026-09-22 — see scripts/metronome_stale_guard.py).  The artefact's
+      # own generated_utc is what distinguishes it; an ancestry test cannot.
+      - name: Guard — do not overwrite newer results
+        id: guard
         if: always()
+        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/redetect.json results/metronome/summary.json
+      - name: Commit results
+        if: ${{ always() && steps.guard.outputs.stale != 'true' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
@@ -518,8 +545,17 @@ jobs:
       - name: Report the vet verbatim
         if: always()
         run: python scripts/metronome_vetstar_report.py results/metronome/vetstar.json
-      - name: Commit results
+      # A run that queued for hours commits at the code it was DISPATCHED
+      # from, and commit_results.sh is last-writer-wins by design, so a late
+      # arrival silently overwrites newer results (measured: run 35741300225,
+      # 2026-09-22 — see scripts/metronome_stale_guard.py).  The artefact's
+      # own generated_utc is what distinguishes it; an ancestry test cannot.
+      - name: Guard — do not overwrite newer results
+        id: guard
         if: always()
+        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/vetstar.json
+      - name: Commit results
+        if: ${{ always() && steps.guard.outputs.stale != 'true' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
@@ -563,8 +599,17 @@ jobs:
         run: |
           python -m seti.metronome.run --stage assess
           cat results/metronome/summary.json | head -120
-      - name: Commit results
+      # A run that queued for hours commits at the code it was DISPATCHED
+      # from, and commit_results.sh is last-writer-wins by design, so a late
+      # arrival silently overwrites newer results (measured: run 35741300225,
+      # 2026-09-22 — see scripts/metronome_stale_guard.py).  The artefact's
+      # own generated_utc is what distinguishes it; an ancestry test cannot.
+      - name: Guard — do not overwrite newer results
+        id: guard
         if: always()
+        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/summary.json
+      - name: Commit results
+        if: ${{ always() && steps.guard.outputs.stale != 'true' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |

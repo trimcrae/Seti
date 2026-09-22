@@ -190,11 +190,22 @@ parallax shells returned OK and untruncated; 43 % carry a usable RV.
 Earth outside every one of the 7e10 directed pairs -- that channel is closed,
 and saying so is worth more than searching it. The interceptable regime is
 radio with modest apertures or deliberately over-filled beams, and there the
-intercepted flux is only slightly below (spillover) or above (between) what the
-intended receiver gets: a strong-signal channel, not leakage. The same numbers
-are the trials budget -- 1.8e4 to 1.8e7 qualifying pairs per beam -- so every
-hit count is printed beside `n_expected_by_chance` and `n_trials`, and RFI at
-non-zero drift stays an unexcluded systematic on any survivor.
+measured median flux ratio at Earth versus at the intended receiver is
+**0.52-0.62** for spillover (2.6 dB down, not a sidelobe) and **3.8-3.9** for
+the near-antipodal geometry (Earth is the nearer point on the same beam): a
+strong-signal channel, not leakage. The same numbers are the trials budget --
+1.8e4 to 1.8e7 qualifying pairs per beam -- so every hit count is printed
+beside `n_expected_by_chance` and `n_trials`, and RFI at non-zero drift stays
+an unexcluded systematic on any survivor.
+
+**The brief's own drift prior is dead, and measured dead.** Median |a_kin| over
+the kept pairs is 5.3e-10 m/s^2 and the p99 of |fdot_kin| at 1.42 GHz is
+5-7e-8 Hz/s -- five to six orders below the 0.0093 Hz/s resolution of the BL
+L-band product. The relative radial ACCELERATION carries no usable prior. What
+does: the unremoved topocentric Earth term (+/-0.16 Hz/s, sign set by hour
+angle), the small-angle leak of the transmitter's platform (<= 0.006 Hz/s), and
+the pair's radial VELOCITY difference, which Gaia measures well and which fixes
+where a de-drifted rest line lands for Earth.
 
 **What the sky did not supply, and the fix.** Run 35738937745 probed 15 seed
 VizieR ids plus six keyword sweeps: 73 tables, **0** carrying both a frequency

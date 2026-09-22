@@ -396,6 +396,90 @@ def test_error_column_is_the_one_that_belongs_to_the_magnitude():
     assert abs(lc.err[1] - 0.15) < 1e-9
 
 
+def test_exposure_time_is_joined_in_from_queryexps():
+    """DR7 light curves carry no exposure time; queryexps does, in minutes.
+
+    The smear ``|sinc(f t_exp)|`` is what makes an injection in a post-gap
+    block comparable to the pre-gap detection, and Harvard exposure lengths are
+    a property of the plate series, which is clustered in calendar time.  A
+    star whose late plates expose longer keeps less of a short-period signal,
+    and an efficiency computed without that is optimistic exactly where the
+    cessation claim is made.
+    """
+    from seti.century.lightcurve import attach_exptime
+    from seti.century.targets import EXPOSURE_KEY_COLS, exposure_table
+
+    exps = ["series,platenum,scannum,mosnum,expnum,solnum,exptime,epoch,limMagApass",
+            "a,101,0,0,0,1,45.0,1899.50,14.2",
+            "a,102,0,0,0,1,45.0,1901.50,14.1",
+            "mc,900,0,0,0,1,75.0,1975.50,15.1",
+            "mc,901,0,0,0,1,75.0,1977.50,15.0",
+            # A duplicate key (a second solution of the same exposure) must not
+            # multiply the rows it is joined onto.
+            "mc,901,0,0,0,2,75.0,1977.50,15.0"]
+    et = exposure_table(to_frame(exps))
+    assert list(et.columns) == [*EXPOSURE_KEY_COLS, "exptime_min"]
+    assert len(et) == 4 and float(et["exptime_min"].iloc[0]) == 45.0
+
+    df = pd.DataFrame({
+        "date_jd": [2415020.5, 2415750.5, 2442000.5, 2442730.5, 2442740.5],
+        # The last row is a non-detection: no magnitude.
+        "magcal_magdep": [11.0, 11.1, 11.05, 11.2, np.nan],
+        "magcal_magdep_rms": [0.10, 0.11, 0.12, 0.11, np.nan],
+        "limiting_mag_local": [14.2, 14.1, 15.1, 15.0, 15.0],
+        "series": ["a", "a", "mc", "mc", "mc"],
+        "plate_number": [101, 102, 900, 901, 901],
+        "mosaic_number": [0, 0, 0, 0, 0],
+        "exposure_number": [0, 0, 0, 0, 0],
+        "aflags": [0, 0, 0, 0, 0], "bflags": [0, 0, 0, 0, 0],
+    })
+    lc = from_api_frame(df)
+    assert lc is not None and lc.n_det == 4 and lc.n_nd == 1
+    assert not np.isfinite(lc.exptime_min).any()      # nothing to take it from
+    prov = attach_exptime(lc, et)
+    assert prov["key"] == "series+platenum+mosnum+expnum"
+    assert prov["matched_det"] == 4 and prov["matched_nd"] == 1
+    assert lc.exptime_unit == "minutes"
+    assert np.allclose(lc.exptime_min, [45.0, 45.0, 75.0, 75.0])
+    assert np.allclose(lc.exptime_nd, [75.0])
+    # The pre/post difference is reported: this is the case where leaving the
+    # smear unmodelled would have mattered.
+    assert prov["exptime_min_pre"] == 45.0 and prov["exptime_min_post"] == 75.0
+    # And it is a real difference in what the plates could have kept.
+    assert smear_factor(1 / 0.12, np.array([75.0]))[0] \
+        < smear_factor(1 / 0.12, np.array([45.0]))[0]
+
+
+def test_exposure_join_never_falls_back_to_the_series_alone():
+    """A plate that is not in the table keeps NaN, not its series' typical time.
+
+    Handing every unmatched plate the series' exposure would synthesise a smear
+    history that follows the series --- i.e. calendar time --- which is exactly
+    the confounder the channel exists to separate from a change in the star.
+    """
+    from seti.century.lightcurve import attach_exptime
+    from seti.century.targets import exposure_table
+
+    et = exposure_table(to_frame(["series,platenum,mosnum,expnum,exptime",
+                                  "a,101,0,0,45.0"]))
+    df = pd.DataFrame({
+        "date_jd": [2415020.5, 2415750.5],
+        "magcal_magdep": [11.0, 11.1], "magcal_magdep_rms": [0.1, 0.1],
+        "limiting_mag_local": [14.0, 14.0], "series": ["a", "a"],
+        "plate_number": [101, 999], "mosaic_number": [0, 0], "exposure_number": [0, 0],
+        "aflags": [0, 0], "bflags": [0, 0],
+    })
+    lc = from_api_frame(df)
+    prov = attach_exptime(lc, et)
+    assert prov["matched_det"] == 1
+    assert np.isfinite(lc.exptime_min[0]) and not np.isfinite(lc.exptime_min[1])
+    # An empty or absent table is a degradation, not a crash or a guess.
+    lc2 = from_api_frame(df)
+    p2 = attach_exptime(lc2, pd.DataFrame())
+    assert p2["key"] == "none" and p2["matched_det"] == 0
+    assert not np.isfinite(lc2.exptime_min).any()
+
+
 def test_margin_mask_is_keyed_to_the_star_not_the_point():
     rng = np.random.default_rng(3)
     lc = synth_plates(rng, lim_mean=13.0, lim_sd=1.0)

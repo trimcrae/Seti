@@ -55,7 +55,7 @@ from .api import (
 from .cease import analyze_century, same_series_check
 from .fade import analyze_fade, fade_from_annual
 from .flags import FlagDefs, resolve_flagdefs
-from .lightcurve import CenturyLC, from_api_frame
+from .lightcurve import CenturyLC, attach_exptime, from_api_frame
 from .scatter import (
     analyze_scatter,
     scatter_from_table,
@@ -63,7 +63,14 @@ from .scatter import (
     season_scatter_to_dict,
 )
 from .step import MENZEL_GAP_END, MENZEL_GAP_START, fit_step_slope
-from .targets import field_tag, match_refcat, plate_density, select_bright, select_variables
+from .targets import (
+    EXPOSURE_KEY_COLS,
+    field_tag,
+    match_refcat,
+    plate_density,
+    select_bright,
+    select_variables,
+)
 from .vet import vet_row
 
 DEFAULTS: dict = {
@@ -403,10 +410,15 @@ def stage_targets(conf: dict, out_root: Path, *, fields=None, radius_deg: float 
     log = AcquisitionLog()
     frames = []
     dens = {}
+    # The same queryexps that measures each field's plate density also carries
+    # the EXPOSURE TIME of every plate, which the light curves do not.  It is
+    # collected here and written beside targets.csv so the shards can join it
+    # on without spending a request of their own.
+    exp_tables: list[pd.DataFrame] = []
     for f in fields:
         ra, dec = float(f["ra"]), float(f["dec"])
         tag = f.get("name") or field_tag(ra, dec, radius)
-        dens[tag] = plate_density(ra, dec, log=log)
+        dens[tag] = plate_density(ra, dec, log=log, exposures_out=exp_tables)
         v = select_variables(ra, dec, radius, log=log, mag_max=tc["mag_max"],
                              period_min=tc["period_min"], period_max=tc["period_max"],
                              amp_min=tc["amp_min"], max_targets=mv)
@@ -436,7 +448,15 @@ def stage_targets(conf: dict, out_root: Path, *, fields=None, radius_deg: float 
     else:
         df = pd.DataFrame(columns=cols)
     df.to_csv(out_root / "targets.csv", index=False)
-    summ = {"n_targets": int(len(df)),
+    if exp_tables:
+        et = pd.concat(exp_tables, ignore_index=True).drop_duplicates(
+            subset=list(EXPOSURE_KEY_COLS), keep="first")
+        et.to_csv(out_root / "plate_exptime.csv", index=False)
+    else:
+        et = pd.DataFrame(columns=[*EXPOSURE_KEY_COLS, "exptime_min"])
+        et.to_csv(out_root / "plate_exptime.csv", index=False)
+    summ = {"n_plate_exptimes": int(len(et)),
+            "n_targets": int(len(df)),
             "n_variables": int((df["kind"] == "variable").sum()) if len(df) else 0,
             "n_bright": int((df["kind"] == "bright").sum()) if len(df) else 0,
             "fields": dens, "radius_deg": radius, "acquisition": log.as_dict()}
@@ -519,6 +539,16 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
     if max_targets:
         mine = mine.head(int(max_targets))
     a, b, flag_src = _runner_flagdefs(conf, log)
+    # Exposure durations from the targets stage's queryexps.  DR7 light curves
+    # carry no exposure time and a long exposure smears a short period, so
+    # without this the injection efficiency in the post-gap blocks is computed
+    # as if the later plates smeared exactly as much as the earlier ones.
+    epath = out_root / "plate_exptime.csv"
+    exp_tab = pd.read_csv(epath) if epath.exists() else pd.DataFrame()
+    log.record("plate_exptime", str(epath), rows=len(exp_tab),
+               error=(None if len(exp_tab) else "absent or empty"))
+    meta_exptime = {"table_rows": int(len(exp_tab)), "n_matched_stars": 0,
+                    "match_keys": {}, "unmatched_stars": 0}
 
     # Resume from a checkpoint if one exists.
     store: dict[str, dict] = {}
@@ -603,10 +633,18 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
             _append(status_path, rec)
             _time.sleep(pause)
             continue
+        eprov = attach_exptime(lc, exp_tab) if len(exp_tab) else {"key": "none",
+                                                                  "matched_det": 0}
+        if eprov.get("matched_det"):
+            meta_exptime["n_matched_stars"] += 1
+            k = str(eprov.get("key"))
+            meta_exptime["match_keys"][k] = meta_exptime["match_keys"].get(k, 0) + 1
+        else:
+            meta_exptime["unmatched_stars"] += 1
         store[tid] = lc.to_arrays()
         meta["stars"][tid] = {"n_raw": lc.n_raw, "n_det": lc.n_det, "n_nd": lc.n_nd,
                               "flags_applied": lc.flags_applied, "columns": lc.columns[:40],
-                              "exptime_unit": lc.exptime_unit,
+                              "exptime_unit": lc.exptime_unit, "exptime": eprov,
                               "gsc_bin_index": int(gbi), "ref_number": int(rn),
                               "pm_total_masyr": rec.get("pm_total_masyr"),
                               "colour": rec.get("colour")}
@@ -626,7 +664,7 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
     rep = {"stage": "acquire", "shard": list(shard), "n_targets": int(len(mine)),
            "n_fetched": n_fetched, "n_failed": n_failed, "n_empty": n_empty,
            "n_resumed": len(prev), "truncated": truncated, "flag_source": flag_src,
-           "service_probe_ok": bool(pr.ok),
+           "service_probe_ok": bool(pr.ok), "exptime": meta_exptime,
            "verdict": ("NO_DATA_REACHED" if (n_fetched + len(prev)) == 0 and not pr.ok
                        else "NO_LIGHTCURVES" if (n_fetched + len(prev)) == 0
                        else "LIGHTCURVES_FETCHED"),

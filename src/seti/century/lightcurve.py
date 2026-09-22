@@ -130,6 +130,7 @@ class CenturyLC:
     lim_nd: np.ndarray = field(default_factory=lambda: np.array([], float))
     series_nd: np.ndarray = field(default_factory=lambda: np.array([], dtype=object))
     exptime_nd: np.ndarray = field(default_factory=lambda: np.array([], float))
+    plate_nd: np.ndarray = field(default_factory=lambda: np.array([], dtype=object))
     # Provenance
     flags_applied: bool = False
     n_raw: int = 0
@@ -218,6 +219,8 @@ class CenturyLC:
             reject=self.reject[m], plate=self.plate[m], t_nd=self.t_nd[mnd],
             lim_nd=self.lim_nd[mnd], series_nd=self.series_nd[mnd],
             exptime_nd=self.exptime_nd[mnd],
+            plate_nd=(self.plate_nd[mnd] if self.plate_nd.size == self.n_nd
+                      else self.plate_nd),
             flags_applied=self.flags_applied, n_raw=self.n_raw, columns=self.columns,
             exptime_unit=self.exptime_unit,
         )
@@ -232,6 +235,7 @@ class CenturyLC:
             "plate": self.plate.astype(str), "t_nd": self.t_nd.astype(float),
             "lim_nd": self.lim_nd.astype(float), "series_nd": self.series_nd.astype(str),
             "exptime_nd": self.exptime_nd.astype(float),
+            "plate_nd": self.plate_nd.astype(str),
         }
 
     @classmethod
@@ -243,7 +247,8 @@ class CenturyLC:
             series=g("series", object), exptime_min=g("exptime_min", float),
             blend=g("blend", bool), reject=g("reject", bool), plate=g("plate", object),
             t_nd=g("t_nd", float), lim_nd=g("lim_nd", float), series_nd=g("series_nd", object),
-            exptime_nd=g("exptime_nd", float), flags_applied=bool(flags_applied),
+            exptime_nd=g("exptime_nd", float), plate_nd=g("plate_nd", object),
+            flags_applied=bool(flags_applied),
             n_raw=int(n_raw), columns=list(columns or []), exptime_unit=str(exptime_unit),
         )
 
@@ -304,7 +309,7 @@ def from_api_frame(df: pd.DataFrame, aflags: FlagDefs | None = None,
         t=t[det], mag=mag[det], err=err_det, lim=lim[det], series=series[det].astype(object),
         exptime_min=exptime[det], blend=blend[det], reject=reject[det],
         plate=plate[det], t_nd=t[nd], lim_nd=lim[nd], series_nd=series[nd].astype(object),
-        exptime_nd=exptime[nd], flags_applied=applied, n_raw=int(len(df)),
+        exptime_nd=exptime[nd], plate_nd=plate[nd], flags_applied=applied, n_raw=int(len(df)),
         columns=[str(c) for c in df.columns], exptime_unit=unit,
     )
 
@@ -462,6 +467,99 @@ def annual_table(lc: CenturyLC, *, mask: np.ndarray | None = None, min_per_year:
     return pd.DataFrame(rows)
 
 
+def plate_ids(plate_strings) -> pd.DataFrame:
+    """``series, platenum, mosnum, expnum`` recovered from a ``plate`` label.
+
+    ``from_api_frame`` builds the label as ``series_platenum[_mosnum[_expnum]]``
+    from whichever identifier columns the archive served.
+    """
+    parts = [str(p).split("_") for p in np.asarray(plate_strings, dtype=object)]
+
+    def _at(i):
+        return pd.to_numeric(pd.Series([p[i] if len(p) > i else None for p in parts]),
+                             errors="coerce").astype("Int64")
+
+    return pd.DataFrame({"series": [p[0].strip().lower() if p else "" for p in parts],
+                         "platenum": _at(1), "mosnum": _at(2), "expnum": _at(3)})
+
+
+def attach_exptime(lc: CenturyLC, table: pd.DataFrame) -> dict:
+    """Fill ``exptime_min`` / ``exptime_nd`` from a ``queryexps`` exposure table.
+
+    DR7 light curves carry **no exposure time** --- the served columns are
+    fixed by ``_COLTYPES`` in ``daschlab/photometry.py`` and ``exptime`` is not
+    among them --- while ``queryexps`` carries it, in minutes.  The channel
+    needs it because a long exposure smears a periodic signal by
+    ``|sinc(f t_exp)|``, and Harvard exposure lengths are a property of the
+    plate SERIES, which is clustered in calendar time.  Left unmodelled, the
+    injection efficiency measured in a star's post-gap blocks would be computed
+    as if those plates smeared the signal exactly as much as the pre-gap plates
+    did; where the later series exposed longer, that overstates how well the
+    late plates could have seen the period --- and that number is the whole
+    content of an efficiency-normalised non-detection.
+
+    One ``queryexps`` per FIELD serves every star in it, so this costs no
+    request.  The join key is ``(series, platenum, mosnum, expnum)`` where the
+    light curve names all four, falling back to ``(series, platenum)`` --- a
+    plate all of whose exposures ran the same length.  It never falls back to
+    the series alone: that would hand every plate its series' typical exposure
+    and so manufacture the series-clustered smear history the channel exists to
+    distinguish from a real change in the star.
+
+    Mutates ``lc`` and returns a provenance dict.
+    """
+    prov = {"n_det": int(lc.n_det), "n_nd": int(lc.n_nd), "matched_det": 0, "matched_nd": 0,
+            "key": "none", "table_rows": int(0 if table is None else len(table)),
+            "exptime_min_pre": float("nan"), "exptime_min_post": float("nan")}
+    if table is None or not len(table) or "exptime_min" not in table.columns:
+        return prov
+    tab = table.copy()
+    tab["series"] = tab["series"].astype(str).str.strip().str.lower()
+    full = [c for c in ("series", "platenum", "mosnum", "expnum") if c in tab.columns]
+    keys = [k for k in (full, ["series", "platenum"]) if len(k) > 1]
+
+    def _join(labels) -> tuple[np.ndarray, str]:
+        if labels is None or not len(labels):
+            return np.array([], dtype=float), "none"
+        left = plate_ids(labels)
+        for key in keys:
+            if any(c not in left.columns or left[c].isna().all()
+                   for c in key if c != "series"):
+                continue
+            red = tab.drop_duplicates(subset=key, keep="first")[[*key, "exptime_min"]]
+            v = left.merge(red, on=key, how="left")["exptime_min"].to_numpy(dtype=float)
+            if np.isfinite(v).any():
+                return v, "+".join(key)
+        return np.full(len(labels), np.nan), "none"
+
+    det_exp, key = _join(lc.plate)
+    if key == "none":
+        return prov
+    prov["key"] = key
+    if det_exp.size == lc.n_det:
+        lc.exptime_min = np.where(np.isfinite(det_exp), det_exp,
+                                  lc.exptime_min if lc.exptime_min.size == lc.n_det
+                                  else np.nan)
+        prov["matched_det"] = int(np.isfinite(det_exp).sum())
+    if lc.plate_nd.size == lc.n_nd and lc.n_nd:
+        nd_exp, _ = _join(lc.plate_nd)
+        if nd_exp.size == lc.n_nd:
+            lc.exptime_nd = np.where(np.isfinite(nd_exp), nd_exp,
+                                     lc.exptime_nd if lc.exptime_nd.size == lc.n_nd
+                                     else np.nan)
+            prov["matched_nd"] = int(np.isfinite(nd_exp).sum())
+    if prov["matched_det"] or prov["matched_nd"]:
+        lc.exptime_unit = "minutes"
+        e, yr = lc.exptime_min, lc.year
+        pre = np.isfinite(e) & (yr < 1954.0)
+        post = np.isfinite(e) & (yr >= 1970.0)
+        if pre.any():
+            prov["exptime_min_pre"] = float(np.median(e[pre]))
+        if post.any():
+            prov["exptime_min_post"] = float(np.median(e[post]))
+    return prov
+
+
 def smear_factor(freq_per_day, exptime_min) -> np.ndarray:
     """``|sinc(f * t_exp)|``: the amplitude a sinusoid of frequency ``f`` keeps
     after a top-hat exposure of ``t_exp``.  NaN exposure -> 1 (unmodelled)."""
@@ -473,5 +571,6 @@ def smear_factor(freq_per_day, exptime_min) -> np.ndarray:
     return out
 
 
-__all__ = ["CenturyBlock", "CenturyLC", "annual_table", "any_time_to_year", "calendar_blocks",
-           "from_api_frame", "mjd_to_year", "smear_factor", "year_to_mjd"]
+__all__ = ["CenturyBlock", "CenturyLC", "annual_table", "any_time_to_year", "attach_exptime",
+           "calendar_blocks", "from_api_frame", "mjd_to_year", "plate_ids", "smear_factor",
+           "year_to_mjd"]

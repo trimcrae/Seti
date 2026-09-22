@@ -10,6 +10,55 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### CENTURY (S50) — the probe came back, and three of its four answers were corrections, 2026-09-22
+
+The first live DASCH DR7 exchange in this repository (run 35738717013) reached
+all three endpoints and returned `API_REACHED_NO_LIGHTCURVE`. The four things
+it settled are in `docs/century.md` §6.1; three of them were silent
+degradations, not cosmetics:
+
+1. **The wire format is a JSON array of CSV lines, header first.** Parsed as
+   ordinary JSON that is a single column of strings called `value` — the probe
+   duly reported 18,429 plates in the Kepler field and not one usable column,
+   and the chain never reached `lightcurve` at all. `api.to_frame` now detects
+   and parses it.
+2. **The AFLAGS/BFLAGS enums live in `daschlab/photometry.py`, not
+   `lightcurves.py`.** The probe fetched only `lightcurves.py` — which merely
+   imports them — parsed nothing, and committed an empty `flag_bits.json`.
+   With an empty table `apply_masks` returns all-False for *both* blend and
+   reject, so a whole sweep would have treated every point of every plate as
+   clean, unblended photometry while reporting success. Time-clustered
+   blending is one of this channel's five kills, because blending follows
+   plate scale and emulsion and therefore plate series, which is clustered in
+   calendar time. `photometry.py` is now first in `DASCHLAB_FILES`, the
+   resolution takes a list of source texts, and all 22 AFLAGS + 25 BFLAGS bits
+   are transcribed into `config/century.yaml` as the offline fallback.
+3. **DR7 light curves carry no exposure time** (the served columns are fixed by
+   `_COLTYPES` in `photometry.py`); `queryexps` carries it, in minutes. A long
+   exposure smears a period by `|sinc(f·t_exp)|`, and Harvard exposure lengths
+   are a property of the plate *series*. Unmodelled, the injection efficiency
+   in a star's post-gap blocks is computed as though the late plates smeared
+   like the early ones — optimistic exactly where the cessation claim is made.
+   The `targets` stage now writes `results/century/plate_exptime.csv` from the
+   same `queryexps` that measures field density (no extra requests) and
+   `acquire` joins it on `(series, platenum, mosnum, expnum)`, falling back to
+   `(series, platenum)` and **never** to the series alone.
+
+Also fixed: the error column is paired to the magnitude actually used
+(`magcal_magdep` → `magcal_magdep_rms`, not another calibration's scatter) with
+DASCH's `99.0` "no rms" sentinel mapped to the default error; the screen stage
+has a wall clock inside the sweep job's `timeout-minutes`, so an overrun
+uploads what it screened and resumes rather than being killed with nothing; and
+`targets.min_ndet_bright` is recorded as **inert** against the DR7 refcat,
+which has no detection count (its `num_matches` counts catalogue cross-matches),
+rather than pretending to cut.
+
+In flight: run **35745660073**, `stages=full`, 4 shards, 60 variables + 60
+bright per field over the six configured DASCH-dense fields (~720 stars),
+acquire budget 7200 s, screen budget 9000 s. Queued at 11:12 EDT. No
+`results/century/summary.json` exists yet; the channel has produced no sky
+statement.
+
 ### CENTURY (S50) wired to DASCH DR7 — and the Menzel trap caught in our own code, 2026-09-22
 
 The first DASCH stage in this repository. `docs/knell.md` §Plates recorded why

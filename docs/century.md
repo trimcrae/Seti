@@ -256,7 +256,61 @@ DASCH DR7 is served as JSON over REST at
 |---|---|
 | `querycat` | reference-catalogue (`apass` / `atlas`) sources around a position, with the DASCH identifiers `gsc_bin_index` and `ref_number` that a light curve needs |
 | `queryexps` | every plate exposure covering a position — a field's plate density and its pre/post-gap split |
-| `lightcurve` | one source's photometry: per-plate calibrated magnitude, local RMS, **per-plate limiting magnitude at the source position**, plate series, exposure time, AFLAGS/BFLAGS |
+| `lightcurve` | one source's photometry: per-plate calibrated magnitude, its RMS, **per-plate limiting magnitude at the source position**, plate series, plate/mosaic/exposure numbers, AFLAGS/BFLAGS |
+
+### 6.1 What the first runner probe actually found
+
+Run 35738717013 (2026-09-22) reached all three endpoints and settled four
+things the brief had guessed at. Three of them were wrong in ways that would
+have silently degraded the science, so they are recorded here in full.
+
+**The wire format is a JSON array of CSV lines, header first**, not a table of
+objects. Read as plain JSON it is one column of strings called `value`, which
+is exactly what the probe reported: 18,429 plates in the Kepler field and not
+one usable column. `api.to_frame` now detects and parses it.
+
+**`queryexps` serves `epoch` as a decimal year**, while light curves carry a
+JD-scale `date_jd`. `lightcurve.any_time_to_year` tells a JD, an MJD and a
+decimal year apart by their magnitude and returns NaN for anything that is none
+of them, rather than a plausible wrong century.
+
+**The AFLAGS/BFLAGS enums live in `daschlab/photometry.py`, not
+`lightcurves.py`**, which merely imports them. The probe fetched only
+`lightcurves.py`, parsed nothing, and committed an empty `flag_bits.json`.
+That is not a small degradation: with an empty table `apply_masks` returns
+all-False for both blend and reject, so every point of every plate would have
+been treated as clean, unblended photometry — and time-clustered blending is
+one of this channel's five kills (§5), precisely because blending follows plate
+scale and emulsion and therefore plate series, which is clustered in calendar
+time. `photometry.py` is now first in `DASCHLAB_FILES`, the resolution takes a
+list of source texts, and all 22 AFLAGS and 25 BFLAGS bits are transcribed into
+`config/century.yaml` so that a GitHub outage costs provenance rather than the
+cut.
+
+**DR7 light curves carry no exposure time.** The served columns are fixed by
+`_COLTYPES` in `daschlab/photometry.py` and `exptime` is not among them;
+`queryexps` has it, in minutes. This matters because a long exposure smears a
+periodic signal by `|sinc(f·t_exp)|` and Harvard exposure lengths are a
+property of the *plate series* — so a star whose post-gap plates expose longer
+keeps less of a short-period signal there, and an injection efficiency computed
+as though the late plates smeared like the early ones overstates the one number
+a cessation claim rests on. The `targets` stage therefore writes
+`results/century/plate_exptime.csv` from the same `queryexps` that measures
+each field's plate density (no extra requests), and `acquire` joins it onto
+every light curve on `(series, platenum, mosnum, expnum)`, falling back to
+`(series, platenum)`. It **never** falls back to the series alone: that would
+hand each plate its series' typical exposure and so manufacture the very
+series-clustered smear history the channel exists to distinguish from a change
+in the star. Unmatched plates keep NaN and are left unsmeared, which
+`smear_modelled` reports.
+
+Two further schema facts that did *not* need a fix but are load-bearing:
+`magcal_magdep` is the preferred calibration and its error is
+`magcal_magdep_rms` (not `magcal_local_rms`, a different calibration's
+scatter), with `99.0` as DASCH's "no rms available" sentinel; and the DR7
+refcat has **no detection count** — its `num_matches` counts catalogue
+cross-matches, not plate detections — so `targets.min_ndet_bright` is inert and
+says so in the acquisition log rather than pretending to cut.
 
 `results/necrofrontier/` recorded all four DASCH endpoints as `REACHED` from a
 runner, but **reachability is not a schema**: nothing in this repository had

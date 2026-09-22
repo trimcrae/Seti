@@ -54,8 +54,53 @@ def field_tag(ra: float, dec: float, radius_deg: float) -> str:
     return f"ra{ra:.2f}_dec{dec:+.2f}_r{radius_deg:.2f}"
 
 
-def plate_density(ra: float, dec: float, log: AcquisitionLog | None = None, **kw) -> dict:
-    """``queryexps`` at a position: plate counts overall and by gap segment."""
+EXPOSURE_KEY_COLS = ("series", "platenum", "mosnum", "expnum")
+
+
+def exposure_table(df: pd.DataFrame) -> pd.DataFrame:
+    """The exposure DURATION of every plate, keyed for a join onto a light curve.
+
+    DR7 light curves do **not** carry an exposure time --- the served columns
+    are fixed by ``_COLTYPES`` in ``daschlab/photometry.py`` and ``exptime`` is
+    not among them --- while ``queryexps`` does, in minutes.  The channel needs
+    it because the exposure smears a periodic signal by ``|sinc(f t_exp)|``,
+    and Harvard exposure lengths are a property of the *plate series*, which is
+    clustered in calendar time.  Unmodelled, an efficiency measured in the
+    post-gap blocks of a star whose late plates are longer exposures overstates
+    how well those plates could have seen the period --- which is the one
+    number the cessation claim rests on.
+
+    One ``queryexps`` per FIELD serves every star in it, so this costs no extra
+    requests.  Returns a frame with ``series, platenum, mosnum, expnum,
+    exptime_min`` and no duplicate keys.
+    """
+    if df is None or not len(df):
+        return pd.DataFrame(columns=[*EXPOSURE_KEY_COLS, "exptime_min"])
+    ecol = pick_column(df, ("exptime", "exposure_time", "exp_time"))
+    scol = pick_column(df, ("series", "plate_series"))
+    if ecol is None or scol is None:
+        return pd.DataFrame(columns=[*EXPOSURE_KEY_COLS, "exptime_min"])
+    out = pd.DataFrame({"series": df[scol].astype(str).str.strip().str.lower()})
+    for key, cands in (("platenum", ("platenum", "plate_number")),
+                       ("mosnum", ("mosnum", "mosaic_number")),
+                       ("expnum", ("expnum", "exposure_number"))):
+        c = pick_column(df, cands)
+        out[key] = (pd.to_numeric(df[c], errors="coerce").astype("Int64") if c is not None
+                    else pd.array([pd.NA] * len(df), dtype="Int64"))
+    out["exptime_min"] = numeric(df, ecol)
+    out = out[np.isfinite(out["exptime_min"].to_numpy(dtype=float))
+              & (out["exptime_min"].to_numpy(dtype=float) > 0)]
+    return out.drop_duplicates(subset=list(EXPOSURE_KEY_COLS), keep="first")
+
+
+def plate_density(ra: float, dec: float, log: AcquisitionLog | None = None,
+                  exposures_out: list | None = None, **kw) -> dict:
+    """``queryexps`` at a position: plate counts overall and by gap segment.
+
+    ``exposures_out``, when given, receives this field's `exposure_table` --- so
+    the one request that measures the field's plate density also supplies the
+    exposure durations the light curves lack.
+    """
     r = queryexps(ra, dec, **kw)
     out = {"n_plates": 0, "n_pre_gap": 0, "n_post_gap": 0, "year_min": float("nan"),
            "year_max": float("nan"), "ok": bool(r.ok), "columns": r.columns[:40],
@@ -68,6 +113,12 @@ def plate_density(ra: float, dec: float, log: AcquisitionLog | None = None, **kw
         return out
     df = r.frame
     out["n_plates"] = int(len(df))
+    if exposures_out is not None:
+        et = exposure_table(df)
+        out["n_exptimes"] = int(len(et))
+        if len(et):
+            out["exptime_min_median"] = float(np.nanmedian(et["exptime_min"].to_numpy(float)))
+            exposures_out.append(et)
     tcol = pick_column(df, EXP_TIME_COLS)
     out["time_column"] = str(tcol) if tcol is not None else None
     if tcol is not None:
@@ -202,7 +253,19 @@ def select_bright(ra: float, dec: float, radius_deg: float, *, log: AcquisitionL
         return pd.DataFrame()
     df = df.drop_duplicates(subset=["gsc_bin_index", "ref_number"])
     keep = np.isfinite(df["mag_cat"]) & (df["mag_cat"] <= mag_max) & (df["mag_cat"] >= mag_min)
-    if "n_det_cat" in df.columns and np.isfinite(df["n_det_cat"]).any():
+    # The min_ndet cut is INERT against the DR7 refcat and is recorded as such.
+    # ``_COLTYPES`` in daschlab/refcat.py serves ref_text, ref_number,
+    # gsc_bin_index, ra_deg, dec_deg, dra_asec, ddec_asec, pos_epoch,
+    # pm_*_masyr, u_pm_*_masyr, stdmag, color, class, v_flag, mag_flag,
+    # num_matches --- and no detection count.  ``num_matches`` counts catalogue
+    # cross-matches, not plate detections, so it is deliberately NOT mapped
+    # onto n_det_cat: cutting on it would discard stars for a reason unrelated
+    # to how many plates saw them.  The real detection count only exists once
+    # the light curve is fetched, where ``lightcurve.min_detections`` applies
+    # it.  A silently inert guard is the failure this channel has already been
+    # bitten by once, so it is named here and in the acquisition log.
+    ndet_available = bool("n_det_cat" in df.columns and np.isfinite(df["n_det_cat"]).any())
+    if ndet_available:
         keep &= ~(np.isfinite(df["n_det_cat"]) & (df["n_det_cat"] < min_ndet))
     df = df[keep].copy()
     df["kind"] = "bright"
@@ -210,7 +273,9 @@ def select_bright(ra: float, dec: float, radius_deg: float, *, log: AcquisitionL
                                                    strict=False)]
     df["vtype"], df["period_cat"], df["amp_cat"], df["source"] = "", np.nan, 0.0, refcat
     log.record("select_bright", f"{n_ok}/{n_tiles} querycat tiles, mag in [{mag_min},{mag_max}]",
-               rows=int(len(df)), extra={"columns": frames[0].columns.tolist()[:40]})
+               rows=int(len(df)),
+               extra={"columns": frames[0].columns.tolist()[:40],
+                      "min_ndet_applied": ndet_available, "min_ndet": float(min_ndet)})
     return df.sort_values("mag_cat").head(int(max_targets)).reset_index(drop=True)
 
 
@@ -262,5 +327,5 @@ def match_refcat(ra: float, dec: float, *, radius_arcsec: float = 15.0, refcat: 
     return row, r
 
 
-__all__ = ["field_tag", "match_refcat", "normalise_refcat", "plate_density", "select_bright",
-           "select_variables"]
+__all__ = ["EXPOSURE_KEY_COLS", "exposure_table", "field_tag", "match_refcat",
+           "normalise_refcat", "plate_density", "select_bright", "select_variables"]

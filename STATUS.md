@@ -153,8 +153,8 @@ transition 1972.0, `transition_at_gap` false — and the named test was not
 relaxed to accommodate it. A detected block left in the post segment now fails
 the new `no_post_detection` check instead of being silently absorbed.
 
-**Cessation family: 14/14 pass.** Full suite was 42/43 before the fix with
-that one test red; re-running.
+**Cessation family: 14/14 pass. Full suite: 49/49, ruff clean.** It was 42/43
+before the fix, with that one test red.
 
 **71 % of the account's queue is CI, not science — and the fix is one merge
 per branch.** At 11:41 EDT there were **87 queued runs, 62 of them `ci`**.

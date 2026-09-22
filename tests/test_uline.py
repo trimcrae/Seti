@@ -1290,3 +1290,41 @@ def test_frequency_limited_species_are_rolled_up_into_the_summary(tmp_path):
     assert set(lim) == {"SO2F2"} and lim["SO2F2"]["err_over_tolerance"] == 73.0
     assert any("FREQUENCY-LIMITED" in d and "quartic" in d for d in s["degraded"])
     assert s["pairs"]["SO2F2|synth"]["searchability"]["status"] == "FREQUENCY_LIMITED"
+
+
+# ---------------------------------------------------------------------------
+# the LTE test lives or dies on the intensity column resolving
+# ---------------------------------------------------------------------------
+def test_the_real_column_sets_of_the_acquired_surveys_resolve_an_intensity():
+    """Runs 35039822190 and 35041128720 reported `lte_testable: false` for every
+    pair, and the channel recorded "no intensity column" as a property of the
+    SURVEYS.  It was a column-matching failure: probe.json shows Cernicharo+2000
+    tables 2 and 3 carrying `T(MB)dv` and He+2008 table 4 carrying `Iint`, both
+    integrated line intensities — exactly the quantity the Spearman test wants,
+    since it is what the column is proportional to in the optically thin LTE
+    limit.  These are the archive's OWN column names, read off the probe's
+    scoreboard, pinned so the regex list cannot silently lose them again.
+    """
+    from seti.uline.acquire import resolve_line_columns
+    from seti.uline.run import _column_patterns
+
+    cols = _column_patterns(load_uline_config())
+    cases = {
+        "J/A+AS/142/181/table2": (
+            ["Mol", "Trans", "n_Freq", "Freq", "e_Freq", "nFreq", "Freqc", "u_Freqc",
+             "T(MB)dv", "e_T(MB)dv", "Vexp", "e_Vexp", "Notes"],
+            {"freq": "Freq", "ident": "Mol", "intensity": "T(MB)dv"}),
+        "J/A+AS/142/181/table3": (
+            ["Name", "Trans", "Freq", "e_Freq", "Freqc", "u_Freqc", "T(MB)dv", "e_T(MB)dv",
+             "Vexp", "e_Vexp", "Notes"],
+            {"freq": "Freq", "ident": "Name", "intensity": "T(MB)dv"}),
+        "J/ApJS/177/275/table4": (
+            ["Species", "Trans", "Freq", "e_Freq", "Iint", "e_Iint", "Vexp", "Notes"],
+            {"freq": "Freq", "ident": "Species", "intensity": "Iint"}),
+    }
+    for table, (columns, want) in cases.items():
+        got = resolve_line_columns(columns, cols)
+        for role, col in want.items():
+            assert got[role] == col, f"{table}: {role} resolved to {got[role]!r}, want {col!r}"
+        # and the ERROR column never masquerades as the intensity
+        assert not str(got["intensity"]).startswith("e_"), table

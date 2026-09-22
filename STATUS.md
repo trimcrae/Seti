@@ -394,6 +394,76 @@ shapes — so `api.py` carries an ordered list of key spellings per endpoint and
 the probe settles them in one cheap job, together with the AFLAGS/BFLAGS bit
 meanings from the `daschlab` source and the real plate density of each
 configured field. The sweep follows.
+### ULINE: the first complete run — NO_PATTERN over 80 U-lines, and the constants gap is now the measured limit, 2026-09-22
+
+S54 (`docs/uline.md`). Run **35752177872** (`stage=full`, 2,000 shift trials)
+completed every stage: probe -> acquire -> screen -> assess -> validate ->
+litfetch -> propose -> commit-back. Verdict **`NO_PATTERN`**, zero survivors,
+**0** pattern candidates on laboratory line lists and **0** on `verify`
+constants.
+
+**The funnel, deduplicated.** 80 DISTINCT U-lines: 63 from IRC+10216
+(Cernicharo, Guelin & Kahane 2000) and 17 from IRC+10216 (He+2008). The run's
+own `summary.json` said 143 because two configured sources are two views of
+the same rows — `J/A+AS/142/181` table2 flags 63 lines unidentified in its
+`Mol` column and table3 IS those same 63 as a standalone table. Proof, from
+the run's `coincidences.csv`: the five SO2F2 coincidences carry *identical*
+frequencies (130765.5, 143606.1, 153782.5, 154149.2, 163264.4 MHz) under both
+source names. Fixed in code; the next run counts distinct lines and names
+every overlap. **The U-line sample did not grow** — 7 of 10 configured sources
+returned `NO_TABLE`, including all four Orion KL routes, both Sgr B2 sources
+and the comet.
+
+**Limit 1 is removed in practice.** `targets_unsearchable` is empty: all 11
+target species were searched, 22 distinct species x source pairs evaluated
+(33 before dedup). 17 pairs had >= 1 coincidence; **one distinct pair had
+>= 3**: SO2F2 x IRC+10216 with 5 coincident features — and it dies on both
+gates, rho = 0.20 against a 0.30 threshold and p_false = 0.67 against 0.01.
+Correctly rejected as a chance alignment.
+
+**The LTE test now runs.** All three reachable sources carry intensities
+(`T(MB)dv`, `Iint`); the test was `untestable` before only because the column
+regexes missed them. It was computable for the one pair with enough
+coincidences, and it is what rejected SO2F2.
+
+**What the predictor is worth, measured.** Against JPL 64002 and CDMS 64502,
+SO2 reproduces to a **median |dnu| = 2.71 MHz** over 687 quantum-number-matched
+lines (p95 80 MHz). Zeroing the quartic terms moves those same lines by a
+median **623 MHz** — the distortion-truncation error, measured rather than
+asserted. CH2F2 (285 MHz) and COF2 (450 MHz) are limited by their recalled
+constants, as their `quality` flags say.
+
+**And the limit that now binds is the constants, not the catalogues.** All five
+newly-searchable species come back `FREQUENCY_LIMITED`: CF2Cl2 x30 (548 MHz),
+CFCl3 x94 (2034 MHz), SO2F2 x18 (398 MHz), CHClF2 x55 (1100 MHz), CF2 x27
+(551 MHz), against tolerances of 18-22 MHz. At those widths a coincidence
+carries almost no information, which is exactly why the one >= 3 result failed
+its FAP.
+
+**The remedy is NOT yet in hand — state this plainly.** The literature ladder
+answered 130 of 178 routes in 148 s and produced `constants_proposal.json`.
+It CONFIRMED CF2Cl2's A/B/C (4118.90 / 2638.70 / 2233.72 MHz) from two
+independent bibliographic routes, upgrading them from a single search-engine
+snippet. It did **not** deliver a trustworthy quartic set. The CHClF2
+candidate arrives with B = 2903 and C = 2360 MHz against an embedded
+4861 / 3508 and a structure estimate of 4855 / 3495 — a 33-40 % conflict with
+two independent references, so the quartics shipped alongside them belong to
+whatever molecule has B = 2903, and nothing was promoted. The SO2F2 and CF2
+"constants" (A = 95, B = 11) are scraper artefacts from abstract prose, all
+correctly flagged `CONFLICTS`. The proposal decided nothing, which is what it
+is for.
+
+**This is a null and is not written up** (CLAUDE.md). It changes the question:
+the channel can now search the five purely-industrial species, but it cannot
+be *sensitive* to them until their published quartic constants are in hand.
+The next decisive action is therefore narrow and concrete — obtain the
+Kisiel-group CHF2Cl fit (8-705 GHz, sextic constants published) and the
+Sarka/Margules SO2F2 set from the papers themselves rather than from abstract
+scraping, noting that SO2F2 additionally needs the Hamiltonian extended
+beyond the A-reduction (`hamiltonian_caveat`). Second: the Orion KL and Sgr B2
+routes all returned NO_TABLE, so the U-line sample is still two surveys of one
+star — reading `probe.json -> uline_column_census` is how it grows.
+
 ### ULINE: both stated limits removed — the five uncatalogued species are now predicted, and the Crockett table is sought over four more doors, 2026-09-22
 
 S54 (`docs/uline.md`). The channel's previous verdict was `NO_PATTERN` over 80

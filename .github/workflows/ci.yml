@@ -12,7 +12,12 @@ on:
 # runs are cancelled; the newest one still gates the branch.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # On a feature branch only the newest commit needs its gate run, so supersede
+  # the older ones. On `main` never cancel: merges land faster than a run takes,
+  # so cancelling meant no run on `main` ever finished and the branch everything
+  # is merged into was the one branch that stopped being gated. Runs there queue
+  # and each one completes against the head it was raised for.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   offline:

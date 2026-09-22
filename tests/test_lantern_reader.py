@@ -317,6 +317,23 @@ def test_verify_eclipse_stack_on_a_synthetic_eclipse():
     assert not v3["passed"] and not v3["checks"]["depth_positive_and_significant"]
 
 
+def test_out_of_eclipse_average_excludes_in_transit_integrations():
+    """"The planet is visible and the star is whole."  With in-transit
+    integrations left in the out-of-eclipse average, a phase curve's
+    out-minus-in-eclipse difference carries the planet's transmission spectrum
+    and the star's limb-darkened profiles -- features that have nothing to do
+    with the occultation."""
+    s = synthesise_timeseries(line_amp=0.0, centre="transit", transit_depth=0.01)
+    s["meta"] = {"INSTRUME": "NIRSPEC", "GRATING": "G395H"}
+    s["time_source"] = "row_bjd_tdb"
+    lab = label_integrations(np.asarray(s["times"], float), s["ephemeris"], _CONF["phase"])
+    assert lab["in_transit"].sum() > 0
+    rec = R.analyse_stack(s, [s["ephemeris"]], _CONF, "X")
+    want = lab["out_eclipse"] & ~lab["transit_contact"] & ~lab["in_transit"]
+    assert rec["n_averaged_integrations"] == int(want.sum())
+    assert int(want.sum()) < int((lab["out_eclipse"] & ~lab["transit_contact"]).sum())
+
+
 def test_verify_rejects_a_misplaced_ephemeris():
     """The timing check must still fail when the eclipse is NOT where the
     ephemeris says.  A free two-level step is allowed to land off the predicted

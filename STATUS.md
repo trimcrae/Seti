@@ -10,6 +10,47 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ARC: KIC 9418692 passed the pixel test and is still above the ceiling, 2026-09-22
+
+S59 (`docs/arc.md` §9.4). Run **35744902798** put the channel's one
+ceiling-excess star on its target pixel files. It is **the first object here
+to survive both tests**:
+
+| | |
+|---|---|
+| Gaia DR3 | 2080152824394749696, RA 297.20212, Dec +45.971088 |
+| Berger+2020 `J/AJ/159/280` | Teff **5677.4 K**, R = **1.089 R☉**, M = **0.957 M☉**, logg 4.341 |
+| amplitude — **its own light curve** | quarter `Rvar` = **3.8425e-4** |
+| ξ_conservative | **+0.292**, `above_ceiling`, 3 flares above (ξ_nom +1.008, 8 above), 13 independent events |
+| centroid | **5 of 6 tested flares `on_target`**, 0.100–0.266 px (**1.0–2.6σ**), Q3/Q9/Q13/Q16, every Gaia neighbour rejected at > 3σ |
+
+The amplitude ambiguity that dominated this object is settled **by the star
+itself**, and it lands between the catalogues: 3.84e-4 against Santos's
+2.008e-4 (ξ +0.715) and Shibayama's 6.0e-4 (ξ +0.002). The census is no
+longer what carries it — the two neighbours need **287 %** and **305 %**
+brightenings, under the 20× arithmetic threshold and therefore *not* excluded
+by the census; the centroid excludes them directly.
+
+**Three things are open, and none is argued away.** (1) The catalogue
+energies are the dominant systematic: re-measured from the light curve the
+same star gives **ξ = +0.045** on 2 flares of 6 independent events — *at* the
+ceiling. Its significance is a range, **+0.045 to +0.292**, not a number.
+(2) **Gaia RUWE = 1.5562** is unresolved; a companion inside ~0.1″ is
+invisible to Gaia and to the pixels alike, so `flare_on_target` does not
+exclude it. (3) `f = 1` is the channel's founding assumption against
+Okamoto+2021's own f ≈ 0.1.
+
+**Run 4 (35774408864) is queued** on the fixed clocks, naming KIC 9418692,
+8487271, 11507705 and the five on-neighbour stars so one coherent
+`stars.json` / `summary.json` / `flares.csv` covers all of them.
+
+**A third wall clock was missing and is now in.** Run 35744902798 checkpointed
+4 stars in 100 s and then sat for **four hours** on the fifth: `stage2_run`
+passed `query_fn=None` straight to `pyvo`'s unbounded `run_async`, the one
+network path the previous two fixes had not covered. Stage 2's default TAP and
+cone callables are now wrapped at `stage2.query_timeout_s` (240 s), as stage 1
+has been since 0d58d5e8. The 21-star measurement below is preserved at commit
+`c751f006`.
 ### SPECTRA-PERSIST: the narrow lines meet their own exposures, 2026-09-22
 
 The 167 narrow-line survivors had only ever been seen in coadds. They have now been
@@ -139,10 +180,22 @@ several sigma to −0.4 — but the number quoted on top of them was not what it
 be. `median_exposure_sig` is now reported beside it, and the `absent_in_exposures` basis
 string no longer asserts "the coadd feature is not in its inputs".
 
-The stack — same exposures, one continuum fit on their combined spectrum, so neither the
-low-S/N continuum bias nor the √N factor — is the statistic the classification should turn
-on. Rebuilding the rules around it is the next substantive change, deliberately not made
-at the end of the session that found it, on a rule that decides what gets killed.
+**And a second correction, an hour after the first.** I wrote here that the stack is
+therefore the statistic to turn the classification on. That is wrong, and a synthetic
+check I should have run before writing it says so: a continuum error *shared by all the
+exposures* hits the stack **harder**, because its errors are √N smaller and the same flux
+bias is √N more significant. Injecting one into every exposure of a file with a real line
+takes the combined significance from 9.84 to 8.57 (−13 %, the null absorbs most of it) and
+the stack from 12.84 to **2.52** (−80 %). The stack is the stronger statistic on clean
+data and the more fragile one under a shared systematic. Pinned as a test.
+
+So what remains is an *unexplained* disagreement: on real data the stack was positive in
+24 of 24 while the combination was negative, and a shared continuum error would have
+driven both negative. Something distinguishes N noisy continuum fits from one clean fit on
+the same pixels that neither the null nor the synthetic reproduces. Finding it is now the
+first next action; neither statistic is promoted until it is found. Every verdict the
+current rules issue on these lines is a kill either way, so the candidate list does not
+move on the answer.
 
 **In flight, and a correction.** I cancelled run 35747997902 — the calibrated full run —
 believing it had sat queued for 98 minutes without a single job starting. That was wrong.
@@ -1202,6 +1255,18 @@ PG 1225−079 p = 0.50 (its "no single meteorite" does not survive a mixture
 with the condensation and sinking levers), LHS 2534 p = 0.086,
 GALEX J2339−0424 p = 0.020, and WD 0106−328 and NLTT 19868
 `INFORMATION_LIMITED` at four measured elements each.
+
+**Run 35762339225 is a confirming re-run, and it is optional.** Dispatched
+1:41 PM EDT at `e861d103`, still queued behind the shared runner backlog. It
+changes no science and supersedes nothing: it only writes into `summary.json`
+three checks that were computed after 35747793625 had already committed its
+verdict — the upper-limit convention (**3,465 of 3,475 rows** reproduce
+PEWDD's own count, checked against the database's own CSV because VizieR does
+not serve the count columns at all), the sinking-lever cross-check (the
+fetched Koester grids against PEWDD's per-star `SinTime*`: median **+0.014
+dex**, rms 0.104), and the smaller screen output (6.6 MB → 3.8 MB). If it has
+not started when you read this, let it land or cancel it; nothing depends on
+it, and the numbers above are already in `docs/slag.md`.
 
 **Why it ran in one job.** The sharded `slag.yml` has to win a runner slot six
 times in sequence and twice failed to get through it: 35739746529's eight

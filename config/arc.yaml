@@ -220,6 +220,10 @@ stage2:
   # run: run 35738785437 sat in a single fetch from 16:51 UTC (its 9,000 s
   # budget already spent) to the 240-minute job cap.  0 restores unbounded.
   product_timeout_s: 600.0
+  # The same clock on one TAP query / Gaia cone, as the assess stage uses.
+  # pyvo's run_async polls a remote job with no time limit, so the bound has
+  # to be imposed on this side. 0 restores the unbounded behaviour.
+  query_timeout_s: 240.0
   quality_bitmask: "default"
   # flare finder (Chang+2015 style: consecutive points above n sigma)
   window_days: 0.5              # running-median detrend window

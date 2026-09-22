@@ -653,6 +653,43 @@ def test_combined_sig_amplifies_a_per_exposure_bias_by_sqrt_n():
     assert "median" in basis and "not in its inputs" not in basis, basis
 
 
+def test_the_stack_is_not_automatically_the_safer_statistic():
+    """Guards against the obvious wrong conclusion from the sqrt(N) finding.
+
+    On real data (run 35747997902 shard 0) the stack read positive in 24/24
+    while the per-exposure combination read negative, which invites the
+    inference "the stack is unbiased, turn the classification on it". That
+    inference does not hold: a continuum error SHARED by all the exposures hits
+    the stack HARDER, because the stack's errors are sqrt(N) smaller and the
+    same flux bias is therefore sqrt(N) more significant. Injecting an
+    upward-curving continuum into every exposure collapses the stack while the
+    per-exposure combination barely moves.
+    """
+    def measure(curvature):
+        data = make_spec_file([0.2] * 8, n_exp=8, seed=11)
+        with fits.open(io.BytesIO(data)) as hd:
+            parsed = persist.parse_sdss_spec(hd)
+        if curvature:
+            for e in parsed["exposures"]:
+                e["flux"] = e["flux"] + curvature * (e["wave"] - LAM0) ** 2
+        fc, ex = persist.sdss_exposure_measurements(parsed, LAM0, "emission")
+        st = persist.stack_exposures(parsed, LAM0)
+        stack = persist.measure_line(st["wave"], st["flux"], st["ivar"], LAM0,
+                                     persist.lsf_fwhm_A(LAM0, "SDSS-DR17"), "emission")
+        # With the null, exactly as process_spectrum classifies.
+        null = persist.offset_null(persist.sdss_measure_at(parsed, "emission"), LAM0,
+                                   n=16, lo_A=12.0, hi_A=120.0)
+        return persist.classify_persistence(fc, ex, stack=stack, null=null)
+
+    clean, curved = measure(0.0), measure(1.2e-4)
+    # The per-exposure combination loses a little -- the in-spectrum null sees
+    # the curvature at the offsets too and takes most of it back out.
+    assert curved["combined_sig"] > 0.8 * clean["combined_sig"], (clean, curved)
+    # The stack loses almost everything -- the opposite of "stack is safer".
+    assert curved["stack_sig"] < 0.3 * clean["stack_sig"], (clean, curved)
+    assert clean["stack_sig"] > clean["combined_sig"]      # and it wins when clean
+
+
 def test_a_thin_null_cannot_manufacture_a_detection():
     """The bias is subtracted from every measurement, so it is an estimate with
     an uncertainty.  A null built from a handful of offsets can land several

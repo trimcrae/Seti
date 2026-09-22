@@ -724,6 +724,40 @@ def test_a_hung_archive_fetch_is_abandoned_inside_its_own_clock(tmp_path):
     del world
 
 
+def test_the_default_tap_and_cone_callables_are_wrapped_in_a_wall_clock(tmp_path, monkeypatch):
+    """Stage 2's TAP path was reaching pyvo's unbounded run_async directly.
+
+    MEASURED (run 35744902798): the stage sat in the run step for half an hour
+    past its own 9,000 s budget, which is only checked BETWEEN stars, with the
+    per-star checkpoint frozen at the last star that finished.
+    """
+    seen = {}
+
+    def fake_query(base_fn=None, *, timeout_s):
+        seen["query"] = timeout_s
+        return lambda adql, **kw: pd.DataFrame()
+
+    def fake_cone(base_fn=None, *, timeout_s):
+        seen["cone"] = timeout_s
+        return lambda table, ra, dec, r, **kw: pd.DataFrame()
+
+    monkeypatch.setattr(acq, "timeout_query_fn", fake_query)
+    monkeypatch.setattr(acq, "timeout_cone_fn", fake_cone)
+    conf = _conf(tmp_path)
+    params = S.Stage2Params.from_config(conf)
+    params.budget_s = 1e-9                                # stop before any star
+    S.stage2_run(conf, tmp_path / "s2", params=params, shortlist=[_entry()])
+    assert seen == {"query": params.query_timeout_s, "cone": params.query_timeout_s}
+    assert params.query_timeout_s > 0
+
+    # an injected callable is left exactly as passed
+    seen.clear()
+    S.stage2_run(conf, tmp_path / "s2b", params=params, shortlist=[_entry()],
+                 query_fn=lambda adql, **kw: pd.DataFrame(),
+                 cone_fn=lambda *a, **kw: pd.DataFrame())
+    assert seen == {}
+
+
 def test_an_in_time_fetch_and_its_exception_pass_straight_through():
     def ok(star_id, **kw):
         return [{"star_id": star_id, "kw": kw}]

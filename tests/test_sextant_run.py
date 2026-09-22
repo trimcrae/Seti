@@ -397,6 +397,49 @@ def test_shard_csv_round_trips_through_gzip(tmp_path):
     assert df.loc[0, "reasons"] == "a|b" and df.loc[0, "is_control"] == 1
 
 
+def test_frame_to_rows_nulls_every_flavour_of_missing():
+    """A missing value must arrive as ``None``, whatever dtype carried it.
+
+    ``isinstance(v, float)`` sufficed only while a missing string sat in an
+    object column as ``float('nan')``.  pandas 3 makes ``str`` the default
+    string dtype, and a nullable or arrow-backed column yields ``pd.NA`` while
+    a datetime column yields ``pd.NaT`` --- neither of which is a float, and
+    ``float(pd.NA)`` raises rather than returning NaN.  Such a value would
+    travel downstream as an object that is neither a number nor a null, which
+    is the shape of bug that surfaces as a fit failure on one object in
+    a thousand rather than as an error.
+    """
+    df = pd.DataFrame({"a": pd.array([1, None], dtype="Int64"),
+                       "s": pd.array(["x", None], dtype="string"),
+                       "t": pd.to_datetime(["2020-01-01", None]),
+                       "f": [1.5, float("nan")],
+                       "o": ["keep", None]})
+    rows = RUN.frame_to_rows(df)
+    assert rows[0]["a"] == 1 and rows[0]["s"] == "x" and rows[0]["o"] == "keep"
+    assert rows[0]["f"] == 1.5
+    for k in ("a", "s", "t", "f", "o"):
+        assert rows[1][k] is None, (k, rows[1][k])
+
+
+def test_is_rejected_is_read_by_content_whatever_dtype_it_arrives_in():
+    """``bool('false')`` is True, and that would drop every FPR observation.
+
+    The probe left this column's type explicitly UNVERIFIED, so the code may
+    not depend on it.  Numpy is the trap: a column of Python strings becomes a
+    ``'<U5'`` array rather than an object array, so a check on ``object`` alone
+    would miss it and ``astype(float)`` would raise on ``'false'``.
+    """
+    def flags(vals):
+        rows = [{"number_mp": 7, "is_rejected": v, "ra": 1.0, "dec": 2.0} for v in vals]
+        return list(RUN.group_observations(rows)[7]["is_rejected"])
+
+    assert flags(["false", "true"]) == [False, True]       # numpy '<U5', not object
+    assert flags([b"false", b"true"]) == [False, True]     # bytes
+    assert flags([True, False]) == [True, False]
+    assert flags([0, 1]) == [False, True]
+    assert flags([0.0, float("nan")]) == [False, False]    # unparsed is NOT rejected
+
+
 def _stub_shard_io(monkeypatch, numbers, controls):
     """Replace every I/O-bound dependency of :func:`RUN.stage_shard`.
 

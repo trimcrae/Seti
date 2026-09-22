@@ -944,9 +944,46 @@ sample size (~150 stars with any interferometric excess, far fewer with an
 N-band measurement). A star with no N-band measurement is `N_UNTESTED` and is
 never a candidate; `NO_PLANCK_CONSISTENT_OUTLIER` is a count, not a limit.
 
+**Two things the channel claimed but did not do, both now fixed.**
+
+1. *The polarimetric null was a field, not a capability.*
+   `StarContext.polarimetry_limit_ppm` was declared and never populated: the
+   acquire stage skipped every non-excess role as "recorded only". It is now
+   fetched from VizieR, keyed to the sample, and carried per star. It stays
+   **out** of the likelihood ratio on physical grounds — both families emit
+   thermally at H/K (1500 K peaks near 1.9 µm), so a polarisation limit
+   constrains the *scattered-light* fraction, a different axis from the
+   emissivity law, and folding it into χ² would let a constraint that cannot
+   separate the two families look like evidence that can. On a survivor it is
+   a real follow-up discriminant, which is where it is attached.
+2. *The ranked list — the actual deliverable — was not emitted.* The summary
+   carried a candidate subset and a tier histogram. Since nano-grain physics
+   is expected to win wherever K and N both constrain, that list is usually
+   empty on real data, and the channel would have read as having found
+   nothing when it had in fact placed the whole tested population between the
+   two families. `planck_ranking.csv` / `.json` now carry every
+   Planck-testable star ordered by Δχ². "Planck-testable" is both legs: an
+   H/K detection to extrapolate *from* **and** an N-band measurement. The
+   first cut ranked every star with an N band, which let ε Eri — N measured,
+   no NIR detection — into the list on a NaN. A star the test never applied
+   to must not appear in a list that reads as the test's output.
+
+**Version discipline** (per the repo-wide warning). The sandbox holds pandas
+2.3.3; the runner installs 3.0.6. FORGE was run in an isolated 3.0.6 / numpy
+2.4.6 / pyarrow 25.0.1 interpreter: **33/33 pass**, and 32/32 at the commit
+the dispatch is pinned to. No `errors="ignore"`, `DataFrame.append`,
+`iteritems` or `applymap` in the package. The runner's own offline gate then
+passed at 11:36 EDT, so the detector recovers the injected swarm *on the
+runner*, not just locally.
+
+Run 35744731075 started 11:36 EDT after 1 h 32 m queued behind a saturated
+runner pool, cleared its gate, and is in the probe stage against live VizieR.
+
 Next decisive action: read `results/forge/` from 35744731075 — `probe.json`
-first, for which of the nine VizieR ids actually resolved — then dispatch the
-broadband population leg (`skip_population=false`) separately.
+first, for which of the nine VizieR ids actually resolved — then re-dispatch
+on the current head (the run is pinned to a commit that predates the
+polarimetry fetch and the ranking), and run the broadband population leg
+(`skip_population=false`) separately.
 
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 

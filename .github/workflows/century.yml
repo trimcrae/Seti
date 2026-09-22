@@ -206,8 +206,10 @@ jobs:
   # NOT `needs: [probe]`.  The probe produces nothing this job reads, so the
   # dependency was pure serialisation — and on a starved queue each job waits
   # for a runner SEPARATELY, so it cost `full` an entire extra queue wait
-  # (70 minutes, measured on run 35745660073) before target selection could
-  # even start.  The two run in parallel; they touch different endpoints.
+  # before target selection could even start.  Observed 2026-09-22: run
+  # 35745660073 sat queued from 15:12Z to at least 15:38Z without its probe
+  # job starting, with 87 runs queued account-wide.  The two run in parallel;
+  # they touch different endpoints.
   targets:
     if: >-
       ${{ github.event.inputs.reduce_only_run_id == ''

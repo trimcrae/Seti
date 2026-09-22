@@ -400,9 +400,10 @@ gh workflow run century.yml --ref <branch> -f stages=probe
 
 **Runner slots, not runner minutes, are the scarce resource.** On a busy
 account each job waits for a runner *separately*, so a `needs:` edge costs a
-whole queue wait — measured at 70–105 minutes on 2026-09-22, during which a
-`full` run never started its first job. Two consequences are built into the
-workflow and should not be undone casually:
+whole queue wait. Observed 2026-09-22: run 35745660073 was dispatched at
+15:12Z and had still not started its first job (the probe) at 15:38Z, with
+**87 runs queued account-wide, 62 of them `ci`**. Two consequences are built
+into the workflow and should not be undone casually:
 
 * `full` is `targets → sweep → assess`, three waits. The probe is
   reconnaissance — it reads documentation and the `daschlab` source and writes

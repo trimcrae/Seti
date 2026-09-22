@@ -68,11 +68,11 @@ Both sides are now normalised, with a round-trip test.
 In flight: run **35748748365**, `stages=full`, 4 shards, 60 variables + 60
 bright per field over the six configured DASCH-dense fields (~720 stars),
 acquire budget 7200 s, screen budget 9000 s, dispatched 11:38 EDT. It replaces
-run 35745660073, which was dispatched at 11:12 EDT and was **still queued 105
-minutes later** without its `probe` job ever starting — a slot that would have
-been spent re-learning a schema already committed. The new run's first job is
-`targets`. No `results/century/summary.json` exists yet; the channel has
-produced no sky statement.
+run 35745660073, dispatched 11:12 EDT, which had still not started its `probe`
+job at 11:38 EDT — a slot that would have been spent re-learning a schema
+already committed. The new run's first job is `targets`. No
+`results/century/summary.json` exists yet; the channel has produced no sky
+statement.
 
 **71 % of the account's queue is CI, not science — and the fix is one merge
 per branch.** At 11:41 EDT there were **87 queued runs, 62 of them `ci`**.

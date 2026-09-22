@@ -826,7 +826,21 @@ def test_acquire_screen_assess_end_to_end_with_scripted_archives(tmp_path):
     assert s["pairs"]["NF3|orion_kl_hifi"]["line_source"] == "jpl"
     c = pd.read_csv(out / "candidates.csv")
     assert len(c) == len(conf["species"]["targets"]) and not c["pattern"].any()
-    assert set(c["line_source"].dropna()) == {"jpl", "cdms", "predicted"}
+    # `rotor` is the fourth line source, and its presence is the point: the five
+    # species with no catalogue entry (CF2Cl2, CFCl3, SO2F2, CHClF2, CF2) are
+    # predicted from src/seti/data_assets/rotor_constants.yaml rather than
+    # reported unsearchable.  A candidates.csv with only the old three would
+    # mean the asymmetric-top predictor had silently stopped reaching them.
+    assert set(c["line_source"].dropna()) == {"jpl", "cdms", "predicted", "rotor"}
+    rotor_rows = c[c["line_source"] == "rotor"]
+    # The five species no catalogue carries must ALL be there.  CH2F2 and COF2
+    # may join them: the assets hold validation blocks for both, and in this
+    # scripted archive their JPL entries come back empty, so the predictor is
+    # the correct fallback rather than `unsearchable`.
+    assert {"CF2Cl2", "CFCl3", "SO2F2", "CHClF2", "CF2"} <= set(rotor_rows["species"])
+    assert set(rotor_rows["species"]) <= {"CF2Cl2", "CFCl3", "SO2F2", "CHClF2", "CF2",
+                                          "CH2F2", "COF2"}
+    assert rotor_rows["verify_constants"].all()   # never a catalogued line list
 
 
 def test_end_to_end_recovers_a_seeded_pattern_through_the_acquire_path(tmp_path):

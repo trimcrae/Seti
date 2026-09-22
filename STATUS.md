@@ -10,6 +10,68 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### RELAY measured: Earth sits in 1.8e4-1.8e7 node-to-node beams, and none of them optical, 2026-09-22
+
+S60 (`docs/relay.md`). The channel asks a question nobody has asked at catalogue
+scale: for every DIRECTED star pair inside 100 pc, does Earth fall inside the
+transmitter's beam on its way to the other node? Two geometries, counted apart:
+**spillover** (T behind R on the same sightline, Earth gets (|T-R|/|T|)^2 of what
+R gets) and **between** (R near T's antipode, the beam crosses Earth first and
+Earth gets MORE than R). The prior art is single-target only -- Tusay+2022 at
+the alpha Cen SGL antipode -- and the network papers are design studies.
+
+**Run 35740854882 (targets+geometry, 264,973 Gaia DR3 stars, counts exact over
+the whole sample, 5/5 beams):**
+
+| beam | theta | spillover | between | meas/analytic |
+|---|---|---|---|---|
+| 10 m optical, 1 um | 0.0252" | **0** | **0** | (3.3e-5 expected) |
+| 100 m, 1.42 GHz | 8.85' | 18,381 | 145,734 | 1.26 |
+| 10 m, 8 GHz | 15.7' | 54,147 | 461,277 | 1.18 |
+| 10 m, 1.42 GHz | 1.48 deg | 1,586,109 | 14,613,310 | 1.09 |
+| over-filled 5 deg | 5 deg | 17,841,566 | 167,627,412 | 1.07 |
+
+Fitted slopes of log N vs log theta: **1.954** (spillover), **2.000** (between) --
+the theta^2 law measured, not assumed. The sample is the clean subset of the
+GCNS volume (parallax >= 10 mas, parallax/error > 10, RUWE < 1.4); all seven
+parallax shells returned OK and untruncated; 43 % carry a usable RV.
+
+**The yield is the result.** A diffraction-limited 10-m optical link leaves
+Earth outside every one of the 7e10 directed pairs -- that channel is closed,
+and saying so is worth more than searching it. The interceptable regime is
+radio with modest apertures or deliberately over-filled beams, and there the
+intercepted flux is only slightly below (spillover) or above (between) what the
+intended receiver gets: a strong-signal channel, not leakage. The same numbers
+are the trials budget -- 1.8e4 to 1.8e7 qualifying pairs per beam -- so every
+hit count is printed beside `n_expected_by_chance` and `n_trials`, and RFI at
+non-zero drift stays an unexcluded systematic on any survivor.
+
+**What the sky did not supply, and the fix.** Run 35738937745 probed 15 seed
+VizieR ids plus six keyword sweeps: 73 tables, **0** carrying both a frequency
+and a drift rate. These surveys deposit their observed-star lists and keep
+their event lists in the papers. So `src/seti/relay/papers.py` now reads the
+events out of the arXiv e-print source (deluxetable/longtable/tabular plus AAS
+machine-readable tables), with the id verified against the Atom title before
+use, provenance on every row down to the header text it was parsed from, and a
+table counted as a hit table only when a frequency column and a drift column
+both resolve and at least one row parses as numbers. 13 offline tests, no
+socket.
+
+**In flight:** run **35745111146**, `stage=all` on `claude/goap-relay`, the
+first full-scale pass with the e-print route: probe -> targets -> geometry ->
+recut -> assess -> `results/relay/summary.json`. The smoke pass
+(24,878-star debug cap) already committed a summary; this one replaces it at
+full scale.
+
+**Next decisive action:** read 35745111146's `hits.json` -- specifically
+`arxiv.papers[]` (which papers resolved, which e-prints downloaded, which
+tables carried a drift column) and the per-beam `n_hits_on_pair_line` beside
+`n_expected_by_chance`. If the e-print route also comes back empty, the honest
+move is not a limit paper but a change of question: the 1,959 BL targets that
+ARE in the 100 pc sample have 993+ public data files, and the pair-line
+pointings with a predicted drift window can be searched in the raw filterbank
+products directly rather than through anyone's published hit list.
+
 ### SHROUD: the SVO VASCO service is dead, so the sample is 127 — and the USNO-B1.0 rebuild is the only way back to scale, 2026-09-22
 
 S33 (`docs/shroud.md`; §9 is the new route ledger). SHROUD looks for POSS-I

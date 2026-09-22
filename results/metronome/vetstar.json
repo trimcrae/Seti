@@ -1,6 +1,6 @@
 {
  "stage": "vetstar",
- "generated_utc": "2026-09-22T23:20:16Z",
+ "generated_utc": "2026-09-22T23:30:10Z",
  "star_key": "kepler:5879574",
  "mission": "kepler",
  "star_id": "5879574",
@@ -847,7 +847,18 @@
  "catalogued_binary_hits": [],
  "fetch_status": "OK",
  "fetch_route": "lightkurve",
- "n_catalogue_epochs": 0,
+ "catalogue_epochs_source": "vizier",
+ "catalogue_epochs_query": {
+  "catalogue": "kepler_yang2019",
+  "seed": "J/ApJS/241/29/table2",
+  "status": "OK",
+  "table": "J/ApJS/241/29/table2",
+  "query": "SELECT \"KIC\", \"Begin\", \"End\" FROM \"J/ApJS/241/29/table2\" WHERE \"KIC\" = 5879574",
+  "error": null,
+  "n_rows": 21,
+  "role": "midpoint(t_start,t_end)"
+ },
+ "n_catalogue_epochs": 21,
  "lightcurve": {
   "n_segments": 17,
   "n_segments_fetched": 17,
@@ -2282,8 +2293,20 @@
   "p": 0.426762098139472,
   "mean_phase": 0.4415546142695838
  },
- "catalogue_phase_rayleigh_at_p": {},
- "catalogue_phase_rayleigh_at_2p": {},
+ "catalogue_phase_rayleigh_at_p": {
+  "n": 21,
+  "rbar": 0.9737607373056258,
+  "z": 19.912409443877916,
+  "p": 8.05039274962064e-09,
+  "mean_phase": 0.9429406065556727
+ },
+ "catalogue_phase_rayleigh_at_2p": {
+  "n": 21,
+  "rbar": 0.14147567391072435,
+  "z": 0.42032269247836584,
+  "p": 0.6620674522618203,
+  "mean_phase": 0.45048345986669536
+ },
  "photometric_max_phase": 0.9711940122402757,
  "event_phase_offset_from_photometric_max": -0.035615804517480476,
  "event_phase_offset_from_photometric_max_binned": 0.010578207722795163,
@@ -2500,9 +2523,50 @@
    "17": 0.0007006834532530259
   }
  },
+ "neighbour_period_matches": [
+  {
+   "source_id": "2053563953175635712",
+   "sep_arcsec": 13.299689103412875,
+   "phot_g_mean_mag": 14.373042106628418,
+   "matches": [
+    {
+     "source": "vsx",
+     "column": "Period",
+     "period": 0.4232946,
+     "harmonic": 1.0,
+     "type": "RR",
+     "name": "KIC 5879583"
+    },
+    {
+     "source": "ztf_chen2020",
+     "column": "Per",
+     "period": 0.4232946,
+     "harmonic": 1.0,
+     "type": "RR",
+     "name": "ZTFJ193127.18+410759.8"
+    },
+    {
+     "source": "ztf_chen2020",
+     "column": "Per-g",
+     "period": 0.423297,
+     "harmonic": 1.0,
+     "type": "RR",
+     "name": "ZTFJ193127.18+410759.8"
+    },
+    {
+     "source": "ztf_chen2020",
+     "column": "Per-r",
+     "period": 0.4232946,
+     "harmonic": 1.0,
+     "type": "RR",
+     "name": "ZTFJ193127.18+410759.8"
+    }
+   ]
+  }
+ ],
  "per_segment_amplitude_ratio": 4.801801197633249,
  "unreached": [],
- "verdict": "MUNDANE_EXPLANATION_FOUND(COHERENT_OSCILLATION_AT_P:amp=0.00082,p_control=0.00498,z=68.7_with_events_masked; EVENTS_ON_THE_CREST:offset=-0.036cycles; AMPLITUDE_TRACKS_SPACECRAFT_ROLL:F=3.07,p=0.0015,ratio=2.37) [P=0.423282 d]",
+ "verdict": "MUNDANE_EXPLANATION_FOUND(CONTAMINATING_VARIABLE_AT_P:gaia2053563953175635712@13.3arcsec,KIC 5879583,type=RR,P=0.4232946,in=vsx+ztf_chen2020; COHERENT_OSCILLATION_AT_P:amp=0.00082,p_control=0.00498,z=68.7_with_events_masked; EVENTS_ON_THE_CREST:offset=-0.036cycles; AMPLITUDE_TRACKS_SPACECRAFT_ROLL:F=3.07,p=0.0015,ratio=2.37) [P=0.423282 d]",
  "surviving_explanations": [],
  "acquisition": {
   "stages": [
@@ -2730,25 +2794,31 @@
     "route": "lightkurve",
     "n_sectors": 17,
     "attempt": 1
+   },
+   {
+    "stage": "vetstar_epochs_kepler_yang2019",
+    "status": "OK",
+    "rows": 21,
+    "query": "SELECT \"KIC\", \"Begin\", \"End\" FROM \"J/ApJS/241/29/table2\" WHERE \"KIC\" = 5879574"
    }
   ],
-  "n_stages": 37,
-  "n_ok": 11,
+  "n_stages": 38,
+  "n_ok": 12,
   "n_query_failed": 0,
   "n_query_returned_zero_rows": 26,
   "any_query_failed": false,
-  "total_rows": 64819,
+  "total_rows": 64840,
   "routes": {
    "routes": {
     "tap": {
-     "n_ok": 33,
+     "n_ok": 36,
      "n_failed": 0,
      "endpoints": [
       "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
      ]
     }
    },
-   "n_attempts": 33,
+   "n_attempts": 36,
    "served_by": "tap",
    "breaker": {
     "fail_limit": 2,
@@ -2777,5 +2847,5 @@
    "n_transitions": 0
   }
  },
- "elapsed_s": 119.2
+ "elapsed_s": 180.9
 }

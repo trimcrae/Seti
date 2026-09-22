@@ -24,6 +24,18 @@ hard way. Deviating costs runs.
    costs an hour of queue; a version check costs nothing. Before dispatching,
    check any API you use against the major version the runner will install, and
    where a channel is exposed to it, run its suite under both majors.
+
+   Removed spellings are the easy half. The other half is silent behaviour
+   change: under pandas 3's copy-on-write, `DataFrame.to_numpy()` hands back a
+   **read-only** array, so the common idiom
+
+       a = df.to_numpy(dtype=float)
+       a[a <= 0] = np.nan          # ValueError: destination is read-only
+
+   raises on the runner and passes in the sandbox. GRAVE hit exactly this, at
+   the top of its screen stage — *after* paying for the whole acquisition. Pass
+   `copy=True` wherever the array is mutated afterwards, which is what such code
+   always meant. Swept 2026-09-22: no other channel carries this pattern.
 6. **A workflow can only be dispatched if its file is on the default branch.**
    `POST /actions/workflows/<file>/dispatches` returns a bare `404 Not Found`
    when `<file>` exists only on a channel branch — the same response as a

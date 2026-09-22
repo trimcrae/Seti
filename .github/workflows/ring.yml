@@ -35,13 +35,147 @@ on:
         description: "Set to 'true' to skip the white-dwarf shortlist follow-up"
         required: false
         default: "false"
+      solo:
+        description: "'true' (default): the whole channel in ONE job. 'false': the sharded path."
+        required: false
+        default: "true"
 
 permissions:
   contents: write
   actions: read
 
 jobs:
+  # ------------------------------------------------------------------------
+  # SOLO: the whole channel on one runner, and the default.
+  #
+  # The sharded path below is NINE scheduling events (plan, probe, four legs,
+  # two NEOWISE shards, assess).  With 18 channels sharing one account's
+  # concurrency that is nine chances to wait: run 35747779136 sat queued for
+  # over two hours without its five-minute `plan` job ever starting, while a
+  # run dispatched two seconds later on another channel ran to completion.
+  # A run that never starts measures nothing, so the default is one job.
+  #
+  # Ordering inside the job is by decisiveness per minute, because a wall
+  # clock may end it early: the pulsars first (3.9 k hosts and the named
+  # two-target vet, minutes), then the free-floating planets (tens of
+  # objects), then the white dwarfs (the census, and the expensive pull),
+  # then the NEOWISE series.  Every leg is wrapped in `timeout ... || true`,
+  # so a leg that hangs costs that leg and the rest still reach `assess`.
+  #
+  # The commit is at the END and only there.  commit_results.sh works by
+  # resetting the checkout to the head of RESULTS_BRANCH and laying the
+  # generated files over it, which inside a single job would swap the source
+  # tree mid-run for anything pushed to the branch since checkout.
+  # ------------------------------------------------------------------------
+  solo:
+    if: ${{ (github.event.inputs.solo || 'true') == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install psrqpy || echo "::warning::psrqpy not installable; the tarball route will be used"
+          python -c "import pandas, numpy, astropy; print('stack:', pandas.__version__, numpy.__version__, astropy.__version__)"
+      - name: Offline gate — the injected 500 K ring must be recovered on this runner
+        run: python -m pytest tests/test_ring.py -q -p no:cacheprovider
+      - name: Probe every endpoint
+        run: |
+          timeout 1800 python -u -m seti.ring.run --stage probe || true
+          cat results/ring/probe.json || echo "::warning::no probe.json"
+      - name: Pulsars
+        if: ${{ contains(github.event.inputs.legs || 'wd,pulsar,bd,ffp', 'pulsar') }}
+        run: |
+          timeout 3000 python -u -m seti.ring.run --stage acquire --leg pulsar || true
+          timeout 1200 python -u -m seti.ring.run --stage screen  --leg pulsar || true
+          cat results/ring/pulsar/screen.json || true
+      - name: Free-floating planetary-mass objects
+        if: ${{ contains(github.event.inputs.legs || 'wd,pulsar,bd,ffp', 'ffp') }}
+        run: |
+          timeout 1800 python -u -m seti.ring.run --stage acquire --leg ffp || true
+          timeout 600  python -u -m seti.ring.run --stage screen  --leg ffp || true
+          cat results/ring/ffp/screen.json || true
+      - name: White dwarfs — the census
+        if: ${{ contains(github.event.inputs.legs || 'wd,pulsar,bd,ffp', 'wd') }}
+        run: |
+          timeout 7200 python -u -m seti.ring.run --stage acquire --leg wd || true
+          timeout 2400 python -u -m seti.ring.run --stage screen  --leg wd || true
+          cat results/ring/wd/screen.json || true
+      - name: Brown dwarfs — NEOWISE per-epoch W2
+        if: ${{ contains(github.event.inputs.legs || 'wd,pulsar,bd,ffp', 'bd') }}
+        run: |
+          timeout 5400 python -u -m seti.ring.run --stage acquire --leg bd || true
+          timeout 900  python -u -m seti.ring.run --stage screen  --leg bd || true
+          cat results/ring/bd/screen.json || true
+      - name: Assess
+        if: always()
+        run: |
+          EXTRA=""
+          if [ "${{ github.event.inputs.skip_followup }}" = "true" ]; then EXTRA="--no-followup"; fi
+          timeout 5400 python -u -m seti.ring.run --stage assess $EXTRA
+          echo "=== summary ==="
+          python -c "import json; s=json.load(open('results/ring/summary.json')); print(json.dumps({k: v for k, v in s.items() if k not in ('legs',)}, indent=2)[:6000]); print(json.dumps({k: {kk: vv for kk, vv in v.items() if kk not in ('flagged','ring_candidates','survivors')} for k, v in s['legs'].items()}, indent=2)[:8000])"
+      - name: Assert the verdict is not a disguised no-data run
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/ring/summary.json")
+          if not p.exists():
+              print("::error::no summary.json"); sys.exit(1)
+          s = json.loads(p.read_text())
+          v = s.get("verdict", "")
+          legs = s.get("legs", {})
+          reached = [k for k, l in legs.items() if l.get("status") == "OK"]
+          if not reached and "NO_DATA_REACHED" not in v:
+              print(f"::error::verdict {v!r} with no leg reaching data is a disguised no-data run"); sys.exit(1)
+          print(f"::notice::{v} -- legs reached: {reached}; degraded: {s.get('degraded_legs')}")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "ring: rings around the dead — solo run over ${{ github.event.inputs.legs || 'wd,pulsar,bd,ffp' }}" \
+            results/ring/summary.json \
+            results/ring/REPORT.md \
+            results/ring/probe.json \
+            results/ring/wd/acquire.json \
+            results/ring/wd/screen.json \
+            results/ring/wd/excess.csv \
+            results/ring/wd/followup.csv \
+            results/ring/pulsar/acquire.json \
+            results/ring/pulsar/screen.json \
+            results/ring/pulsar/pulsars_screened.csv \
+            results/ring/pulsar/counterparts.csv \
+            results/ring/bd/acquire_targets.json \
+            results/ring/bd/screen.json \
+            results/ring/bd/targets.csv \
+            results/ring/bd/bd_screened.csv \
+            results/ring/ffp/acquire.json \
+            results/ring/ffp/screen.json \
+            results/ring/ffp/ffp_screened.csv \
+            $(ls results/ring/bd/acquire_shard*.json 2>/dev/null)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ring-solo
+          path: |
+            results/ring/
+            !results/ring/wd/chunks
+            !results/ring/wd/sample*.parquet
+          if-no-files-found: warn
+
   plan:
+    if: ${{ (github.event.inputs.solo || 'true') != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -64,6 +198,7 @@ jobs:
           SHARDS: ${{ github.event.inputs.bd_shards || '3' }}
 
   probe:
+    if: ${{ (github.event.inputs.solo || 'true') != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -171,7 +306,11 @@ jobs:
 
   assess:
     needs: [plan, probe, leg, bd]
-    if: ${{ always() && github.event.inputs.stage != 'probe' }}
+    # `always()` must not mean "also when the sharded path was never chosen":
+    # in solo mode every job it needs is skipped, and an assess job running on
+    # an empty results/ring would race the solo job's commit with a verdict
+    # composed from nothing.
+    if: ${{ always() && (github.event.inputs.solo || 'true') != 'true' && github.event.inputs.stage != 'probe' }}
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:

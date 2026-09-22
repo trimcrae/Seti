@@ -61,6 +61,14 @@ from .rotorpred import (
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_NONE = "NO_PATTERN"
 VERDICT_PATTERN = "PATTERN_CANDIDATE"
+#: A pattern found ONLY on `verify`-flagged frequencies — constants
+#: reconstructed from the literature rather than read off a laboratory line
+#: list.  A predicted frequency is only as good as its constants, so such a
+#: pattern is never reported as a candidate on the same footing: it is a
+#: reason to obtain the laboratory list, and the verdict says so in its name.
+#: Its promotion to :data:`VERDICT_PATTERN` needs a coincidence that survives
+#: with a catalogued (non-``verify``) line list.
+VERDICT_PATTERN_VERIFY = "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
 
 DEFAULTS: dict = {
     "archives": {
@@ -243,6 +251,20 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=
             discovered = df.to_dict(orient="records")
         except Exception as exc:                              # noqa: BLE001
             log.record("tables_described", str(word), error=repr(exc), extra={"adql": adql})
+    # ---- the U-LINE CENSUS proper --------------------------------------
+    # The per-source `fallback` census inherits that source's own description
+    # terms ("Orion", "IRC+10216", "line survey"), so run 35039345593 returned
+    # 78 tables of which ~70 were Orion *star* catalogues and X-ray
+    # "unidentified sources": the term list, not the instrument, was wrong.
+    # This census runs ONCE, on phrases only a spectral U-line table's column
+    # carries, and is the channel's answer to "which U-line lists exist at
+    # all".  It stays DIAGNOSTIC: a table found here is screened only after it
+    # is asserted in `sources:` with its own v_LSR, linewidth and verify note.
+    census_terms = [str(t) for t in (conf["archives"].get("uline_column_census_terms") or [])]
+    uline_census: dict = {"status": "NOT_ATTEMPTED"}
+    if census_terms:
+        uline_census = A.column_census(census_terms, query_fn=query_fn, log=log,
+                                       source="uline_census", limit=500)
     predicted = {sp: {k: v for k, v in blk.items()}
                  for sp, blk in (conf.get("predicted") or {}).items() if sp != "error_model"}
     assets = load_rotor_assets()
@@ -260,12 +282,15 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=
                          "rotor_constants": rotor_summary.get(sp)}
     rep = {"stage": "probe", "generated_utc": _now(), "jpl": jpl, "cdms": cdms,
            "vizier": vizier, "discovered_unidentified_tables": discovered,
+           "uline_column_census": uline_census,
            "species_inventory": inventory, "rotor_assets": rotor_summary,
            "acquisition": log.as_dict()}
     _write(out / "probe.json", rep)
     n_ok = sum(1 for v in vizier.values() if v["status"] == A.STATUS_OK)
     print(f"[uline] probe: JPL {jpl['status']} ({jpl['n_entries']} entries), CDMS {cdms['status']} "
-          f"({cdms.get('n_entries', 0)} entries), VizieR {n_ok}/{len(vizier)} sources usable")
+          f"({cdms.get('n_entries', 0)} entries), VizieR {n_ok}/{len(vizier)} sources usable, "
+          f"U-line census {uline_census.get('status')} "
+          f"({uline_census.get('n_tables', 0)} tables)")
     return rep
 
 
@@ -706,10 +731,19 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
     evaluated = [r for r in results.values() if r.get("status") == "OK"
                  and any(x.get("status") == "OK" for x in r.get("records", []))]
     patterns = [r for r in evaluated if (r.get("best") or {}).get("pattern")]
+    # A predicted frequency is only as good as its constants.  A pattern that
+    # rests on a `verify` line list (reconstructed constants, not a laboratory
+    # line list) is separated out BEFORE the verdict is written, so a
+    # reconstructed number can never be read as a candidate on the same
+    # footing as one from a catalogue.
+    patterns_lab = [r for r in patterns if not r.get("verify")]
+    patterns_verify = [r for r in patterns if r.get("verify")]
     if n_ulines == 0 or not evaluated:
         verdict = VERDICT_NO_DATA
-    elif patterns:
+    elif patterns_lab:
         verdict = VERDICT_PATTERN
+    elif patterns_verify:
+        verdict = VERDICT_PATTERN_VERIFY
     else:
         verdict = VERDICT_NONE
 
@@ -784,7 +818,10 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
                 for k, r in results.items()}
     summary = {
         "verdict": verdict, "generated_utc": _now(),
-        "n_pattern_candidates": len(patterns),
+        "n_pattern_candidates": len(patterns_lab),
+        "n_pattern_candidates_verify_constants": len(patterns_verify),
+        "pattern_candidates_verify_constants": [f"{r['species']}|{r['source']}"
+                                                for r in patterns_verify],
         "n_pairs_evaluated": len(evaluated), "n_pairs_total": len(results),
         "species_inventory": inventory,
         "targets_unsearchable": unsearchable,
@@ -797,11 +834,15 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
         "acquisition": {"acquire": acq.get("acquisition")},
         "note": ("PATTERN_CANDIDATE is a coincidence statement pending a line-by-line vet "
                  "(isotopologues, vibrational states, blends, instrumental features) and a "
-                 "matched-filter stack; NO_PATTERN is a count, not an abundance limit, and is "
-                 "not written up (CLAUDE.md); NO_DATA_REACHED says nothing about the sky"),
+                 "matched-filter stack; PATTERN_CANDIDATE_VERIFY_CONSTANTS rests on "
+                 "reconstructed, not laboratory, rotational constants and is a reason to obtain "
+                 "the laboratory line list, never a detection; NO_PATTERN is a count, not an "
+                 "abundance limit, and is not written up (CLAUDE.md); NO_DATA_REACHED says "
+                 "nothing about the sky"),
     }
     _write(out / "summary.json", summary)
-    print(f"[uline] assess: {verdict} — {len(patterns)} pattern(s) in {len(evaluated)} "
+    print(f"[uline] assess: {verdict} — {len(patterns_lab)} pattern(s) on laboratory line lists, "
+          f"{len(patterns_verify)} on verify constants, in {len(evaluated)} "
           f"species×source pairs, {n_ulines} U-lines")
     return summary
 
@@ -1063,7 +1104,8 @@ if __name__ == "__main__":                                    # pragma: no cover
 
 
 __all__ = ["DEFAULTS", "DEFAULT_STAGES", "STAGES", "VERDICT_NONE", "VERDICT_NO_DATA",
-           "VERDICT_PATTERN", "build_species_tables", "contaminant_lines", "load_uline_config",
+           "VERDICT_PATTERN", "VERDICT_PATTERN_VERIFY",
+           "build_species_tables", "contaminant_lines", "load_uline_config",
            "main", "screen_all", "source_from_table", "stage_acquire", "stage_assess",
            "stage_litfetch", "stage_probe", "stage_screen", "stage_validate", "uline_run",
            "validate_rotor"]

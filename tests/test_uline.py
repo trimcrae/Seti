@@ -1188,3 +1188,81 @@ def test_the_config_says_a_same_formula_alias_must_be_declared():
     raw = Path("config/uline.yaml").read_text()
     assert "MUST BE DECLARED HERE" in raw
     assert "glycolaldehyde" in raw and "isomer" in raw.lower()
+
+
+# ---------------------------------------------------------------------------
+# a `verify` line list may never, on its own, make a candidate
+# ---------------------------------------------------------------------------
+def _verify_screen(verify: bool) -> dict:
+    """A minimal screen report with exactly one PASSING species x source pair."""
+    best = {"tex_k": 50.0, "n_features_tested": 40, "n_coincident": 5,
+            "n_coincident_vetoed": 0, "spearman_rho": 0.8, "lte_testable": True,
+            "lte_pass": True, "top5_fraction_any": 1.0, "top5_fraction_uline": 1.0,
+            "p_false": 0.001, "p_false_full": 0.001, "n_trials": 1000, "pattern": True,
+            "tests": {"count": True, "lte": True, "top5": True, "p_false": True},
+            "coincident_freq_mhz": [1.0e5]}
+    return {"sources": {"synth": {"status": "OK", "n_ulines": 40, "has_intensity": True}},
+            "species_tables": {"SO2F2": {"group": "targets", "line_source": "rotor",
+                                         "databases": [], "n_lines": 400,
+                                         "predicted": True, "verify": verify}},
+            "results": {"SO2F2|synth": {"species": "SO2F2", "source": "synth",
+                                        "line_source": "rotor", "status": "OK",
+                                        "predicted": True, "verify": verify,
+                                        "records": [{"status": "OK"}], "best": best}},
+            "match": {}}
+
+
+def test_a_pattern_on_verify_constants_is_not_a_pattern_candidate(tmp_path):
+    """A predicted frequency is only as good as its constants.
+
+    Every rotor block in ``src/seti/data_assets/rotor_constants.yaml`` is
+    ``verify``: reconstructed from the literature, not read off a laboratory
+    line list.  A pattern resting on those frequencies alone is a reason to
+    obtain the laboratory list; it must never be counted alongside a candidate
+    found on a catalogued list.
+    """
+    conf = synth_conf()
+    s = stage_assess(conf, tmp_path, screen=_verify_screen(True), acquire_report={})
+    assert s["verdict"] == "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
+    assert s["n_pattern_candidates"] == 0
+    assert s["n_pattern_candidates_verify_constants"] == 1
+    assert s["pattern_candidates_verify_constants"] == ["SO2F2|synth"]
+    assert "reconstructed" in s["note"]
+    # the same pattern on a laboratory list IS a candidate
+    s2 = stage_assess(conf, tmp_path, screen=_verify_screen(False), acquire_report={})
+    assert s2["verdict"] == "PATTERN_CANDIDATE" and s2["n_pattern_candidates"] == 1
+    assert s2["n_pattern_candidates_verify_constants"] == 0
+
+
+# ---------------------------------------------------------------------------
+# the U-line census asks for U-LINES, not for everything unidentified
+# ---------------------------------------------------------------------------
+def test_the_uline_census_runs_once_on_its_own_phrases(tmp_path):
+    """Run 35039345593's census inherited the SOURCE's description terms
+    ("Orion", "IRC+10216", "line survey") and came back with 78 tables of which
+    ~70 were Orion star catalogues and Chandra "unidentified sources".  The
+    census now carries its own phrase list and runs once, not per source."""
+    conf = load_uline_config()
+    terms = conf["archives"]["uline_column_census_terms"]
+    assert "unidentified line" in terms and not any("rion" in t for t in terms)
+
+    seen: list[str] = []
+    base = _FakeTAP("ok", _raw_rows())
+
+    def query_fn(adql: str):
+        seen.append(adql)
+        if "TAP_SCHEMA.columns" in adql and "unidentified line" in adql:
+            return pd.DataFrame({
+                "table_name": ['"J/ApJ/787/112/table3"'],
+                "column_name": ["Note"],
+                "description": ["Unidentified line, peak T(MB)"]})
+        return base(adql)
+
+    rep = stage_probe(conf, tmp_path, fetch_fn=_FakeWeb(), query_fn=query_fn,
+                      sources=["orion_kl_hifi"])
+    census = rep["uline_column_census"]
+    assert census["status"] == "OK" and census["n_tables"] == 1
+    assert census["tables"][0]["table_name"] == "J/ApJ/787/112/table3"
+    # exactly ONE census query, and it asked TAP_SCHEMA.columns
+    asked = [a for a in seen if "unidentified line" in a]
+    assert len(asked) == 1 and "TAP_SCHEMA.columns" in asked[0]

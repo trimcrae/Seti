@@ -83,6 +83,25 @@ archives:
   # in probe.json as further U-line inventories; screened only once they have
   # a `sources:` entry with v_LSR and linewidth).
   discover_description_word: "nidentified"
+  # ---- THE U-LINE CENSUS -------------------------------------------------
+  # Run ONCE per probe over TAP_SCHEMA.COLUMNS (probe.json ->
+  # uline_column_census), not per source.  The per-source census inherited
+  # each source's own terms, so run 35039345593 came back with 78 tables of
+  # which ~70 were Orion STAR catalogues and Chandra "unidentified sources":
+  # the word "unidentified" alone does not mean a spectral line.  These are
+  # PHRASES that only a spectral U-line table's column description carries,
+  # which is what makes the census a list of U-line lists rather than a list
+  # of everything with an unknown counterpart.  It stays DIAGNOSTIC: a table
+  # found here is screened only after it is asserted under `sources:` with its
+  # own v_LSR, linewidth and verify note.
+  uline_column_census_terms:
+    - "unidentified line"
+    - "unidentified lines"
+    - "unidentified feature"
+    - "unidentified molecular"
+    - "unidentified transition"
+    - "U-line"
+    - "unidentified emission line"
 
 species:
   # ---- the industrial fluorine set (S54) ---------------------------------

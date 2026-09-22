@@ -221,6 +221,10 @@ jobs:
               print(f"::notice::{s.get('n_pairs_evaluated')} species×source pairs compared against {n} U-lines; no pattern. A COUNT, NOT AN ABUNDANCE LIMIT — see docs/uline.md.")
           if v == "PATTERN_CANDIDATE":
               print(f"::notice::{s.get('n_pattern_candidates')} PATTERN candidate(s) — PENDING line-by-line vet, see results/uline/candidates.csv and coincidences.csv")
+          if v == "PATTERN_CANDIDATE_VERIFY_CONSTANTS":
+              print("::warning::pattern(s) found ONLY on `verify` (reconstructed, not laboratory) "
+                    "constants: " + ", ".join(s.get("pattern_candidates_verify_constants") or [])
+                    + " — a reason to obtain the laboratory line list, NOT a candidate")
           if s.get("targets_with_predicted_frequencies"):
               print("::warning::predicted (placeholder-constant) frequencies used for: " + ", ".join(s["targets_with_predicted_frequencies"]))
           if s.get("targets_unsearchable"):

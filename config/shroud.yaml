@@ -202,6 +202,15 @@ crossmatch:
   # (spatial uniformity) that Watters et al. 2026 showed to be false.
   offset_null_arcsec: 45.0
   offset_null_realisations: 4
+  # The excess is also measured as a FUNCTION of radius, because one radius
+  # cannot separate a real counterpart population from the background: at 5"
+  # against AllWISE the matched subsample is chance-dominated by construction.
+  # Unrelated matches accumulate with the search area (chance fraction ~ r^2)
+  # while a genuine counterpart is already counted at the smallest radius, so
+  # a real population shows as an excess concentrated at small separation with
+  # a significance that PEAKS near the combined astrometric error.  Evidence
+  # only: the channel's selection radius stays radius_arcsec above.
+  excess_radii_arcsec: [1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
 
 proper_motion:
   # Largest proper motion searched for when testing "did it just move?".

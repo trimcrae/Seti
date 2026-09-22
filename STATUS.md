@@ -74,6 +74,17 @@ been spent re-learning a schema already committed. The new run's first job is
 `targets`. No `results/century/summary.json` exists yet; the channel has
 produced no sky statement.
 
+**71 % of the account's queue is CI, not science — and the fix is one merge
+per branch.** At 11:41 EDT there were **87 queued runs, 62 of them `ci`**.
+`ci.yml` on `main` has carried a `concurrency: ci-${{ github.ref }}` group with
+`cancel-in-progress` since commit 9e8e4696, so a branch that has merged `main`
+keeps at most one queued gate. A branch that has *not* accumulates one per
+push: `claude/goap-century` had **nine** sitting queued at once before this
+session merged `main` in and cancelled them by hand. Every builder whose
+branch predates 9e8e4696 is in the same position, and each stale gate is a
+runner slot a search is not getting. **Recommended for every branch: merge
+`origin/main`, then cancel that branch's superseded queued `ci` runs.**
+
 **A `needs:` edge costs a whole queue wait, not a job.** On a starved queue
 every job waits for a runner separately, so `full` (probe → targets → sweep →
 assess) pays four separate waits before a verdict. The `probe` job produces

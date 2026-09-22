@@ -10,6 +10,117 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### SPECTRA-PERSIST: the narrow lines meet their own exposures, 2026-09-22
+
+The 167 narrow-line survivors had only ever been seen in coadds. They have now been
+measured in the individual exposures that built those coadds — the test no coadded
+spectrum can provide. Three runs were needed, and the first two were measuring the
+estimator rather than the sky.
+
+**The systematic, twice.** Run 35738206630 returned `absent_in_exposures` for every SDSS
+survivor it reached, with combined significances of −2.2 to −9.2 σ. Genuine absence gives
+0. The local continuum was the *median* of an annulus, which has no slope term, and the
+annulus is sampled asymmetrically near the blue end of an SDSS exposure where these
+survivors sit. Replaced with a sigma-clipped linear fit — and run 35740672875 still came
+back at −2.6 to −10.9 σ for 15 of 17. A second continuum model was not going to settle
+it, so the estimator is now measured instead of modelled: `offset_null()` repeats the
+whole measurement at 24 random offsets of 12–200 Å **in the same spectrum**, and its
+median and MAD are subtracted from and divided into every exposure. `combined_sig` is now
+an excess over what that spectrum returns for nothing at all, and `combined_sig_raw`
+keeps the uncorrected number beside it.
+
+`stack_exposures()` adds the second reference: the inverse-variance mean of the exposure
+HDUs on the coadd's own grid, measured with the same estimator. The coadd is supposed to
+*be* that stack. A line the exposures are individually too noisy to show but whose own
+stack shows at ≥ 4 σ is now `stack_only` (OPEN), not `absent_in_exposures` (KILLED).
+
+**A run that split into two estimators.** The summary committed at 182b338e came from a
+reduce whose shards did not all run the same code: the jobs queued for up to 45 minutes
+and `actions/checkout` took the branch head at each job's start, so early shards used the
+median continuum and late ones the linear fit. The `ckpt_version` guard caught it — 36 of
+98 checkpoints ignored as stale — so nothing superseded entered the table, but 96 of 167
+lines went unmeasured. Shards now pin to `github.sha` and every checkpoint records the
+commit that measured it.
+
+**What the incomplete, uncalibrated run says** (`results/spectra_persist/summary.json`,
+62 of 141 spectra, `ckpt_version` 2): 106 lines killed by a rest-frame known line
+(including the two DESI "survivors" that were Balmer H11 and H12 at the star's own
+redshift), 53 `absent_in_exposures` — not to be believed until re-measured against the
+null — 13 `persistent`, and **6 `ALIVE_persistent_unidentified`**. Full table and
+per-candidate kill paths in [`docs/spectra-persist.md`](docs/spectra-persist.md).
+
+The strongest is **0412-51942-0465 at 6809.26 Å** (RA 47.488109, Dec +0.504935): an
+emission line of EW 6.3 Å present in all 5 exposures across two nights at 5.2–7.0 σ, with
+no sky-model line, only one candidate line in the whole spectrum, and **confirmed in a
+second epoch at 19.5 σ** with 8 further epochs available. The next is
+**3241-54884-0388 at 8578.28 Å**: 14 exposures over six nights, every one positive,
+χ²p = 0.76, EW 0.42–0.96 Å.
+
+**Why neither is a detection yet.** Both objects are stars, the first an M dwarf
+(SIMBAD `LM*`), and all six survivors lie between 6403 and 8578 Å — the part of the
+spectrum where the hand-kept OH list has gaps (it jumps from 6753.3 to 6863.9 Å) and the
+telluric bands, which the list did not carry at all, live. More to the point, **no test
+run so far can reject a feature of the spectral type itself**: a gap between TiO band
+heads in an M dwarf is in every exposure of that star and in every epoch of it. That is
+what `--stage control` is for — the same wavelength measured in 40 unrelated stars of the
+same type and in 40 stars of any type, which separates "this spectral type does this"
+from "the sky or the instrument does this" from "this object does this".
+
+**A contamination result that did not need a runner.** The triage stored the coadd window
+around its top 40 candidates and the full 350-candidate table, so two things could be
+measured offline while the queue was full.
+
+*The profiles are narrow, so the band-gap story is wrong.* Fitting the stored windows
+gives FWHM / LSF of 0.91 (6809.3), 1.10 (6856.5), 1.11 (6403.2), 1.13 (7490.3) and 0.52
+(6967.9) — two-to-three-pixel features on the local continuum, not the broad relative
+maxima a molecular band gap makes. 0.52 is narrower than the instrument can make, which
+is its own verdict. The triage's own `width_ratio` correlates with a profile fit at
+−0.17 across those 40 and should not be leaned on.
+
+*Unrelated sightlines share pixels more than chance allows.* A survey coadd is one common
+grid, so the same wavelength is the same pixel. Histogramming the pixel separation of
+every pair of candidates from different sightlines, and calibrating against separations
+of 3–10 pixels:
+
+| release | candidates | 0 px | baseline | excess |
+|---|---|---|---|---|
+| SDSS-DR17 | 166 | 21 | 9.75 | +11, z = 3.6 |
+| DESI-DR1 | 95 | 11 | 4.62 | +6, z = 3.0 |
+
+About one candidate in eight is on a shared pixel for an instrumental reason. The
+triage's recurrence cut needed *three* spectra within 3 Å, so pairs came through: 114 of
+the 350 triaged candidates are in an exact-wavelength pair, and 76 of the 167 survivors
+have another sightline within 3 Å. None of the six lines left standing is a 0-px
+coincidence; two have a neighbour one pixel away.
+
+*The triage's significance is not calibrated, and the candidates cluster on plates.*
+Persist measures the same line in the same coadd against the local scatter and gets a
+median of 0.34× the triage's number; 51 % of the 70 fall below 3 σ and 74 % below 5 σ.
+And plate 2333 (SEGUE, MJD 53682) alone contributes 11 of the 71 measured lines — every
+one below 3.3 σ once calibrated, with **two pairs of different fibres carrying a
+candidate at exactly the same wavelength** (3947.299 and 4357.125 Å). Different objects,
+same detector columns: a bad CCD column. Plate 3241 contributes 6. The strongest
+candidate's plate, 0412, contributes exactly one — 6809.261 itself — and 8578.276 has
+more than twice the coadd significance of any of its five plate-mates. Both survivors
+look structurally different from the contaminated bulk, which is the first thing in this
+channel that has argued *for* them rather than against.
+
+*And the leading explanation for the strongest line is now a background galaxy.*
+`galaxy_reject` tests the candidate LIST: it needs two surviving candidates in one
+spectrum at one redshift. A galaxy whose Hα clears the 8 σ search threshold while its
+[N II] does not leaves exactly one candidate and passes — and 0412-51942-0465 has
+`n_lines_in_spectrum` = 1. Asking the *spectrum* instead, at the redshift that makes
+6809.26 Å Hα (z = 0.037268), [N II] 6584 is already present at 6830.69 Å at 2.0 σ with an
+equivalent-width ratio of 0.23, which is textbook star-forming. The decisive lines lie
+outside the window the triage stored: Hβ at 5043.9 Å and [O III] 5008 at 5194.9 Å. If
+either reaches 4 σ, the persistence, the second epoch and the unresolved width are all
+explained at once — a real source in the fibre, just not the star.
+
+Next: land the calibrated full run (35747997902), then the control sample on whatever is
+still standing (35751666444). For the strongest candidate the four live kill paths are
+the background-galaxy family at z = 0.0373, how many *distinct fibres* its eight "other
+epochs" actually are, the same-plate control (a bad column in plate 412's red camera
+would produce everything seen so far), and the same-type control.
 ### CENTURY (S50) — the probe came back, and three of its four answers were corrections, 2026-09-22
 
 The first live DASCH DR7 exchange in this repository (run 35738717013) reached

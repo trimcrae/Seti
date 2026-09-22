@@ -228,17 +228,30 @@ def resolve_names(columns: list[str], want: dict[str, list[str]]) -> tuple[dict,
 # ---------------------------------------------------------------------------
 def fetch_unit(conf: dict, unit: dict, fn, *, shapes: tuple[str, ...] | list[str] = JOINED_SHAPES,
                count: bool = True, max_level: int | None = None,
-               ledger: list | None = None) -> tuple[pd.DataFrame, dict]:
+               ledger: list | None = None,
+               deadline: float | None = None) -> tuple[pd.DataFrame, dict]:
     """One HEALPix unit over the shape ladder; timed-out units split recursively.
 
     Returns ``(rows, record)``.  ``record["status"]`` is ``OK`` /
     ``QUERY_RETURNED_ZERO_ROWS`` / ``QUERY_FAILED`` / ``PARTIAL`` (some children
     failed); ``record["n_parent"]`` is the Gaia-only ``COUNT(*)`` when measured.
+
+    ``deadline`` is a :func:`time.monotonic` instant that bounds the whole unit,
+    recursion included.  Without it one pathological level-3 pixel can cost
+    ``1 + 4 + 16 + 64`` queries at ``query_timeout_s`` each --- 28 h at the
+    configured 1200 s --- which is longer than the job it is running in, so the
+    shard would lose every unit it had not yet reached.  Past the deadline the
+    split is abandoned and the record carries ``deadline_exceeded``.
     """
     c = {**DEFAULT_SAMPLE, **(conf or {})}
     max_level = int(c.get("healpix_split_max_level", 6) if max_level is None else max_level)
     label = unit_label(unit)
     rec: dict = {"unit": dict(unit), "label": label, "attempts": [], "children": []}
+    if deadline is not None and _time.monotonic() > deadline:
+        rec.update(status=STATUS_FAILED, n_rows=0, deadline_exceeded=True)
+        if ledger is not None:
+            ledger.append({k: v for k, v in rec.items() if k != "children"})
+        return pd.DataFrame(), rec
     if count:
         cdf, crec = ask(fn, build_query(c, unit=unit, shape=SHAPE_GAIA_ONLY, count_only=True),
                         label=f"count_{label}", service=GAIA_TAP)
@@ -248,6 +261,9 @@ def fetch_unit(conf: dict, unit: dict, fn, *, shapes: tuple[str, ...] | list[str
         rec["n_parent"] = None
     last_status = STATUS_FAILED
     for sh in shapes:
+        if deadline is not None and _time.monotonic() > deadline:
+            rec["deadline_exceeded"] = True
+            break
         df, qrec = ask(fn, build_query(c, unit=unit, shape=sh), label=f"{label}:{sh}",
                        service=GAIA_TAP)
         rec["attempts"].append({"shape": sh, **{k: qrec.get(k) for k in
@@ -271,7 +287,9 @@ def fetch_unit(conf: dict, unit: dict, fn, *, shapes: tuple[str, ...] | list[str
         n_fail = 0
         for child in unit_children(unit):
             cdf, crec = fetch_unit(c, child, fn, shapes=shapes, count=False,
-                                   max_level=max_level, ledger=ledger)
+                                   max_level=max_level, ledger=ledger, deadline=deadline)
+            if crec.get("deadline_exceeded"):
+                rec["deadline_exceeded"] = True
             kids.append({k: crec.get(k) for k in ("label", "status", "n_rows", "shape")})
             if crec.get("status") in (STATUS_OK, STATUS_ZERO):
                 if len(cdf):

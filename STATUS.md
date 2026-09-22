@@ -283,6 +283,21 @@ and at 14:58 EDT-4 (2026-09-22T14:58Z) commit `05df5117` pushed that over the
 `HEAD` holds no sampled one; otherwise the results are checked back out and the
 empty attempt is kept beside them as `summary_attempt.json`.
 
+**The probe ladder has no ceiling, and it is eating the run.** Run
+35741075121 entered "Retrieve the sample by every route" at 11:09 EDT and was
+still in that one step **two hours later**; the same step took 13 minutes in
+run 35738062833. What changed between them is the RegTAP route: the SVO probe
+walks (configured roots + registry roots + roots scraped from an index page)
+x 5 URL forms, each a 25 s timeout against a host dead at the TCP level in
+every run this channel has ever made — and the number of roots is contributed
+by the registry and by a page scrape, not by this channel, so the cost has no
+upper bound. The cost lands on exactly the wrong route:
+`reconstruct_from_usnob1` is handed `max(deadline - elapsed, 60)`, so the only
+route that can restore the channel's scale gets 60 seconds in the limit.
+Fixed for the next dispatch (`acquire.svo_probe_budget_s` = 600 s, also capped
+at 25% of the remaining deadline, reporting `budget_exhausted` with the count
+of roots not tried); the fix is *not* in the run now in flight.
+
 **In flight.** Run **35741075121** (dispatched 10:32 EDT, started 11:07 EDT)
 is the first to carry the column fix, so it is the first that *can* return a
 non-zero `n_poss1_red_only`. The decisive number to read from it is
@@ -293,9 +308,17 @@ from a source that does not depend on SVO being alive. Runs 35738062833 and
 35740203590 were cancelled as superseded.
 
 **Not yet measured:** the current summary's zeros for IR presence come from a
-photometry job that never ran, not from a search that found nothing — the
-funnel says so (`2c_no_modern_catalogue_covered_the_position = 127`). No
-survivor stands as of this entry.
+photometry job that never ran, not from a search that found nothing. That
+distinction is now carried explicitly — `summary.json:photometry_reached`
+names which catalogues answered and `degraded_reason` spells out what each
+zero does and does not mean, with `REPORT.md` leading on it rather than on the
+funnel. No survivor stands as of this entry.
+
+**Runner-version gate.** Per the repo-wide pandas warning, both shroud suites
+(96 tests) were run against a throwaway venv holding **pandas 3.0.6 / numpy
+2.4.6 / astropy 8.0.1** — what the runner installs, not the sandbox's pandas
+2.3.3 — and pass unchanged. The channel uses no removed API; `np.trapz` was
+already behind a `getattr(np, "trapezoid", ...)` fallback.
 
 ### LANTERN: the reader and the phase are fixed, and the sensitivity floor was not photon noise, 2026-09-22
 

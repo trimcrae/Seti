@@ -1116,6 +1116,11 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
                                         or r.get("cess_status_screen") == "cessation"),
         "n_cess_candidates_confirmed": cnt(lambda r: r.get("cess_status") == "cessation"),
         "n_fade_testable": cnt(lambda r: r.get("fade_status") not in ("insufficient_data", None)),
+        # Whether a star's fade was judged against the FIELD's own plate history
+        # or only against its own.  Without the ensemble the gauntlet falls back
+        # to the raw fade, so this is the number that says which of
+        # n_fade_candidates_raw / _corrected the verdict actually rests on.
+        "n_ensemble_applied": cnt(lambda r: bool(r.get("ensemble_applied"))),
         "n_fade_candidates_raw": cnt(lambda r: bool(r.get("fade_is_fade"))),
         "n_fade_candidates_corrected": cnt(lambda r: bool(r.get("fade_corr_is_fade"))),
         "n_fade_naive_trend_was_gap": cnt(lambda r: "naive_trend_was_the_gap"

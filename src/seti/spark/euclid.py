@@ -544,3 +544,154 @@ def stars_with_spectra(spec_objs: pd.DataFrame, gaia: pd.DataFrame, conf: dict) 
     matched["gaia_source_id"] = g["source_id"].to_numpy()[idx[ok]] if "source_id" in g else idx[ok]
     matched["gaia_sep_arcsec"] = sep[ok]
     return int(matched["gaia_source_id"].nunique()), matched
+
+
+# --------------------------------------------------------------------------
+# The survivor vet: the slitless neighbour, from the archive's own catalogues
+# --------------------------------------------------------------------------
+# A Gaia neighbour test cannot see a faint galaxy sitting on the star's trace,
+# and an overlapping trace is the dominant slitless systematic (docs/roman.md
+# §2.2).  The vet asks the Euclid catalogues themselves, and only about
+# survivors, so its cost is bounded however large the search was.
+
+def _as_int(x):
+    try:
+        return int(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def neighbour_box_adql(tables: dict, roles_mer: dict, ra: float, dec: float, *,
+                       along_arcsec: float, across_arcsec: float, top: int = 4000) -> str:
+    """MER sources in a box around a survivor: ``along`` in RA, ``across`` in Dec."""
+    ra_col, dec_col = roles_mer["ra"], roles_mer["dec"]
+    dd = float(across_arcsec) / 3600.0
+    dr = float(along_arcsec) / 3600.0 / max(math.cos(math.radians(float(dec))), 1e-3)
+    cols = ", ".join([f"m.{c} AS m_{r}" for r, c in roles_mer.items() if c])
+    return (f"SELECT TOP {int(top)} {cols} FROM {tables['mer']} m "
+            f"WHERE m.{dec_col} BETWEEN {float(dec) - dd:.6f} AND {float(dec) + dd:.6f} "
+            f"AND {_ra_clause('m.' + ra_col, float(ra) - dr, float(ra) + dr)}")
+
+
+def _id_list(ids, limit: int = 400) -> str:
+    out = []
+    for x in list(ids)[:limit]:
+        v = _as_int(x)
+        if v is not None:
+            out.append(str(v))
+    return ", ".join(out)
+
+
+def neighbour_z_adql(spectra_table: str, roles_spec: dict, object_ids) -> str:
+    """Whatever the SPE redshift catalogue says about a list of neighbour objects."""
+    cols = ", ".join([f"s.{c} AS s_{r}" for r, c in roles_spec.items() if c])
+    return (f"SELECT {cols} FROM {spectra_table} s "
+            f"WHERE s.{roles_spec['object_id']} IN ({_id_list(object_ids)})")
+
+
+def neighbour_line_adql(lines_table: str, roles_line: dict, object_ids, wl_lo: float, wl_hi: float) -> str:
+    """Line features of the neighbours inside the survivor's own wavelength window."""
+    cols = ", ".join([f"l.{c} AS l_{r}" for r, c in roles_line.items() if c])
+    return (f"SELECT {cols} FROM {lines_table} l "
+            f"WHERE l.{roles_line['object_id']} IN ({_id_list(object_ids)}) "
+            f"AND l.{roles_line['wl']} BETWEEN {float(wl_lo):.6f} AND {float(wl_hi):.6f}")
+
+
+def classify_neighbours(survivor: dict, nbrs: pd.DataFrame, conf: dict, *,
+                        z_rows: pd.DataFrame | None = None,
+                        line_rows: pd.DataFrame | None = None,
+                        wavelength_scale: float = 1.0) -> dict:
+    """What the neighbourhood of one survivor contains.  Pure.
+
+    ``nbrs`` are MER rows (``m_*`` columns) in the box; ``z_rows`` their SPE
+    redshifts (``s_*``); ``line_rows`` their own line features near the
+    survivor's wavelength (``l_*``, in the table's unit, scaled to microns by
+    ``wavelength_scale``).  Returns the counts and two vetoes:
+
+    ``neighbour_trace_overlap``  a MER source inside the dispersion corridor or
+                                 the blend radius carrying at least
+                                 ``vet_neighbour_flux_ratio`` of the star's H flux;
+    ``neighbour_line_at_z``      a neighbour whose catalogued redshift puts a
+                                 galaxy line at the survivor's observed
+                                 wavelength, or which carries a feature at the
+                                 same wavelength itself.
+    """
+    c = conf
+    out: dict = {"n_mer_in_box": int(len(nbrs)), "n_in_blend_radius": 0, "n_in_corridor": 0,
+                 "neighbour_trace_overlap": False, "neighbour_line_at_z": False,
+                 "offenders": [], "z_matches": []}
+    lam = float(survivor.get("wl_um", np.nan))
+    if not len(nbrs):
+        return out
+    d = nbrs.copy()
+    d.columns = [str(x).lower() for x in d.columns]
+    ra0, dec0 = float(survivor["ra"]), float(survivor["dec"])
+    ra = pd.to_numeric(d.get("m_ra"), errors="coerce").to_numpy(float)
+    dec = pd.to_numeric(d.get("m_dec"), errors="coerce").to_numpy(float)
+    oid = d.get("m_object_id")
+    sep = sep_arcsec(ra0, dec0, ra, dec)
+    dra = (ra - ra0) * 3600.0 * math.cos(math.radians(dec0))
+    ddec = (dec - dec0) * 3600.0
+    self_row = sep < 0.4
+    in_blend = (~self_row) & (sep <= float(c.get("blend_radius_arcsec", 6.0)))
+    in_corr = ((~self_row) & (np.abs(ddec) <= float(c.get("dispersion_neighbour_halfwidth_arcsec", 3.0)))
+               & (np.abs(dra) <= float(c.get("dispersion_neighbour_radius_arcsec", 140.0))))
+    out["n_in_blend_radius"] = int(in_blend.sum())
+    out["n_in_corridor"] = int(in_corr.sum())
+    fh = (pd.to_numeric(d.get("m_flux_h"), errors="coerce").to_numpy(float) if "m_flux_h" in d
+          else np.full(len(d), np.nan))
+    f0 = float(fh[self_row][0]) if (self_row.any() and np.isfinite(fh[self_row]).any()) else np.nan
+    ratio_min = float(c.get("vet_neighbour_flux_ratio", 0.1))
+    bright = (np.isfinite(fh) & (fh >= ratio_min * f0)) if np.isfinite(f0) else np.isfinite(fh)
+    hit = (in_blend | in_corr) & bright
+    out["neighbour_trace_overlap"] = bool(hit.any())
+    for j in np.where(hit)[0][:10]:
+        out["offenders"].append({
+            "object_id": None if oid is None else _as_int(oid.iloc[j]),
+            "sep_arcsec": round(float(sep[j]), 2),
+            "d_ra_arcsec": round(float(dra[j]), 2), "d_dec_arcsec": round(float(ddec[j]), 2),
+            "flux_h": None if not np.isfinite(fh[j]) else float(fh[j]),
+            "flux_ratio": (None if not (np.isfinite(fh[j]) and np.isfinite(f0) and f0)
+                           else round(float(fh[j] / f0), 3)),
+            "in_corridor": bool(in_corr[j]), "in_blend_radius": bool(in_blend[j])})
+    near = set()
+    if oid is not None:
+        near = {_as_int(x) for x in oid[in_blend | in_corr].tolist()} - {None}
+    if z_rows is not None and len(z_rows) and np.isfinite(lam):
+        z = z_rows.copy()
+        z.columns = [str(x).lower() for x in z.columns]
+        zid = z.get("s_object_id")
+        zz = pd.to_numeric(z.get("s_spe_z"), errors="coerce").to_numpy(float)
+        # dλ = λ·dz/(1+z); never tighter than one resolution element, since two
+        # rest lines closer than that are one feature in this spectrograph
+        tol_um = max(float(c.get("redshift_z_tol", 0.003)) * lam,
+                     lam / float(c.get("resolving_power", 450.0)))
+        for k in range(len(z)):
+            if zid is not None and _as_int(zid.iloc[k]) not in near:
+                continue
+            if not np.isfinite(zz[k]):
+                continue
+            best, best_d = None, math.inf
+            for ln in L.GALAXY_LINES:
+                d_um = abs(ln.um * (1.0 + zz[k]) - lam)
+                if d_um <= tol_um and d_um < best_d:
+                    best, best_d = ln, d_um
+            if best is not None:
+                out["z_matches"].append({"object_id": None if zid is None else _as_int(zid.iloc[k]),
+                                         "z": round(float(zz[k]), 5), "line": best.name,
+                                         "lambda_obs_um": round(float(best.um * (1.0 + zz[k])), 5),
+                                         "delta_resel": round(float(best_d / (lam / float(c.get("resolving_power", 450.0)))), 2)})
+    if line_rows is not None and len(line_rows) and np.isfinite(lam):
+        lr = line_rows.copy()
+        lr.columns = [str(x).lower() for x in lr.columns]
+        lid = lr.get("l_object_id")
+        wl = pd.to_numeric(lr.get("l_wl"), errors="coerce").to_numpy(float) * float(wavelength_scale)
+        res = lam / float(c.get("resolving_power", 450.0))
+        for k in range(len(lr)):
+            if lid is not None and _as_int(lid.iloc[k]) not in near:
+                continue
+            if np.isfinite(wl[k]) and abs(wl[k] - lam) <= res:
+                out["z_matches"].append({"object_id": None if lid is None else _as_int(lid.iloc[k]),
+                                         "same_wavelength_feature_um": round(float(wl[k]), 5)})
+    out["neighbour_line_at_z"] = bool(out["z_matches"])
+    return out

@@ -527,6 +527,39 @@ def _match_controls(cfg: dict, panels: list[dict]) -> list[dict]:
     return out
 
 
+def _p_distribution(misfit_df: pd.DataFrame) -> dict:
+    """Is the calibrated misfit p CALIBRATED?  The one statistic the list rests on.
+
+    Each object's p is the fraction of its own natural draws that fit worse
+    than it does.  If the natural model is adequate for the population, those
+    p values are roughly uniform on (0, 1].  A pile-up at low p means the
+    model is too rigid for *everyone* --- the "unexplainable" list would then
+    be a statement about the model, not about any star --- and a pile-up at
+    high p means it is too loose to reject anything.  Both are reported; the
+    Kolmogorov-Smirnov distance from uniform is the summary number.
+    """
+    if not len(misfit_df) or "p_misfit" not in misfit_df:
+        return {"n": 0}
+    p = np.sort(misfit_df["p_misfit"].to_numpy(dtype=float))
+    p = p[np.isfinite(p)]
+    n = len(p)
+    if n == 0:
+        return {"n": 0}
+    ks = float(np.max(np.abs(np.arange(1, n + 1) / n - p))) if n else float("nan")
+    return {
+        "n": int(n),
+        "quantiles": {q: float(np.quantile(p, q / 100.0)) for q in (5, 25, 50, 75, 95)},
+        "fraction_below_0.01": float(np.mean(p < 0.01)),
+        "fraction_below_0.05": float(np.mean(p < 0.05)),
+        "fraction_below_0.50": float(np.mean(p < 0.50)),
+        "ks_distance_from_uniform": ks,
+        "expected_below_0.05_if_uniform": 0.05,
+        "note": "roughly uniform p means the natural model is neither too rigid nor too "
+                "loose for the population; a pile-up at low p is a statement about the "
+                "model, not about any star",
+    }
+
+
 def _count_by(rows: list[dict], key: str) -> dict:
     out: dict = {}
     for r in rows:
@@ -714,6 +747,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
                    "flags_fired": int(flags_df["fired"].sum()) if len(flags_df) else 0,
                    "candidates_before_kills": len(cand), "candidates_surviving": len(survivors),
                    "kills": kill_counts},
+        "misfit_p_distribution": _p_distribution(misfit_df),
         "pair_statistics": pair_stats,
         "misfit_list_top": misfit_df.head(25).to_dict("records") if len(misfit_df) else [],
         "survivors": survivors,

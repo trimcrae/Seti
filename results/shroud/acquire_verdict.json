@@ -1,6 +1,29 @@
 {
-  "verdict": "VIZIER_FALLBACK",
+  "verdict": "VO_ARCHIVE",
   "routes": [
+    {
+      "route": "registry_regtap_discovery",
+      "url": "",
+      "status": "ok",
+      "n_rows": 12,
+      "attempts": [
+        {
+          "url": "https://reg.g-vo.org/tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&MAXREC=2000&QUERY=SELECT+DISTINCT+ivoid%2C+short_name%2C+res_title%2C+access_url%2C+standard_id+FROM+rr.resource+NATURAL+JOIN+rr.capability+NATURAL+JOIN+rr.interface+WHERE+res_title+LIKE+%27%25anish%25%27+OR+res_title+LIKE+%27%25VASCO%25%27+OR+res_description+LIKE+%27%25VASCO%25%27+OR+res_description+LIKE+%27%25anishing%25%27+OR+ivoid+LIKE+%27%25vanish%25%27+OR+ivoid+LIKE+%27%25vasco%25%27",
+          "ok": false,
+          "detail": "URLError: <urlopen error [Errno 111] Connection refused> (0.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "http://dc.g-vo.org/tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&MAXREC=2000&QUERY=SELECT+DISTINCT+ivoid%2C+short_name%2C+res_title%2C+access_url%2C+standard_id+FROM+rr.resource+NATURAL+JOIN+rr.capability+NATURAL+JOIN+rr.interface+WHERE+res_title+LIKE+%27%25anish%25%27+OR+res_title+LIKE+%27%25VASCO%25%27+OR+res_description+LIKE+%27%25VASCO%25%27+OR+res_description+LIKE+%27%25anishing%25%27+OR+ivoid+LIKE+%27%25vanish%25%27+OR+ivoid+LIKE+%27%25vasco%25%27",
+          "ok": true,
+          "detail": "HTTP 200 (6542 B, 1.6s)",
+          "n_rows": 39
+        }
+      ],
+      "notes": [
+        "registry rows: J/A+A/318/416 [tap#aux] https://tapvizier.cds.unistra.fr/TAPVizieR/tap; J/A+A/318/416 [nan] https://vizier.cds.unistra.fr/viz-bin/VizieR-2?-source=J/A+A/318/416; J/A+A/318/416 [nan] https://vizier.cds.unistra.fr/viz-bin/votable?-source=J/A+A/318/416; J/A+A/566/A37 [tap#aux] https://tapvizier.cds.unistra.fr/TAPVizieR/tap; J/A+A/566/A37 [nan] https://vizier.cds.unistra.fr/viz-bin/VizieR-2?-source=J/A+A/566/A37; J/A+A/566/A37 [conesearch] https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3?; J/A+A/566/A37 [conesearch] https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4?; J/A+A/566/A37 [conesearch] https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5?; J/A+A/566/A37 [nan] https://vizier.cds.unistra.fr/viz-bin/votable?-source=J/A+A/566/A37; J/A+AS/126/373 [tap#aux] https://tapvizier.cds.unistra.fr/TAPVizieR/tap; J/A+AS/126/373 [nan] https://vizier.cds.unistra.fr/viz-bin/VizieR-2?-source=J/A+AS/126/373; J/A+AS/126/373 [nan] https://vizier.cds.unistra.fr/viz-bin/votable?-source=J/A+AS/126/373"
+      ]
+    },
     {
       "route": "discover_vo_archive:vanish_neowise",
       "url": "",
@@ -16,7 +39,7 @@
         {
           "url": "http://svocats.cab.inta-csic.es/",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "URLError: <urlopen error timed out> (25.1s)",
           "n_rows": 0
         },
         {
@@ -34,13 +57,13 @@
         {
           "url": "http://svo2.cab.inta-csic.es/vocats/v2/",
           "ok": false,
-          "detail": "HTTP 403 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>403 Forbidden</title> </head><body> <h1>Forbidden</h1> <p>You don't have permission to access /vocats/v2/ on this server.</p> </b",
+          "detail": "HTTP 403 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>403 Forbidden</title> </head><body> <h1>Forbidden</h1> <p>You don't have permission to access /vocats/v2/ on this server.</p> </b",
           "n_rows": 0
         },
         {
           "url": "http://svo2.cab.inta-csic.es/vocats/v2/index.php",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/index.php was not found on this server.</p",
+          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/index.php was not found on this server.</p",
           "n_rows": 0
         },
         {
@@ -52,7 +75,7 @@
         {
           "url": "http://svo2.cab.inta-csic.es/theory/vosa/",
           "ok": true,
-          "detail": "HTTP 200 (9867 B, 0.4s)",
+          "detail": "HTTP 200 (9867 B, 0.3s)",
           "n_rows": 0
         }
       ],
@@ -60,277 +83,307 @@
     },
     {
       "route": "probe_svo:vanish_neowise",
-      "url": "",
-      "status": "unreachable",
+      "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+      "status": "ok",
       "n_rows": 0,
       "attempts": [
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-neowise/",
-          "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 1.1s)",
           "n_rows": 0
         },
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-neowise/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "HTTP 200 (2607 B, 1.2s)",
           "n_rows": 0
         },
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-neowise?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "HTTP 200 (9252 B, 1.2s)",
           "n_rows": 0
         },
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-neowise/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "HTTP 200 (2595 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-neowise/",
-          "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-neowise/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "detail": "HTTP 200 (2607 B, 1.2s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-neowise?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "detail": "HTTP 200 (9225 B, 1.1s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-neowise/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "detail": "HTTP 200 (2595 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise/ was not found on this serv",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise/cs.php was not found on thi",
+          "detail": "HTTP 200 (2607 B, 1.4s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise was not found on this serve",
+          "detail": "HTTP 200 (7774 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise/cs was not found on this se",
+          "detail": "HTTP 200 (2595 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-neowise/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-neowise/ was not found on this server.",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-neowise/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-neowise/cs.php was not found on this s",
+          "detail": "HTTP 200 (2598 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-neowise?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-neowise was not found on this server.<",
+          "detail": "HTTP 200 (5806 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-neowise/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-neowise/cs was not found on this serve",
+          "detail": "HTTP 200 (2586 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise/",
-          "ok": false,
-          "detail": "HTTP 404 (0.7s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise/ was not found on this serv",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.6s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.8s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise/cs.php was not found on thi",
+          "detail": "HTTP 200 (2598 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.8s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise was not found on this serve",
+          "detail": "HTTP 200 (5555 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.7s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-neowise/cs was not found on this se",
+          "detail": "HTTP 200 (2586 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-neowise/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-neowise/ was not found on this server",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-neowise/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-neowise/cs.php was not found on this ",
+          "detail": "HTTP 200 (2616 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-neowise?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-neowise was not found on this server.",
+          "detail": "HTTP 200 (12128 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-neowise/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-neowise/cs was not found on this serv",
+          "detail": "HTTP 200 (2604 B, 1.0s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_neowise/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_neowise/ was not found on this serv",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_neowise/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_neowise/cs.php was not found on thi",
+          "detail": "HTTP 200 (2615 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_neowise?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_neowise was not found on this serve",
+          "detail": "HTTP 200 (9980 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_neowise/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_neowise/cs was not found on this se",
+          "detail": "HTTP 200 (2603 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish/",
-          "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish/ was not found on this server.</p> ",
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/",
+          "ok": true,
+          "detail": "HTTP 200 (20235 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish/cs.php was not found on this server",
+          "detail": "HTTP 501 (0.6s) <?xml version=\"1.0\" encoding=\"utf-8\"?> <VOTABLE version=\"1.3\" xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.ivoa.net",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish was not found on this server.</p> <",
+          "detail": "HTTP 500 (0.4s) <!doctype html><html lang=\"fr\"><head><title>\u00c9tat HTTP 500 \u2013 Erreur interne du serveur</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-co",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish/cs was not found on this server.</p",
+          "detail": "HTTP 501 (0.6s) <?xml version=\"1.0\" encoding=\"utf-8\"?> <VOTABLE version=\"1.3\" xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.ivoa.net",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vasco/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vasco/ was not found on this server.</p> <",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/",
+          "ok": true,
+          "detail": "HTTP 200 (43048 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vasco/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vasco/cs.php was not found on this server.",
+          "detail": "HTTP 200 (9636 B, 0.6s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vasco?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vasco was not found on this server.</p> </",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vasco/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vasco/cs was not found on this server.</p>",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanishing/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanishing/ was not found on this server.</",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanishing/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanishing/cs.php was not found on this ser",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanishing?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanishing was not found on this server.</p",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanishing/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanishing/cs was not found on this server.",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/poss1/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/poss1/ was not found on this server.</p> <",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/poss1/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/poss1/cs.php was not found on this server.",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/poss1?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/poss1 was not found on this server.</p> </",
-          "n_rows": 0
-        },
-        {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/poss1/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
-          "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/poss1/cs was not found on this server.</p>",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "ok": true,
+          "detail": "HTTP 200 (43292 B, 0.9s)",
           "n_rows": 0
         }
       ],
       "notes": [
-        "no root for 'vanish_neowise' answered a cone search"
+        "links on https://vizier.cds.unistra.fr/viz-bin/VizieR-2/: ['https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/aladin.xml', 'https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/simbad.xml', 'https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/vizier.xml', 'https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/xmatch.xml']"
+      ]
+    },
+    {
+      "route": "fetch_svo:vanish_neowise",
+      "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2",
+      "status": "ok",
+      "n_rows": 10458,
+      "attempts": [
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9636 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (43296 B, 0.9s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9632 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9636 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (43342 B, 0.8s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9632 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=votable",
+          "ok": false,
+          "detail": "HTTP 200 (9636 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=votable",
+          "ok": false,
+          "detail": "HTTP 200 (43298 B, 0.8s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=votable",
+          "ok": false,
+          "detail": "HTTP 200 (9632 B, 0.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=3&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9636 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=3&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (43296 B, 0.9s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=3&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9632 B, 0.6s)",
+          "n_rows": 0
+        }
+      ],
+      "notes": [
+        "whole-sky dump refused; falling back to a band sweep",
+        "WARNING: row count 10458 differs from the published 171753 by 93.9% - the fetch may be truncated or the archive changed"
       ]
     },
     {
@@ -342,25 +395,25 @@
         {
           "url": "https://svo.cab.inta-csic.es/docs/index.php?pagename=Archives",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "URLError: <urlopen error timed out> (25.1s)",
           "n_rows": 0
         },
         {
           "url": "http://svocats.cab.inta-csic.es/",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "URLError: <urlopen error timed out> (25.1s)",
           "n_rows": 0
         },
         {
           "url": "http://svo2.cab.inta-csic.es/vocats/",
           "ok": false,
-          "detail": "HTTP 403 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>403 Forbidden</title> </head><body> <h1>Forbidden</h1> <p>You don't have permission to access /vocats/ on this server.</p> </body",
+          "detail": "HTTP 403 (0.5s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>403 Forbidden</title> </head><body> <h1>Forbidden</h1> <p>You don't have permission to access /vocats/ on this server.</p> </body",
           "n_rows": 0
         },
         {
           "url": "http://svo2.cab.inta-csic.es/",
           "ok": true,
-          "detail": "HTTP 200 (42 B, 0.3s)",
+          "detail": "HTTP 200 (42 B, 0.4s)",
           "n_rows": 0
         },
         {
@@ -384,7 +437,7 @@
         {
           "url": "http://svo2.cab.inta-csic.es/theory/vosa/",
           "ok": true,
-          "detail": "HTTP 200 (9867 B, 0.4s)",
+          "detail": "HTTP 200 (9867 B, 0.3s)",
           "n_rows": 0
         }
       ],
@@ -392,181 +445,307 @@
     },
     {
       "route": "probe_svo:vanish_possi",
-      "url": "",
-      "status": "unreachable",
+      "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+      "status": "ok",
       "n_rows": 0,
       "attempts": [
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-possi/",
-          "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-possi/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "detail": "HTTP 200 (2607 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-possi?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "HTTP 200 (9252 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "http://svocats.cab.inta-csic.es/vanish-possi/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.0s)",
+          "detail": "HTTP 200 (2595 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-possi/",
-          "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.6s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-possi/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "detail": "HTTP 200 (2607 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-possi?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "detail": "HTTP 200 (9225 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "https://svocats.cab.inta-csic.es/vanish-possi/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "URLError: <urlopen error timed out> (25.1s)",
+          "detail": "HTTP 200 (2595 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi/ was not found on this server",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.6s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi/cs.php was not found on this ",
+          "detail": "HTTP 200 (2607 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi was not found on this server.",
+          "detail": "HTTP 200 (7774 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi/cs was not found on this serv",
+          "detail": "HTTP 200 (2595 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-possi/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-possi/ was not found on this server.</",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.6s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-possi/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-possi/cs.php was not found on this ser",
+          "detail": "HTTP 200 (2598 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-possi?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-possi was not found on this server.</p",
+          "detail": "HTTP 200 (5806 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/vanish-possi/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/vanish-possi/cs was not found on this server.",
+          "detail": "HTTP 200 (2586 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-possi/",
-          "ok": false,
-          "detail": "HTTP 404 (0.7s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi/ was not found on this server",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.7s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-possi/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.8s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi/cs.php was not found on this ",
+          "detail": "HTTP 200 (2598 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-possi?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.8s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi was not found on this server.",
+          "detail": "HTTP 200 (5555 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "https://svo2.cab.inta-csic.es/vocats/v2/vanish-possi/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.7s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish-possi/cs was not found on this serv",
+          "detail": "HTTP 200 (2586 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-possi/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-possi/ was not found on this server.<",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.6s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-possi/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-possi/cs.php was not found on this se",
+          "detail": "HTTP 200 (2616 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-possi?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-possi was not found on this server.</",
+          "detail": "HTTP 200 (12128 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/svocats/vanish-possi/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.3s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /svocats/vanish-possi/cs was not found on this server",
+          "detail": "HTTP 200 (2604 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_possi/",
-          "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_possi/ was not found on this server",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs/",
+          "ok": true,
+          "detail": "HTTP 200 (671 B, 0.6s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_possi/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_possi/cs.php was not found on this ",
+          "detail": "HTTP 200 (2615 B, 0.9s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_possi?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_possi was not found on this server.",
+          "detail": "HTTP 200 (9980 B, 0.8s)",
           "n_rows": 0
         },
         {
-          "url": "http://svo2.cab.inta-csic.es/vocats/v2/vanish_possi/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
           "ok": false,
-          "detail": "HTTP 404 (0.4s) <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL /vocats/v2/vanish_possi/cs was not found on this serv",
+          "detail": "HTTP 200 (2603 B, 0.9s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/",
+          "ok": true,
+          "detail": "HTTP 200 (20235 B, 0.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 501 (0.6s) <?xml version=\"1.0\" encoding=\"utf-8\"?> <VOTABLE version=\"1.3\" xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.ivoa.net",
+          "n_rows": 0
+        },
+        {
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 500 (0.4s) <!doctype html><html lang=\"fr\"><head><title>\u00c9tat HTTP 500 \u2013 Erreur interne du serveur</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-co",
+          "n_rows": 0
+        },
+        {
+          "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/cs?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 501 (0.4s) <?xml version=\"1.0\" encoding=\"utf-8\"?> <VOTABLE version=\"1.3\" xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.ivoa.net",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/",
+          "ok": true,
+          "detail": "HTTP 200 (43046 B, 0.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9633 B, 0.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=5.0000&VERB=2&format=ascii",
+          "ok": true,
+          "detail": "HTTP 200 (43290 B, 0.8s)",
           "n_rows": 0
         }
       ],
       "notes": [
-        "no root for 'vanish_possi' answered a cone search"
+        "links on https://vizier.cds.unistra.fr/viz-bin/VizieR-2/: ['https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/aladin.xml', 'https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/simbad.xml', 'https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/vizier.xml', 'https://vizier.cds.unistra.fr/cds-navbar-resources/opensearch/xmatch.xml']"
+      ]
+    },
+    {
+      "route": "fetch_svo:vanish_possi",
+      "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2",
+      "status": "ok",
+      "n_rows": 10458,
+      "attempts": [
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9633 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (43294 B, 1.0s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9629 B, 0.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9633 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (43340 B, 0.8s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9629 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=votable",
+          "ok": false,
+          "detail": "HTTP 200 (9633 B, 0.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=votable",
+          "ok": false,
+          "detail": "HTTP 200 (43296 B, 0.8s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=votable",
+          "ok": false,
+          "detail": "HTTP 200 (9629 B, 0.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs.php?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=3&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9633 B, 0.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=3&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (43294 B, 1.0s); 9 rows but no RA/DEC column (cols: [])",
+          "n_rows": 9
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/VizieR-2/cs?RA=180.000000&DEC=0.000000&SR=180.000000&VERB=3&format=ascii",
+          "ok": false,
+          "detail": "HTTP 200 (9629 B, 0.5s)",
+          "n_rows": 0
+        }
+      ],
+      "notes": [
+        "whole-sky dump refused; falling back to a band sweep",
+        "WARNING: row count 10458 differs from the published 5399 by 93.7% - the fetch may be truncated or the archive changed"
       ]
     },
     {
@@ -578,13 +757,96 @@
         {
           "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&MAXREC=5000&QUERY=SELECT+TOP+200+table_name%2C+description+FROM+TAP_SCHEMA.tables+WHERE+description+LIKE+%27%25vanish%25%27+OR+table_name+LIKE+%27%25vanish%25%27+OR+description+LIKE+%27%25VANISH%25%27+OR+table_name+LIKE+%27%25VANISH%25%27+OR+description+LIKE+%27%25Vanish%25%27+OR+table_name+LIKE+%27%25Vanish%25%27+OR+description+LIKE+%27%25VASCO%25%27+OR+table_name+LIKE+%27%25VASCO%25%27+OR+description+LIKE+%27%25vasco%25%27+OR+table_name+LIKE+%27%25vasco%25%27+OR+description+LIKE+%27%25Vasco%25%27+OR+table_name+LIKE+%27%25Vasco%25%27+OR+description+LIKE+%27%25Villarroel%25%27+OR+table_name+LIKE+%27%25Villarroel%25%27+OR+description+LIKE+%27%25villarroel%25%27+OR+table_name+LIKE+%27%25villarroel%25%27+OR+description+LIKE+%27%25VILLARROEL%25%27+OR+table_name+LIKE+%27%25VILLARROEL%25%27+OR+description+LIKE+%27%25MNRAS%2F515%2F1380%25%27+OR+table_name+LIKE+%27%25MNRAS%2F515%2F1380%25%27+OR+description+LIKE+%27%25mnras%2F515%2F1380%25%27+OR+table_name+LIKE+%27%25mnras%2F515%2F1380%25%27+OR+description+LIKE+%27%25Mnras%2F515%2F1380%25%27+OR+table_name+LIKE+%27%25Mnras%2F515%2F1380%25%27+OR+description+LIKE+%27%25AJ%2F159%2F8%25%27+OR+table_name+LIKE+%27%25AJ%2F159%2F8%25%27+OR+description+LIKE+%27%25aj%2F159%2F8%25%27+OR+table_name+LIKE+%27%25aj%2F159%2F8%25%27+OR+description+LIKE+%27%25Aj%2F159%2F8%25%27+OR+table_name+LIKE+%27%25Aj%2F159%2F8%25%27",
           "ok": true,
-          "detail": "HTTP 200 (1858 B, 6.6s)",
+          "detail": "HTTP 200 (1858 B, 5.4s)",
           "n_rows": 11
         }
       ],
       "notes": [
         "tables: J/A+A/550/A110/table1 (Matrix representing the 3D-template of pulse profiles of Her); J/AJ/130/1707/table1 (Detected emission lines for 167-317 ( Vasconcelos M.J., Cerq); J/AJ/159/82/refs (References ( Bica E., Westera P., de O. Kerber L., Dias B., ); J/AJ/159/82/table2 (*The general SMC/Bridge catalog ( Bica E., Westera P., de O.); J/AJ/159/82/table4 (Possible extended magellanic system clusters and satellite d); J/AJ/159/83/fig1 (*MEarth transits photometry ( Kain I.J., Newton E.R., Dittma); J/AJ/159/83/fig2 (Stellar rotational variability over three years ( Kain I.J.,); J/AJ/159/8/table2 (Coordinates (J2000.0) of the first set of ~100 surviving can); J/AJ/159/8/table3 (The most interesting candidates ( Villarroel B., Soodla J., ); J/AJ/141/189/table4 (Star/galaxy classification provided by SDSS and by our FT De); J/AJ/159/84/table2 (Results of our regression for Gaia DR2 (Cat. I/345) (1000 so)"
       ]
+    },
+    {
+      "route": "vizier_meta:J/MNRAS/515/1380",
+      "url": "",
+      "status": "absent",
+      "n_rows": 0,
+      "attempts": [
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/MNRAS/515/1380&-meta.all&-out.form=TSV",
+          "ok": true,
+          "detail": "HTTP 200 (713 B, 0.9s)",
+          "n_rows": 0
+        }
+      ],
+      "notes": [
+        "tables reported for J/MNRAS/515/1380: none"
+      ]
+    },
+    {
+      "route": "vizier_meta:J/AJ/159/8",
+      "url": "",
+      "status": "absent",
+      "n_rows": 0,
+      "attempts": [
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/AJ/159/8&-meta.all&-out.form=TSV",
+          "ok": true,
+          "detail": "HTTP 200 (0 B, 0.8s)",
+          "n_rows": 0
+        }
+      ],
+      "notes": [
+        "tables reported for J/AJ/159/8: none"
+      ]
+    },
+    {
+      "route": "vizier_meta:J/other/NatSR/11.12794",
+      "url": "",
+      "status": "absent",
+      "n_rows": 0,
+      "attempts": [
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/other/NatSR/11.12794&-meta.all&-out.form=TSV",
+          "ok": true,
+          "detail": "HTTP 200 (725 B, 0.9s)",
+          "n_rows": 0
+        }
+      ],
+      "notes": [
+        "tables reported for J/other/NatSR/11.12794: none"
+      ]
+    },
+    {
+      "route": "vizier_meta:I/284",
+      "url": "",
+      "status": "ok",
+      "n_rows": 1,
+      "attempts": [
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/284&-meta.all&-out.form=TSV",
+          "ok": true,
+          "detail": "HTTP 200 (2111 B, 1.1s)",
+          "n_rows": 0
+        }
+      ],
+      "notes": [
+        "tables reported for I/284: ['I/284/out']"
+      ]
+    },
+    {
+      "route": "vizier_asu:I/284/out",
+      "url": "",
+      "status": "ok",
+      "n_rows": 400000,
+      "attempts": [
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-out.all=&-out.max=400000",
+          "ok": true,
+          "detail": "HTTP 200 (36861907 B, 85.1s)",
+          "n_rows": 0
+        }
+      ],
+      "notes": []
     },
     {
       "route": "vizier_J/AJ/159/8",
@@ -595,7 +857,7 @@
         {
           "url": "https://vizier.cds.unistra.fr/viz-bin/votable?-source=J/AJ/159/8&-out.max=100000",
           "ok": true,
-          "detail": "HTTP 200 (12113 B, 1.2s)",
+          "detail": "HTTP 200 (12113 B, 1.3s)",
           "n_rows": 0
         }
       ],
@@ -608,83 +870,1225 @@
       "n_rows": 0,
       "attempts": [
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=152.783448%20%2B46.013215&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=152.783448%20%2B46.013215&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (98908 B, 1.4s)",
+          "detail": "HTTP 200 (182987 B, 1.4s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=29.973103%20-13.483579&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=29.973103%20-13.483579&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (76819 B, 1.6s)",
+          "detail": "HTTP 200 (141975 B, 1.6s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=168.598890%20-16.349750&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=168.598890%20-16.349750&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (125744 B, 1.3s)",
+          "detail": "HTTP 200 (232942 B, 1.3s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=161.564516%20%2B41.643978&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=161.564516%20%2B41.643978&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (76876 B, 1.2s)",
+          "detail": "HTTP 200 (142109 B, 1.1s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=222.441830%20%2B47.236847&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=222.441830%20%2B47.236847&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (121804 B, 1.2s)",
+          "detail": "HTTP 200 (226121 B, 1.2s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=261.875078%20%2B40.629621&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=261.875078%20%2B40.629621&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (249298 B, 1.7s)",
+          "detail": "HTTP 200 (463132 B, 1.7s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=197.115836%20%2B18.592385&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=197.115836%20%2B18.592385&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (123154 B, 1.5s)",
+          "detail": "HTTP 200 (226826 B, 1.4s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=161.828446%20%2B60.207827&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=161.828446%20%2B60.207827&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (153124 B, 1.3s)",
+          "detail": "HTTP 200 (280361 B, 1.5s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=357.449618%20%2B38.792368&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=357.449618%20%2B38.792368&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (320848 B, 1.5s)",
+          "detail": "HTTP 200 (595997 B, 1.8s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=75.788256%20%2B3.085915&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=75.788256%20%2B3.085915&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (292658 B, 1.6s)",
+          "detail": "HTTP 200 (544198 B, 1.5s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=201.261694%20%2B51.705266&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=201.261694%20%2B51.705266&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (91348 B, 1.4s)",
+          "detail": "HTTP 200 (168812 B, 1.2s)",
           "n_rows": 0
         },
         {
-          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=164.491539%20%2B40.253205&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out.form=TSV&R1mag=%3C%3D19.30",
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=164.491539%20%2B40.253205&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
           "ok": true,
-          "detail": "HTTP 200 (93778 B, 1.1s)",
+          "detail": "HTTP 200 (173457 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=165.244821%20-7.903208&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (233989 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=353.994736%20%2B13.778361&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (229213 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=40.136124%20-7.633351&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (115549 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=157.092424%20%2B58.925845&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (241097 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=139.002428%20%2B34.044272&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (212138 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=82.923442%20-21.089961&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (542253 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=173.699654%20%2B27.742586&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (219094 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=168.963632%20%2B27.011329&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (197791 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=138.210640%20-2.875545&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (483165 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=245.066223%20-1.289264&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (650951 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=228.295875%20%2B44.226771&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (236892 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=41.354959%20%2B20.579089&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (283577 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=210.205880%20%2B23.630285&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (189227 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=307.061560%20-0.047746&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1327657 B, 1.9s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=7.938874%20%2B3.946981&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (303239 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=352.612784%20%2B4.751445&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (230055 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=231.486828%20%2B61.945423&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (298470 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=79.833302%20-0.716216&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (658948 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=256.975939%20%2B75.657751&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (393204 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=40.990218%20-22.592016&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (299831 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=243.420341%20-22.405967&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1517777 B, 3.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=206.688693%20%2B60.907200&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (210470 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=63.552306%20-16.230365&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (260131 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=52.271262%20-19.380089&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (341129 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=335.314577%20%2B23.338756&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (452708 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=114.468223%20%2B48.981700&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (352227 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=175.834889%20-9.371391&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (341607 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=190.306885%20%2B4.272494&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (199751 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=338.567834%20-16.270152&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (217565 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=43.917241%20-23.734559&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (246718 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=174.390631%20%2B32.899469&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (163991 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=247.993246%20-2.340228&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (742582 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=54.445003%20%2B25.689885&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (371694 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=222.341018%20%2B11.644188&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (239263 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=236.913826%20%2B76.288122&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (302761 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=50.136028%20%2B17.247506&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (345601 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=141.075357%20%2B52.451085&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (264929 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=179.716817%20%2B5.729573&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (157848 B, 1.1s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=238.785131%20%2B8.038202&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (468798 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=2.612687%20%2B30.808258&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (363461 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=261.711961%20%2B78.569745&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (538045 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=248.521105%20%2B21.458876&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (449959 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=266.611101%20%2B41.490817&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (569527 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=15.074060%20-20.171622&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (155312 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=33.164055%20-2.760815&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (195204 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=197.907625%20%2B68.253677&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (257831 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=234.576968%20%2B32.355215&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (277642 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=65.889165%20%2B9.023139&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (348438 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=25.174776%20%2B38.085255&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (464279 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=44.709029%20%2B11.975886&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (175847 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=246.121941%20%2B52.263456&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (279896 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=196.261743%20%2B34.761849&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (192530 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=213.886184%20-23.651133&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (512832 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=250.920269%20-3.391981&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1046344 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=266.875030%20%2B59.977998&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (421409 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=234.840897%20%2B47.603795&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (305214 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=267.302077%20%2B47.745615&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (514439 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=352.022619%20%2B32.513615&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (403364 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=224.514759%20%2B75.277193&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (301780 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=26.355104%20-17.007687&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (146363 B, 1.1s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=175.143912%20-13.916053&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (306823 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=216.323855%20%2B34.576076&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (185778 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=0.112711%20%2B23.880683&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (334022 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=60.299049%20%2B23.380364&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (474054 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=253.521057%20%2B35.485718&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (335064 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=107.232225%20%2B39.481819&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (562082 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=151.929354%20%2B76.127897&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (281144 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=183.699558%20%2B63.487030&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (246218 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=320.741768%20-21.931634&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (426738 B, 1.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=347.348902%20-19.582673&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (273221 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=228.986852%20%2B50.820146&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (218935 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=35.136172%20-20.334480&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (243331 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=55.035167%20-1.212851&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (188767 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=45.726240%20-21.890463&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (184853 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=163.373516%20%2B43.960848&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (247807 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=267.038148%20%2B32.468329&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (700855 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=201.324000%20-4.387414&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (234686 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=238.521202%20-3.640732&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (428082 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=342.612880%20-20.273388&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (291621 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=245.920317%20-15.892501&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (992033 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=253.420245%20%2B2.760815&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1127536 B, 2.0s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=43.591006%20%2B14.803215&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (220464 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=301.836186%20%2B77.118527&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (502900 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=308.870560%20%2B1.652257&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1264060 B, 1.9s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=11.820802%20%2B19.359845&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (274360 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=313.769699%20-16.788122&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (695704 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=192.706049%20-20.517900&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (371445 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=191.261791%20%2B20.824091&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (161348 B, 1.1s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=176.362748%20%2B14.112898&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (190759 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=218.723019%20%2B8.192536&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (299583 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=140.283569%20%2B10.534837&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (251431 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=345.539903%20-21.397326&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (186847 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=235.958920%20%2B43.669701&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (246521 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=67.698164%20%2B10.748598&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (383686 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=192.969978%20-8.462766&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (230075 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=39.018101%20-4.866441&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (137578 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=188.761815%20%2B14.369051&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (197073 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=350.376737%20%2B10.301812&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (297829 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=137.030311%20%2B59.223145&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (259630 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=229.476204%20-12.229812&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (475098 B, 1.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=28.691963%20%2B8.269726&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (167777 B, 1.1s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=341.494857%20-17.367532&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (339532 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=47.636052%20%2B10.904156&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (171766 B, 1.1s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=331.370343%20%2B84.173201&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (634105 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=214.150114%20-11.410287&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (329433 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=207.379669%20%2B72.082410&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (269416 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=56.681049%20%2B19.724634&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (372011 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=217.177949%20%2B18.431259&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (222661 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=349.258714%20%2B13.110708&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (302509 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=210.306692%20%2B68.933947&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (231497 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=176.098818%20%2B2.321114&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (207085 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=131.238571%20%2B1.977097&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (494450 B, 2.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=229.903251%20-19.724634&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (668165 B, 1.9s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=10.966709%20%2B35.650072&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (381239 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=233.358132%20%2B2.913791&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (417958 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=142.193380%20%2B48.144786&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (245935 B, 1.9s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=231.813062%20%2B12.973478&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (280325 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=129.794313%20%2B47.774025&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (238316 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=188.862627%20%2B51.306378&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (148482 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=216.587784%20%2B50.428781&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (156267 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=241.812966%20%2B40.831246&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (271040 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=69.934211%20%2B5.192372&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (411903 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=144.227803%20-24.571806&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (559365 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=224.941806%20%2B57.298857&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (219153 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=308.179583%20-2.799057&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1127348 B, 2.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=203.132999%20-2.684334&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (335134 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=182.744652%20%2B37.867197&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (172910 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=11.292943%20-4.310799&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (204448 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=262.993102%20%2B37.097032&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (549488 B, 1.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=222.868877%20%2B37.481122&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (253966 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=198.824024%20-10.593121&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (283157 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=338.404717%20%2B2.799057&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (425329 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=132.457406%20%2B31.254026&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (230179 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=204.452647%20%2B75.890905&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (261100 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=63.979353%20-23.901572&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (195878 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=317.814745%20-20.803659&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (515010 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=28.164104%20-15.238249&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (151700 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=181.098770%20%2B14.783461&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (179029 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=54.344191%20-5.671993&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (231217 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=312.488559%20%2B5.058146&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (862381 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=158.637494%20%2B43.065448&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (176299 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=152.255589%20%2B18.230064&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (238327 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=199.515000%20-6.094387&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (224192 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=74.833350%20-13.130319&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (341950 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=1.393852%20%2B1.594939&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (209725 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=356.820947%20-18.209957&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (230200 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=173.800466%20%2B86.227649&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (289253 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=162.744845%20-14.171984&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (323244 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=4.848734%20%2B24.592809&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (344181 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=234.313038%20%2B19.380089&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (292605 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=304.561584%20-6.209643&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1559257 B, 2.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=201.487117%20-23.922464&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (452149 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=127.884501%20%2B10.282401&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (411544 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=179.025841%20%2B1.270160&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (182526 B, 1.1s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=13.956037%20-17.267505&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (184809 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=194.515048%20-18.713329&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (311497 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=218.295972%20%2B15.555202&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (221782 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=259.211985%20%2B60.789579&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (430342 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=261.347219%20%2B14.152287&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (1005508 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=11.456061%20-23.838917&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (157463 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=81.114443%20-22.923392&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (444950 B, 1.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=133.474617%20-3.525915&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (542160 B, 1.6s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=129.856618%20-6.940199&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (694463 B, 1.8s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=150.446590%20%2B16.449293&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (214424 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=181.688934%20-11.507722&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (217211 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=16.393707%20%2B42.208721&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (892921 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=41.518077%20%2B1.289264&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (214500 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=219.841042%20%2B5.422542&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (253206 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=256.448080%20%2B34.205770&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (448232 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=188.497885%20%2B2.569622&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (254385 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=51.844215%20-11.897803&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (195148 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=175.570959%20-21.479399&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (368933 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=211.914067%20-5.844752&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (282092 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=8.466733%20%2B28.391910&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (303455 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=236.222850%20%2B63.358966&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (285793 B, 1.5s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=327.651532%20%2B23.776292&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (785812 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=183.598746%20%2B21.253809&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (176039 B, 1.1s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=29.546056%20-6.171221&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (170267 B, 1.2s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=143.575333%20%2B64.179983&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (229654 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=71.052234%20%2B2.435804&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (385949 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=148.474473%20%2B35.626572&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (199904 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=138.738499%20%2B20.885404&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (232177 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=226.285252%20-23.380364&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (795715 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=355.539806%20%2B3.698145&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (237532 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=229.149969%20%2B26.498006&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (294555 B, 1.4s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=116.440340%20%2B27.075658&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (769507 B, 1.7s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=5.275781%20%2B16.887893&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (204598 B, 1.3s)",
+          "n_rows": 0
+        },
+        {
+          "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I%2F284%2Fout&-c=2.511875%20-1.155543&-c.eq=J2000&-c.rd=0.5000&-out.max=200000&-out=USNO-B1.0&-out=RAJ2000&-out=DEJ2000&-out=Epoch&-out=pmRA&-out=pmDE&-out=muPr&-out=Ndet&-out=Flags&-out=B1mag&-out=R1mag&-out=R1S&-out=R1f&-out=R1s%2Fg&-out=B2mag&-out=R2mag&-out=Imag&-out.form=TSV&R1mag=%3C%3D19.30",
+          "ok": true,
+          "detail": "HTTP 200 (189914 B, 1.3s)",
           "n_rows": 0
         }
       ],
       "notes": [
-        "I/284/out -meta.all: HTTP 200 (2163 B, 2.6s); 8 column(s) reported; MISSING from the catalogue: ['B1mag', 'B2mag', 'Flags', 'Imag', 'Ndet', 'R1S', 'R1f', 'R1mag', 'R1s/g', 'R2mag', 'muPr']",
+        "I/284/out -meta.all: HTTP 200 (2163 B, 1.5s); 8 column(s) reported: ['DEJ2000', 'Epoch', 'RAJ2000', 'USNO-B1.0', 'e_DEJ2000', 'e_RAJ2000', 'pmDE', 'pmRA']; not mentioned by the probe: ['B1mag', 'B2mag', 'Flags', 'Imag', 'Ndet', 'R1S', 'R1f', 'R1mag', 'R1s/g', 'R2mag', 'muPr'] (reported only -- the request is not edited from this; the -meta.all body lists the catalogue's DEFAULT output columns, so 'not mentioned' does NOT mean 'absent from the catalogue')",
         "query form 'r1' returned rows on field 0; using it first from here on"
       ]
     }
+  ],
+  "registry_roots": [
+    "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table3",
+    "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table4",
+    "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/A+A/566/A37/table5",
+    "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table2",
+    "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/AJ/159/8/table3",
+    "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/445/2440/table3",
+    "https://vizier.cds.unistra.fr/viz-bin/conesearch/J/MNRAS/515/256/rmpairs",
+    "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+    "https://vizier.cds.unistra.fr/viz-bin/VizieR-2",
+    "https://vizier.cds.unistra.fr/viz-bin/votable",
+    "http://dc.g-vo.org/lensunion/q/im/siap.xml",
+    "http://dc.g-vo.org/tap"
   ],
   "vizier_tables_discovered": [
     {
@@ -732,9 +2136,19 @@
       "description": "Results of our regression for Gaia DR2 (Cat. I/345) (1000 sources among 132,739,322) ( Bai Yu, Liu J., Wang Y., Wang S.)"
     }
   ],
+  "vizier_direct_tables_found": [
+    "I/284/out"
+  ],
   "per_sample_rows": {
+    "solano2022_ir_present": 10458,
+    "solano2022_no_counterpart": 10458,
+    "vizier:I/284/out": 400000,
     "vasco2020_surviving_candidates": 127
   },
-  "n_rows": 127,
-  "note": "the Solano+2022 SVO archive did not answer a cone probe; only the Villarroel+2020 surviving-candidate list (127 rows) was retrieved; population fractions from it are indicative only"
+  "n_rows": 421043,
+  "routes_with_rows": [
+    "VO_ARCHIVE",
+    "VIZIER_SOLANO_TABLE"
+  ],
+  "note": ""
 }

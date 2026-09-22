@@ -10,6 +10,82 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ARC stage 2 on the pixels: 5 of 21 catalogued flares were on a NEIGHBOUR, 2026-09-22
+
+S59 (`docs/arc.md` §9). The centroid test that decides this channel has now
+run on real target pixel files with the NaN-pixel fix in place (run
+**35738785437**, 21 of 30 stars before it was superseded — the per-star
+checkpoint in `results/arc/stage2/stars.json` holds every one):
+
+| | run 35675112803 | run 35738785437 |
+|---|---|---|
+| `flare_on_target` | 6 | **8** |
+| `flare_on_neighbour` | 1 | **5** |
+| `centroid_ambiguous` | 1 | 5 |
+| `centroid_untestable` | **22** | **3** |
+
+58 flares examined: 21 on target, **5 on a neighbour**, 9 ambiguous, 7 with
+too few pixels, 2 unattributed, 14 untestable. The five misattributions are
+KIC 10288777 (**16.8σ** from the target), KIC 7009116 (14.6σ), KIC 9268205
+(7.0σ), KIC 7174965 (4.8σ) and KIC 9139163 (3.9σ), each consistent with a
+named Gaia DR3 source. That is a statement about the *flare catalogues*
+— their per-star attribution comes from the pipeline aperture — not about
+this channel's candidates.
+
+**The channel's two named candidates are settled, and differently.**
+
+| star | ξ stage 1 | ξ measured | Teff, R★, M★ (Berger+2020 table2) | verdict |
+|---|---|---|---|---|
+| KIC 8487271 | +0.104 | **−0.920** | 5998.6 K, 1.301 R☉, 1.209 M☉ | **`flare_on_target`** |
+| KIC 11507705 | +0.440 | **−1.240** | 6365.3 K, 1.311 R☉, 1.187 M☉ | **`centroid_ambiguous`** |
+
+8487271's flare (4.57e34 erg) put the difference-image centroid **0.171 px
+(1.5σ) from the target**, every neighbour rejected — so it passes the pixel
+test and dissolves on the parameters anyway. 11507705's one testable flare is
+consistent with the target *and* with DR3 2129762445437102464; its own
+quarter amplitude is 2.7× the catalogue value, which is most of the further
+0.65 dex it fell. `stellar_params_assumed` is closed on both: measured Teff /
+R★ / M★ from Berger+2020 `J/AJ/159/280/table2`, 20 of 21 stars measured.
+
+**Stage 1 re-run (run 35741271294, assess, 288 s).** A shortlisted star now
+takes measured parameters whether or not it was flagged assumed. Funnel
+unchanged — 190,486 flares, 8,908 stars, **4,206 assessable**, 4,702 with no
+amplitude and so no ceiling, **1** above the conservative ceiling, 0/0/13
+candidate/interest/watch — but the one excess grew: ξ_conservative,max
+**+0.462 → +0.715**, flares above 4 → 6 (nominal 11 → 12).
+
+**The Santos+2021 lever is measured and it is not the lever STATUS predicted.**
+It was already in the sample (245 of 2,507 Yang & Liu stars, 22 of 279
+Shibayama) and moved the assessable count 4,204 → 4,206. The 4,702 unassessable
+are not waiting on Santos: 1,117 are Günther TESS stars with no amplitude
+anywhere and 913 are Yang & Liu stars in neither McQuillan nor Santos. What
+the lever did instead was **raise the ceiling** — `Sph` → range (×2√2) lifts
+`E_mag` by 0.68 dex — taking conservative positives 5 → 2 → 1.
+
+**KIC 9418692 — and the number that decides it is its amplitude.** ξ = +0.715
+on 6 flares (ξ_nominal +1.431 on 12) of 14 Yang & Liu events, on Santos's
+`Sph` as a range, 2.008e-4. The *same star's* Shibayama record carries
+6.0e-4, and on that amplitude the identical flares give **ξ = +0.002** —
+exactly at the ceiling — because `E_mag ∝ A^{3/2}` turns a factor 3 into 0.71
+dex. Run **35744902798** (queued 11:05 ET) is the first to put its Yang & Liu
+record on the pixels *and* measure its amplitude from its own Kepler light
+curve; `load_shortlist` ranks it first of 13 as `vetoed_excess`. Its only
+remaining killer, Gaia RUWE 1.556, is an astrometric suspicion, not a
+detection.
+
+**Two defects fixed, each measured on real output.** An archive fetch had no
+wall clock of its own — the stage budget is checked *between* stars, so one
+hung MAST request in run 35738785437 held the process from the moment its
+9,000 s budget expired; `_fetch_products` now abandons a fetch after
+`stage2.product_timeout_s` and records `QUERY_FAILED`, never zero rows. And a
+star that leaves every tier when better parameters arrive left every
+shortlist with it (KIC 8487271, +0.104 → −0.920), so `--stars` /
+the workflow's `stars` input reads named rows straight from `xi_table.csv`
+whatever tier they ended in.
+
+**Next decisive action:** read run 35744902798 for KIC 9418692's quarter
+`Rvar` and its centroid verdict; then the Gaia DR3 non-single-star solutions
+and any archival spectroscopy for the RUWE 1.556 companion.
 ### RELAY measured: Earth sits in 1.8e4-1.8e7 node-to-node beams, and none of them optical, 2026-09-22
 
 S60 (`docs/relay.md`). The channel asks a question nobody has asked at catalogue

@@ -51,9 +51,9 @@ on:
   workflow_dispatch:
     inputs:
       n_shards:
-        description: "Parallel fit shards"
+        description: "Parallel fit shards (few: 18 channels share one account's concurrency, and a wide matrix waits rather than finishing sooner)"
         required: false
-        default: "16"
+        default: "4"
       max_objects:
         description: "Cap the object list (0 = every numbered object in the release). Capped runs take every JPL non-grav solution FIRST, so the positive controls are always in."
         required: false
@@ -75,9 +75,13 @@ on:
         required: false
         default: ""
       fit_timeout_minutes:
-        description: "Per-shard timeout (<= 360)"
+        description: "Per-shard job timeout (<= 360)"
         required: false
         default: "330"
+      fit_budget_minutes:
+        description: "In-job clock for the fit stage: it stops itself between chunks this many minutes in, so an overrun still uploads its checkpointed chunks. Keep it ~20 min below fit_timeout_minutes."
+        required: false
+        default: "300"
 
 permissions:
   contents: write
@@ -166,7 +170,7 @@ jobs:
     steps:
       - id: mk
         run: |
-          python3 -c "import json; print('shards=' + json.dumps(list(range(int('${{ github.event.inputs.n_shards || '16' }}')))))" >> "$GITHUB_OUTPUT"
+          python3 -c "import json; print('shards=' + json.dumps(list(range(int('${{ github.event.inputs.n_shards || '4' }}')))))" >> "$GITHUB_OUTPUT"
 
   fit:
     needs: [probe, plan]
@@ -201,15 +205,16 @@ jobs:
         run: |
           tar -xzf sextant-work.tar.gz
           ls -la work/sextant/ results/sextant/ || true
-      - name: Fit shard ${{ matrix.shard }} of ${{ github.event.inputs.n_shards || '16' }}
+      - name: Fit shard ${{ matrix.shard }} of ${{ github.event.inputs.n_shards || '4' }}
         run: |
           EXTRA=""
           if [ -n "${{ github.event.inputs.route }}" ]; then
             EXTRA="--route ${{ github.event.inputs.route }}"
           fi
           python -m seti.cli sextant --stage fit \
-            --shard ${{ matrix.shard }}/${{ github.event.inputs.n_shards || '16' }} \
+            --shard ${{ matrix.shard }}/${{ github.event.inputs.n_shards || '4' }} \
             --release ${{ github.event.inputs.release || 'gaiafpr' }} \
+            --budget-minutes ${{ github.event.inputs.fit_budget_minutes || '300' }} \
             --max-objects ${{ github.event.inputs.max_objects || '0' }} $EXTRA
       - name: Shard verdict
         if: always()

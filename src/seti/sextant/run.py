@@ -766,6 +766,35 @@ def shard_slice(objects: list[int], shard: int, n_shards: int) -> list[int]:
     return [n for k, n in enumerate(objects) if k % max(int(n_shards), 1) == int(shard)]
 
 
+def order_objects(objects: list[int], sbdb: dict[int, dict], seed: int) -> list[int]:
+    """The order a shard actually works in: controls first, then a random shuffle.
+
+    Two problems with running a shard in ascending ``number_mp``, and this fixes
+    both.  (1) The positive controls --- the objects with a published, JPL-fitted
+    ``A2`` --- are overwhelmingly NEAs, so they carry high numbers and would be
+    reached last.  A shard that runs out of wall clock would then report an
+    ``A2`` distribution with *no control on it*, and by this channel's own rule
+    nothing in that output is believed.  Controls therefore go first, so the
+    falsification test is paid for before anything else.  (2) Ascending number is
+    ascending discovery date and therefore, to a good approximation, descending
+    size: a truncated run in that order is a sample of large main-belt bodies,
+    which is exactly the population in which the signal is weakest, and its
+    element/pole statistics are not those of the catalogue.  A seeded shuffle of
+    the non-controls makes any truncation an unbiased random subsample instead,
+    so the population tests stay interpretable however early the run stops.
+
+    Deterministic in ``seed`` and in the input list, so a re-run of the same
+    shard does the same work in the same order and the per-chunk cache hits.
+    """
+    nums = [int(n) for n in objects]
+    ctrl = [n for n in nums if (sbdb.get(n) or {}).get("nongrav_fitted")]
+    seen = set(ctrl)
+    rest = [n for n in nums if n not in seen]
+    rng = np.random.default_rng(int(seed))
+    perm = rng.permutation(len(rest)).tolist() if rest else []
+    return sorted(ctrl) + [rest[i] for i in perm]
+
+
 def chunked(seq: list, size: int) -> list[list]:
     size = max(int(size), 1)
     return [seq[i:i + size] for i in range(0, len(seq), size)]
@@ -1244,13 +1273,23 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
 
 def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
                 log=print, gaia=None, client=None, route: str | None = None,
-                max_objects: int | None = None, commit_hook=None) -> dict:
+                max_objects: int | None = None, commit_hook=None,
+                budget_minutes: float | None = None, now=time.time) -> dict:
     from .acquire import GaiaSSO
 
     tag = f"shard_{int(shard)}_of_{int(n_shards)}"
     rec: dict = {"stage": "fit", "shard": int(shard), "n_shards": int(n_shards),
                  "started_utc": _utc(), "verdict": "NOT_RUN", "chunks": [],
                  "funnel": {}}
+    # A clock INSIDE the job's own cap.  A job killed by `timeout-minutes` is
+    # cancelled, and a cancelled job does not reliably run its `if: always()`
+    # upload --- so an overrun would throw away every chunk the shard had
+    # already fitted and checkpointed.  Stopping ourselves a little early turns
+    # that into a clean, honest partial result that still reaches `assess`.
+    t_start = now()
+    budget_s = (float(budget_minutes) * 60.0
+                if budget_minutes is not None and float(budget_minutes) > 0 else None)
+    rec["budget_minutes"] = float(budget_minutes) if budget_s else None
     out_json = paths.results / "fits" / f"{tag}.json"
     out_csv = paths.results / "fits" / f"{tag}.csv.gz"
     gaia = gaia or GaiaSSO()
@@ -1297,14 +1336,27 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
         sbdb = cat["rows"]
         cap = int(max_objects if max_objects is not None else conf["max_objects"])
         chosen = choose_objects(numbers, sbdb, cap, int(conf["seed"]))
-        mine = shard_slice(chosen, shard, n_shards)
+        mine = order_objects(shard_slice(chosen, shard, n_shards), sbdb,
+                             int(conf["seed"]) + int(shard))
+        n_ctrl = sum(1 for n in mine if (sbdb.get(n) or {}).get("nongrav_fitted"))
         rec.update({"n_gaia_objects": len(numbers), "n_chosen": len(chosen),
-                    "n_assigned": len(mine), "max_objects": cap})
+                    "n_assigned": len(mine), "max_objects": cap,
+                    "n_controls_assigned": n_ctrl,
+                    "object_order": "controls_first_then_seeded_shuffle"})
         binaries = load_binaries(paths, log=log)
         rec["binary_catalogue"] = (binaries.retrieved_utc if binaries else None)
         checkpoint()
         chunks = chunked(mine, int(conf["objects_per_chunk"]))
         for ci, chunk in enumerate(chunks):
+            if budget_s is not None and now() - t_start > budget_s:
+                rec["budget_stop"] = {"after_chunks": ci, "of_chunks": len(chunks),
+                                      "elapsed_minutes": (now() - t_start) / 60.0,
+                                      "note": ("stopped on the in-job clock so the "
+                                               "checkpointed chunks survive; the "
+                                               "remaining objects are UNMEASURED, "
+                                               "not null")}
+                log(f"{tag}: budget exhausted after {ci}/{len(chunks)} chunks")
+                break
             t0 = time.time()
             groups, info = fetch_chunk(gaia, chunk, conf["release"], paths,
                                        f"{tag}_chunk{ci:04d}", log=log)
@@ -1379,7 +1431,12 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
             checkpoint()
         # Whole-shard timing offset: the epoch-convention meter.
         rec["timing_offset"] = R.fit_common_time_offset(series_for_timing)
-        rec["verdict"] = "OK" if records else "NO_OBJECTS"
+        if not records:
+            rec["verdict"] = "NO_OBJECTS"
+        elif rec.get("budget_stop"):
+            rec["verdict"] = "OK_PARTIAL_BUDGET"
+        else:
+            rec["verdict"] = "OK"
     except Exception as exc:                                  # noqa: BLE001
         rec["verdict"] = "SHARD_FAILED"
         rec["error"] = f"{type(exc).__name__}: {exc}"[:600]
@@ -1668,6 +1725,9 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
                                "route": j.get("route"), "n_records": j.get("n_records"),
                                "funnel": j.get("funnel"), "timing_offset": j.get("timing_offset"),
                                "conventions": j.get("conventions"),
+                               "budget_stop": j.get("budget_stop"),
+                               "n_assigned": j.get("n_assigned"),
+                               "n_controls_assigned": j.get("n_controls_assigned"),
                                "started_utc": j.get("started_utc"),
                                "finished_utc": j.get("finished_utc")})
         except Exception as exc:                              # noqa: BLE001
@@ -1694,7 +1754,16 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
         "routes": (out.get("funnel") or {}).get("routes"),
         "timing_offset_seconds_by_shard": dts,
         "coverage": {"n_shard_files": len(files),
-                     "n_objects": out.get("n_objects", 0)},
+                     "n_objects": out.get("n_objects", 0),
+                     # How much of the assigned sample was actually reached.  A
+                     # shard that stopped on its clock leaves objects UNMEASURED,
+                     # and an unmeasured object is not a null --- the funnel
+                     # counts below are a statement about what was fitted, not
+                     # about the catalogue.
+                     "n_assigned": sum(int(m.get("n_assigned") or 0) for m in shard_meta),
+                     "n_shards_budget_stopped": sum(1 for m in shard_meta
+                                                    if m.get("budget_stop")),
+                     "shard_verdicts": sorted({str(m.get("verdict")) for m in shard_meta})},
     }
     E.save_json(paths.results / "summary.json", summary)
     log(f"assess: {out['verdict']} funnel={out.get('funnel')} controls={summary['controls']}")
@@ -1706,7 +1775,8 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
 # ---------------------------------------------------------------------------
 def run(stage: str, shard: str = "0/1", cfg=None, out_dir=None, work_dir=None,
         route: str | None = None, max_objects: int | None = None,
-        n_shards_for_all: int = 1, release: str | None = None, log=print) -> dict:
+        n_shards_for_all: int = 1, release: str | None = None,
+        budget_minutes: float | None = None, log=print) -> dict:
     conf = load_config(cfg)
     if max_objects is not None:
         conf["max_objects"] = int(max_objects)
@@ -1723,13 +1793,17 @@ def run(stage: str, shard: str = "0/1", cfg=None, out_dir=None, work_dir=None,
         return stage_probe(conf, paths, log=log)
     if stage in ("acquire", "fit", "screen"):
         return stage_shard(conf, paths, i, n, log=log, route=route,
-                           max_objects=max_objects)
+                           max_objects=max_objects, budget_minutes=budget_minutes)
     if stage == "assess":
         return stage_assess(conf, paths, log=log)
     if stage == "all":
         stage_probe(conf, paths, log=log)
-        for k in range(max(int(n_shards_for_all), 1)):
-            stage_shard(conf, paths, k, max(int(n_shards_for_all), 1), log=log,
-                        route=route, max_objects=max_objects)
+        nsh = max(int(n_shards_for_all), 1)
+        # In-process `all` splits one budget across the shards it runs.
+        per = (float(budget_minutes) / nsh
+               if budget_minutes is not None and float(budget_minutes) > 0 else None)
+        for k in range(nsh):
+            stage_shard(conf, paths, k, nsh, log=log, route=route,
+                        max_objects=max_objects, budget_minutes=per)
         return stage_assess(conf, paths, log=log)
     raise ValueError(f"unknown stage {stage!r}")

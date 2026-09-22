@@ -354,6 +354,35 @@ def test_shards_partition_the_chosen_set_exactly_once_and_controls_come_first():
     assert sum(len(c) for c in RUN.chunked(chosen, 30)) == 100
 
 
+def test_work_order_puts_the_controls_first_and_shuffles_the_rest():
+    """A shard that runs out of clock must still have paid for its controls.
+
+    Two properties, and both matter for a *truncated* shard.  (1) Every object
+    with a JPL non-gravitational solution is worked before any object without
+    one, so the falsification test is complete even if the shard stops in its
+    first chunk.  (2) What follows is a seeded shuffle, not ascending number:
+    ascending number is descending size, so a truncation in that order would
+    return a sample of large main-belt bodies whose element and pole statistics
+    are not the catalogue's.  The shuffle makes any prefix an unbiased random
+    subsample.  Deterministic in the seed, so a re-run does the same work.
+    """
+    numbers = list(range(1, 501))
+    sbdb = {n: {"nongrav_fitted": n % 61 == 0} for n in numbers}
+    ctrl = [n for n in numbers if n % 61 == 0]
+    order = RUN.order_objects(numbers, sbdb, seed=7)
+    assert sorted(order) == numbers                       # a permutation, nothing lost
+    assert order[:len(ctrl)] == ctrl                      # controls first, in order
+    rest = order[len(ctrl):]
+    assert rest != sorted(rest)                           # and the rest is shuffled
+    assert RUN.order_objects(numbers, sbdb, seed=7) == order        # deterministic
+    assert RUN.order_objects(numbers, sbdb, seed=8) != order        # and seed-dependent
+    # An early prefix of the non-controls is not a low-number prefix: the median
+    # of the first 50 sits near the catalogue median, not near its bottom.
+    head = rest[:50]
+    assert 150 < float(np.median(head)) < 350, float(np.median(head))
+    assert RUN.order_objects([], sbdb, seed=7) == []
+
+
 def test_shard_csv_round_trips_through_gzip(tmp_path):
     recs = [{"number_mp": 5, "denomination": "Astraea, x", "verdict": "FITTED", "tier": "ordinary",
              "a2": 1.5e-14, "a2_err": 2e-15, "reasons": ["a", "b"], "vetoes": [],
@@ -366,6 +395,86 @@ def test_shard_csv_round_trips_through_gzip(tmp_path):
     assert df.loc[0, "denomination"] == "Astraea, x"
     assert abs(df.loc[0, "a2"] - 1.5e-14) < 1e-25
     assert df.loc[0, "reasons"] == "a|b" and df.loc[0, "is_control"] == 1
+
+
+def _stub_shard_io(monkeypatch, numbers, controls):
+    """Replace every I/O-bound dependency of :func:`RUN.stage_shard`.
+
+    What is left under test is the orchestration only --- the work order, the
+    per-chunk checkpoint, the in-job clock and the shard verdict --- which is
+    exactly the part that decides whether an overrunning runner produces a
+    usable partial result or nothing at all.
+    """
+    sbdb = {n: {"nongrav_fitted": n in controls, "h": 15.0, "a": 2.4, "e": 0.1,
+                "a2": float("nan"), "a2_sigma": float("nan")} for n in numbers}
+    monkeypatch.setattr(RUN, "load_perturbers", lambda *a, **k: None)
+    monkeypatch.setattr(RUN, "load_binaries", lambda *a, **k: None)
+    monkeypatch.setattr(RUN, "load_sbdb", lambda *a, **k: {"rows": sbdb, "meta": {}})
+    monkeypatch.setattr(RUN, "load_gaia_objects",
+                        lambda *a, **k: [{"number_mp": n, "denomination": f"o{n}"}
+                                         for n in numbers])
+    worked: list[int] = []
+
+    def fake_fetch(gaia, chunk, release, paths, tag, log=print):
+        worked.extend(chunk)
+        return {n: {"number_mp": np.array([n])} for n in chunk}, {"tag": tag}
+
+    monkeypatch.setattr(RUN, "fetch_chunk", fake_fetch)
+    monkeypatch.setattr(RUN, "integrator_bundles",
+                        lambda groups, *a, **k: ({n: object() for n in groups}, {}))
+    monkeypatch.setattr(RUN, "fit_object",
+                        lambda n, cols, b, row, *a, **k: (
+                            {"number_mp": n, "route": "integrator", "verdict": "FITTED",
+                             "a2": 1e-16, "a2_err": 1e-16, "a2_snr": 1.0,
+                             "a2_absorbed_fraction": 0.9, "excess_scatter": 1.0,
+                             "n_transits": 30, "arc_days": 900.0}, None))
+    monkeypatch.setattr(R, "fit_common_time_offset", lambda *a, **k: {})
+    return worked
+
+
+class _FakeGaia:
+    calls = 0
+
+
+def test_a_shard_that_runs_out_of_clock_keeps_its_chunks_and_says_so(tmp_path, monkeypatch):
+    """The in-job clock, which is what makes an overrun survivable.
+
+    A job killed by the runner's own ``timeout-minutes`` is *cancelled*, and a
+    cancelled job does not reliably run its ``if: always()`` artifact upload ---
+    so every chunk the shard had already fitted would be thrown away.  Stopping
+    between chunks instead turns the overrun into a partial result that reaches
+    ``assess``, labelled ``OK_PARTIAL_BUDGET`` with the count of chunks NOT
+    attempted, so nothing downstream can read the unmeasured objects as a null.
+    """
+    numbers = list(range(1, 41))
+    worked = _stub_shard_io(monkeypatch, numbers, controls={37, 38})
+    monkeypatch.setitem(RUN.DEFAULT_CONFIG, "objects_per_chunk", 10)
+    conf = RUN.load_config({"sextant": {"objects_per_chunk": 10}})
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    clock = iter([0.0] + [60.0 * k for k in range(0, 40)])
+    rec = RUN.stage_shard(conf, paths, 0, 1, gaia=_FakeGaia(), client=_FakeGaia(),
+                          budget_minutes=1.5, now=lambda: next(clock), log=lambda *a: None)
+
+    assert rec["verdict"] == "OK_PARTIAL_BUDGET"
+    assert rec["budget_stop"]["after_chunks"] < rec["budget_stop"]["of_chunks"]
+    assert rec["n_records"] == 10 * rec["budget_stop"]["after_chunks"]
+    # The controls were paid for first, so a truncated shard still has them.
+    assert worked[:2] == [37, 38]
+    assert rec["n_controls_assigned"] == 2
+    # And what it did fit is on disk, readable by assess.
+    df = pd.read_csv(paths.results / "fits" / "shard_0_of_1.csv.gz")
+    assert len(df) == rec["n_records"] > 0
+
+
+def test_a_shard_with_room_on_the_clock_finishes_every_chunk(tmp_path, monkeypatch):
+    numbers = list(range(1, 41))
+    _stub_shard_io(monkeypatch, numbers, controls={37})
+    conf = RUN.load_config({"sextant": {"objects_per_chunk": 10}})
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    rec = RUN.stage_shard(conf, paths, 0, 1, gaia=_FakeGaia(), client=_FakeGaia(),
+                          budget_minutes=600.0, log=lambda *a: None)
+    assert rec["verdict"] == "OK" and "budget_stop" not in rec
+    assert rec["n_records"] == 40
 
 
 # ---------------------------------------------------------------------------

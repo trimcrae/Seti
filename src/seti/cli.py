@@ -1170,6 +1170,7 @@ def _cmd_sextant(args, cfg):
     _sextant_run(args.stage, shard=args.shard, cfg=cfg, out_dir=args.out_dir,
                  work_dir=args.work_dir, route=args.route,
                  max_objects=args.max_objects, release=args.release,
+                 budget_minutes=args.budget_minutes,
                  n_shards_for_all=args.n_shards)
 # --- end SEXTANT ---
 
@@ -2480,6 +2481,11 @@ def main(argv=None):
                         "objects; horizons is the reference it is measured against")
     p.add_argument("--max-objects", type=int, default=None,
                    help="0 = every numbered object in the release")
+    p.add_argument("--budget-minutes", type=float, default=None,
+                   help="stop the fit stage cleanly after this many minutes, "
+                        "between chunks, keeping every checkpointed chunk.  Set it "
+                        "below the job's own timeout: a job killed by the runner is "
+                        "cancelled and its artifact upload does not reliably run")
     p.add_argument("--release", default=None, choices=["gaiafpr", "gaiadr3"],
                    help="which Gaia SSO table (default from config/sextant.yaml: "
                         "gaiafpr, the 66-month re-reduction, 46.3M observations of "

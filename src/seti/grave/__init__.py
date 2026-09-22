@@ -29,4 +29,16 @@ runtime schema discovery), ``run`` (stages, ``results/grave/``).
 
 from __future__ import annotations
 
+import os as _os
+
+# Pin the BLAS thread pool before NumPy is imported by any submodule.  Every
+# matrix in this channel is tiny (a design is of order 45 x 13), so a threaded
+# BLAS spends its time synchronising workers: measured, one fit went from 7.0 s
+# to 0.076 s for a bit-identical answer.  `setdefault` so an operator who sets
+# these deliberately still wins.  `vectors.single_threaded` enforces the same
+# thing at run time for callers that imported NumPy before this ran.
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+           "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    _os.environ.setdefault(_v, "1")
+
 __all__ = ["acquire", "agestack", "references", "run", "vectors"]

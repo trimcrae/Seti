@@ -42,6 +42,7 @@ tungsten alloy has no Sn/Mo/Bi.  :func:`classify_pge` and
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -52,6 +53,26 @@ from ..fallout import yields as Y
 from . import references as R
 
 LN10 = float(np.log(10.0))
+
+
+@contextlib.contextmanager
+def single_threaded():
+    """Hold the BLAS thread pool at one thread for the duration.
+
+    Every matrix this module touches is tiny -- a design is of order 45 x 13 --
+    so a threaded BLAS spends all its time synchronising workers.  Measured on
+    a loaded machine: one call to :func:`fit_mixture` on a single sample took
+    **7.0 s** with the default pool and **0.076 s** pinned to one thread, for
+    a bit-identical likelihood ratio.  That is a 92x factor and it is the
+    difference between a screen that finishes and one that does not.
+    """
+    try:
+        from threadpoolctl import threadpool_limits  # noqa: PLC0415
+    except Exception:                                  # noqa: BLE001
+        yield
+        return
+    with threadpool_limits(limits=1):
+        yield
 
 # ---------------------------------------------------------------------------
 # Labels
@@ -276,6 +297,12 @@ def fit_mixture(conc: np.ndarray, D: Design, cfg: GraveConfig | None = None, *,
     dominant natural reservoir by *mass* share in the natural fit and its
     share, and ``f_<reservoir>`` columns (natural fit).
     """
+    with single_threaded():
+        return _fit_mixture(conc, D, cfg, sigma=sigma, refine=refine)
+
+
+def _fit_mixture(conc: np.ndarray, D: Design, cfg: GraveConfig | None = None, *,
+                 sigma: np.ndarray | None = None, refine: bool = True) -> pd.DataFrame:
     cfg = cfg or GraveConfig()
     conc = np.asarray(conc, dtype=float)
     n, k = conc.shape
@@ -335,6 +362,11 @@ def natural_model(conc_row: np.ndarray, D: Design, s: np.ndarray, *, refine: boo
 
 def leave_one_out(conc_row: np.ndarray, D: Design, cfg: GraveConfig, s: np.ndarray) -> dict:
     """``fission_lr`` with each measured element dropped in turn."""
+    with single_threaded():
+        return _leave_one_out(conc_row, D, cfg, s)
+
+
+def _leave_one_out(conc_row: np.ndarray, D: Design, cfg: GraveConfig, s: np.ndarray) -> dict:
     ok = np.isfinite(conc_row) & (conc_row > 0)
     Afull = np.column_stack([D.A, D.phi])
     out = {}
@@ -421,11 +453,12 @@ def error_floors(conc: np.ndarray, D: Design, cfg: GraveConfig, *, max_rows: int
     n = conc.shape[0]
     pick = np.arange(n) if n <= max_rows else rng.choice(n, max_rows, replace=False)
     res = np.full((len(pick), len(D.elements)), np.nan)
-    for r, i in enumerate(pick):
-        c = conc[i]
-        if (np.isfinite(c) & (c > 0)).sum() < cfg.min_elements:
-            continue
-        _, res[r] = natural_model(c, D, D.sigma, refine=False)
+    with single_threaded():
+        for r, i in enumerate(pick):
+            c = conc[i]
+            if (np.isfinite(c) & (c > 0)).sum() < cfg.min_elements:
+                continue
+            _, res[r] = natural_model(c, D, D.sigma, refine=False)
     out = {}
     for k, el in enumerate(D.elements):
         v = res[:, k]

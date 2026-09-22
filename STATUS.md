@@ -93,6 +93,18 @@ the 350 triaged candidates are in an exact-wavelength pair, and 76 of the 167 su
 have another sightline within 3 Å. None of the six lines left standing is a 0-px
 coincidence; two have a neighbour one pixel away.
 
+*The triage's significance is not calibrated, and the candidates cluster on plates.*
+Persist measures the same line in the same coadd against the local scatter and gets a
+median of 0.34× the triage's number; 51 % of the 70 fall below 3 σ and 74 % below 5 σ.
+And plate 2333 (SEGUE, MJD 53682) alone contributes 11 of the 71 measured lines — every
+one below 3.3 σ once calibrated, with **two pairs of different fibres carrying a
+candidate at exactly the same wavelength** (3947.299 and 4357.125 Å). Different objects,
+same detector columns: a bad CCD column. Plate 3241 contributes 6. The strongest
+candidate's plate, 0412, contributes exactly one — 6809.261 itself — and 8578.276 has
+more than twice the coadd significance of any of its five plate-mates. Both survivors
+look structurally different from the contaminated bulk, which is the first thing in this
+channel that has argued *for* them rather than against.
+
 Next: land the calibrated full run (35747997902), then the control sample on whatever is
 still standing (35751666444). For the strongest candidate the three live kill paths are
 the same-plate control (a bad column in plate 412's red camera would produce everything

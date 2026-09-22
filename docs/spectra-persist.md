@@ -285,6 +285,35 @@ Two caveats, both structural, both now fixed in code but **not** in those number
    the six ALIVE lines are conservative; the 53 `absent_in_exposures` are not, and must be
    re-measured before any of them is believed.
 
+### Two things the committed table says on its own
+
+**The triage's significance is not calibrated.** Persist measures the *same line in the
+same coadd* against the local scatter and gets a median of **0.34×** the triage's number.
+Of the 70 lines with both, **51 % fall below 3 σ** and **74 % below 5 σ**. So
+`absent_in_exposures` for most of them is not "the coadd made a feature its inputs lack";
+there was no feature at a calibrated significance to begin with. Both readings are true
+and they must not be confused — the per-exposure deficit is real *and* most of these
+lines were never significant.
+
+**The candidates cluster on plates.** An SDSS plate is one exposure set on one pair of
+CCDs.
+
+| plate | lines | coadd σ (persist) | triage σ | same-wavelength fibre pairs |
+|---|---|---|---|---|
+| 2333 (SEGUE, MJD 53682) | **11** of 71 | 1.1–3.3 | 8.4–13.3 | **2** (3947.299 Å, 4357.125 Å) |
+| 3241 | 6 | 1.9–5.8, one at 11.9 | 8.5–14.7 | 0 |
+| 0412 | **1** | 10.5 | 16.8 | 0 |
+
+Two *different fibres* of plate 2333 carrying a candidate at exactly the same wavelength
+are different objects on the same detector columns: that is a bad column, not a sky.
+Plate 2333 contributes 15 % of everything measured and not one of its lines survives a
+calibrated coadd measurement.
+
+Against that background the two strongest candidates look structurally different: 6809.3
+is the **only** candidate on its plate, and 8578.3 has more than twice the coadd
+significance of any of its five plate-mates. `plate_n_other_candidates` and
+`plate_other_fibre_same_wavelength` now travel with every line.
+
 ### The six lines left standing (run 35738206630, uncalibrated)
 
 | plate-mjd-fiber | RA, Dec | λ_obs (Å) | mode | coadd EW (Å) | combined σ | present | χ²p | 2nd epoch | SIMBAD | atmosphere |

@@ -407,6 +407,18 @@ chunking is needed), and the shard deadline is now predictive — it refuses to
 *start* an exposure whose estimated cost would run past it, because a
 checkpoint is only safe once the shard's artifact uploads.
 
+**Runner-version gate.** Per the repo-wide pandas warning, all 60 LANTERN
+tests were re-run in a throwaway venv holding **pandas 3.0.6 / numpy 2.4.6 /
+astropy 8.0.1 / scipy 1.17.1** — what the runner installs, not the sandbox's
+pandas 2.3.3 — and pass unchanged. The channel uses no removed API (no
+`errors="ignore"`, no `applymap`, no `fillna(method=)`, no `inplace=`; every
+frame is `.copy()`/`.reset_index()`-ed before a column is assigned, so
+copy-on-write is a no-op), and every `pd.concat` filters empty frames first.
+Independently, run 35741401724's probe executed the whole acquisition path —
+NASA Exoplanet Archive TAP (4,738 transiting planets) and four MAST
+`query_criteria` calls (4,001 timeseries observations) — on the runner under
+pandas 3.0.6 and succeeded.
+
 Run **35745941769** (4 shards, eclipse-first, `require_verify=true`,
 `deadline_minutes=270`) is queued with all of this. Checkpoint version is 3 and
 deliberately unchanged, so a mid-flight assess cannot mark a running screen's

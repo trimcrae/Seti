@@ -1266,3 +1266,27 @@ def test_the_uline_census_runs_once_on_its_own_phrases(tmp_path):
     # exactly ONE census query, and it asked TAP_SCHEMA.columns
     asked = [a for a in seen if "unidentified line" in a]
     assert len(asked) == 1 and "TAP_SCHEMA.columns" in asked[0]
+
+
+# ---------------------------------------------------------------------------
+# a species whose quartic constants are unknown is not searchable, and says so
+# ---------------------------------------------------------------------------
+def test_frequency_limited_species_are_rolled_up_into_the_summary(tmp_path):
+    """The predicted error of a rotor with unknown quartic constants is tens to
+    hundreds of MHz, while an Orion linewidth at 150 GHz is ~2 MHz.  The match
+    tolerance is then the prediction's own ignorance, chance alignments rise
+    with it, and the FAP gate can never be reached.  That is a property of the
+    CONSTANTS and no amount of data repairs it, so the summary names it."""
+    conf = synth_conf()
+    screen = _verify_screen(True)
+    screen["results"]["SO2F2|synth"]["best"]["pattern"] = False
+    screen["results"]["SO2F2|synth"]["searchability"] = {
+        "status": "FREQUENCY_LIMITED", "median_err_mhz": 146.0, "tolerance_mhz": 2.0,
+        "err_over_tolerance": 73.0, "quartic_known": False,
+        "remedy": "the quartic centrifugal-distortion constants are unknown"}
+    s = stage_assess(conf, tmp_path, screen=screen, acquire_report={})
+    assert s["verdict"] == "NO_PATTERN"
+    lim = s["targets_frequency_limited"]
+    assert set(lim) == {"SO2F2"} and lim["SO2F2"]["err_over_tolerance"] == 73.0
+    assert any("FREQUENCY-LIMITED" in d and "quartic" in d for d in s["degraded"])
+    assert s["pairs"]["SO2F2|synth"]["searchability"]["status"] == "FREQUENCY_LIMITED"

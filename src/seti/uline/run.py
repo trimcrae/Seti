@@ -779,6 +779,26 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
         degraded.append("no line list (unsearchable this run): " + ", ".join(unsearchable))
     if predicted_used:
         degraded.append("PREDICTED (not laboratory) frequencies: " + ", ".join(predicted_used))
+    # A species whose quartic centrifugal-distortion constants are unknown
+    # carries a predicted-frequency error far wider than any survey linewidth
+    # — the "tolerance" the pattern test then uses is the prediction's own
+    # ignorance, chance alignments rise with it, and the rigid-shift FAP can
+    # never reach its gate.  That is a statement about the CONSTANTS, not
+    # about the sky, and no amount of data repairs it: the remedy is the
+    # published quartic set.  Rolled up here so it cannot be missed.
+    limited: dict[str, dict] = {}
+    for r in results.values():
+        s = r.get("searchability") or {}
+        if s.get("status") in ("FREQUENCY_LIMITED", "DEGRADED"):
+            cur = limited.get(r["species"])
+            if cur is None or float(s.get("err_over_tolerance") or 0) > float(
+                    cur.get("err_over_tolerance") or 0):
+                limited[r["species"]] = {k: v for k, v in s.items() if k != "remedy"}
+    if limited:
+        degraded.append(
+            "FREQUENCY-LIMITED (predicted error wider than the survey linewidth; the remedy is "
+            "the published quartic constants, not more data): "
+            + ", ".join(f"{sp} x{v['err_over_tolerance']:.0f}" for sp, v in sorted(limited.items())))
 
     rows = []
     for r in results.values():
@@ -812,6 +832,7 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
                     "p_false_full": (r.get("best") or {}).get("p_false_full"),
                     "pattern": bool((r.get("best") or {}).get("pattern")),
                     "tests": (r.get("best") or {}).get("tests"),
+                    "searchability": r.get("searchability"),
                     "per_tex": [{"tex_k": x.get("tex_k"), "n_coincident": x.get("n_coincident"),
                                  "p_false": x.get("p_false"), "pattern": x.get("pattern")}
                                 for x in r.get("records", [])]}
@@ -826,6 +847,7 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
         "species_inventory": inventory,
         "targets_unsearchable": unsearchable,
         "targets_with_predicted_frequencies": predicted_used,
+        "targets_frequency_limited": limited,
         "sources": {k: {kk: vv for kk, vv in v.items()} for k, v in sources.items()},
         "n_ulines_total": n_ulines,
         "pairs": per_pair,

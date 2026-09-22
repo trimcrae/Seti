@@ -21,17 +21,32 @@ acquire:
   # first that returns a parseable table wins and its URL is recorded in the
   # provenance block.  None is reachable from the sandbox (egress 403) - they
   # are probed on the GitHub Actions runner.
+  # Run 35653059591 (2026-09-21): svocats.cab.inta-csic.es times out at the
+  # TCP level (http and https); svo2.cab.inta-csic.es is ALIVE (403 on the
+  # /vocats/ directory listing, 404 on the two catalogue paths in 0.2 s), so
+  # the catalogues are simply not at those paths.  More spellings are probed,
+  # each costing a fifth of a second.
   svo_catalogs:
     vanish_neowise:
       - "http://svocats.cab.inta-csic.es/vanish-neowise"
       - "https://svocats.cab.inta-csic.es/vanish-neowise"
       - "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise"
       - "http://svo2.cab.inta-csic.es/vocats/vanish-neowise"
+      - "https://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise"
+      - "http://svo2.cab.inta-csic.es/svocats/vanish-neowise"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish_neowise"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vasco"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanishing"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/poss1"
     vanish_possi:
       - "http://svocats.cab.inta-csic.es/vanish-possi"
       - "https://svocats.cab.inta-csic.es/vanish-possi"
       - "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi"
       - "http://svo2.cab.inta-csic.es/vocats/vanish-possi"
+      - "https://svo2.cab.inta-csic.es/vocats/v2/vanish-possi"
+      - "http://svo2.cab.inta-csic.es/svocats/vanish-possi"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish_possi"
   # Whole-sky dump in one request: SR=180 about (RA,DEC)=(180,0).  The first
   # form is the parameter set used by working production code against another
   # svocats catalogue (jeroenbouwman/CASCADe scripts/check_phase_error.py).
@@ -56,6 +71,11 @@ acquire:
     - "https://svo.cab.inta-csic.es/docs/index.php?pagename=Archives"
     - "http://svocats.cab.inta-csic.es/"
     - "http://svo2.cab.inta-csic.es/vocats/"
+    - "http://svo2.cab.inta-csic.es/"
+    - "http://svo2.cab.inta-csic.es/vocats/v2/"
+    - "http://svo2.cab.inta-csic.es/vocats/v2/index.php"
+    - "https://svo.cab.inta-csic.es/main/index.php"
+    - "http://svo2.cab.inta-csic.es/theory/vosa/"
   # Minnesota APS (MAPS) scan of POSS-I E+O: an INDEPENDENT digitization of the
   # same plates, ~90M objects.  Watters et al. used it as the null-distribution
   # reference; it is the natural artifact control here too (a real object is on
@@ -66,8 +86,47 @@ acquire:
   # runner, the server returns "Table or Catalog not found".
   vizier_votable: "https://vizier.cds.unistra.fr/viz-bin/votable?-source={cat}&-out.max={maxrows}"
   vizier_vasco2020_cat: "J/AJ/159/8"
+  # Reachability probes are SHORT.  Run 30203741898 (2026-07-26) found the SVO
+  # host answering nothing at the TCP level and then spent its whole 70-minute
+  # budget in a 300 s-timeout retry ladder; only a root that answered a probe
+  # gets the long bulk-fetch timeout below.
+  probe_timeout_s: 25
+  probe_retries: 1
+  try_svo: true
+  # VizieR: TAP for TAP_SCHEMA discovery, ASU for bulk table pulls.
+  vizier_tap: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync"
+  vizier_asu: "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+  tap_timeout_s: 120
+  # Keyword search of TAP_SCHEMA.tables (name AND description); the 2026-07-26
+  # "not found" was a single-name probe of J/MNRAS/515/1380.
+  tap_schema_keywords: ["vanish", "VASCO", "Villarroel", "MNRAS/515/1380", "AJ/159/8"]
+  # Route 3: reconstruct the Solano+2022 parent selection from USNO-B1.0, the
+  # PMM scan of the same POSS-I plates.  Ndet = 1 with R1mag present = seen on
+  # the POSS-I red plate and on no other plate.  dec >= -25 keeps to the sky
+  # where USNO-B1.0's first-epoch plates ARE POSS-I (south of -30 they are
+  # SERC-J / ESO-R).  R1 <= 19.3 stays 0.7 mag above the E plate limit, the
+  # emulsion-noise regime the vet would flag anyway (Hambly & Blair 2024).
+  reconstruct:
+    enabled: true
+    usnob1_table: "I/284/out"
+    n_fields: 40
+    field_radius_deg: 0.5
+    seed: 0
+    dec_min_deg: -25.0
+    dec_max_deg: 88.0
+    abs_glat_min_deg: 20.0
+    ndet: 1
+    r1_max_mag: 19.3
+    max_rows_per_field: 200000
+    field_timeout_s: 240
+    field_retries: 2
+    max_consecutive_failures: 6
+    pause_s: 0.5
   # CDS X-Match: the only sane way to crossmatch 10^5 uploaded positions.
-  xmatch_url: "http://cdsxmatch.u-strasbg.fr/xmatch/api/v1/sync"
+  xmatch_urls:
+    - "https://cdsxmatch.cds.unistra.fr/xmatch/api/v1/sync"
+    - "http://cdsxmatch.u-strasbg.fr/xmatch/api/v1/sync"
+  xmatch_timeout_s: 600
   xmatch_chunk_rows: 25000
   # VizieR table identifiers used through X-Match / TAP.
   catalogs:
@@ -78,7 +137,7 @@ acquire:
     usnob1: "vizier:I/284/out"
     ps1_dr1: "vizier:II/349/ps1"
   http_timeout_s: 300
-  retries: 4
+  retries: 2
   retry_backoff_s: 8.0
 
 epochs:
@@ -117,6 +176,11 @@ proper_motion:
   # Largest proper motion searched for when testing "did it just move?".
   # 3000 mas/yr covers everything but Barnard's Star (10.36"/yr).
   mu_max_mas_yr: 3000.0
+  # Radius of the wide Gaia pull used for back-propagation: 60" = 950 mas/yr
+  # over 63 yr; only a few dozen stars in the whole sky move faster, and all of
+  # them are famous.  Photometry is taken only from matches inside the 5"
+  # crossmatch radius - a star 40" away is a neighbour, not a counterpart.
+  gaia_search_radius_arcsec: 60.0
   # A modern source that propagates back to within this of the POSS-I position
   # is the same star -> HIGH_PM_STAR, rejected.
   match_radius_arcsec: 3.0
@@ -190,3 +254,11 @@ vet:
   reject_negative_w1w2: true
   max_ir_neighbours_in_psf: 1
   wise_psf_arcsec: 6.0
+  # Artefact flags from the reconstruction and the WISE join.  USNO-B1.0
+  # Flags 's' = diffraction spike; AllWISE ccf letters in W1/W2 = the source
+  # is a diffraction spike (D), persistence (P), halo (H) or optical ghost (O)
+  # of a nearby bright star.  A Gaia star this bright inside the wide pull
+  # means the plate "source" sits in a halo / spike footprint.
+  reject_usnob_spike: true
+  reject_wise_artifact_flags: true
+  bright_neighbour_gmag_max: 10.0

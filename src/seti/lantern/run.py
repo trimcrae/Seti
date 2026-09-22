@@ -276,7 +276,17 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
     # Integrations used for the time-averaged spectrum: everything outside
     # eclipse and outside every contact window.
     if lab is not None:
-        avg_mask = lab["out_eclipse"] & ~lab["transit_contact"]
+        # "The planet is visible and the star is whole": outside eclipse and
+        # its contacts, and outside the TRANSIT too.  Dropping in-transit
+        # integrations matters for a phase curve (a `both` exposure holds a
+        # transit as well as two eclipses): with them in, the out-of-eclipse
+        # average carries the planet's transmission spectrum and the star's
+        # limb-darkened line profiles, and both then appear in the
+        # out-minus-in-eclipse difference as features that have nothing to do
+        # with the occultation.
+        avg_mask = lab["out_eclipse"] & ~lab["transit_contact"] & ~lab["in_transit"]
+        if avg_mask.sum() < 4:
+            avg_mask = lab["out_eclipse"] & ~lab["transit_contact"]
         if avg_mask.sum() < 4:
             avg_mask = np.ones(n_int, bool)
     else:

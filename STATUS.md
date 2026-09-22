@@ -10,6 +10,47 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ARC: KIC 9418692 passed the pixel test and is still above the ceiling, 2026-09-22
+
+S59 (`docs/arc.md` §9.4). Run **35744902798** put the channel's one
+ceiling-excess star on its target pixel files. It is **the first object here
+to survive both tests**:
+
+| | |
+|---|---|
+| Gaia DR3 | 2080152824394749696, RA 297.20212, Dec +45.971088 |
+| Berger+2020 `J/AJ/159/280` | Teff **5677.4 K**, R = **1.089 R☉**, M = **0.957 M☉**, logg 4.341 |
+| amplitude — **its own light curve** | quarter `Rvar` = **3.8425e-4** |
+| ξ_conservative | **+0.292**, `above_ceiling`, 3 flares above (ξ_nom +1.008, 8 above), 13 independent events |
+| centroid | **5 of 6 tested flares `on_target`**, 0.100–0.266 px (**1.0–2.6σ**), Q3/Q9/Q13/Q16, every Gaia neighbour rejected at > 3σ |
+
+The amplitude ambiguity that dominated this object is settled **by the star
+itself**, and it lands between the catalogues: 3.84e-4 against Santos's
+2.008e-4 (ξ +0.715) and Shibayama's 6.0e-4 (ξ +0.002). The census is no
+longer what carries it — the two neighbours need **287 %** and **305 %**
+brightenings, under the 20× arithmetic threshold and therefore *not* excluded
+by the census; the centroid excludes them directly.
+
+**Three things are open, and none is argued away.** (1) The catalogue
+energies are the dominant systematic: re-measured from the light curve the
+same star gives **ξ = +0.045** on 2 flares of 6 independent events — *at* the
+ceiling. Its significance is a range, **+0.045 to +0.292**, not a number.
+(2) **Gaia RUWE = 1.5562** is unresolved; a companion inside ~0.1″ is
+invisible to Gaia and to the pixels alike, so `flare_on_target` does not
+exclude it. (3) `f = 1` is the channel's founding assumption against
+Okamoto+2021's own f ≈ 0.1.
+
+**Run 4 (35774408864) is queued** on the fixed clocks, naming KIC 9418692,
+8487271, 11507705 and the five on-neighbour stars so one coherent
+`stars.json` / `summary.json` / `flares.csv` covers all of them.
+
+**A third wall clock was missing and is now in.** Run 35744902798 checkpointed
+4 stars in 100 s and then sat for **four hours** on the fifth: `stage2_run`
+passed `query_fn=None` straight to `pyvo`'s unbounded `run_async`, the one
+network path the previous two fixes had not covered. Stage 2's default TAP and
+cone callables are now wrapped at `stage2.query_timeout_s` (240 s), as stage 1
+has been since 0d58d5e8. The 21-star measurement below is preserved at commit
+`c751f006`.
 ### SPECTRA-PERSIST: the narrow lines meet their own exposures, 2026-09-22
 
 The 167 narrow-line survivors had only ever been seen in coadds. They have now been

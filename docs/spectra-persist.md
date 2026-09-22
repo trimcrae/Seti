@@ -466,12 +466,30 @@ where the hand-kept OH list is least complete and the telluric bands live.
   reported (`oh_gap_A`, `oh_density_per_100A`, `telluric_band`) and neither is enforced;
   the empirical replacement is the any-star control sample.
 
+### In flight
+
+| run | stage | dispatched (EDT) | state |
+|---|---|---|---|
+| **35758868818** | `run`, `ckpt_version` 4, 2 shards | 13:09 | queued |
+| **35751666444** | `control`, 40 comparison spectra per line | 12:04 | queued |
+
+Runner concurrency is the binding constraint on this repository — 18 channels share one
+account — and run 35747997902 (the same `run` stage at 4 shards) sat queued for 98 minutes
+without a single job starting before it was cancelled and re-dispatched smaller. Under the
+old fixed `[0..7]` matrix a 4-shard dispatch asked the scheduler for **eight** runners,
+four of them only to evaluate their own skip condition and exit; the `plan` job now builds
+the matrix from `n_shards`, so 35758868818 asks for three.
+
 ### Next decisive action
 
-1. Land the `ckpt_version` 3 run (run 35747997902) so all 167 lines are measured once,
-   with the offset null and the stack, by one commit.
-2. Run `--stage control` on whatever is still standing. That is the only test left that
-   can reject an M-dwarf band-head gap, and it is what the strongest candidate turns on.
-3. If 8578.3 Å survives both, the next step is outside SDSS: a complete airglow atlas for
-   8500–8700 Å, and the other 8 epochs of 0412-51942-0465 measured individually rather
-   than through the best-of summary.
+1. Land 35758868818 so all 167 lines are measured once, with the offset null and the
+   stack, by one commit.
+2. Read 35751666444. For the strongest candidate it decides four things at once: whether
+   Hβ (5043.9 Å) and [O III] (5194.9 Å) are there at z = 0.037268; how many **distinct
+   fibres** its eight "other epochs" are; whether other fibres of plate 412 spike at
+   6809.3 Å; and whether other M1 dwarfs do.
+3. Close the stated limitation: pass the SPARCL coadd arrays into `desi_measure_at` so
+   the DESI coadd significance is calibrated like the SDSS one. Needs a `CKPT_VERSION`
+   bump, so it waits for a moment when no run is in flight.
+4. If 8578.3 Å survives all of it, the next step is outside SDSS: a complete airglow
+   atlas for 8500–8700 Å, where the hand-kept list jumps from 8548.5 to 8620.8 Å.

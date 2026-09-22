@@ -2420,6 +2420,17 @@ def main(argv=None):
     p.set_defaults(func=_cmd_relay)
     # --- RELAY ---
 
+    # --- SPARK ---
+    from .spark.run import _add_arguments as _spark_args
+    from .spark.run import _cmd_spark
+    p = sub.add_parser("spark",
+                       help="SPARK (S48/S49): a single-spectral-element excess on a stellar point "
+                            "source — Euclid Q1 NISP line features x Gaia, SPHEREx QR2 forced "
+                            "spectrophotometry (probe/euclid/spherex/screen/assess/all)")
+    _spark_args(p)
+    p.set_defaults(func=_cmd_spark)
+    # --- SPARK ---
+
     args = parser.parse_args(argv)
     cfg = load_config()
     return args.func(args, cfg)

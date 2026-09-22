@@ -561,3 +561,41 @@ def test_no_pair_line_hit_verdict_when_hits_avoid_the_geometry(pipeline, conf):
     s = stage_assess(conf, pipeline["out"], hits_df=hits)
     assert s["assess_verdict"].startswith(V_PAIRLINE_OFF_PRIOR) or s["assess_verdict"].startswith(V_NO_PAIRLINE_HIT)
     assert s["candidates"] == []
+
+
+# ---------------------------------------------------------------------------
+# the wall clock: a beam the clock cuts short is recorded, never guessed at
+# ---------------------------------------------------------------------------
+def test_find_pairs_past_its_deadline_reports_partial_counts(sample):
+    import time as _t
+
+    xyz = geo.positions_pc(sample["ra"], sample["dec"], sample["parallax"])
+    full = geo.find_pairs(xyz, 5.0 * DEG, d_max_pc=100.0)
+    cut = geo.find_pairs(xyz, 5.0 * DEG, d_max_pc=100.0, chunk_candidates=1,
+                         deadline=_t.monotonic() - 1.0)
+    assert full.counts_complete and full.as_dict()["counts_complete"] is True
+    assert full.n_receivers_done == full.n_receivers == len(sample)
+    # nothing was searched, so nothing may be claimed
+    assert not cut.counts_complete
+    assert cut.n_spillover == 0 and cut.n_between == 0
+    assert cut.n_receivers_done == 0 and cut.n_receivers == len(sample)
+
+
+def test_geometry_beam_budget_records_the_beams_it_never_ran(tmp_path, conf, sample):
+    c = json.loads(json.dumps(conf))
+    c["geometry"]["budget_s"] = -1.0            # spent before the first beam
+    rep = stage_geometry(c, tmp_path, gaia_df=sample.copy())
+    assert rep["verdict"].startswith(V_GEOMETRY)
+    assert "BEAMS_INCOMPLETE" in rep["verdict"]
+    assert rep["n_beams_computed"] == 0
+    assert all(b["status"] == "NOT_COMPUTED" for b in rep["beams"].values())
+    # a beam that was never searched contributes no count and no scaling point
+    assert all("n_spillover" not in b for b in rep["beams"].values())
+    assert rep["scaling"]["n_spillover"]["n_points"] == 0
+
+
+def test_geometry_beams_run_narrowest_first(conf, sample, tmp_path):
+    rep = stage_geometry(conf, tmp_path, gaia_df=sample.copy())
+    order = [rep["beams"][k]["theta_rad"] for k in rep["beams"]]
+    assert order == sorted(order)
+    assert all(b.get("status") == "COMPUTED" for b in rep["beams"].values())

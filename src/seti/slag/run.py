@@ -452,7 +452,8 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
         keys = keys[: int(max_panels)]
     rng = np.random.default_rng(20260921 + i)
     t0 = _time.time()
-    for k in keys:
+    last_ckpt = t0
+    for j, k in enumerate(keys, start=1):
         group = by_key[k]
         for p in group:
             others = [q for q in group if q is not p]
@@ -464,9 +465,17 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
                        "error": repr(exc)[:500]}
             rec["n_sources_for_object"] = len(group)
             out["panels"].append(rec)
-        # checkpoint every object: a killed shard loses one object, not the shard
-        if len(out["panels"]) % 25 == 0:
+        # Checkpoint on the OBJECT counter and on the clock, never on the panel
+        # count: a group can add several panels at once and step straight over a
+        # modulus, which on a multi-hour shard means the file is written far
+        # less often than intended (or, for a shard whose groups are all large,
+        # never).  A killed shard must lose minutes, not hours.
+        if j % 25 == 0 or (_time.time() - last_ckpt) > 300.0:
+            out["n_objects_done"] = j
+            out["n_objects_total"] = len(keys)
+            out["elapsed_s"] = round(_time.time() - t0, 1)
             _write_json(out_dir / f"screen_{i}of{n}.json", out)
+            last_ckpt = _time.time()
     out["elapsed_s"] = round(_time.time() - t0, 1)
     out["n_objects"] = len(keys)
     out["n_panels"] = len(out["panels"])

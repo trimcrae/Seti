@@ -468,6 +468,11 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
                                         float(conf["telescopes"].get("in_beam_max_arcmin", 8.0)))
         keep = set(tidx) | {j for js in neighbours.values() for j in js}
     beams = beams or geo.beam_grid(conf["beams"])
+    # narrowest first: the cheap, scientifically central beams must always finish,
+    # and a wide beam that overruns the clock is recorded, never guessed at
+    beams = sorted(beams, key=lambda b: float(b["theta_rad"]))
+    budget = float(gconf.get("budget_s", 9000))
+    deadline = started + budget
     rep = {"stage": "geometry", "generated_utc": _now(), "sample": sample_rec, "n_stars": n,
            "n_with_rv": int(sample["has_rv"].sum()),
            "rv_completeness": float(sample["has_rv"].mean()) if n else 0.0,
@@ -475,7 +480,7 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
            "n_targets": int(len(targets)), "n_targets_matched": n_targets_matched,
            "n_keep_transmitters": int(len(keep)) if keep is not None else n,
            "min_separation_pc": float(gconf.get("min_separation_pc", 0.0)),
-           "beams": {}, "committed_files": []}
+           "beam_budget_s": budget, "beams": {}, "committed_files": []}
 
     def _save():
         rep["elapsed_s"] = round(time.monotonic() - started, 1)
@@ -488,6 +493,12 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
         name = _beam_name(b)
         th = float(b["theta_rad"])
         t0 = time.monotonic()
+        if t0 >= deadline:
+            rep["beams"][name] = {**dict(b), "status": "NOT_COMPUTED",
+                                  "reason": f"geometry wall clock spent ({budget:.0f} s)"}
+            print(f"[relay] {name}: NOT COMPUTED -- geometry wall clock spent")
+            _save()
+            continue
         last = [t0]
 
         def _prog(done, total, ns, nb, name=name, last=last):
@@ -499,7 +510,7 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
                              keep_transmitters=keep, row_cap=int(gconf.get("row_cap", 4_000_000)),
                              chunk_candidates=int(gconf.get("chunk_candidates", 3_000_000)),
                              min_separation_pc=float(gconf.get("min_separation_pc", 0.0)),
-                             progress=_prog)
+                             progress=_prog, deadline=deadline)
         pairs = res.pairs
         if len(pairs):
             kin = geo.pair_kinematics(xyz, vel, pairs["t_idx"].to_numpy(int), pairs["r_idx"].to_numpy(int))
@@ -512,10 +523,15 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
         exp = geo.analytic_expectation(th, n)
         per_t = res.per_transmitter_spill + res.per_transmitter_between
         brec = {**{k: v for k, v in b.items()}, **res.as_dict(),
+                "status": "COMPUTED" if res.counts_complete else "PARTIAL_COUNTS",
                 "analytic_expectation": exp,
+                # a count cut short by the clock covers only part of the receiver
+                # list, so it is NOT comparable with the whole-sample expectation
                 "measured_over_analytic": {
-                    "spillover": (res.n_spillover / exp["spillover"]) if exp["spillover"] else None,
-                    "between": (res.n_between / exp["between"]) if exp["between"] else None},
+                    "spillover": (res.n_spillover / exp["spillover"])
+                    if (exp["spillover"] and res.counts_complete) else None,
+                    "between": (res.n_between / exp["between"])
+                    if (exp["between"] and res.counts_complete) else None},
                 "n_transmitters_with_any_pair": int((per_t > 0).sum()),
                 "n_transmitters_spillover": int((res.per_transmitter_spill > 0).sum()),
                 "n_transmitters_between": int((res.per_transmitter_between > 0).sum()),
@@ -597,8 +613,12 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
         rep["committed_files"].append("pairs_targets.csv.gz")
         rep["n_target_pair_rows"] = int(len(tp))
     rep["scaling"] = _scaling_fit(rep["beams"])
+    n_done = sum(1 for v in rep["beams"].values() if v.get("status") in (None, "COMPUTED"))
+    rep["n_beams_computed"] = n_done
     rep["verdict"] = (V_GEOMETRY_PARTIAL if sample_rec.get("status") == acq.STATUS_PARTIAL
-                      else V_GEOMETRY) + f" ({n} stars, {len(beams)} beams)"
+                      else V_GEOMETRY) + f" ({n} stars, {n_done}/{len(beams)} beams complete)"
+    if n_done < len(beams):
+        rep["verdict"] += " | BEAMS_INCOMPLETE (geometry wall clock)"
     _save()
     print(f"[relay] geometry: {rep['verdict']} in {rep['elapsed_s']} s")
     return rep
@@ -615,6 +635,9 @@ def _scaling_fit(beams: dict) -> dict:
     for geom_key in ("n_spillover", "n_between"):
         xs, ys = [], []
         for b in beams.values():
+            # a partial or uncomputed beam's count is not on the theta^2 curve
+            if b.get("status") not in (None, "COMPUTED"):
+                continue
             if b.get(geom_key, 0) > 0:
                 xs.append(math.log10(b["theta_rad"]))
                 ys.append(math.log10(b[geom_key]))
@@ -697,6 +720,7 @@ def stage_recut(conf: dict, out: Path, *, bl_fetch=None, log=None, beams=None,
     mpath = out / "targets_matched.csv"
     matched = pd.read_csv(mpath) if mpath.exists() else pd.DataFrame()
     pairs = _load_pairs(out, beams)
+    geom_beams = ((_read(out / "geometry.json") or {}).get("beams") or {})
     rep = {"stage": "recut", "generated_utc": _now(), "n_targets": int(len(matched)),
            "n_targets_in_sample": int((matched["gaia_idx"] >= 0).sum()) if len(matched) else 0,
            "beams": {}, "pointings": {}}
@@ -741,6 +765,9 @@ def stage_recut(conf: dict, out: Path, *, bl_fetch=None, log=None, beams=None,
         nb = per_target.get(f"{name}:n_in_beam_neighbour_pairs", 0)
         rep["beams"][name] = {
             "theta_label": b["theta_label"],
+            # a beam the geometry stage never finished has no pairs to recut on:
+            # its zeros are the absence of a search, not the absence of a pair
+            "geometry_status": geom_beams.get(name, {}).get("status", "COMPUTED"),
             "n_targets_as_transmitter_spillover": int((sp > 0).sum()),
             "n_targets_as_transmitter_between": int((bt > 0).sum()),
             "n_targets_as_transmitter_any": int(((sp > 0) | (bt > 0)).sum()),

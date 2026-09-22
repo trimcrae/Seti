@@ -50,7 +50,11 @@ def _enshrouded_row(plate_mag=17.0, t_dust=350.0, ir_scale_factor=1.0,
     scale = ir_scale_factor * f_bol_then * math.pi / (SIGMA_SB * t_dust ** 4)
     row = {"source_id": source_id, "ra_deg": 190.0, "dec_deg": 42.0,
            "poss1_e": plate_mag, "sample": "solano2022_ir_present",
-           "n_ir_neighbours": 1, "ir_local_density_per_deg2": 2000.0}
+           "n_ir_neighbours": 1, "ir_local_density_per_deg2": 2000.0,
+           # The modern search that found nothing was real and deeper than the
+           # plate detection: Pan-STARRS r = 23.2 against POSS-I E ~ 20.
+           "modern_depth_mag": 23.2, "modern_depth_cats": "ps1,gaia",
+           "modern_depth_margin_mag": 23.2 - plate_mag}
     for b in ("w1", "w2", "w3", "w4"):
         row[b] = S.fnu_to_mag(b, scale * S.planck_fnu(t_dust, S.BANDS[b][0]))
         row[f"{b}_err"] = 0.03
@@ -63,7 +67,9 @@ def _plate_defect_row(source_id="DEFECT"):
     """Emulsion artefact: on the plate, absent from every catalogue ever since."""
     return {"source_id": source_id, "ra_deg": 12.0, "dec_deg": 70.0,
             "poss1_e": 19.8, "sample": "solano2022_no_counterpart",
-            "n_ir_neighbours": 0, "ir_local_density_per_deg2": 1500.0}
+            "n_ir_neighbours": 0, "ir_local_density_per_deg2": 1500.0,
+            "modern_depth_mag": 23.2, "modern_depth_cats": "ps1,gaia",
+            "modern_depth_margin_mag": 3.4}
 
 
 def _high_pm_case(cfg_epochs):

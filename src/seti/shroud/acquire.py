@@ -1319,6 +1319,44 @@ def join_xmatch_photometry(positions: pd.DataFrame,
     return out
 
 
+def modern_optical_depth(positions: pd.DataFrame, provs: dict, cfg: dict
+                         ) -> tuple[pd.Series, pd.Series]:
+    """Per source: the deepest modern-optical limit actually ESTABLISHED there.
+
+    ``(depth_mag, catalogues)``.  A catalogue contributes only if its X-Match
+    really answered (``ok``/``cached``) **and** the source lies inside that
+    survey's footprint --- Pan-STARRS stops at dec = -30, so a southern source
+    has only Gaia behind its "absence", three magnitudes shallower.
+
+    This exists because absence is the whole signature, and an absence is only
+    as good as the search that failed to find it.  Without this, a Pan-STARRS
+    X-Match that simply errored would hand every source in the run an empty
+    ``ps1_r`` --- and empty reads as *gone*.  A catalogue that was never
+    successfully queried has established nothing, so its sources get NaN here
+    and are excluded from the disappearance count rather than counted as
+    disappearances.
+    """
+    mo = cfg.get("modern_optical", {})
+    limits = mo.get("limits", {})
+    dec = pd.to_numeric(positions.get("dec_deg"), errors="coerce")
+    depth = pd.Series(np.nan, index=positions.index, dtype=float)
+    names = pd.Series("", index=positions.index, dtype=object)
+    for name, spec in limits.items():
+        st = str((provs.get(name) or {}).get("status", "")).lower()
+        if st not in ("ok", "cached"):
+            continue
+        inside = ((dec >= float(spec.get("dec_min_deg", -90.0)))
+                  & (dec <= float(spec.get("dec_max_deg", 90.0))))
+        mag = float(spec.get("mag", np.nan))
+        if not np.isfinite(mag):
+            continue
+        better = inside & (depth.isna() | (mag > depth))
+        depth = depth.where(~better, mag)
+        names = names.where(~inside, names.str.cat(pd.Series(
+            [name] * len(names), index=names.index), sep=",").str.strip(","))
+    return depth, names
+
+
 def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
                            ) -> tuple[pd.DataFrame, dict]:
     """Attach POSS-I, modern-optical and infrared photometry to a position list.
@@ -1365,6 +1403,24 @@ def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
         xmatches[name] = df
     merged = join_xmatch_photometry(positions, xmatches, cfg,
                                     phot_radius={"gaia": r_match})
+    # How deep the search that found nothing actually went, per source.  An
+    # absence is only as good as the search behind it.
+    depth, cats = modern_optical_depth(merged, provs, cfg)
+    merged["modern_depth_mag"] = depth.to_numpy()
+    merged["modern_depth_cats"] = cats.to_numpy()
+    plate = pd.to_numeric(merged.get("poss1_e"), errors="coerce")
+    if "poss1_o" in merged.columns:
+        plate = plate.fillna(pd.to_numeric(merged["poss1_o"], errors="coerce"))
+    merged["modern_depth_margin_mag"] = (depth.to_numpy()
+                                         - plate.to_numpy())
+    provs["_modern_optical_depth"] = {
+        "route": "derived", "status": "ok",
+        "n_rows": int(np.isfinite(depth.to_numpy()).sum()),
+        "catalogues_that_answered": sorted(
+            n for n in cfg.get("modern_optical", {}).get("limits", {})
+            if str((provs.get(n) or {}).get("status", "")).lower() in ("ok", "cached")),
+        "n_sources_with_no_modern_coverage": int((~np.isfinite(depth.to_numpy())).sum()),
+    }
     (out_dir / "acquire_provenance.json").write_text(
         json.dumps(provs, indent=2, default=str))
     return merged, provs

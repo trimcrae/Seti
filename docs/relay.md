@@ -158,6 +158,16 @@ enough to commit whole. Kinematics attached to every kept row. →
 `geometry.json`, `gaia_sample.json`, `pairs_full_<beam>.csv.gz`,
 `pairs_targets.csv.gz`; the parquet intermediates travel in the artifact.
 
+Beams run **narrowest first** under one wall clock (`geometry.budget_s`), so
+the diffraction-limited and 9′ beams always finish and the 5° beam — ~3 × 10⁸
+directed pairs on the full sample — can never eat the run and starve recut and
+assess. A beam the clock cuts short is `PARTIAL_COUNTS` with
+`n_receivers_done / n_receivers`; one never started is `NOT_COMPUTED` with the
+reason. Neither count is compared with the analytic expectation, neither
+enters the θ² slope fit, and the verdict carries `BEAMS_INCOMPLETE`. The recut
+stage records each beam's `geometry_status`, so a zero pair count on an
+unfinished beam reads as the absence of a *search*, not of a pair.
+
 **recut** — per resolved target: pair counts as transmitter per beam and
 geometry, in-beam neighbour pairs; then the BL files per target (telescope,
 band, epoch) grouped into pointings, and for each pointing × beam the pair

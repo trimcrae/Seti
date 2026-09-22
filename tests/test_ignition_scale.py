@@ -128,6 +128,20 @@ def test_uploaded_table_carries_no_unicodechar_column():
     assert _ascii_string_columns(t3)["lbl"].dtype.kind == "S"
     assert "unicodeChar" not in _votable_bytes(t3).decode("utf-8", "replace")
 
+    # pyvo does NOT use `_votable_bytes`: it serialises an uploaded astropy
+    # Table with `Table.write(format="votable")` (pyvo/dal/query.py), so that
+    # path is pinned too -- it is the rung IRSA parsed and refused.
+    from io import BytesIO
+    fo = BytesIO()
+    _ascii_string_columns(tbl).write(output=fo, format="votable")
+    pyvo_xml = fo.getvalue().decode("utf-8", "replace")
+    assert "unicodeChar" not in pyvo_xml and 'datatype="long"' in pyvo_xml
+    # The old spelling, for the record: this is exactly what was refused.
+    old = Table.from_pandas(pd.DataFrame({"sid": stars["source_id"].astype(str)}))
+    fo2 = BytesIO()
+    old.write(output=fo2, format="votable")
+    assert 'datatype="unicodeChar"' in fo2.getvalue().decode("utf-8", "replace")
+
 
 def test_the_ladder_downgrades_the_id_column_once_on_a_datatype_refusal():
     """If the service will not take `long` either, the id is expendable.

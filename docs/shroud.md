@@ -258,6 +258,26 @@ Note the sanity check this enables: the published match fraction is
 rate. Most of the infrared matches are therefore real associations — but *which*
 ones is exactly what the per-object chance probability decides.
 
+### One radius is not enough — the excess as a function of radius
+
+The 5″ number alone is not a test. It is the radius at which the chance rate is
+*largest*, so a sample whose counterparts are perfectly real can still show an
+excess consistent with zero there. The first committed null on the 127-source
+Villarroel+2020 list did exactly that: 7 of 127 real sightlines matched AllWISE
+within 5″ against 39 of 508 offset ones, i.e. 9.8 expected by chance and an
+excess of **−0.9 σ**. Read at 5″ alone, that says nothing at all.
+
+The shape does say something. Unrelated matches accumulate with the search
+*area*, so `f_chance ∝ r²`; a genuine counterpart sits at the source's own
+position and is already counted at the smallest radius. A real associated
+population therefore appears as an excess **concentrated at small separation**,
+with a significance that *peaks* near the combined astrometric error instead of
+tracking the area. Both curves are measured on the same sightlines —
+`crossmatch.excess_radii_arcsec` = 1, 1.5, 2, 3, 4, 5″ — and land in
+`null_stats.json:by_radius` and the report table. The channel's *selection*
+radius stays at the published 5″; the curve is evidence about whether an
+associated population exists at all, never a threshold chosen after the fact.
+
 ### Inherited ledger vetoes
 
 Single-band anomalies, W4-only excesses (cirrus), negative W1−W2 (a blend),
@@ -338,3 +358,70 @@ invented).
 * Per CLAUDE.md, an empty survivor list is **not** a publishable result. The
   population breakdown and the obscuration-to-destruction ratio are the standing
   measurements regardless of whether anything survives.
+
+---
+
+## 9. Which data routes answer (measured on the runner, 2026-09-22)
+
+Recorded verbatim in `results/shroud/acquire_verdict.json` and
+`field_ledger.json`. Nothing here is a statement about the sky; it is a
+statement about reachability.
+
+| route | endpoint | answer |
+|---|---|---|
+| Solano+2022 SVO VASCO service | `svocats.cab.inta-csic.es/vanish-neowise/`, `/vanish-possi/`, http+https, 4 path spellings each | **dead** — TCP timeout at 25 s on every one, both schemes |
+| SVO alternate host | `svo2.cab.inta-csic.es/vocats/`, `/vocats/v2/` | **403** on the index, **404** on every `vanish-*` path |
+| SVO archive index | `svo.cab.inta-csic.es/docs/index.php?pagename=Archives` | **timeout** |
+| SVO server root | `svo2.cab.inta-csic.es/` | 200 (42 B) — the host is up, the VASCO service is not on it |
+| VizieR TAP_SCHEMA keyword search | `tapvizier.cds.unistra.fr/TAPVizieR/tap/sync` | **200, and the answer is "no"** — 11 hits for *vanish / VASCO / Villarroel / MNRAS/515/1380 / AJ/159/8*, and 9 of them are the surname *Vasco D.* or *Vasconcelos M.J.* The Solano+2022 by-product tables are **not in VizieR** |
+| Villarroel+2020 candidate list | `vizier.cds.unistra.fr/viz-bin/votable?-source=J/AJ/159/8` | **200, 127 rows** (table2 surviving candidates + table3 most interesting) |
+| USNO-B1.0 POSS-I reconstruction | `vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/284/out` | **200, 12/12 fields, 33 273 raw rows over 9.425 deg²** |
+| CDS X-Match (AllWISE, 2MASS, PS1, Gaia) | `cdsxmatch.cds.unistra.fr/xmatch/api/v1/sync` | **200**, 15–21 s per chunk |
+
+Consequences for the channel:
+
+* The Solano+2022 sample (~10⁵–10⁶ objects) **cannot be reached at all**. Both
+  the service and the catalogue route are closed, so `VO_ARCHIVE` is currently
+  unreachable and the verdict ceiling is `VIZIER_FALLBACK`.
+* `VIZIER_FALLBACK` means 127 objects, three orders of magnitude smaller than
+  the intended sample. Population fractions from it are indicative only, and
+  the channel says so in `summary.json:acquire_note`.
+* The USNO-B1.0 reconstruction is therefore the only route that can restore
+  scale, and it is the channel's own selection rather than a borrowed one:
+  `R1mag` present with `B1mag`/`B2mag`/`R2mag`/`Imag` all absent, `Ndet = 1`,
+  `R1 ≤ 19.3`, `dec ≥ −25°`, `|b| ≥ 20°`, in a deterministic Fibonacci grid of
+  0.5° fields, checkpointed per field so a re-dispatch only fetches new ones.
+
+### Two VizieR ASU failure modes this channel has now paid for
+
+1. **A literal `+` in a query string decodes to a space.** `-c=266+65` reaches
+   VizieR as the unsigned pair `266 65`, which it cannot read as a position; it
+   answers with an empty resource that is indistinguishable from an empty sky.
+   The sign is percent-encoded on *every* rung of the query ladder, and
+   `tests/test_shroud_acquire.py` asserts it there and for negative
+   declinations. (IGNITION lost a whole dispatch to this.)
+2. **`-meta.all` lists a catalogue's default output columns, not its
+   dictionary.** I/284/out's defaults are the eight astrometric columns, so the
+   probe reported `B1mag`, `R1mag`, `R2mag`, `Imag` and `Ndet` as absent from a
+   catalogue that plainly has them. Run 35738062833 let that probe *edit* the
+   request, so all 12 fields returned bare positions — and "POSS-I red present,
+   everything else absent" is a statement about which magnitudes are present,
+   which a frame with no magnitudes cannot express. All 12 fields duly reported
+   `n_poss1_only = 0`, and that zero was an artefact of the request, not a
+   property of the sky. The probe now reports only; a rung's answer is accepted
+   only if it carries `RAJ2000`, `DEJ2000` and `R1mag`, otherwise the ladder
+   falls through to the `-out.all` rung, which names no columns and so cannot
+   be emptied by a bad name.
+
+### An empty analyze must not overwrite a measurement
+
+`analyze` runs with `if: always()` so a failed photometry join still yields an
+honest degraded report. It therefore also runs when `acquire` was cancelled and
+no sample artifact exists, and it then writes `NO_DATA_REACHED` / `n_sample 0`
+— a statement about *this run's archive access*. On 2026-09-22T14:58Z that
+empty summary was committed over a real 127-source one (cancelled run
+35740203590). The workflow now refuses: a summary with `n_sample == 0` may be
+committed only when `HEAD` holds no sampled summary; otherwise the result files
+are checked back out of `HEAD` and the empty attempt is kept beside them as
+`summary_attempt.json`, so the failed access stays on the record without
+masquerading as the channel's result.

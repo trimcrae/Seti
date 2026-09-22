@@ -44,6 +44,15 @@ elements:
 
 panels:
   min_elements: 5            # fewer measured elements -> INFORMATION_LIMITED, never a candidate
+  # PEWDD is one row per star per paper and each paper uses its own designation
+  # (GD 378 = WD 1822+410; PG 0843+516 = PG 0843+517 = WD0843+516).  Objects are
+  # therefore built by single-linkage on RAJ2000/DEJ2000 within this radius, not
+  # on the name.  The object count is flat across the choice: 1610 at 1", 1588
+  # at 3", 1576 at 5", 1566 at 8" for the 3547 served rows (2441 name groups).
+  # 5" because PEWDD's positions are per-paper transcriptions at different
+  # epochs and these stars have large proper motions (GD 362's two served
+  # positions differ by 3.5"); a false 5" pair among ~1600 objects is ~1e-3.
+  object_match_arcsec: 5.0
   default_error_dex: 0.2     # a measurement with no error column gets this, and is flagged
   error_floor_dex: 0.02
 
@@ -97,7 +106,9 @@ controls:
     aliases: ["GD378", "WD 1822+410", "WD1822+410", "J1823+4104"]
     expectation: "Be +2 dex (Klein+2021)"
   - name: "NLTT 19868"
-    aliases: ["NLTT19868", "WD 0843+516", "J0843+5158"]
+    # NOT WD/PG 0843+516 (131.7595 +51.4815) -- that is a different polluted DA.
+    # PEWDD serves NLTT 19868 at 129.0070 -10.1021 (Kawka 2016).
+    aliases: ["NLTT19868", "NLTT 19868"]
     expectation: "extreme Fe-poor (Kawka & Vennes 2016) -> FE_MG_BELOW_MANTLE probe"
   - name: "WD 0106-328"
     aliases: ["WD0106-328", "HE 0106-3253", "HE0106-3253", "J0108-3233",

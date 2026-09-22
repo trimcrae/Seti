@@ -45,7 +45,7 @@ import numpy as np
 import pandas as pd
 
 from . import acquire as A
-from .family import combined_ratio_envelope, load_family, load_meteorites
+from .family import load_family, ratio_envelope
 from .misfit import FitSettings, Panel, calibrate_misfit, fit_panel, naive_p
 from .pairs import (
     KILL_INFORMATION_LIMITED,
@@ -170,16 +170,13 @@ def stage_probe(cfg: dict, out_dir: Path, *, fetch_fn=None, query_fn=None) -> di
     pew = A.probe_pewdd(cfg, fetch_fn=fetch_fn, query_fn=query_fn, log=log)
     ts = A.discover_timescale_tables(cfg, out_dir, fetch_fn=fetch_fn, log=log)
     fam = load_family()
-    met, met_prov = _load_meteorites(out_dir)
     envs = {}
     for a, b in cfg["tier2"]["pairs"]:
-        e = combined_ratio_envelope(fam, a, b, meteorites=met,
-                                    t_cut_max=float(cfg["fit"]["t_cut_max_restricted"]))
-        envs[f"{a}/{b}"] = {k: e[k] for k in
-                            ("lo", "hi", "width_dex", "unfractionated_lo", "unfractionated_hi",
-                             "model_lo", "model_hi", "source", "meteorite") if k in e}
+        e = ratio_envelope(fam, a, b, t_cut_max=float(cfg["fit"]["t_cut_max_restricted"]))
+        envs[f"{a}/{b}"] = {k: e[k] for k in ("lo", "hi", "width_dex", "unfractionated_lo",
+                                              "unfractionated_hi") if k in e}
     out = {"generated_utc": _now(), "elapsed_s": round(_time.time() - t0, 1), "pewdd": pew,
-           "timescales": ts, "pair_envelopes_restricted": envs, "meteorites": met_prov,
+           "timescales": ts, "pair_envelopes_restricted": envs,
            "family_endmembers": fam.endmembers, "family_elements": fam.elements,
            "acquisition": log.as_dict()}
     _write_json(out_dir / "probe.json", out)
@@ -230,13 +227,24 @@ def _load_table(out_dir: Path, cfg: dict, input_csv: str | None = None) -> tuple
     aj = json.loads(ap.read_text())
     path = aj.get("pewdd", {}).get("path")
     if not path or not Path(path).exists():
-        # a path relative to the repo root
-        cand = _repo_root() / str(path) if path else None
-        if cand is not None and cand.exists():
-            path = str(cand)
+        # acquire.json records the absolute path of the checkout that fetched
+        # the rows (on a runner, /home/runner/work/...).  A later stage, a
+        # different checkout or a local replay sees the same file under its own
+        # results directory, so fall back on the basename before giving up.
+        cands = []
+        if path:
+            name = Path(str(path)).name
+            cands += [out_dir / "data" / name, out_dir / name,
+                      _repo_root() / "results" / "slag" / "data" / name,
+                      _repo_root() / str(path).lstrip("/")]
+        found = next((c for c in cands if c.exists()), None)
+        if found is not None:
+            path = str(found)
         else:
             return None, None, {"source": None, "error": "acquired table missing",
-                                "acquire_status": aj.get("status")}
+                                "acquire_status": aj.get("status"),
+                                "recorded_path": path,
+                                "searched": [str(c) for c in cands]}
     df = pd.read_csv(path, low_memory=False)
     roles = aj.get("roles")
     if not roles:
@@ -286,34 +294,6 @@ def _timescale_model(fam, out_dir: Path, *, df=None, roles: dict | None = None) 
     return tsm
 
 
-def _load_meteorites(out_dir: Path):
-    """PEWDD's meteorite compilation, from whichever copy this run has.
-
-    Preferred: the file the acquire stage saved beside the table.  A run that
-    cannot find it keeps going on the end-member model alone and says so --- a
-    missing measurement degrades the envelope, it never invents one.
-    """
-    cands: list[Path] = []
-    ap = out_dir / "acquire.json"
-    if ap.exists():
-        try:
-            for f in (json.loads(ap.read_text()).get("meteorites") or {}).get("files", []):
-                if f.get("local"):
-                    cands.append(Path(f["local"]))
-        except Exception:                                     # noqa: BLE001
-            pass
-    for d in (out_dir / "data", _repo_root() / "results" / "slag" / "data"):
-        cands.extend(sorted(d.glob("meteorites_meteorite_database_*.csv")) if d.is_dir() else [])
-    for c in cands:
-        if not Path(c).exists():
-            continue
-        df = load_meteorites(c)
-        if df is not None and len(df):
-            return df, {"status": "OK", "path": str(c), "n_rows": int(len(df))}
-    return None, {"status": "NOT_FOUND", "tried": [str(c) for c in cands][:8],
-                  "effect": "pair envelopes fall back to the end-member model alone"}
-
-
 def _limit_bookkeeping(panels: list[Panel]) -> dict:
     """Check the parsed detections/limits against the catalogue's own counts.
 
@@ -348,7 +328,7 @@ def _limit_bookkeeping(panels: list[Panel]) -> dict:
 
 
 def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | None = None,
-                 n_cal: int | None = None, rng=None, meteorites=None) -> dict:
+                 n_cal: int | None = None, rng=None) -> dict:
     """Everything the channel computes for one panel."""
     s_res = fit_settings(cfg, restricted=True)
     s_full = fit_settings(cfg, restricted=False)
@@ -357,6 +337,10 @@ def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | Non
     min_el = int(cfg["panels"]["min_elements"])
     n_cal = int(cfg["fit"]["n_cal"]) if n_cal is None else int(n_cal)
     rec: dict = {"name": panel.name, "name_key": panel.meta.get("name_key"),
+                 "object_key": panel.meta.get("object_key") or panel.meta.get("name_key"),
+                 "object_label": panel.meta.get("object_label") or panel.name,
+                 "object_designations": panel.meta.get("object_designations") or [],
+                 "ra": panel.meta.get("ra"), "dec": panel.meta.get("dec"),
                  "reference": panel.reference, "atmosphere": panel.atmosphere,
                  "atmosphere_how": panel.meta.get("atmosphere_how"), "teff": panel.teff,
                  "logg": panel.logg, "spt": panel.meta.get("spt"), "n_measured": panel.n_measured,
@@ -406,11 +390,10 @@ def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | Non
                                pairs=[tuple(p) for p in t2["pairs"]],
                                t_cut_max=float(cfg["fit"]["t_cut_max_restricted"]),
                                z_threshold=float(t2["z_threshold"]),
-                               rest_p_min=float(t2["rest_p_min"]), meteorites=meteorites)
+                               rest_p_min=float(t2["rest_p_min"]))
         flags = refinery_flags(fam, tsm, panel, s_res, nsig=float(t2["nsig_flags"]),
                                t_cut_max=float(cfg["fit"]["t_cut_max_restricted"]),
-                               exotic_mantle_margin_dex=float(t2["exotic_mantle_margin_dex"]),
-                               meteorites=meteorites)
+                               exotic_mantle_margin_dex=float(t2["exotic_mantle_margin_dex"]))
         need_two = any(p["exceeds"] for p in pairs) or any(f.get("fired") for f in flags)
         if need_two:
             rec["two_parcel"] = fit_two_parcel(fam, panel, tsm, s_res, rng=rng)
@@ -463,31 +446,30 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
         out["error"] = prov.get("error", "no table or no element columns resolved")
         _write_json(out_dir / f"screen_{i}of{n}.json", out)
         return out
+    grouping: dict = {}
     panels, diag = A.build_panels(df, roles, default_error_dex=float(cfg["panels"]["default_error_dex"]),
                                   error_floor_dex=float(cfg["panels"]["error_floor_dex"]),
                                   elements=cfg["elements"]["all"],
-                                  sinking=roles.get("sinking_time_columns") or {})
+                                  sinking=roles.get("sinking_time_columns") or {},
+                                  match_arcsec=float(cfg["panels"].get("object_match_arcsec",
+                                                                       A.OBJECT_MATCH_ARCSEC)),
+                                  grouping_out=grouping)
     out["n_rows"] = len(panels)
+    out["object_grouping"] = grouping
     out["roles"] = {k: v for k, v in roles.items() if k != "elements"}
     out["element_columns"] = {e: r["value"] for e, r in roles["elements"].items()}
     out["timescale_library"] = tsm.library_meta
     out["limit_bookkeeping"] = _limit_bookkeeping(panels)
-    met, met_prov = _load_meteorites(out_dir)
-    out["meteorites"] = met_prov
-    out["pair_envelopes"] = {
-        f"{a}/{b}": {k: v for k, v in combined_ratio_envelope(
-            fam, a, b, meteorites=met,
-            t_cut_max=float(cfg["fit"]["t_cut_max_restricted"])).items()
-            if k in ("lo", "hi", "width_dex", "model_lo", "model_hi", "source",
-                     "meteorites_outside_model_envelope_fraction")}
-        for a, b in (tuple(x) for x in cfg["tier2"]["pairs"])}
+    # The shard unit and the "other sources for this object" set are the
+    # reconciled OBJECT (sky position), not the name a given paper used.
     by_key: dict[str, list[Panel]] = {}
     for p in panels:
-        by_key.setdefault(p.meta["name_key"], []).append(p)
+        by_key.setdefault(p.meta.get("object_key") or p.meta["name_key"], []).append(p)
     keys = sorted(by_key)
     if names:
         want = {A.normalise_name(x) for x in names}
-        keys = [k for k in keys if k in want]
+        keys = [k for k in keys
+                if k in want or any((q.meta.get("name_key") in want) for q in by_key[k])]
     keys = [k for j, k in enumerate(keys) if j % n == (i - 1)]
     if max_panels:
         keys = keys[: int(max_panels)]
@@ -499,8 +481,7 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
         for p in group:
             others = [q for q in group if q is not p]
             try:
-                rec = screen_panel(fam, tsm, p, cfg, others=others, n_cal=n_cal, rng=rng,
-                                   meteorites=met)
+                rec = screen_panel(fam, tsm, p, cfg, others=others, n_cal=n_cal, rng=rng)
             except Exception as exc:                          # noqa: BLE001
                 rec = {"name": p.name, "name_key": k, "reference": p.reference,
                        "n_measured": p.n_measured, "status": "SCREEN_ERROR",
@@ -516,6 +497,9 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
             out["n_objects_done"] = j
             out["n_objects_total"] = len(keys)
             out["elapsed_s"] = round(_time.time() - t0, 1)
+            # a checkpoint is a partial shard, not a failed query: say so, so a
+            # shard killed mid-flight is never merged as if its table had failed
+            out["status"] = "IN_PROGRESS"
             _write_json(out_dir / f"screen_{i}of{n}.json", out)
             last_ckpt = _time.time()
     out["elapsed_s"] = round(_time.time() - t0, 1)
@@ -532,7 +516,10 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
 def _match_controls(cfg: dict, panels: list[dict]) -> list[dict]:
     keys = {}
     for r in panels:
-        keys.setdefault(r.get("name_key") or A.normalise_name(r.get("name", "")), []).append(r)
+        for k in {r.get("object_key"), r.get("name_key"),
+                  A.normalise_name(r.get("name", ""))} | set(r.get("object_designations") or []):
+            if k:
+                keys.setdefault(k, []).append(r)
     all_keys = sorted(keys)
     out = []
     for c in cfg.get("controls", []):
@@ -556,9 +543,18 @@ def _match_controls(cfg: dict, panels: list[dict]) -> list[dict]:
             near = [k for k in all_keys if any(nk[:5] in k for nk in norm if len(nk) >= 5)][:8]
             rec.update(status="CONTROL_NOT_FOUND", nearest_keys=near)
         else:
+            # the alias may have matched one designation of a star the sky
+            # match reconciled with others; report the whole object
             rows = keys[hit]
+            okey = (max(rows, key=lambda r: r.get("n_measured", 0)).get("object_key") or hit)
+            rows = keys.get(okey, rows)
             best = max(rows, key=lambda r: r.get("n_measured", 0))
-            rec.update(status="FOUND", matched_key=hit, n_sources=len(rows),
+            rec.update(status="FOUND", matched_key=hit, object_key=okey,
+                       object_label=best.get("object_label"),
+                       designations=sorted({r.get("name") for r in rows}),
+                       ra=best.get("ra"), dec=best.get("dec"),
+                       teff=best.get("teff"), atmosphere=best.get("atmosphere"),
+                       n_sources=len(rows),
                        best_reference=best.get("reference"), n_measured=best.get("n_measured"),
                        elements=best.get("elements"), misfit_class=best.get("misfit_class"),
                        p_misfit=(best.get("misfit") or {}).get("p_misfit"),
@@ -625,8 +621,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     shard_meta = []
     ts_source = None
     ts_library: dict = {}
-    pair_envs: dict = {}
-    met_prov: dict = {}
+    obj_grouping: dict = {}
     limit_book: dict = {}
     for s in shards:
         try:
@@ -638,9 +633,8 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
                            "n_panels": d.get("n_panels"), "n_objects": d.get("n_objects"),
                            "provenance": d.get("provenance"), "error": d.get("error")})
         ts_source = d.get("timescale_source", ts_source)
+        obj_grouping = d.get("object_grouping") or obj_grouping
         ts_library = d.get("timescale_library") or ts_library
-        pair_envs = d.get("pair_envelopes") or pair_envs
-        met_prov = d.get("meteorites") or met_prov
         if d.get("limit_bookkeeping"):
             lb = d["limit_bookkeeping"]
             for k in ("detections_checked", "detections_agree", "upper_limits_checked",
@@ -665,7 +659,8 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     n_panels = len(panels)
     objects = {}
     for r in panels:
-        objects.setdefault(r.get("name_key") or r.get("name"), []).append(r)
+        objects.setdefault(r.get("object_key") or r.get("name_key") or r.get("name"),
+                           []).append(r)
     screened = [r for r in panels if r.get("status") == "SCREENED" and r.get("misfit")]
     errors = [r for r in panels if r.get("status") == "SCREEN_ERROR"]
     # the misfit list: best panel per object among those calibrated
@@ -789,7 +784,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         "generated_utc": _now(), "verdict": verdict, "degraded": degraded,
         "acquisition": acq, "timescale_source": ts_source,
         "timescale_library": ts_library, "limit_bookkeeping": limit_book,
-        "pair_envelopes": pair_envs, "meteorites": met_prov,
+        "object_grouping": obj_grouping,
         "timescale_source_per_panel": _count_by(screened, "timescale_source"),
         "panels_with_own_timescales": sum(1 for r in screened
                                           if int(r.get("n_row_sinking_times") or 0) > 0),
@@ -807,7 +802,9 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         "pair_statistics": pair_stats,
         "misfit_list_top": misfit_df.head(25).to_dict("records") if len(misfit_df) else [],
         "survivors": survivors,
-        "controls": [{k: c.get(k) for k in ("name", "status", "matched_key", "n_measured",
+        "controls": [{k: c.get(k) for k in ("name", "status", "matched_key", "designations",
+                                             "ra", "dec", "teff", "atmosphere", "n_sources",
+                                             "n_measured",
                                              "p_misfit", "p_misfit_full", "misfit_class", "phase",
                                              "dominant_endmember", "max_abs_residual_sigma")}
                      for c in controls],

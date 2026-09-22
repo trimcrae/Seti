@@ -25,6 +25,42 @@ hard way. Deviating costs runs.
    check any API you use against the major version the runner will install, and
    where a channel is exposed to it, run its suite under both majors.
 
+   Removed spellings are the easy half. The other half is silent behaviour
+   change: under pandas 3's copy-on-write, `DataFrame.to_numpy()` hands back a
+   **read-only** array, so the common idiom
+
+       a = df.to_numpy(dtype=float)
+       a[a <= 0] = np.nan          # ValueError: destination is read-only
+
+   raises on the runner and passes in the sandbox. GRAVE hit exactly this, at
+   the top of its screen stage — *after* paying for the whole acquisition. Pass
+   `copy=True` wherever the array is mutated afterwards, which is what such code
+   always meant. Swept 2026-09-22: no other channel carries this pattern.
+6. **A workflow can only be dispatched if its file is on the default branch.**
+   `POST /actions/workflows/<file>/dispatches` returns a bare `404 Not Found`
+   when `<file>` exists only on a channel branch — the same response as a
+   misspelt filename, which is why it reads as a typo rather than as the rule
+   it is. RING was built, tested and never once run for this reason. Put the
+   `.yml` on `main` early (it is inert there: a `workflow_dispatch`-only
+   trigger fires on nothing), then dispatch with `ref` set to your branch —
+   the run still executes the copy on your ref, so the branch stays the place
+   work happens.
+
+   A second, quieter one, found the same day by GRAVE and worth knowing because
+   it does **not** look like a version problem: under pandas 3's copy-on-write,
+   `DataFrame.to_numpy()` returns a **read-only** array, so the common idiom
+
+   ```python
+   x = df.to_numpy(dtype=float)
+   x[x <= 0] = np.nan          # ValueError: assignment destination is read-only
+   ```
+
+   raises on the runner and nowhere else. Pass `copy=True` whenever the result
+   is mutated. This one is worse than a removed keyword because it fires
+   *after* the acquisition, deep in a stage the sandbox always ran green. The
+   cheapest check is a throwaway venv on the runner's majors — building one and
+   running `pytest tests/test_<channel>.py` under it takes a couple of minutes.
+
 ## 1. Layout
 
 ```
@@ -59,6 +95,16 @@ Config thresholds go in `config/`, not as magic numbers in code.
   crossmatch locally with a KD-tree.
 
 ## 3. Workflow design
+
+**Register the workflow on the default branch before you try to dispatch it.**
+A `workflow_dispatch` API call 404s for a workflow file that is not on `main`,
+whatever branch you pass as the ref. A channel whose `.yml` lives only on its
+own branch is therefore *undispatchable*, and the failure looks like a missing
+channel rather than a missing file. RING and FORGE each lost their first
+dispatch to this on 2026-09-22 — FORGE's had been impossible the whole time it
+appeared merely unrun. The file is inert on `main` (`workflow_dispatch` only,
+no `push` or `schedule` trigger) and the run executes the copy on its own ref,
+so registering it early costs nothing.
 
 Copy `.github/workflows/herdsman.yml`. It encodes:
 

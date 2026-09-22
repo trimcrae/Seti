@@ -511,14 +511,18 @@ through the exponential ramp. Dispatch via `.github/workflows/ignition.yml`
 
 ### 7.1 In flight, 2026-09-22 — and the next decisive action
 
-Two dispatches are queued behind an account-wide GitHub Actions ceiling (11
-runs in flight, 111 queued repo-wide across the parallel channels); neither
-had a runner after four hours, so **neither has yet corrected the brief**:
+Both dispatches have since run. **35738088082 is complete and its verdict is
+committed** — read §7.3, which supersedes items 1–3 of the read order below.
+**35740159635 is in flight**: its probe landed at 15:42 UTC (11:42 EDT) and
+its 12-shard sweep matrix began at 15:48 UTC (11:48 EDT) under a 150-minute
+per-shard wall clock, so the shards commit their own `sweep_s*of12` /
+`screen_s*of12` records from about 18:20 UTC (14:20 EDT), each shard as it
+finishes. Item 4 of the read order is the live one.
 
 | run | what it settles | inputs |
 |---|---|---|
-| **35738088082** | Step 1: do the 846 parents get full 10-year series now? | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
-| **35740159635** | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
+| **35738088082** ✅ | Step 1: do the 846 parents get full 10-year series now? **Yes — 846/846, see §7.3** | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
+| **35740159635** ⏳ | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers — *sweeping* | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
 
 `route=upload` with `upload_fallback_cone: true` is deliberate: it tests the
 `unicodeChar` fix on the real service, and a chunk no rung answers still goes
@@ -572,3 +576,120 @@ Independently confirmed on the metal: run 35738088082's eight acquire+screen
 shards each installed pandas 3.0.6 on the runner and completed, so the acquire,
 ensemble-correction and rise-test paths are proven at that version against real
 archive data, not only in tests.
+
+### 7.3 Run 35738088082 — the upload fix on the real service, and 846/846
+
+Dispatched `stage=all mode=fields shards=8 route=upload
+sample_from_run_id=35039105536`. The parent was the 846-star Gaia DR3 x AllWISE
+sample already pulled by run 35039105536; reusing it took 1 s in the `sample`
+job instead of the 2 h 22 min that killed the previous dispatch.
+
+**The upload question is settled.** Every acquire shard logged the rung it
+used:
+
+```
+[ignition] upload[pyvo_sync/long] 83 stars -> 253114 rows in 100 s   (shard 0)
+[ignition] upload[pyvo_sync/long] 80 stars -> 281058 rows in  93 s   (shard 2)
+[ignition] acquire s0of8: OK ok=106 zero=0 failed=0 route=upload
+[ignition] acquire s2of8: OK ok=106 zero=0 failed=0 route=upload
+```
+
+`pyvo_sync/long` is the top rung of the ladder with `sid` serialised as VOTable
+`long`. IRSA's TAP accepted it. No shard fell through to the `char` rung, none
+took the one recorded 32-bit downgrade, and `Unimplemented data type:
+unicodeChar` does not appear anywhere in the run. The same conclusion comes
+independently from run 35740159635's probe, which walked the ladder live:
+
+```
+neowise_upload.label   = neowise_upload[pyvo_sync]_2   status OK   7919 rows
+neowise_upload_transport = pyvo_sync
+neowise_route_recommended = upload        (it had never been recommended before)
+verdict = ALL_ROUTES_REACHABLE
+```
+
+**And the 314 lost stars are back.** Denominators, against the 846:
+
+| | run 35039105536 | run 35738088082 |
+|---|---|---|
+| parents attempted | 336 of 846 | **846 of 846** |
+| stars with NEOWISE rows | 172 | **846** |
+| stars screened | 172 | **846** |
+| acquire failures | 314 | **0** |
+
+Per-shard: 106,106,106,106,106,106,105,105 screened = 846, with `ok=N zero=0
+failed=0` on every shard. A shard's whole star list now comes back in two to
+three minutes of wall clock.
+
+**The ensemble zero-point correction has now been run on real data — and the
+answer is split.** This is the claim that most needed testing, so it is worth
+separating what the run establishes from what it does not.
+
+*What it establishes.* The correction measures a real instrumental term, and
+the evidence is that the eight shards agree on it. The shards are eight
+disjoint sets of ~106 stars; each computes its own median offset per 0.25-yr
+bin independently, 44 bins over a 10.75-yr baseline, all 44 applied:
+
+| band | mean pairwise correlation between the 8 shards' curves | shard-to-shard scatter per bin (median) | ensemble-mean first → last |
+|---|---|---|---|
+| W1 | **+0.970** (min +0.952, max +0.983) | 0.0004 mag | **+0.0190 mag** |
+| W2 | **+0.989** (min +0.980, max +0.994) | 0.0009 mag | **+0.0563 mag** |
+
+Eight independent star samples reproducing the same 44-point curve to within
+0.4–0.9 mmag, against a 19–59 mmag excursion, is not a stellar signal. NEOWISE
+drifts faint by ~0.019 mag in W1 and ~0.056 mag in W2 over the decade, the
+correction sees it, and it subtracts it. That had never been shown on sky data
+before this run.
+
+*What it does not establish.* It is **not** what removed the 97 faders. The
+summary carries the uncorrected control: `raw_two_band_fading_5sigma`, the
+count of stars whose **uncorrected** bare linear slope is >= 5 sigma fading in
+both bands, is **18** over the 846, against **17** after the correction. The
+correction moved one star. So the fall from `FADING` 97 of 172 (56.4%) to 17
+of 846 (2.0%) is a change of **sample**, not of method, and the earlier
+diagnosis — that those 97 were the survey zero point — is *not* confirmed
+here.
+
+The likely reason is that the earlier 172 were not a random 172 of the 846:
+they were the remnant the broken `field` route happened to deliver, which is
+the ecliptic-pole end of the sample, where NEOWISE stacks far more epochs per
+star. A fixed 0.056 mag decade-long drift is worth ~sqrt(N_epochs) in slope
+significance, so the same instrumental term that is harmless at ~100 epochs
+becomes a 5-sigma two-band "fade" at ~1000. That is a mechanism, not a
+measurement, and this run does not test it: the decisive test is to re-screen
+the high-epoch-count tail with and without `--no-ensemble` and compare
+`raw_two_band_fading_5sigma` to `FADING` there, where the two should finally
+diverge. Until then the correction is retained because it demonstrably removes
+a real term at negligible cost, not because it has been shown to rescue any
+star.
+
+`raw_two_band_rising_5sigma` is **0** on every shard, uncorrected — so no
+candidate was created *or* destroyed by the correction either.
+
+**The funnel.** `results/ignition/summary.json`, committed by the run itself at
+16:15:33 UTC, carries `verdict: NO_IGNITION_CANDIDATE`, `degraded: []` (nothing
+was degraded) and `shards: {expected 8, found 8, missing []}`:
+
+| verdict | run 35039105536 (of 172) | run 35738088082 (of 846) |
+|---|---|---|
+| `NOT_RISING` | 37 | 780 |
+| `IMPULSIVE_SHAPE` | 12 | 25 |
+| `INSUFFICIENT_EPOCHS` | 26 | 23 |
+| `FADING` | 97 | 17 |
+| `SCAN_SYSTEMATIC` | — | 1 |
+| **rise candidates** | 0 | **0** |
+
+The five veto counts sum to 846 exactly, so no star is unaccounted for. The
+two columns are *not* like for like: 172 is the biased remnant of a broken
+route, 846 is the whole sample.
+
+Injection sensitivity, measured on this run's own 823 screened non-rising
+stars by injecting linear ramps on both bands over 10 yr and asking how many
+the rise test recovers: **83.8%** at 0.10 mag, **95.7%** at 0.20 mag, **99.4%**
+at 0.40 mag. So a 0.2 mag decade-long born excess would have been found in 19
+of every 20 stars carrying one, and none was.
+
+**What the run did not find.** Zero rise candidates in 846 stars, with the
+sensitivity above. That is a clean result on a channel that now demonstrably
+works end to end, and per `CLAUDE.md` it is a reason to widen the question, not
+a deliverable: 846 stars is a pilot, and the `|b| > 15` tiles sweep — 2,047
+tiles, 32,451 deg2, 517x this area — is the scale axis that follows.

@@ -38,6 +38,7 @@ from seti.metronome.clock import (
     gumbel_tail_p,
     h_statistic,
     phase_stats,
+    scan,
     shuffle_waiting_times,
 )
 from seti.metronome.run import (
@@ -47,6 +48,7 @@ from seti.metronome.run import (
     stage_assess,
 )
 from seti.metronome.vet import (
+    DEFAULT_VET,
     HARD_VETO_ORDER,
     REPORT_FLAGS,
     assign_tiers,
@@ -61,7 +63,9 @@ from seti.metronome.windows import (
     KEPLER_LC_CADENCE_DAYS,
     Windows,
     guess_time_system,
+    infer_time_grid,
     kepler_quarter_windows,
+    lattice_phase_limits,
     star_windows,
     tess_sector_windows,
     windows_from_events,
@@ -395,7 +399,17 @@ def _sig_record(**kw) -> dict:
     rec = {"status": "scanned", "fdr_significant": True, "fdr_watch": True, "period": 3.137,
            "Q": 0.97, "jitter": 0.005, "f_in_window": 1.0, "gap_integer_frac": 0.95,
            "n_gaps_used": 40, "p_window": 1e-9, "p_shuffle": 0.02, "p_window_source": "empirical",
-           "energy_phase_p": 0.4, "wn_truncated_by_budget": False, "mission": "kepler"}
+           "energy_phase_p": 0.4, "wn_truncated_by_budget": False, "mission": "kepler",
+           # null 3 ran and the star beat it; a record without these is a star
+           # whose pool null could not be run, which is an incomplete vet
+           "p_pool": 0.005, "pn_n_trials": 200, "pn_n_exceed": 0,
+           "jitter_floor": 1e-6, "phase_spacing": 1e-5,
+           # the period ticked 300 times inside the windows: a real recurrence
+           "cycles_span": 300.0, "cycles_hit": 40,
+           # enough events for the quality gates to carry information (see
+           # n_quality_informative); tests that care override it
+           "n_events": 120,
+           "grid_days": KEPLER_LC_CADENCE_DAYS, "grid_source": "measured"}
     rec.update(kw)
     return rec
 
@@ -462,6 +476,86 @@ def test_energy_incoherent_is_report_only():
     assert v["tier"] == "candidate"
 
 
+def _population(n: int, period_fn, **kw) -> list[dict]:
+    """A scanned population of ``n`` kepler stars with given best periods."""
+    return [dict(_sig_record(period=float(period_fn(i)), **kw), star_key=f"kepler:{i}",
+                 mission="kepler") for i in range(n)]
+
+
+def test_population_period_veto_kills_a_period_many_unrelated_stars_share():
+    # a smooth background of 200 periods spread over a decade, plus 12 stars
+    # all sitting within 1% of 243 d -- the shape the 2026-09-21 TESS run had
+    rng = np.random.default_rng(7)
+    bg = _population(200, lambda i: 10.0 ** rng.uniform(1.0, 2.6))
+    spike = [dict(_sig_record(period=243.0 * (1.0 + 0.0005 * (j - 6))),
+                  star_key=f"kepler:s{j}", mission="kepler") for j in range(12)]
+    vetted = assign_tiers(bg + spike, {}, VET)
+    by_key = {r["star_key"]: r for r in vetted}
+    for j in range(12):
+        r = by_key[f"kepler:s{j}"]
+        assert r["first_veto"] == "population_period", (j, r["flags"])
+        assert r["veto_detail"]["population_period"]["n_near"] >= 4
+    # the background stars are not swept up with them
+    swept = sum(1 for i in range(200)
+                if by_key[f"kepler:{i}"]["first_veto"] == "population_period")
+    assert swept <= 4, swept
+
+
+def test_population_period_leaves_a_star_alone_at_its_period():
+    rng = np.random.default_rng(11)
+    bg = _population(200, lambda i: 10.0 ** rng.uniform(1.0, 2.6))
+    lone = dict(_sig_record(period=4.7137), star_key="kepler:lone", mission="kepler")
+    vetted = assign_tiers(bg + [lone], {}, VET)
+    r = next(x for x in vetted if x["star_key"] == "kepler:lone")
+    assert "population_period" not in r["flags"]
+    assert r["tier"] in ("candidate", "interest", "watch")
+
+
+def test_population_period_is_not_applied_to_a_population_too_small_to_measure():
+    # five identical periods among five stars is not evidence of anything
+    vetted = assign_tiers(_population(5, lambda i: 3.137), {}, VET)
+    assert all("population_period" not in r["flags"] for r in vetted)
+
+
+def test_few_cycles_veto_trips_when_the_period_barely_repeated():
+    v = vet_star(_sig_record(period=243.0, cycles_span=3.0), FULL_CTX)
+    assert v["first_veto"] == "few_cycles" and v["tier"] == "none"
+    assert v["veto_detail"]["few_cycles"]["cycles_span"] == 3.0
+    # exactly at the threshold is enough
+    v = vet_star(_sig_record(cycles_span=float(DEFAULT_VET["cycles_min"])), FULL_CTX)
+    assert v["tier"] == "candidate"
+
+
+def test_cycle_bookkeeping_counts_opportunities_not_tick_instants():
+    """cycles_hit can never exceed cycles_span, and occupancy is a fraction."""
+    w = kepler_windows_short()
+    t = clock_events(w, 2.5, w.starts[0] + 0.3, duty=0.5, jitter_days=0.002, seed=3)
+    r = scan(t, star_windows(t, w), dict(SCAN))
+    assert r.cycles_hit <= r.cycles_span
+    assert 0.0 <= r.cycle_occupancy <= 1.0
+    assert r.cycles_span > 20.0
+    # forced onto a period comparable with the baseline, the same events have
+    # only a handful of chances to repeat -- which is what few_cycles reads
+    r2 = scan(t, star_windows(t, w), dict(SCAN, min_period_days=100.0,
+                                          max_period_days=400.0))
+    assert r2.cycles_span < 20.0
+    # the null runs the same scan thousands of times per star and reads none
+    # of these, so it skips them; everything else must be identical
+    sw = star_windows(t, w)
+    a, b = scan(t, sw, dict(SCAN)), scan(t, sw, dict(SCAN), cycles=False)
+    assert b.cycles_hit == 0 and not np.isfinite(b.cycles_span)
+    assert (a.period, a.h_max, a.Q, a.jitter) == (b.period, b.h_max, b.Q, b.jitter)
+
+
+def test_window_overlap_is_not_window_containment():
+    w = Windows(np.array([0.0, 10.0]), np.array([2.0, 12.0]))
+    inside = w.overlaps(np.array([0.5]), np.array([1.5]))
+    straddle = w.overlaps(np.array([1.5]), np.array([3.0]))
+    gap = w.overlaps(np.array([4.0]), np.array([6.0]))
+    assert bool(inside[0]) and bool(straddle[0]) and not bool(gap[0])
+    assert not bool(w.contains(np.array([2.5]))[0])
+
+
 def test_every_rejection_rule_has_a_counter():
     recs = [dict(_sig_record(period=13.7), star_key="k:1", mission="tess"),
             dict(_sig_record(period=5.5), star_key="k:2"),
@@ -469,12 +563,23 @@ def test_every_rejection_rule_has_a_counter():
             dict(_sig_record(p_shuffle=0.9, gap_integer_frac=0.05), star_key="k:4"),
             dict(_sig_record(Q=0.2, jitter=0.3), star_key="k:5"),
             dict({"status": "insufficient_events", "star_key": "k:6"}),
-            dict(_sig_record(p_window=0.9), star_key="k:7")]
+            dict(_sig_record(p_window=0.9), star_key="k:7"),
+            dict(_sig_record(p_pool=0.4), star_key="k:8"),
+            dict(_sig_record(pn_n_trials=0, jitter=0.001, jitter_floor=0.001),
+                 star_key="k:9"),
+            dict(_sig_record(period=200.0, cycles_span=2.0), star_key="k:10")]
+    # population_period needs a population: a TESS background wide of k:1's
+    # 13.7 d, plus six stars piled up on one period
+    rng = np.random.default_rng(3)
+    recs += [dict(_sig_record(period=float(10.0 ** rng.uniform(1.6, 2.6))),
+                  star_key=f"t:{i}", mission="tess") for i in range(60)]
+    recs += [dict(_sig_record(period=243.0 * (1.0 + 0.0005 * (j - 3))),
+                  star_key=f"t:s{j}", mission="tess") for j in range(6)]
     ctx = {"k:1": {"mission": "tess", "prot": 100.0, "variability_catalogues_reached": True},
            "k:2": {"mission": "kepler", "prot": 11.0, "variability_catalogues_reached": True},
            "k:3": {"mission": "kepler", "prot": 30.0, "variability_catalogues_reached": True,
                    "catalogued_periods": [("vsx", 0.5668, "RRAB")]},
-           "k:4": FULL_CTX, "k:5": FULL_CTX, "k:7": FULL_CTX}
+           "k:4": FULL_CTX, "k:5": FULL_CTX, "k:7": FULL_CTX, "k:8": FULL_CTX, "k:9": FULL_CTX}
     vetted = assign_tiers(recs, ctx, VET)
     first = rejection_counters(vetted)["first_veto"]
     for rule in HARD_VETO_ORDER + ("insufficient_events", "not_significant"):
@@ -482,6 +587,152 @@ def test_every_rejection_rule_has_a_counter():
     flags = rejection_counters(vetted)["flags_raised"]
     for f in REPORT_FLAGS:
         assert f in flags
+
+
+# ---------------------------------------------------------------------------
+# the catalogue's own time lattice, and the null that carries it
+# ---------------------------------------------------------------------------
+def test_infer_time_grid_recovers_a_coarse_lattice_not_the_mission_cadence():
+    """Tu+2022's TESS peak times are spaced by 0.0069 d, five 2-min cadences.
+
+    The mission cadence in configuration says 0.0013889.  A null that snaps to
+    the configured value cannot reproduce the data's lattice, so the lattice
+    has to be MEASURED.
+    """
+    g = 0.0069
+    rng = np.random.default_rng(3)
+    t = 1325.0 + g * np.unique(rng.integers(0, 120000, size=4000))
+    out = infer_time_grid(t)
+    assert out["method"] == "lattice"
+    assert abs(out["grid_days"] / g - 1.0) < 1e-6, out
+    assert out["frac_on_grid"] > 0.999
+
+
+def test_infer_time_grid_reports_no_lattice_for_continuous_times():
+    rng = np.random.default_rng(4)
+    out = infer_time_grid(np.sort(rng.uniform(0.0, 600.0, 3000)))
+    assert not np.isfinite(out["grid_days"])
+    assert out["method"] in ("no_lattice", "too_few_times")
+
+
+def test_lattice_phase_limits_gives_the_jitter_floor_the_rounding_forces():
+    """Rounding peak times to g forces rms phase jitter >= g / (P sqrt 12)."""
+    g = KEPLER_LC_CADENCE_DAYS
+    lim = lattice_phase_limits(0.4232741, g)
+    assert abs(lim["jitter_floor"] - g / 0.4232741 / np.sqrt(12.0)) < 1e-12
+    assert 0.013 < lim["jitter_floor"] < 0.015          # KIC 5879574's floor
+    assert not lim["comb_coarser_than_window"]
+    # a short period against a coarse TESS lattice: the comb IS coarser than
+    # the +-0.05 cycle phase window, so f_in_window is quantised there
+    assert lattice_phase_limits(0.1, 0.0069)["comb_coarser_than_window"]
+    assert not np.isfinite(lattice_phase_limits(3.0, float("nan"))["jitter_floor"])
+
+
+def test_quantisation_limited_is_report_only_and_names_the_floor():
+    # jitter at the floor: flagged, but still a candidate -- the flag says the
+    # tightness is the catalogue's rounding, the pool null says whether to care
+    v = vet_star(_sig_record(jitter=0.001, jitter_floor=0.001), FULL_CTX)
+    assert "quantisation_limited" in v["flags"] and v["tier"] == "candidate"
+    assert v["veto_detail"]["quantisation_limited"]["jitter_floor"] == 0.001
+    v = vet_star(_sig_record(jitter=0.005, jitter_floor=0.0001), FULL_CTX)
+    assert "quantisation_limited" not in v["flags"]
+
+
+def _lattice_catalogue(mission: Windows, grid: float, n_stars: int, n_each: int, seed: int):
+    """Many stars whose events fall at random on ONE coarse lattice.
+
+    Nothing here is periodic: each star's events are uniform over the lattice
+    points inside the windows.  But every event of every star sits at an exact
+    multiple of ``grid``, so at P = grid (and at every rational multiple of it)
+    the phases are identical by construction.  This is the Tu+2022 failure
+    mode with the lattice made coarse enough to see in a unit test.
+    """
+    rng = np.random.default_rng(seed)
+    lat = np.arange(mission.starts[0], mission.stops[-1], grid)
+    lat = lat[mission.contains(lat)]
+    return {i: np.sort(rng.choice(lat, size=n_each, replace=False)) for i in range(n_stars)}
+
+
+def test_pool_null_kills_a_lattice_artefact_that_the_window_null_calls_significant():
+    mission = Windows(np.array([0.0, 220.0]), np.array([180.0, 400.0]),
+                      cadence_days=KEPLER_LC_CADENCE_DAYS, label="two_blocks")
+    grid = 0.7
+    cat = _lattice_catalogue(mission, grid, n_stars=12, n_each=40, seed=7)
+    t = cat[0]
+    pool = np.concatenate([v for k, v in cat.items() if k != 0])
+    w = star_windows(t, mission)
+    rec = analyze_star(t, w, None, dict(SCAN), dict(NULL), np.random.default_rng(5),
+                       pool_times=pool)
+    # The window null snaps to the CONFIGURED cadence (30 min), so it cannot
+    # place an event on the 0.7-d lattice: the star looks like a perfect clock.
+    assert rec["status"] == "scanned"
+    assert rec["jitter"] < 1e-6 and rec["Q"] > 0.999
+    assert rec["p_window"] < 0.05, rec["p_window"]
+    # The pool null draws from the same lattice and is not impressed.
+    assert rec["pool_null_computed"] and rec["pn_n_trials"] > 0
+    assert rec["p_pool"] > 0.05, rec["p_pool"]
+    v = vet_star(dict(rec, fdr_significant=True, fdr_watch=True), FULL_CTX)
+    assert v["first_veto"] == "pool_null_explains", (v["first_veto"], v["flags"])
+    assert v["tier"] == "none"
+
+
+def _clock_on_lattice(mission: Windows, grid: float, period: float, t0: float) -> np.ndarray:
+    k = np.arange(0, int(mission.span / period) + 2)
+    t = np.round((t0 + k * period) / grid) * grid
+    return np.unique(t[mission.contains(t)])
+
+
+def test_pool_null_does_not_kill_a_real_clock_on_the_same_lattice():
+    """The pool is the control: a genuine clock beats it as it beats null 1."""
+    mission = Windows(np.array([0.0, 220.0]), np.array([180.0, 400.0]),
+                      cadence_days=KEPLER_LC_CADENCE_DAYS, label="two_blocks")
+    grid = 0.05
+    cat = _lattice_catalogue(mission, grid, n_stars=12, n_each=60, seed=8)
+    pool = np.concatenate(list(cat.values()))
+    P = 5.23                          # NOT a multiple of the lattice step
+    t = _clock_on_lattice(mission, grid, P, 3.5)
+    assert len(t) >= 40
+    w = star_windows(t, mission)
+    rec = analyze_star(t, w, None, dict(SCAN), dict(NULL), np.random.default_rng(6),
+                       pool_times=pool)
+    assert abs(rec["period"] / P - 1.0) < 1e-3, rec["period"]
+    assert rec["pool_null_computed"] and rec["p_pool"] <= 0.02, rec["p_pool"]
+    v = vet_star(dict(rec, fdr_significant=True, fdr_watch=True), FULL_CTX)
+    assert "pool_null_explains" not in v["flags"]
+    assert v["tier"] in ("candidate", "interest"), (v["tier"], v["flags"])
+
+
+def test_pool_null_that_could_not_run_is_flagged_and_blocks_the_candidate_tier():
+    v = vet_star(_sig_record(pn_n_trials=0, p_pool=float("nan")), FULL_CTX)
+    assert "pool_null_unreached" in v["flags"]
+    assert v["first_veto"] is None and v["tier"] == "interest"
+
+
+def test_screen_measures_the_grid_and_runs_the_pool_null():
+    """The screen stage measures the lattice, and the measurement propagates:
+    into the window model, into the shortest period the scan will entertain
+    (>= n_cadences_min lattice steps), and into the pool null."""
+    mission = Windows(np.array([0.0, 220.0]), np.array([180.0, 400.0]),
+                      cadence_days=KEPLER_LC_CADENCE_DAYS, label="two_blocks")
+    grid = 0.05
+    cat = _lattice_catalogue(mission, grid, n_stars=10, n_each=60, seed=9)
+    rows = [(str(k), v) for k, v in cat.items()]
+    rows.append(("clock", _clock_on_lattice(mission, grid, 5.23, 3.5)))
+    ev = pd.DataFrame({"star_id": np.concatenate([[k] * len(v) for k, v in rows]),
+                       "t_peak": np.concatenate([v for _, v in rows])})
+    conf = load_metronome_config()
+    conf = dict(conf, scan=dict(conf["scan"], **SCAN), null=dict(conf["null"], **NULL))
+    recs, rep = screen_catalogue(ev, "synthetic", "kepler", conf)
+    assert rep["time_grid"]["cadence_source"] == "measured"
+    assert abs(rep["time_grid"]["cadence_used_days"] / grid - 1.0) < 1e-6
+    assert rep["mission_windows"]["cadence_days"] == rep["time_grid"]["cadence_used_days"]
+    assert rep["n_pool_null_computed"] >= 1
+    assert all(np.isfinite(r.get("grid_days", np.nan)) for r in recs)
+    assert all(np.isfinite(r.get("jitter_floor", np.nan)) for r in recs
+               if r.get("status") == "scanned")
+    clock = [r for r in recs if r["star_id"] == "clock"][0]
+    assert abs(clock["period"] / 5.23 - 1.0) < 1e-3
+    assert clock["pool_null_computed"] and clock["p_pool"] <= 0.02
 
 
 def test_calibration_reports_where_thresholds_sit():
@@ -629,6 +880,30 @@ def test_cone_failure_is_per_star_not_per_catalogue():
     v, reached = acq.fetch_variable_context(pos, {"vsx": {"table": "B/vsx/vsx"}}, cone_fn=cone)
     assert reached == {"a": {"vsx"}}
     assert v["a"] == [("vsx", 0.5, "RRAB")] and "b" not in v
+
+
+def test_positions_fall_back_to_the_acquired_star_tables():
+    """The TIC/KIC round trip reached 45% of the 2026-09-21 shortlist, and the
+    stars it missed could not have the periodic-variable veto applied at all.
+    The flare catalogues' own star tables carry positions and are already on
+    disk, so they fill the gap; the round trip's answer still wins."""
+    from seti.metronome.run import _fill_positions_from_rotation
+
+    pos = pd.DataFrame({"star_id": ["1"], "ra": [10.0], "dec": [1.0]})
+    rot = pd.DataFrame({"star_id": ["1", "2", "3", "4"], "prot": [1.0, 2.0, 3.0, 4.0],
+                        "ra": [99.0, 20.0, 30.0, np.nan],
+                        "dec": [99.0, 2.0, 3.0, np.nan]})
+    out = _fill_positions_from_rotation(pos, ["1", "2", "3", "4"], rot)
+    assert list(out.columns) == ["star_id", "ra", "dec"]
+    assert set(out["star_id"]) == {"1", "2", "3"}          # "4" has no position
+    assert float(out.loc[out["star_id"] == "1", "ra"].iloc[0]) == 10.0   # round trip wins
+    assert float(out.loc[out["star_id"] == "2", "ra"].iloc[0]) == 20.0
+    # a rotation table without positions changes nothing, and neither does an
+    # empty round trip with no rotation table
+    assert len(_fill_positions_from_rotation(pos, ["1", "2"], rot[["star_id", "prot"]])) == 1
+    empty = pd.DataFrame(columns=["star_id", "ra", "dec"])
+    assert len(_fill_positions_from_rotation(empty, ["2"], pd.DataFrame())) == 0
+    assert len(_fill_positions_from_rotation(empty, ["2", "3"], rot)) == 2
 
 
 def test_run_with_empty_archive_is_zero_rows_not_a_null(tmp_path):
@@ -1724,6 +1999,82 @@ def test_redetect_finds_injected_flares_and_the_clock_on_them():
     assert rec["rd_jitter_core"] <= 0.05 and rec["rd_n_core"] >= 8
 
 
+def test_a_sinusoid_does_not_manufacture_flares_but_a_sharp_pulsator_does():
+    """THE confounder of the re-detection stage, measured rather than assumed.
+
+    A running median over ``detrend_window_days`` cannot flatten a photometric
+    oscillation of comparable period, so the worry is that its maxima are
+    re-detected as a train of "flares" at exactly the photometric period ---
+    with the phase stability of the oscillation rather than of any flare
+    mechanism.  KIC 5879574's re-detected period (0.4233 d) sits in that band.
+
+    Measured here, on light curves that contain NO flares at all:
+
+    * a pure SINUSOID does not do it.  The residual is a sinusoid too, and the
+      MAD sigma is set by that same sinusoid, so its maxima sit at ~1.4 sigma,
+      under the 2.5/3.5 sigma gates.  The detector is safe against this case
+      and the assertion records it.
+    * a SHARP-PEAKED periodic signal does.  A pulsator's sawtooth maximum, a
+      heartbeat brightening, an ellipsoidal or contact-binary light curve with
+      a narrow maximum: the bulk of the cycle sets the MAD, the narrow peak
+      clears it every cycle, and out comes a perfect clock at P_phot.
+
+    The second case is what the photometric veto is for.
+    """
+    from seti.metronome.redetect import (
+        find_flares,
+        photometric_period,
+        redetect_star,
+        stitch_segments,
+    )
+
+    P_phot = 0.4233
+    # (a) sinusoid: no manufactured flares
+    segs = _synthetic_kepler_lightcurve([], seed=17, noise=4e-4)
+    for s in segs:
+        s["flux"] = s["flux"] * (1.0 + 0.010 * np.sin(2 * np.pi * s["time"] / P_phot))
+    t, f, meta = stitch_segments(segs)
+    assert len(find_flares(t, f, cadence_days=meta["cadence_days"])) == 0
+
+    # (b) sharp periodic maximum: a manufactured clock
+    segs = _synthetic_kepler_lightcurve([], seed=17, noise=4e-4)
+    for s in segs:
+        ph = (s["time"] / P_phot) % 1.0
+        s["flux"] = s["flux"] * (1.0 + 0.040 * np.exp(-0.5 * (np.minimum(ph, 1.0 - ph)
+                                                              / 0.05) ** 2))
+    t, f, meta = stitch_segments(segs)
+    fl = find_flares(t, f, cadence_days=meta["cadence_days"])
+    assert len(fl) >= 50, len(fl)
+    ph = photometric_period(t, f, cadence_days=meta["cadence_days"])
+    assert abs(ph["period"] / P_phot - 1.0) < 0.02, ph
+    rec = redetect_star(segs, {}, scan_conf=dict(SCAN, min_period_days=0.3),
+                        null_conf=NULL, rng=np.random.default_rng(3),
+                        catalogue_times=np.array([]), period_catalogue=P_phot)
+    assert rec["status"] == "scanned"
+    assert abs(rec["rd_period"] / P_phot - 1.0) < 0.02, rec["rd_period"]
+    assert rec["period_is_photometric"], (rec["rd_period"], rec["phot_period"])
+    assert not rec["clock_in_lightcurve"] and not rec["confirms_catalogue_clock"]
+    # the shape statistics agree with the verdict: a symmetric maximum
+    assert rec["rd_rise_frac_median"] > 0.35, rec["rd_rise_frac_median"]
+
+
+def test_photometric_veto_leaves_a_real_flare_clock_alone():
+    """The control: real flares on a star whose photometric period is nowhere
+    near the clock must still confirm."""
+    from seti.metronome.redetect import redetect_star
+
+    rng = np.random.default_rng(19)
+    P = 3.137                             # the light curve's own sinusoid is 11.3 d
+    ticks = 171.3 + P * np.arange(0, 118)
+    ticks = ticks[rng.random(len(ticks)) < 0.6] + rng.normal(0.0, 0.002, size=None)
+    segs = _synthetic_kepler_lightcurve(np.sort(ticks))
+    rec = redetect_star(segs, {}, scan_conf=SCAN, null_conf=NULL, rng=np.random.default_rng(4),
+                        catalogue_times=np.sort(ticks), period_catalogue=P)
+    assert not rec["period_is_photometric"], (rec["rd_period"], rec["phot_period"])
+    assert rec["clock_in_lightcurve"] and rec["confirms_catalogue_clock"]
+    assert rec["rd_duty_cycle"] < 0.1, rec["rd_duty_cycle"]
+
+
 def test_redetect_reports_no_clock_for_random_flares():
     from seti.metronome.redetect import redetect_star
 
@@ -1799,7 +2150,8 @@ def test_clock_with_a_natural_flare_background_reaches_strict_quality():
     ticks = clock_events(w, P, w.starts[0] + 1.3, duty=0.6, jitter_days=0.002, seed=31)
     noise = poisson_events(w, int(0.45 * len(ticks)), seed=32)
     t = np.sort(np.concatenate([ticks, noise]))
-    r = analyze(t, w, seed=33)
+    pool = np.concatenate([poisson_events(w, 200, seed=400 + i) for i in range(4)])
+    r = analyze(t, w, seed=33, pool_times=pool)
     assert r["status"] == "scanned" and abs(r["period"] / P - 1.0) < 2e-3, r["period"]
     # the ±0.15 core still admits ~30% x 0.3 of the background, so its jitter
     # is not the ticks' 0.002 but stays well under the strict 0.05
@@ -1822,3 +2174,184 @@ def test_redetect_is_never_part_of_stage_all():
     from seti.metronome.run import STAGE_REDETECT, STAGES
 
     assert STAGE_REDETECT not in STAGES
+
+
+def test_quality_gate_is_flagged_uninformative_at_small_n_but_never_vetoes():
+    """MEASURED on run 35652897914: 83% of the stars that run rejected as
+    `rotation_alias` pass BOTH strict quality gates, and every one of them has
+    N <= 34.  The gates are a look-elsewhere floor at small N.  The flag says
+    so; it does not change a tier, because the null already prices it."""
+    v = vet_star(_sig_record(n_events=12), FULL_CTX)
+    assert "quality_uninformative" in v["flags"] and v["tier"] == "candidate"
+    v = vet_star(_sig_record(n_events=200), FULL_CTX)
+    assert "quality_uninformative" not in v["flags"] and v["tier"] == "candidate"
+
+
+def test_calibration_reports_the_look_elsewhere_floor_the_run_measured():
+    from seti.metronome.vet import calibrate_jitter
+
+    rng = np.random.default_rng(31)
+    recs = []
+    for i in range(80):
+        n = int(rng.integers(8, 120))
+        # the fitted quality improves with a free period at small N, and the
+        # star's own null sees the same thing on times with no clock in them
+        recs.append(dict(_sig_record(n_events=n, jitter=0.03 + 0.0018 * n,
+                                     Q=max(0.05, 0.95 - 0.007 * n)),
+                         star_key=f"kepler:{i}", mission="kepler",
+                         wn_null_jitter_median=0.13 + 0.0009 * n,
+                         wn_null_Q_median=max(0.05, 0.42 - 0.003 * n),
+                         first_veto="rotation_alias" if n < 35 else None))
+    cal = calibrate_jitter(recs, VET)
+    assert cal["n_quality_informative"] == 35.0
+    small = cal["by_n_events"]["8-12"]
+    big = cal["by_n_events"]["80-inf"]
+    assert small["jitter_p50"] < big["jitter_p50"], (small, big)
+    assert small["jitter_p50"] < small["jitter_null_p50"]
+    wn = cal["window_null_own_best_fit"]
+    assert wn["n"] == 80 and wn["fraction_inside_strict_gate"] == 0.0, wn
+    assert np.isfinite(cal["fraction_of_rotation_population_inside_strict_gate"])
+
+
+def test_catalogue_epochs_that_are_real_brightenings_are_detected_as_such():
+    """The threshold-free check: real injected flares at the catalogued epochs."""
+    from seti.metronome.redetect import (
+        catalogue_epoch_response,
+        lightcurve_windows,
+        stitch_segments,
+    )
+
+    rng = np.random.default_rng(21)
+    injected = np.sort(rng.uniform(172.0, 536.0, 60))
+    segs = _synthetic_kepler_lightcurve(injected, seed=6)
+    t, f, meta = stitch_segments(segs)
+    w = lightcurve_windows(t, cadence_days=meta["cadence_days"])
+    er = catalogue_epoch_response(t, f, injected, w, cadence_days=meta["cadence_days"],
+                                  n_control=1500, rng=np.random.default_rng(1))
+    assert er["n_epochs"] >= 40, er
+    assert er["epoch_sigma_median"] > 5.0 * er["control_sigma_median"], er
+    assert er["p_empirical"] <= 0.01, er
+    assert er["epoch_frac_above_3"] > 0.8 > er["control_frac_above_3"], er
+
+
+def test_catalogue_epochs_with_no_flux_behind_them_are_indistinguishable_from_random():
+    """The confounder this exists for: a catalogue whose listed epochs are not
+    brightenings in the star's own light curve.  A clock built from them is a
+    pattern in the catalogue, not in the star."""
+    from seti.metronome.redetect import (
+        catalogue_epoch_response,
+        lightcurve_windows,
+        stitch_segments,
+    )
+
+    rng = np.random.default_rng(23)
+    # a perfectly clocked list of epochs -- and no flares injected anywhere
+    fake = 171.0 + 4.3737 * np.arange(0, 84)
+    segs = _synthetic_kepler_lightcurve([], seed=6)
+    t, f, meta = stitch_segments(segs)
+    w = lightcurve_windows(t, cadence_days=meta["cadence_days"])
+    er = catalogue_epoch_response(t, f, fake, w, cadence_days=meta["cadence_days"],
+                                  n_control=1500, rng=rng)
+    assert er["n_epochs"] >= 20, er
+    assert er["epoch_sigma_median"] < 3.0, er
+    assert er["p_empirical"] > 0.01, er
+    assert abs(er["epoch_sigma_median"] - er["control_sigma_median"]) < 0.6, er
+
+
+def test_catalogue_epoch_response_finds_a_time_system_offset():
+    """Epochs in the wrong time system are a recorded shift, not an empty
+    catalogue: every one of them lands outside the windows until it is undone."""
+    from seti.metronome.redetect import (
+        catalogue_epoch_response,
+        lightcurve_windows,
+        stitch_segments,
+    )
+
+    rng = np.random.default_rng(29)
+    injected = np.sort(rng.uniform(172.0, 536.0, 60))
+    segs = _synthetic_kepler_lightcurve(injected, seed=6)
+    t, f, meta = stitch_segments(segs)
+    w = lightcurve_windows(t, cadence_days=meta["cadence_days"])
+    er = catalogue_epoch_response(t, f, injected + 2400000.5, w,
+                                  cadence_days=meta["cadence_days"], n_control=800,
+                                  offsets=[-2457000.0, -2400000.5, -1.0, 1.0],
+                                  rng=np.random.default_rng(2))
+    assert er["n_epochs"] == 0 or er["epoch_sigma_median"] < 3.0
+    assert er["best_offset_days"] == -2400000.5, er
+    assert er["best_offset_sigma_median"] > 5.0, er
+
+
+def test_redetect_demotes_a_star_whose_catalogue_epochs_are_not_in_the_lightcurve(tmp_path):
+    from seti.metronome.redetect import reconcile_summary
+
+    (tmp_path / "summary.json").write_text(json.dumps(
+        {"verdict": "CLOCK_CANDIDATES_PENDING_VET", "n_candidates": 0, "n_interest": 1,
+         "funnel": {"stars_interest": 1}}))
+    (tmp_path / "candidates.json").write_text(json.dumps(
+        {"candidates": [{"star_key": "tess:1", "tier": "interest", "flags": ""}], "watch": []}))
+    res = reconcile_summary(tmp_path, [
+        {"star_key": "tess:1", "status": "TOO_FEW_FLARES",
+         "catalogue_epochs_are_brightenings": False, "cat_epoch_sigma_median": 1.1,
+         "cat_control_sigma_median": 1.0, "cat_n_epochs": 217}],
+        verdict="REDETECT_CONFIRMS_NONE; CATALOGUE_EPOCHS_ABSENT_1")
+    assert res["demoted"] == ["tess:1:catalogue_epochs_absent"]
+    cj = json.loads((tmp_path / "candidates.json").read_text())
+    assert cj["candidates"][0]["first_veto"] == "catalogue_epochs_absent"
+    sj = json.loads((tmp_path / "summary.json").read_text())
+    assert sj["n_interest"] == 0 and sj["funnel"]["stars_demoted_by_lightcurve"] == 1
+
+
+def test_reconcile_demotes_a_candidate_whose_clock_is_its_photometric_period(tmp_path):
+    """The light curve has the last word on the headline verdict."""
+    from seti.metronome.redetect import reconcile_summary
+
+    (tmp_path / "summary.json").write_text(json.dumps({
+        "verdict": "CLOCK_CANDIDATES_PENDING_VET", "n_candidates": 1, "n_interest": 1,
+        "funnel": {"stars_candidate": 1, "stars_interest": 1}}))
+    (tmp_path / "candidates.json").write_text(json.dumps({
+        "candidates": [{"star_key": "kepler:1", "tier": "candidate", "flags": ""},
+                       {"star_key": "kepler:2", "tier": "interest", "flags": "p_extrapolated"}],
+        "watch": [{"star_key": "kepler:3", "tier": "watch", "flags": ""}]}))
+    records = [
+        {"star_key": "kepler:1", "status": "scanned", "period_is_photometric": True,
+         "phot_period": 0.4233, "rd_period": 0.4233, "n_flares": 74},
+        {"star_key": "kepler:2", "status": "scanned", "period_is_photometric": False,
+         "confirms_catalogue_clock": True, "rd_period": 3.137, "n_flares": 40},
+    ]
+    res = reconcile_summary(tmp_path, records, verdict="REDETECT_CONFIRMS_1")
+    assert res["status"] == "OK" and res["demoted"] == ["kepler:1:photometric_oscillation"]
+
+    cj = json.loads((tmp_path / "candidates.json").read_text())
+    c1, c2 = cj["candidates"]
+    assert c1["tier"] == "none" and c1["first_veto"] == "photometric_oscillation"
+    assert "photometric_oscillation" in c1["flags"]
+    assert c1["redetect"]["phot_period"] == 0.4233
+    # the star the photometry did not explain keeps its tier and its evidence
+    assert c2["tier"] == "interest" and c2["redetect"]["confirms_catalogue_clock"]
+    # a star the budget never reached says so rather than being scored
+    assert cj["watch"][0]["redetect"] == {"status": "not_attempted"}
+
+    sj = json.loads((tmp_path / "summary.json").read_text())
+    assert sj["n_candidates"] == 0 and sj["n_interest"] == 1
+    assert sj["funnel"]["stars_demoted_by_lightcurve"] == 1
+    assert "REDETECT_DEMOTED_1" in sj["verdict"]
+    assert sj["redetect"]["verdict"] == "REDETECT_CONFIRMS_1"
+
+
+def test_reconcile_never_promotes_and_survives_a_missing_summary(tmp_path):
+    from seti.metronome.redetect import reconcile_summary
+
+    # no summary at all: a recorded fact, not a crash
+    assert reconcile_summary(tmp_path, [])["status"] == "NO_SUMMARY"
+    (tmp_path / "summary.json").write_text(json.dumps({"verdict": "NO_CLOCK_CANDIDATES",
+                                                       "n_candidates": 0}))
+    (tmp_path / "candidates.json").write_text(json.dumps({
+        "candidates": [], "watch": [{"star_key": "k:9", "tier": "watch", "flags": ""}]}))
+    res = reconcile_summary(tmp_path, [{"star_key": "k:9", "status": "scanned",
+                                        "confirms_catalogue_clock": True,
+                                        "clock_in_lightcurve": True}])
+    assert res["demoted"] == []
+    cj = json.loads((tmp_path / "candidates.json").read_text())
+    assert cj["watch"][0]["tier"] == "watch"        # confirmation does not promote
+    sj = json.loads((tmp_path / "summary.json").read_text())
+    assert sj["verdict"] == "NO_CLOCK_CANDIDATES"   # and does not rewrite the verdict

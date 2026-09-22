@@ -79,10 +79,37 @@ archives:
   # 503 there is transient load, not a dead endpoint.
   tap_retries: 5
   max_rows: 200000
+  # The `litfetch` ladder is long by design (four bibliographic services x
+  # eight phrasings x five species, plus the database pages), so it gets its
+  # own short per-call timeout and a wall clock.  One service that hangs must
+  # not take the job's whole budget with it; unreached sources are recorded
+  # NOT_ATTEMPTED, never as a route that answered with nothing.
+  litfetch_timeout_s: 30
+  litfetch_retries: 1
+  litfetch_budget_s: 1800
   # Also list any VizieR table whose description mentions this word (recorded
   # in probe.json as further U-line inventories; screened only once they have
   # a `sources:` entry with v_LSR and linewidth).
   discover_description_word: "nidentified"
+  # ---- THE U-LINE CENSUS -------------------------------------------------
+  # Run ONCE per probe over TAP_SCHEMA.COLUMNS (probe.json ->
+  # uline_column_census), not per source.  The per-source census inherited
+  # each source's own terms, so run 35039345593 came back with 78 tables of
+  # which ~70 were Orion STAR catalogues and Chandra "unidentified sources":
+  # the word "unidentified" alone does not mean a spectral line.  These are
+  # PHRASES that only a spectral U-line table's column description carries,
+  # which is what makes the census a list of U-line lists rather than a list
+  # of everything with an unknown counterpart.  It stays DIAGNOSTIC: a table
+  # found here is screened only after it is asserted under `sources:` with its
+  # own v_LSR, linewidth and verify note.
+  uline_column_census_terms:
+    - "unidentified line"
+    - "unidentified lines"
+    - "unidentified feature"
+    - "unidentified molecular"
+    - "unidentified transition"
+    - "U-line"
+    - "unidentified emission line"
 
 species:
   # ---- the industrial fluorine set (S54) ---------------------------------
@@ -168,11 +195,30 @@ predicted:
     k3_weight: 2.0
     verify: true
     source: "placeholder B (channel brief); fallback only — JPL carries NF3"
-  # error model for predicted frequencies: err = base + rel * nu
+  # Error model for predicted frequencies.  For a line of the asymmetric-top
+  # predictor (src/seti/uline/rotor.py, constants in
+  # src/seti/data_assets/rotor_constants.yaml):
+  #
+  #   err = base_mhz + rel*nu + 2*sigma_ABC*(J_up+1)
+  #         + [each unknown quartic constant, at its own rate: DJ*|J'^2(J'+1)^2-J^2(J+1)^2|
+  #            + DJK*|J'(J'+1)K'^2-J(J+1)K^2| + DK*|K'^4-K^4|]
+  #         (+) hyperfine blend width, in quadrature, for Cl/N species
+  #
+  # An unmeasured quartic constant is sized by Delta ~ 4 X^3 / omega^2 with X
+  # the rotational constant the term is built from: Bbar=(B+C)/2 for DJ,
+  # A*Bbar^2 for DJK, A^3 for DK (src/seti/uline/rotor.py quartic_estimates).
+  # Per term that lands 2-12x HIGH against SO2 and CH2F2 — conservative, as an
+  # error bound must be — where a single scale for all three was ~80x high for
+  # DJ and ~14x LOW for DK at once.  omega is the lowest bending fundamental;
+  # 300 cm-1 is at or below every species here (CFCl3 ~240 is the lowest).
+  # The three terms enter a line completely differently — DJ as J^2(J+1)^2,
+  # which CANCELS in a Q branch, DJK as J(J+1)K^2, DK as K^4 — so a Q-branch
+  # line is no longer reported as accurate just because DJ drops out of it.
   error_model:
     base_mhz: 0.5
     rel_with_distortion: 1.0e-5      # DJ and DJK given
     rel_without_distortion: 1.0e-4   # DJ/DJK unknown: 4 DJ (J+1)^3 is unmodelled
+    distortion_omega_cm: 300.0
 
 sources:
   orion_kl_hifi:
@@ -212,6 +258,50 @@ sources:
     fallback_description_all: []
     fallback_description_any: ["Orion", "line survey", "spectral survey",
                                "unidentified", "molecular lines"]
+    # ---- REACHING CROCKETT+2014 WITHOUT VIZIER -----------------------------
+    # The table was never deposited at CDS under the paper's id (three routes
+    # agreed, above).  It exists as an AAS MACHINE-READABLE TABLE attached to
+    # the article, and the MRT and CDS .dat formats share one byte-by-byte
+    # header, which src/seti/uline/textlists.py reads.  The MRT filenames carry
+    # an internal manuscript id (apjNNNNNNtN_mrt.txt) that cannot be guessed,
+    # so the article's own data page is scraped for them first.  Every URL is
+    # tried and every answer — including a 403 or an HTML banner where a table
+    # was expected — is recorded in acquire.json -> sources.*.text_route.
+    #
+    # The IOP CDN and suppdata spellings below are NOT guesses: a web search
+    # for the AAS machine-readable tables of neighbouring ApJ 787 papers
+    # returned the real forms
+    #   content.cld.iop.org/journals/0004-637X/710/2/1032/revision1/apj317177t2_mrt.txt
+    #   iopscience.iop.org/0004-637X/787/2/107/suppdata/apj493243t2_ascii.txt?doi=...
+    #   iopscience.iop.org/0004-637X/787/1/18/suppdata/apj493688t1_ascii.txt
+    # so the DIRECTORY is constructible from the article's DOI while the
+    # manuscript id (apj4932xx) is not.  That is why the directories are
+    # scraped for links rather than a filename being assembled: the id is the
+    # one part no caller can derive.
+    text_routes:
+      index_urls:
+        - "https://iopscience.iop.org/article/10.1088/0004-637X/787/2/112"
+        - "https://iopscience.iop.org/article/10.1088/0004-637X/787/2/112/data"
+        - "https://iopscience.iop.org/0004-637X/787/2/112/suppdata"
+        - "https://content.cld.iop.org/journals/0004-637X/787/2/112/revision1/"
+        - "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/"
+        # HEXOS is the observing programme behind the survey; IRSA serves its
+        # delivered products with a release note that names the line lists.
+        # verify: the directory layout is ASSERTED from the release-note URL a
+        # web search returned, not confirmed — the runner settles it.
+        - "https://irsa.ipac.caltech.edu/data/Herschel/HEXOS/"
+        - "https://irsa.ipac.caltech.edu/data/Herschel/HEXOS/docs/"
+      link_pattern: "(_mrt\\.txt|_ascii\\.txt|\\.mrt\\b|machine[-_]?readable|/table\\d+\\.dat)"
+      urls:
+        - "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/table3.dat"
+        - "https://cdsarc.u-strasbg.fr/ftp/J/ApJ/787/112/table3.dat"
+        - "https://cdsarc.cds.unistra.fr/viz-bin/nph-Cat/txt?J/ApJ/787/112/table3"
+      readme_urls:
+        - "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/ReadMe"
+        - "https://cdsarc.u-strasbg.fr/ftp/J/ApJ/787/112/ReadMe"
+      # a body that is a login page or an error document is NOT a table: it must
+      # carry the byte-by-byte header that every MRT and CDS file has
+      must_match: "Byte-by-byte Description"
   # FOUND BY THE COLUMN/TABLE CENSUS (run 35039345593), not asserted from a
   # paper: the table search returned 34 VizieR tables whose DESCRIPTION is a
   # U-line list, and the column census 78 tables carrying a U-line flag column.
@@ -253,6 +343,158 @@ sources:
   #     A genuinely new environment for this search, and worth doing once the
   #     frame is handled properly rather than approximated.
 
+  # ---- OTHER ORION KL LINE SURVEYS, which VizieR MAY carry ----------------
+  # Crockett+2014 is not the only deep Orion KL survey with a published U-line
+  # residue, and the channel should not stand or fall on one catalogue id that
+  # is measurably absent.  Each of these is ASSERTED from its paper and is
+  # verify: unconfirmed until a runner reaches it.  A source that resolves to
+  # no usable table reports QUERY_RETURNED_ZERO_ROWS with its scoreboard, which
+  # is a statement about VizieR, never about the sky.  Orion KL's velocity and
+  # linewidth are the existing entry's, so nothing new is assumed about the
+  # source — only about which survey's residue is being read.
+  orion_kl_tercero2010:
+    label: "Orion KL, IRAM 30m 80-280 GHz line survey (Tercero et al. 2010, A&A 517, A96)"
+    vizier_like: "J/A+A/517/A96/"
+    v_lsr_km_s: 9.0
+    fwhm_km_s: 4.0
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 4.0
+    contaminant_tex_k: 150.0
+    enabled: true
+    fallback_description_all: []
+    fallback_description_any: ["Orion", "unidentified", "line survey"]
+  orion_kl_crockett2015:
+    label: "Orion KL, HIFI 1.2 THz wide spectral survey (Crockett et al. 2015, ApJ 806, 239)"
+    vizier_like: "J/ApJ/806/239/"
+    v_lsr_km_s: 9.0
+    fwhm_km_s: 4.0
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 4.0
+    contaminant_tex_k: 150.0
+    enabled: true
+    fallback_description_all: []
+    fallback_description_any: ["Orion", "unidentified", "line survey"]
+
+  # ---- THE U-LINE TABLE ITSELF, not the survey's identified list -----------
+  # Discovery picks ONE table per source, and it picks the biggest usable one:
+  # for J/A+AS/142/181 that is table2 (399 identified lines), whose `Mol` column
+  # names a molecule on every row.  The catalogue's actual U-line list is
+  # table3, whose VizieR description is literally "Unidentified lines
+  # (Cernicharo J., Guelin M., Kahane C.)" and whose `Name` column holds the
+  # U-labels.  It is asserted here as its own source, with:
+  #   all_unidentified: true   — every row of a table whose PUBLISHED
+  #       description is "Unidentified lines" is a U-line.  This does not
+  #       depend on parsing the label column, which is what made the old route
+  #       fragile ("U 130156.3" matched no uline_values regex).
+  #   coverage_from            — the coverage mask (is the survey even
+  #       sensitive at this frequency?) must come from ALL the survey's
+  #       catalogued lines, which live in the sibling table, not from the 63
+  #       U-lines alone.  Without this a predicted line would be called "out of
+  #       coverage" wherever the survey had no U-line, which is backwards.
+  irc10216_cernicharo2000_u:
+    label: "IRC+10216 U-lines (Cernicharo, Guelin & Kahane 2000, A&AS 142, 181, table 3)"
+    vizier_like: "J/A+AS/142/181/table3"
+    all_unidentified: true
+    coverage_from: irc10216_cernicharo2000
+    v_lsr_km_s: -26.0
+    fwhm_km_s: 30.0
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 0.0
+    contaminant_tex_k: 50.0
+    enabled: true
+    fallback_description_all: []
+    fallback_description_any: ["IRC+10216", "unidentified", "line survey"]
+
+  # ---- NEW SOURCE, found by this channel's own column/description census ---
+  # J/ApJS/117/427/table46, description "Unidentified lines (Nummelin A.,
+  # Bergman P., Hjalmarson A., Friberg P., Irvine W.M., Millar T.J., Ohishi M.,
+  # Saito S.)" — the SEST 3 mm spectral survey of Sgr B2, ApJS 117, 427 (1998).
+  # A hot-core source in a completely different chemistry from IRC+10216, and
+  # the U-line table of a survey with published intensities.
+  #
+  # verify: the survey observed THREE positions (Sgr B2 N, M and NW) whose
+  # systemic velocities differ by a few km/s (N ~ +64, M ~ +62, NW ~ +64).
+  # Until the table is read and its columns seen, the velocity is taken as
+  # +64 km/s with a 6 km/s UNCERTAINTY that covers all three, which widens the
+  # tolerance rather than putting a wrong Doppler shift on every line.  The
+  # linewidth is Sgr B2's own: 15 km/s is typical of the hot core.
+  sgrb2_nummelin1998_u:
+    label: "Sgr B2 U-lines (Nummelin et al. 1998, ApJS 117, 427, table 46; SEST 3 mm survey)"
+    vizier_like: "J/ApJS/117/427/table46"
+    all_unidentified: true
+    coverage_from: sgrb2_nummelin1998
+    v_lsr_km_s: 64.0
+    fwhm_km_s: 15.0
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 6.0
+    contaminant_tex_k: 100.0
+    enabled: true
+    fallback_description_all: []
+    fallback_description_any: ["Sgr B2", "unidentified", "line survey"]
+  sgrb2_nummelin1998:
+    label: "Sgr B2, SEST 3 mm line survey (Nummelin et al. 1998, ApJS 117, 427) — identified lines"
+    vizier_like: "J/ApJS/117/427/"
+    v_lsr_km_s: 64.0
+    fwhm_km_s: 15.0
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 6.0
+    contaminant_tex_k: 100.0
+    enabled: true
+    fallback_description_all: []
+    fallback_description_any: ["Sgr B2", "line survey", "unidentified"]
+
+  # ---- A GENUINELY NEW ENVIRONMENT: a comet ------------------------------
+  # J/A+A/564/L2/table4, "Unidentified lines in comet Lovejoy" (Agundez, Biver,
+  # Santos-Sanz, Bockelee-Morvan, Moreno 2014), 251.8-264.8 GHz.  The rest
+  # frame is the nucleus, not the LSR, and the lines are ~1 km/s wide rather
+  # than 30 — so the tolerance here is TIGHTER than anywhere else in the
+  # channel, which makes a coincidence worth more and a chance alignment
+  # rarer.  A cometary coma is also the one place where a species with no
+  # interstellar formation route could be sublimated from ice rather than made.
+  #
+  # verify: the column description read "[251766/264753] Frequency of
+  # Unidentified line" in the census, i.e. MHz, already in the comet's rest
+  # frame.  frequency_frame: rest with a zero systemic velocity is the right
+  # reading of that, and a 0.5 km/s uncertainty covers the outgassing.
+  comet_lovejoy_agundez2014_u:
+    label: "Comet C/2013 R1 (Lovejoy) U-lines (Agundez et al. 2014, A&A 564, L2, table 4)"
+    vizier_like: "J/A+A/564/L2/table4"
+    all_unidentified: true
+    v_lsr_km_s: 0.0
+    fwhm_km_s: 1.5
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 0.5
+    contaminant_tex_k: 50.0
+    enabled: true
+    fallback_description_all: []
+    fallback_description_any: ["Lovejoy", "comet", "unidentified", "line survey"]
+
+  # ---- Sgr B2(N) and (M), the other deep hot-core survey with a U-residue --
+  # Belloche et al. 2013, A&A 559, A47: the IRAM 30 m 3/2/1 mm survey of
+  # Sgr B2(N) and (M) behind the EMoCA/ReMoCA programme.  Asserted here
+  # because the S54 brief names it as one of the few U-line lists with real
+  # statistics, and a web search puts the catalogue at J/A+A/559/A47.
+  #
+  # verify, twice over: (a) the catalogue id is asserted, not confirmed
+  # against TAP_SCHEMA — a miss reports QUERY_RETURNED_ZERO_ROWS with its
+  # scoreboard, which is a statement about VizieR and never about the sky;
+  # (b) the survey covers TWO positions whose systemic velocities differ
+  # (N ~ +64, M ~ +62 km/s), so the velocity is +63 with a 4 km/s
+  # UNCERTAINTY covering both, which widens the tolerance rather than putting
+  # a wrong Doppler shift on every line.  Linewidth 12 km/s: Sgr B2(N)'s
+  # complex-organic lines are 7-10 km/s, (M)'s broader.
+  sgrb2_belloche2013:
+    label: "Sgr B2(N)+(M), IRAM 30m 3/2/1mm line survey (Belloche et al. 2013, A&A 559, A47)"
+    vizier_like: "J/A+A/559/A47/"
+    v_lsr_km_s: 63.0
+    fwhm_km_s: 12.0
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 4.0
+    contaminant_tex_k: 150.0
+    enabled: true
+    fallback_description_all: []
+    fallback_description_any: ["Sgr B2", "unidentified", "line survey", "spectral survey"]
+
   irc10216_he2008:
     label: "IRC+10216, ARO 12 m + SMT 2 mm / 1.3 mm line survey (He+2008, ApJS 177, 275)"
     vizier_like: "J/ApJS/177/275/"
@@ -293,9 +535,24 @@ columns:
   freq_err: ["^e_?freq(uency)?$", "^e_?nu$", "^e_?f$", "^freq_?err$", "^efreq$", "^err_?freq$", "^dfreq$", "^e_?frest$"]
   ident: ["^species$", "^mol(ecule)?$", "^ident(ification)?$", "^id$", "^name$", "^assign(ment)?$",
           "^line$", "^formula$", "^molec$", "^spec$", "^carrier$", "^mole$", "^spname$", "^molname$"]
-  intensity: ["^t_?a\\*?$", "^ta$", "^tmb$", "^t_?mb$", "^t_?peak$", "^tpk$", "^peak$", "^tpeak$",
-              "^t_?max$", "^i_?peak$", "^ipeak$", "^int(ensity)?$", "^w$", "^area$", "^flux$", "^s$",
-              "^snu$", "^tb$", "^t$", "^amp$", "^tant$", "^tr$", "^t_?r$", "^w_?int$"]
+  # THE LTE TEST DIED ON THIS LIST, not on the archives.  Runs 35039822190 and
+  # 35041128720 reported `lte_testable: false` for every pair and the channel
+  # recorded "no intensity column" as a property of the surveys — but
+  # Cernicharo+2000 tables 2 and 3 carry `T(MB)dv` and He+2008 table 4 carries
+  # `Iint`, both integrated line intensities, and NEITHER matched any regex
+  # here.  An integrated intensity is exactly what the Spearman test wants (it
+  # is the quantity proportional to the column in the optically thin LTE limit),
+  # so the integrated forms now come FIRST, before the peak temperatures.
+  # e_T(MB)dv and the like never match: every pattern is anchored at ^.
+  intensity: ["^t\\(?mb\\)?dv$", "^t\\(?a\\*?\\)?dv$", "^tdv$", "^i_?int$", "^intint$",
+              "^int_?flux$", "^w_?int$", "^wint$", "^integ(rated)?(_?int(ensity)?)?$",
+              "^t_?a\\*?$", "^ta$", "^tmb$", "^t_?mb$", "^t_?peak$", "^tpk$", "^peak$", "^tpeak$",
+              "^t_?max$", "^i_?peak$", "^ipeak$", "^tlc$", "^int(ensity)?$", "^w$", "^area$",
+              "^flux$", "^s$", "^snu$", "^tb$", "^t$", "^amp$", "^tant$", "^tr$", "^t_?r$"]
   transition: ["^trans(ition)?$", "^qn$", "^qns$", "^quantum$", "^levels$", "^qnum$"]
   # an identification value meaning "unidentified"
-  uline_values: ["^\\s*u\\s*$", "^\\s*u[-_ ]?line", "^\\s*unid", "^\\s*\\?+\\s*$", "^\\s*unknown", "^\\s*u\\s*\\d*\\s*$", "^\\s*u\\s*[-:]"]
+  uline_values: ["^\\s*u\\s*$", "^\\s*u[-_ ]?line", "^\\s*unid", "^\\s*\\?+\\s*$", "^\\s*unknown",
+                 "^\\s*u\\s*\\d*\\s*$", "^\\s*u\\s*[-:]",
+                 # U-line labels are usually the frequency: "U 130156.3", "U-93870",
+                 # "U131.4".  The decimal point made the old \\d* pattern miss them.
+                 "^\\s*u[\\s\\-_]*[0-9]+(\\.[0-9]+)?\\s*$"]

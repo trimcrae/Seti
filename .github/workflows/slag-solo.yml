@@ -7,8 +7,10 @@ name: slag-solo
 # parallel slots, ~20 minutes end to end.  It is the wrong shape when they are
 # not.  With eighteen channels on one account's concurrency the queue has run
 # to 146 jobs, and a six-job run has to win a slot SIX times in sequence before
-# it commits anything -- a dispatch waited 52 minutes without its first job
-# starting.  This workflow wins a slot once.
+# it commits anything.  Measured on this channel: run 35739746529 got its
+# acquire job at 14:34 UTC and its eight screen jobs were still queued 30
+# minutes later; run 35745205866 had not started a single job 22 minutes after
+# dispatch.  This workflow wins a slot once.
 #
 # The cost is wall clock inside the job: the screen stage runs unsharded.  That
 # is affordable because the population is small where it is expensive --- 168

@@ -358,19 +358,63 @@ def calibrate_misfit(fam: NaturalFamily, panel: Panel, tsm: TimescaleModel, fit:
     starts = pm.random_thetas(rng, s.n_random)
     obj_mat = pm.batch_objective(starts, draws)                               # (n_theta, n)
     obj_draw = np.zeros(n)
+    res_draw = np.zeros((n, pm.n_meas))
     for j in range(n):
         i0 = int(np.argmin(obj_mat[:, j]))
         r = minimize(lambda th, yy=draws[j]: pm.objective(th, y=yy)[0], starts[i0],
                      method="Nelder-Mead",
                      options={"maxiter": int(s.refine_maxiter), "xatol": 1e-3, "fatol": 1e-4,
                               "adaptive": True})
+        theta = r.x if float(r.fun) <= float(obj_mat[i0, j]) else starts[i0]
         obj_draw[j] = min(float(r.fun), float(obj_mat[i0, j]))
+        res_draw[j] = pm.objective(theta, y=draws[j])[5]
     p = (1.0 + float(np.sum(obj_draw >= fit.nll2))) / (n + 1.0)
-    return {"p_misfit": float(p), "n_draws": n, "draw_mode": draw_mode,
-            "nll2_obs": float(fit.nll2), "chi2_obs": float(fit.chi2),
-            "nll2_draw_p50": float(np.median(obj_draw)),
-            "nll2_draw_p95": float(np.percentile(obj_draw, 95)),
-            "nll2_draw_max": float(np.max(obj_draw))}
+    out = {"p_misfit": float(p), "n_draws": n, "draw_mode": draw_mode,
+           "nll2_obs": float(fit.nll2), "chi2_obs": float(fit.chi2),
+           "nll2_draw_p50": float(np.median(obj_draw)),
+           "nll2_draw_p95": float(np.percentile(obj_draw, 95)),
+           "nll2_draw_max": float(np.max(obj_draw))}
+    out["per_element"] = per_element_calibration(pm.elements, fit.residual_sigma, res_draw)
+    return out
+
+
+def per_element_calibration(elements: list[str], res_obs, res_draw) -> dict:
+    """Per element, how often a natural draw is left this badly fitted.
+
+    The Tier 2 envelope test asks whether an element RATIO lies outside
+    everything nature has been measured to do.  The measured meteorite suite
+    showed that envelope is wide -- Ti/Al spans 2.95 dex across real stones --
+    so on its own it is a blunt instrument.  This is the sharp complement, and
+    it costs nothing extra: the calibration already refits N natural draws with
+    the panel's own errors, so the distribution of each ELEMENT's residual
+    under the natural model is already in hand.  ``p`` is the fraction of draws
+    whose |residual| at that element is at least the observed one --- a
+    calibrated statement about one element rather than about the whole vector,
+    and one that inherits the model's full freedom instead of a global
+    envelope.
+
+    It is a diagnostic, not a candidate rule: with a dozen elements per panel
+    the smallest of a dozen p values is small by construction, so the
+    look-elsewhere correction (``p_min_corrected``) is reported beside it.
+    """
+    res_obs = np.abs(np.asarray(res_obs, dtype=float))
+    res_draw = np.abs(np.asarray(res_draw, dtype=float))
+    if res_draw.ndim != 2 or res_draw.shape[1] != len(res_obs) or res_draw.shape[0] == 0:
+        return {}
+    n = res_draw.shape[0]
+    out = {}
+    for i, el in enumerate(elements):
+        k = int(np.sum(res_draw[:, i] >= res_obs[i]))
+        out[el] = {"residual_sigma": float(np.asarray(res_obs)[i]),
+                   "p": float((1.0 + k) / (n + 1.0)),
+                   "draw_p95_abs_residual": float(np.percentile(res_draw[:, i], 95))}
+    if out:
+        worst = min(out, key=lambda e: out[e]["p"])
+        pmin = out[worst]["p"]
+        out["_worst"] = {"element": worst, "p": pmin,
+                         "p_min_corrected": float(min(1.0, pmin * len(elements))),
+                         "n_elements": len(elements), "n_draws": n}
+    return out
 
 
 #: A meteorite calibration is only attempted with at least this many real

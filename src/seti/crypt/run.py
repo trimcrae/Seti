@@ -46,12 +46,17 @@ import numpy as np
 import pandas as pd
 
 from . import acquire as A
+from . import diurnal as D
+from . import pcp as PCP
 from . import radar as R
 from . import thermal as T
 from . import vet as V
 from .labels import RasterMeta, read_label, read_raster
 
-STAGES = ("probe", "acquire", "screen", "assess")
+#: the anisothermality pipeline (kept: it runs the moment per-channel polar
+#: maps exist) and the diurnal one, which is what the PDS holdings support
+STAGES = ("probe", "pcp", "radar", "assess_diurnal")
+STAGES_ANISO = ("probe", "acquire", "screen", "assess")
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_NONE = "NO_ANISOTHERMAL_SURVIVOR"
 VERDICT_CANDIDATES = "ANISOTHERMAL_CANDIDATES"
@@ -220,7 +225,12 @@ def crawl_diviner(conf: dict, fetch, log: list) -> tuple[list[A.Entry], list[dic
             roots_tried.append({"url": url, "reached": ok, "n_entries": len(got),
                                 "n_files": sum(1 for e in got if not e.is_dir)})
             entries.extend(got)
-        if sum(1 for e in entries if not e.is_dir) > 0:
+        # Stop only once the crawl has found products that actually carry the
+        # axes the screen needs.  ``lrodlr_1002/data/`` answers 200 with two
+        # PDS4 collection files and nothing else — treating that as "reached"
+        # is what made the first run report NO_DATA_REACHED (results/crypt at
+        # 2026-09-22T01:25Z).
+        if _n_useful(conf, entries) > 0:
             break
     # de-duplicate by URL
     seen, uniq = set(), []
@@ -231,14 +241,135 @@ def crawl_diviner(conf: dict, fetch, log: list) -> tuple[list[A.Entry], list[dic
     return uniq, roots_tried
 
 
+def _n_useful(conf: dict, entries: list[A.Entry]) -> int:
+    """Files whose NAME already places them on a pole and a channel — the
+    minimum for the selector to have anything to choose between."""
+    n = 0
+    for e in entries:
+        if e.is_dir:
+            continue
+        c = A.classify_name(e.name, conf["patterns"])
+        if c.get("pole") and c.get("channel"):
+            n += 1
+    return n
+
+
+def discover_diviner_ode(conf: dict, fetch) -> tuple[list[A.Entry], dict]:
+    """Diviner gridded products through ODE's own index.
+
+    The PDS directory layout is not knowable from the sandbox and the first
+    run's guess was wrong; ODE lists (ihid=LRO, iid=DLRE) product types
+    including PCP (Polar Cumulative Products) and GDR_L3, and ``results=f``
+    hands back each product's absolute file URLs.  Returns listing entries so
+    they join the crawled ones before classification.
+    """
+    acq = conf["acquire"]
+    base = acq.get("ode_rest")
+    spec = acq.get("diviner_ode") or {}
+    rep: dict = {"queries": [], "n_files": 0, "n_products": 0, "by_pt": {}}
+    if not base or not spec.get("product_types"):
+        rep["status"] = "NOT_CONFIGURED"
+        return [], rep
+    entries: list[A.Entry] = []
+    for pt in spec["product_types"]:
+        try:
+            r = A.ode_dataset_files(fetch, base, spec.get("ihid", "LRO"), spec.get("iid", "DLRE"), pt,
+                                    limit=int(spec.get("limit", 1000)),
+                                    timeout=float(acq.get("listing_timeout_s", 60)))
+        except Exception as exc:  # noqa: BLE001
+            rep["queries"].append({"pt": pt, "error": f"{type(exc).__name__}: {exc}"[:300]})
+            continue
+        entries.extend(A.entries_from_ode_files(r["files"]))
+        rep["queries"].append({k: v for k, v in r.items() if k != "files"} |
+                              {"example_files": [f["name"] for f in r["files"][:40]],
+                               **_name_space(r["files"])})
+        rep["n_products"] += int(r.get("n_products") or 0)
+        rep["by_pt"][pt] = {f["name"]: f["url"] for f in r["files"]}
+    rep["n_files"] = len(entries)
+    rep["status"] = "OK" if entries else "NO_FILES"
+    return entries, rep
+
+
+def _name_space(files: list[dict]) -> dict:
+    """The complete naming space of a product type, compactly.
+
+    A PDS product name is underscore-delimited fields; tabulating the distinct
+    tokens per position describes every product the type contains in a few
+    hundred bytes, where a list of 18 270 file names would not fit.
+    """
+    from collections import Counter  # noqa: PLC0415
+    fields: dict[int, Counter] = {}
+    exts: Counter = Counter()
+    stems: set[str] = set()
+    for f in files:
+        name = f["name"]
+        m = re.match(r"(?i)^(.*?)((?:\.[a-z0-9]{1,4})+)$", name)
+        stem, ext = (m.group(1), m.group(2).lower()) if m else (name, "")
+        exts[ext] += 1
+        if ext in (".tab", ".img", ".jp2", ".cub", ".tif"):
+            stems.add(stem.upper())
+        for i, tok in enumerate(stem.upper().split("_")):
+            fields.setdefault(i, Counter())[tok] += 1
+    return {"token_fields": {str(i): dict(c.most_common(40)) for i, c in sorted(fields.items())},
+            "n_token_fields": {str(i): len(c) for i, c in sorted(fields.items())},
+            "extensions": dict(exts.most_common(20)),
+            "n_data_stems": len(stems), "data_stems": sorted(stems)[:300]}
+
+
+def probe_formats(conf: dict, fetch, ode_rep: dict) -> list[dict]:
+    """Read one real product of each kind end to end.
+
+    The Diviner gridded products turned out to be PDS3 ASCII TABLES, not
+    rasters, so the label text and the first bytes of the data file are
+    recorded verbatim: the column layout is what the screen has to be written
+    against and it cannot be guessed from the sandbox.
+    """
+    acq = conf["acquire"]
+    out: list[dict] = []
+    for spec in acq.get("format_probe", []):
+        rx = re.compile(spec["match"], re.I)
+        pool: dict[str, str] = {}
+        for pt, files in (ode_rep.get("by_pt") or {}).items():
+            if spec.get("pt") in (None, pt):
+                pool.update(files)
+        pool.update(spec.get("extra_files") or {})
+        hit = next((n for n in sorted(pool) if rx.search(n)), None)
+        rec: dict = {"label": spec.get("label", spec["match"]), "matched": hit}
+        if hit is None:
+            rec["status"] = "NO_MATCH"
+            out.append(rec)
+            continue
+        base = re.sub(r"(?i)\.[a-z0-9]+$", "", hit)
+        for role, exts in (("label", (".LBL", ".XML")), ("data", (".TAB", ".IMG"))):
+            url = next((pool[n] for e in exts for n in (base + e, base + e.lower()) if n in pool), None)
+            if url is None:
+                rec[role] = {"status": "NOT_LISTED"}
+                continue
+            res = fetch(url, timeout=float(acq.get("listing_timeout_s", 60)),
+                        max_bytes=int(spec.get("head_bytes", 40000)))
+            rec[role] = {"url": url, "status": res.status, "error": res.error,
+                         "n_bytes": res.n_bytes,
+                         "head": (res.content or b"")[:int(spec.get("head_bytes", 40000))]
+                         .decode("latin-1", errors="replace")}
+        rec["status"] = "OK" if (rec.get("label", {}).get("head") or rec.get("data", {}).get("head")) \
+            else "NOT_SERVED"
+        out.append(rec)
+    return out
+
+
 def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
     fetch = fetch or A.http_fetch
     acq = conf["acquire"]
     t_list = float(acq.get("listing_timeout_s", 60))
     rep: dict = {"stage": "probe", "generated_utc": _now(), "roots": {}, "diviner": {},
                  "minirf": {}, "shadowcam": {}, "ode": {}, "psr": {}, "crawl_log": []}
-    # 1. Diviner: crawl, read labels, classify, select
+    # 1. Diviner: crawl, read labels, classify, select.  Two independent
+    # routes — the HTTP directory crawl and ODE's index — are merged, so a
+    # wrong volume path cannot by itself produce a no-data verdict.
     entries, roots_tried = crawl_diviner(conf, fetch, rep["crawl_log"])
+    ode_entries, ode_rep = discover_diviner_ode(conf, fetch)
+    have = {e.url for e in entries}
+    entries = entries + [e for e in ode_entries if e.url not in have]
     files = [e for e in entries if not e.is_dir]
     groups = A.pair_products(files)
     label_texts: dict[str, str] = {}
@@ -285,7 +416,7 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
         for ax in axis_counts:
             axis_counts[ax][str(c.get(ax))] = axis_counts[ax].get(str(c.get(ax)), 0) + 1
     rep["diviner"] = {
-        "roots_tried": roots_tried, "n_entries": len(entries), "n_files": len(files),
+        "roots_tried": roots_tried, "ode": ode_rep, "n_entries": len(entries), "n_files": len(files),
         "n_products": len(groups), "n_labels_read": n_lab,
         "directories": sorted({e.url for e in entries if e.is_dir})[:400],
         "inventory": [{"stem": s, **{k: v for k, v in c.items() if k != "name"}} for s, c in
@@ -296,6 +427,11 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
         "n_selected": {p: sum(1 for v in sel.values() if v) for p, sel in selection.items()},
         "n_needed": {p: len(sel) for p, sel in selection.items()},
         "example_names": [e.name for e in files[:60]],
+        "n_useful": _n_useful(conf, entries),
+        "useful_example_names": [s for s, c in classified.items()
+                                 if c.get("pole") and c.get("channel")][:80],
+        "unplaced_example_names": [s for s, c in classified.items()
+                                   if not (c.get("pole") and c.get("channel"))][:80],
     }
     # 2. Mini-RF
     mr_entries: list[A.Entry] = []
@@ -313,6 +449,10 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
     rep["minirf"] = {"roots": mr_roots, "n_files": len(mr_files), "n_matching": len(mr_hits),
                      "directories": sorted({e.url for e in mr_entries if e.is_dir})[:300],
                      "matching": [e.as_dict() for e in mr_hits[:300]],
+                     # every file in a mosaic directory, unfiltered: the product
+                     # codes that actually exist are read off this, not guessed
+                     "mosaic_names": sorted({e.name for e in mr_files
+                                             if "mosaic" in e.url.lower()})[:400],
                      "example_names": [e.name for e in mr_files[:60]]}
     # 3. ShadowCam roots
     rep["shadowcam"] = {u: _reach(fetch, u, t_list) for u in acq.get("shadowcam_roots", [])}
@@ -335,8 +475,28 @@ def stage_probe(conf: dict, out: Path, *, fetch=None) -> dict:
         rep["ode"]["footprint_probe"] = {}
         for pole, (lon, lat) in probe_pos.items():
             rep["ode"]["footprint_probe"][pole] = V.ode_coverage(conf, fetch, lon, lat)
-    # 5. PSR routes
+    # 5. PSR routes: the HTTP pages, plus ODE's index of the LOLA GDR
+    # permanently-shadowed map (LRO/LOLA/GDRPSR) which names the rasters.
     rep["psr"] = {u: _reach(fetch, u, t_list) for u in acq.get("psr_routes", [])}
+    pspec = acq.get("psr_ode") or {}
+    if base and pspec.get("product_types"):
+        rep["psr_ode"] = []
+        for pt in pspec["product_types"]:
+            try:
+                r = A.ode_dataset_files(fetch, base, pspec.get("ihid", "LRO"), pspec.get("iid", "LOLA"),
+                                        pt, limit=int(pspec.get("limit", 500)), timeout=t_list)
+            except Exception as exc:  # noqa: BLE001
+                rep["psr_ode"].append({"pt": pt, "error": f"{type(exc).__name__}: {exc}"[:300]})
+                continue
+            rep["psr_ode"].append({k: v for k, v in r.items() if k != "files"} |
+                                  {"files": r["files"][:60]})
+            ode_rep.setdefault("by_pt", {})[f"LOLA_{pt}"] = {f["name"]: f["url"] for f in r["files"]}
+    # 6. Read one real product of each kind: label text and data head verbatim.
+    rep["formats"] = probe_formats(conf, fetch, ode_rep)
+    for f in rep["formats"]:
+        print(f"[crypt] format {f['label']}: {f['status']} {f.get('matched')}")
+    # the full name->url tables are working data, far too large to commit
+    ode_rep.pop("by_pt", None)
     rep["crawl_log"] = rep["crawl_log"][:600]
     reached = {"diviner": rep["diviner"]["n_files"] > 0,
                "minirf": rep["minirf"]["n_files"] > 0,
@@ -450,7 +610,14 @@ def _acquire_minirf(conf: dict, fetch, probe: dict, pole: str, ddir: Path) -> di
         if g["image"] is None or not pole_rx.search(g["image"].name):
             continue
         low = g["image"].name.lower()
-        kind = "cpr" if "cpr" in low else ("s1" if re.search(r"(^|[_\-.])s1([_\-.]|$)", low) else None)
+        # Mini-RF PDS3 mosaic names carry the level and the product code in one
+        # token: lsz_xxxxx_3s1_pfu_90n000_v1 → level 3, Stokes 1.  The CPR code
+        # is "cp".  Both therefore sit against a digit, not a separator.
+        kind = None
+        if "cpr" in low or re.search(r"(^|[_\-.]|\d)cp([_\-.]|$)", low):
+            kind = "cpr"
+        elif re.search(r"(^|[_\-.]|\d)s1([_\-.]|$)", low):
+            kind = "s1"
         if kind is None:
             continue
         if g["image"].size and g["image"].size > int(acq.get("max_bytes_per_file", 4e8)):
@@ -780,6 +947,489 @@ def stage_assess(conf: dict, out: Path, *, fetch=None, synthetic: bool = False, 
 
 
 # ---------------------------------------------------------------------------
+# the diurnal pipeline: the screen the PDS polar holdings actually support
+# ---------------------------------------------------------------------------
+def _read_raster(path: Path, fallback_dtype=">i2") -> tuple[np.ndarray | None, dict]:
+    """A PDS3 raster through the label parser, falling back to a square read
+    when the label cannot be parsed.  The fallback is recorded, never silent."""
+    note: dict = {}
+    try:
+        meta = read_label(path)
+        arr = read_raster(meta)
+        note["route"] = "label"
+        note["shape"] = list(np.shape(arr))
+        return np.asarray(arr), note
+    except Exception as exc:  # noqa: BLE001
+        note["label_error"] = f"{type(exc).__name__}: {exc}"[:300]
+    img = path.with_suffix(".img")
+    for p in (img, path):
+        if not p.exists():
+            continue
+        n = p.stat().st_size
+        for dt in (fallback_dtype, "<i2", "u1"):
+            item = np.dtype(dt).itemsize
+            if n % item:
+                continue
+            side = int(round((n / item) ** 0.5))
+            if side * side * item == n:
+                note.update({"route": "square_fallback", "dtype": dt, "side": side, "path": str(p)})
+                return np.fromfile(p, dtype=dt).reshape(side, side), note
+    note["route"] = "FAILED"
+    return None, note
+
+
+def _acquire_psr(conf: dict, fetch, pole: str, ddir: Path, half_px: int) -> dict:
+    """The LOLA permanently-shadowed raster, resampled onto the PCP grid.
+
+    Every published route is tried in order and each one's outcome recorded;
+    the registration comes off the label's projection offsets, never from the
+    array centre (``pcp.crop_lpsr``).
+    """
+    acq = conf["acquire"]
+    rec: dict = {"pole": pole, "routes": []}
+    ddir.mkdir(parents=True, exist_ok=True)
+    for route in range(PCP.n_lpsr_routes()):
+        r: dict = {"route": route}
+        ok = True
+        for ext in ("lbl", "img"):
+            url = PCP.lpsr_url(pole, ext, route)
+            dest = ddir / Path(url).name
+            res = A.download(fetch, url, dest, max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
+                             timeout=float(acq.get("download_timeout_s", 900)))
+            r[ext] = {"url": url, "status": res.status, "error": res.error, "n_bytes": res.n_bytes}
+            ok = ok and bool(res.ok)
+        if not ok:
+            r["outcome"] = "DOWNLOAD_FAILED"
+            rec["routes"].append(r)
+            continue
+        lbl_path = ddir / Path(PCP.lpsr_url(pole, "lbl", route)).name
+        arr, note = _read_raster(lbl_path)
+        r["read"] = note
+        if arr is None:
+            r["outcome"] = "UNREADABLE"
+            rec["routes"].append(r)
+            continue
+        src_georef = None
+        try:
+            src_georef = read_label(lbl_path).georef
+        except Exception as exc:  # noqa: BLE001
+            r["georef_error"] = f"{type(exc).__name__}: {exc}"[:200]
+        r["outcome"] = "OK"
+        r["full_shape"] = list(arr.shape)
+        r["n_psr_full"] = int((arr > 0).sum())
+        r["src_georef"] = src_georef.as_dict() if src_georef is not None else None
+        r["registration"] = ("label_offsets" if (src_georef is not None
+                                                 and np.isfinite(src_georef.line_offset))
+                             else "array_centre_fallback")
+        rec["routes"].append(r)
+        mask = PCP.crop_lpsr(arr, half_px, pole=pole, src_georef=src_georef)
+        rec.update({k: v for k, v in r.items() if k in
+                    ("lbl", "img", "read", "full_shape", "n_psr_full", "registration")})
+        rec.update({"status": "OK", "route_used": route,
+                    "n_psr_cropped": int(mask.sum()), "shape": list(mask.shape)})
+        return {**rec, "mask": mask}
+    rec["status"] = "NO_PSR_RASTER"
+    return rec
+
+
+def resolve_pcp_products(conf: dict, fetch, out: Path) -> dict:
+    """Ask ODE for every PCP file, so neither the directory layout nor the
+    NUMBER of local-time bins is assumed.
+
+    Falls back to the URL template verified on the runner
+    (``results/crypt/probe.json``, ``formats[0]``) when ODE cannot be reached;
+    which route was used is recorded with the result.
+    """
+    acq = conf["acquire"]
+    spec = acq.get("diviner_ode") or {}
+    rep: dict = {"route": None, "n_files": 0, "status": "NOT_TRIED"}
+    index: dict = {}
+    base = acq.get("ode_rest")
+    if base:
+        try:
+            r = A.ode_dataset_files(fetch, base, spec.get("ihid", "LRO"), spec.get("iid", "DLRE"),
+                                    "PCP", limit=int(spec.get("limit", 2000)),
+                                    timeout=float(acq.get("listing_timeout_s", 60)))
+            index = PCP.index_pcp_files(r["files"])
+            rep.update({"url": r.get("url"), "http_status": r.get("status"),
+                        "error": r.get("error"), "n_products": r.get("n_products"),
+                        "n_files": len(r["files"]), "n_ltim_files": len(index)})
+        except Exception as exc:  # noqa: BLE001
+            rep["error"] = f"{type(exc).__name__}: {exc}"[:300]
+    if index:
+        rep.update({"route": "ode", "status": "OK"})
+    else:
+        rep.update({"route": "url_template", "status": "ODE_UNAVAILABLE_USING_TEMPLATE"})
+    rep["bins_available"] = {p: PCP.available_bins(index, p) for p in conf["products"]["poles"]}
+    rep["n_bins_available"] = {p: len(v) for p, v in rep["bins_available"].items()}
+    _write(out / "pcp_index.json", {k: v for k, v in rep.items() if k != "index"})
+    return {**rep, "index": index}
+
+
+def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, poles=None,
+              run_sensitivity: bool = True) -> dict:
+    """Download the selected Diviner PCP local-time maps, build the cube, run
+    the diurnal screen.  Each table is deleted after it is rasterised, so peak
+    disk is one product (262 MB) and not the whole set."""
+    fetch = fetch or A.http_fetch
+    acq = conf["acquire"]
+    dcfg = conf.get("diurnal", {})
+    thr = {**D.DEFAULT_THRESHOLDS, **{k: v for k, v in dcfg.items() if k in D.DEFAULT_THRESHOLDS}}
+    half_px = PCP.half_px_for(float(dcfg.get("min_lat_deg", 80.0)))
+    seasons = list(dcfg.get("seasons", ["summer", "winter"]))
+    resolved = resolve_pcp_products(conf, fetch, out)
+    index = resolved.get("index") or {}
+    reports = {}
+    for pole in shard_poles(conf, shard, poles):
+        avail = PCP.available_bins(index, pole, seasons) if index else []
+        n_bins = max(avail) if avail else int(dcfg.get("n_bins_fallback", 96))
+        bins = [b for b in PCP.parse_bin_spec(dcfg.get("ltim_bins", "every:16"), n_bins)
+                if (not avail) or b in avail]
+        max_n = int(dcfg.get("max_products_per_pole", 0) or 0)
+        if max_n and len(bins) * len(seasons) > max_n:
+            step = int(np.ceil(len(bins) * len(seasons) / max_n))
+            bins = bins[::step]
+        ddir = out / "data" / pole
+        ddir.mkdir(parents=True, exist_ok=True)
+        rep: dict = {"stage": "pcp", "pole": pole, "generated_utc": _now(), "half_px": half_px,
+                     "grid": [2 * half_px + 1] * 2, "ltim_bins": bins, "seasons": seasons,
+                     "n_bins_axis": n_bins,
+                     "n_bins_available": len(avail),
+                     "index": {k: v for k, v in resolved.items() if k not in ("index", "bins_available")},
+                     "local_times_h": [round(PCP.local_time_hours(b, n_bins), 3) for b in bins],
+                     "products": {}, "bytes": 0, "degraded": []}
+        if not bins:
+            rep["degraded"].append("no_ltim_bins_resolved")
+        psr = _acquire_psr(conf, fetch, pole, ddir, half_px)
+        rep["psr"] = {k: v for k, v in psr.items() if k != "mask"}
+        if psr.get("status") != "OK":
+            rep["degraded"].append(f"psr:{psr.get('status')}")
+        cube = D.DiurnalCube(pole, PCP.pcp_georef(pole, half_px))
+        n_ok = 0
+        for season in seasons:
+            for b in bins:
+                key = f"{season}/ltim{int(b):02d}"
+                url = index.get((pole, season, int(b), "tab")) or PCP.pcp_url(pole, season, b, "tab")
+                dest = ddir / Path(url).name
+                res = A.download(fetch, url, dest, max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
+                                 timeout=float(acq.get("download_timeout_s", 900)))
+                prec = {"url": url, "status": res.status, "error": res.error, "n_bytes": res.n_bytes}
+                if not res.ok:
+                    prec["outcome"] = "DOWNLOAD_FAILED"
+                    rep["products"][key] = prec
+                    continue
+                rep["bytes"] += int(res.n_bytes or 0)
+                try:
+                    tab = PCP.read_pcp_tab(dest)
+                    r = PCP.rasterise(tab, pole, half_px)
+                except Exception as exc:  # noqa: BLE001
+                    prec["outcome"] = f"PARSE_FAILED: {type(exc).__name__}: {exc}"[:300]
+                    # the first records VERBATIM, so the next correction is read
+                    # off the product rather than costing another runner hour
+                    try:
+                        with dest.open("rb") as fh:
+                            prec["head"] = fh.read(400).decode("latin-1", "replace")
+                        prec["sniffed_sep"] = PCP.sniff_delimiter(dest)
+                    except Exception:  # noqa: BLE001, S110
+                        pass
+                    rep["products"][key] = prec
+                    dest.unlink(missing_ok=True)
+                    continue
+                prec.update({k: v for k, v in r.items() if k not in ("array", "georef")})
+                if r.get("status") == "OK":
+                    cube.put(season, f"ltim{int(b):02d}", r["array"], source=url)
+                    prec["outcome"] = "OK"
+                    n_ok += 1
+                else:
+                    prec["outcome"] = r.get("status")
+                rep["products"][key] = prec
+                dest.unlink(missing_ok=True)      # one product on disk at a time
+                print(f"[crypt] pcp {pole} {key}: {prec['outcome']} "
+                      f"n={prec.get('n_on_grid')} resid={prec.get('georef_resid_deg')}")
+        rep["n_layers"] = n_ok
+        rep["n_missing"] = len(seasons) * len(bins) - n_ok
+        if n_ok == 0:
+            rep["status"] = VERDICT_NO_DATA
+            _write(out / f"pcp_{pole}.json", rep)
+            reports[pole] = rep
+            print(f"[crypt] pcp {pole}: {VERDICT_NO_DATA}")
+            continue
+        scr = D.screen_pole(cube, thr, hardware=conf.get("hardware"), external_psr=psr.get("mask"))
+        flags = scr.pop("flags", None)
+        if flags is not None and len(flags):
+            flags.sort_values("z_floor", ascending=False).head(4000).to_csv(
+                out / f"diurnal_flags_{pole}.csv", index=False)
+            scr["top_flags"] = flags.sort_values("z_floor", ascending=False).head(40).to_dict("records")
+            cand = flags[flags["class"] == "candidate"]
+            scr["candidates"] = cand.sort_values("z_floor", ascending=False).head(200).to_dict("records")
+        else:
+            scr["top_flags"], scr["candidates"] = [], []
+        g = cube.georef
+        scr["mask"]["area_km2_interior"] = scr["mask"].get("n_interior", 0) * g.pixel_area_m2 / 1e6
+        scr["pole"] = pole
+        scr["degraded"] = list(scr.get("degraded", [])) + rep["degraded"]
+        scr["acquisition"] = {"n_layers": n_ok, "n_missing": rep["n_missing"], "bytes": rep["bytes"],
+                              "ltim_bins": bins, "seasons": seasons, "n_bins_axis": n_bins,
+                              "n_bins_available": len(avail),
+                              "local_times_h": rep["local_times_h"],
+                              "index_route": resolved.get("route"),
+                              "psr": {k: v for k, v in rep.get("psr", {}).items()
+                                      if k in ("status", "route_used", "registration",
+                                               "n_psr_full", "n_psr_cropped", "full_shape")}}
+        if run_sensitivity:
+            sens = D.sensitivity(cube, thr, conf.get("sensitivity", {}).get("areas_m2", [3, 10, 30, 100]),
+                                 float(conf.get("sensitivity", {}).get("t_hot_K", [300.0])[0]),
+                                 n_per_area=int(conf.get("sensitivity", {}).get("n_per_area", 20)),
+                                 seed=int(conf.get("sensitivity", {}).get("seed", 11)),
+                                 hardware=conf.get("hardware"), external_psr=psr.get("mask"),
+                                 window_px=int(conf.get("sensitivity", {}).get("window_px", 0) or 0)
+                                 or None)
+            scr["sensitivity"] = sens
+            _write(out / f"diurnal_sensitivity_{pole}.json", sens)
+        _write(out / f"diurnal_{pole}.json", scr)
+        rep["status"] = "OK"
+        _write(out / f"pcp_{pole}.json", rep)
+        reports[pole] = scr
+        print(f"[crypt] diurnal {pole}: {scr['status']} interior={scr['mask'].get('n_interior')} "
+              f"flagged={scr.get('n_flagged')} counts={scr['counts']} floor={scr.get('floor')}")
+    return reports
+
+
+#: ``lsz_xxxxx_3cp_pfu_90n000_v1.img`` — Mini-RF polar stereographic mosaics.
+#: The merged product carries ``xxxxx`` where a single-orbit strip carries the
+#: orbit number, and the code is ``3cp`` (circular polarisation ratio) or
+#: ``3s1`` (first Stokes parameter, i.e. total power).
+MINIRF_MOSAIC_RE = re.compile(
+    r"(?i)^lsz_(?P<orbit>[0-9x]+)_3(?P<code>cp|s1)_p\w+_90(?P<pole>[ns])\d*(?P<look>_[ew])?_v1"
+    r"\.(?P<ext>img|lbl)$")
+_MINIRF_POLE = {"n": "north", "s": "south"}
+
+
+def find_minirf_mosaics(entries, pole: str) -> dict:
+    """Group a mosaic-directory listing into ``{code: {ext: Entry}}`` for one
+    pole, preferring the MERGED mosaic (``xxxxx``) over a single-orbit strip
+    and an unspecified look direction over an east/west-only one."""
+    best: dict = {}
+    for e in entries:
+        m = MINIRF_MOSAIC_RE.match(getattr(e, "name", "") or "")
+        if not m or _MINIRF_POLE[m.group("pole").lower()] != pole:
+            continue
+        code = m.group("code").lower()
+        # merged first, then no look restriction, then anything
+        rank = (0 if set(m.group("orbit").lower()) == {"x"} else 1,
+                0 if not m.group("look") else 1, m.group("orbit").lower())
+        slot = best.setdefault(code, {"rank": None, "files": {}})
+        if slot["rank"] is not None and rank > slot["rank"]:
+            continue
+        if slot["rank"] is None or rank < slot["rank"]:
+            slot.update({"rank": rank, "files": {}})
+        slot["files"][m.group("ext").lower()] = e
+    return {k: v["files"] for k, v in best.items() if v["files"].get("img")}
+
+
+def _acquire_minirf_mosaic(conf: dict, fetch, pole: str, ddir: Path) -> dict:
+    """List the Mini-RF mosaic directories and fetch this pole's CPR (and S1)
+    polar mosaic.  Each is 1294 x 1294 PC_REAL — 6.7 MB, not a data problem."""
+    acq = conf["acquire"]
+    rec: dict = {"pole": pole, "dirs": [], "status": "NO_MINIRF_MOSAIC_LISTED"}
+    entries: list = []
+    for url in acq.get("minirf_mosaic_dirs", []) or []:
+        res = fetch(url, timeout=float(acq.get("listing_timeout_s", 60)), max_bytes=5_000_000)
+        got = []
+        if res.ok and res.content:
+            got = [e for e in A.parse_listing(res.content.decode("latin-1", "replace"), url)
+                   if not e.is_dir]
+        rec["dirs"].append({"url": url, "status": res.status, "error": res.error,
+                            "n_entries": len(got)})
+        entries.extend(got)
+    found = find_minirf_mosaics(entries, pole)
+    rec["listed"] = {k: sorted(v) for k, v in found.items()}
+    if not found.get("cp"):
+        return rec
+    mdir = ddir / "minirf"
+    mdir.mkdir(parents=True, exist_ok=True)
+    for code, files in found.items():
+        entry: dict = {"stem": files["img"].name, "url": files["img"].url}
+        lbl_path = None
+        if files.get("lbl") is not None:
+            lbl_path = mdir / files["lbl"].name
+            A.download(fetch, files["lbl"].url, lbl_path,
+                       max_bytes=int(acq.get("label_max_bytes", 4e5)),
+                       timeout=float(acq.get("listing_timeout_s", 60)))
+            if not lbl_path.exists():
+                lbl_path = None
+        ip = mdir / files["img"].name
+        r = A.download(fetch, files["img"].url, ip,
+                       max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
+                       timeout=float(acq.get("download_timeout_s", 900)))
+        entry.update({"status": r.status, "error": r.error, "n_bytes": r.n_bytes})
+        if r.ok:
+            try:
+                meta = read_label(lbl_path if lbl_path is not None else ip)
+                if lbl_path is None:
+                    meta.data_file = str(ip)
+                entry["label"] = _label_summary(meta)
+                entry["label_path"] = str(lbl_path if lbl_path is not None else ip)
+                entry["outcome"] = "OK"
+            except Exception as exc:  # noqa: BLE001
+                entry["outcome"] = f"label: {type(exc).__name__}: {exc}"[:300]
+        else:
+            entry["outcome"] = "DOWNLOAD_FAILED"
+        rec[code] = entry
+    rec["status"] = "OK" if (rec.get("cp") or {}).get("outcome") == "OK" else "NO_POLAR_CPR_MATCH"
+    return rec
+
+
+def stage_radar(conf: dict, out: Path, *, fetch=None, shard: str | None = None, poles=None) -> dict:
+    """The radar axis: compact Mini-RF circular-polarisation-ratio anomalies
+    inside the LOLA-mapped PSR.
+
+    The mask is the same LOLA raster the thermal screen uses, re-sampled from
+    the 240 m PCP grid onto the Mini-RF polar stereographic grid by longitude
+    and latitude, so both axes screen the SAME region and a hit on one can be
+    looked up on the other.
+    """
+    fetch = fetch or A.http_fetch
+    dcfg = conf.get("diurnal", {})
+    half_px = PCP.half_px_for(float(dcfg.get("min_lat_deg", 80.0)))
+    reports = {}
+    for pole in shard_poles(conf, shard, poles):
+        ddir = out / "data" / pole
+        rep: dict = {"stage": "radar", "pole": pole, "generated_utc": _now()}
+        acq = _acquire_minirf_mosaic(conf, fetch, pole, ddir)
+        rep["acquisition"] = {k: v for k, v in acq.items() if k not in ("cp", "s1")}
+        if acq.get("status") != "OK":
+            rep["status"] = acq.get("status") or VERDICT_NO_DATA
+            _write(out / f"radar_{pole}.json", rep)
+            reports[pole] = rep
+            print(f"[crypt] radar {pole}: {rep['status']}")
+            continue
+        psr = _acquire_psr(conf, fetch, pole, ddir, half_px)
+        rep["psr"] = {k: v for k, v in psr.items() if k != "mask"}
+        if psr.get("status") != "OK":
+            rep["status"] = "NO_PSR_RASTER"
+            _write(out / f"radar_{pole}.json", rep)
+            reports[pole] = rep
+            print(f"[crypt] radar {pole}: NO_PSR_RASTER")
+            continue
+        try:
+            meta = read_label(acq["cp"]["label_path"])
+            cpr = read_raster(meta)
+            s1 = None
+            if (acq.get("s1") or {}).get("outcome") == "OK":
+                m1 = read_label(acq["s1"]["label_path"])
+                a1 = read_raster(m1)
+                s1 = a1 if a1.shape == cpr.shape else None
+                rep["s1_shape_mismatch"] = s1 is None
+            rmask = R.resample_mask(psr["mask"], PCP.pcp_georef(pole, half_px), meta.georef)
+            rep["mask"] = {"n_psr_on_radar_grid": int(rmask.sum()),
+                           "pixel_area_m2": float(meta.georef.pixel_area_m2),
+                           "area_km2": int(rmask.sum()) * float(meta.georef.pixel_area_m2) / 1e6}
+            rr = R.screen_radar(cpr, rmask, meta.georef, conf["radar"], s1=s1)
+            rf = rr.pop("flags")
+            rr["top"] = _clean(rf.sort_values("cpr", ascending=False).head(100)
+                               .to_dict(orient="records")) if len(rf) else []
+            rr["radar_candidates"] = _clean(rf[rf["class"] == "radar_candidate"].head(500)
+                                            .to_dict(orient="records")) if len(rf) else []
+            if len(rf):
+                rf.sort_values("cpr", ascending=False).head(4000).to_csv(
+                    out / f"radar_flags_{pole}.csv", index=False)
+            rep.update(rr)
+            rep["georef"] = meta.georef.as_dict()
+            rep["status"] = rr.get("status", "OK")
+        except Exception as exc:  # noqa: BLE001
+            rep["status"] = "RADAR_SCREEN_FAILED"
+            rep["error"] = f"{type(exc).__name__}: {exc}"[:300]
+        _write(out / f"radar_{pole}.json", rep)
+        reports[pole] = rep
+        print(f"[crypt] radar {pole}: {rep.get('status')} counts={rep.get('counts')} "
+              f"psr_px={rep.get('mask', {}).get('n_psr_on_radar_grid')}")
+    return reports
+
+
+def stage_assess_diurnal(conf: dict, out: Path) -> dict:
+    """Merge the per-pole diurnal screens into results/crypt/summary.json."""
+    poles = conf["products"]["poles"]
+    screens = {p: _read_json(out / f"diurnal_{p}.json") for p in poles}
+    pcps = {p: _read_json(out / f"pcp_{p}.json") for p in poles}
+    radars = {p: _read_json(out / f"radar_{p}.json") for p in poles}
+    probe = _read_json(out / "probe.json") or {}
+    ok = [p for p in poles if (screens.get(p) or {}).get("status") == "OK"]
+    counts = {c: 0 for c in D.CLASSES}
+    degraded: list[str] = []
+    n_interior, n_flagged, area_km2 = 0, 0, 0.0
+    cands: list[dict] = []
+    for p in ok:
+        s = screens[p]
+        for c, n in (s.get("counts") or {}).items():
+            counts[c] = counts.get(c, 0) + int(n)
+        n_interior += int((s.get("mask") or {}).get("n_interior", 0))
+        area_km2 += float((s.get("mask") or {}).get("area_km2_interior", 0.0) or 0.0)
+        n_flagged += int(s.get("n_flagged", 0))
+        degraded += [f"{p}:{d}" for d in s.get("degraded", [])]
+        for c in s.get("candidates", []):
+            cands.append({**c, "pole": p})
+    for p in [x for x in poles if x not in ok]:
+        degraded.append(f"{p}:{(screens.get(p) or {}).get('status') or (pcps.get(p) or {}).get('status') or 'NOT_SCREENED'}")
+    if not ok:
+        verdict = VERDICT_NO_DATA
+    elif cands:
+        verdict = f"DIURNALLY_INVARIANT_CANDIDATES ({len(cands)})"
+    else:
+        verdict = "NO_DIURNALLY_INVARIANT_SURVIVOR"
+    if degraded and ok:
+        verdict = f"{verdict}; DEGRADED ({', '.join(sorted(set(degraded)))})"
+    summary = {
+        "verdict": verdict, "generated_utc": _now(), "screen": "diurnal", "synthetic": False,
+        "poles_screened": ok, "poles_missing": [p for p in poles if p not in ok],
+        "n_psr_interior_px": n_interior, "psr_interior_area_km2": area_km2,
+        "n_flagged": n_flagged, "counts": counts, "n_candidates": len(cands),
+        "candidates": cands[:200], "degraded": sorted(set(degraded)),
+        "floor": {p: screens[p].get("floor") for p in ok},
+        "mask": {p: screens[p].get("mask") for p in ok},
+        "stats": {p: screens[p].get("stats") for p in ok},
+        "sensitivity": {p: (screens[p].get("sensitivity") or {}).get("rows") for p in ok},
+        "acquisition": {p: (screens.get(p) or {}).get("acquisition")
+                        or {"status": (pcps.get(p) or {}).get("status"),
+                            "n_layers": (pcps.get(p) or {}).get("n_layers"),
+                            "n_missing": (pcps.get(p) or {}).get("n_missing")} for p in poles},
+        "products": {p: {"ltim_bins": (pcps.get(p) or {}).get("ltim_bins"),
+                         "local_times_h": (pcps.get(p) or {}).get("local_times_h"),
+                         "bytes": (pcps.get(p) or {}).get("bytes"),
+                         "psr": (pcps.get(p) or {}).get("psr")} for p in poles},
+        "radar": {p: ({k: v for k, v in (radars.get(p) or {}).items()
+                       if k in ("status", "counts", "n_high_cpr", "mask", "error",
+                                "radar_candidates", "s1_shape_mismatch")}
+                      or {"status": "NOT_RUN"}) for p in poles},
+        "routes": {"pcp_url_template": PCP.PCP_URL_TEMPLATE, "lpsr_url": PCP.LPSR_URL,
+                   "minirf_mosaic_dirs": (conf.get("acquire") or {}).get("minirf_mosaic_dirs"),
+                   "diviner_ode": (probe.get("diviner", {}).get("ode") or {}).get("queries"),
+                   "diviner_reached": probe.get("reached", {}).get("diviner")},
+        "thresholds": {**D.DEFAULT_THRESHOLDS, **{k: v for k, v in (conf.get("diurnal") or {}).items()
+                                                  if k in D.DEFAULT_THRESHOLDS}},
+        "note": ("A candidate is a pixel inside the LOLA-mapped permanently shadowed region (eroded "
+                 "edge_px) whose FLOOR bolometric temperature — the minimum over every loaded "
+                 "(season, local-time) bin — exceeds its local annulus background by >= z_min of that "
+                 "annulus's own scatter, while its winter diurnal amplitude and its summer-winter "
+                 "offset are both below threshold and the excess is present in >= n_bins_excess bins. "
+                 "Passive heating inside a PSR (scattered light off a sunlit rim, re-radiated IR from "
+                 "surrounding terrain) necessarily varies with local time and season; an internal "
+                 "source does not. NO_DIURNALLY_INVARIANT_SURVIVOR is a COUNT at the stated floor, "
+                 "not an occurrence limit, and is not written up. NO_DATA_REACHED is an access "
+                 "statement about the archive, never about the Moon."),
+    }
+    _write(out / "summary.json", summary)
+    _write(out / "candidates.json", {"generated_utc": _now(), "n": len(cands), "candidates": cands})
+    flat = [{k: v for k, v in c.items() if not isinstance(v, (dict, list))} for c in cands]
+    pd.DataFrame(flat if flat else None,
+                 columns=None if flat else ["pole", "line", "sample", "lon", "lat", "class"]
+                 ).to_csv(out / "candidates.csv", index=False)
+    print(f"[crypt] assess(diurnal): {verdict}; interior px={n_interior} ({area_km2:.0f} km2); "
+          f"flagged={n_flagged}; counts={counts}")
+    return summary
+
+
+# ---------------------------------------------------------------------------
 # entry points
 # ---------------------------------------------------------------------------
 def crypt_run(conf: dict | None = None, stage: str = "all", *, shard: str | None = None, poles=None,
@@ -804,8 +1454,19 @@ def crypt_run(conf: dict | None = None, stage: str = "all", *, shard: str | None
                                run_sensitivity=run_sensitivity)
         elif s == "assess":
             rep = stage_assess(conf, out, fetch=fetch, synthetic=synthetic, do_vet=do_vet)
+        elif s == "pcp":
+            if synthetic:
+                continue
+            rep = stage_pcp(conf, out, fetch=fetch, shard=shard, poles=poles,
+                            run_sensitivity=run_sensitivity)
+        elif s == "radar":
+            if synthetic:
+                continue
+            rep = stage_radar(conf, out, fetch=fetch, shard=shard, poles=poles)
+        elif s == "assess_diurnal":
+            rep = stage_assess_diurnal(conf, out)
         else:
-            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
+            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + STAGES_ANISO}")
     return rep
 
 
@@ -813,7 +1474,8 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="seti crypt",
                                 description="CRYPT (S55): anisothermal hot components and compact radar "
                                             "anomalies inside lunar permanently shadowed regions")
-    p.add_argument("--stage", default="all", help="probe|acquire|screen|assess|all or a comma list")
+    p.add_argument("--stage", default="all",
+                   help="probe|pcp|radar|assess_diurnal|acquire|screen|assess|all or a comma list")
     p.add_argument("--shard", default="", help="i/n: this job's share of the poles")
     p.add_argument("--poles", default="", help="comma list (default from config)")
     p.add_argument("--out-dir", default="", help="results directory (default results/crypt)")
@@ -836,6 +1498,8 @@ if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["DEFAULTS", "STAGES", "VERDICT_CANDIDATES", "VERDICT_NONE", "VERDICT_NO_DATA", "build_layers",
-           "crypt_run", "load_crypt_config", "main", "needed_products", "parse_shard", "shard_poles",
-           "stage_acquire", "stage_assess", "stage_probe", "stage_screen"]
+__all__ = ["DEFAULTS", "STAGES", "STAGES_ANISO", "VERDICT_CANDIDATES", "VERDICT_NONE",
+           "VERDICT_NO_DATA", "build_layers", "crypt_run", "load_crypt_config", "main",
+           "needed_products", "parse_shard", "shard_poles", "stage_acquire", "stage_assess",
+           "find_minirf_mosaics", "stage_assess_diurnal", "stage_pcp", "stage_probe",
+           "stage_radar", "stage_screen"]

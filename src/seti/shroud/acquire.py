@@ -388,12 +388,13 @@ def probe_svo_catalog(name: str, roots, cfg: dict, budget_s: float | None = None
     **The ladder runs under a clock.** Each probe is short, but the number of
     roots is not bounded by this channel: the RegTAP route contributes however
     many the registry publishes, and the index scrape contributes however many
-    links it mines, so *roots x 5 URL forms x 25 s* grows without limit. Run
-    35741075121 spent more than 45 minutes in this step alone, and the route
-    that follows it --- the USNO-B1.0 reconstruction, the only one that can
-    restore the channel's scale --- is given whatever is left of the
-    acquisition deadline. A probe ladder that cannot find a service must not
-    be able to consume the run that would have worked without it.
+    links it mines, so *roots x 5 URL forms x 25 s* grows without limit ---
+    200 roots is seven hours. The route that follows it, the USNO-B1.0
+    reconstruction, is handed ``max(deadline - elapsed, 60)``, so the only
+    route that can restore the channel's scale gets whatever the ladder
+    leaves it. A probe ladder that cannot find a service must not be able to
+    consume the run that would have worked without it. This is a bound on a
+    cost that has none, not a fix for an overrun that was observed.
     """
     prov = Provenance(route=f"probe_svo:{name}")
     t0 = time.time()

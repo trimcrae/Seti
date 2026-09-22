@@ -845,83 +845,81 @@ yet. **Next decisive action:** let 35738702139 drain, then re-dispatch
 and redo every unverified-TIC row, then `assess` → `control` → sharded `vet`
 (stage 2 both eras + stage 3 difference image on **every** survivor, not the top
 of the list).
-### GRAVE: a pandas-3 read-only array was about to eat the first screen, 2026-09-22
+### GRAVE screened 155,304 analyses — no fission vector, and no iridium to test with, 2026-09-22
 
-S56 asks whether any horizon in Earth's sedimentary record carries a
-fission-product residue that no non-negative mixture of twelve natural
-reservoirs can build. The screen is per-sample, but nothing is a claim until
-the **age stack** says it recurs at one stratigraphic level across independent
-sections, the way the K–Pg iridium does. That makes the stack the only load
-path to a detection — and it was carrying an uncorrected p.
+S56's first real measurement. Run **35747786123** (12:04–12:39 EDT) —
+`DEGRADED_SOURCE (earthchem:NO_DATA_REACHED); NO_FISSION_VECTOR`, with
+`REFINED_PARTICULATE_CANDIDATES_PENDING_VET`. Committed in `results/grave/`.
 
-Thirteen boundary windows were tested at once and any window with
-`p_hypergeom` < 0.01 was promoted. Family-wise that is 1 − 0.99¹³ = **0.122**:
-a spurious "stratigraphic cluster" somewhere in the catalogue about one run in
-eight. `p_hypergeom` is now **Holm-corrected** over the windows that were
-testable at all (those holding ≥ 1 sampled section — a boundary the corpus
-never sampled was never a test, and padding *m* with it only costs power), and
-the promotion rule reads the corrected `p_family` at a family-wise
-`cluster_p` = 0.05. Net of the change the channel is **stricter** than before:
-FWER 0.05, not 0.122. Both p values are reported per window; `summary.json`
-carries `multiple_testing`, `n_boundaries_tested`, `cluster_p_is_family_wise`.
+| source | rows | requests | state |
+|---|---|---|---|
+| SGP | 101,618 | 80 | OK — all 36 age bins `complete` |
+| GEOROC / DIGIS | 53,686 | 10 | OK — the silicic + Parnaíba tephra reference |
+| EarthChem | 0 | 14 | `NO_DATA_REACHED`, ten-rung ladder recorded |
 
-Both positive controls survive with margin — a correction that killed the K–Pg
-iridium would be the wrong correction:
+Funnel: 155,304 analyses → 116,515 with a sufficient panel → 54,814 with
+LR > 0 → **63** above threshold → 63 fully vetted → **0 survivors**, and
+**0 candidate sections at every one of the thirteen boundaries**, out of
+16,408 sections (1,270 K–Pg-window analyses in 312 sections).
 
-| control | sections | p_raw | p_Holm | m |
-|---|---|---|---|---|
-| injected six-section K–Pg fission cluster | 6 of 9 | 3.97e-4 | 5.16e-3 | 13 |
-| chondritic Ir-anchored impact layer | 5 of 10 | 7.76e-4 | 7.76e-3 | 10 |
+The threshold is **ln LR = 555**, set by the *control population* — the same
+lithologies away from every boundary — with the shuffled null independently at
+509. Both empirical nulls sit ~65× the nominal `lr_min` of 8, and 4.7 % of
+shuffled samples clear it. The real scatter of sedimentary chemistry dwarfs
+any per-element error model, so the LR is inflated for everyone; a fixed-LR
+threshold would have produced thousands of false candidates. This is the error
+model working, not a weakness.
 
-and a window that clears 0.01 raw but not the correction (2 candidate sections
-of 10 sampled, against 5 candidate sections in a 300-section corpus,
-p_raw = 9.5e-3 → p_Holm = 0.067 over 7 tested windows) is now held at
-`multi_section_at_background_rate`. The suite asserts that case explicitly.
+All 63 died on `unexplained_by_all_reservoirs` **and** `single_element_driver`
+(23 also `peak_incoherent`); every other veto is zero. None is fission-shaped:
+χ² is still bad *with* the fission column in the design, and the preference
+collapses when one element is dropped.
 
-**The ash kill was also half-written.** The brief names both of volcanic ash's
-ratios, Zr/Hf *and* Nb/Ta; only Zr/Hf was on the fission path, and it fired
-solely when Zr was the driver. `tephra_signature` now tests the coherence an
-ash fall actually produces — all four of Zr, Hf, Nb, Ta up together by ≥ 2×
-with Zr/Hf in 25–60 *and* Nb/Ta in 5–40 — and vetoes `volcanic_ash` when the
-driver is an element the tephra itself carries. Written on coherence the kill
-is blind to a real fission residue: fission gives Zr with no Hf and has no
-path to Ta at all. The suite also *measured* something the doc had assumed — a
-plain ash bed never reaches the vet, because `rhyolite` is already one of the
-twelve reservoirs and the mixture absorbs it outright (LR = 0.0).
+**The headline caveat, and it is a big one: the built-in impact positive
+control could not run.** Ir is measured on **33** of 155,304 analyses, Ru on
+25, Rh on 29; 154,679 are `pge_insufficient` and nothing classes as `impact`.
+So this run did **not** show that the channel recognises the K–Pg iridium *in
+this corpus* — the corpus has no iridium. The offline suite still recovers a
+chondritic Ir layer at p_Holm = 7.8 × 10⁻³, but that is a statement about the
+code. Here the light peak rests on Mo (54,650), Pd (1,120) and Te (6,788)
+alone.
 
-29 offline tests pass, ruff clean.
+The 568 refined-particulate records are diffuse, not a horizon: every boundary
+is `multi_section_at_background_rate` or `single_section` at **p_Holm = 1.0**,
+over 272 candidate sections in 16,408. And the provenance flag earned its
+keep — **65 % of `refined_ta` and 25 % of `refined_w` records come from
+drilled core or cuttings**, i.e. tungsten-carbide bits and Ta hardware, the
+exact modern contamination the kill list names.
 
-**The run that was in flight would have produced nothing.** Under pandas 3's
-copy-on-write `DataFrame.to_numpy()` returns a **read-only** view, and the
-screen stage masks non-positive concentrations to NaN on the very next line:
-`full[full <= 0] = np.nan` raises `ValueError: assignment destination is
-read-only`. Both the full element matrix (which every kill reads) and the
-design matrix (which every fit reads) were built that way, so run 35742065160
-was going to die at the top of the screen — *after* paying for the whole
-acquisition. The sandbox could not see it: this venv holds pandas 2.3.3, the
-runner installs 3.0.6. Reproduced in a scratch pandas-3.0.6 venv (three
-end-to-end tests fail), fixed with `copy=True`, and **29 tests now pass on
-both pandas 2.3.3 and 3.0.6**. `read_csv(low_memory=False)` and the
-python-engine `on_bad_lines="skip"` reader were checked against 3.0.6 too and
-are clear; there is no `to_numeric(errors="ignore")` in the channel.
+Two honest limits, measured not guessed: the binned pull summed 103,585 rows
+against the 114,688 the service declares for [0, 4000] Ma, so it reaches
+**90.3 %** of the corpus; and EarthChem remains gone, so the verdict carries
+`DEGRADED_SOURCE`.
 
-**Data state.** The SGP schema is established on the runner (runs 35738860553,
-35739776468): `POST sgp-search.io/api/frontend/post-paged`, 94 field codes
-accepted, **114,688 samples** behind the [0, 4000] Ma filter, pages of 5,000
-not capped. Ru and Rh are *not served*, so the light peak rests on Mo, Pd and
-Te. EarthChem's REST service is gone (ten-rung endpoint ladder recorded);
-GEOROC/DIGIS supplies the tephra reference. **No screen has run yet**: the
-full-corpus run `35742065160` was dispatched 10:41 EDT, waited 32 min in the
-queue, started 11:13 EDT and is expected to fail at the screen for the reason
-above (it will still commit `acquisition.json`, which is a real measurement of
-what SGP served). The replacement, `35747786123`, was dispatched 11:30 EDT on
-the fixed head. `results/grave/` holds `probe.json` only — **there is no
-verdict about the sedimentary record yet**, and nothing in the repo should be
-read as one.
+**What this changes.** The null is *coverage-limited, not
+sensitivity-limited*, so per `CLAUDE.md` it changes the question rather than
+becoming a paper. Screening more rows cannot help when the two strongest
+discriminants are measured on 25 and 29 analyses and the marker that validates
+the method is measured on 33. The decisive escalation is isotopic and targeted
+(`docs/grave.md` §8): ²³⁵U/²³⁸U in boundary shales, the Fe–Mn crust ¹²⁹I and
+²³⁶U profiles, published Nd and Ru isotope data at the boundaries — plus, on
+the elemental side, a targeted pull of the PGE literature rather than a
+compilation assembled to study redox.
 
-Next decisive action: land 35747786123 and read `summary.json` — the funnel,
-which of the twelve named vetoes fired and how often, and whether any boundary
-window reaches `STRATIGRAPHIC_CLUSTER` under the corrected p.
+**Two defects fixed to get here, both of which would have falsified the
+result.** (1) Under pandas 3's copy-on-write `DataFrame.to_numpy()` returns a
+**read-only** view, so `full[full <= 0] = np.nan` raised on the runner and
+nowhere else — the sandbox holds pandas 2.3.3. It killed run 35742065160 at
+the top of the screen, *after* the whole acquisition had been paid for;
+reproduced in a scratch 3.0.6 venv, fixed with `copy=True`, and 29 tests now
+pass on both majors. (2) The age stack tested thirteen boundary windows and
+promoted any with p < 0.01 — FWER 0.122. `p_hypergeom` is now **Holm-corrected**
+over the testable windows and promotion reads `p_family` at a family-wise
+0.05, which is *stricter*; both positive controls survive (injected K–Pg
+cluster p_Holm = 5.2 × 10⁻³, chondritic impact layer 7.8 × 10⁻³). The ash kill
+was also half-written — only Zr/Hf was on the fission path, never Nb/Ta — and
+`tephra_signature` now requires all four of Zr, Hf, Nb, Ta up together at
+crustal ratios, which by construction cannot fire on a fission residue.
 
 ### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
 

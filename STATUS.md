@@ -70,6 +70,15 @@ MAST only -- is the decisive one; 35745637197 re-assesses the same shards with
 the new vetoes; 35741300225 is a full re-run. All three check out the branch
 head when they start.
 
+**Runner-version gate (the repo-wide pandas 3 warning).** The sandbox venv
+holds pandas 2.3.3; the runner installs 3.0.6. METRONOME was checked against
+the real thing rather than audited: a `--system-site-packages` venv with
+`pandas==3.0.6` runs the **whole** 114-test metronome suite green
+(`python -m venv --system-site-packages <dir> && <dir>/bin/pip install
+pandas==3.0.6`, then `PYTHONPATH=src <dir>/bin/python -m pytest
+tests/test_metronome.py`). The package uses no `errors="ignore"`, no
+`applymap`, no `inplace=`, no chained assignment and no removed numpy alias.
+
 **Next decisive action.** Read 35746944111: `cat_epoch_sigma_median` vs
 `cat_control_sigma_median` and `phot_period` for kepler:5879574 and the 14
 Tu+2022 stars. If 0.42327 d is the star's photometric period it is a contact

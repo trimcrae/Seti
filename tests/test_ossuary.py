@@ -483,6 +483,36 @@ def test_cirrus_gate_and_population_level_correlation(cfg):
     assert res["tested"] and res["spearman_rho"] > 0 and res["p_value"] < 0.01
 
 
+def test_cirrus_gate_defers_when_the_reddening_has_not_been_fetched(cfg):
+    """The gauntlet must not reject on a value nobody has looked up yet.
+
+    E(B-V) is a per-candidate lookup that only ``stage_followup`` performs, so
+    at the gauntlet the column is absent for every row.  A strict gate there
+    rejects the whole funnel for want of a measurement (run 35737257465 lost
+    1,764 of 1,764 flagged stars to "galactic_cirrus" with ``ebv_sfd``
+    entirely null), which is a broken gate reported as a clean sky.
+    """
+    c = cfg.thresholds["ossuary"]["contamination"]
+    df = pd.DataFrame({"ebv_sfd": [np.nan, np.nan, 0.5, 0.02],
+                       "b": [55.0, 2.0, 55.0, 55.0]})
+    deferred = ovet.cirrus_gate(df, c, untested_ok=True)
+    # Untested defers; a low latitude and a measured, over-threshold reddening
+    # still reject, because those ARE tested.
+    assert list(deferred["cirrus_ok"]) == [True, False, False, True]
+    assert list(deferred["cirrus_tested"]) == [False, False, True, True]
+    # The strict form (follow-up, after the lookup was attempted) is unchanged.
+    strict = ovet.cirrus_gate(df, c)
+    assert list(strict["cirrus_ok"]) == [False, False, False, True]
+
+    # End to end: a flagged star with no reddening yet must reach the verdict
+    # stage rather than be consumed by the cirrus gate.
+    full = ovet.vet(df.assign(**{"excess_flag": True}), c,
+                    cfg.thresholds["ossuary"]["sample"],
+                    cfg.thresholds["ossuary"]["excess"],
+                    cfg.thresholds["ossuary"]["kinematics"])
+    assert (full["reject_reason"] != "galactic_cirrus").all()
+
+
 # ==========================================================================
 # Honest degradation
 # ==========================================================================

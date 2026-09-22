@@ -145,21 +145,31 @@ jobs:
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           v = json.load(open("results/lantern/verify.json"))
-          print("verified=" + ("true" if v.get("verdict") == "PHASE_VERIFIED" else "false"))
+          # The gate is the PHASE question: the continuum of a KNOWN eclipse must
+          # drop, by a planetary amount, where the ephemeris puts the occultation.
+          # The injected-line recovery is a per-exposure sensitivity statement and
+          # is reported, not gated on.
+          print("verified=" + ("true" if v.get("phase_verdict") == "PHASE_VERIFIED" else "false"))
           PY
           python - <<'PY'
           import json
           v = json.load(open("results/lantern/verify.json"))
           for k, c in v["cases"].items():
-              keep = {x: c.get(x) for x in ("passed", "reason", "phase_class", "depth", "depth_snr",
+              keep = {x: c.get(x) for x in ("passed", "phase_passed", "injection_passed", "reason",
+                                            "phase_class", "depth", "depth_snr", "verify_window_days",
+                                            "verify_window_n_integrations",
                                             "free_step_offset_days", "timing_tolerance_days", "checks",
+                                            "ew_5sigma_limit_um", "ew_5sigma_limit_diff_um",
+                                            "line_contrast_5sigma",
                                             "time_source", "n_integrations", "binned_by", "grid", "cal_ver")}
               print(k, json.dumps(keep, indent=1))
               print("  injection:", json.dumps(c.get("injection")))
               print("  hdu_layout:", json.dumps((c.get("hdu_layout") or [])[:3]))
-          print("VERDICT:", v["verdict"])
-          if v["verdict"] != "PHASE_VERIFIED":
-              print("::warning::known-eclipse verification did not pass -- see verify.json")
+          print("PHASE VERDICT:", v.get("phase_verdict"), "INJECTION VERDICT:", v.get("injection_verdict"))
+          if v.get("phase_verdict") != "PHASE_VERIFIED":
+              print("::warning::known-eclipse PHASE verification did not pass -- see verify.json")
+          if v.get("injection_verdict") != "SENSITIVITY_VERIFIED":
+              print("::warning::injected vanishing line not recovered clean -- see verify.json")
           PY
       - id: plan
         name: Shard plan

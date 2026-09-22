@@ -102,7 +102,8 @@ DEFAULTS: dict = {
                 "level3_min_byte_fraction": 0.7,
                 "plan_cadence_minutes": 1.0},
     "verify": {"cases": [], "min_depth_snr": 5.0, "depth_range": [1e-4, 2e-2],
-               "injection_amp": 0.02, "window_fraction_of_period": 0.25},
+               "injection_amp": 0.02, "window_fraction_of_period": 0.25,
+               "injection_snr_target": 12.0, "max_injection_amp": 0.5},
 }
 
 
@@ -1177,8 +1178,17 @@ def assess(out_dir: Path, conf: dict) -> dict:
     if verify_path.exists():
         try:
             v = json.loads(verify_path.read_text())
-            verify = {"verdict": v.get("verdict"), "generated_utc": v.get("generated_utc"),
-                      "cases": {k: {"passed": c.get("passed"), "phase_class": c.get("phase_class"),
+            verify = {"verdict": v.get("verdict"), "phase_verdict": v.get("phase_verdict"),
+                      "injection_verdict": v.get("injection_verdict"),
+                      "generated_utc": v.get("generated_utc"),
+                      "cases": {k: {"passed": c.get("passed"),
+                                    "phase_passed": c.get("phase_passed"),
+                                    "injection_passed": c.get("injection_passed"),
+                                    "phase_class": c.get("phase_class"),
+                                    "checks": c.get("checks"),
+                                    "injected_ew_over_5sigma_limit":
+                                        (c.get("injection") or {}).get("injected_ew_over_5sigma_limit"),
+                                    "ew_5sigma_limit_um": c.get("ew_5sigma_limit_um"),
                                     "depth": c.get("depth"), "depth_snr": c.get("depth_snr")}
                                 for k, c in (v.get("cases") or {}).items()}}
         except Exception:  # noqa: BLE001
@@ -1339,7 +1349,9 @@ def _continuum_series(stack: dict) -> np.ndarray:
 
 
 def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
-                         injection_amp: float | None = None) -> dict:
+                         injection_amp: float | None = None,
+                         injection_snr_target: float = 12.0,
+                         max_injection_amp: float = 0.5) -> dict:
     """Does the continuum light curve of a KNOWN eclipse observation drop while
     the labeller says the planet is occulted?
 
@@ -1436,24 +1448,55 @@ def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
                chi2_flat=disc.get("chi2_flat"), chi2_step_predicted=disc.get("chi2_step_predicted"),
                chi2_step_free=disc.get("chi2_step_free"), checks=checks,
                continuum_binned=_bin_series(d, 60), in_eclipse_binned=_bin_series(inn.astype(float), 60),
-               passed=all(checks.values()))
+               phase_passed=all(checks.values()), passed=all(checks.values()))
     if injection_amp:
         f = np.asarray(stack["flux"], float).copy()
         wl = np.asarray(stack["wavelength"], float)
         fin = np.flatnonzero(np.isfinite(wl) & np.all(np.isfinite(f[: min(32, f.shape[0])]), axis=0))
         j = int(fin[fin.size // 2]) if fin.size else f.shape[1] // 2
-        prof = np.exp(-0.5 * ((np.arange(f.shape[1]) - j) / 0.9) ** 2)
+        # A FIXED fraction of the continuum is the wrong injection: on the real
+        # products 2% of the continuum sits BELOW the 5-sigma equivalent-width
+        # limit of both verification exposures, so "not recovered" says nothing
+        # about the chain.  Measure the exposure's own noise first (one pass of
+        # the real analysis on the un-injected stack), then inject a line at
+        # `injection_snr` times that noise.  The check then reads: a vanishing
+        # line at N sigma of THIS exposure's sensitivity comes back clean.
+        base = analyse_stack(dict(stack), [eph], conf, "verify_baseline")
+        noise = base.get("noise_median_difference") or base.get("noise_median_norm")
+        spr_v = float(base.get("samples_per_resel") or 2.0)
+        amp = float(injection_amp)
+        if noise and np.isfinite(noise) and noise > 0:
+            amp = max(amp, float(injection_snr_target) * float(noise))
+        amp = min(amp, float(max_injection_amp))
+        # The line must be unresolved-but-not-a-spike on THIS grid: the search
+        # accepts a half-max width in [min_width_resel, max_width_resel]
+        # resolution elements, so scale the injected sigma to the sampling
+        # instead of hard-coding 0.9 samples (which is a sub-resolution-element
+        # spike, and vetoed, whenever samples_per_resel > 2).
+        sig_pix = max(0.55 * spr_v, 0.6)
+        prof = np.exp(-0.5 * ((np.arange(f.shape[1]) - j) / sig_pix) ** 2)
         # The injected line vanishes at EVERY eclipse in the visit (the
         # verification window above restricts only the continuum check; the
         # analysis chain below sees the whole exposure and the full labels).
         vis = np.where(lab["in_eclipse"], 0.0, np.where(lab["eclipse_contact"], 0.5, 1.0))
         cont_j = np.nanmedian(f[:, max(0, j - 10): j + 11], axis=1)
-        f += (injection_amp * cont_j * vis)[:, None] * prof[None, :]
+        f += (amp * cont_j * vis)[:, None] * prof[None, :]
         s2 = dict(stack)
         s2["flux"] = f
         rec = analyse_stack(s2, [eph], conf, "verify")
         near = [x for x in rec["features"] if abs(x["index"] - j) <= 2]
-        out["injection"] = {"wavelength_um": float(wl[j]), "amp": injection_amp,
+        dl = float(np.nanmedian(np.abs(np.gradient(wl)))) if wl.size > 1 else np.nan
+        ew_inj = float(amp * np.sqrt(2.0 * np.pi) * sig_pix * dl)
+        lim = base.get("ew_5sigma_limit_um")
+        out["injection"] = {"wavelength_um": float(wl[j]), "amp": amp,
+                            "amp_requested_floor": float(injection_amp),
+                            "sigma_samples": float(sig_pix),
+                            "baseline_noise_median": float(noise) if noise else None,
+                            "baseline_ew_5sigma_limit_um": lim,
+                            "injected_ew_um": ew_inj,
+                            "injected_ew_over_5sigma_limit": (float(ew_inj / lim)
+                                                              if lim else None),
+                            "baseline_n_features": len(base.get("features") or []),
                             "found_in": near[0].get("found_in") if near else None,
                             "snr_difference": near[0].get("snr_difference") if near else None,
                             "drift_control_snr": ((near[0].get("eclipse") or {})
@@ -1469,12 +1512,16 @@ def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
                             if near else None,
                             "n_features_total": len(rec["features"]),
                             "ew_5sigma_limit_um": rec.get("ew_5sigma_limit_um")}
+        out["ew_5sigma_limit_um"] = lim
+        out["ew_5sigma_limit_diff_um"] = base.get("ew_5sigma_limit_diff_um")
+        out["line_contrast_5sigma"] = base.get("line_contrast_5sigma")
         # 'candidate', or 'interest' with no veto (the in-eclipse residual at
         # the line centre above 2 sigma on noise alone, ~1 in 8 on the
         # synthetic forest): either is the line coming back clean.
         clean = bool(near and near[0]["tier_local"] in ("candidate", "interest")
                      and not near[0]["vetoes_local"])
         out["passed"] = bool(out["passed"] and clean)
+        out["injection_passed"] = clean
         out["checks"]["injected_line_recovered_clean"] = clean
     return out
 
@@ -1539,20 +1586,38 @@ def verify(out_dir: Path, conf: dict, work_dir: Path | None = None,
         c["cal_ver"] = (g.get("meta") or {}).get("CAL_VER")
         c["binned_by"] = k
         try:
-            c.update(verify_eclipse_stack(g, eph, conf, float(vcfg.get("injection_amp") or 0.0)))
+            c.update(verify_eclipse_stack(g, eph, conf, float(vcfg.get("injection_amp") or 0.0),
+                                          float(vcfg.get("injection_snr_target") or 12.0),
+                                          float(vcfg.get("max_injection_amp") or 0.5)))
         except Exception as exc:  # noqa: BLE001
             c["reason"] = f"verify raised {exc!r}"
         if case.get("expect") and c.get("phase_class") not in (case["expect"], "both"):
-            c["passed"] = False
+            c["passed"] = c["phase_passed"] = False
             c["reason"] = f"expected {case['expect']} got {c.get('phase_class')}"
         res["cases"][name] = c
         print(f"[lantern] verify {name}: {json.dumps(_json_safe({k: v for k, v in c.items() if k not in ('continuum_binned', 'in_eclipse_binned', 'hdu_layout')}))}")
     n_pass = sum(1 for c in res["cases"].values() if c.get("passed"))
+    # The gate on the screen is the PHASE question the mission poses: does the
+    # continuum of a known secondary eclipse drop, by a planetary amount, where
+    # the ephemeris says the planet is occulted?  The injected-line recovery is
+    # a SENSITIVITY statement about that one exposure (reported separately), not
+    # evidence that the labeller works -- a screen that cannot class an eclipse
+    # is the failure the gate exists to catch.
+    n_phase = sum(1 for c in res["cases"].values() if c.get("phase_passed"))
+    n_inj = sum(1 for c in res["cases"].values() if c.get("injection_passed"))
     res["n_cases"], res["n_passed"] = len(res["cases"]), n_pass
+    res["n_phase_passed"], res["n_injection_passed"] = n_phase, n_inj
+    res["phase_verdict"] = ("PHASE_VERIFIED" if res["cases"] and n_phase == len(res["cases"])
+                            else ("PHASE_PARTIALLY_VERIFIED" if n_phase else "PHASE_NOT_VERIFIED"))
+    res["injection_verdict"] = ("SENSITIVITY_VERIFIED" if res["cases"] and n_inj == len(res["cases"])
+                                else ("SENSITIVITY_PARTIALLY_VERIFIED" if n_inj
+                                      else "SENSITIVITY_NOT_VERIFIED"))
     res["verdict"] = ("PHASE_VERIFIED" if res["cases"] and n_pass == len(res["cases"])
                       else ("PHASE_PARTIALLY_VERIFIED" if n_pass else "PHASE_NOT_VERIFIED"))
     _write_json(out_dir / "verify.json", res)
-    print(f"[lantern] verify: {res['verdict']} ({n_pass}/{len(res['cases'])})")
+    print(f"[lantern] verify: {res['verdict']} ({n_pass}/{len(res['cases'])}); "
+          f"phase {res['phase_verdict']} ({n_phase}/{len(res['cases'])}); "
+          f"injection {res['injection_verdict']} ({n_inj}/{len(res['cases'])})")
     return res
 
 

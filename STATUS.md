@@ -121,12 +121,20 @@ outside the window the triage stored: Hβ at 5043.9 Å and [O III] 5008 at 5194.
 either reaches 4 σ, the persistence, the second epoch and the unresolved width are all
 explained at once — a real source in the fibre, just not the star.
 
-**In flight, and the queue is the blocker.** Run 35747997902 — the calibrated full run —
-sat queued for 98 minutes without one job starting, because the fixed `[0..7]` shard
-matrix asked the scheduler for eight runners even for a 4-shard dispatch, four of them
-only to evaluate their own skip condition and exit. The matrix is now built from
-`n_shards`, and the re-dispatch **35758868818** (2 shards, `ckpt_version` 4) asks for
-three. The control stage is **35751666444**.
+**In flight, and a correction.** I cancelled run 35747997902 — the calibrated full run —
+believing it had sat queued for 98 minutes without a single job starting. That was wrong.
+Its shard 3 started at 12:16 PM EDT and shard 0 ran 1:05–1:08 PM; only shards 1 and 2
+never started. The jobs API returned `queued` for every job on each of my checks and I
+acted on that without looking at the per-job `started_at`. The cancellation cost little in
+data, by luck rather than judgement: those shards had checked out `CKPT_VERSION` 3 — the
+null calibration *before* the thin-null standard-error guard — so a version-4 reduce would
+have discarded their checkpoints anyway. The version guard covered for the reasoning.
+
+The shard-matrix change stands on separate evidence: run 35747997902's shard 7 acquired a
+runner at 11:48:35 and exited at 11:48:38, three seconds to evaluate its own skip
+condition, which is what a fixed `[0..7]` matrix costs on a 4-shard dispatch. The matrix
+is now built from `n_shards`, and the re-dispatch **35758868818** (2 shards,
+`ckpt_version` 4) asks for three. The control stage is **35751666444**.
 
 Next: land 35758868818, then read 35751666444. For the strongest candidate the four live
 kill paths are

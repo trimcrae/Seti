@@ -21,9 +21,11 @@ on:
       stage:
         description: >-
           "all" (probe, run, reduce), "probe" (SPARCL fields + archive URL
-          reconnaissance only — cheap, run first), "run" (per-exposure
-          measurements, sharded), or "reduce" (merge checkpoints on the branch,
-          SIMBAD, NIST, summary).
+          reconnaissance only — cheap, run first), "diagnose" (raw side-by-side
+          of the SPARCL coadd, the SAS file coadd and each exposure for the top
+          `top` survivors — use when a class looks like a systematic), "run"
+          (per-exposure measurements, sharded), or "reduce" (merge checkpoints
+          on the branch, SIMBAD, NIST, summary).
         required: false
         default: "all"
       n_shards:
@@ -81,6 +83,42 @@ jobs:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
           scripts/commit_results.sh "spectra-persist probe" results/spectra_persist/probe.json
+
+  diagnose:
+    if: ${{ github.event.inputs.stage == 'diagnose' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,spectra]"
+          pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
+          pip install fsspec aiohttp requests astropy-healpix
+          python -c "import sparcl.client, astropy; print('imports OK')"
+      - name: Diagnose (SPARCL coadd vs SAS file coadd vs exposures)
+        run: |
+          python -m seti.spectra.persist --stage diagnose \
+            --top "${{ github.event.inputs.top || '8' }}" \
+            --release "${{ github.event.inputs.release || 'SDSS' }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: persist-diagnose
+          path: results/spectra_persist/diagnose.json
+          if-no-files-found: warn
+      - name: Commit diagnose
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh "spectra-persist diagnose" results/spectra_persist/diagnose.json
 
   run:
     if: ${{ always() && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run') && needs.probe.result != 'failure' }}

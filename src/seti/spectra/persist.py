@@ -1410,9 +1410,117 @@ def probe(root: Path, n_each: int = 2) -> dict:
     return rep
 
 
+def diagnose(root: Path, n: int = 8, release: str = "SDSS") -> dict:
+    """Side-by-side of the SPARCL coadd, the SAS file coadd and each exposure.
+
+    The first sharded run returned ``absent_in_exposures`` for every SDSS
+    survivor with a *consistently negative* combined significance (-3 to -9
+    sigma), not the ~0 sigma that genuine absence produces.  That is the
+    signature of a systematic, so this stage prints the raw numbers the
+    classifier is built on -- the same line measured in the SPARCL coadd, in
+    the file's own COADD HDU and in each exposure HDU, plus the pixel values
+    around the line and the correlation between the two coadds -- so the
+    disagreement can be attributed instead of guessed at.
+    """
+    root = Path(root)
+    out_dir = root / "results" / "spectra_persist"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df = load_survivors(root)
+    if release:
+        df = df[df["data_release"].str.upper().str.startswith(release.upper())]
+    df = df.sort_values("significance", ascending=False).head(n)
+    client = _make_client()
+    report = []
+    for _, c in df.iterrows():
+        spec_id, lam0 = str(c["spec_id"]), float(c["wavelength"])
+        rel, mode = str(c["data_release"]), str(c.get("search_mode", "emission"))
+        entry = {"spec_id": spec_id, "wavelength": lam0, "search_mode": mode,
+                 "triage_significance": float(c.get("significance", np.nan)), "release": rel}
+        recs = sparcl_retrieve(client, [spec_id], rel)
+        if not recs:
+            entry["error"] = "no SPARCL record"
+            report.append(entry)
+            continue
+        rec = recs[0]
+        entry["sparcl_keys"] = sorted(rec.keys())
+        sw = np.asarray(rec.get("wavelength", []), float)
+        sf = np.asarray(rec.get("flux", []), float)
+        si = np.asarray(rec.get("ivar", []), float)
+        entry["sparcl_n_pix"] = int(sw.size)
+        fwhm = lsf_fwhm_A(lam0, rel)
+        entry["fwhm_A"] = round(fwhm, 3)
+        if sw.size:
+            entry["sparcl_coadd"] = _json_safe(measure_line(sw, sf, si, lam0, fwhm, mode))
+            k = int(np.argmin(np.abs(sw - lam0)))
+            lo, hi = max(k - 6, 0), min(k + 7, sw.size)
+            entry["sparcl_window"] = {"wave": [round(float(x), 3) for x in sw[lo:hi]],
+                                      "flux": [round(float(x), 4) for x in sf[lo:hi]]}
+        ids = sdss_ids_from_record(rec)
+        entry["sdss_ids"] = ids
+        if not ids:
+            report.append(entry)
+            continue
+        files = []
+        for url in sdss_spec_urls(ids["plate"], ids["mjd"], ids["fiberid"], ids.get("run2d")):
+            data = fetch_bytes(url, max_bytes=200_000_000)
+            if data is None:
+                continue
+            finfo = {"url": url, "n_bytes": len(data)}
+            try:
+                from astropy.io import fits
+                with fits.open(io.BytesIO(data), memmap=False) as hd:
+                    finfo["extnames"] = [str(h.header.get("EXTNAME", f"HDU{i}"))
+                                         for i, h in enumerate(hd)]
+                    parsed = parse_sdss_spec(hd)
+            except Exception as exc:  # noqa: BLE001
+                finfo["error"] = repr(exc)
+                files.append(finfo)
+                continue
+            co = parsed.get("coadd")
+            finfo["n_exposure_hdus"] = len(parsed["exposures"])
+            finfo["n_exposures"] = len({e["expid"] for e in parsed["exposures"]})
+            if co is not None:
+                finfo["file_coadd"] = _json_safe(
+                    measure_line(co["wave"], co["flux"], co["ivar"], lam0, fwhm, mode,
+                                 mask=co.get("mask"), sky=co.get("sky"),
+                                 bad_bits=SDSS_BAD_BITS, cosmic_bits=SDSS_REJECT_BITS))
+                k = int(np.argmin(np.abs(co["wave"] - lam0)))
+                lo, hi = max(k - 6, 0), min(k + 7, co["wave"].size)
+                finfo["file_window"] = {"wave": [round(float(x), 3) for x in co["wave"][lo:hi]],
+                                        "flux": [round(float(x), 4) for x in co["flux"][lo:hi]]}
+                # Is the SAS file the same spectrum SPARCL served?
+                if sw.size and co["wave"].size:
+                    g = (sw > max(sw.min(), co["wave"].min())) & (sw < min(sw.max(), co["wave"].max()))
+                    if g.sum() > 100:
+                        fi = np.interp(sw[g], co["wave"], co["flux"])
+                        a, b = sf[g], fi
+                        ok = np.isfinite(a) & np.isfinite(b)
+                        if ok.sum() > 100 and np.std(a[ok]) > 0 and np.std(b[ok]) > 0:
+                            finfo["corr_with_sparcl"] = round(
+                                float(np.corrcoef(a[ok], b[ok])[0, 1]), 4)
+                            finfo["median_ratio_to_sparcl"] = round(
+                                float(np.median(b[ok] / np.where(a[ok] == 0, np.nan, a[ok]))), 4)
+            _, ex = sdss_exposure_measurements(parsed, lam0, mode)
+            finfo["exposures"] = [
+                {k2: e.get(k2) for k2 in ("expid", "arms", "testable", "reason", "sig", "ew",
+                                          "cont", "F", "err", "n_line_pix", "n_cosmic",
+                                          "err_scale", "mjd")}
+                for e in ex]
+            files.append(_json_safe(finfo))
+            if finfo.get("n_exposures"):
+                break
+        entry["files"] = files
+        report.append(entry)
+        print(json.dumps(_json_safe(entry), indent=2, default=str)[:6000])
+        print("-" * 78)
+    out = {"n": len(report), "release": release, "entries": report}
+    (out_dir / "diagnose.json").write_text(json.dumps(_json_safe(out), indent=2, default=str))
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="seti.spectra.persist")
-    ap.add_argument("--stage", choices=["probe", "run", "reduce"], default="run")
+    ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose"], default="run")
     ap.add_argument("--root", default=".")
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--n-shards", type=int, default=1)
@@ -1425,6 +1533,8 @@ def main(argv=None) -> int:
     root = Path(a.root)
     if a.stage == "probe":
         probe(root)
+    elif a.stage == "diagnose":
+        diagnose(root, n=a.top or 8, release=a.release or "SDSS")
     elif a.stage == "run":
         st = run_shard(root, a.shard, a.n_shards, a.top, a.max_exposures, a.release)
         print("[persist] shard stats:", json.dumps(st))
@@ -1440,4 +1550,4 @@ if __name__ == "__main__":
 __all__ = ["measure_line", "combine_measurements", "classify_persistence", "decode_specobjid",
            "sdss_spec_urls", "parse_sdss_spec", "sdss_exposure_measurements",
            "desi_bands_for", "desi_coadd_url", "desi_exposure_rows", "process_spectrum",
-           "run_shard", "reduce_results", "final_verdict", "probe", "main"]
+           "run_shard", "reduce_results", "final_verdict", "probe", "diagnose", "main"]

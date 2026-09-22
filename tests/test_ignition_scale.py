@@ -128,6 +128,20 @@ def test_uploaded_table_carries_no_unicodechar_column():
     assert _ascii_string_columns(t3)["lbl"].dtype.kind == "S"
     assert "unicodeChar" not in _votable_bytes(t3).decode("utf-8", "replace")
 
+    # pyvo does NOT use `_votable_bytes`: it serialises an uploaded astropy
+    # Table with `Table.write(format="votable")` (pyvo/dal/query.py), so that
+    # path is pinned too -- it is the rung IRSA parsed and refused.
+    from io import BytesIO
+    fo = BytesIO()
+    _ascii_string_columns(tbl).write(output=fo, format="votable")
+    pyvo_xml = fo.getvalue().decode("utf-8", "replace")
+    assert "unicodeChar" not in pyvo_xml and 'datatype="long"' in pyvo_xml
+    # The old spelling, for the record: this is exactly what was refused.
+    old = Table.from_pandas(pd.DataFrame({"sid": stars["source_id"].astype(str)}))
+    fo2 = BytesIO()
+    old.write(output=fo2, format="votable")
+    assert 'datatype="unicodeChar"' in fo2.getvalue().decode("utf-8", "replace")
+
 
 def test_the_ladder_downgrades_the_id_column_once_on_a_datatype_refusal():
     """If the service will not take `long` either, the id is expendable.
@@ -300,6 +314,25 @@ def test_upload_chunks_shrink_toward_the_ecliptic_poles():
     assert max(len(c) for c in c_nep) < 100 < max(len(c) for c in c_eq) <= 200
     assert sum(len(c) for c in c_nep) == n and sum(len(c) for c in c_eq) == n
     assert set(pd.concat(c_nep)["source_id"]) == set(nep["source_id"])
+
+
+def test_each_mode_keeps_its_own_summary_beside_the_channel_verdict(tmp_path):
+    """Two dispatches in flight must not overwrite each other's verdict."""
+    import json as _json
+
+    from seti.ignition.run import _write_summary
+
+    f = {"verdict": "NO_IGNITION_CANDIDATE", "denominators": {"sample_mode": "fields"}}
+    t = {"verdict": "IGNITION_CANDIDATES", "denominators": {"sample_mode": "tiles"}}
+    _write_summary(tmp_path, f)
+    _write_summary(tmp_path, t)
+    # summary.json is the CURRENT verdict, and each mode's own record survives.
+    assert _json.loads((tmp_path / "summary.json").read_text())["verdict"] == t["verdict"]
+    assert _json.loads((tmp_path / "summary_fields.json").read_text())["verdict"] == f["verdict"]
+    assert _json.loads((tmp_path / "summary_tiles.json").read_text())["verdict"] == t["verdict"]
+    # An unknown mode gets no tagged copy rather than a file named after nothing.
+    _write_summary(tmp_path, {"verdict": "X", "denominators": {}})
+    assert not (tmp_path / "summary_.json").exists()
 
 
 def test_a_tiles_shard_never_screens_the_fields_mode_parent(tmp_path):

@@ -42,6 +42,8 @@ from .line import (
     assess_feature,
     bh_fdr,
     cosmic_ray_driven,
+    difference_spectrum,
+    drift_control_masks,
     eclipse_discriminant,
     feature_snr_in_mask,
     is_recurrent,
@@ -49,6 +51,7 @@ from .line import (
     line_flux_series,
     narrow_feature_search,
     recurrent_wavelengths,
+    residual_z,
     time_average_spectrum,
     transit_consistency,
     vanish_pvalue,
@@ -69,7 +72,11 @@ VERDICTS = ("NO_DATA_REACHED", "NO_VANISHING_LINE",
 # different version; `assess` reports them as `stale_checkpoint`.  Version 1
 # was the run that read the table-per-segment x1dints layout as one row per
 # HDU (docs/lantern.md section 3.1).
-CHECKPOINT_VERSION = 2
+# Version 2 searched only the out-of-eclipse time-averaged spectrum, which on
+# real x1d products is limited at ~1% of the continuum by the static pixel
+# pattern; version 3 searches the out-minus-in difference, where that pattern
+# cancels (docs/lantern.md section 3.8).
+CHECKPOINT_VERSION = 3
 # Time sources that already carry the barycentric correction (no extra timing
 # sigma): the per-row TDB-MID column and the INT_TIMES BJD_TDB column.
 BARYCENTRIC_TIME_SOURCES = ("int_times_bjd_tdb", "row_bjd_tdb")
@@ -95,7 +102,7 @@ DEFAULTS: dict = {
                 "level3_min_byte_fraction": 0.7,
                 "plan_cadence_minutes": 1.0},
     "verify": {"cases": [], "min_depth_snr": 5.0, "depth_range": [1e-4, 2e-2],
-               "injection_amp": 0.02},
+               "injection_amp": 0.02, "window_fraction_of_period": 0.25},
 }
 
 
@@ -270,15 +277,93 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
             avg_mask = np.ones(n_int, bool)
     else:
         avg_mask = np.ones(n_int, bool)
-    avg = time_average_spectrum(flux, avg_mask, err, float(lcfg.get("clip_sigma", 5.0)))
-    scan = narrow_feature_search(wl, avg["spec"], avg["spec_err"],
-                                 float(prof.get("samples_per_resel", 2)), lcfg)
+    clip = float(lcfg.get("clip_sigma", 5.0))
+    spr = float(prof.get("samples_per_resel", 2))
+    avg = time_average_spectrum(flux, avg_mask, err, clip)
+    scan = narrow_feature_search(wl, avg["spec"], avg["spec_err"], spr, lcfg)
     rec["n_scanned"] = int(scan["n_scanned"])
+    rec["ew_5sigma_limit_out_um"] = scan["ew_5sigma_limit"]
     rec["ew_5sigma_limit_um"] = scan["ew_5sigma_limit"]
     rec["noise_median_norm"] = scan["noise_median"]
     rec["guard_counters"] = dict(scan["counters"])
     rec["n_averaged_integrations"] = int(avg_mask.sum())
-    for f in scan["features"]:
+    # --- the difference search -------------------------------------------------
+    # The out-of-eclipse spectrum is static-pattern limited (see
+    # line.difference_spectrum); the out-minus-in difference is not, and it is
+    # where an eclipse-gated line has to show up anyway.  For an eclipse-class
+    # exposure the difference is searched too, with the drift null
+    # (out-before minus out-after) as the matched control.
+    features = [dict(f, found_in="out_spectrum") for f in scan["features"]]
+    in_mask = out_diff_mask = ctrl_a = ctrl_b = None
+    diff_z = ctrl_z = None
+    diff_kind = None
+    if lab is not None and phase_class in ("eclipse", "both"):
+        # The eclipse difference: the vanishing test itself.
+        diff_kind = "difference"
+        in_mask, out_diff_mask = lab["in_eclipse"], avg_mask
+    elif lab is not None and phase_class == "transit":
+        # No eclipse in this visit, so the vanishing test cannot run -- but the
+        # out-of-transit minus in-transit difference cancels the same static
+        # pattern, so a narrow feature that CHANGED when the planet crossed the
+        # star is reachable at the photon limit instead of at ~8% of the
+        # continuum.  Such a feature can only ever be 'watch': it is not the
+        # eclipse-gated signature and assess_feature keeps it off the candidate
+        # ladder through insufficient_phase_coverage.
+        diff_kind = "transit_difference"
+        in_mask = lab["in_transit"]
+        out_diff_mask = lab["out_transit"] & ~lab["eclipse_contact"]
+        if in_mask.sum() < 4 or out_diff_mask.sum() < 8:
+            diff_kind = None
+    if diff_kind is not None:
+        dif = difference_spectrum(flux, out_diff_mask, in_mask, err, clip)
+        dscan = narrow_feature_search(wl, dif["spec"], dif["spec_err"], spr, lcfg)
+        diff_z = residual_z(dif["spec"], dif["spec_err"], spr, lcfg)["z"]
+        rec["n_scanned"] = int(rec["n_scanned"] + dscan["n_scanned"])
+        rec["ew_5sigma_limit_diff_um"] = dscan["ew_5sigma_limit"]
+        rec["noise_median_difference"] = dscan["noise_median"]
+        rec["difference_kind"] = diff_kind
+        rec["n_in_difference_integrations"] = int(np.count_nonzero(in_mask))
+        # The difference is the detection channel whenever it runs, so it sets
+        # the quoted sensitivity.
+        if dscan["ew_5sigma_limit"] is not None:
+            rec["ew_5sigma_limit_um"] = dscan["ew_5sigma_limit"]
+        for k, v in (dscan["counters"] or {}).items():
+            rec["guard_counters"][f"difference_{k}"] = int(v)
+        ctrl_a, ctrl_b = drift_control_masks(out_diff_mask, in_mask)
+        if ctrl_a.sum() >= 4 and ctrl_b.sum() >= 4:
+            cd = difference_spectrum(flux, ctrl_a, ctrl_b, err, clip)
+            ctrl_z = residual_z(cd["spec"], cd["spec_err"], spr, lcfg)["z"]
+            rec["drift_control"] = {"n_before": int(ctrl_a.sum()), "n_after": int(ctrl_b.sum())}
+        else:
+            rec["drift_control"] = {"n_before": int(ctrl_a.sum()), "n_after": int(ctrl_b.sum()),
+                                    "note": "too few out-of-event integrations on one side"}
+        by_index = {f["index"]: f for f in features}
+        for f in dscan["features"]:
+            near = next((by_index[j] for j in range(f["index"] - 2, f["index"] + 3)
+                         if j in by_index), None)
+            if near is not None:
+                near["found_in"] = "both"
+                near["snr_difference"] = float(f["snr"])
+                near["equivalent_width_difference"] = float(f["equivalent_width"])
+            else:
+                g = dict(f, found_in=diff_kind)
+                g["snr_difference"] = float(f["snr"])
+                g["equivalent_width_difference"] = float(f["equivalent_width"])
+                features.append(g)
+                by_index[g["index"]] = g
+        features.sort(key=lambda d: -float(d.get("snr_difference") or d["snr"]))
+        features = features[: int(lcfg.get("max_features_per_spectrum", 200))]
+        for f in features:
+            i = int(f["index"])
+            if ctrl_z is not None and np.isfinite(ctrl_z[i]):
+                f["drift_control_snr"] = float(ctrl_z[i])
+            if diff_z is not None and np.isfinite(diff_z[i]):
+                f["difference_spectrum_snr"] = float(diff_z[i])
+    _DIFF_KINDS = ("difference", "transit_difference", "both")
+    rec["n_features_out_spectrum"] = sum(1 for f in features
+                                         if f["found_in"] in ("out_spectrum", "both"))
+    rec["n_features_difference"] = sum(1 for f in features if f["found_in"] in _DIFF_KINDS)
+    for f in features:
         ser = line_flux_series(flux, f["left"], f["right"], err, lcfg)
         lo_w = max(0, f["index"] - half_win)
         hi_w = min(wl.size, f["index"] + half_win + 1)
@@ -292,16 +377,24 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
             # 2-sigma threshold means 2 sigma (a max over +-1 sample demoted a
             # quarter of injected candidates to 'interest' on pure noise).
             disc["in_eclipse_spectrum_snr"] = feature_snr_in_mask(
-                fw, lab["in_eclipse"], f["index"] - lo_w, ew_,
-                float(prof.get("samples_per_resel", 2)), lcfg, halfwidth=0)
+                fw, lab["in_eclipse"], f["index"] - lo_w, ew_, spr, lcfg, halfwidth=0)
             disc["out_eclipse_spectrum_snr"] = float(f["snr"])
+            disc["difference_spectrum_snr"] = f.get("difference_spectrum_snr")
+            disc["drift_control_snr"] = f.get("drift_control_snr")
+            # The null control matched to HOW the feature was found.
+            disc["null_control_snr"] = (disc["drift_control_snr"]
+                                        if f.get("found_in") == "difference"
+                                        else disc["in_eclipse_spectrum_snr"])
         if lab is not None and phase_class in ("transit", "both"):
             tr = transit_consistency(ser["line"], ser["line_err"], ser["cont"], lab)
         art = known_artefact(f["wavelength"], prof["artefacts"], prof["edge_tolerance_um"])
-        cr = cosmic_ray_driven(fw, avg_mask, f["left"] - lo_w, f["right"] - lo_w,
+        diff_found = f.get("found_in") in ("difference", "transit_difference")
+        cr_in = in_mask if diff_found else None
+        cr_out = out_diff_mask if diff_found else avg_mask
+        cr = cosmic_ray_driven(fw, cr_out, f["left"] - lo_w, f["right"] - lo_w,
                                float(lcfg.get("sigma_min", 6.0)),
                                int(dcfg.get("cosmic_ray_top_n", 2)),
-                               float(prof.get("samples_per_resel", 2)), lcfg, ew_)
+                               spr, lcfg, ew_, in_mask=cr_in)
         a = assess_feature(f, disc, tr, phase_class, lab, artefact=art, cosmic=cr, cfg=dcfg)
         entry = {**f, "artefact": art, "cosmic_ray": cr, "eclipse": disc, "transit": tr,
                  "tier_local": a["tier"], "vetoes_local": a["vetoes"],
@@ -321,6 +414,12 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
             entry["window"] = {"wavelength": [round(float(x), 5) for x in wl[lo:hi]],
                                "spec_norm": [round(float(x), 6) if np.isfinite(x) else None
                                              for x in avg["spec"][lo:hi]]}
+            if diff_z is not None:
+                entry["window"]["difference_z"] = [
+                    round(float(x), 3) if np.isfinite(x) else None for x in diff_z[lo:hi]]
+            if ctrl_z is not None:
+                entry["window"]["drift_control_z"] = [
+                    round(float(x), 3) if np.isfinite(x) else None for x in ctrl_z[lo:hi]]
             if disc is not None:
                 entry["line_series_binned"] = _bin_series(ser["line"], 25)
                 entry["cont_series_binned"] = _bin_series(ser["cont"], 25)
@@ -393,6 +492,8 @@ def analyse_exposure(grids: list[dict], ephemerides: list[Ephemeris], conf: dict
     rec = dict(primary)
     rec["features"] = [f for r in analysed for f in r["features"]]
     rec["n_scanned"] = int(sum(int(r.get("n_scanned") or 0) for r in analysed))
+    for k in ("n_features_out_spectrum", "n_features_difference"):
+        rec[k] = int(sum(int(r.get(k) or 0) for r in analysed))
     rec["grids"] = [{"grid_index": r["grid_index"], "status": r["status"],
                      "grid": r.get("grid"), "n_integrations": r.get("n_integrations"),
                      "n_integrations_raw": r.get("n_integrations_raw"),
@@ -400,6 +501,10 @@ def analyse_exposure(grids: list[dict], ephemerides: list[Ephemeris], conf: dict
                      "wavelength_range_um": r.get("wavelength_range_um"),
                      "phase_class": r.get("phase_class"), "n_scanned": r.get("n_scanned"),
                      "ew_5sigma_limit_um": r.get("ew_5sigma_limit_um"),
+                     "ew_5sigma_limit_out_um": r.get("ew_5sigma_limit_out_um"),
+                     "ew_5sigma_limit_diff_um": r.get("ew_5sigma_limit_diff_um"),
+                     "difference_kind": r.get("difference_kind"),
+                     "drift_control": r.get("drift_control"),
                      "n_features": len(r.get("features", [])),
                      "time_source": r.get("time_source")} for r in recs]
     rec["n_grids"] = len(recs)
@@ -474,8 +579,9 @@ def plan_units(inv: dict, conf: dict, n_shards: int = 8) -> dict:
     * a unit with any non-public product is recorded, never scheduled;
     * each scheduled unit gets a predicted phase class from its MAST window
       (:func:`predict_phase_class`) and a rank: eclipse-class 0, transit 1,
-      unresolved 2.  Units are sorted by (rank, -bytes) and dealt round-robin
-      into ``n_shards`` shards, so every shard works eclipses first.
+      unresolved 2.  Units are sorted by (rank, bytes) and dealt round-robin
+      into ``n_shards`` shards, so every shard works eclipses first and, within
+      a rank, the cheapest exposures first.
     """
     acq = conf.get("acquire", {})
     pcfg = conf.get("phase", {})
@@ -550,7 +656,12 @@ def plan_units(inv: dict, conf: dict, n_shards: int = 8) -> dict:
             u["predicted"] = predict_phase_class(eph, jd0, jd1, pcfg, cadence_days=cadence)
             u["rank"] = int(u["predicted"]["rank"])
             units.append(u)
-    units.sort(key=lambda u: (0 if u["scheduled"] else 1, u["rank"], -u["total_bytes"],
+    # Eclipse-class first, then transit, then unresolved; WITHIN a rank the
+    # cheapest exposure first.  Every exposure is an independent target/epoch,
+    # so cost-ascending order maximises the number of independent eclipse tests
+    # a bounded dispatch reaches (the 10 GB phase curves are reached by the
+    # dispatches that follow, since checkpoints accumulate).
+    units.sort(key=lambda u: (0 if u["scheduled"] else 1, u["rank"], u["total_bytes"],
                               u["host"], u["exposure_key"]))
     for i, u in enumerate(units):
         u["unit"] = i
@@ -925,6 +1036,9 @@ def assess(out_dir: Path, conf: dict) -> dict:
                          "mode": r.get("mode"), "grid": f.get("grid"),
                          "phase_class": r.get("phase_class"),
                          "wavelength_um": f["wavelength"], "snr": f["snr"],
+                         "found_in": f.get("found_in"),
+                         "snr_difference": f.get("snr_difference"),
+                         "drift_control_snr": (f.get("eclipse") or {}).get("drift_control_snr"),
                          "fwhm_samples": f.get("fwhm_samples"), "width_resel": f.get("width_resel"),
                          "equivalent_width_um": f.get("equivalent_width"),
                          "eclipse_vanish_snr": (f.get("eclipse") or {}).get("eclipse_vanish_snr"),
@@ -994,8 +1108,10 @@ def assess(out_dir: Path, conf: dict) -> dict:
         m = f"{r.get('instrument')}/{r.get('mode')}"
         d = by_mode.setdefault(m, {"exposures": 0, "eclipse_class": 0, "transit_class": 0,
                                    "phase_unresolved": 0, "integrations": 0,
-                                   "resolution_elements": 0, "features": 0, "eclipse_tested": 0,
-                                   "ew_5sigma_limit_um_median": []})
+                                   "resolution_elements": 0, "features": 0,
+                                   "features_difference": 0, "eclipse_tested": 0,
+                                   "ew_5sigma_limit_um_median": [],
+                                   "ew_5sigma_limit_out_um_median": []})
         d["exposures"] += 1
         pc = r.get("phase_class")
         if pc in ("eclipse", "both"):
@@ -1007,14 +1123,19 @@ def assess(out_dir: Path, conf: dict) -> dict:
         d["integrations"] += int(r.get("n_integrations_raw") or r.get("n_integrations") or 0)
         d["resolution_elements"] += int(r.get("n_scanned") or 0)
         d["features"] += len(r.get("features", []))
+        d["features_difference"] += sum(1 for f in r.get("features", [])
+                                        if f.get("found_in") in ("difference", "both"))
         d["eclipse_tested"] += sum(1 for f in r.get("features", []) if f.get("eclipse_tested"))
         if r.get("ew_5sigma_limit_um") is not None:
             d["ew_5sigma_limit_um_median"].append(float(r["ew_5sigma_limit_um"]))
+        if r.get("ew_5sigma_limit_out_um") is not None:
+            d["ew_5sigma_limit_out_um_median"].append(float(r["ew_5sigma_limit_out_um"]))
         pk = f"{(r.get('predicted') or {}).get('phase_class')}->{pc}"
         pred_vs[pk] = pred_vs.get(pk, 0) + 1
     for d in by_mode.values():
-        v = d.pop("ew_5sigma_limit_um_median")
-        d["ew_5sigma_limit_um_median"] = float(np.median(v)) if v else None
+        for k in ("ew_5sigma_limit_um_median", "ew_5sigma_limit_out_um_median"):
+            v = d.pop(k)
+            d[k] = float(np.median(v)) if v else None
     verify_path = out_dir / "verify.json"
     verify = None
     if verify_path.exists():
@@ -1065,6 +1186,8 @@ def assess(out_dir: Path, conf: dict) -> dict:
                                                  "phase_class": r.get("phase_class"),
                                                  "velocity_width_kms": r.get("velocity_width_kms"),
                                                  "ew_5sigma_limit_um": r.get("ew_5sigma_limit_um"),
+                                                 "ew_5sigma_limit_out_um": r.get("ew_5sigma_limit_out_um"),
+                                                 "ew_5sigma_limit_diff_um": r.get("ew_5sigma_limit_diff_um"),
                                                  "n_integrations": r.get("n_integrations_raw") or r.get("n_integrations")}
                         for r in analysed},
         "thresholds": {"discriminant": dcfg, "line": conf.get("line", {}),
@@ -1097,11 +1220,14 @@ def assess(out_dir: Path, conf: dict) -> dict:
                   "coverage": next((p.get("coverage") for p in r.get("planets", [])
                                     if p.get("planet") == r.get("planet")), None),
                   "n_features": len(r.get("features", [])),
+                  "n_features_difference": r.get("n_features_difference"),
                   "n_features_eclipse_tested": sum(1 for f in r.get("features", [])
                                                    if f.get("eclipse_tested")),
                   "best_vanish_snr": max((_f((f.get("eclipse") or {}).get("eclipse_vanish_snr"))
                                           for f in r.get("features", [])), default=None),
                   "ew_5sigma_limit_um": r.get("ew_5sigma_limit_um"),
+                  "ew_5sigma_limit_out_um": r.get("ew_5sigma_limit_out_um"),
+                  "ew_5sigma_limit_diff_um": r.get("ew_5sigma_limit_diff_um"),
                   "analysis_seconds": r.get("analysis_seconds"),
                   "notes": r.get("notes")} for r in recs]
     for e in exposures:
@@ -1170,8 +1296,29 @@ def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
     if inn.sum() < 4 or outm.sum() < 8:
         out.update(passed=False, reason="labeller_placed_no_eclipse_in_window")
         return out
+    # A phase curve (WASP-43 b: two eclipses AND a transit in 1.1 d) is not a
+    # two-level light curve: a free step fitted over the whole visit locks onto
+    # the transit, which is deeper than the eclipse, and the timing check then
+    # fails on an observation whose eclipse is perfectly well placed.  Restrict
+    # the verification to a window around ONE predicted eclipse -- wide enough
+    # that the free step can still land far from the prediction (the window is
+    # ~10x the tolerance), narrow enough that the transit and most of the
+    # thermal phase variation are outside it.
+    ecl_all = [e for e in lab["eclipses"] if not e.get("unplaceable")]
+    win_frac = float(vcfg.get("window_fraction_of_period", 0.25))
+    if ecl_all:
+        best_e = max(ecl_all, key=lambda e: int(np.count_nonzero(
+            (times >= e["t2"]) & (times <= e["t3"]))))
+        half = max(win_frac * eph.period, 2.0 * eph.duration)
+        win = np.abs(times - best_e["mid"]) <= half
+        win &= ~lab["in_transit"] & ~lab["transit_contact"]
+        if np.count_nonzero(win & inn) >= 4 and np.count_nonzero(win & outm) >= 8:
+            inn = inn & win
+            outm = outm & win
+            out["verify_window_days"] = [float(best_e["mid"] - half), float(best_e["mid"] + half)]
+            out["verify_window_n_integrations"] = int(np.count_nonzero(win))
     c = _continuum_series(stack)
-    ok = np.isfinite(c)
+    ok = np.isfinite(c) & (inn | outm)
     # Detrend with a line through the out-of-eclipse points (a settling ramp
     # or slope must not masquerade as, or hide, the eclipse).
     x = times - times.mean()
@@ -1181,10 +1328,16 @@ def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
     mu_in, mu_out = float(np.nanmean(d[inn & ok])), float(np.nanmean(d[outm & ok]))
     depth = mu_out - mu_in
     depth_err = s_out * np.sqrt(1.0 / (inn & ok).sum() + 1.0 / (outm & ok).sum())
-    disc = eclipse_discriminant(d, np.full(d.size, s_out), c, lab, times, dcfg)
+    # Restrict the discriminant to the same window and phase groups.
+    lab_w = dict(lab)
+    lab_w["in_eclipse"], lab_w["out_eclipse"] = inn, outm
+    disc = eclipse_discriminant(np.where(ok, d, np.nan), np.full(d.size, s_out), c,
+                                lab_w, times, dcfg)
     ecl = [e for e in lab["eclipses"] if not e.get("unplaceable")]
-    tol_days = (float(dcfg.get("timing_tolerance_ingress_units", 2.0)) * ecl[0]["ingress_duration"]
-                + ecl[0]["timing_sigma"] + 2.0 * (lab["cadence_days"] or 0.0)) if ecl else np.nan
+    e_ref = best_e if ecl_all else (ecl[0] if ecl else None)
+    tol_days = ((float(dcfg.get("timing_tolerance_ingress_units", 2.0)) * e_ref["ingress_duration"]
+                 + e_ref["timing_sigma"] + 2.0 * (lab["cadence_days"] or 0.0))
+                if e_ref else np.nan)
     off = disc.get("free_step_offset_days")
     lo_d, hi_d = vcfg["depth_range"]
     checks = {
@@ -1208,7 +1361,10 @@ def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
         fin = np.flatnonzero(np.isfinite(wl) & np.all(np.isfinite(f[: min(32, f.shape[0])]), axis=0))
         j = int(fin[fin.size // 2]) if fin.size else f.shape[1] // 2
         prof = np.exp(-0.5 * ((np.arange(f.shape[1]) - j) / 0.9) ** 2)
-        vis = np.where(inn, 0.0, np.where(lab["eclipse_contact"], 0.5, 1.0))
+        # The injected line vanishes at EVERY eclipse in the visit (the
+        # verification window above restricts only the continuum check; the
+        # analysis chain below sees the whole exposure and the full labels).
+        vis = np.where(lab["in_eclipse"], 0.0, np.where(lab["eclipse_contact"], 0.5, 1.0))
         cont_j = np.nanmedian(f[:, max(0, j - 10): j + 11], axis=1)
         f += (injection_amp * cont_j * vis)[:, None] * prof[None, :]
         s2 = dict(stack)
@@ -1216,6 +1372,12 @@ def verify_eclipse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict,
         rec = analyse_stack(s2, [eph], conf, "verify")
         near = [x for x in rec["features"] if abs(x["index"] - j) <= 2]
         out["injection"] = {"wavelength_um": float(wl[j]), "amp": injection_amp,
+                            "found_in": near[0].get("found_in") if near else None,
+                            "snr_difference": near[0].get("snr_difference") if near else None,
+                            "drift_control_snr": ((near[0].get("eclipse") or {})
+                                                  .get("drift_control_snr") if near else None),
+                            "ew_5sigma_limit_out_um": rec.get("ew_5sigma_limit_out_um"),
+                            "ew_5sigma_limit_diff_um": rec.get("ew_5sigma_limit_diff_um"),
                             "recovered": bool(near), "tier": near[0]["tier_local"] if near else None,
                             "vetoes": near[0]["vetoes_local"] if near else None,
                             "snr": near[0]["snr"] if near else None,
@@ -1323,6 +1485,16 @@ def selftest(out_dir: Path, conf: dict) -> dict:
         "line_ramp_late_eclipse": (dict(line_amp=0.02, line_vanishes=False, line_ramp_amp=3.0,
                                         ramp_tau=60.0, centre_shift_h=-1.8), "none"),
         "planet_line_transit_only": (dict(line_amp=0.02, centre="transit"), "watch"),
+        # With the ~1% static pixel pattern that real x1d products carry, the
+        # out-of-eclipse spectrum cannot see a 2% line at all; the difference
+        # must still return it, and must still reject the same confounders.
+        "pattern_planet_line_vanishes": (dict(line_amp=0.02, fixed_pattern_amp=0.01),
+                                         "candidate"),
+        "pattern_stellar_line_constant": (dict(line_amp=0.02, line_vanishes=False,
+                                               fixed_pattern_amp=0.01), None),
+        "pattern_no_line": (dict(line_amp=0.0, fixed_pattern_amp=0.01), None),
+        "pattern_line_ramp": (dict(line_amp=0.02, line_vanishes=False, line_ramp_amp=3.0,
+                                   ramp_tau=60.0, fixed_pattern_amp=0.01), "none"),
     }
     out = {"generated_utc": _utc(), "cases": {}, "all_as_expected": True}
     for name, (kw, expect) in cases.items():
@@ -1335,6 +1507,11 @@ def selftest(out_dir: Path, conf: dict) -> dict:
         ok = (got == expect) if expect is not None else (got is None)
         out["cases"][name] = {"expected": expect, "got": got, "phase_class": rec["phase_class"],
                               "n_features": len(rec["features"]), "ok": ok,
+                              "found_in": near[0].get("found_in") if near else None,
+                              "n_features_out_spectrum": rec.get("n_features_out_spectrum"),
+                              "n_features_difference": rec.get("n_features_difference"),
+                              "ew_5sigma_limit_out_um": rec.get("ew_5sigma_limit_out_um"),
+                              "ew_5sigma_limit_diff_um": rec.get("ew_5sigma_limit_diff_um"),
                               "vetoes": near[0]["vetoes_local"] if near else None}
         out["all_as_expected"] &= ok
     _write_json(out_dir / "selftest.json", out)

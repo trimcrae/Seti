@@ -1125,6 +1125,14 @@ def _cmd_uline(args, cfg):
     return _uline_main(list(args.rest))
 
 
+# --- CRADLE ---
+def _cmd_cradle(args, cfg):
+    from .cradle.run import run_from_args as _cradle_run
+
+    return _cradle_run(args, cfg)
+# --- /CRADLE ---
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
@@ -2433,6 +2441,27 @@ def main(argv=None):
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_relay)
     # --- RELAY ---
+
+    # --- SPARK ---
+    from .spark.run import _add_arguments as _spark_args
+    from .spark.run import _cmd_spark
+    p = sub.add_parser("spark",
+                       help="SPARK (S48/S49): a single-spectral-element excess on a stellar point "
+                            "source — Euclid Q1 NISP line features x Gaia, SPHEREx QR2 forced "
+                            "spectrophotometry (probe/euclid/spherex/screen/assess/all)")
+    _spark_args(p)
+    p.set_defaults(func=_cmd_spark)
+    # --- SPARK ---
+
+    # --- CRADLE ---
+    from .cradle.run import add_arguments as _cradle_args
+    p = sub.add_parser("cradle",
+                       help="CRADLE (S52/S53): warm debris at the habitable-zone radius of a "
+                            "MATURE star, above the collisional steady-state maximum; "
+                            "same flags as seti.cradle.run")
+    _cradle_args(p)
+    p.set_defaults(func=_cmd_cradle)
+    # --- /CRADLE ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

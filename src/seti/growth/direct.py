@@ -188,7 +188,7 @@ VETOES = (VETO_ODD_EVEN, VETO_DURATION, VETO_DURATION_INCONCLUSIVE, VETO_FPFLAG,
 #: Extra TIC-resolution routes tried in the shard when the ``ps`` routes failed.
 TIC_FALLBACK_ROUTES: tuple[str, ...] = ("tic_kic_crossid", "tic_region_kic", "tic_region_nearest")
 
-STAGES = ("probe", "targets", "measure", "assess", "vet")
+STAGES = ("probe", "targets", "measure", "assess", "control", "vet")
 
 #: The KOI columns the direct stage needs on top of stage 1's list: the epoch
 #: (``koi_time0bk`` is NOT in the stage-1 list) and the period's second error.
@@ -289,6 +289,10 @@ class EpochSearchParams:
     #: |offset| beyond this many propagated sigmas is flagged (a real transit
     #: can still sit there --- TTVs --- but the flag is on the record).
     flag_offset_sigma: float = 5.0
+    #: Phases (in units of the period) at which the SAME max-over-trials search
+    #: is repeated where no transit is --- the look-elsewhere null.  0 and 0.5
+    #: are excluded: the transit and the secondary eclipse live there.
+    control_phases: tuple = (0.17, 0.27, 0.37, 0.63, 0.73, 0.83)
 
     @classmethod
     def from_config(cls, conf: dict | None) -> EpochSearchParams:
@@ -962,6 +966,103 @@ def search_epoch_offset(segments, *, period_days: float, t0_btjd: float, duratio
     return out
 
 
+#: The control-phase verdicts.
+CTRL_ABOVE = "ABOVE_CONTROL"
+CTRL_WITHIN = "WITHIN_SEARCH_NOISE"
+CTRL_UNAVAILABLE = "CONTROL_UNAVAILABLE"
+CTRL_VERDICTS = (CTRL_ABOVE, CTRL_WITHIN, CTRL_UNAVAILABLE)
+
+
+def control_phase_null(products, family: str, *, period_days: float, t0_btjd: float,
+                       duration_days: float, sigma_t0_days: float, depth_ppm: float,
+                       ref_ppm: float, fit: FitParams | None = None,
+                       params: EpochSearchParams | None = None) -> dict:
+    """Repeat the epoch search where no transit is, and report what it finds.
+
+    :func:`search_epoch_offset` takes the **maximum** of the fitted signal-to-
+    noise over up to ``max_trials`` epoch offsets, and the depth is then fitted
+    at the winning offset.  A maximum over trials is biased upward, and the bias
+    grows as the signal weakens --- exactly the regime in which a spurious
+    *deeper* TESS depth would be manufactured.  Nothing in the depth's formal
+    error knows about it.
+
+    So the identical search --- same half-width, same coarse and fine steps,
+    same fitter, same segments --- is run centred on ``control_phases`` of the
+    period, where the planet is not.  The best signal-to-noise and the deepest
+    depth it finds there are what the search produces from noise alone on
+    *this* star.  ``snr_excess`` and ``depth_excess_over_control_ppm`` say by
+    how much the transit beat its own null.
+
+    Caveats kept on the record, not buried: in a multi-planet system a control
+    phase can land on a *sibling's* transit, which makes the null conservative,
+    not permissive; and a control phase can land in a data gap, in which case
+    that phase returns nothing and is not counted.
+    """
+    fit = fit or FitParams()
+    params = params or EpochSearchParams()
+    out = {"control_family": family, "control_n_phases": 0, "control_n_phases_measured": 0,
+           "control_phases": "", "control_snr_max": float("nan"),
+           "control_snr_median": float("nan"), "control_depth_max_ppm": float("nan"),
+           "control_depth_median_ppm": float("nan"), "snr_excess": float("nan"),
+           "depth_excess_over_control_ppm": float("nan"),
+           "control_verdict": CTRL_UNAVAILABLE}
+    segs = family_segments(products, family)
+    segs, _dropped = dedupe_sectors(segs)
+    phases = tuple(float(p) for p in (params.control_phases or ()))
+    out["control_n_phases"] = len(phases)
+    out["control_phases"] = ",".join(f"{p:g}" for p in phases)
+    if not segs or not phases or not (np.isfinite(period_days) and period_days > 0):
+        return out
+    snrs, depths = [], []
+    for ph in phases:
+        es = search_epoch_offset(segs, period_days=period_days,
+                                 t0_btjd=t0_btjd + ph * float(period_days),
+                                 duration_days=duration_days, sigma_t0_days=sigma_t0_days,
+                                 fit=fit, params=params)
+        s, d = _f(es.get("epoch_search_snr_best")), _f(es.get("depth_at_best_offset_ppm"))
+        if np.isfinite(s):
+            snrs.append(float(s))
+        if np.isfinite(d):
+            depths.append(float(d))
+    out["control_n_phases_measured"] = len(snrs)
+    if not snrs:
+        return out
+    out["control_snr_max"] = float(np.max(snrs))
+    out["control_snr_median"] = float(np.median(snrs))
+    if depths:
+        out["control_depth_max_ppm"] = float(np.max(depths))
+        out["control_depth_median_ppm"] = float(np.median(depths))
+    return out
+
+
+def apply_control(rec: dict, ctrl: dict, *, family: str) -> dict:
+    """Fold one family's control-phase null into the record's own numbers.
+
+    ``snr_excess`` is the transit's search signal-to-noise minus the best the
+    same search reached off-transit.  ``depth_excess_over_control_ppm`` is the
+    measured depth's excess over the Kepler reference minus the deepest depth
+    the search manufactured from noise: a "growth" smaller than that is not a
+    growth, it is the search.
+    """
+    out = dict(ctrl)
+    snr_t = _f(rec.get("epoch_search_snr_best"))
+    smax = _f(out.get("control_snr_max"))
+    if np.isfinite(snr_t) and np.isfinite(smax):
+        out["snr_excess"] = float(snr_t - smax)
+    d = _f(rec.get(f"{family}_depth_ppm"))
+    ref = _f(rec.get("koi_depth_in_tess_band_ppm"))
+    dmax = _f(out.get("control_depth_max_ppm"))
+    if np.isfinite(d) and np.isfinite(ref) and np.isfinite(dmax):
+        out["depth_excess_over_control_ppm"] = float((d - ref) - max(dmax, 0.0))
+    if not np.isfinite(smax):
+        out["control_verdict"] = CTRL_UNAVAILABLE
+    elif np.isfinite(out.get("snr_excess", float("nan"))) and out["snr_excess"] > 0:
+        out["control_verdict"] = CTRL_ABOVE
+    else:
+        out["control_verdict"] = CTRL_WITHIN
+    return out
+
+
 # ---------------------------------------------------------------------------
 # The duration profile fit
 # ---------------------------------------------------------------------------
@@ -1424,6 +1525,12 @@ def classify_direct(rec: dict, *, params: ClassifyParams | None = None,
     flags = []
     if pdc_deeper:
         flags.append("pdc_deeper_than_sap")
+    # The TIC came from the weakest of the three routes --- the nearest source
+    # within the cone whose Tmag is close enough --- so the light curve may not
+    # be this KIC star's at all.  Not a veto (stage 3's difference image is the
+    # test that settles it), but it travels with the record.
+    if _s(rec.get("tic_route")) == "tic_region_nearest":
+        flags.append("tic_identified_by_position_only")
     if both_up and not vetoes:
         out["class"] = CLASS_GROWTH
     elif both_down and not vetoes:
@@ -2045,6 +2152,153 @@ def direct_assess(conf: dict, out: Path) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Stage: control (the look-elsewhere null, on everything that changed)
+# ---------------------------------------------------------------------------
+#: Classes the control stage re-opens.  ``consistent`` needs no null --- the
+#: search bias can only push a depth UP, so it cannot manufacture agreement.
+CONTROL_CLASSES: tuple[str, ...] = (CLASS_GROWTH, CLASS_SHRINK, CLASS_DEEPER, CLASS_CROWDING)
+
+CONTROL_COLUMNS: tuple[str, ...] = (
+    "kepoi_name", "kepler_name", "kepid", "tic_id", "class", "koi_period",
+    "koi_depth_in_tess_band_ppm", "epoch_search_snr_best", "epoch_search_n_trials",
+    "epoch_offset_minutes", "epoch_offset_sigma", "control_status",
+    *[f"{fam}_{k}" for fam in FAMILIES for k in (
+        "depth_ppm", "total_err_ppm", "z", "control_n_phases_measured", "control_snr_max",
+        "control_snr_median", "control_depth_max_ppm", "control_depth_median_ppm",
+        "snr_excess", "depth_excess_over_control_ppm", "control_verdict")],
+    "control_verdict",
+)
+
+
+def direct_control(conf: dict, out: Path, *, products_fn=None, tic_fn=None,
+                   budget_s: float | None = None, max_targets: int | None = None,
+                   classes=None, log: AcquisitionLog | None = None) -> dict:
+    """Run the control-phase null on every planet the measurement said changed.
+
+    The epoch search maximises signal-to-noise over up to ``max_trials``
+    offsets and the depth is fitted at the winner; that maximum is biased
+    upward and its bias is not in the formal error.  This stage re-fetches the
+    star and repeats the identical search at ``epoch_search.control_phases``,
+    where the planet is not, so every survivor carries the depth the search
+    manufactures from that star's own noise.  A planet whose transit does not
+    beat its own null (``WITHIN_SEARCH_NOISE``) is not a candidate.
+    """
+    out = Path(out)
+    cdir = out / "control"
+    cdir.mkdir(parents=True, exist_ok=True)
+    log = log or AcquisitionLog(prefix="growth/direct/control")
+    fp = FetchParams.from_config(conf)
+    if budget_s is not None:
+        fp.shard_budget_s = float(budget_s)
+    fit = FitParams.from_config(conf)
+    search = EpochSearchParams.from_config(conf)
+    want = tuple(classes) if classes else CONTROL_CLASSES
+    meas = _read_csv(out / "measurements.csv")
+    if not len(meas) or "class" not in meas:
+        rep = {"stage": "control", "generated_utc": _now(), "n_selected": 0,
+               "note": "no measurements.csv to re-open"}
+        _write(cdir / "summary.json", rep)
+        return rep
+    sel = meas[meas["class"].map(_s).isin(want)].copy()
+    sel = sel.assign(_a=pd.to_numeric(sel.get("pdc_z"), errors="coerce").abs()) \
+        .sort_values("_a", ascending=False).drop(columns=["_a"])
+    cap = int(max_targets) if max_targets is not None else len(sel)
+    sel = sel.head(max(cap, 0))
+    if fp.download_dir is None and products_fn is None:
+        fp.download_dir = str(cdir / "downloads")
+    deadline = Deadline(budget_s=(float(fp.shard_budget_s)
+                                  if fp.shard_budget_s is not None else None))
+    rows: list[dict] = []
+    n_within, n_above, n_unavailable = 0, 0, 0
+    for kepid, g in sel.groupby("kepid", sort=True):
+        if deadline.expired():
+            for r in g.to_dict(orient="records"):
+                rows.append({"kepoi_name": r.get("kepoi_name"), "kepid": kepid,
+                             "class": r.get("class"), "control_status": REASON_NOT_REACHED,
+                             "control_verdict": CTRL_UNAVAILABLE})
+                n_unavailable += 1
+            continue
+        tic = _f(g.iloc[0].get("tic_id"))
+        products, status, _route = ([], REASON_TIC_UNRESOLVED, "")
+        if np.isfinite(tic) and tic > 0:
+            products, status, _route = fetch_products(
+                int(tic), products_fn=products_fn, params=fp, log=log, deadline=deadline,
+                key=f"control_{g.iloc[0].get('kepoi_name')}")
+        for r in g.to_dict(orient="records"):
+            row = {k: r.get(k) for k in ("kepoi_name", "kepler_name", "kepid", "tic_id", "class",
+                                          "koi_period", "koi_depth_in_tess_band_ppm",
+                                          "epoch_search_snr_best", "epoch_search_n_trials",
+                                          "epoch_offset_minutes", "epoch_offset_sigma")}
+            row["control_status"] = status
+            period, t0u = _f(r.get("koi_period")), _f(r.get("t0_btjd_used"))
+            dur_d = _f(r.get("koi_duration")) / 24.0
+            sig_d = _f(r.get("ephemeris_sigma_minutes")) / 1440.0
+            verdicts = []
+            for fam in FAMILIES:
+                row[f"{fam}_depth_ppm"] = r.get(f"{fam}_depth_ppm")
+                row[f"{fam}_total_err_ppm"] = r.get(f"{fam}_total_err_ppm")
+                row[f"{fam}_z"] = r.get(f"{fam}_z")
+                c = {"control_verdict": CTRL_UNAVAILABLE}
+                if status == STATUS_OK and products and np.isfinite(period) and period > 0 \
+                        and np.isfinite(t0u) and np.isfinite(dur_d) and dur_d > 0:
+                    c = apply_control(r, control_phase_null(
+                        products, fam, period_days=period, t0_btjd=t0u, duration_days=dur_d,
+                        sigma_t0_days=sig_d if np.isfinite(sig_d) else 0.0,
+                        depth_ppm=_f(r.get(f"{fam}_depth_ppm")),
+                        ref_ppm=_f(r.get("koi_depth_in_tess_band_ppm")),
+                        fit=fit, params=search), family=fam)
+                for k in ("control_n_phases_measured", "control_snr_max", "control_snr_median",
+                          "control_depth_max_ppm", "control_depth_median_ppm", "snr_excess",
+                          "depth_excess_over_control_ppm", "control_verdict"):
+                    row[f"{fam}_{k}"] = c.get(k)
+                verdicts.append(_s(c.get("control_verdict")))
+            # The planet's verdict is the WEAKEST family's: a change the search
+            # can manufacture in either reduction is not a change.
+            if CTRL_UNAVAILABLE in verdicts or not verdicts:
+                row["control_verdict"] = CTRL_UNAVAILABLE
+                n_unavailable += 1
+            elif CTRL_WITHIN in verdicts:
+                row["control_verdict"] = CTRL_WITHIN
+                n_within += 1
+            else:
+                row["control_verdict"] = CTRL_ABOVE
+                n_above += 1
+            rows.append(row)
+            print(f"[growth-direct] control {row['kepoi_name']} ({row['class']}): "
+                  f"snr {row.get('epoch_search_snr_best')} vs control "
+                  f"pdc {row.get('pdc_control_snr_max')} / sap {row.get('sap_control_snr_max')}"
+                  f" -> {row['control_verdict']}")
+        if fp.clean_downloads and fp.download_dir and products_fn is None:
+            shutil.rmtree(fp.download_dir, ignore_errors=True)
+    df = pd.DataFrame(rows)
+    if len(df):
+        df = df[[c for c in CONTROL_COLUMNS if c in df.columns]
+                + [c for c in df.columns if c not in CONTROL_COLUMNS]]
+    _write_csv(cdir / "control.csv", df)
+    rep = {"stage": "control", "generated_utc": _now(), "classes_selected": list(want),
+           "n_selected": int(len(sel)), "n_rows": int(len(df)),
+           "n_above_control": n_above, "n_within_search_noise": n_within,
+           "n_control_unavailable": n_unavailable,
+           "control_phases": list(search.control_phases),
+           "budget_exhausted": bool(deadline.expired()),
+           "elapsed_s": round(deadline.elapsed(), 1),
+           "what_this_tests": ("the epoch search maximises S/N over up to "
+                               f"{search.max_trials} offsets and the depth is fitted at the "
+                               "winner; the same search is repeated at control phases where the "
+                               "planet is not, and a planet whose transit does not beat that "
+                               "null is not a candidate"),
+           "caveats": ["a control phase can land on a sibling planet's transit in a multi-planet "
+                       "system, which makes the null conservative, not permissive",
+                       "a control phase in a data gap returns nothing and is not counted",
+                       "the null is per star: it is not a population statement"],
+           "acquisition": {k: v for k, v in log.as_dict().items() if k != "stages"}}
+    _write(cdir / "summary.json", rep)
+    print(f"[growth-direct] control: {n_above} above control, {n_within} within search noise, "
+          f"{n_unavailable} unavailable")
+    return rep
+
+
+# ---------------------------------------------------------------------------
 # Stage: vet (stage 2 + stage 3 on every survivor)
 # ---------------------------------------------------------------------------
 def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn=None,
@@ -2085,13 +2339,22 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
                       cone_fn=cone_fn, tpf_fn=tpf_fn, shortlist=shortlist)
     by2 = {str(t.get("kepoi_name")): t for t in (s2.get("targets") or [])}
     by3 = {str(t.get("kepoi_name")): t for t in (c3.get("targets") or [])}
+    # The look-elsewhere null, if the control stage has run.  Absent, it is
+    # NOT silently treated as a pass: the column says CONTROL_NOT_RUN and the
+    # survivor carries that as an open systematic.
+    ctrl_df = _read_csv(out / "control" / "control.csv")
+    byc = {str(r.get("kepoi_name")): r for r in (ctrl_df.to_dict(orient="records")
+                                                 if len(ctrl_df) else [])}
     per = []
     for r in chosen.to_dict(orient="records"):
         k = str(r.get("kepoi_name"))
         t2, t3 = by2.get(k, {}), by3.get(k, {})
+        tc = byc.get(k, {})
+        cverd = _s(tc.get("control_verdict")) or "CONTROL_NOT_RUN"
         survives = (str(t2.get("like_for_like_verdict")) == "MEASURED_DEPTH_CHANGED"
                     and str(t3.get("verdict")) == "TRANSIT_ON_TARGET"
-                    and str(t2.get("sap_vs_pdcsap_verdict")) != BG_DISAGREE)
+                    and str(t2.get("sap_vs_pdcsap_verdict")) != BG_DISAGREE
+                    and cverd != CTRL_WITHIN)
         per.append({"kepoi_name": k, "kepler_name": r.get("kepler_name"), "tic_id": r.get("tic_id"),
                     "direct_class": r.get("class"), "direct_pdc_z_pop": r.get("pdc_z_pop"),
                     "direct_sap_z": r.get("sap_z"),
@@ -2106,6 +2369,10 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
                     "stage3_offset_arcsec": t3.get("offset_arcsec"),
                     "stage3_offset_sigma": t3.get("offset_sigma"),
                     "stage3_census_statement": t3.get("census_statement"),
+                    "control_verdict": cverd,
+                    "control_snr_excess_pdc": tc.get("pdc_snr_excess"),
+                    "control_snr_excess_sap": tc.get("sap_snr_excess"),
+                    "control_depth_max_pdc_ppm": tc.get("pdc_control_depth_max_ppm"),
                     "survives_vet": bool(survives)})
     pdf = pd.DataFrame(per)
     _write_csv(vet_dir / "vetted.csv", pdf)
@@ -2114,10 +2381,18 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
            "n_survive_vet": int(pdf["survives_vet"].sum()) if len(pdf) else 0,
            "stage2_primary_verdict": s2.get("primary_verdict"),
            "stage3_verdict": c3.get("verdict"), "targets": per,
+           "n_control_within_search_noise": int(sum(1 for t in per
+                                                    if t.get("control_verdict") == CTRL_WITHIN)),
+           "n_control_not_run": int(sum(1 for t in per
+                                        if t.get("control_verdict") == "CONTROL_NOT_RUN")),
            "survives_vet_means": ("stage 2 MEASURED_DEPTH_CHANGED on the total error with both "
-                                  "eras fitted alike, SAP and PDCSAP not in disagreement, and "
-                                  "stage 3 TRANSIT_ON_TARGET; still not a detection — "
-                                  "achromaticity is untested")}
+                                  "eras fitted alike, SAP and PDCSAP not in disagreement, "
+                                  "stage 3 TRANSIT_ON_TARGET, and the transit beating its own "
+                                  "control-phase null WHERE THAT NULL HAS RUN — a survivor "
+                                  "carrying CONTROL_NOT_RUN has the look-elsewhere bias of the "
+                                  "epoch search still open against it, and n_control_not_run "
+                                  "counts them; still not a detection — achromaticity is "
+                                  "untested")}
     _write(vet_dir / "summary.json", rep)
     print(f"[growth-direct] vet: {rep['n_vetted']} vetted, {rep['n_survive_vet']} survive")
     return rep
@@ -2147,6 +2422,9 @@ def direct_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, sh
                                  tic_fn=tic_fn, resume=resume, budget_s=budget_s)
         elif s == "assess":
             rep = direct_assess(conf, out)
+        elif s == "control":
+            rep = direct_control(conf, out, products_fn=products_fn, tic_fn=tic_fn,
+                                 budget_s=budget_s)
         elif s == "vet":
             rep = direct_vet(conf, out, query_fn=query_fn, **vet_kw)
         else:
@@ -2161,8 +2439,8 @@ def main(argv=None):
                     "with a TIC id, fitted from the light curves on both SAP and PDCSAP, "
                     "against the KOI depth — sharded, checkpointed, with per-planet sensitivity")
     p.add_argument("--stage", default="all",
-                   help="probe | targets | measure | assess | vet | all (probe,targets,measure,"
-                        "assess) | a comma list")
+                   help="probe | targets | measure | assess | control | vet | "
+                        "all (probe,targets,measure,assess) | a comma list")
     p.add_argument("--out-dir", default="results/growth/direct")
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--n-shards", type=int, default=1)
@@ -2194,7 +2472,9 @@ __all__ = [
     "VETO_DURATION_INCONCLUSIVE", "VETO_EPHEMERIS", "VETO_FPFLAG", "VETO_LOWER_BOUND",
     "VETO_ODD_EVEN", "VETO_ONE_FAMILY", "ClassifyParams", "DurationParams", "EpochSearchParams",
     "FetchParams", "TargetParams", "astroquery_tic_fn", "build_targets", "classify_direct",
-    "compare_family", "default_products_fn", "detrended_fold", "direct_assess", "direct_measure",
+    "CONTROL_CLASSES", "CONTROL_COLUMNS", "CTRL_ABOVE", "CTRL_UNAVAILABLE", "CTRL_WITHIN",
+    "CTRL_VERDICTS", "apply_control", "compare_family", "control_phase_null",
+    "default_products_fn", "detrended_fold", "direct_assess", "direct_control", "direct_measure",
     "direct_probe", "direct_run", "direct_targets", "direct_vet", "family_segments",
     "fetch_products", "fit_duration", "gather_shards", "ingress_fraction",
     "lightkurve_products_fn", "main", "mast_fits_products_fn", "measure_direct_target",

@@ -1,0 +1,288 @@
+name: spark
+
+# SPARK (S48/S49) — a single-spectral-element excess on a stellar point source.
+#
+#   probe ──▶ euclid  (N shards over (field, dec-strip) units)   ──▶ assess
+#         └─▶ spherex (M shards over seed boxes)                 ──┘
+#
+# probe writes results/spark/probe.json — the real table schemas, column
+# roles, counts and product shapes — and commits it straight back, because the
+# next dispatch is steered by it.  Shard jobs are checkpointed per unit / per
+# box and upload with `if: always()`, so a killed shard loses minutes.  Only
+# the light ledgers are committed; the bulk strip / sample CSVs travel as
+# artifacts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "probe | euclid | spherex | both | all"
+        required: false
+        default: "all"
+      euclid_shards:
+        description: "Parallel Euclid shards (field x dec-strip units)"
+        required: false
+        default: "8"
+      spherex_shards:
+        description: "Parallel SPHEREx shards (seed boxes)"
+        required: false
+        default: "4"
+      fields:
+        description: "Comma-separated Euclid field names (empty = all)"
+        required: false
+        default: ""
+      boxes:
+        description: "Comma-separated SPHEREx box names (empty = all)"
+        required: false
+        default: ""
+      max_units:
+        description: "Cap on (field, strip) units per Euclid shard (empty = no cap)"
+        required: false
+        default: ""
+      max_images:
+        description: "Cap on SPHEREx images per detector per box (empty = config)"
+        required: false
+        default: ""
+      max_seeds:
+        description: "Cap on SPHEREx seeds per box (empty = config)"
+        required: false
+        default: ""
+      no_denominator:
+        description: "Skip the Euclid stars-with-spectra denominator queries (true/false)"
+        required: false
+        default: "false"
+      probe_skip_spherex:
+        description: "Probe Euclid + Gaia only, no SPHEREx product download (true/false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+env:
+  PROBE_ART: spark-probe
+
+jobs:
+  probe:
+    if: ${{ github.event.inputs.stage != 'euclid' && github.event.inputs.stage != 'spherex' && github.event.inputs.stage != 'both' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Probe (Euclid schemas, Gaia routes, SPHEREx products)
+        run: |
+          EXTRA=""
+          if [ "${{ github.event.inputs.probe_skip_spherex }}" = "true" ]; then EXTRA="--probe-skip-spherex"; fi
+          python -m seti.cli spark --stage probe --out-dir results/spark $EXTRA
+      - name: Show probe
+        if: always()
+        run: python -c "import json,sys; d=json.load(open('results/spark/probe.json')); print(json.dumps({k:d[k] for k in ('status','elapsed_s') if k in d}, indent=2)); print(json.dumps(d.get('euclid',{}).get('roles_line'), indent=2)); print(json.dumps(d.get('euclid',{}).get('roles_mer'), indent=2))"
+      - name: Commit probe
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/spark/probe.json
+          if git diff --cached --quiet; then
+            echo "No probe changes to commit."
+          else
+            git commit -m "spark: probe — what Euclid Q1 / SPHEREx / Gaia actually serve"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spark-probe
+          path: results/spark/probe.json
+          if-no-files-found: warn
+
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      euclid: ${{ steps.mk.outputs.euclid }}
+      spherex: ${{ steps.mk.outputs.spherex }}
+    steps:
+      - id: mk
+        run: |
+          python3 -c "import json; print('euclid=' + json.dumps(list(range(int('${{ github.event.inputs.euclid_shards || '8' }}')))))" >> "$GITHUB_OUTPUT"
+          python3 -c "import json; print('spherex=' + json.dumps(list(range(int('${{ github.event.inputs.spherex_shards || '4' }}')))))" >> "$GITHUB_OUTPUT"
+
+  euclid:
+    needs: [probe, plan]
+    if: ${{ always() && needs.plan.result == 'success' && (needs.probe.result == 'success' || needs.probe.result == 'skipped' || needs.probe.result == 'failure') && github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'spherex' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.euclid) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard state
+        run: rm -rf results/spark/euclid results/spark/spherex
+      - name: Fetch probe
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: spark-probe
+          path: results/spark/
+      - name: Euclid shard ${{ matrix.shard }}
+        run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.fields }}" ]; then EXTRA="$EXTRA --fields ${{ github.event.inputs.fields }}"; fi
+          if [ -n "${{ github.event.inputs.max_units }}" ]; then EXTRA="$EXTRA --max-units ${{ github.event.inputs.max_units }}"; fi
+          if [ "${{ github.event.inputs.no_denominator }}" = "true" ]; then EXTRA="$EXTRA --no-denominator"; fi
+          python -m seti.cli spark --stage euclid --out-dir results/spark \
+            --shard ${{ matrix.shard }}/${{ github.event.inputs.euclid_shards || '8' }} $EXTRA
+          echo "=== shard ledger ==="
+          python -c "import json;d=json.load(open('results/spark/euclid/euclid_s${{ matrix.shard }}.json'));print(json.dumps({k:d.get(k) for k in ('status','n_units','screen','degraded')}, indent=2))"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spark-euclid-${{ matrix.shard }}
+          path: |
+            results/spark/euclid/
+          if-no-files-found: warn
+
+  spherex:
+    needs: [probe, plan]
+    if: ${{ always() && needs.plan.result == 'success' && (needs.probe.result == 'success' || needs.probe.result == 'skipped' || needs.probe.result == 'failure') && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'both' || github.event.inputs.stage == 'spherex') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.spherex) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard state
+        run: rm -rf results/spark/euclid results/spark/spherex
+      - name: Fetch probe
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: spark-probe
+          path: results/spark/
+      - name: SPHEREx shard ${{ matrix.shard }}
+        run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.boxes }}" ]; then EXTRA="$EXTRA --boxes ${{ github.event.inputs.boxes }}"; fi
+          if [ -n "${{ github.event.inputs.max_images }}" ]; then EXTRA="$EXTRA --max-images ${{ github.event.inputs.max_images }}"; fi
+          if [ -n "${{ github.event.inputs.max_seeds }}" ]; then EXTRA="$EXTRA --max-seeds ${{ github.event.inputs.max_seeds }}"; fi
+          python -m seti.cli spark --stage spherex --out-dir results/spark \
+            --shard ${{ matrix.shard }}/${{ github.event.inputs.spherex_shards || '4' }} $EXTRA
+          echo "=== shard ledger ==="
+          python -c "import json;d=json.load(open('results/spark/spherex/spherex_s${{ matrix.shard }}.json'));print(json.dumps({k:d.get(k) for k in ('status','screen','degraded')}, indent=2))"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spark-spherex-${{ matrix.shard }}
+          path: |
+            results/spark/spherex/
+          if-no-files-found: warn
+
+  assess:
+    needs: [euclid, spherex]
+    if: ${{ always() && github.event.inputs.stage != 'probe' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard state
+        run: rm -rf results/spark/euclid results/spark/spherex
+      - name: Fetch probe
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: spark-probe
+          path: results/spark/
+      - name: Fetch Euclid shards
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: spark-euclid-*
+          merge-multiple: true
+          path: results/spark/euclid/
+      - name: Fetch SPHEREx shards
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: spark-spherex-*
+          merge-multiple: true
+          path: results/spark/spherex/
+      - name: Assess (merge shards, cross-shard recurrence, trials)
+        run: |
+          python -m seti.cli spark --stage assess --out-dir results/spark
+          echo "=== summary ==="
+          cat results/spark/summary.json || true
+      - name: Commit results (ledgers only; bulk CSVs stay artifacts)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/spark \
+            ':(exclude)results/spark/euclid/strip_*.csv' \
+            ':(exclude)results/spark/euclid/gaia_*.csv' \
+            ':(exclude)results/spark/euclid/denominator_*.csv' \
+            ':(exclude)results/spark/spherex/samples_*.csv' \
+            ':(exclude)results/spark/spherex/images_*.csv' \
+            ':(exclude)results/spark/spherex/imgs_*.csv'
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "spark: S48/S49 single-spectral-element excess — run results"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spark-final
+          path: results/spark/
+          if-no-files-found: warn

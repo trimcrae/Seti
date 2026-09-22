@@ -821,6 +821,51 @@ def test_a_hard_vetoed_ceiling_excess_star_is_tested_first_not_dropped(tmp_path)
     assert S.Stage2Params.from_config(conf).include_vetoed_excess is True
 
 
+def test_a_named_star_is_tested_whatever_tier_it_ended_in(tmp_path):
+    """A star can leave every tier the moment better parameters arrive.
+
+    MEASURED (run 35741271294): KIC 8487271 went xi +0.104 -> -0.920 on
+    Berger+2020's 1.301 Rsun and dropped out of `interest`, and with it out of
+    every shortlist -- so the centroid test that had failed on it before the
+    NaN-pixel fix could never be retried.
+    """
+    d = {"candidates": [], "watch": [_entry(star_id="3", tier="watch",
+                                            xi_conservative_max=-0.1)]}
+    (tmp_path / "candidates.json").write_text(json.dumps(d))
+    pd.DataFrame([
+        {"star_key": "kepler:8487271", "star_id": "8487271", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "none", "first_veto": "below_ceiling",
+         "xi_conservative_max": -0.920, "amplitude_frac": 1.07e-3,
+         "amplitude_source": "santos2021", "amplitude_scale": 2.828},
+        # the same star in a second catalogue: the larger xi wins
+        {"star_key": "kepler:8487271", "star_id": "8487271", "mission": "kepler",
+         "catalogue": "kepler_shibayama2013", "tier": "none", "first_veto": "below_ceiling",
+         "xi_conservative_max": -1.9, "amplitude_frac": 2e-3,
+         "amplitude_source": "own", "amplitude_scale": 1.0},
+        {"star_key": "kepler:3", "star_id": "3", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "watch", "first_veto": "below_ceiling",
+         "xi_conservative_max": -0.1, "amplitude_frac": 1e-3,
+         "amplitude_source": "mcquillan2014", "amplitude_scale": 1.0},
+    ]).to_csv(tmp_path / "xi_table.csv", index=False)
+
+    p = S.Stage2Params(max_stars=10, stars=("kepler:8487271",))
+    short = S.load_shortlist(tmp_path, params=p)
+    assert [e["star_id"] for e in short] == ["8487271", "3"]
+    assert short[0]["tier"] == "named" and short[0]["catalogue"] == "kepler_yang2019"
+    # a bare id works too
+    assert S.load_shortlist(tmp_path, params=S.Stage2Params(
+        max_stars=10, stars=("8487271",)))[0]["star_id"] == "8487271"
+    # naming nothing changes nothing; naming an unknown star adds nothing
+    assert [e["star_id"] for e in S.load_shortlist(
+        tmp_path, params=S.Stage2Params(max_stars=10))] == ["3"]
+    assert [e["star_id"] for e in S.load_shortlist(
+        tmp_path, params=S.Stage2Params(max_stars=10, stars=("kepler:404",)))] == ["3"]
+    assert S.named_rows(tmp_path / "nowhere", ["kepler:8487271"]) == []
+    # the config carries no named star by default: this is an explicit request
+    conf = load_arc_config()
+    assert S.Stage2Params.from_config(conf).stars == ()
+
+
 def test_probe_writes_the_route_and_shortlist(tmp_path):
     conf = _conf(tmp_path)
     (tmp_path / "arc").mkdir()

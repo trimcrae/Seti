@@ -15,6 +15,30 @@ hard way. Deviating costs runs.
 3. **Never write up a null result.** A clean null changes the question. Compute
    limits as internal honesty checks only.
 4. **Trace every candidate to a systematic before believing it.**
+5. **A green local suite is not a green gate.** The sandbox venv and the runner
+   resolve dependencies independently, and the runner takes the newest release:
+   measured 2026-09-22, the sandbox held pandas 2.3.3 while the runner installed
+   3.0.6. CRADLE lost a whole dispatch to that gap — run 35741356662's probe
+   reached a runner and died in two minutes, before a single archive call, on
+   `pd.to_numeric(errors="ignore")`, a spelling pandas 3 removed. A runner slot
+   costs an hour of queue; a version check costs nothing. Before dispatching,
+   check any API you use against the major version the runner will install, and
+   where a channel is exposed to it, run its suite under both majors.
+
+   A second, quieter one, found the same day by GRAVE and worth knowing because
+   it does **not** look like a version problem: under pandas 3's copy-on-write,
+   `DataFrame.to_numpy()` returns a **read-only** array, so the common idiom
+
+   ```python
+   x = df.to_numpy(dtype=float)
+   x[x <= 0] = np.nan          # ValueError: assignment destination is read-only
+   ```
+
+   raises on the runner and nowhere else. Pass `copy=True` whenever the result
+   is mutated. This one is worse than a removed keyword because it fires
+   *after* the acquisition, deep in a stage the sandbox always ran green. The
+   cheapest check is a throwaway venv on the runner's majors — building one and
+   running `pytest tests/test_<channel>.py` under it takes a couple of minutes.
 
 ## 1. Layout
 

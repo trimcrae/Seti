@@ -548,3 +548,27 @@ to per-star cones, so the run cannot come back empty because of the route.
    `degraded` for `unit_budget_skips:<n>/<units>`. That is the honest coverage
    statement for the sweep; a later dispatch continues it with
    `resume_run_id=35740159635` **at the same shard count (12)**.
+
+### 7.2 The offline gate is only a gate at the runner's library versions
+
+`docs/channel-brief.md` §0 item 5: the sandbox venv and the runner do not hold
+the same pandas. A sibling channel lost a whole dispatch to `pandas.to_numeric
+(errors="ignore")`, removed in pandas 3, two minutes into a runner job and
+before a single archive call. IGNITION was audited against that failure mode on
+2026-09-22:
+
+* the channel's only `to_numeric` calls (`run.py` 824, 873/874) pass
+  `errors="coerce"`, which pandas 3 keeps; there is no `errors="ignore"`,
+  `applymap`, `iteritems`, `fillna(method=)`, `delim_whitespace`, `.mad()`,
+  `get_values` or `append`-on-a-DataFrame anywhere under `src/seti/ignition/`
+  (every `.append(` there is a plain Python list);
+* the whole offline suite (`tests/test_ignition.py`,
+  `tests/test_ignition_scale.py`, 102 tests) was re-run in a throwaway venv
+  pinned to the runner's exact stack — pandas 3.0.6, numpy 2.4.6, astropy
+  8.0.1 — and is green. The sandbox default (pandas 2.3.3) is *not* the gate;
+  this is.
+
+Independently confirmed on the metal: run 35738088082's eight acquire+screen
+shards each installed pandas 3.0.6 on the runner and completed, so the acquire,
+ensemble-correction and rise-test paths are proven at that version against real
+archive data, not only in tests.

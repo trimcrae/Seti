@@ -358,13 +358,61 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
     if len(df):
         df[keep].to_csv(out_dir / "classified.csv", index=False)
 
+    # Which photometry actually happened.  Without this the funnel's zeros are
+    # ambiguous in the worst possible direction: run 35738062833's analyze job
+    # ran after its photometry job was cancelled, and reported
+    # "3_with_any_ir_detection: 0" for 127 sources that were never searched.
+    # A reader cannot tell "we looked and it is not there" from "we never
+    # looked" unless the summary says which it was.
+    phot_prov = _read_json(out_dir / "photometry_provenance.json")
+    phot_status = {k: str(v.get("status", "")) for k, v in phot_prov.items()
+                   if isinstance(v, dict) and not k.startswith("_")}
+    answered = sorted(k for k, s in phot_status.items()
+                      if s.lower() in ("ok", "cached"))
+    ir_cats = [c for c in ("allwise", "catwise", "twomass") if c in answered]
+    opt_cats = [c for c in ("ps1", "gaia") if c in answered]
+
+    def _any_finite(*cols) -> bool:
+        return any(pd.to_numeric(df[c], errors="coerce").notna().any()
+                   for c in cols if c in df.columns)
+
+    # Provenance is the primary evidence, but a table that actually carries
+    # the photometry is proof the search happened whatever the provenance
+    # file survived (a re-reduction from an artifact, a local input).
+    ir_searched = bool(ir_cats) or _any_finite(
+        "w1", "w2", "w3", "w4", "w3_lim", "w4_lim", "2mass_j", "2mass_ks")
+    opt_searched = bool(opt_cats) or _any_finite(
+        "gaia_g", "ps1_r", "modern_depth_mag")
+    degraded_reason: list[str] = []
+    if not ir_searched:
+        degraded_reason.append(
+            "NO_INFRARED_SEARCH: no infrared catalogue answered, so a zero in "
+            "'3_with_any_ir_detection' records that the search did not happen, "
+            "never that nothing is there")
+    if not opt_searched:
+        degraded_reason.append(
+            "NO_MODERN_OPTICAL_SEARCH: no modern optical catalogue answered, so "
+            "no absence is established and no disappearance may be claimed")
+    if verdict in ("VIZIER_FALLBACK", "VO_ARCHIVE_PARTIAL"):
+        degraded_reason.append(
+            f"{verdict}: the intended sample was not reached; population "
+            "fractions are indicative only")
     summary = {
         "channel": "shroud",
         "verdict": verdict,
         # A reconstruction with its own stated selection function is a real
-        # measurement; a 127-row fallback or a half-archive is not.
-        "degraded": verdict not in ("VO_ARCHIVE", "USNOB1_RECONSTRUCTION",
-                                    "VIZIER_SOLANO_TABLE", "LOCAL_INPUT"),
+        # measurement; a 127-row fallback or a half-archive is not.  Nor is a
+        # run whose photometry never happened, however many rows it acquired.
+        "degraded": bool(degraded_reason) or verdict not in (
+            "VO_ARCHIVE", "USNOB1_RECONSTRUCTION", "VIZIER_SOLANO_TABLE",
+            "LOCAL_INPUT"),
+        "degraded_reason": degraded_reason,
+        "photometry_reached": {
+            "catalogues_that_answered": answered,
+            "per_catalogue_status": phot_status,
+            "infrared_searched": ir_searched,
+            "modern_optical_searched": opt_searched,
+        },
         "acquire_note": prov.get("note", ""),
         "acquire_per_sample_rows": prov.get("per_sample_rows",
                                             prov.get("per_catalog_rows", {})),
@@ -430,6 +478,14 @@ def _report_md(s: dict, sc: dict) -> str:
         return "\n".join(L) + "\n"
 
     L += [f"Sample: **{s['n_sample']}** sources.", ""]
+    why = s.get("degraded_reason") or []
+    if why:
+        ph = s.get("photometry_reached") or {}
+        L += ["> **DEGRADED — read the zeros as statements about the search, "
+              "not about the sky.**", ">"]
+        L += [f"> - {w}" for w in why]
+        L += [">", f"> Catalogues that answered: "
+              f"{', '.join(ph.get('catalogues_that_answered') or []) or 'none'}.", ""]
     per = s.get("acquire_per_sample_rows") or {}
     if per:
         L += ["| sample | rows |", "|---|---:|"]

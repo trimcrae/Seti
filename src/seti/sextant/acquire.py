@@ -1382,7 +1382,12 @@ class GaiaSSO:
             for col in ("astrometric_outcome_ccd", "astrometric_outcome_transit"):
                 run(f"flag_{col}_{table.replace('.', '_')}",
                     f"SELECT {col} AS value, COUNT(*) AS n FROM {table} "
-                    f"GROUP BY {col} ORDER BY COUNT(*) DESC", maxrec=200)
+                    # ORDER BY takes an ORDINAL, not an aggregate expression:
+                    # `ORDER BY COUNT(*) DESC` is rejected by this service's ADQL
+                    # parser ("Encountered COUNT ... was expecting <UNSIGNED_
+                    # INTEGER>"), which silently cost the 2026-09-03 probe every
+                    # outcome-flag distribution it went there to measure.
+                    f"GROUP BY {col} ORDER BY 2 DESC", maxrec=200)
         run(f"flag_is_rejected_{FPR_OBSERVATION.replace('.', '_')}",
             "SELECT is_rejected AS value, COUNT(*) AS n "
             f"FROM {FPR_OBSERVATION} GROUP BY is_rejected", maxrec=50)
@@ -1390,7 +1395,7 @@ class GaiaSSO:
             "SELECT is_rejected, astrometric_outcome_ccd, COUNT(*) AS n "
             f"FROM {FPR_OBSERVATION} "
             "GROUP BY is_rejected, astrometric_outcome_ccd "
-            "ORDER BY COUNT(*) DESC", maxrec=200)
+            "ORDER BY 3 DESC", maxrec=200)
         run(f"flag_fov_{FPR_OBSERVATION.replace('.', '_')}",
             f"SELECT fov AS value, COUNT(*) AS n FROM {FPR_OBSERVATION} "
             "GROUP BY fov", maxrec=50)
@@ -1454,12 +1459,12 @@ class GaiaSSO:
             "SELECT transit_id, COUNT(*) AS n_rows "
             f"FROM {FPR_OBSERVATION} "
             f"WHERE number_mp IN ({_int_list(probe_numbers)}) "
-            "GROUP BY transit_id ORDER BY COUNT(*) DESC", maxrec=400)
+            "GROUP BY transit_id ORDER BY 2 DESC", maxrec=400)
         run("rows_per_transit_dr3",
             "SELECT transit_id, COUNT(*) AS n_rows "
             f"FROM {DR3_OBSERVATION} "
             f"WHERE number_mp IN ({_int_list(probe_numbers)}) "
-            "GROUP BY transit_id ORDER BY COUNT(*) DESC", maxrec=400)
+            "GROUP BY transit_id ORDER BY 2 DESC", maxrec=400)
 
         # --- number_mp_completeness.  A NULL number_mp would be silently skipped by
         # every number_mp chunk, and the objects without a number are the least

@@ -169,12 +169,12 @@ a null all yield no tier. Analysis is 2–3 s per exposure.
 The first runner measurement (run 35737559234, 2026-09-22) verified the reader
 and the phase labels on both known eclipses and still failed verification, on
 the same thing in both cases: an injected line at **2% of the continuum
-produced zero features**.
+produced zero features** in the out-of-eclipse spectrum.
 
-| Verify case | integrations | eclipse depth | free step vs predicted ingress | injected 2% line |
-|---|---|---|---|---|
-| WASP-43 b MIRI/LRS `jw01366-o011` (phase curve) | 9 216 (30 EXTRACT1D tables, row BJD_TDB) | 6 681 ppm at 15.4σ | 0.402 d (locked onto the **transit**) | 0 features |
-| WASP-18 b NIRISS/SOSS `jw01366-o021` | 2 720 (6 tables, orders 1–3) | 1 451 ppm at 23.1σ | 0.007 d (tolerance 0.020 d) ✓ | 0 features |
+| Verify case | integrations | eclipse depth | injected 2% line, out-of-eclipse search |
+|---|---|---|---|
+| WASP-43 b MIRI/LRS `jw01366-o011` (phase curve) | 9 216 (30 EXTRACT1D tables, row BJD_TDB) | 6 681 ppm at 15.4σ | 0 features |
+| WASP-18 b NIRISS/SOSS `jw01366-o021` | 2 720 (6 tables, orders 1–3) | 1 451 ppm at 23.1σ | 0 features |
 
 The reason is physical. On a real `x1d` product the time-averaged spectrum's
 residual around its local continuum sits at **~1% of the continuum however
@@ -234,6 +234,18 @@ The faint-line floor is set by the photon noise of the two averages, as it
 should be: at 600 integrations the difference triggers down to ~1.5×10⁻³ of
 the continuum.
 
+And on the **real** products (run 35741401724, the same two exposures through
+the difference search) it does exactly what the synthetic battery says:
+
+| | WASP-18 b NIRISS/SOSS | WASP-43 b MIRI/LRS |
+|---|---|---|
+| 5σ EW limit, out-of-eclipse spectrum | 8.87×10⁻⁵ µm | 1.378×10⁻³ µm |
+| 5σ EW limit, **difference** | **1.73×10⁻⁶ µm** (51× deeper) | **1.93×10⁻⁴ µm** (7.1× deeper) |
+| injected vanishing line, out-of-eclipse | 0 features | 0 features |
+| injected vanishing line, difference | 62.6σ, `candidate`, no veto | 10.6σ, `candidate`, no veto |
+| its drift null | 0.42σ | 0.39σ |
+| its in-eclipse residual | −0.13σ | −0.32σ |
+
 ### 3.5 Vetoes (every one has a counter in `summary.json`)
 
 `known_artefact_wavelength` · `recurrent_across_targets` (same wavelength in
@@ -242,6 +254,13 @@ the continuum.
 (and `single_pixel_spike`, `adjacent_to_gap` at the search stage) ·
 `transit_inconsistent` · `insufficient_phase_coverage` · `low_snr` ·
 `present_in_drift_control` (§3.4a) · `fdr_not_significant`.
+
+**Cross-epoch coherence** is recorded, never used as a veto:
+`recurrent_across_targets` kills a wavelength shared by *unrelated* hosts
+(instrumental), but the same wavelength in two independent exposures of the
+*same* host is the opposite — it is what a persistent source does, and it is
+what would turn one exposure's feature into something worth a telescope. Each
+row carries `same_target_epochs` and the exposure keys.
 
 **Tiers:** `none` → `watch` (a clean narrow feature whose phase coverage cannot
 test vanishing; kept for the recurrence census) → `interest` → `candidate`.
@@ -255,6 +274,48 @@ features that reached the test.
 · `DEGRADED_SOURCE` (data reached but the discriminant could not run on any
 exposure, or most downloads failed). The workflow refuses a verdict other than
 `NO_DATA_REACHED` when zero exposures were analysed.
+
+### 3.7 Verification — the screen has to pass its own test first
+
+The first screen classed **zero** of 21 exposures as eclipse or transit. A
+screen that never classes an eclipse cannot run the test it exists to run, so
+two published eclipses go through the real reader, the real labeller and the
+real analysis chain on the runner **before any shard starts**, and the result
+gates the screen. Two separate questions are asked, and they are reported
+separately because they fail for different reasons.
+
+**`phase_verdict` — can the labeller find a known secondary eclipse?** The
+broad-band continuum, detrended by a line through the out-of-eclipse
+integrations, must (i) drop, (ii) by a planetary amount (10⁻⁴–2×10⁻²), (iii)
+by more than 5σ of the out-of-eclipse scatter, (iv) with a two-level step at
+the predicted ingress beating a flat light curve by Δχ² > 25, and (v) with no
+*differently placed* step preferred by the data. Check (v) is deliberately not
+"the free step lands within the timing tolerance". On a thermal phase curve
+the arch a linear detrend leaves behind pulls the free step away from the
+eclipse: on WASP-43 b it landed 0.17 d off, yet improved χ² by only **9.9**
+over the step held at the predicted ingress, which itself beat flat by 49. An
+offset alone is therefore not evidence about the ephemeris; a free step that
+*beats* the predicted one by Δχ² > 25 is, and a t₀ shifted by 0.55·T₁₄ on a
+synthetic eclipse fails on exactly that (`test_verify_rejects_a_misplaced_ephemeris`).
+This is the gate: one clean case settles whether in-eclipse integrations can
+be identified, and a second exposure cannot make that more or less true.
+
+**`injection_verdict` — how faint a vanishing line comes back?** A Gaussian of
+σ = 0.55·(samples per resolution element) is injected at the centre of the
+grid, at full strength out of eclipse and zero while the planet is occulted,
+and the whole chain must return it as `candidate`/`interest` with no veto. The
+amplitude is **not** a fixed fraction of the continuum: run 35737559234
+injected 2% of the continuum into both exposures and recovered neither, which
+was a statement about the injection, not the chain — 2% is *below* the 5σ
+equivalent-width limit of both. The exposure's own noise is measured first (one
+pass of the real analysis on the un-injected stack) and the line injected at
+`injection_snr_target` × that noise, with the injected equivalent width
+recorded in units of the 5σ limit. The result is a sensitivity statement about
+one exposure, so it is reported and not gated on.
+
+Both cases are recorded in `results/lantern/verify.json` with the full check
+dictionary, the HDU layout the reader saw, `CAL_VER`, the binning factor, the
+measured depth and its error, both χ² comparisons and both 5σ EW limits.
 
 ---
 
@@ -290,18 +351,52 @@ Nothing in this channel is a detection on its own.
   ~1000 (M), ~1600 (NIRCam grism), ~700 (SOSS order 1), ~100 (PRISM, MIRI LRS).
   A "narrow" feature is therefore **≥ 110 km/s** wide at best, ~430 km/s at
   SOSS and ~3000 km/s at PRISM/LRS. A true laser (Δλ/λ ~ 10⁻⁸) is always
-  unresolved; what is measured is its **equivalent width**. Every exposure's
-  5σ EW limit (`ew_5sigma_limit_um`, one resolution element) and velocity
-  width are recorded in `summary.json: sensitivity`.
+  unresolved; what is measured is its **equivalent width**. Every exposure
+  records **three** numbers in `summary.json: sensitivity` —
+  `ew_5sigma_limit_out_um` (the out-of-eclipse spectrum, held at ~1% of the
+  continuum by the static pixel pattern, §3.4a), `ew_5sigma_limit_diff_um`
+  (the difference spectrum, photon limited), and `ew_5sigma_limit_um`, which
+  is the difference's wherever the difference ran. **Quote the difference
+  limit**: the other one is the pattern, not the data.
+* **What the limit means.** An equivalent width is a fraction of the *star's*
+  continuum. Each eclipse-class exposure also measures its own broad-band
+  event depth (`event_depth`, the planet's day-side flux over the star's,
+  from the same detrended continuum light curve the verification uses), so
+  `line_contrast_5sigma` (= 5 × the difference spectrum's noise, the faintest
+  line peak the exposure could have shown, as a fraction of the stellar
+  continuum) divided by that depth gives
+  **`beacon_fraction_of_event_flux_5sigma`**: the faintest beacon detectable
+  *as a fraction of the planet's own broad-band emission*, in one resolution
+  element. That is the number to quote about a *planet*, and it needs neither
+  a distance nor a stellar model. On the synthetic 600-integration stack it is
+  ~0.10 for a 1% eclipse and ~0.48 for a 0.2% one.
 * **Phase.** Only eclipse-class exposures (≥8 in-eclipse and ≥16 out-of-eclipse
-  integrations *and* a pre-ingress baseline) test vanishing. Transit-only and
-  `phase_unresolved` exposures contribute constant-line entries (`watch`) and
-  recurrence statistics, nothing more.
+  integrations *and* a pre-ingress baseline) test vanishing, and only they get
+  the eclipse difference. A transit-class exposure gets the transit difference
+  and reaches the same depth, but produces `watch` at most (§3.4a);
+  `phase_unresolved` exposures get neither and are limited by the pattern —
+  they contribute constant-line entries and recurrence statistics, nothing
+  more.
 * **Duty cycle.** A beacon that is off during the observation, or pointed
   elsewhere, is invisible. A beacon brighter than the star's local continuum by
   less than ~5 noise units per resolution element is invisible.
 * **Targets.** Only hosts with public JWST time series; proprietary products
   are counted, not analysed.
+* **What one dispatch can reach.** The 2026-09 inventory is 148 hosts,
+  7 287 `x1dints` products, 1.118 TB. Most of that is *double counted*: a
+  level-3 product and the level-2 segments it was built from are both in MAST,
+  and the planner takes one or the other (632 units, 502 GB, are skipped as
+  `level3_product_holds_these_segments`; 182 units, 107 GB, are proprietary).
+  What is actually schedulable is **467 exposures, 509 GB** — 78 eclipse-class
+  (rank 0: 63 `eclipse` + 15 `both`, 43 hosts, **123 GB**), 265 transit,
+  124 `phase_unresolved`. No single product exceeds the 12 GB cap (the largest
+  is 10.33 GB), so nothing is skipped as `too_large` and no chunking is needed;
+  the median exposure is 660 MB. Units are ordered eclipse-first and
+  cheapest-first within a rank and dealt round-robin, so every shard works the
+  eclipse class first: the whole eclipse-class set is ~31 GB per shard on a
+  4-shard dispatch. Checkpoints carry a version and accumulate across
+  dispatches (`prior_run_ids`), so coverage is cumulative; each shard records
+  `deferred_bytes`, so the fraction reached is measured, not guessed.
 
 `NO_VANISHING_LINE` is a **count** over the analysed exposures at the quoted
 sensitivities. It is not an occurrence limit and is not written up
@@ -317,6 +412,8 @@ eclipses, longer baselines) and the stage-3 products.
 src/seti/lantern/{__init__,acquire,phase,line,synth,run}.py
 config/lantern.yaml           thresholds, phase windows, per-instrument artefact table
 tests/test_lantern.py         offline battery (CI gate)
+tests/test_lantern_reader.py  the table-per-segment x1dints layout
+tests/test_lantern_difference.py  the out-minus-in difference search and its drift null
 .github/workflows/lantern.yml inventory -> sharded screen -> assess (+ lit)
 scripts/lanternlit_fetch.py   prior-art sweep -> results/lanternlit/
 results/lantern/              summary.json, candidates.json, exposures.json,

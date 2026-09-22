@@ -485,6 +485,24 @@ def _report_md(s: dict, sc: dict) -> str:
               f"- expected chance matches in the sample: "
               f"{_fmt(nul.get('n_expected_chance'), '.0f')}",
               f"- significance: {_fmt(nul.get('significance_sigma'), '.1f')} sigma", ""]
+        rows = nul.get("by_radius") or []
+        if rows:
+            L += ["A single radius cannot tell a counterpart population from the",
+                  "background: unrelated matches accumulate with the search area,",
+                  "a genuine counterpart is already counted at the smallest radius.",
+                  "", "| r (\") | real matched | chance fraction | genuine fraction"
+                  " | sigma |", "|---:|---:|---:|---:|---:|"]
+            for r in rows:
+                L.append(f"| {_fmt(r.get('radius_arcsec'), '.1f')} "
+                         f"| {r.get('n_real_matched')} "
+                         f"| {_fmt(r.get('f_chance'))} "
+                         f"| {_fmt(r.get('f_true'))} "
+                         f"| {_fmt(r.get('significance_sigma'), '.1f')} |")
+            b = nul.get("best_radius") or {}
+            L += ["", f"Most significant radius: "
+                  f"{_fmt(b.get('radius_arcsec'), '.1f')}\" at "
+                  f"{_fmt(b.get('significance_sigma'), '.1f')} sigma. "
+                  "Evidence only --- the selection radius is unchanged.", ""]
 
     L += ["## Energy-budget verdicts", "", "| verdict | n |", "|---|---:|"]
     for k, v in (s.get("budget_verdicts") or {}).items():

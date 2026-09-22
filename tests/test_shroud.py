@@ -440,6 +440,72 @@ def test_chance_rate_from_null_recovers_the_true_fraction():
     assert V.chance_match_rate_from_null(0, 0, 0, 0)["f_true"] is None
 
 
+def _background_separations(n_sources, density_per_arcsec2, r_max, rng):
+    """Nearest unrelated neighbour inside r_max for a Poisson background.
+
+    P(nearest <= r) = 1 - exp(-pi r^2 rho), so the chance-match fraction grows
+    with the search AREA.  Sources with no neighbour inside r_max return inf.
+    """
+    u = rng.uniform(0.0, 1.0, n_sources)
+    # Inverse CDF of the unbounded nearest-neighbour distance.
+    r = np.sqrt(-np.log(1.0 - u) / (np.pi * density_per_arcsec2))
+    r[r > r_max] = np.inf
+    return r
+
+
+def test_excess_by_radius_localises_a_real_counterpart_population():
+    """A genuine population is concentrated; the background is not.
+
+    Half the sample has a true infrared counterpart at ~0.5" (the combined
+    AllWISE/plate astrometric error); every source, real or offset, also sits
+    in the same Poisson background.  The point of the curve is that the 5"
+    answer is diluted while the small-radius answer is not.
+    """
+    rng = np.random.default_rng(11)
+    n = 4000
+    rho = 1.8e4 / 3600.0 ** 2          # AllWISE sources per arcsec^2, high lat.
+    bg_real = _background_separations(n, rho, 5.0, rng)
+    bg_null = _background_separations(4 * n, rho, 5.0, rng)
+    true_sep = np.abs(rng.normal(0.0, 0.5, n))
+    has_true = rng.random(n) < 0.5
+    real_sep = np.where(has_true, np.minimum(bg_real, true_sep), bg_real)
+
+    rows = V.excess_by_radius(real_sep, bg_null, n, 4 * n,
+                              [1.0, 1.5, 2.0, 3.0, 4.0, 5.0])
+    assert [r["radius_arcsec"] for r in rows] == [1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
+    # The chance fraction really does grow like the area.
+    f_chance = [r["f_chance"] for r in rows]
+    assert f_chance == sorted(f_chance)
+    assert f_chance[-1] / f_chance[0] > 10
+    # The genuine excess is already complete at 1" and stays ~0.5 thereafter.
+    assert rows[0]["f_true"] == pytest.approx(0.5, abs=0.06)
+    best = V.best_radius(rows)
+    assert best["radius_arcsec"] <= 2.0
+    assert best["significance_sigma"] > 20
+    # ... and the 5" answer is the least significant of the six, which is the
+    # whole reason the channel may not quote it alone.
+    assert rows[-1]["significance_sigma"] < best["significance_sigma"]
+
+
+def test_excess_by_radius_returns_a_clean_null_on_background_alone():
+    """The dominant confounder: every match is an unrelated neighbour."""
+    rng = np.random.default_rng(12)
+    n = 4000
+    rho = 1.8e4 / 3600.0 ** 2
+    real_sep = _background_separations(n, rho, 5.0, rng)
+    null_sep = _background_separations(4 * n, rho, 5.0, rng)
+    rows = V.excess_by_radius(real_sep, null_sep, n, 4 * n, [1.0, 2.0, 3.0, 5.0])
+    for r in rows:
+        assert abs(r["significance_sigma"]) < 3.0
+    assert V.best_radius(rows)["significance_sigma"] < 3.0
+
+
+def test_best_radius_is_empty_when_nothing_was_measured():
+    assert V.best_radius([]) == {}
+    # n_real = 0 makes every significance None; that is not a "best" radius.
+    assert V.best_radius(V.excess_by_radius([], [], 0, 0, [1.0, 5.0])) == {}
+
+
 # ===========================================================================
 # SED machinery.
 # ===========================================================================

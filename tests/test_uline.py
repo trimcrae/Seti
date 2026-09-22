@@ -4,8 +4,9 @@ No network anywhere (``conftest.py`` raises on any socket).  Per
 ``docs/channel-brief.md`` §5 the suite:
 
 * recovers an injected CHF₃ K-ladder pattern seeded into a synthetic U-line
-  list (``PATTERN_CANDIDATE``) and returns ``NO_PATTERN`` on the same list
-  with the pattern removed;
+  list, and — because CHF₃'s constants are placeholders — reports it as
+  ``PATTERN_CANDIDATE_VERIFY_CONSTANTS`` rather than ``PATTERN_CANDIDATE``,
+  while returning ``NO_PATTERN`` on the same list with the pattern removed;
 * shows that Poisson-random U-lines give a false-alarm probability consistent
   with the number of shift trials;
 * checks the ``.cat`` / ``catdir`` / CDMS partition-table parsers on synthetic
@@ -383,11 +384,19 @@ def test_injected_chf3_pattern_is_recovered(tmp_path):
     assert best["p_false"] == pytest.approx(1.0 / 201.0)
     assert best["tests"] == {"count": True, "lte": True, "top5": True, "p_false": True}
     s = stage_assess(conf, tmp_path, screen=rep, acquire_report={})
-    assert s["verdict"] == "PATTERN_CANDIDATE" and s["n_pattern_candidates"] == 1
+    # The signal is recovered — and CHF3's constants are placeholders carrying
+    # `verify: true`, so the verdict says the pattern rests on them.  That is
+    # the point of the split: the search must find an injected pattern, and it
+    # must not dress a reconstructed frequency up as a catalogued one.
+    assert s["verdict"] == "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
+    assert s["n_pattern_candidates"] == 0
+    assert s["n_pattern_candidates_verify_constants"] == 1
+    assert s["pattern_candidates_verify_constants"] == ["CHF3|synth"]
     assert "CHF3" in s["targets_with_predicted_frequencies"]
     assert any("PREDICTED" in d for d in s["degraded"])
     c = pd.read_csv(tmp_path / "candidates.csv")
     assert bool(c.iloc[0]["pattern"]) and c.iloc[0]["species"] == "CHF3"
+    assert bool(c.iloc[0]["verify_constants"])
 
 
 def test_same_list_without_the_pattern_is_no_pattern(tmp_path):
@@ -843,7 +852,11 @@ def test_end_to_end_recovers_a_seeded_pattern_through_the_acquire_path(tmp_path)
     conf["archives"]["prefer_line_list"] = ["predicted", "cdms", "jpl"]
     stage_screen(conf, out, species=["CHF3"])
     s = stage_assess(conf, out)
-    assert s["verdict"] == "PATTERN_CANDIDATE"
+    # found, and flagged: the predictor's CHF3 block is `verify`, so this is a
+    # reason to obtain the laboratory line list, not a candidate
+    assert s["verdict"] == "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
+    assert s["n_pattern_candidates"] == 0
+    assert s["pattern_candidates_verify_constants"] == ["CHF3|orion_kl_hifi"]
     p = s["pairs"]["CHF3|orion_kl_hifi"]
     assert p["line_source"] == "predicted" and p["pattern"] and p["n_coincident"] >= 8
     rows = pd.read_csv(out / "coincidences.csv")

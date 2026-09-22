@@ -648,9 +648,10 @@ def test_photometry_that_did_happen_is_not_called_degraded_for_it(sc, tmp_path):
 def test_the_svo_probe_ladder_runs_under_a_clock(sc, monkeypatch):
     """A dead service must not be able to eat the run that would have worked.
 
-    Run 35741075121 spent > 45 min in this one step, because the number of
-    roots is contributed by the registry and by an index scrape, not by this
-    channel.  The route AFTER it is the one that can restore the sample.
+    The number of roots is contributed by the registry and by an index
+    scrape, not by this channel, so the ladder's cost has no upper bound --- 200
+    roots x 5 forms x 25 s is seven hours.  The route AFTER it is the one that
+    can restore the sample.
     """
     t = [0.0]
 

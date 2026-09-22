@@ -175,9 +175,9 @@ acquire:
   # (probe_timeout_s), but the NUMBER of roots is not bounded by this channel:
   # RegTAP contributes however many the registry publishes and the index
   # scrape however many links it mines, so roots x 5 forms x 25 s grows without
-  # limit.  Run 35741075121 spent > 45 min in this step alone, and the route
-  # after it -- the USNO-B1.0 reconstruction, the only one that can restore the
-  # channel's scale -- gets whatever is left of the acquisition deadline.  A
+  # limit -- 200 roots is seven hours.  The route after it, the USNO-B1.0
+  # reconstruction, is handed max(deadline - elapsed, 60), so the only route
+  # that can restore the channel's scale gets whatever the ladder leaves it.  A
   # ladder that cannot find a service must not consume the run that would have
   # worked without it.  Also capped at 25% of the remaining deadline.
   svo_probe_budget_s: 600

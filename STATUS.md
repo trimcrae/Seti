@@ -283,20 +283,21 @@ and at 14:58 EDT-4 (2026-09-22T14:58Z) commit `05df5117` pushed that over the
 `HEAD` holds no sampled one; otherwise the results are checked back out and the
 empty attempt is kept beside them as `summary_attempt.json`.
 
-**The probe ladder has no ceiling, and it is eating the run.** Run
-35741075121 entered "Retrieve the sample by every route" at 11:09 EDT and was
-still in that one step **two hours later**; the same step took 13 minutes in
-run 35738062833. What changed between them is the RegTAP route: the SVO probe
-walks (configured roots + registry roots + roots scraped from an index page)
-x 5 URL forms, each a 25 s timeout against a host dead at the TCP level in
-every run this channel has ever made — and the number of roots is contributed
-by the registry and by a page scrape, not by this channel, so the cost has no
-upper bound. The cost lands on exactly the wrong route:
+**The probe ladder has no ceiling — a bound, not a diagnosis.** The SVO probe
+walks (configured roots + RegTAP roots + roots scraped from an index page) × 5
+URL forms, each a 25 s timeout against a host dead at the TCP level in every
+run this channel has ever made. The root count is contributed by the registry
+and by a page scrape, not by this channel, so the cost has no upper bound: 200
+roots is seven hours. And it lands on exactly the wrong route —
 `reconstruct_from_usnob1` is handed `max(deadline - elapsed, 60)`, so the only
 route that can restore the channel's scale gets 60 seconds in the limit.
-Fixed for the next dispatch (`acquire.svo_probe_budget_s` = 600 s, also capped
-at 25% of the remaining deadline, reporting `budget_exhausted` with the count
-of roots not tried); the fix is *not* in the run now in flight.
+Bounded now: `acquire.svo_probe_budget_s` = 600 s, also capped at 25% of the
+remaining deadline, reporting `budget_exhausted` with the count of roots not
+tried. *Correction:* an earlier version of this section said run 35741075121
+had spent two hours in that step. That was wrong — I mistook my own elapsed
+working time for the run's. At the time of writing it had been in the step for
+21 minutes, against 11 minutes for the same step in run 35738062833. The bound
+stands on the unbounded root count, not on an overrun that was observed.
 
 **In flight.** Run **35741075121** (dispatched 10:32 EDT, started 11:07 EDT)
 is the first to carry the column fix, so it is the first that *can* return a

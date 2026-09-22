@@ -83,14 +83,28 @@ def _per_century(fit: StepFit, attr: str) -> tuple[float, float]:
             float(s) if np.isfinite(s) else float("nan"))
 
 
+def _slope_err_per_century(fit: StepFit, attr: str = "slope") -> float:
+    """The 1-sigma error on a fitted slope, in mag per century."""
+    e = getattr(fit, attr + "_err", float("nan"))
+    return float(e) * 100.0 if np.isfinite(e) else float("nan")
+
+
 def _consistent(a: float, sa: float, b: float, sb: float, nsig: float = 2.5) -> bool:
-    if not (np.isfinite(a) and np.isfinite(b)):
+    """Do two fits of the same slope agree?
+
+    ``sa`` and ``sb`` are 1-sigma ERRORS on ``a`` and ``b``, in the same units
+    as ``a`` and ``b``.  (This is worth stating because getting it wrong is
+    silent: comparing a difference in mag/century against a combination of
+    *significances* makes the threshold tens of mag/century and the test can
+    never fail, which is how the deeper-plate and single-series refits ---
+    two of this channel's three robustness guards --- were inert.)
+
+    An unusable error on either side is NOT consistency: it is a failure to
+    establish it, and the caller flags it as such.
+    """
+    if not (np.isfinite(a) and np.isfinite(b) and np.isfinite(sa) and np.isfinite(sb)):
         return False
-    ea = abs(a) / sa if (np.isfinite(sa) and sa > 0) else float("nan")
-    eb = abs(b) / sb if (np.isfinite(sb) and sb > 0) else float("nan")
-    if not (np.isfinite(ea) and np.isfinite(eb)):
-        return False
-    s = float(np.hypot(ea, eb))
+    s = float(np.hypot(abs(sa), abs(sb)))
     return bool(s > 0 and abs(a - b) <= nsig * s)
 
 
@@ -160,10 +174,9 @@ def analyze_fade(lc: CenturyLC, *, amp_cat: float = 0.0, margin: float = 1.0,
     if fd.ok:
         res.slope_deep_mag_per_century, res.slope_deep_sigma = _per_century(fd, "slope")
         res.deep_consistent = _consistent(res.slope_mag_per_century,
-                                          res.slope_mag_per_century / max(res.slope_sigma, 1e-9),
+                                          _slope_err_per_century(fit),
                                           res.slope_deep_mag_per_century,
-                                          res.slope_deep_mag_per_century
-                                          / max(res.slope_deep_sigma, 1e-9))
+                                          _slope_err_per_century(fd))
     # Robustness 2: the dominant series alone.
     name, _frac = lc.dominant_series(m)
     res.series_name = name
@@ -177,9 +190,8 @@ def analyze_fade(lc: CenturyLC, *, amp_cat: float = 0.0, margin: float = 1.0,
         if fs.ok:
             res.slope_series_mag_per_century, res.slope_series_sigma = _per_century(fs, "slope")
             res.series_consistent = _consistent(
-                res.slope_mag_per_century, res.slope_mag_per_century / max(res.slope_sigma, 1e-9),
-                res.slope_series_mag_per_century,
-                res.slope_series_mag_per_century / max(res.slope_series_sigma, 1e-9))
+                res.slope_mag_per_century, _slope_err_per_century(fit),
+                res.slope_series_mag_per_century, _slope_err_per_century(fs))
 
     fading = res.slope_mag_per_century > 0
     sig_ok = np.isfinite(res.slope_sigma) and res.slope_sigma >= float(fade_sigma_min)

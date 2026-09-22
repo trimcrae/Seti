@@ -537,6 +537,42 @@ def test_real_fade_is_recovered_and_pre_gap_segment_carries_it():
     assert len(tab) >= 15
 
 
+def test_slope_consistency_compares_errors_not_significances():
+    """The units contract of the robustness refits.
+
+    ``_consistent`` takes 1-sigma ERRORS.  Handing it significances makes the
+    threshold tens of mag per century, so the deeper-plate and single-series
+    refits can never disagree and two of the channel's three robustness guards
+    are silently inert.
+    """
+    from seti.century.fade import _consistent
+
+    assert not _consistent(1.0, 0.2, 0.05, 0.2)       # 3.4 sigma apart
+    assert _consistent(1.0, 0.2, 0.9, 0.2)            # 0.35 sigma apart
+    # An unusable error is a failure to ESTABLISH consistency, not consistency.
+    assert not _consistent(1.0, float("nan"), 0.9, 0.2)
+    assert not _consistent(1.0, 0.0, 0.9, 0.0)
+
+
+def test_a_fade_carried_only_by_shallow_plates_is_rejected():
+    """Near the plate limit only the bright excursions are measured, so a
+    depth history that changes with calendar time makes a fade out of nothing.
+    Here a spurious drift is put on the SHALLOW plates alone; the deeper-plate
+    refit must disagree and the fade must not survive."""
+    rng = np.random.default_rng(21)
+    lc = synth_plates(rng, n_per_year=30, lim_mean=13.5, lim_sd=0.0, mag0=11.0, err=0.10)
+    shallow = np.arange(lc.n_det) % 2 == 1
+    lc.lim = np.where(shallow, 12.3, 16.0)
+    yr = lc.year
+    lc.mag = lc.mag + np.where(shallow, 1.2 * (yr - 1890.0) / 100.0, 0.0)
+    res, _ = analyze_fade(lc, margin=1.0, deep_extra=1.0, gap=GAP)
+    assert np.isfinite(res.slope_deep_mag_per_century), res.flags
+    assert not res.deep_consistent, (res.slope_mag_per_century,
+                                     res.slope_deep_mag_per_century, res.flags)
+    assert "depends_on_shallow_plates" in res.flags
+    assert not res.is_fade
+
+
 def test_shallow_plate_censoring_bias_is_caught_by_the_deeper_margin():
     """A constant variable star on plates that get shallower late: the annual
     median of the *kept* plates brightens (only the bright phase is measured),

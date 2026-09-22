@@ -637,6 +637,19 @@ class _FakeSparcl:
         return ["sparcl_id", "wavelength", "flux", "ivar", "redshift", "data_release", "spectype"]
 
 
+def test_survey_subclass_normalises_a_simbad_spectral_type():
+    """SIMBAD says M1V, the archive says M1.  Asking for M1V returns nothing,
+    the query falls back to "any star", and the same-type control silently
+    becomes a second copy of the all-stars control -- a clean-looking result
+    that means nothing."""
+    assert persist.survey_subclass("M1V") == "M1"
+    assert persist.survey_subclass("K3III") == "K3"
+    assert persist.survey_subclass("dM4e") == "M4"
+    assert persist.survey_subclass("M") == "M"
+    assert persist.survey_subclass("") == "" and persist.survey_subclass(None) == ""
+    assert persist.survey_subclass("WD") == ""
+
+
 def test_control_sample_separates_observed_frame_from_stellar_frame():
     """A feature at a fixed OBSERVED wavelength (sky, instrument) must light up
     the observed-frame control; one at a fixed REST wavelength (the spectral

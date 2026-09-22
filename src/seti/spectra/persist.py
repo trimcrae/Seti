@@ -1392,6 +1392,25 @@ def _control_stats(meas: list[dict], key: str = "sig") -> dict:
             "frac_ge8": float(np.mean(v >= 8.0))}
 
 
+def survey_subclass(sptype: str | None) -> str:
+    """A SIMBAD spectral type reduced to what a survey pipeline calls a subclass.
+
+    SIMBAD says ``M1V``, ``M4V``, ``K3III``; SDSS's ``subclass`` and DESI's
+    ``subtype`` say ``M1``, ``M4``, ``K3``.  Asking the archive for ``M1V``
+    returns nothing, the query falls back to "any star", and the same-type
+    control silently becomes a second copy of the all-stars control -- which
+    would look like a clean result and mean nothing.
+    """
+    if not sptype:
+        return ""
+    # Search rather than match: SIMBAD prefixes luminosity/metallicity markers
+    # ("dM4e", "sdF8"), and the first class letter is the one that matters.
+    m = re.search(r"([OBAFGKMLTY])\s*(\d)?", str(sptype).upper())
+    if not m:
+        return ""
+    return m.group(1) + (m.group(2) or "")
+
+
 def control_sample(client, release: str, lam0: float, mode: str, z_cand: float,
                    subclass: str | None = None, n: int = 40,
                    exclude_ids: tuple = (), seed: int = 0) -> dict:
@@ -1431,7 +1450,10 @@ def control_sample(client, release: str, lam0: float, mode: str, z_cand: float,
     if subclass:
         for key in ("subclass", "subtype"):
             tries.append(({**cons, key: [subclass]}, f"{key}={subclass}"))
-    tries.append((cons, "spectype=STAR"))
+    # The label the archive uses must be on the record, so a same-type control
+    # that quietly degraded to "any star" can be seen to have done so.
+    tries.append((cons, "spectype=STAR (subclass not matched)" if subclass
+                  else "spectype=STAR"))
     recs = []
     for c, label in tries:
         try:
@@ -1568,14 +1590,17 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
     entries = []
     for _, r in sel.iterrows():
         rel = str(r.get("data_release"))
-        sub = r.get("simbad_sptype")
-        sub = None if (sub is None or (isinstance(sub, float) and not np.isfinite(sub))) else str(sub)
+        raw_sp = r.get("simbad_sptype")
+        raw_sp = "" if (raw_sp is None or
+                        (isinstance(raw_sp, float) and not np.isfinite(raw_sp))) else str(raw_sp)
+        sub = survey_subclass(raw_sp) or None
         e = {"spec_id": str(r["spec_id"]), "identifier": r.get("identifier"),
              "wavelength": float(r["wavelength"]), "search_mode": str(r.get("search_mode")),
              "persistence_class": str(r.get("persistence_class")),
              "combined_sig": float(r.get("combined_sig", np.nan)),
              "coadd_ew_A": float(r.get("coadd_ew_A", np.nan)),
-             "simbad_otype": r.get("simbad_otype"), "simbad_sptype": sub}
+             "simbad_otype": r.get("simbad_otype"), "simbad_sptype": raw_sp,
+             "survey_subclass": sub}
         try:
             z = float(r.get("redshift", 0.0) or 0.0)
         except (TypeError, ValueError):

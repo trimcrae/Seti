@@ -10,6 +10,137 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### METRONOME: the last clock is settled -- it is an uncatalogued oscillation, and probably not even that star's, 2026-09-22
+
+`kepler:5879574` was the channel's only `candidate` and the one open question
+in the repository: 21 catalogued flares and 74 independently re-detected ones
+on a clock at 0.42328185 d against the catalogue's 0.42327409 d, jitter 0.048,
+`rd_p_window` 2.4e-55 over 17 quarters and 1,340.8 observed days, its
+catalogued epochs confirmed as real brightenings (epoch sigma 3.33 vs control
+0.52, p 0.0025, best time-offset 0.0 d), and `period_is_photometric: false`.
+
+**Run 35796061650 (2026-09-22, ~7:13 PM ET) settled it.** New stage
+`vetstar` (`src/seti/metronome/vetstar.py`), one runner, 115 s:
+`MUNDANE_EXPLANATION_FOUND(COHERENT_OSCILLATION_AT_P; EVENTS_ON_THE_CREST)`,
+nothing unreached.
+
+**It is not an eclipsing binary, and every catalogue was asked by name.**
+Kepler Eclipsing Binary Catalog (Kirk+2016, `J/AJ/151/68`, all ten tables
+enumerated from TAP_SCHEMA and queried by KIC): **not listed**. Gaia DR3
+`vari_summary`, `vari_classifier_result`, `vari_eclipsing_binary`,
+`vari_rotation_modulation`, `vari_short_timescale`, `nss_two_body_orbit`: all
+**not listed**. Gaia's VizieR mirrors `I/358/veb` and `I/358/vclassre`, and
+ZTF (Chen+2020): **not listed**. VSX **is** listed -- as `ROT`, P = 11.107 d,
+amplitude 0.014 Kp, which is the rotation and matches McQuillan+2014's
+11.107 +- 0.079 d, not the clock. Astrometry: Gaia DR3 2053563953175632768,
+0.049" away once proper motion is propagated back to the KIC epoch, **RUWE
+0.995**, `non_single_star` 0, astrometric excess noise 0.0,
+`ipd_frac_multi_peak` 0, `duplicated_source` 0. No Gaia RV at G = 14.79, so
+that route is silent rather than clean.
+
+**It is not an EB folded at half its period either** -- the trap the vet was
+built for. At 2P the two half-phase minima are equal to 0.14 sigma, and the
+Fourier fit at 2P gives A1 = 3.2e-6 against A2 = 3.78e-4, a factor 117: there
+is no signal at 2P at all. At P the extremum is a **crest**, not a dip (height
+5.75e-4 vs depth 2.65e-4), and `frac_below_half_depth` = 0.32 -- the 1/3 of a
+sinusoid, not the few percent of an eclipse.
+
+**What it is: a coherent 0.084% photometric oscillation at exactly the clock
+period, whose crests the flare detector counts as flares.** Folded amplitude
+8.40e-4 peak-to-peak, and **8.21e-4 with all 74 detected events masked out**,
+so the oscillation is not made by the events. Against 200 control-period folds
+of the same light curve: z = 68.7, p at the 1/201 floor. Detrend the 11.05 d
+rotation away and the clock period is the **rank-1** periodogram peak, at
+0.4232737 d, Baluev FAP 0. The 74 events sit on the crest: Rayleigh r = 0.957,
+p = 3e-28, mean phase 0.936 against a fitted photometric maximum at
+0.936-0.971 -- an offset of **-0.036 cycles, 22 minutes**. At 2P the events do
+not cluster at all (r = 0.107, p = 0.43).
+
+`period_is_photometric: false` was right about what it measured and wrong
+about what it was taken to mean: it compares the clock against the *global*
+Lomb-Scargle maximum of the raw light curve, where a 0.6%-amplitude 11.05 d
+rotation buries a 0.084% signal. **That veto cannot see any oscillation that
+is not the largest thing in the light curve -- which is every oscillation that
+matters, because a large one would already have been catalogued.**
+
+**And the signal is probably not even this star's.** The folded amplitude,
+measured independently in each of the 17 quarters, is a function of
+`quarter % 4` -- the Kepler roll orientation:
+
+| season (`quarter % 4`) | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| mean folded amplitude | 6.59e-4 | 5.96e-4 | 1.41e-3 | 1.18e-3 |
+| quarters | 4 | 5 | 4 | 4 |
+
+Every quarter respects the grouping; the phase of maximum does not move
+(0.89-0.99 in all seventeen). Between-season over within-season scatter
+F = 3.07, **p = 5.0e-4** from 20,000 relabellings, ratio 2.37. `quarter % 4`
+is a fact about the spacecraft, not about the sky. An intrinsic signal is
+diluted by crowding, which moves with the mask by tens of percent; a
+neighbour's signal scales with how much of *that* star's flux the mask
+catches, which moves by factors. Gaia names a candidate source: **DR3
+2053563953175635712, 13.3" away (3.3 Kepler pixels), G = 14.37 against the
+target's 14.79 -- brighter -- and flagged `VARIABLE`.** Proving it is the
+source needs pixel-level photometry, which has not been done; what is
+established is that the amplitude tracks the aperture and not the star.
+
+Per `CLAUDE.md` this is a clean result and is **not** written up. METRONOME
+has no candidate.
+
+### METRONOME: 17 of 39 shortlisted stars' catalogued flares are not in the photometry, 2026-09-22
+
+This may outlast the star. Run 35746944111's threshold-free epoch stack
+(`results/metronome/redetect.json`) asked, of every shortlisted star, the
+simplest possible question: **is there any flux at the times the catalogue
+published?** It reads the detrended residual in units of the run's own robust
+sigma at the catalogued epochs and compares it to the same statistic at
+thousands of random times inside the same observing windows. No detection
+threshold enters anywhere.
+
+Of 40 shortlisted stars, 39 were fetched and 39 got a verdict:
+
+| | stars | epoch sigma (median) | control sigma (median) |
+|---|---|---|---|
+| catalogued epochs **are** brightenings | 22 | 3.91 | 0.82 |
+| catalogued epochs are **not** | **17** | 1.19 | 0.95 |
+
+Per catalogue: **14 of 28** tested stars from Tu+2022 (TESS), **2 of 10** from
+Yang & Liu 2019 (Kepler), **1 of 1** from Shibayama+2013. **18 of the 39
+recover exactly 0.000** of their catalogued flares with an independent
+detector on the same light curve; the median recovery is 0.064. Nine stars
+were demoted on `catalogue_epochs_absent`, all of them `tess_tu2022`.
+
+It is not a time-system error: the stack is repeated at +-2400000.5 and
++-2457000 applied to every epoch, and not one of the 17 picked up a shifted
+peak (`cat_best_offset_days` is 0.0 for eight of them, |offset| <= 0.1 d for
+five more). It is not the detector's threshold: the stack has no threshold in
+it. And the instrument separates the populations cleanly -- among the 17 the
+epoch sigma (1.19) is indistinguishable from its own control (0.95), while
+among the 22 the epochs stand 4.8x above theirs.
+
+**Three caveats bound the claim.** (i) These 40 are *not* a random sample:
+they are the clock shortlist, selected because their catalogued times form an
+unusually regular pattern -- exactly what a pipeline's own periodic
+systematics would produce. **44% is not a catalogue-wide false-positive rate
+and this channel cannot produce one from this run.** (ii) Tu+2022 publishes
+superflare *candidates* and says so. (iii) The light-curve product fetched
+here need not be the one the catalogue was built on, and for TESS that gap is
+real.
+
+What stands: **for a substantial fraction of shortlisted stars the published
+flare epochs carry no more flux than random times in the same observing
+windows.** Any analysis that treats a flare catalogue's timing as a
+measurement of the star, without going back to the photometry, is in these
+cases resting on times that are not events.
+
+**Also fixed here:** the metronome workflow's `permissions:` block granted only
+`contents: write`, and a permissions block *replaces* the defaults -- so
+`actions: read` was missing and every cross-run `actions/download-artifact`
+(`reduce_only_run_id`, in `assess-only`, `redetect-only` and `vetstar`) 403'd
+and silently returned nothing. Run 35796061650 reported
+`n_catalogue_epochs = 0` for that reason. Any other channel whose workflow
+sets `permissions:` and downloads artifacts from a prior run has the same bug.
+
 ### METRONOME has its first real measurement — and its own output names the artefact, 2026-09-22
 
 The channel's brief said it had scanned nothing. That was true of the

@@ -40,18 +40,63 @@ stars were fetched from MAST (run 35652897914's `redetect` job):
 * `kepler:5879574`, the only `candidate`: the independent detector found
   **74** flares of its own against 21 catalogued, at P = 0.4232819 d versus
   the catalogue's 0.4232741 d — agreement to 2 × 10⁻⁵, p ~ 10⁻⁵⁴, strict
-  quality, `confirms_catalogue_clock`.  **The clock is in the photometry, not
-  only in the catalogue.**  That run predates the photometric veto, so
-  whether 0.42327 d is the star's *own* dominant photometric period — it is
-  squarely in the contact-binary / fast-rotator range, and the Kepler
-  survivors pile up across 0.21–0.83 d — has not yet been asked.  It is the
-  single open question on this star.
+  quality, `confirms_catalogue_clock`.  The clock was in the photometry and
+  not only in the catalogue.  **It is now settled, and it is not a clock in
+  the flares.**  See the next section.
 * the 14 `interest` stars are **all** `tess_tu2022`, and 13 of them recover
   **0.000** of their catalogued flares while the detector finds 8–51 flares
   of its own on the same light curves.  The median recovery over all 40 stars
   is 0.064.  That is not yet a rejection — a detector missing 94% of a
   catalogue cannot reject anything — which is exactly why §4.7b's
   threshold-free epoch stack exists.
+
+**The one candidate is settled: the signal is real, it is not flares, and it
+is probably not even this star's.**  Run 35796061650 (2026-09-22) ran the
+single-star vet (§4.7d) on `kepler:5879574` — every variability catalogue by
+name, the fold at P and at 2P, the flares' place in phase, and Gaia
+astrometry.  Verdict:
+`MUNDANE_EXPLANATION_FOUND(COHERENT_OSCILLATION_AT_P; EVENTS_ON_THE_CREST)`,
+with nothing unreached.
+
+| Question | Answer |
+|---|---|
+| Is it a **catalogued** eclipsing binary? | **No.**  Kepler Eclipsing Binary Catalog (Kirk+2016, all ten `J/AJ/151/68` tables, by KIC): not listed.  Gaia DR3 `vari_eclipsing_binary`, `vari_summary`, `vari_classifier_result`, `vari_rotation_modulation`, `vari_short_timescale`, `nss_two_body_orbit`: not listed.  Gaia DR3 `I/358/veb`, `I/358/vclassre`, ZTF (Chen+2020): not listed.  **VSX lists it**, as `ROT`, P = 11.107 d, amplitude 0.014 Kp — the rotation, not the clock. |
+| Is it an **uncatalogued** eclipsing binary folded at half its period? | **No.**  At 2P the fold's two half-phase minima are equal to `delta = 0.14σ` (masked: 0.11σ), and the Fourier fit at 2P puts A₁ = 3.2 × 10⁻⁶ against A₂ = 3.78 × 10⁻⁴ — a factor 117. There is no signal at 2P at all; all of it is at P. |
+| Is the extremum at P an eclipse? | **No.**  It is a *crest*: height 5.75 × 10⁻⁴ against depth 2.65 × 10⁻⁴, and `frac_below_half_depth` = 0.32 — the 1/3 of a sinusoid, not the few percent of an eclipse.  Fundamental fraction 0.90, A₂/A₁ = 0.32. |
+| Is it a **spectroscopic** binary? | **No evidence.**  Gaia DR3 2053563953175632768 (0.049″ away once proper motion is propagated to the KIC epoch): RUWE 0.995, `non_single_star` 0, `astrometric_excess_noise` 0.0, `ipd_frac_multi_peak` 0, `duplicated_source` 0.  No Gaia RV at G = 14.79, so the RV route is silent rather than clean. |
+| Then what **is** at 0.42328 d? | **A coherent photometric oscillation, at exactly the clock period, whose crests the flare detector counts as flares.**  Folded amplitude 8.40 × 10⁻⁴ peak-to-peak (0.084%), and **8.21 × 10⁻⁴ with all 74 detected events masked out** — the oscillation is not made by the events.  Against 200 control-period folds of the same light curve: z = 68.7, p at the 1/201 floor.  Once the 11.05 d rotation is detrended away the clock period is the **rank-1** peak of the periodogram, at 0.4232737 d, Baluev FAP 0. |
+| Where do the flares sit? | **On the crest.**  Rayleigh on the 74 event phases at P: r̄ = 0.957, p = 3 × 10⁻²⁸, mean phase 0.936; the fitted photometric maximum is at 0.936–0.971.  Offset **−0.036 cycles = 22 minutes**.  At 2P the events do not cluster at all (r̄ = 0.107, p = 0.43), which is the same verdict from the other direction. |
+
+So `period_is_photometric: false` was right about what it measured and wrong
+about what it was taken to mean.  It compares the clock against the *global*
+Lomb–Scargle maximum of the raw light curve, and there an 0.6%-amplitude
+11.05 d rotation buries an 0.084% signal completely.  **The veto as written
+cannot see any oscillation that is not the largest thing in the light curve —
+which is every oscillation that matters, because a large one would have been
+catalogued.**  §4.7d is the replacement.
+
+**And the signal is probably not even this star's.**  The folded amplitude,
+measured independently in each of the 17 quarters, is a function of
+`quarter % 4` — the Kepler roll orientation:
+
+| season (`quarter % 4`) | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| mean folded amplitude | 6.59 × 10⁻⁴ | 5.96 × 10⁻⁴ | 1.41 × 10⁻³ | 1.18 × 10⁻³ |
+| quarters | 4 | 5 | 4 | 4 |
+
+Every quarter respects the grouping; the phase of maximum does not move
+(0.89–0.99 in all seventeen).  Between-season over within-season scatter
+F = 3.07, p = 5.0 × 10⁻⁴ from 20,000 relabellings, ratio 2.37.  `quarter % 4`
+is a fact about the spacecraft and not about the sky, and an intrinsic signal
+diluted by crowding moves with the mask by tens of percent, not by factors.
+Gaia names a candidate source: **2053563953175635712, 13.3″ away (3.3 Kepler
+pixels), G = 14.37 against the target's 14.79 — brighter — and flagged
+`VARIABLE`.**  Establishing that it *is* the source needs pixel-level
+photometry, which this channel has not done; what is established is that the
+0.4233 d signal's amplitude tracks the aperture and not the star.
+
+Per `CLAUDE.md` this is a clean result and is not written up.  It changes the
+question: see §8.
 
 **And the channel's own calibration falsified one of its design assumptions.**
 `fraction_of_rotation_population_below_jitter_max` came back **0.857** — 24 of
@@ -454,6 +499,57 @@ only those already inside a window.  A catalogue in the wrong time system
 then announces itself as a stack peak at a named shift
 (`cat_best_offset_days`) instead of looking like an empty catalogue.
 
+**What that 0.064 median means about the flare catalogues themselves.**  The
+epoch stack turns the question round and makes it answerable, and the answer
+is about the catalogues rather than about the stars.  Of the 40 shortlisted
+stars, 39 were fetched and 39 got an epoch-stack verdict:
+
+| | stars | epoch σ (median) | control σ (median) |
+|---|---|---|---|
+| catalogued epochs **are** brightenings | 22 | 3.91 | 0.82 |
+| catalogued epochs are **not** | **17** | 1.19 | 0.95 |
+
+Per catalogue: **14 of 28** tested stars from Tu+2022 (TESS), **2 of 10** from
+Yang & Liu 2019 (Kepler), **1 of 1** from Shibayama+2013.  **18 of the 39
+recover exactly 0.000** of their catalogued flares with an independent
+detector on the same light curve, and the median recovery is 0.064.  Nine
+stars were demoted on `catalogue_epochs_absent`; all nine are `tess_tu2022`.
+
+Three things make this a statement about the lists rather than about the
+pipeline that read them:
+
+* **it is not a time-system error.**  The stack is repeated at ±2 400 000.5
+  and ±2 457 000 applied to every epoch; not one of the 17 picked up a shifted
+  peak.  `cat_best_offset_days` is 0.0 for 8 of them and |offset| ≤ 0.1 d for
+  five more; the largest is −2.0 d, which is noise on this statistic;
+* **it is not the detector's threshold.**  The stack has no threshold in it.
+  It compares the detrended residual in run-σ at the catalogued times against
+  the same statistic at thousands of random times inside the same windows;
+* **the control arm behaves.**  Among the 17 the control σ (0.95) is
+  indistinguishable from the epoch σ (1.19), while among the 22 the epochs
+  stand 4.8× above their controls.  The instrument separates the two
+  populations cleanly.
+
+Three caveats are owed, and they bound the claim rather than dissolve it.
+**(i)** These 40 stars are *not* a random sample of the catalogues — they are
+the clock shortlist, selected because their catalogued times form an unusually
+regular pattern, and a list of spurious epochs laid down by a pipeline's own
+periodic systematics is exactly the kind of list that would be selected.  So
+44% is **not** a catalogue-wide false-positive rate, and this channel cannot
+produce one from this run.  **(ii)** Tu+2022 publishes *superflare
+candidates*, and the paper says so; finding that half of a selected subset of
+them have no measurable photometric response is consistent with the label.
+**(iii)** The light-curve product this channel fetched need not be the one the
+catalogue was built on, and for TESS that gap is real.
+
+What the result does establish is narrower and still worth recording: **for
+a substantial fraction of shortlisted stars, the published flare epochs carry
+no more flux than random times in the same observing windows** — so any
+analysis that treats a flare catalogue's timing as a measurement of the star,
+without going back to the photometry, is resting on times that in these cases
+are not events.  That is why `catalogue_epochs_absent` runs *before* the
+`n_min` gate and why it is a hard veto.
+
 ### 4.7c Reconciliation — the light curve has the last word
 
 Assess runs before any light curve is fetched, so its headline was written by
@@ -478,6 +574,66 @@ prior run's acquire + assess artifacts — one runner, MAST only, no archive
 and no screen matrix — so the decisive test can be re-run without waiting
 behind a re-acquisition.
 
+### 4.7d The single-star vet (`vetstar.py`) — the mundane explanations, asked by name
+
+`period_is_photometric` asks whether the clock period is the light curve's
+**dominant** periodicity.  Run 35796061650 measured what that misses: a
+coherent 0.084% oscillation at the clock period, buried under a 0.6% rotation,
+returned `false` — and it was the whole answer.  A grazing or diluted
+eclipsing binary, a g-mode pulsator or a blended neighbour is *never* the
+dominant periodicity, because if it were it would already be catalogued.
+
+So the vet asks one star every mundane question explicitly, and reports each
+as a number:
+
+1. **What the catalogues say**, by name, with three distinct answers —
+   `OK`, `NOT_LISTED`, `UNREACHED` — never merged, because an archive that
+   could not be reached is not a statement about the star.  Gaia DR3
+   `vari_summary`, `vari_classifier_result`, `vari_eclipsing_binary`,
+   `vari_rotation_modulation`, `vari_short_timescale` and `nss_two_body_orbit`
+   by `source_id`; VSX, ZTF (Chen+2020), `I/358/vclassre` and `I/358/veb` by
+   cone; and for a Kepler star the one that settles it — the **Kepler
+   Eclipsing Binary Catalog** (`J/AJ/151/68`), by KIC, every table under the
+   seed enumerated through `TAP_SCHEMA` first.
+2. **The fold, at P and at 2P.**  Detrended on a 2-day running median: long
+   compared with the clock (which survives at ~95% of its amplitude) and short
+   compared with an 11-day rotation (which does not).  The detector's own
+   0.5 d window would eat the very signal under test.  Reported: peak-to-peak,
+   crest-or-dip, `frac_below_half_depth` (⅓ for a sinusoid, a few percent for
+   an eclipse), the first four Fourier amplitudes, and **at 2P the two
+   half-phase minima separately** — unequal minima are an eclipsing binary
+   folded at half its orbital period, which is the classic trap.
+3. **The fold with the detected events masked out.**  This is the measurement
+   that separates the two hypotheses, and nothing else does: if the folded
+   amplitude survives the mask, the star carries an oscillation independent of
+   the events; if it collapses, the fold *is* the events.
+4. **Where the events sit.**  Rayleigh at P and at 2P, and — because a clock
+   is by construction a phase-clustering statement at its own period, which
+   makes the P test circular — the offset between the events' mean phase and
+   the **fitted** photometric crest.  Fitted, not binned: masking the events
+   punches a hole at the crest, and the argmax of a holed profile sits on the
+   edge of the hole.
+5. **The astrometric route.**  RUWE, `non_single_star`, astrometric excess
+   noise, `ipd_frac_multi_peak`, and RV scatter where Gaia has an RV.
+6. **The aperture.**  Every Gaia DR3 source within 20″ (a Kepler pixel is
+   3.98″), proper motion propagated back to the KIC epoch before the
+   separation is measured; the brighter and the Gaia-`VARIABLE` ones are put
+   to the same variability tables as the target.  And `roll_season_test`
+   (§5) on the per-quarter folded amplitudes.
+
+**The folded amplitude is judged against control periods, not against the
+per-bin error.**  With ~600 cadences in a phase bin the standard error is
+tiny, and `amplitude_sigma` clears five on a pure flare clock too — measured
+at 5.5 on the offline synthetic where the correct answer is "nothing there".
+So the same fold is repeated at 200 periods drawn uniformly in frequency
+across ±35%, skipping the peak's own frequency width (the larger of 2% and
+twenty resolution elements) and the low-order rational multiples that a
+per-bin **median**, unlike a mean, leaks signal through.  Those folds carry
+the star's own red noise, gaps and cadence.  `p_empirical` and `z_control`
+are what the vetoes read.
+
+`stage=vetstar` runs it on one star, one runner, in ~2 minutes.
+
 ---
 
 ## 5. Contamination ledger — every rejection is a named counter
@@ -499,6 +655,12 @@ star), `flags_raised` (every flag) and `tiers`.
 | `few_cycles` | The period repeated too few times inside the observing windows for "recurs" to mean anything — the long-period tail where P approaches the span/3 grid edge and three sector groups phase up | `cycles_span < 10`, where `cycles_span` counts the ticks whose ±0.05-cycle phase window had *any* observing coverage |
 | `catalogue_epochs_absent` *(light curve)* | **The catalogued epochs are not brightenings in the star's own photometry.** Whatever pattern they form is a pattern in the catalogue, not in the star | Detrended residual in run-σ at the catalogued times vs. the same at random times inside the same windows; bootstrap p > 0.01 or median < 2σ over ≥ 8 epochs |
 | `photometric_oscillation` *(light curve)* | The re-detected period **is** the star's dominant photometric period: a running median over 0.5 d cannot flatten an oscillation of comparable period with a narrow maximum, and the surviving maxima are detected as a flare train | Lomb–Scargle peak of the flux itself within 2% of P or its ½, 2×, ⅓, 3× |
+| `coherent_oscillation_at_p` *(vet)* | **A coherent photometric oscillation sits at the clock period and survives masking every detected event.**  The events are its crests; the detector's running median cannot flatten a cycle of comparable length.  This is `photometric_oscillation` without the requirement that the oscillation be the *dominant* one | Folded amplitude with events masked, against 200 control-period folds of the same light curve: `p_empirical ≤ 0.01` **and** `z_control ≥ 5` |
+| `events_on_the_crest` *(vet)* | The events' mean phase coincides with the fitted photometric maximum: they are that oscillation's peaks being counted as flares | `|offset| ≤ 0.15` cycles, with the oscillation significant |
+| `narrow_dip_at_p` *(vet)* | The fold at P is a narrow **dip**, not a crest — an eclipse | `extremum_is_dip`, `frac_below_half_depth ≤ 0.25`, fold significant against controls |
+| `unequal_minima_at_2p` *(vet)* | The fold at 2P has two half-phase minima of different depth: an eclipsing binary found at half its orbital period | `delta_sigma ≥ 3` on the **unmasked** fold (masking brightenings manufactures both a dip and an inequality), with the 2P fold significant against controls |
+| `amplitude_tracks_spacecraft_roll` *(vet, Kepler)* | **The folded amplitude is a function of `quarter % 4`** — the roll orientation, a fact about the spacecraft and not about the sky.  An intrinsic signal is diluted by crowding, which moves with the mask by tens of percent; a neighbour's signal scales with how much of *that* star's flux the mask catches, which moves by factors.  So the signal belongs to another star | Between-season over within-season scatter of the per-quarter folded amplitude, p from 20,000 relabellings into the same season sizes: `p ≤ 0.01` **and** max/min season mean `≥ 1.5` |
+| `catalogued_eclipsing_binary` *(vet)* | Some catalogue types the star as eclipsing, or gives it a period at P, 2P or P/2 | Type/class regex or period within 3% of P, 2P, P/2 |
 | `bursty_random` | Clustered-but-random flaring whose coherence the waiting-time shuffle reproduces | `p_shuffle ≥ 0.05` **and** neither `gap_integer_frac` nor `gap_integer_frac_core` ≥ 0.6 |
 | `jitter_too_large` | Not a clock: fails even the loose thresholds on both routes | (Q < 0.6 or jitter > 0.12) **and** (`f_in_window` < 0.4 or `jitter_core` > 0.12) |
 | `energy_incoherent` *(report)* | Energy depends on clock phase — visibility, not a beacon | Spearman p < 0.01 |
@@ -625,6 +787,17 @@ get by fitting alone.
 * **Vetting reach.**  P_rot exists for a minority of TESS flare stars; the
   variability cones are run only for the FDR shortlist.  A star at `interest`
   is one whose vet is incomplete, not one that passed.
+* **A low-amplitude oscillation at the clock period is the channel's hardest
+  confounder, and it is not screened at scale.**  §4.7d catches it, but §4.7d
+  runs on one star at a time and needs that star's whole light curve.  The
+  screen and assess stages never see the photometry at all, so *every* star
+  above `watch` should be assumed to carry an unasked 0.1%-level oscillation
+  until the vet has been run on it.  `kepler:5879574` was the only star that
+  had survived far enough to deserve the vet, and the vet killed it.
+* **The roll-season test is Kepler-only.**  TESS sectors do not repeat a
+  camera orientation the way Kepler quarters do, so the sharpest contamination
+  diagnostic in the vet has no TESS counterpart here; a TESS star's blending
+  would need the pixel data.
 
 ---
 
@@ -640,12 +813,28 @@ clocks faster than ten cadences, clocks slower than a third of the span, or
 clocks in the ~10⁵ Kepler/TESS stars that never entered a flare catalogue.
 
 Per `CLAUDE.md`, a clean null is **not written up**.  It is a reason to change
-the question: to run the flare finder rather than inherit it (recovering the
-sub-threshold regime), to move to a different event class (the ZTF alert
-stream's brief brightenings; the CHIME-style burst catalogues), or to test
-weaker structure than a strict clock — arithmetic progressions with a drifting
-period, prime-number or Fibonacci gap patterns (S28's broader reading), which
-the H-test is not built for.  `NO_DATA_REACHED` and `QUERY_RETURNED_ZERO_ROWS`
+the question, and the 2026-09-22 vet says which way.  The channel's one
+candidate died not as a false clock but as a **real 0.084% periodicity that
+nobody had catalogued**, sitting at a period no variability survey had
+recorded for this star, and most probably belonging to a neighbour 13″ away.
+Three of those facts are directions:
+
+1. **Run the flare finder rather than inherit it.**  The catalogues' epochs
+   were the weakest link twice over — 17 of 39 shortlisted stars' epochs are
+   not brightenings at all (§4.7b), and the one star whose epochs *were* real
+   turned out to be an oscillation's crests.  Detecting on the photometry
+   directly removes both failure modes and recovers the sub-threshold regime.
+2. **The confounder is a population.**  If a 0.084% coherent oscillation at
+   0.42 d, uncatalogued by VSX, Gaia DR3, ZTF and the Kepler EB catalogue, can
+   masquerade as a strict flare clock on the one star that got this far, then
+   the *rate* of such oscillations among flare stars is the thing standing
+   between this signature and any detection — and it is measurable on the
+   Kepler flare sample in one pass.  That is a prerequisite, not a paper.
+3. **Move to an event class with no catalogue in the way**: the ZTF alert
+   stream's brief brightenings, or the CHIME-style burst catalogues.  Or test
+   weaker structure than a strict clock — arithmetic progressions with a
+   drifting period, prime-number or Fibonacci gap patterns (S28's broader
+   reading), which the H-test is not built for.  `NO_DATA_REACHED` and `QUERY_RETURNED_ZERO_ROWS`
 are statements about archive access and the catalogues' contents, not about
 the sky, and the workflow refuses to let either read as a science null.
 
@@ -659,18 +848,25 @@ src/seti/metronome/clock.py     H-test scan, clock quality, three nulls, cross-s
 src/seti/metronome/vet.py       the gauntlet and the tiers (rms and core quality routes)        [pure]
 src/seti/metronome/redetect.py  flare detector on light curves, the photometric veto, the
                                 catalogue-epoch stack, the redetect stage and reconcile_summary
+src/seti/metronome/vetstar.py   the SINGLE-STAR vet: variability catalogues by name, the fold at
+                                P and 2P, the events-masked fold against control periods, event
+                                phase, Gaia astrometry, the aperture census, the roll-season test
 src/seti/metronome/acquire.py   runner-only VizieR access, runtime schema discovery, AcquisitionLog
-src/seti/metronome/run.py       stages probe / acquire / screen / assess (+ redetect) -> results/metronome/
+src/seti/metronome/run.py       stages probe / acquire / screen / assess (+ redetect, vetstar)
 config/metronome.yaml           every threshold, every table seed
 tests/test_metronome.py         offline suite (the CI gate)
+tests/test_metronome_vetstar.py offline suite for the vet (injected EB, real clock, crest-counting
+                                oscillation, roll contamination, every archive failure mode)
 .github/workflows/metronome.yml probe+acquire -> screen matrix -> assess -> commit-back; lit job;
-                                assess-only and redetect-only over a prior run's artifacts
+                                assess-only, redetect-only and vetstar over a prior run's artifacts
+scripts/metronome_vetstar_report.py  prints the vet verbatim into the run log
 scripts/metronomelit_fetch.py   prior-art sweep, verbatim abstracts -> results/metronomelit/
 ```
 
-Entry point: `python -m seti.metronome.run --stage {probe|acquire|screen|assess|all|redetect}
+Entry point: `python -m seti.metronome.run --stage {probe|acquire|screen|assess|all|redetect|vetstar}
 [--catalogues a,b] [--shard i --n-shards n] [--max-stars k] [--max-rows r] [--offline]
-[--budget-s s]` (`redetect` runs only when named — it opens MAST);
+[--budget-s s] [--star-key kepler:5879574 --period 0.42328185409991]`
+(`redetect` and `vetstar` run only when named — they open MAST);
 programmatic `seti.metronome.run.metronome_run(cfg, stage=..., catalogues=..., shard=...,
 n_shards=..., max_stars=..., max_rows=..., offline=..., seed=..., out_root=...)`.
 
@@ -679,5 +875,7 @@ Outputs: `probe.json`, `acquire.json`, `acquisition_log.json`, `screen_<cat>[_s<
 (verdict, funnel, rejection counters, jitter calibration, coverage, `generated_utc`,
 per-catalogue acquisition log), `candidates.json` (interest + candidate, and the watch list),
 `redetect.json` + `stars_redetect.csv` (the light-curve re-detection of the shortlist,
-including the catalogue-epoch stack), and the `redetect` block reconciliation writes back
-into `summary.json` / `candidates.json`.
+including the catalogue-epoch stack), the `redetect` block reconciliation writes back
+into `summary.json` / `candidates.json`, and `vetstar.json` + `vetstar_fold.csv`
+(the single-star vet: every catalogue's verbatim answer, the four folded profiles bin by
+bin, the control-period nulls, the event phases and the per-quarter roll table).

@@ -447,6 +447,25 @@ where the hand-kept OH list is least complete and the telluric bands live.
   summary with `reduce_skipped` saying why. With nothing to overwrite it reports
   `NO_DATA_REACHED` honestly, as before.
 
+### Known limitations, stated rather than hidden
+
+* **The DESI coadd significance is not calibrated.** `desi_measure_at` re-measures the
+  cframe rows at the null's offsets but has no coadd to re-measure, so
+  `n_coadd_measurements` is 0 for the DESI route and `coadd_sig_cal` falls back to the
+  uncalibrated `coadd_sig`. The per-exposure statistic — the one the classification turns
+  on — *is* calibrated for both routes. On the SDSS side the calibrated coadd
+  significance runs a median 0.34× the triage's, so the DESI coadd numbers should be
+  assumed optimistic by a comparable factor until this is closed. The fix is small:
+  pass the SPARCL coadd arrays into `desi_measure_at` so the offsets measure it too. It
+  was deliberately not made while run 35747997902 was queued, because it changes
+  measured numbers and would have risked splitting that run across two estimators.
+* **`plate_other_fibre_same_wavelength` is a lower bound.** It can only see fibres whose
+  lines were also measured, so it fires where there is evidence and stays silent where
+  there is none — the right way round for a channel whose object is a detection.
+* **The OH list has gaps and the telluric bands are intervals, not lines.** Both are
+  reported (`oh_gap_A`, `oh_density_per_100A`, `telluric_band`) and neither is enforced;
+  the empirical replacement is the any-star control sample.
+
 ### Next decisive action
 
 1. Land the `ckpt_version` 3 run (run 35747997902) so all 167 lines are measured once,

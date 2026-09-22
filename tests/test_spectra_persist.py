@@ -687,6 +687,13 @@ def test_fit_line_profile_tells_an_unresolved_line_from_a_resolved_one():
         ratio = fit["fit_fwhm_A"] / lsf
         assert abs(ratio - factor) < 0.15, (factor, ratio, fit)
         assert abs(fit["fit_dv_kms"]) < 30.0
+    # A one-pixel spike is narrower than the instrument can make.  The fit must
+    # say "hit the bound", not hand back a suspiciously precise sub-LSF width.
+    f = 10.0 + rng.normal(0, 0.02, w.size)
+    f[int(np.argmin(abs(w - lam)))] += 2.0
+    spike = persist.fit_line_profile(w, f, np.full(w.size, 1 / 0.02 ** 2), lam, lsf)
+    assert spike["fit_ok"] and spike["fit_at_bound"], spike
+    assert spike["fit_fwhm_A"] < 0.5 * lsf
     # And the measured LSF is taken from the pipeline column when it is served.
     ws = np.full(w.size, 2.0)            # sigma = 2 A  ->  FWHM = 4.71 A
     assert abs(persist.lsf_fwhm_measured(w, ws, lam) - 2.3548 * 2.0) < 1e-6

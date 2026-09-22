@@ -1336,7 +1336,8 @@ def fit_line_profile(wave, flux, ivar, lam0: float, fwhm_guess: float, mode: str
     out = {"fit_ok": False, "fit_reason": "", "fit_center_A": float("nan"),
            "fit_dv_kms": float("nan"), "fit_fwhm_A": float("nan"),
            "fit_fwhm_err_A": float("nan"), "fit_amp": float("nan"),
-           "fit_amp_sig": float("nan")}
+           "fit_amp_sig": float("nan"), "fit_at_bound": False,
+           "fit_reduced_chi2": float("nan")}
     good = np.isfinite(w) & np.isfinite(f) & np.isfinite(iv) & (iv > 0)
     d = w - float(lam0)
     ann = good & (np.abs(d) <= cont_win_A) & (np.abs(d) > 2.0 * fwhm_guess)
@@ -1358,8 +1359,13 @@ def fit_line_profile(wave, flux, ivar, lam0: float, fwhm_guess: float, mode: str
         return amp * np.exp(-0.5 * ((x - mu) / sig) ** 2)
 
     p0 = [max(float(np.max(y)), 1e-6), 0.0, max(fwhm_guess / 2.3548, 1e-3)]
-    lo = [0.0, -2.0 * fwhm_guess, 0.2 * fwhm_guess / 2.3548]
-    hi = [1e6 * abs(p0[0]) + 1e6, 2.0 * fwhm_guess, 8.0 * fwhm_guess / 2.3548]
+    # A spectral feature cannot be narrower than the LSF.  The lower bound is
+    # set just below it so that a fit which WANTS to go narrower is reported as
+    # having hit the bound -- that is a one-pixel defect or a cosmic ray, and it
+    # must read as a flag, not as a suspiciously precise width.
+    s_lo, s_hi = 0.35 * fwhm_guess / 2.3548, 8.0 * fwhm_guess / 2.3548
+    lo = [0.0, -2.0 * fwhm_guess, s_lo]
+    hi = [1e6 * abs(p0[0]) + 1e6, 2.0 * fwhm_guess, s_hi]
     try:
         p, cov = curve_fit(_g, d[sel], y, p0=p0, sigma=sy, absolute_sigma=True,
                            bounds=(lo, hi), maxfev=20000)
@@ -1368,7 +1374,11 @@ def fit_line_profile(wave, flux, ivar, lam0: float, fwhm_guess: float, mode: str
         return out
     perr = np.sqrt(np.diag(cov)) if cov is not None and np.all(np.isfinite(cov)) \
         else np.full(3, np.nan)
+    resid = y - _g(d[sel], *p)
+    dof = max(int(sel.sum()) - 3, 1)
     out.update({
+        "fit_at_bound": bool(p[2] <= s_lo * 1.01 or p[2] >= s_hi * 0.99),
+        "fit_reduced_chi2": float(np.sum((resid / sy) ** 2) / dof),
         "fit_ok": True,
         "fit_center_A": float(lam0 + p[1]),
         "fit_dv_kms": float(p[1] / lam0 * 299792.458),

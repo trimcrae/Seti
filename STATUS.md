@@ -67,9 +67,23 @@ Both sides are now normalised, with a round-trip test.
 
 In flight: run **35745660073**, `stages=full`, 4 shards, 60 variables + 60
 bright per field over the six configured DASCH-dense fields (~720 stars),
-acquire budget 7200 s, screen budget 9000 s. Queued at 11:12 EDT. No
+acquire budget 7200 s, screen budget 9000 s. Dispatched 11:12 EDT and **still
+queued 80 minutes later** — its `probe` job has never started. No
 `results/century/summary.json` exists yet; the channel has produced no sky
 statement.
+
+**A `needs:` edge costs a whole queue wait, not a job.** On a starved queue
+every job waits for a runner separately, so `full` (probe → targets → sweep →
+assess) pays four separate waits before a verdict. The `probe` job produces
+documentation, flag bits and a schema report, and the `targets` job reads none
+of them — the edge was pure serialisation, and it is gone, so the two now run
+in parallel and `full` pays three. This does **not** apply to run
+35745660073: GitHub fixes a run's workflow file when it is *dispatched*, not
+when each job checks out, so that run keeps the old graph (and would also have
+lost `plate_exptime.csv`, which travels as an artifact named in the workflow —
+hence `stage_acquire` now rebuilds the exposure table itself from one
+`queryexps` per field when the file does not arrive). Only the *code* a job
+checks out follows the branch tip.
 
 ### CENTURY (S50) wired to DASCH DR7 — and the Menzel trap caught in our own code, 2026-09-22
 

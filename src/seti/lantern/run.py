@@ -1068,6 +1068,21 @@ def assess(out_dir: Path, conf: dict) -> dict:
                          "transit_excess_sigma": (f.get("transit") or {}).get("transit_excess_sigma"),
                          "p_vanish": f.get("p_vanish"), "tier": tier, "vetoes": vetoes,
                          "eclipse_tested": bool(f.get("eclipse_tested"))})
+    # Cross-epoch coherence within one target.  `recurrent_across_targets` kills
+    # a wavelength shared by UNRELATED hosts (instrumental); the same wavelength
+    # in two independent exposures of the SAME host is the opposite -- it is what
+    # a persistent source would do, and it is what turns one exposure's feature
+    # into something worth a telescope.  It is recorded, never used as a veto.
+    by_wl_target: dict[tuple, set] = {}
+    for row in rows:
+        b = int(round(float(row["wavelength_um"]) / float(rcfg["bin_um"])))
+        for bb in (b - 1, b, b + 1):
+            by_wl_target.setdefault((row["target"], bb), set()).add(row["exposure_key"])
+    for row in rows:
+        b = int(round(float(row["wavelength_um"]) / float(rcfg["bin_um"])))
+        eks = by_wl_target.get((row["target"], b), set())
+        row["same_target_exposures"] = sorted(eks)
+        row["same_target_epochs"] = len(eks)
     # BH-FDR over the eclipse-tested features with the FULL trial count.
     m_total = int(sum(int(r.get("n_scanned") or 0) for r in analysed))
     tested = [i for i, row in enumerate(rows) if row["p_vanish"] is not None
@@ -1190,6 +1205,8 @@ def assess(out_dir: Path, conf: dict) -> dict:
             "features_eclipse_tested": sum(1 for r in rows if r["eclipse_tested"]),
             "features_vanish_snr_ge_3": sum(1 for r in rows if r["eclipse_tested"]
                                             and _f(r["eclipse_vanish_snr"]) >= 3.0),
+            "features_in_multiple_exposures_of_one_target":
+                sum(1 for r in rows if int(r.get("same_target_epochs") or 0) > 1),
             "tiers": tiers,
         },
         "by_mode": by_mode,

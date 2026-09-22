@@ -243,6 +243,13 @@ the continuum.
 `transit_inconsistent` · `insufficient_phase_coverage` · `low_snr` ·
 `present_in_drift_control` (§3.4a) · `fdr_not_significant`.
 
+**Cross-epoch coherence** is recorded, never used as a veto:
+`recurrent_across_targets` kills a wavelength shared by *unrelated* hosts
+(instrumental), but the same wavelength in two independent exposures of the
+*same* host is the opposite — it is what a persistent source does, and it is
+what would turn one exposure's feature into something worth a telescope. Each
+row carries `same_target_epochs` and the exposure keys.
+
 **Tiers:** `none` → `watch` (a clean narrow feature whose phase coverage cannot
 test vanishing; kept for the recurrence census) → `interest` → `candidate`.
 BH-FDR at α = 0.05 is applied across the population with the **full trial

@@ -131,6 +131,9 @@ class Stage2Params:
     # tested FIRST rather than not at all (see vetoed_excess_rows).
     include_vetoed_excess: bool = True
     vetoed_first_vetoes: tuple[str, ...] = ("companion_suspect", "blend", "catalogue_doubtful")
+    #: Stars tested ahead of everything else whatever tier they ended in
+    #: (star_key or bare id) -- see named_rows.
+    stars: tuple[str, ...] = ()
     max_stars: int = 40
     max_flares_per_star: int = 6
     # wall clocks
@@ -184,11 +187,12 @@ class Stage2Params:
         c = dict((conf or {}).get("stage2") or {})
         phys = (conf or {}).get("physics") or {}
         d = cls()
-        for k in ("tiers", "missions", "vetoed_first_vetoes"):
+        for k in ("tiers", "missions", "vetoed_first_vetoes", "stars"):
             if c.get(k):
                 setattr(d, k, tuple(str(x) for x in c[k]))
         for k in d.__dataclass_fields__:
-            if k in ("tiers", "missions", "vetoed_first_vetoes", "param_tables"):
+            if k in ("tiers", "missions", "vetoed_first_vetoes", "stars",
+                     "param_tables"):
                 continue
             if c.get(k) is not None:
                 cur = getattr(d, k)
@@ -250,6 +254,20 @@ def _finite(v) -> bool:
     return np.isfinite(_f(v))
 
 
+def _na(v) -> bool:
+    """One missing-value test for every spelling a CSV cell can arrive in.
+
+    pandas 3 makes ``str`` the default dtype for text columns, so a missing
+    cell is no longer always a float ``nan`` -- it can be ``pd.NA``, which
+    ``np.isnan`` refuses and ``isinstance(v, float)`` misses.
+    """
+    try:
+        out = pd.isna(v)
+    except (TypeError, ValueError):                       # arrays, odd objects
+        return False
+    return bool(out) if isinstance(out, (bool, np.bool_)) else False
+
+
 # ---------------------------------------------------------------------------
 # the shortlist
 # ---------------------------------------------------------------------------
@@ -279,8 +297,47 @@ def vetoed_excess_rows(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
     keep = d[(x > 0) & d.get("first_veto", pd.Series([""] * len(d))).astype(str).isin(hard)]
     rows = []
     for r in keep.to_dict(orient="records"):
-        r = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in r.items()}
+        # pd.isna, not np.isnan on a float: under pandas 3 a missing cell in a
+        # string column can come back as pd.NA, which is not a float and would
+        # otherwise reach json as "<NA>".
+        r = {k: (None if _na(v) else v) for k, v in r.items()}
         r["tier"] = "vetoed_excess"
+        rows.append(r)
+    rows.sort(key=lambda r: -_f(r.get("xi_conservative_max")))
+    return rows
+
+
+def named_rows(arc_dir: Path, keys) -> list[dict]:
+    """The ``xi_table.csv`` rows for named stars, whatever tier they ended in.
+
+    A star can leave every tier and still be worth putting on the pixels --
+    KIC 8487271 dropped out of ``interest`` the moment Berger+2020's radius
+    replaced the assumed one, and with it out of every shortlist, so the
+    centroid test that had failed on it could never be retried.  ``keys`` are
+    ``star_key`` (``kepler:8487271``) or bare ids; the record with the largest
+    ``xi_conservative_max`` wins when a star appears in several catalogues.
+    """
+    want = {str(k).strip() for k in keys if str(k).strip()}
+    if not want:
+        return []
+    p = Path(arc_dir) / "xi_table.csv"
+    if not p.exists():
+        return []
+    try:
+        d = pd.read_csv(p, dtype={"star_id": str, "star_key": str, "record_key": str})
+    except Exception:                                     # noqa: BLE001
+        return []
+    if not len(d) or "star_key" not in d.columns:
+        return []
+    m = d["star_key"].astype(str).isin(want) | d.get(
+        "star_id", pd.Series([""] * len(d))).astype(str).isin(want)
+    rows = []
+    for r in d[m].to_dict(orient="records"):
+        # pd.isna, not np.isnan on a float: under pandas 3 a missing cell in a
+        # string column can come back as pd.NA, which is not a float and would
+        # otherwise reach json as "<NA>".
+        r = {k: (None if _na(v) else v) for k, v in r.items()}
+        r["tier"] = "named"
         rows.append(r)
     rows.sort(key=lambda r: -_f(r.get("xi_conservative_max")))
     return rows
@@ -288,9 +345,10 @@ def vetoed_excess_rows(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
 
 def load_shortlist(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
     """Interest / candidate stars first, then watch, from ``candidates.json``,
-    with the hard-vetoed ceiling-excess stars ahead of all of them."""
+    with the explicitly named stars and then the hard-vetoed ceiling-excess
+    stars ahead of all of them."""
     p = Path(arc_dir) / "candidates.json"
-    order = {"vetoed_excess": -1, "candidate": 0, "interest": 1, "watch": 2}
+    order = {"named": -2, "vetoed_excess": -1, "candidate": 0, "interest": 1, "watch": 2}
     rows: list[dict] = []
     if p.exists():
         try:
@@ -302,6 +360,8 @@ def load_shortlist(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
     if params.include_vetoed_excess:
         rows = vetoed_excess_rows(arc_dir, params=params) + rows
     rows = [r for r in rows if str(r.get("mission", "")).lower() in set(params.missions)]
+    # A named star is tested whatever tier and whatever mission it ended in.
+    rows = named_rows(arc_dir, params.stars) + rows
     seen, out = set(), []
     for r in sorted(rows, key=lambda r: (order.get(str(r.get("tier")), 9),
                                          -_f(r.get("xi_conservative_max")))):
@@ -1502,6 +1562,9 @@ def main(argv=None):
     p.add_argument("--arc-dir", default="results/arc", help="stage 1 results directory")
     p.add_argument("--out-dir", default="results/arc/stage2")
     p.add_argument("--tiers", default="", help="comma-separated tiers (default from config)")
+    p.add_argument("--stars", default="",
+                   help="comma-separated star_key / id tested first whatever tier they are in "
+                        '(e.g. "kepler:9418692,8487271")')
     p.add_argument("--max-stars", type=int, default=-1)
     p.add_argument("--no-vetoed-excess", action="store_true",
                    help="do NOT shortlist hard-vetoed stars above the conservative ceiling")
@@ -1511,6 +1574,8 @@ def main(argv=None):
     params = Stage2Params.from_config(conf)
     if a.tiers:
         params.tiers = tuple(x.strip() for x in a.tiers.split(",") if x.strip())
+    if a.stars:
+        params.stars = tuple(x.strip() for x in a.stars.split(",") if x.strip())
     if a.max_stars >= 0:
         params.max_stars = int(a.max_stars)
     if a.no_vetoed_excess:

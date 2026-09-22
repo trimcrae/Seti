@@ -2,8 +2,11 @@
 
 *A sextant measures the angle between where a thing is and where it ought to be.*
 
-**Channel status:** residual computation and screen built and offline-tested (45
-tests); acquisition is a parallel workstream; nothing has been run on live data.
+**Channel status:** residual computation, screen, ephemeris layer, per-object
+fit and assessment built and offline-tested (135 tests); the acquisition probe
+has run on live data and settled four of §7's questions (§6b); the search
+itself runs as `.github/workflows/sextant.yml` — `probe` → N `fit` shards →
+`assess`.
 Rubin has been off sky since the night of 13/14 July 2026 (`docs/rubin-outage.md`,
 verdict `SKY_STOPPED`), and this is not a stopgap for it — see §1.
 
@@ -390,6 +393,77 @@ silently passing.
 
 ---
 
+## 6b. What the 2026-09-03 probe settled
+
+`results/sextant/probe.json`, verdict `OK`, 46,264,083 FPR rows reached. Four
+of §7's questions are no longer open, and the first is settled to the
+millisecond.
+
+### `epoch` is TCB. Not inferred — *derived*.
+
+The probe measured `epoch_utc − epoch` at both ends of the mission:
+
+| | MJD | measured `epoch_utc − epoch` | TCB − UTC, computed |
+|---|---|---|---|
+| start | 56864.28 | −85.564 s | **85.564 s** |
+| end | 58868.50 | −90.250 s | **90.249 s** |
+
+with `TCB − TDB = L_B (JD_TT − 2443144.5003725) × 86400`, `L_B =
+1.550519768×10⁻⁸`, and `TT − UTC = 32.184 + (TAI−UTC)` taking 35 s before the
+2015-06-30 leap second and 37 s after 2016-12-31. Both ends agree to under a
+millisecond, and the **4.686 s drift across the mission** decomposes as 2.685 s
+of secular `L_B` rate plus exactly 2 s of leap seconds. Nothing but TCB does
+that. So `epoch` is TCB days from JD 2455197.5 and `epoch_utc` is the same
+instant in UTC; `config/sextant.yaml` carries `epoch:TCB:2455197.5` and
+`stage probe` re-derives it from the residuals themselves rather than trusting
+this table.
+
+Why it had to be settled first: 87 s of time-tag error is ~0.7 arcsec of
+along-track offset on *every* object, in proportion to sky rate. That is not a
+subtle bias — it is a catalogue-wide fake detection with exactly the shape of
+the signal.
+
+### The other three
+
+| question | measured | consequence |
+|---|---|---|
+| state-vector frame | `max\|z_gaia\| = 0.4098 au` | **equatorial (ICRS)**. An L2 orbit confined to a thin ecliptic slab would give \|z\| ≲ 0.01 au; 0.41 au is `y_ecl·sin 23.44°`. The 23.44° that would have rotated along-scan into across-scan is not there |
+| `is_rejected` | 291,657 / 46,264,083 = **0.6304%** | against a published 0.58% DR3 outlier fraction, ratio 1.087: the column marks the documented astrometric outlier rejection, so the rejection-pattern observable of §6 reads what it is meant to read |
+| DR3 vs FPR | union deduplicates under **both** keys — `observation_id` and `transit_ccd` — 18 shared of 20+20, 2 unique each side | `reconcile_observations` no longer has to refuse. The releases are neither a clean superset nor disjoint; they are an overlapping union, and the dedup key survives the re-minting |
+| synchronous row cap | 5000 requested, 5000 returned; declared output limits 3,000,000 rows / 3600 s | the feared ~2000-row silent truncation is not there, and the hard 3M-row output limit is what bounds a chunk. At ~300 rows per object, 250 objects per chunk is ~75k rows — a factor of 40 inside the limit |
+
+`astrometric_outcome_ccd` / `astrometric_outcome_transit` remain **unsettled**:
+the `GROUP BY` on them errored on the service, and the per-object census that
+did return shows 5–7 distinct values per object with a strong mode at `1`
+(235/382 for Ceres, 369/548 for Pallas). Nothing is hard-coded as "good".
+
+Two things about *why* it errored, both worth carrying forward because both
+are facts about the service and the tables rather than about this code.
+
+**The error was the `ORDER BY`, not the column.** Every failed query ends
+`ORDER BY COUNT(*) DESC`, and the parser's message points at the `COUNT` token
+("Encountered \" \"COUNT\" \" at line 1, column 127. Was expecting one of:
+`<REGULAR_IDENTIFIER>`, `<UNSIGNED_INTEGER>` …"). The Gaia TAP ADQL parser will
+not take an aggregate *expression* in `ORDER BY`; it wants a column alias or an
+ordinal. The census queries that carried no `ORDER BY` returned normally on the
+same columns of the same tables. So the distributions are one `ORDER BY n`
+away, not blocked.
+
+**The column is array-valued in DR3 and scalar in FPR, and that is not
+cosmetic.** `GROUP BY number_mp, astrometric_outcome_ccd` returns, from
+`gaiadr3.sso_observation`, groups whose `flag_value` is a **ten-element list**
+(`[12, 1, 1, 1, 1, 1, 1, 1, 1, 11]` and so on — one entry per AF CCD of the
+transit), with group counts of 5–16. From `gaiafpr.sso_observation` the same
+query returns **scalars** (`1`, `11`, `12`, `32`, `35`, `39`) with group counts
+of 2–568. The schema calls both `int`, so only the data show it. The
+consequence is that §6's rejection-pattern observable can be read directly from
+FPR and only after unpacking the array from DR3 — which is a further reason,
+beyond the 66-month arc, that `release: gaiafpr` is the default. `is_rejected`
+and `fov` exist in FPR alone, so the rejection observable is an FPR observable
+either way.
+
+---
+
 ## 7. Unsettled assumptions — the probe list
 
 These could not be settled offline. Every one of them is **loud in the code**,
@@ -474,7 +548,69 @@ Add arXiv:2605.22702's FPR candidate list when it is machine-readable.
 | `src/seti/sextant/residuals.py` | provenance gate, time scales, the astrometric chain, the scan frame and its verification, two-body propagation and state partials, the variational signal basis, block-correlated GLS, the six-model comparison, the convention resolver |
 | `src/seti/sextant/screen.py` | the rejection-pattern observable, the stratified quasi-binomial null, covariate robustness, binaries, the tier ladder, the population decision |
 | `src/seti/sextant/acquire.py` | Gaia TAP acquisition (runner-only; separate workstream) |
+| `src/seti/sextant/ephem.py` | Horizons `VECTORS` and SBDB clients, the 26-body perturber grid, the batched RK4 + Schwarzschild propagator, the interpolants |
+| `src/seti/sextant/controls.py` | the positive controls: the published Yarkovsky detections, and the scoring that says `RECOVERED` / `SIGN_WRONG` / `MAGNITUDE_OFF` / `INCONSISTENT_BELOW_SNR` |
+| `src/seti/sextant/run.py` | the three stages — `probe` (route + conventions, measured), `fit` (per shard: acquire, propagate, fit A1/A2/A3, screen, checkpoint per chunk), `assess` (controls first, then the A2 distribution, the ceiling exceedances and the population) |
+| `.github/workflows/sextant.yml` | `probe` → N `fit` shards (`fail-fast: false`) → `assess` |
 | `tests/test_sextant_residuals.py` | 45 offline tests, all on synthetic observations with a known injected signal |
+| `tests/test_sextant_run.py` | 32 tests: the propagator against an analytic Kepler orbit, the interpolants' convergence order, the fit on synthetic sky with a known injected `A2`, the screen against records built to trip each rule, the work order and the in-job clock |
+| `tests/test_sextant_acquire.py` | 58 offline tests; no network |
+
+### Running it
+
+```
+python -m seti.cli sextant --stage probe                 # route + conventions, once
+python -m seti.cli sextant --stage fit --shard 3/16      # one shard
+python -m seti.cli sextant --stage assess                # gather, score, decide
+```
+
+The workflow offers two paths through those three stages, chosen by the `solo`
+input. `solo: true` (the default) runs all three as steps of **one job on one
+runner**; `solo: false` runs `probe` → an *N*-shard `fit` matrix → `assess` as
+separate jobs. The choice is about scheduling, not about science: the sharded
+path is six separate scheduling events on a queue shared by 18 channels, and a
+run that never starts measures nothing, while the solo path needs one slot and
+reaches roughly a quarter as many objects. What makes that trade honest rather
+than merely cheap is the work order below — the controls are fitted first
+either way, and what follows is a seeded shuffle, so the solo run is a smaller
+*unbiased sample of the same catalogue* and not a different sample.
+
+The positive controls travel with any capped run: `choose_objects` takes every
+object carrying a JPL non-gravitational solution **first** and fills the
+remainder with a seeded random draw, so `--max-objects 800` is a small run that
+still exercises the estimator against the published Yarkovsky detections rather
+than a small run that quietly has nothing to check itself against.
+
+### What an unfinished shard leaves behind
+
+An uncapped run is ~1.6×10⁵ objects and will not finish inside one job however
+it is sliced, so the design question is not whether a shard completes but what
+it has already paid for when it stops. Two mechanisms, and both are about
+that.
+
+`order_objects` fixes the **work order** inside a shard: the controls first,
+then the rest in a seeded shuffle. Ascending `number_mp` — the obvious order —
+fails twice. The controls are overwhelmingly NEAs and therefore carry high
+numbers, so they would be reached last, and a truncated shard would report an
+`A2` distribution with *no control on it*; by this channel's own rule nothing
+in such an output is believed, which makes the whole run worthless rather than
+partial. Ascending number is also, to a good approximation, descending size,
+so a truncated run in that order returns a sample of large main-belt bodies
+whose element and pole distributions are not the catalogue's — the population
+tests in §6 would then be run on a sample selected by the very thing that ran
+out of time. The shuffle makes any prefix an unbiased random subsample. It is
+seeded on `seed + shard`, so a re-run does the same work in the same order and
+hits the per-chunk parquet cache.
+
+`--budget-minutes` is a clock **inside** the job's own cap. A job killed by
+`timeout-minutes` is *cancelled*, and a cancelled job does not reliably run its
+`if: always()` artifact upload — so an overrun would discard every chunk the
+shard had already fitted and checkpointed. The fit stage therefore stops itself
+between chunks, records `budget_stop` (`after_chunks`, `of_chunks`,
+`elapsed_minutes`) and returns `OK_PARTIAL_BUDGET`. `assess` carries that into
+`summary.json`'s `coverage` block as `n_assigned`, `n_shards_budget_stopped`
+and `shard_verdicts`, so the objects never reached read as **unmeasured** and
+never as a null. The workflow default is 290 minutes inside a 330-minute job.
 
 ## 10. Related channels
 

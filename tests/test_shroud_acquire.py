@@ -601,3 +601,157 @@ def test_a_live_catalogue_that_is_only_partly_deep_is_recorded_per_source(sc):
         pos, {"ps1": {"status": "unreachable"}, "gaia": {"status": "cached"}}, sc)
     assert depth.iloc[0] == sc["modern_optical"]["limits"]["gaia"]["mag"]
     assert cats.iloc[0] == "gaia"
+
+
+def test_a_run_whose_photometry_never_happened_says_so(sc, tmp_path):
+    """The exact failure of run 35738062833's analyze job.
+
+    Its photometry job was cancelled, so analyze reported
+    ``3_with_any_ir_detection: 0`` for 127 sources that were never searched.
+    A zero from a search that did not happen must never read like a zero from
+    a search that found nothing.
+    """
+    rows = [{"source_id": f"S{i}", "ra_deg": 10.0 + i, "dec_deg": 40.0,
+             "poss1_e": 18.5, "sample": "vasco2020_surviving_candidates"}
+            for i in range(5)]
+    df = runmod.stage_classify(pd.DataFrame(rows), sc)
+    df, budgets, fits = runmod.stage_budget(df, sc)
+    df = V.vet_table(df, sc, budgets, fits)
+    s = runmod.stage_report(load_config(), sc, df,
+                            {"verdict": "VIZIER_FALLBACK"}, tmp_path)
+    assert s["degraded"] is True
+    assert s["funnel"]["3_with_any_ir_detection"] == 0
+    why = " ".join(s["degraded_reason"])
+    assert "NO_INFRARED_SEARCH" in why, s["degraded_reason"]
+    assert "NO_MODERN_OPTICAL_SEARCH" in why, s["degraded_reason"]
+    assert s["photometry_reached"]["infrared_searched"] is False
+    assert s["photometry_reached"]["modern_optical_searched"] is False
+    # And the human-readable report leads with it, not with the zero.
+    rep = (tmp_path / "REPORT.md").read_text()
+    assert "DEGRADED" in rep and "not about the sky" in rep
+
+
+def test_photometry_that_did_happen_is_not_called_degraded_for_it(sc, tmp_path):
+    """The other half: real photometry must not trip the new reason."""
+    rows = [_enshrouded_row(source_id="A"), _plate_defect_row("B")]
+    df = runmod.stage_classify(pd.DataFrame(rows), sc)
+    df, budgets, fits = runmod.stage_budget(df, sc)
+    df = V.vet_table(df, sc, budgets, fits)
+    s = runmod.stage_report(load_config(), sc, df,
+                            {"verdict": "USNOB1_RECONSTRUCTION"}, tmp_path)
+    assert s["photometry_reached"]["infrared_searched"] is True
+    assert s["photometry_reached"]["modern_optical_searched"] is True
+    assert s["degraded_reason"] == []
+    assert s["degraded"] is False
+
+
+def test_the_svo_probe_ladder_runs_under_a_clock(sc, monkeypatch):
+    """A dead service must not be able to eat the run that would have worked.
+
+    The number of roots is contributed by the registry and by an index
+    scrape, not by this channel, so the ladder's cost has no upper bound --- 200
+    roots x 5 forms x 25 s is seven hours.  The route AFTER it is the one that
+    can restore the sample.
+    """
+    t = [0.0]
+
+    def slow_probe(url, cfg_, data=None, timeout=None):
+        t[0] += 25.0                       # every root times out, as they do
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "_probe", slow_probe)
+    monkeypatch.setattr(acq.time, "time", lambda: t[0])
+    roots = [f"http://dead-{i}.example" for i in range(200)]
+    root, _url, prov = acq.probe_svo_catalog("vanish_neowise", roots, sc,
+                                             budget_s=300.0)
+    assert root is None
+    d = prov.as_dict()
+    assert d["status"] == "budget_exhausted", d
+    # It stopped early: 200 roots x 5 forms x 25 s is 7 hours.
+    assert len(d["attempts"]) < 40, len(d["attempts"])
+    # And it says so, so a reader cannot mistake the clock for the sky.
+    assert any("not about the service" in n for n in d["notes"]), d["notes"]
+
+
+def test_a_live_root_inside_the_budget_is_still_found(sc, monkeypatch):
+    """The clock must not cost the channel a service that does answer."""
+    def probe(url, cfg_, data=None, timeout=None):
+        if "live" in url and "RA=" in url:
+            return (b"RA\tDEC\tW1mag\tW2mag\n"
+                    b"180.000000\t0.000000\t15.1\t14.8\n"
+                    b"180.001000\t0.001000\t16.2\t15.9\n"), "HTTP 200"
+        if "live" in url:
+            return b"<html><a href='cs.php'>cone</a></html>", "HTTP 200"
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "_probe", probe)
+    root, url, prov = acq.probe_svo_catalog(
+        "vanish_neowise", ["http://dead.example", "http://live.example"], sc,
+        budget_s=600.0)
+    assert root == "http://live.example", prov.as_dict()
+    assert "RA=" in url
+    assert prov.status == "ok"
+
+
+# ===========================================================================
+# The second-digitisation reachability probe.
+# ===========================================================================
+def test_second_digitisation_probe_reports_a_live_route(sc, monkeypatch):
+    """An independent scan reachable: the route is 'ok' and names what answered."""
+    seen = []
+
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        seen.append(url)
+        if "TAPVizieR" in url and "SuperCOSMOS" in urllib.parse.unquote(url):
+            return (b'table_name,description\n'
+                    b'"II/341/sss","SuperCOSMOS Sky Survey (Hambly+ 2001)"\n'), "HTTP 200"
+        if "ssa.roe.ac.uk" in url:
+            return b"table_name\nssa.Source\n", "HTTP 200"
+        if "-meta.all" in url:
+            return b"#Column\tRAJ2000\t(deg)\tRight ascension\n", "HTTP 200"
+        return None, "HTTP 404"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    d = acq.probe_second_digitisation(sc).as_dict()
+    assert d["route"] == "second_digitisation_probe"
+    assert d["status"] == "ok"
+    assert d["n_rows"] >= 1
+    assert any("II/341/sss" in n for n in d["notes"]), d["notes"]
+    assert any("ssa.roe.ac.uk" in u for u in seen)
+
+
+def test_second_digitisation_probe_is_honest_when_nothing_answers(sc, monkeypatch):
+    """Nothing answering is a statement about the archives, not the sky ---
+    and it must FORBID the kill rather than silently skip it."""
+    cap = max(int(sc["acquire"]["second_digitisation"]["probe_timeout_s"]),
+              int(sc["acquire"].get("tap_timeout_s", 120)))
+
+    def dead(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        # A dead host in Edinburgh must not be able to eat the acquisition
+        # budget: run 30203741898 lost a whole 70-minute job to a 300 s retry
+        # ladder against a dead SVO host.
+        assert timeout <= cap, (url, timeout)
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "http_get", dead)
+    d = acq.probe_second_digitisation(sc).as_dict()
+    assert d["status"] == "unreachable"
+    assert d["n_rows"] == 0
+    assert any("no source may be vetoed" in n for n in d["notes"]), d["notes"]
+    # Every endpoint tried is on the record, with its error verbatim.
+    assert d["attempts"] and all(a["ok"] is False for a in d["attempts"])
+    assert any("ssa.roe.ac.uk" in a["url"] for a in d["attempts"])
+
+
+def test_second_digitisation_probe_runs_inside_the_acquisition(sc, tmp_path,
+                                                               monkeypatch):
+    """It is part of the route ledger, not something someone must remember."""
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        if "TAPVizieR" in url and "SuperCOSMOS" in urllib.parse.unquote(url):
+            return b'table_name,description\n"II/341/sss","SuperCOSMOS"\n', "HTTP 200"
+        return None, "HTTP 404"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    _df, prov = acq.acquire_sample(sc, tmp_path, allow_network=True, n_fields=1)
+    routes = {r["route"]: r["status"] for r in prov["routes"]}
+    assert "second_digitisation_probe" in routes, routes

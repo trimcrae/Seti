@@ -28,7 +28,7 @@ from seti.lantern.line import (
     residual_z,
     time_average_spectrum,
 )
-from seti.lantern.run import analyse_stack, load_lantern_config
+from seti.lantern.run import analyse_stack, load_lantern_config, measure_event_depth
 from seti.lantern.synth import synthesise_timeseries
 
 PATTERN = 0.01          # the ~1% static pixel pattern measured on real x1d products
@@ -203,6 +203,32 @@ def test_difference_not_attempted_without_enough_in_event_integrations(n_in):
     if rec["phase_class"] == "phase_unresolved":
         assert rec.get("ew_5sigma_limit_diff_um") is None
         assert all(f["found_in"] == "out_spectrum" for f in rec["features"])
+
+
+# --- what the limit means ---------------------------------------------------------
+
+
+@pytest.mark.parametrize("depth", [0.002, 0.01])
+def test_eclipse_depth_is_recovered_and_sets_the_beacon_fraction(depth):
+    """The equivalent-width limit is a fraction of the STAR's continuum; divided
+    by the measured eclipse depth it becomes a fraction of the PLANET's own
+    broad-band emission, which is the statement that says what kind of beacon
+    was ruled out -- and it needs no distance and no stellar model."""
+    rec, _f = _analyse(line_amp=0.0, eclipse_depth=depth)
+    ev = rec["event_depth"]
+    assert ev["depth"] == pytest.approx(depth, rel=0.1)
+    assert ev["depth_snr"] > 10
+    assert rec["line_contrast_5sigma"] > 0
+    assert rec["beacon_fraction_of_event_flux_5sigma"] == pytest.approx(
+        rec["line_contrast_5sigma"] / ev["depth"], rel=1e-6)
+
+
+def test_event_depth_degrades_rather_than_guesses():
+    f = np.ones((20, 50)) + 0.01 * np.random.default_rng(0).normal(size=(20, 50))
+    t = np.arange(20, dtype=float)
+    inn = np.zeros(20, bool)
+    inn[:2] = True                      # too few in-event integrations
+    assert measure_event_depth(f, t, inn, ~inn)["depth"] is None
 
 
 def test_difference_spectrum_offsets_to_unity():

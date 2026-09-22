@@ -392,6 +392,32 @@ Consequences for the channel:
   `R1 ≤ 19.3`, `dec ≥ −25°`, `|b| ≥ 20°`, in a deterministic Fibonacci grid of
   0.5° fields, checkpointed per field so a re-dispatch only fetches new ones.
 
+### The USNO-B1.0 route selects the catalogue's own least-reliable population
+
+This has to be said plainly, because it is the single biggest thing that could
+make the rebuilt sample worthless. `Ndet = 1` means the object was measured on
+**one** of the five plate/colour combinations USNO-B1.0 merges, and USNO-B1.0's
+own documentation warns that single-detection entries are the least reliable in
+the catalogue — the usual defensive cut is `Ndet ≥ 2`, i.e. precisely the
+opposite of this selection. Monet et al. 2003 (AJ 125, 984) are explicit that
+the catalogue contains spurious entries.
+
+That is not a reason to change the selection: **a genuinely enshrouded star
+would be `Ndet = 1`.** Present on POSS-I E and on nothing else is exactly the
+signature, so the intended population and the catalogue's junk population sit
+on top of one another and cannot be separated by the plate data alone. The
+consequence is about what may be *concluded*, not about what may be *selected*:
+
+* the raw POSS-I-red-only count is an **upper bound on the population**, never
+  a population, and `summary.json` must not quote it as one;
+* the discriminants have to come from *outside* USNO-B1.0. Two are available:
+  a **real infrared detection** (an emulsion flaw does not emit at 3–22 µm) and
+  a **second, independent digitisation of the same glass** (§ the probe route
+  above). The first is applied at selection time; the second is not yet
+  reachable and is recorded as such;
+* the offset-position null runs on the *same* selection, so whatever base rate
+  of artefacts it carries is subtracted rather than assumed away.
+
 ### Two VizieR ASU failure modes this channel has now paid for
 
 1. **A literal `+` in a query string decodes to a space.** `-c=266+65` reaches

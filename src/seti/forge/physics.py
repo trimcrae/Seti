@@ -313,7 +313,12 @@ class StarContext:
     known_companion: bool = False
     companion_note: str = ""
     companion_assessed: bool = False
+    #: the tightest polarimetric constraint on the star, in ppm.  Carried and
+    #: reported per star; deliberately NOT a term in the likelihood ratio,
+    #: because both families emit thermally at H/K and a polarisation limit
+    #: constrains scattered light rather than the emissivity law.
     polarimetry_limit_ppm: float | None = None
+    polarimetry_note: str = ""
     notes: list[str] = field(default_factory=list)
 
 
@@ -371,6 +376,16 @@ def assess_star(meas: list[Measurement], ctx: StarContext, physics: dict | None 
     ph = {**DEFAULT_PHYSICS, **(physics or {})}
     out: dict = {"key": ctx.key, "teff_k": float(ctx.teff_k), "n_meas": len(meas),
                  "measurements": [m.as_dict() for m in meas], "gates": {}}
+    # Carried on every star, never a term in chi^2 and never a kill: see
+    # StarContext.polarimetry_limit_ppm for why a scattering constraint cannot
+    # discriminate between two thermally emitting families.
+    out["polarimetry"] = {
+        "limit_ppm": (float(ctx.polarimetry_limit_ppm)
+                      if ctx.polarimetry_limit_ppm is not None else None),
+        "source": ctx.polarimetry_note,
+        "constrains": "scattered-light fraction, not the emissivity law",
+        "in_likelihood": False,
+    }
     nir = [m for m in meas if band_family(m.band) in ("H", "K") and m.kind == "meas"]
     nir_det = [m for m in nir if m.significance >= ph["nir_detection_sigma"]]
     nband = [m for m in meas if band_family(m.band) == "N"]

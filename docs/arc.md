@@ -430,41 +430,97 @@ standard deviation to a range (§3.2, ×2√2) lifts `E_mag` by 2.828^1.5 = 4.75
 i.e. **0.68 dex**, and that alone cut the conservative-positive count from 5
 to 2 and the nominal-positive count from 24 to 9.
 
+Run **35741271294** re-ran `assess` alone (288 s) with one rule changed: a
+shortlisted star takes its Teff and radius from the measured table whenever
+that table answers, not only when the record was flagged
+`stellar_params_assumed`.  Nothing else moved — 8,908 stars, 4,206 assessable,
+one star above the conservative ceiling, 13 in `watch` — but the *size* of
+that one excess did, because it had been carried on a KIC-era star table:
+`ξ_conservative,max` **+0.462 → +0.715**, `n_above_conservative` 4 → 6,
+`n_above_nominal` 11 → 12 (§9.3).  The displaced values stay on the record as
+`teff_k_before` / `radius_rsun_before` / `xi_conservative_max_before`.
+
+### 9.1a The centroid test on 21 real stars
+
+Run **35738785437** is the first stage-2 pass with the NaN-pixel fix (a single
+permanently-NaN pixel had been vetoing every cadence of a stamp, §6).  It was
+cancelled at 21 of its 30 stars in favour of a run on the current shortlist,
+and the per-star checkpoint in `stars.json` holds what it measured:
+
+| | run 35675112803 (30 stars) | run 35738785437 (21 stars) |
+|---|---|---|
+| `flare_on_target` | 6 | **8** |
+| `flare_on_neighbour` | 1 | **5** |
+| `centroid_ambiguous` | 1 | 5 |
+| `centroid_untestable` | **22** | **3** |
+
+Per flare: 58 examined, **21 on target**, **5 on a neighbour**, 9 ambiguous,
+7 with too few pixels above the difference-image threshold, 2 unattributed,
+14 untestable.  Parameters were measured for 20 of 21 stars.
+
+**Five of 21 stars had their catalogued flare land on a different Gaia source**
+— KIC 10288777 (16.8σ from the target), KIC 7009116 (14.6σ), KIC 9268205
+(7.0σ), KIC 7174965 (4.8σ), KIC 9139163 (3.9σ), each consistent with a named
+DR3 neighbour.  That is not a statement about this channel's candidates; it is
+a statement about the flare catalogues, whose per-star attribution comes from
+the pipeline aperture and has here been contradicted at up to 17σ by the
+difference image on the same cadences.
+
 ### 9.2 The two stage-1 interest stars dissolved
 
 Stage 2 (run **35675112803**, 2 h 08 m, 30 stars, 69 flares) closed the
 `stellar_params_assumed` flag on 25 of 30 stars from Berger+2020 `table2` and
 recomputed ξ:
 
-| star | ξ stage 1 | ξ measured | Teff, R★ (Berger+2020) | verdict |
-|---|---|---|---|---|
-| KIC 11507705 | +0.440 | **−0.590** | 6365 K, 1.311 R☉ | `centroid_untestable` |
-| KIC 8487271 | +0.104 | **−0.920** | 5999 K, 1.301 R☉ | `centroid_untestable` |
+| star | ξ stage 1 | ξ measured | Teff, R★, M★ (Berger+2020 `table2`) | amplitude used | centroid verdict |
+|---|---|---|---|---|---|
+| KIC 11507705 | +0.440 | **−1.240** | 6365.3 K, 1.311 R☉, 1.187 M☉ | 8.890e-4 (quarter `Rvar`) | **`centroid_ambiguous`** |
+| KIC 8487271 | +0.104 | **−0.920** | 5998.6 K, 1.301 R☉, 1.209 M☉ | 1.0746e-3 (catalogue, as range) | **`flare_on_target`** |
 
-For KIC 11507705 the 1.030 dex move decomposes exactly: **0.677 dex** from
-the `Sph` → range rescaling and **0.353 dex** from the radius (1.311 R☉ for
-an assumed 1.000).  Neither star's flare was ever on the pixels — one lost
-its light curve to `QUERY_FAILED`, the other had no difference image — so
-they are *dissolved on the parameters*, not refuted on the pixels.
+Both are settled, and settled differently from each other:
 
-**The pixel test itself works on real data**, which the same run demonstrated:
-of 69 flares examined, 9 were attributed `on_target`, **1 `on_neighbour`**
-(KIC 7009116 — the difference-image centroid landed on a Gaia neighbour, not
-the target) and 2 `ambiguous`.
+* **KIC 8487271 — the flare is on the star, and the star is under its
+  ceiling.**  Its one testable flare (t_peak 143.487, 4.57e34 erg) put the
+  difference-image centroid **0.171 px (1.5σ) from the target**, with every
+  Gaia neighbour rejected at > 3σ or excluded by arithmetic.  So the pixel
+  test passes and the object still dissolves — on the parameters, not on a
+  blend.  Its quarter `Rvar` (3.45e-4) is *smaller* than the catalogue
+  amplitude, so the conservative larger value is the one used.
+* **KIC 11507705 — ambiguous, and further below the ceiling than stage 1
+  thought.**  Of 6 catalogue flares, 2 reached the pixels: one is consistent
+  with the target *and* with Gaia DR3 2129762445437102464 (`ambiguous`), the
+  other had only 2 pixels above 20 % of the difference-image peak where 3 are
+  required; the remaining 4 were not re-detected in the light curve.  The
+  star's own quarter amplitude (8.890e-4) is **2.7× the catalogue value**, so
+  ξ falls further than §9.1's numbers: +0.440 → **−1.240**.
+
+The stage-1 → measured move for KIC 11507705 decomposes: **0.677 dex** from
+the `Sph` → range rescaling, **0.353 dex** from the radius (1.311 R☉ for an
+assumed 1.000), the rest from its own measured rotational amplitude.
 
 ### 9.3 The one star still standing: KIC 9418692
 
-Of 4,206 assessable stars, exactly one is above the conservative ceiling:
+Of 4,206 assessable stars, exactly one is above the conservative ceiling.  On
+run 35741271294's parameters (Berger+2020 `table2`: Teff 5677.4 K,
+R = 1.089 R☉, replacing the Shibayama star table's 5378 K / 1.300 R☉):
 
-* **ξ_conservative = +0.462 on 4 flares** (ξ_nominal = +1.178 on 11), of
-  14 Yang & Liu 2019 flares in 13 independent events;
-  `E_flare,max = 9.78 × 10^34 erg` against `E_mag,cons = 3.37 × 10^34 erg`.
+* **ξ_conservative = +0.715 on 6 flares** (ξ_nominal = +1.431 on 12), of 14
+  Yang & Liu 2019 flares in 13 independent events;
+  `E_flare,max = 9.78 × 10^34 erg`.  On the displaced KIC-era parameters the
+  same flares gave +0.462 on 4: the excess *grows* by 0.25 dex on the better
+  stellar parameters, which is why they are now preferred whether or not the
+  record was flagged assumed.
 * Amplitude `2.008 × 10^-4` from Santos+2021 **with** the ×2.828 range
   scaling already applied — the ceiling is not being under-counted.
-* On **Berger+2020 table2** (Teff 5677.4 K, R = 1.089 R☉) rather than the
-  Shibayama star table (5378 K, 1.300 R☉) the same flares give
-  **ξ_conservative = +0.715**: the excess *grows* by 0.25 dex on the better
-  stellar parameters.
+* **The amplitude is the whole result, and the two catalogues disagree by 3×.**
+  The same star carries a *second* stage-1 record from Shibayama+2013 whose
+  amplitude is `6.0 × 10^-4` (`amplitude_source: own`, `amplitude_unit`
+  guessed).  Put the Yang & Liu energies on Berger's radius with that
+  amplitude instead and `ξ_conservative = +0.002` — exactly at the ceiling,
+  not 0.7 dex above it, because `E_mag ∝ A^{3/2}` turns a factor 3 in
+  amplitude into 0.71 dex of ceiling.  Nothing about this object can be
+  claimed until its rotational amplitude is measured from its own light
+  curve, which is what stage 2's `amplitude_quarter_rvar` does.
 * Gaia DR3 **RUWE = 1.556** → `first_veto = companion_suspect`, which put the
   star in *no tier at all* and therefore outside every stage-2 shortlist
   (fixed: `stage2.include_vetoed_excess`).
@@ -473,13 +529,25 @@ Of 4,206 assessable stars, exactly one is above the conservative ceiling:
   G = 19.69 at 5.18″) supply 0.14 % and 0.13 % and would have to brighten by
   **39 %** and **41 %** to produce the observed aperture excess.  Neither is
   excluded by arithmetic, so only the pixels can decide.
-* Its only stage-2 pass so far ran on its *Shibayama* record — one flare row,
-  no quarter — and returned `centroid_untestable`.
+* Its only stage-2 pass so far ran on its *Shibayama* record — one flare row
+  at the 6.0e-4 amplitude, `ξ = −0.386` — and returned `centroid_untestable`.
+  Run **35744902798** is the first to put its Yang & Liu record on the pixels:
+  `load_shortlist` now ranks it first of 13 as `tier: vetoed_excess`.
 
-This is not a null and it is not a candidate.  It is **one object whose two
-killers are respectively suspected-but-unmeasured (a companion, from RUWE
-alone) and untested (the flare's pixel position, on the 14 Yang & Liu
-flares)**.  The decisive next action is a stage-2 pass on KIC 9418692's Yang
-& Liu flares with the Berger radius, and — because RUWE 1.556 is an
-astrometric *suspicion*, not a detection — a look for the companion in Gaia
-DR3 non-single-star solutions and in any archival spectroscopy.
+This is not a null and it is not a candidate.  It is **one object with three
+open questions, none of them yet answered by a measurement of this star**:
+
+1. *Which rotational amplitude is right?*  Santos+2021's `Sph` (as a range,
+   2.008e-4) puts it 0.7 dex above the ceiling; Shibayama's 6.0e-4 puts it
+   exactly at the ceiling.  Decided by `amplitude_quarter_rvar` — the star's
+   own Kepler light curve — in run 35744902798.
+2. *Is the flare on the target?*  Untested until that run.  §9.1a shows the
+   test is not a formality: it moved 5 of 21 stars onto a neighbour.
+3. *Is there a companion?*  RUWE 1.556 is an astrometric **suspicion**, not a
+   detection, and it is the only thing that vetoed the star.  Needs the Gaia
+   DR3 non-single-star solutions and any archival spectroscopy.
+
+Its Gaia census already bounds the third: the target supplies 99.73 % of the
+flux inside one Kepler pixel, and the two catalogued neighbours would have to
+brighten by 39 % and 41 % — large, but not excluded by arithmetic, which is
+precisely why the centroid and not the census is the instrument.

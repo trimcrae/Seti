@@ -496,9 +496,131 @@ def normalise_name(name: str) -> str:
     return s.replace("?", "")
 
 
+OBJECT_MATCH_ARCSEC = 5.0
+
+
+def assign_object_keys(panels: list[Panel], *, arcsec: float = OBJECT_MATCH_ARCSEC) -> dict:
+    """Reconcile PEWDD's star–paper rows into objects ON THE SKY, not on the name.
+
+    PEWDD is one row per star per publication, and the same star is written
+    under whatever designation its paper used: GD 378 and WD 1822+410 are one
+    He-atmosphere DBZ; PG 0843+516, PG 0843+517 and WD0843+516 are one DA.
+    Grouping on the (qualifier-stripped, case- and space-normalised) name
+    leaves those as separate objects, which silently disables every check that
+    compares an object's own sources -- the multi-reference disagreement kill
+    above all -- and inflates the object count.
+
+    Every served row carries RAJ2000/DEJ2000, so objects are built by
+    single-linkage on the sky within ``arcsec`` (3" by default; the count is on
+    a plateau there -- 1610 objects at 1", 1588 at 3", 1576 at 5", 1560 at 10"
+    for the 3547 served rows, against 2441 name groups).  A panel with no
+    usable coordinate keeps its name key, so nothing is lost when the
+    coordinate columns are absent.  The chosen label is the most frequent
+    stripped name in the group, and every designation is kept on the panel.
+
+    5" is the default because PEWDD's positions are transcribed per paper at
+    different epochs and white dwarfs have large proper motions: GD 362's two
+    served positions differ by 3.5".  The object count is flat across the
+    choice (1610 at 1", 1594 at 2", 1588 at 3", 1576 at 5", 1566 at 8", 1559
+    at 12" for the 3547 served rows, against 2441 name groups), and the chance
+    of a false 5" pair among ~1600 objects over the whole sky is ~1e-3.
+    """
+    ra = np.array([p.meta.get("ra", np.nan) for p in panels], dtype=float)
+    dec = np.array([p.meta.get("dec", np.nan) for p in panels], dtype=float)
+    ok = np.isfinite(ra) & np.isfinite(dec)
+    parent = list(range(len(panels)))
+
+    def find(a: int) -> int:
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    n_pairs = 0
+    if ok.sum() >= 2:
+        from scipy.spatial import cKDTree
+
+        idx = np.flatnonzero(ok)
+        r, d = np.radians(ra[idx]), np.radians(dec[idx])
+        xyz = np.c_[np.cos(d) * np.cos(r), np.cos(d) * np.sin(r), np.sin(d)]
+        chord = 2.0 * np.sin(np.radians(float(arcsec) / 3600.0) / 2.0)
+        for a, b in cKDTree(xyz).query_pairs(chord):
+            ia, ib = find(int(idx[a])), find(int(idx[b]))
+            if ia != ib:
+                parent[ia] = ib
+                n_pairs += 1
+    # The name is the UNRELIABLE key and must never link two sky positions.
+    # PEWDD carries rows whose designation belongs to a different star from
+    # their coordinates (two rows called "WD1202-232" sit 40 degrees apart;
+    # rows called "Ross 640" appear at both 16h28m+36 and 07h40m-17).  Joining
+    # on the name as well as the sky chains those into single-linkage blobs of
+    # up to 27 rows and ten unrelated designations.  So rows are joined on the
+    # name ONLY when neither has a usable coordinate.
+    name_groups: dict[str, int] = {}
+    for i, p in enumerate(panels):
+        k = p.meta.get("name_key") or normalise_name(p.name)
+        name_groups.setdefault(k, i)
+        if ok[i]:
+            continue
+        j = name_groups[k]
+        if ok[j]:
+            continue
+        ia, ib = find(j), find(i)
+        if ia != ib:
+            parent[ia] = ib
+    by_name = name_groups
+    groups: dict[int, list[int]] = {}
+    for i in range(len(panels)):
+        groups.setdefault(find(i), []).append(i)
+    n_merged_by_sky = 0
+    used_keys: dict[str, int] = {}
+    for members in sorted(groups.values(), key=lambda m: (-len(m), m[0])):
+        names = [strip_name_qualifiers(panels[i].meta.get("star_raw") or panels[i].name)
+                 for i in members]
+        keys = sorted({panels[i].meta.get("name_key") or normalise_name(panels[i].name)
+                       for i in members})
+        if len(keys) > 1:
+            n_merged_by_sky += 1
+        label = max(sorted(set(names)), key=lambda s: (names.count(s), -len(s)))
+        okey = normalise_name(label) or keys[0]
+        ras = [panels[i].meta.get("ra") for i in members
+               if np.isfinite(panels[i].meta.get("ra", np.nan))]
+        des = [panels[i].meta.get("dec") for i in members
+               if np.isfinite(panels[i].meta.get("dec", np.nan))]
+        # A designation PEWDD reuses for two different sky positions must not
+        # re-merge them downstream: the object key stays unique, tagged by
+        # position, and the clash is visible in the key itself.
+        if okey in used_keys:
+            tag = (f"@{np.mean(ras):.4f}{np.mean(des):+.4f}" if ras
+                   else f"#{used_keys[okey] + 1}")
+            used_keys[okey] += 1
+            okey = okey + tag
+        used_keys.setdefault(okey, 0)
+        for i in members:
+            panels[i].meta["object_key"] = okey
+            panels[i].meta["object_label"] = label
+            panels[i].meta["object_designations"] = keys
+            panels[i].meta["object_n_rows"] = len(members)
+            if ras:
+                panels[i].meta["object_ra"] = float(np.mean(ras))
+                panels[i].meta["object_dec"] = float(np.mean(des))
+    per_name: dict[str, set] = {}
+    for p in panels:
+        per_name.setdefault(p.meta.get("name_key") or "", set()).add(p.meta["object_key"])
+    reused = sorted(k for k, v in per_name.items() if len(v) > 1)
+    return {"match_arcsec": float(arcsec), "n_rows": len(panels),
+            "n_rows_with_coordinates": int(ok.sum()),
+            "n_name_groups": len(by_name), "n_objects": len(groups),
+            "n_objects_merging_designations": n_merged_by_sky,
+            "n_sky_links": n_pairs,
+            "n_designations_reused_across_objects": len(reused),
+            "designations_reused_across_objects": reused[:20]}
+
+
 def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.2,
                  error_floor_dex: float = 0.02, elements=None,
-                 sinking=None) -> tuple[list[Panel], list[dict]]:
+                 sinking=None, match_arcsec: float = OBJECT_MATCH_ARCSEC,
+                 grouping_out: dict | None = None) -> tuple[list[Panel], list[dict]]:
     """One panel per table row (one white dwarf, one source) from the resolved roles.
 
     Upper limits
@@ -545,7 +667,9 @@ def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.
         meta = {"row": int(i), "atmosphere_how": how, "atmosphere_raw": atm,
                 "errors_assumed_for": assumed,
                 "spt": str(row.get(roles["spt"], "")) if roles.get("spt") else "",
-                "star_raw": name, "name_key": normalise_name(name)}
+                "star_raw": name, "name_key": normalise_name(name),
+                "ra": _to_float(row.get(roles["ra"])) if roles.get("ra") else np.nan,
+                "dec": _to_float(row.get(roles["dec"])) if roles.get("dec") else np.nan}
         meta.update(_provenance_of_row(row, roles))
         meta["stated_n_detections"] = _stated_count(row, roles, "n_detections")
         meta["stated_n_upper_limits"] = _stated_count(row, roles, "n_upper_limits")
@@ -562,6 +686,14 @@ def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.
                      "n_errors_assumed": len(assumed),
                      "stated_n_detections": meta["stated_n_detections"],
                      "n_sinking_times": len(tau)})
+    grouping = assign_object_keys(panels, arcsec=match_arcsec)
+    diag_by_row = {d["row"]: d for d in diag}
+    for p in panels:
+        d = diag_by_row.get(p.meta["row"])
+        if d is not None:
+            d["object_key"] = p.meta.get("object_key")
+    if grouping_out is not None:
+        grouping_out.update(grouping)
     return panels, diag
 
 

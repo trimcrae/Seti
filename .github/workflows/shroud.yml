@@ -2,22 +2,32 @@ name: shroud
 
 # SHROUD — "enshrouded, not destroyed" (necrosignature S33).
 #
-# Analyses the never-analysed CATALOGUE BY-PRODUCT of Solano, Villarroel &
-# Rodrigo 2022 (MNRAS 515, 1380): the ~172 000 sources present on POSS-I and
-# absent from the modern optical but detected in the infrared, published to an
-# SVO VO archive and characterised only as "unidentified red transients".
+# Sources on the POSS-I red plates (1949-58) that are ABSENT from the modern
+# optical (Gaia DR3, Pan-STARRS) but PRESENT in the infrared (AllWISE, CatWISE,
+# 2MASS).  Sample routes, all tried in one dispatch and each recorded:
+#   1. the Solano+2022 SVO catalogues (vanish-neowise / vanish-possi) - short
+#      probes only; run 30203741898 found the host dead at the TCP level and
+#      burned 70 min in a 300 s retry ladder;
+#   2. VizieR TAP_SCHEMA keyword discovery + J/AJ/159/8 (Villarroel+2020);
+#   3. USNO-B1.0 (I/284) POSS-I-red-only objects (Ndet = 1, R1 <= 19.3) in a
+#      deterministic grid of high-latitude fields - the same selection, owned.
 #
-# SCOPING: this workflow touches the archival crossmatch ONLY.  It does not
-# use, replicate, or depend on the contested VASCO transient / Earth-shadow /
-# nuclear-test analyses.  See docs/shroud.md.
+# SCOPING: the archival crossmatch ONLY.  No VASCO transient / Earth-shadow /
+# nuclear-test analysis.  See docs/shroud.md.
 #
 # The sandbox has no archive egress (403); everything here runs on the runner.
 
 on:
   workflow_dispatch:
     inputs:
+      n_fields:
+        description: "USNO-B1.0 reconstruction: number of 0.5-deg fields (6 = smoke, 40 = default, 200 = full)"
+        default: "40"
+      field_radius_deg:
+        description: "Cone radius per field, degrees"
+        default: "0.5"
       max_sources:
-        description: "Truncate the sample (0 = all ~177k). Use e.g. 2000 for a smoke run."
+        description: "Truncate the sample after acquisition (0 = all)"
         default: "0"
       skip_photometry:
         description: "Skip the X-Match photometry join + offset null (true/false)"
@@ -31,12 +41,11 @@ permissions:
 
 jobs:
   # -------------------------------------------------------------------------
-  # 1. Acquire both published catalogues: the IR-present sample and the
-  #    no-counterpart control.  The channel exists to compare them.
+  # 1. Acquire: every route, short probes, field-by-field checkpoints.
   # -------------------------------------------------------------------------
   acquire:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 200
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,35 +58,70 @@ jobs:
           python -m pip install --upgrade pip -q
           pip install -e ".[dev]" -q
 
-      - name: Probe the SVO endpoints and report reachability
+      - name: Probe every endpoint and report reachability (25 s each)
         run: |
           for u in \
+            "http://svocats.cab.inta-csic.es/" \
             "http://svocats.cab.inta-csic.es/vanish-neowise/" \
-            "http://svocats.cab.inta-csic.es/vanish-possi/" \
-            "https://vizier.cds.unistra.fr/viz-bin/votable?-source=J/AJ/159/8" ; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$u" || echo "ERR")
+            "https://svocats.cab.inta-csic.es/vanish-neowise/" \
+            "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise/" \
+            "https://svo.cab.inta-csic.es/docs/index.php?pagename=Archives" \
+            "https://vizier.cds.unistra.fr/viz-bin/votable?-source=J/AJ/159/8" \
+            "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY=SELECT%20TOP%201%20table_name%20FROM%20TAP_SCHEMA.tables" \
+            "https://cdsxmatch.cds.unistra.fr/xmatch/api/v1/sync" ; do
+            code=$(curl -s -o /dev/null -w "%{http_code} %{time_total}s" --max-time 25 "$u" || echo "ERR")
             echo "REACHABILITY $code  $u"
           done
 
-      - name: Retrieve the VO catalogues (falls back to VizieR, then degrades)
+      - name: Retrieve the sample by every route
         run: |
-          timeout -k 60 4200 python -m seti.cli shroud --stage acquire \
+          timeout -k 60 10800 python -m seti.cli shroud --stage acquire \
+            --n-fields ${{ github.event.inputs.n_fields || 40 }} \
+            --field-radius-deg ${{ github.event.inputs.field_radius_deg || 0.5 }} \
+            --acquire-deadline-s 9000 \
             || echo "acquire hit the soft deadline; committing whatever landed"
-          echo "=== acquire verdict ==="
-          cat results/shroud/acquire_verdict.json 2>/dev/null | head -60 || true
+          echo "=== acquire verdict (head) ==="
+          python - <<'EOF'
+          import json, pathlib
+          p = pathlib.Path("results/shroud/acquire_verdict.json")
+          if p.exists():
+              v = json.loads(p.read_text())
+              print("verdict:", v.get("verdict"), "| rows:", v.get("n_rows"),
+                    "| per sample:", v.get("per_sample_rows"))
+              print("note:", v.get("note"))
+              for r in v.get("routes", []):
+                  print(f"- {r.get('route')}: {r.get('status')} n={r.get('n_rows')}")
+                  for n in r.get("notes", [])[:6]:
+                      print("    note:", str(n)[:300])
+                  for a in r.get("attempts", [])[:8]:
+                      print("    ", "OK " if a.get("ok") else "-- ", str(a.get("detail"))[:160], a.get("url")[:140])
+              print("vizier tables discovered:", v.get("vizier_tables_discovered"))
+          else:
+              print("no acquire_verdict.json")
+          q = pathlib.Path("results/shroud/field_ledger.json")
+          if q.exists():
+              led = json.loads(q.read_text())
+              print("fields ok:", led.get("n_fields_ok"), "/", led.get("n_fields_requested"))
+              for f in led.get("fields", [])[:60]:
+                  print(f"  field {f['field_id']:3d} ({f['ra_deg']:.2f},{f['dec_deg']:+.2f}) "
+                        f"{f['status']:>12} raw={f['n_raw']:6d} poss1only={f['n_poss1_only']:5d} "
+                        f"{f['seconds']:.0f}s {str(f.get('detail'))[:80]}")
+          EOF
           ls -la results/shroud/ || true
+          du -sh results/shroud/ || true
 
-      - name: Commit the sample + provenance
+      - name: Commit the provenance (small files only)
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f -- results/shroud ':!results/shroud/*.raw' \
-            ':!results/shroud/svo_*_raw.parquet' || true
+          for p in results/shroud/acquire_verdict.json results/shroud/field_ledger.json; do
+            git add -f -- "$p" 2>/dev/null && echo "staged: $p" || echo "absent: $p"
+          done
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else
-            git commit -m "shroud: acquire Solano+2022 VO catalogues (vanish-neowise + vanish-possi)"
+            git commit -m "shroud: acquisition provenance (SVO probe, VizieR discovery, USNO-B1.0 fields)"
             git checkout -- . 2>/dev/null || true
             git pull --rebase --autostash origin ${{ github.ref_name }} || true
             git push origin HEAD:${{ github.ref_name }} || \
@@ -95,11 +139,10 @@ jobs:
           retention-days: 30
 
   # -------------------------------------------------------------------------
-  # 2. Photometry join.  The published table was matched to NeoWISE, which
-  #    carries only W1/W2 — the energy budget needs AllWISE W3/W4 and 2MASS,
-  #    and the proper-motion test needs a WIDE-radius Gaia pull (a 200 mas/yr
-  #    star sits 12.6" from its 1953 position).  The offset-position null
-  #    measures the chance-match rate on the real sky.
+  # 2. Photometry join: AllWISE W3/W4 + CatWISE + 2MASS (IR presence), PS1 +
+  #    Gaia DR3 at 5" (modern-optical absence), Gaia at 60" for the proper-
+  #    motion back-propagation, and the offset-position null that MEASURES the
+  #    chance-match rate.  Every X-Match result is checkpointed.
   # -------------------------------------------------------------------------
   photometry:
     needs: acquire
@@ -125,11 +168,23 @@ jobs:
 
       - name: X-Match join + offset-position null
         run: |
-          timeout -k 60 20400 python -m seti.cli shroud --stage photometry \
+          timeout -k 60 20000 python -m seti.cli shroud --stage photometry \
             --max-sources ${{ github.event.inputs.max_sources || 0 }} \
             || echo "photometry hit the soft deadline; partial join kept"
-          echo "=== chance-match null ==="
-          cat results/shroud/null_stats.json 2>/dev/null || true
+          echo "=== photometry provenance ==="
+          python - <<'EOF'
+          import json, pathlib
+          p = pathlib.Path("results/shroud/photometry_provenance.json")
+          if p.exists():
+              for k, v in json.loads(p.read_text()).items():
+                  print(f"- {k}: {v.get('status')} n={v.get('n_rows')} r={v.get('radius_arcsec')}")
+                  for a in v.get("attempts", [])[:4]:
+                      print("    ", "OK " if a.get("ok") else "-- ", str(a.get("detail"))[:200])
+          q = pathlib.Path("results/shroud/null_stats.json")
+          if q.exists():
+              s = json.loads(q.read_text())
+              print({k: s[k] for k in s if k != "realisations"})
+          EOF
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -141,14 +196,14 @@ jobs:
 
   # -------------------------------------------------------------------------
   # 3. Classify, fit both SED models, run the energy budget, vet, report.
-  #    This stage is pure computation and always runs, so a failed or skipped
-  #    photometry join still produces an honest (degraded) report.
+  #    Pure computation; always runs so a failed join still yields an honest
+  #    (degraded) report.
   # -------------------------------------------------------------------------
   analyze:
     needs: [acquire, photometry]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
         with:
@@ -163,12 +218,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: shroud-photometry
+          name: shroud-sample
           path: results/shroud/
         continue-on-error: true
       - uses: actions/download-artifact@v4
         with:
-          name: shroud-sample
+          name: shroud-photometry
           path: results/shroud/
         continue-on-error: true
       - name: Re-reduce a previous run instead (optional)
@@ -180,11 +235,11 @@ jobs:
             -n shroud-photometry -D results/shroud/ || true
 
       - name: Offline gate — the physics must pass its own tests first
-        run: python -m pytest tests/test_shroud.py -q
+        run: python -m pytest tests/test_shroud.py tests/test_shroud_acquire.py -q -p no:warnings
 
       - name: Classify, fit, budget, vet, report
         run: |
-          timeout -k 60 12600 python -m seti.cli shroud --stage analyze \
+          timeout -k 60 16000 python -m seti.cli shroud --stage analyze \
             --offline \
             --max-sources ${{ github.event.inputs.max_sources || 0 }} \
             || echo "analyze hit the soft deadline; partial report kept"
@@ -196,14 +251,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Keep the small, reviewable outputs; the bulk tables stay artifacts.
           # One path at a time: `git add` with several pathspecs is ATOMIC, so a
-          # single missing file makes it stage NOTHING, the `|| true` swallows
-          # the error, and the whole run's results are silently lost.
+          # single missing file makes it stage NOTHING.
           for p in results/shroud/summary.json results/shroud/REPORT.md \
                    results/shroud/population.csv results/shroud/survivors.csv \
                    results/shroud/null_stats.json \
                    results/shroud/acquire_verdict.json \
+                   results/shroud/field_ledger.json \
                    results/shroud/photometry_provenance.json; do
             git add -f -- "$p" 2>/dev/null && echo "staged: $p" || echo "absent: $p"
           done

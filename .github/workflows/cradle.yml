@@ -1,0 +1,463 @@
+name: cradle
+
+# CRADLE — the shattered cradle (S52) and slag, not glass (S53); docs/cradle.md.
+#
+#   probe ──▶ acquire (N shards, HEALPix source_id ranges) ──▶ screen ──▶
+#   ages (M shards over the shortlist) ──▶ assess ──▶ commit-back
+#
+# The target is ONE EMPTY CELL: 250 <= T_bb <= 350 K (the habitable-zone
+# blackbody temperature) AND log10(f / f_max) > 3 (three decades above the
+# Wyatt et al. 2007 collisional steady-state maximum) AND age > 1 Gyr from
+# >= 2 INDEPENDENT indicators.  Every known extreme debris disk is either
+# young or hot; nothing is known in the cell.
+#
+# What the inherited channels taught, encoded below:
+#  * IGNITION run 34787803862: a FLAT three-table Gaia x AllWISE join cannot
+#    return even TOP 5 — the planner starts from the 750M-row AllWISE mirror.
+#    Every query here puts the Gaia-only cuts in an inner sub-select on
+#    gaia_source ALONE (seti.cradle.sample.build_query), and the probe measures
+#    each join SHAPE before the acquire stage trusts one.
+#  * VIGIL: an aggregator that runs over an empty tree writes a null that is
+#    really a no-data run.  The assess job LISTS what it downloaded and FAILS
+#    if the ages matrix ran but no shard output reached it.
+#  * Every shard checkpoints per HEALPix unit (CSV append + progress JSON) and
+#    uploads with `if: always()`, so a killed shard loses one unit, not a run.
+#  * Commit-back goes through scripts/commit_results.sh, which VERIFIES the push.
+#
+# Sky coverage is exact, not sampled: source_id carries the level-12 NESTED
+# HEALPix index in its high bits, so 768 level-3 pixels ARE the whole sky as
+# contiguous primary-key ranges, with no gaps and no double counting.  Pixel k
+# goes to shard k mod n.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (probe, acquire matrix, screen, ages matrix, assess),
+          "probe" (the archive probe only — run this first), "acquire",
+          "screen", "ages", or "assess".
+        required: false
+        default: "all"
+      shards:
+        description: "Number of acquire shards (HEALPix units are split k mod n)"
+        required: false
+        default: "8"
+      age_shards:
+        description: "Number of ages/enrichment shards over the shortlist"
+        required: false
+        default: "4"
+      max_units:
+        description: >-
+          Cap on HEALPix units per acquire shard (0 = every unit of the shard;
+          768 units total at level 3, so 8 shards of 96).  A pilot sets this.
+        required: false
+        default: "0"
+      max_stars_per_shard:
+        description: "Cap on shortlist stars enriched per ages shard (0 = all)"
+        required: false
+        default: "0"
+      reduce_only_run_id:
+        description: "Skip probe/acquire/screen/ages; assess from this prior run's artifacts"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.mk.outputs.matrix }}
+      age_matrix: ${{ steps.mk.outputs.age_matrix }}
+      n_shards: ${{ steps.mk.outputs.n_shards }}
+      n_age_shards: ${{ steps.mk.outputs.n_age_shards }}
+    steps:
+      - id: mk
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          n = int("${{ github.event.inputs.shards || '8' }}" or 8)
+          m = int("${{ github.event.inputs.age_shards || '4' }}" or 4)
+          print("matrix=" + json.dumps({"include": [{"shard": i} for i in range(n)]}))
+          print("age_matrix=" + json.dumps({"include": [{"shard": i} for i in range(m)]}))
+          print(f"n_shards={n}")
+          print(f"n_age_shards={m}")
+          PY
+
+  probe:
+    needs: plan
+    if: ${{ github.event.inputs.reduce_only_run_id == '' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'probe') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Offline gate — injected cradle recovered, Sco-Cen and galaxy blends vetoed
+        run: python -m pytest tests/test_cradle.py -q -p no:cacheprovider
+      - name: Probe the archives (ESA mirror columns, each join shape, controls, IRSA, VizieR)
+        # Nothing here is asserted: the column spellings, the working join shape,
+        # whether the three control stars resolve and land in the join, whether
+        # irs_enhv211 exists and how many rows it has, whether a NEOWISE cone
+        # answers, and whether each VizieR table is real.  probe.json is what the
+        # acquire stage reads for the shape order.
+        run: |
+          python -m seti.cradle.run --stage probe
+          echo "=== probe.json ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/cradle/probe.json"))
+          print("verdict:", d.get("verdict"), "| route:", d.get("parent_route"),
+                "| shape_working:", d.get("shape_working"))
+          for s in d.get("gaia_shapes", []):
+              print(f"  shape {s.get('shape')}: {s.get('status')} rows={s.get('n_rows')} "
+                    f"{s.get('seconds')}s transport={s.get('transport')} "
+                    f"{str(s.get('error') or '')[:240]}")
+          for k, v in (d.get("esa") or {}).items():
+              print(f"  esa/{k}: {v.get('status')} n_columns={v.get('n_columns')} "
+                    f"{str(v.get('error') or '')[:160]}")
+              if v.get("missing"):
+                  print(f"    MISSING: {v['missing']}  resolved={v.get('resolved')}")
+              if v.get("id_column"):
+                  print(f"    id_column={v['id_column']}")
+          for k, v in (d.get("irsa") or {}).items():
+              print(f"  irsa/{k}: {v}" if not isinstance(v, dict) else
+                    f"  irsa/{k}: {v.get('status')} n_columns={v.get('n_columns')} "
+                    f"file_like={v.get('file_like_columns')} {str(v.get('error') or '')[:160]}")
+          print("  irs columns:", (d.get("irsa", {}).get("irs") or {}).get("columns"))
+          for c in d.get("controls", []):
+              print(f"  control {c.get('name')}: method={c.get('method')} status={c.get('status')} "
+                    f"ra={c.get('ra')} dec={c.get('dec')}")
+          for r in d.get("controls_rows", []):
+              print(f"    row: {r}")
+          print("  vizier:", json.dumps(d.get("vizier"), default=str)[:1200])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cradle-probe
+          path: results/cradle/probe.json
+          if-no-files-found: warn
+      - name: Commit the probe evidence
+        # A GREEN RUN THAT COMMITS NOTHING IS A LOST RUN.
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "cradle: probe — which Gaia join shape answers, which columns exist, where the controls are" \
+            results/cradle/probe.json
+
+  acquire:
+    needs: [plan, probe]
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire') && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4          # be a good citizen toward the ESA TAP service
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Take the probe's shape order if this run produced one
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: cradle-probe
+          path: results/cradle/
+      - name: Acquire shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} (HEALPix units, checkpointed)
+        run: |
+          python -m seti.cradle.run --stage acquire \
+            --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} \
+            --max-units ${{ github.event.inputs.max_units || '0' }}
+          ls -la results/cradle/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cradle-acquire-${{ matrix.shard }}
+          path: |
+            results/cradle/parent_s*.csv
+            results/cradle/acquire_s*.json
+          if-no-files-found: warn
+
+  screen:
+    needs: [plan, acquire]
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'screen') && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cradle-acquire-*
+          merge-multiple: true
+          path: results/cradle/
+      - name: What reached this job
+        run: |
+          ls -la results/cradle/ | head -60
+          N=$(ls results/cradle/parent_s*.csv 2>/dev/null | wc -l)
+          echo "parent shard files found: $N of ${{ needs.plan.outputs.n_shards }}"
+      - name: Screen (empirical loci, W3/W4 excess, T_bb, f, log f/f_max)
+        run: |
+          python -m seti.cradle.run --stage screen
+          echo "=== screen.json ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/cradle/screen.json"))
+          print("verdict:", d.get("verdict"), "| n_raw:", d.get("n_raw"),
+                "| n_parent:", d.get("n_parent"), "| n_shortlist:", d.get("n_shortlist"))
+          print("coverage:", json.dumps(d.get("coverage"), default=str)[:1200])
+          print("funnel:", json.dumps(d.get("funnel"), default=str))
+          print("T_bb histogram above f_max:", json.dumps(d.get("t_bb_histogram_above_fmax")))
+          print("locus bins:", {b: v.get("n_bins") for b, v in (d.get("loci") or {}).items()})
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cradle-screen
+          path: |
+            results/cradle/shortlist.csv
+            results/cradle/screen.json
+            results/cradle/parent_screened.csv
+          if-no-files-found: warn
+      - name: Commit the screen evidence (the funnel, not the parent dump)
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "cradle: screen — the excess funnel and the T_bb distribution above f_max" \
+            results/cradle/screen.json \
+            $(ls results/cradle/shortlist.csv 2>/dev/null)
+
+  ages:
+    needs: [plan, screen]
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'ages') && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 2          # NEOWISE + VizieR cones per star; do not hammer IRSA
+      matrix: ${{ fromJSON(needs.plan.outputs.age_matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cradle-screen
+          merge-multiple: true
+          path: results/cradle/
+      - name: Take the probe's VizieR verdicts if this run produced them
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: cradle-probe
+          path: results/cradle/
+      - name: Enrich + age shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_age_shards }}
+        # Gaia beam neighbours, IRSA profile fits, SIMBAD, E(B-V), NEOWISE,
+        # VizieR known-disk and rotation catalogues, Spitzer/IRS + the S53
+        # mineralogy score; then the >= 2 independent age indicators.
+        run: |
+          MS=""
+          if [ "${{ github.event.inputs.max_stars_per_shard || '0' }}" != "0" ]; then
+            MS="--max-stars-per-shard ${{ github.event.inputs.max_stars_per_shard }}"
+          fi
+          python -m seti.cradle.run --stage ages \
+            --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_age_shards }} $MS
+          ls -la results/cradle/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cradle-ages-${{ matrix.shard }}
+          path: |
+            results/cradle/enriched_s*.csv
+            results/cradle/ages_s*.json
+          if-no-files-found: warn
+
+  assess:
+    needs: [plan, screen, ages]
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'assess') && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cradle-*
+          merge-multiple: true
+          path: results/cradle/
+      - name: What reached this job (VIGIL's aggregator ran on an empty tree and called it a null)
+        run: |
+          ls -la results/cradle/ | head -80
+          N=$(ls results/cradle/enriched_s*.csv 2>/dev/null | wc -l)
+          echo "ages shard files found: $N of ${{ needs.plan.outputs.n_age_shards }}"
+          if [ "$N" = "0" ] && [ "${{ needs.ages.result }}" = "success" ]; then
+            echo "::error::the ages matrix succeeded but no shard output reached assess — artifact passthrough failed; refusing to write a verdict over nothing"
+            exit 1
+          fi
+      - name: Assess (kill list, classes, controls, candidates.csv, summary.json)
+        run: |
+          python -m seti.cradle.run --stage assess --shards ${{ needs.plan.outputs.n_age_shards }}
+          echo "=== summary.json ==="
+          python - <<'PY'
+          import json
+          s = json.load(open("results/cradle/summary.json"))
+          print("VERDICT:", s.get("verdict"))
+          print("stage_counts:", json.dumps(s.get("stage_counts")))
+          print("funnel:", json.dumps(s.get("funnel"), default=str))
+          print("classes:", json.dumps(s.get("classes")))
+          print("degraded:", json.dumps(s.get("degraded")))
+          for c in s.get("controls", []):
+              print(f"  control {c.get('name')}: found={c.get('found')} "
+                    f"class={c.get('cradle_class')} T_bb={c.get('t_bb_k')} "
+                    f"log(f/fmax)={c.get('log_f_fmax_1gyr')} age_class={c.get('age_class')} "
+                    f"kills={c.get('kill_reasons')}")
+              print(f"    expected: {c.get('expected')}")
+          for c in s.get("candidates", []):
+              print("  CANDIDATE:", json.dumps(c, default=str)[:2000])
+          for c in s.get("in_cell_age_undetermined", []):
+              print("  in-cell, age undetermined:", json.dumps(c, default=str)[:800])
+          print("vet counters:", json.dumps(s.get("vet_counters"), default=str)[:2000])
+          PY
+      - name: Assert the verdict is not a disguised no-data run
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/cradle/summary.json")
+          if not p.exists():
+              print("::error::no summary.json — the assess stage produced nothing"); sys.exit(1)
+          s = json.loads(p.read_text())
+          v = s.get("verdict", "")
+          n = int((s.get("stage_counts") or {}).get("screened", 0) or 0)
+          if n == 0 and "NO_DATA_REACHED" not in v:
+              print(f"::error::verdict {v!r} with 0 screened stars is a disguised no-data run"); sys.exit(1)
+          if "NO_DATA_REACHED" in v:
+              print(f"::warning::NO_DATA_REACHED ({s.get('reason')}) — nothing was tested; see summary.json")
+          if "NO_CRADLE_CANDIDATE" in v:
+              f = s.get("funnel") or {}
+              print(f"::notice::{n} stars screened, {f.get('n_in_cell')} in the cell, none mature and unkilled. "
+                    "A COUNT, NOT AN OCCURRENCE LIMIT — see docs/cradle.md.")
+          if "CRADLE_CANDIDATES" in v:
+              print(f"::notice::{s.get('n_candidates')} candidate(s) in the 250-350 K, >3 dex, >1 Gyr cell "
+                    "— see results/cradle/candidates.csv")
+          if s.get("degraded"):
+              print(f"::warning::degraded: {s['degraded']}")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          # Small files only: parent_s*.csv and parent_screened.csv travel as artifacts.
+          scripts/commit_results.sh \
+            "cradle: S52/S53 — warm debris at the HZ radius of a mature star" \
+            results/cradle/summary.json \
+            results/cradle/controls.json \
+            $(ls results/cradle/candidates.csv 2>/dev/null) \
+            $(ls results/cradle/screen.json 2>/dev/null) \
+            $(ls results/cradle/probe.json 2>/dev/null) \
+            $(ls results/cradle/ages_s*.json 2>/dev/null) \
+            $(ls results/cradle/acquire_s*.json 2>/dev/null)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cradle-final
+          path: results/cradle/
+          if-no-files-found: warn
+
+  assess-only:
+    if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch artifacts from a prior run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cradle-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/cradle/
+      - name: Assess
+        run: |
+          ls -la results/cradle/ | head -80
+          N=$(ls results/cradle/enriched_s*.csv 2>/dev/null | wc -l)
+          echo "ages shard files found: $N"
+          if [ "$N" = "0" ]; then
+            echo "::error::no ages shard output in run ${{ github.event.inputs.reduce_only_run_id }}'s artifacts; refusing to write a verdict over nothing"
+            exit 1
+          fi
+          python -m seti.cradle.run --stage assess --shards ${{ github.event.inputs.age_shards || '4' }}
+          head -c 8000 results/cradle/summary.json
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "cradle: re-assess of a prior run's shards" \
+            results/cradle/summary.json \
+            results/cradle/controls.json \
+            $(ls results/cradle/candidates.csv 2>/dev/null)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cradle-final
+          path: results/cradle/
+          if-no-files-found: warn

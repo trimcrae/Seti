@@ -159,7 +159,42 @@ fdr:
 acquire:
   instruments: ["NIRSPEC", "NIRISS", "NIRCAM", "MIRI"]
   match_radius_arcsec: 30.0
-  max_file_bytes: 3.0e9
+  # One product is on disk at a time (downloaded, read, deleted); the runner
+  # has ~25 GB free after the dotnet/android purge, and the reader only
+  # materialises the spectral columns it needs (astropy memmap).  The largest
+  # public product in the 2026-09 inventory is 10.3 GB (WASP-76, G395H).
+  max_file_bytes: 12.0e9
   product_batch: 15
   retries: 3
   retry_pause_s: 5.0
+  # In-memory cap on n_int x n_wl per grid; longer stacks are co-added in
+  # time first, never by more than max_bin_minutes nor a quarter of the
+  # shortest ingress of the host's planets (the bin is recorded per exposure).
+  max_samples_in_memory: 40.0e6
+  max_bin_minutes: 3.0
+  # Planner: the level-3 product (calwebb_tso3: every segment and detector of
+  # the visit in one file) supersedes its level-2 segments when it holds at
+  # least this fraction of their bytes; otherwise the segments are used.
+  level3_min_byte_fraction: 0.7
+  plan_cadence_minutes: 1.0
+
+verify:
+  # Known eclipses run through the real reader and labeller on the runner
+  # BEFORE the screen (docs/lantern.md section 3.7): the broad-band continuum
+  # must drop, significantly and by a planetary amount, exactly where the
+  # ephemeris puts the occultation; and a vanishing line injected at
+  # `injection_amp` of the local continuum must come back as a candidate.
+  min_depth_snr: 5.0
+  depth_range: [1.0e-4, 2.0e-2]
+  injection_amp: 0.02
+  cases:
+    - name: WASP-43b_MIRI_LRS_phase_curve_jw01366-o011
+      host: WASP-43
+      exposure_key: jw01366-o011_t002_miri_p750l-slitlessprism
+      expect: eclipse          # a phase curve: 'both' is accepted
+      uris: ["mast:JWST/product/jw01366-o011_t002_miri_p750l-slitlessprism_x1dints.fits"]
+    - name: WASP-18b_NIRISS_SOSS_eclipse_jw01366-o021
+      host: WASP-18
+      exposure_key: jw01366-o021_t003_niriss_clear-gr700xd-substrip96
+      expect: eclipse
+      uris: ["mast:JWST/product/jw01366-o021_t003_niriss_clear-gr700xd-substrip96_x1dints.fits"]

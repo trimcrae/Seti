@@ -2,10 +2,13 @@ name: ignition
 
 # IGNITION — an infrared excess being born on an old star (docs/ignition.md).
 #
-#   sample ──▶ acquire+screen (N parallel shards) ──▶ assess ──▶ commit-back
+#   fields mode:  sample ──▶ acquire+screen (N shards) ──▶ assess ──▶ commit-back
+#   tiles  mode:  probe  ──▶ sweep+screen  (N shards, each samples AND acquires
+#                            its own tiles under one wall clock and commits its
+#                            own sweep/screen record) ──▶ assess ──▶ commit-back
 #     ▲
 #   probe (first, cheap): the Gaia x AllWISE join, the NEOWISE cone on a
-#   resolved star, and the TAP_UPLOAD join — decides the acquire route.
+#   resolved star, and the UPLOAD LADDER on two stars — decides the acquire route.
 #
 # Signature S61 (docs/necrofrontier.md §2 XIV): a takeover's resource-
 # acquisition phase is exponential over decades, so the residue in a decade-
@@ -15,29 +18,32 @@ name: ignition
 # TIME SIGNATURE: born excesses (impacts, comet swarms) rise in < 1 yr and
 # decay; obscured-AGN turn-ons rise for a decade but have no parallax.
 #
-# What VIGIL's run taught, encoded below:
-#  * per-star NEOWISE cones cost ~92 s each; the field-wide cone + local
-#    KD-tree grouping (VIGIL's fix) is the proven route, and the upload join
-#    is PROBED before it is relied on;
+# What run 35039105536 (2026-09-16, the first full run) taught, encoded below:
+#  * the field route at 1 degree near the ecliptic poles is 2.4-4.7 M rows a
+#    cone: 1.5 GB VOTables, IncompleteRead / RemoteDisconnected / 502, 20-65 min
+#    per query, TOP-4M truncation, two shards killed at the job limit with no
+#    checkpoint — 314 of 336 attempted stars lost.  It is never recommended now;
+#  * the TAP_UPLOAD join was refused with `QUERY must be set`: pyvo's multipart
+#    form on the async queue.  A transport failure, so the probe now walks a
+#    LADDER (pyvo sync, raw HTTP sync/async with the parameters in the URL,
+#    IRSA Gator multi-object) and records the rung that answered;
+#  * the per-star cone worked (4,110 rows in 15.6 s) and is the fallback, per
+#    chunk and per shard, running `cone_workers` at a time;
+#  * 97 of 172 screened stars were FADING at 5 sigma in both bands: the
+#    survey's zero point, not the stars.  The screen now subtracts the shard's
+#    ensemble offset per 0.25-yr bin and records it, with the raw slope kept
+#    per star;
+#  * a stale shard file from an earlier matrix (s0of8 next to s0of16) must not
+#    be summed into a new verdict: assess reads only `*of{N}` files.
+#
+# What VIGIL's run taught, still encoded:
 #  * VIGIL's summary.json said NO_DATA_REACHED over eight field summaries that
 #    said SEARCHED: the aggregator ran without the per-field artefacts.  The
 #    assess job here LISTS what it downloaded, and FAILS if the acquire matrix
 #    ran but no shard output reached it (a disguised no-data run);
-#  * every shard checkpoints (CSV append + progress JSON) and uploads with
-#    `if: always()`, so a killed shard loses one batch, not a run;
+#  * every shard checkpoints (CSV append + progress JSON; tiles mode also per
+#    tile) and uploads with `if: always()`, so a killed shard loses one batch;
 #  * commit-back through scripts/commit_results.sh, which VERIFIES the push.
-#
-# What run 34787803862 (`--stage probe`, GREEN, 25 min, nothing committed) taught:
-#  * its flat three-table Gaia x AllWISE join could not return even TOP 5 inside a
-#    1-degree cone (`canceling statement due to statement timeout`), and its 503
-#    says it went to the SYNCHRONOUS endpoint.  The probe now tries the candidate
-#    query SHAPES in order (inner sub-select on gaia_source first, flat last),
-#    async-first, under a per-shape wall-clock budget, and records the shape and
-#    queue that answered so the sample stage does not re-derive them;
-#  * it committed NOTHING: the probe path uploaded an artifact and the assess job
-#    that owns the commit-back is skipped for stage=probe, so the only evidence
-#    was a log read by hand.  The sample job now commits results/ignition/probe.json
-#    itself, artifact AND commit.
 
 on:
   workflow_dispatch:
@@ -45,38 +51,70 @@ on:
       stage:
         description: >-
           "all" (probe, sample, acquire+screen matrix, assess), "probe" (the
-          archive probe only — run this first), or "assess" with
-          reduce_only_run_id to re-assess a prior run's shard artifacts.
+          archive probe only), or "assess" with reduce_only_run_id to
+          re-assess a prior run's shard artifacts.
         required: false
         default: "all"
-      shards:
-        description: "Number of acquire+screen shards"
-        required: false
-        default: "8"
-      max_stars:
-        description: >-
-          Cap on stars per shard (sample rows per shard AND stars fetched per
-          shard).  The pilot's honest denominator; 0 = config default (20000).
-        required: false
-        default: "2000"
       mode:
-        description: "Sample mode: fields (proven field-cone route) or allsky (needs the upload route)"
+        description: >-
+          Sample mode: "fields" (the 20 configured ecliptic-pole cones),
+          "allsky" (parallax shells; needs the upload route) or "tiles" (the
+          whole |b| > 15 sky in ~4-degree boxes, each shard sampling AND
+          acquiring its own tiles under a wall clock — the scale mode).
         required: false
         default: "fields"
+      shards:
+        description: "Number of acquire+screen (or sweep) shards"
+        required: false
+        default: "8"
+      max_parallel:
+        description: "Shards running at once (each holds cone_workers IRSA connections)"
+        required: false
+        default: "4"
+      budget_min:
+        description: >-
+          tiles mode: minutes after which a shard stops STARTING tiles (its
+          finished tiles are complete and committed).  The job timeout is this
+          plus 60.  Default 150 (~3 h wall clock per dispatch).
+        required: false
+        default: "150"
+      tile_deg:
+        description: "tiles mode: box side in degrees (0 = config default, 4)"
+        required: false
+        default: "0"
+      max_stars:
+        description: >-
+          fields/allsky: cap on stars per shard (sample rows per shard AND stars
+          fetched per shard).  0 = config default (20000).
+        required: false
+        default: "2000"
       route:
-        description: "NEOWISE route: auto (from probe.json) | upload | field | cone"
+        description: "NEOWISE route: auto (from probe.json) | upload | cone | field"
         required: false
         default: "auto"
       parent_route:
         description: >-
-          Parent-sample route: "auto" (ESA Gaia TAP first, then the IRSA route
-          — ESA's gaia_source under the gaia_only shape joined positionally to
-          IRSA's own AllWISE table, which avoids the 750M-row AllWISE mirror
-          inside ESA that timed out every joined shape — then VizieR's non-TAP ASU
-          mirrors as the fallback for any chunk ESA does not answer) or
-          "esa_only" (no fallback).  ESA is tried first either way.
+          Parent-sample route: "auto" (ESA Gaia TAP first, then the IRSA route,
+          then VizieR's non-TAP ASU mirrors) or "esa_only" (no fallback).
         required: false
         default: "auto"
+      sample_from_run_id:
+        description: >-
+          Skip the probe AND the sample: take probe.json / sample.json /
+          parent.parquet from this prior run's `ignition-sample` artifact and
+          go straight to acquire.  Run 35653615329's sample step ran 2 h 22 min
+          over the same 20 cones without finishing (ESA was slow that night)
+          and the acquire matrix never started; the 846-star parent it needs
+          was already pulled, in 719 s, by run 35039105536.  A parent that is
+          already on disk is not worth re-pulling.
+        required: false
+        default: ""
+      resume_run_id:
+        description: >-
+          Resume each shard from the `ignition-shard-<i>` artifact of this prior
+          run (same shard count): finished tiles and stars are not re-fetched.
+        required: false
+        default: ""
       reduce_only_run_id:
         description: "Skip probe/sample/acquire; assess from this prior run's artifacts"
         required: false
@@ -93,14 +131,26 @@ jobs:
     outputs:
       matrix: ${{ steps.mk.outputs.matrix }}
       n_shards: ${{ steps.mk.outputs.n_shards }}
+      max_parallel: ${{ steps.mk.outputs.max_parallel }}
+      timeout_min: ${{ steps.mk.outputs.timeout_min }}
+      budget_s: ${{ steps.mk.outputs.budget_s }}
     steps:
       - id: mk
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           n = int("${{ github.event.inputs.shards || '8' }}" or 8)
+          mp = int("${{ github.event.inputs.max_parallel || '4' }}" or 4)
+          budget_min = int("${{ github.event.inputs.budget_min || '150' }}" or 150)
+          mode = "${{ github.event.inputs.mode || 'fields' }}"
+          # tiles: the shard clock plus an hour for the screen and the upload;
+          # fields/allsky: the old generous limit.  Never above GitHub's 360.
+          timeout_min = min(budget_min + 60, 355) if mode == "tiles" else 350
           print("matrix=" + json.dumps({"include": [{"shard": i} for i in range(n)]}))
           print(f"n_shards={n}")
+          print(f"max_parallel={max(1, min(mp, n))}")
+          print(f"timeout_min={timeout_min}")
+          print(f"budget_s={budget_min * 60}")
           PY
 
   sample:
@@ -119,22 +169,41 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Offline gate — injected ramp recovered, impact rejected, on this runner
-        run: python -m pytest tests/test_ignition.py -q -p no:cacheprovider -k "injected or impact or no_data or one_band"
-      - name: Probe the archives (Gaia shapes, the IRSA and VizieR ASU routes, NEOWISE, TAP_UPLOAD)
-        # Run 34787803862 spent 1,490 s on four retries of a flat three-table join
-        # that could not succeed.  The probe now tries the candidate query shapes
-        # in order under a wall-clock budget (config/ignition.yaml -> probe:
-        # budget_s per shape, total_budget_s for the stage), records which shape
-        # and which queue answered, and moves on rather than waiting.
-        #
-        # And what the 2026-09-14T00:22Z probe taught: ALL THREE shapes TIMED_OUT
-        # and both queues were refused, so the block is at the ESA archive itself
-        # and no ADQL can get past it.  The probe now also tries the SECOND route
-        # to the same parent sample -- VizieR's non-TAP ASU interface
-        # (viz-bin/asu-tsv), the transport that served ULINE's table the same
-        # night -- and records `parent_route_recommended` so this run says which
-        # source the sample stage will actually get the parent from.
+      - name: Offline gate — injected ramp recovered, impact rejected, drift removed, on this runner
+        run: |
+          python -m pytest tests/test_ignition.py -q -p no:cacheprovider -k "injected or impact or no_data or one_band"
+          python -m pytest tests/test_ignition_scale.py -q -p no:cacheprovider -k "ladder or drift or tile_grid or sweep_stage"
+      - name: Reuse a prior run's parent sample (skip probe + sample)
+        if: ${{ github.event.inputs.sample_from_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ignition-sample
+          run-id: ${{ github.event.inputs.sample_from_run_id }}
+          github-token: ${{ github.token }}
+          path: results/ignition/
+      - name: What the reused sample contains
+        if: ${{ github.event.inputs.sample_from_run_id != '' }}
+        run: |
+          ls -la results/ignition/
+          # The reused artifact's probe.json is an OLDER run's archive record.
+          # Drop it: the branch's own probe.json (the most recent live probe) is
+          # what `--route auto` must read, and it must not be overwritten by a
+          # record this dispatch did not gather.
+          git checkout -- results/ignition/probe.json 2>/dev/null || rm -f results/ignition/probe.json
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/ignition/parent.parquet")
+          if not p.exists():
+              print("::error::run ${{ github.event.inputs.sample_from_run_id }} carried no parent.parquet"); sys.exit(1)
+          import pandas as pd
+          df = pd.read_parquet(p)
+          print(f"reused parent: {len(df)} stars, columns {list(df.columns)[:12]}")
+          s = json.loads(pathlib.Path("results/ignition/sample.json").read_text())
+          print("route_used:", s.get("route_used"), "n_units:", s.get("n_units"),
+                "parent_count:", s.get("parent_count"), "elapsed_s:", s.get("elapsed_s"))
+          PY
+      - name: Probe the archives (Gaia shapes, the IRSA and VizieR ASU routes, NEOWISE cone, the upload ladder)
+        if: ${{ github.event.inputs.sample_from_run_id == '' }}
         run: |
           python -m seti.ignition.run --stage probe
           echo "=== probe.json ==="
@@ -145,26 +214,23 @@ jobs:
           for s in d.get("gaia_shapes", []):
               print(f"  {s.get('shape')}: {s.get('status')} in {s.get('elapsed_s')} s "
                     f"queue={s.get('queue')} {str(s.get('error') or '')[:200]}")
-          vz = d.get("vizier_asu") or {}
           print("parent_route_recommended:", d.get("parent_route_recommended"))
-          print(f"  vizier_asu: {vz.get('status')} rows={vz.get('n_rows')} "
-                f"catalogues={vz.get('catalogues')} {str(vz.get('error') or '')[:200]}")
-          for side in ("gaia", "allwise"):
-              s = vz.get(side) or {}
-              print(f"    {side}: {s.get('status')} {str(s.get('url') or '')[:220]}")
-              print(f"      missing={s.get('columns_missing')} "
-                    f"err={str(s.get('error') or '')[:200]}")
+          print("neowise_route_recommended:", d.get("neowise_route_recommended"),
+                "upload_transport:", d.get("neowise_upload_transport"))
+          up = d.get("neowise_upload") or {}
+          print(f"  upload: {up.get('status')} label={up.get('label')} rows={up.get('n_rows')} "
+                f"{up.get('elapsed_s')} s")
+          print("  upload errors:", str(up.get("error") or "")[:1500])
+          nc = d.get("neowise_cone") or {}
+          print(f"  cone: {nc.get('status')} rows={nc.get('n_rows')} {nc.get('elapsed_s')} s")
           print(json.dumps({k: d[k] for k in d
-                            if k not in ("allwise_columns_seen", "gaia_shapes", "vizier_asu")},
-                           indent=2)[:6000])
+                            if k not in ("allwise_columns_seen", "gaia_shapes", "vizier_asu",
+                                         "neowise_upload", "neowise_cone", "irsa_tap")},
+                           indent=2)[:4000])
           PY
-      - name: Sample (Gaia DR3 x AllWISE parent — ESA first, VizieR ASU as the fallback)
-        # Each chunk is asked of the ESA archive over every query shape first; only
-        # a chunk that no shape answered is retried over VizieR's ASU mirrors.  The
-        # route that served each chunk is recorded, and a parent drawn from BOTH is
-        # DEGRADED in summary.json, never silently mixed.  --no-vizier disables the
-        # fallback (the ESA route is tried first either way).
-        if: ${{ github.event.inputs.stage != 'probe' }}
+      - name: Sample (Gaia DR3 x AllWISE parent — ESA first, IRSA and VizieR ASU as fallbacks)
+        # fields/allsky only: in tiles mode every shard samples its own tiles.
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.mode != 'tiles' && github.event.inputs.sample_from_run_id == '' }}
         run: |
           MS=""
           if [ "${{ github.event.inputs.max_stars || '0' }}" != "0" ]; then
@@ -172,7 +238,7 @@ jobs:
           fi
           VZ=""
           if [ "${{ github.event.inputs.parent_route || 'auto' }}" = "esa_only" ]; then
-            VZ="--no-vizier"
+            VZ="--no-vizier --no-irsa"
           fi
           python -m seti.ignition.run --stage sample \
             --shards ${{ needs.plan.outputs.n_shards }} \
@@ -197,19 +263,17 @@ jobs:
             results/ignition/parent.parquet
           if-no-files-found: warn
       - name: Commit the probe and sample evidence
-        # A GREEN RUN THAT COMMITS NOTHING IS A LOST RUN.  `--stage probe` used to
-        # end here with its 25 minutes of evidence only in an artifact and a log
-        # someone had to read by hand: the assess job (which owns the other
-        # commit-back) is skipped for stage=probe.  Every other channel commits
-        # its probe; so does this one now, through the script that VERIFIES the
-        # push.  The artifact upload above stays — it runs first, so the evidence
-        # is safe even if the push cannot be landed and turns the job red.
-        if: always()
+        # A GREEN RUN THAT COMMITS NOTHING IS A LOST RUN.  The artifact upload
+        # above runs first, so the evidence is safe even if the push cannot land.
+        # A REUSED sample produced nothing this run, and its probe.json is an
+        # older run's: committing it would overwrite the branch's own record
+        # with evidence this dispatch did not gather.
+        if: ${{ always() && github.event.inputs.sample_from_run_id == '' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
           scripts/commit_results.sh \
-            "ignition: probe — which Gaia query shape and which queue answered" \
+            "ignition: probe — which Gaia shape, which NEOWISE route and which upload rung answered" \
             results/ignition/probe.json \
             $(ls results/ignition/sample.json 2>/dev/null)
 
@@ -217,10 +281,10 @@ jobs:
     needs: [plan, sample]
     if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'probe' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: ${{ fromJSON(needs.plan.outputs.timeout_min) }}
     strategy:
       fail-fast: false
-      max-parallel: 4          # be a good citizen toward the IRSA TAP service
+      max-parallel: ${{ fromJSON(needs.plan.outputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
@@ -233,11 +297,44 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: Start from a clean results tree
+        # The checkout carries the committed shard files of EARLIER dispatches
+        # (a resumed shard's own record is restored from its artifact below).
+        run: |
+          rm -f results/ignition/epochs_s*.csv results/ignition/neowise_stars_s*.csv \
+                results/ignition/acquire_s*.json results/ignition/stars_s*.csv \
+                results/ignition/screen_s*.json results/ignition/sweep_s*.json \
+                results/ignition/parent_s*.parquet
       - uses: actions/download-artifact@v4
         with:
           name: ignition-sample
           path: results/ignition/
+      - name: Resume this shard from a prior run's artifact
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ignition-shard-${{ matrix.shard }}
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/ignition/
+      - name: Sweep shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} (tiles mode — sample + acquire per tile under one wall clock)
+        if: ${{ github.event.inputs.mode == 'tiles' }}
+        run: |
+          TD=""
+          if [ "${{ github.event.inputs.tile_deg || '0' }}" != "0" ]; then
+            TD="--tile-deg ${{ github.event.inputs.tile_deg }}"
+          fi
+          VZ=""
+          if [ "${{ github.event.inputs.parent_route || 'auto' }}" = "esa_only" ]; then
+            VZ="--no-vizier --no-irsa"
+          fi
+          python -m seti.ignition.run --stage sweep \
+            --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} \
+            --route "${{ github.event.inputs.route || 'auto' }}" \
+            --budget-s ${{ needs.plan.outputs.budget_s }} $TD $VZ
       - name: Acquire shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} (NEOWISE frames -> epochs, checkpointed)
+        if: ${{ github.event.inputs.mode != 'tiles' }}
         run: |
           MS=""
           if [ "${{ github.event.inputs.max_stars || '0' }}" != "0" ]; then
@@ -246,7 +343,7 @@ jobs:
           python -m seti.ignition.run --stage acquire \
             --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} \
             --route "${{ github.event.inputs.route || 'auto' }}" $MS
-      - name: Screen shard ${{ matrix.shard }} (rise statistics, two-band rule, injections)
+      - name: Screen shard ${{ matrix.shard }} (ensemble correction, rise statistics, two-band rule, injections)
         if: always()
         run: |
           python -m seti.ignition.run --stage screen \
@@ -260,9 +357,25 @@ jobs:
             results/ignition/epochs_s*.csv
             results/ignition/neowise_stars_s*.csv
             results/ignition/acquire_s*.json
+            results/ignition/sweep_s*.json
+            results/ignition/parent_s*.parquet
             results/ignition/stars_s*.csv
             results/ignition/screen_s*.json
           if-no-files-found: warn
+      - name: Commit this shard's own record (tiles mode)
+        # Each shard lands its sweep + screen record itself, so a run whose
+        # assess job never ran (or a shard the job limit killed after its
+        # checkpoint) still leaves what it covered on the branch.  Contention
+        # between shards is handled by the script's fetch/reset/retry loop.
+        if: ${{ always() && github.event.inputs.mode == 'tiles' }}
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+          RESULTS_PUSH_ATTEMPTS: "12"
+        run: |
+          scripts/commit_results.sh \
+            "ignition: sweep shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} — tiles covered and screened" \
+            $(ls results/ignition/sweep_s*.json 2>/dev/null) \
+            $(ls results/ignition/screen_s*.json 2>/dev/null)
 
   assess:
     needs: [plan, sample, acquire]
@@ -280,6 +393,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: Start from a clean results tree (stale shard files of earlier dispatches)
+        run: |
+          rm -f results/ignition/epochs_s*.csv results/ignition/neowise_stars_s*.csv \
+                results/ignition/acquire_s*.json results/ignition/stars_s*.csv \
+                results/ignition/screen_s*.json results/ignition/sweep_s*.json \
+                results/ignition/parent_s*.parquet
       - uses: actions/download-artifact@v4
         with:
           pattern: ignition-*
@@ -287,7 +406,7 @@ jobs:
           path: results/ignition/
       - name: What reached this job (VIGIL's aggregator ran on an empty tree and called it a null)
         run: |
-          ls -la results/ignition/ | head -80
+          ls -la results/ignition/ | head -120
           N=$(ls results/ignition/screen_s*.json 2>/dev/null | wc -l)
           echo "shard screen files found: $N of ${{ needs.plan.outputs.n_shards }}"
           if [ "$N" = "0" ] && [ "${{ needs.acquire.result }}" != "skipped" ]; then
@@ -301,7 +420,7 @@ jobs:
           python - <<'PY'
           import json
           s = json.load(open("results/ignition/summary.json"))
-          print(json.dumps({k: s[k] for k in s if k not in ("config",)}, indent=2)[:8000])
+          print(json.dumps({k: s[k] for k in s if k not in ("config",)}, indent=2)[:12000])
           PY
       - name: Assert the verdict is not a disguised no-data run
         run: |
@@ -323,21 +442,27 @@ jobs:
               print(f"::notice::{s.get('n_candidates')} candidate(s) ({s.get('n_clean')} with the optical checked) — see results/ignition/candidates.csv")
           if s.get("degraded"):
               print(f"::warning::degraded: {s['degraded']}")
+          cov = s.get("coverage") or {}
+          if cov:
+              print(f"::notice::coverage: {cov.get('tiles_done')}/{cov.get('tiles_in_sky')} tiles, "
+                    f"sky fraction {cov.get('sky_fraction_done')}, {cov.get('n_parent_done_tiles')} parent stars")
           PY
       - name: Commit results
         if: always()
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
-          # Small files only: the epochs CSVs and parent.parquet travel as artifacts.
+          # Small files only: the epochs CSVs and parquet files travel as artifacts.
           scripts/commit_results.sh \
             "ignition: an infrared excess being born — probe/sample/acquire/screen/assess" \
             results/ignition/probe.json \
             results/ignition/sample.json \
             results/ignition/summary.json \
+            $(ls results/ignition/summary_*.json 2>/dev/null) \
             results/ignition/candidates.csv \
             results/ignition/stars_vetted.csv \
             $(ls results/ignition/screen_s*.json 2>/dev/null) \
+            $(ls results/ignition/sweep_s*.json 2>/dev/null) \
             $(ls results/ignition/acquire_s*.json 2>/dev/null)
       - uses: actions/upload-artifact@v4
         if: always()
@@ -361,6 +486,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: Start from a clean results tree
+        run: |
+          rm -f results/ignition/epochs_s*.csv results/ignition/neowise_stars_s*.csv \
+                results/ignition/acquire_s*.json results/ignition/stars_s*.csv \
+                results/ignition/screen_s*.json results/ignition/sweep_s*.json \
+                results/ignition/parent_s*.parquet
       - name: Fetch artifacts from a prior run
         uses: actions/download-artifact@v4
         with:
@@ -371,15 +502,19 @@ jobs:
           path: results/ignition/
       - name: Assess
         run: |
-          ls results/ignition/ | head -80
+          ls results/ignition/ | head -120
           N=$(ls results/ignition/screen_s*.json 2>/dev/null | wc -l)
           echo "shard screen files found: $N"
           if [ "$N" = "0" ]; then
             echo "::error::no shard output in run ${{ github.event.inputs.reduce_only_run_id }}'s artifacts; refusing to write a verdict over nothing"
             exit 1
           fi
-          python -m seti.ignition.run --stage assess
-          head -c 6000 results/ignition/summary.json
+          SH=""
+          if [ "${{ github.event.inputs.shards || '0' }}" != "0" ]; then
+            SH="--shards ${{ github.event.inputs.shards }}"
+          fi
+          python -m seti.ignition.run --stage assess $SH
+          head -c 8000 results/ignition/summary.json
       - name: Commit results
         if: always()
         env:
@@ -388,6 +523,7 @@ jobs:
           scripts/commit_results.sh \
             "ignition: re-assess of a prior run's shards" \
             results/ignition/summary.json \
+            $(ls results/ignition/summary_*.json 2>/dev/null) \
             results/ignition/candidates.csv \
             results/ignition/stars_vetted.csv
       - uses: actions/upload-artifact@v4

@@ -492,6 +492,8 @@ def analyse_exposure(grids: list[dict], ephemerides: list[Ephemeris], conf: dict
     rec = dict(primary)
     rec["features"] = [f for r in analysed for f in r["features"]]
     rec["n_scanned"] = int(sum(int(r.get("n_scanned") or 0) for r in analysed))
+    for k in ("n_features_out_spectrum", "n_features_difference"):
+        rec[k] = int(sum(int(r.get(k) or 0) for r in analysed))
     rec["grids"] = [{"grid_index": r["grid_index"], "status": r["status"],
                      "grid": r.get("grid"), "n_integrations": r.get("n_integrations"),
                      "n_integrations_raw": r.get("n_integrations_raw"),
@@ -499,6 +501,10 @@ def analyse_exposure(grids: list[dict], ephemerides: list[Ephemeris], conf: dict
                      "wavelength_range_um": r.get("wavelength_range_um"),
                      "phase_class": r.get("phase_class"), "n_scanned": r.get("n_scanned"),
                      "ew_5sigma_limit_um": r.get("ew_5sigma_limit_um"),
+                     "ew_5sigma_limit_out_um": r.get("ew_5sigma_limit_out_um"),
+                     "ew_5sigma_limit_diff_um": r.get("ew_5sigma_limit_diff_um"),
+                     "difference_kind": r.get("difference_kind"),
+                     "drift_control": r.get("drift_control"),
                      "n_features": len(r.get("features", [])),
                      "time_source": r.get("time_source")} for r in recs]
     rec["n_grids"] = len(recs)

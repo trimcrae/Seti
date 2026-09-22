@@ -55,7 +55,7 @@ from .labels import RasterMeta, read_label, read_raster
 
 #: the anisothermality pipeline (kept: it runs the moment per-channel polar
 #: maps exist) and the diurnal one, which is what the PDS holdings support
-STAGES = ("probe", "pcp", "assess_diurnal")
+STAGES = ("probe", "pcp", "radar", "assess_diurnal")
 STAGES_ANISO = ("probe", "acquire", "screen", "assess")
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_NONE = "NO_ANISOTHERMAL_SURVIVOR"
@@ -1187,11 +1187,164 @@ def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, po
     return reports
 
 
+#: ``lsz_xxxxx_3cp_pfu_90n000_v1.img`` — Mini-RF polar stereographic mosaics.
+#: The merged product carries ``xxxxx`` where a single-orbit strip carries the
+#: orbit number, and the code is ``3cp`` (circular polarisation ratio) or
+#: ``3s1`` (first Stokes parameter, i.e. total power).
+MINIRF_MOSAIC_RE = re.compile(
+    r"(?i)^lsz_(?P<orbit>[0-9x]+)_3(?P<code>cp|s1)_p\w+_90(?P<pole>[ns])\d*(?P<look>_[ew])?_v1"
+    r"\.(?P<ext>img|lbl)$")
+_MINIRF_POLE = {"n": "north", "s": "south"}
+
+
+def find_minirf_mosaics(entries, pole: str) -> dict:
+    """Group a mosaic-directory listing into ``{code: {ext: Entry}}`` for one
+    pole, preferring the MERGED mosaic (``xxxxx``) over a single-orbit strip
+    and an unspecified look direction over an east/west-only one."""
+    best: dict = {}
+    for e in entries:
+        m = MINIRF_MOSAIC_RE.match(getattr(e, "name", "") or "")
+        if not m or _MINIRF_POLE[m.group("pole").lower()] != pole:
+            continue
+        code = m.group("code").lower()
+        # merged first, then no look restriction, then anything
+        rank = (0 if set(m.group("orbit").lower()) == {"x"} else 1,
+                0 if not m.group("look") else 1, m.group("orbit").lower())
+        slot = best.setdefault(code, {"rank": None, "files": {}})
+        if slot["rank"] is not None and rank > slot["rank"]:
+            continue
+        if slot["rank"] is None or rank < slot["rank"]:
+            slot.update({"rank": rank, "files": {}})
+        slot["files"][m.group("ext").lower()] = e
+    return {k: v["files"] for k, v in best.items() if v["files"].get("img")}
+
+
+def _acquire_minirf_mosaic(conf: dict, fetch, pole: str, ddir: Path) -> dict:
+    """List the Mini-RF mosaic directories and fetch this pole's CPR (and S1)
+    polar mosaic.  Each is 1294 x 1294 PC_REAL — 6.7 MB, not a data problem."""
+    acq = conf["acquire"]
+    rec: dict = {"pole": pole, "dirs": [], "status": "NO_MINIRF_MOSAIC_LISTED"}
+    entries: list = []
+    for url in acq.get("minirf_mosaic_dirs", []) or []:
+        res = fetch(url, timeout=float(acq.get("listing_timeout_s", 60)), max_bytes=5_000_000)
+        got = []
+        if res.ok and res.content:
+            got = [e for e in A.parse_listing(res.content.decode("latin-1", "replace"), url)
+                   if not e.is_dir]
+        rec["dirs"].append({"url": url, "status": res.status, "error": res.error,
+                            "n_entries": len(got)})
+        entries.extend(got)
+    found = find_minirf_mosaics(entries, pole)
+    rec["listed"] = {k: sorted(v) for k, v in found.items()}
+    if not found.get("cp"):
+        return rec
+    mdir = ddir / "minirf"
+    mdir.mkdir(parents=True, exist_ok=True)
+    for code, files in found.items():
+        entry: dict = {"stem": files["img"].name, "url": files["img"].url}
+        lbl_path = None
+        if files.get("lbl") is not None:
+            lbl_path = mdir / files["lbl"].name
+            A.download(fetch, files["lbl"].url, lbl_path,
+                       max_bytes=int(acq.get("label_max_bytes", 4e5)),
+                       timeout=float(acq.get("listing_timeout_s", 60)))
+            if not lbl_path.exists():
+                lbl_path = None
+        ip = mdir / files["img"].name
+        r = A.download(fetch, files["img"].url, ip,
+                       max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
+                       timeout=float(acq.get("download_timeout_s", 900)))
+        entry.update({"status": r.status, "error": r.error, "n_bytes": r.n_bytes})
+        if r.ok:
+            try:
+                meta = read_label(lbl_path if lbl_path is not None else ip)
+                if lbl_path is None:
+                    meta.data_file = str(ip)
+                entry["label"] = _label_summary(meta)
+                entry["label_path"] = str(lbl_path if lbl_path is not None else ip)
+                entry["outcome"] = "OK"
+            except Exception as exc:  # noqa: BLE001
+                entry["outcome"] = f"label: {type(exc).__name__}: {exc}"[:300]
+        else:
+            entry["outcome"] = "DOWNLOAD_FAILED"
+        rec[code] = entry
+    rec["status"] = "OK" if (rec.get("cp") or {}).get("outcome") == "OK" else "NO_POLAR_CPR_MATCH"
+    return rec
+
+
+def stage_radar(conf: dict, out: Path, *, fetch=None, shard: str | None = None, poles=None) -> dict:
+    """The radar axis: compact Mini-RF circular-polarisation-ratio anomalies
+    inside the LOLA-mapped PSR.
+
+    The mask is the same LOLA raster the thermal screen uses, re-sampled from
+    the 240 m PCP grid onto the Mini-RF polar stereographic grid by longitude
+    and latitude, so both axes screen the SAME region and a hit on one can be
+    looked up on the other.
+    """
+    fetch = fetch or A.http_fetch
+    dcfg = conf.get("diurnal", {})
+    half_px = PCP.half_px_for(float(dcfg.get("min_lat_deg", 80.0)))
+    reports = {}
+    for pole in shard_poles(conf, shard, poles):
+        ddir = out / "data" / pole
+        rep: dict = {"stage": "radar", "pole": pole, "generated_utc": _now()}
+        acq = _acquire_minirf_mosaic(conf, fetch, pole, ddir)
+        rep["acquisition"] = {k: v for k, v in acq.items() if k not in ("cp", "s1")}
+        if acq.get("status") != "OK":
+            rep["status"] = acq.get("status") or VERDICT_NO_DATA
+            _write(out / f"radar_{pole}.json", rep)
+            reports[pole] = rep
+            print(f"[crypt] radar {pole}: {rep['status']}")
+            continue
+        psr = _acquire_psr(conf, fetch, pole, ddir, half_px)
+        rep["psr"] = {k: v for k, v in psr.items() if k != "mask"}
+        if psr.get("status") != "OK":
+            rep["status"] = "NO_PSR_RASTER"
+            _write(out / f"radar_{pole}.json", rep)
+            reports[pole] = rep
+            print(f"[crypt] radar {pole}: NO_PSR_RASTER")
+            continue
+        try:
+            meta = read_label(acq["cp"]["label_path"])
+            cpr = read_raster(meta)
+            s1 = None
+            if (acq.get("s1") or {}).get("outcome") == "OK":
+                m1 = read_label(acq["s1"]["label_path"])
+                a1 = read_raster(m1)
+                s1 = a1 if a1.shape == cpr.shape else None
+                rep["s1_shape_mismatch"] = s1 is None
+            rmask = R.resample_mask(psr["mask"], PCP.pcp_georef(pole, half_px), meta.georef)
+            rep["mask"] = {"n_psr_on_radar_grid": int(rmask.sum()),
+                           "pixel_area_m2": float(meta.georef.pixel_area_m2),
+                           "area_km2": int(rmask.sum()) * float(meta.georef.pixel_area_m2) / 1e6}
+            rr = R.screen_radar(cpr, rmask, meta.georef, conf["radar"], s1=s1)
+            rf = rr.pop("flags")
+            rr["top"] = _clean(rf.sort_values("cpr", ascending=False).head(100)
+                               .to_dict(orient="records")) if len(rf) else []
+            rr["radar_candidates"] = _clean(rf[rf["class"] == "radar_candidate"].head(500)
+                                            .to_dict(orient="records")) if len(rf) else []
+            if len(rf):
+                rf.sort_values("cpr", ascending=False).head(4000).to_csv(
+                    out / f"radar_flags_{pole}.csv", index=False)
+            rep.update(rr)
+            rep["georef"] = meta.georef.as_dict()
+            rep["status"] = rr.get("status", "OK")
+        except Exception as exc:  # noqa: BLE001
+            rep["status"] = "RADAR_SCREEN_FAILED"
+            rep["error"] = f"{type(exc).__name__}: {exc}"[:300]
+        _write(out / f"radar_{pole}.json", rep)
+        reports[pole] = rep
+        print(f"[crypt] radar {pole}: {rep.get('status')} counts={rep.get('counts')} "
+              f"psr_px={rep.get('mask', {}).get('n_psr_on_radar_grid')}")
+    return reports
+
+
 def stage_assess_diurnal(conf: dict, out: Path) -> dict:
     """Merge the per-pole diurnal screens into results/crypt/summary.json."""
     poles = conf["products"]["poles"]
     screens = {p: _read_json(out / f"diurnal_{p}.json") for p in poles}
     pcps = {p: _read_json(out / f"pcp_{p}.json") for p in poles}
+    radars = {p: _read_json(out / f"radar_{p}.json") for p in poles}
     probe = _read_json(out / "probe.json") or {}
     ok = [p for p in poles if (screens.get(p) or {}).get("status") == "OK"]
     counts = {c: 0 for c in D.CLASSES}
@@ -1236,7 +1389,12 @@ def stage_assess_diurnal(conf: dict, out: Path) -> dict:
                          "local_times_h": (pcps.get(p) or {}).get("local_times_h"),
                          "bytes": (pcps.get(p) or {}).get("bytes"),
                          "psr": (pcps.get(p) or {}).get("psr")} for p in poles},
+        "radar": {p: ({k: v for k, v in (radars.get(p) or {}).items()
+                       if k in ("status", "counts", "n_high_cpr", "mask", "error",
+                                "radar_candidates", "s1_shape_mismatch")}
+                      or {"status": "NOT_RUN"}) for p in poles},
         "routes": {"pcp_url_template": PCP.PCP_URL_TEMPLATE, "lpsr_url": PCP.LPSR_URL,
+                   "minirf_mosaic_dirs": (conf.get("acquire") or {}).get("minirf_mosaic_dirs"),
                    "diviner_ode": (probe.get("diviner", {}).get("ode") or {}).get("queries"),
                    "diviner_reached": probe.get("reached", {}).get("diviner")},
         "thresholds": {**D.DEFAULT_THRESHOLDS, **{k: v for k, v in (conf.get("diurnal") or {}).items()
@@ -1293,6 +1451,10 @@ def crypt_run(conf: dict | None = None, stage: str = "all", *, shard: str | None
                 continue
             rep = stage_pcp(conf, out, fetch=fetch, shard=shard, poles=poles,
                             run_sensitivity=run_sensitivity)
+        elif s == "radar":
+            if synthetic:
+                continue
+            rep = stage_radar(conf, out, fetch=fetch, shard=shard, poles=poles)
         elif s == "assess_diurnal":
             rep = stage_assess_diurnal(conf, out)
         else:
@@ -1305,7 +1467,7 @@ def main(argv=None):
                                 description="CRYPT (S55): anisothermal hot components and compact radar "
                                             "anomalies inside lunar permanently shadowed regions")
     p.add_argument("--stage", default="all",
-                   help="probe|pcp|assess_diurnal|acquire|screen|assess|all or a comma list")
+                   help="probe|pcp|radar|assess_diurnal|acquire|screen|assess|all or a comma list")
     p.add_argument("--shard", default="", help="i/n: this job's share of the poles")
     p.add_argument("--poles", default="", help="comma list (default from config)")
     p.add_argument("--out-dir", default="", help="results directory (default results/crypt)")
@@ -1331,4 +1493,5 @@ if __name__ == "__main__":  # pragma: no cover
 __all__ = ["DEFAULTS", "STAGES", "STAGES_ANISO", "VERDICT_CANDIDATES", "VERDICT_NONE",
            "VERDICT_NO_DATA", "build_layers", "crypt_run", "load_crypt_config", "main",
            "needed_products", "parse_shard", "shard_poles", "stage_acquire", "stage_assess",
-           "stage_assess_diurnal", "stage_pcp", "stage_probe", "stage_screen"]
+           "find_minirf_mosaics", "stage_assess_diurnal", "stage_pcp", "stage_probe",
+           "stage_radar", "stage_screen"]

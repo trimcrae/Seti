@@ -38,9 +38,17 @@ import pytest
 
 from seti.crypt import acquire as A
 from seti.crypt import diurnal as D
+from seti.crypt import labels as Lb
 from seti.crypt import pcp as PCP
 from seti.crypt.labels import Georef
-from seti.crypt.run import crypt_run, load_crypt_config, resolve_pcp_products, stage_pcp
+from seti.crypt.run import (
+    crypt_run,
+    find_minirf_mosaics,
+    load_crypt_config,
+    resolve_pcp_products,
+    stage_pcp,
+    stage_radar,
+)
 
 CONF = load_crypt_config()
 THR = {**D.DEFAULT_THRESHOLDS, **{k: v for k, v in CONF["diurnal"].items()
@@ -571,6 +579,112 @@ def test_a_missing_psr_raster_is_recorded_as_degraded_not_ignored(tmp_path):
     summary = crypt_run(conf, stage="assess_diurnal", out_dir=tmp_path)
     assert any("NO_PSR_RASTER" in d for d in summary["degraded"])
     assert "DEGRADED" in summary["verdict"]
+
+
+# ---------------------------------------------------------------------------
+# the radar axis, on the same mapped PSR
+# ---------------------------------------------------------------------------
+def _entries(names):
+    return [A.Entry(name=n, url=f"https://example.invalid/mosaics/{n}", is_dir=False)
+            for n in names]
+
+
+def test_the_merged_polar_mosaic_is_preferred_over_a_single_orbit_strip():
+    found = find_minirf_mosaics(_entries([
+        "lsz_06899_3cp_phu_90n000_e_v1.img", "lsz_06899_3cp_phu_90n000_e_v1.lbl",
+        "lsz_xxxxx_3cp_pfu_90n000_v1.img", "lsz_xxxxx_3cp_pfu_90n000_v1.lbl",
+        "lsz_xxxxx_3s1_pfu_90n000_v1.img", "lsz_xxxxx_3s1_pfu_90n000_v1.lbl",
+        "lsz_04790_3cp_phu_90s000_e_v1.img",
+        "global_cpr_128ppd_simp_0c.img",
+    ]), "north")
+    assert set(found) == {"cp", "s1"}
+    assert found["cp"]["img"].name == "lsz_xxxxx_3cp_pfu_90n000_v1.img"
+    assert found["cp"]["lbl"].name == "lsz_xxxxx_3cp_pfu_90n000_v1.lbl"
+
+
+def test_the_other_pole_is_not_offered():
+    names = ["lsz_04790_3cp_phu_90s000_e_v1.img", "lsz_04790_3s1_phu_90s000_e_v1.img"]
+    assert find_minirf_mosaics(_entries(names), "north") == {}
+    assert set(find_minirf_mosaics(_entries(names), "south")) == {"cp", "s1"}
+
+
+def _radar_archive(tmp_path, *, cpr_field, s1_field=None, serve: bool = True):
+    """Serve a Mini-RF polar mosaic in the real PDS3 shape, plus the LPSR
+    raster the mask comes from."""
+    n = cpr_field.shape[0]
+    g = Lb.polar_georef("north", n, 947.60470075467)
+    routes: dict = {}
+    base = "https://example.invalid/mosaics/"
+    if serve:
+        (tmp_path / "wire").mkdir(parents=True, exist_ok=True)
+        lbl = Lb.write_pds3_raster(cpr_field, tmp_path / "wire" / "lsz_xxxxx_3cp_pfu_90n000_v1.img",
+                                   georef=g, product_id="CP", description="CPR mosaic")
+        routes[base] = (200, '<a href="lsz_xxxxx_3cp_pfu_90n000_v1.lbl">lbl</a>'
+                             '<a href="lsz_xxxxx_3cp_pfu_90n000_v1.img">img</a>')
+        routes[base + "lsz_xxxxx_3cp_pfu_90n000_v1.lbl"] = (200, lbl.read_bytes())
+        routes[base + "lsz_xxxxx_3cp_pfu_90n000_v1.img"] = (
+            200, lbl.with_suffix(".img").read_bytes())
+    else:
+        routes[base] = (200, "<a href='readme.txt'>readme</a>")
+    fetch = _scripted_archive()                      # brings the LPSR routes
+    fetch.routes.update(routes)
+    conf = _scripted_conf(tmp_path)
+    conf["products"]["poles"] = ["north"]
+    conf["acquire"]["minirf_mosaic_dirs"] = [base]
+    conf["radar"] = {**conf["radar"], "bg_r_out": 6, "bg_r_in": 2, "edge_px": 1}
+    return conf, fetch
+
+
+def _cpr_field(n=61):
+    rng = np.random.default_rng(4)
+    return rng.uniform(0.2, 0.5, (n, n)).astype(np.float32)
+
+
+def test_a_compact_high_cpr_pixel_inside_the_psr_is_a_radar_candidate(tmp_path):
+    f = _cpr_field()
+    f[30, 33] = 1.6                                   # one pixel, quiet around it
+    conf, fetch = _radar_archive(tmp_path, cpr_field=f)
+    reps = stage_radar(conf, tmp_path, fetch=fetch, poles=["north"])
+    rep = reps["north"]
+    assert rep["status"] == "OK", rep
+    assert rep["mask"]["n_psr_on_radar_grid"] > 0
+    hits = [c for c in rep["radar_candidates"] if (c["line"], c["sample"]) == (30, 33)]
+    assert hits, f"counts={rep.get('counts')} top={rep.get('top')[:3]}"
+
+
+def test_a_rock_field_is_rejected_not_counted_as_a_candidate(tmp_path):
+    f = _cpr_field()
+    f[28:34, 28:34] = 1.6                             # an extended high-CPR patch
+    conf, fetch = _radar_archive(tmp_path, cpr_field=f)
+    rep = stage_radar(conf, tmp_path, fetch=fetch, poles=["north"])["north"]
+    assert rep["status"] == "OK"
+    assert rep["counts"]["rock_field"] > 0
+    assert rep["counts"]["radar_candidate"] == 0
+
+
+def test_a_quiet_radar_map_is_a_count_not_a_candidate(tmp_path):
+    conf, fetch = _radar_archive(tmp_path, cpr_field=_cpr_field())
+    rep = stage_radar(conf, tmp_path, fetch=fetch, poles=["north"])["north"]
+    assert rep["status"] == "OK"
+    assert rep["counts"]["radar_candidate"] == 0
+
+
+def test_no_mosaic_listed_is_an_access_statement(tmp_path):
+    conf, fetch = _radar_archive(tmp_path, cpr_field=_cpr_field(), serve=False)
+    rep = stage_radar(conf, tmp_path, fetch=fetch, poles=["north"])["north"]
+    assert rep["status"] in ("NO_MINIRF_MOSAIC_LISTED", "NO_POLAR_CPR_MATCH")
+    assert "counts" not in rep
+
+
+def test_the_radar_reading_reaches_the_summary(tmp_path):
+    f = _cpr_field()
+    f[30, 33] = 1.6
+    conf, fetch = _radar_archive(tmp_path, cpr_field=f)
+    stage_pcp(conf, tmp_path, fetch=fetch, poles=["north"], run_sensitivity=False)
+    stage_radar(conf, tmp_path, fetch=fetch, poles=["north"])
+    summary = crypt_run(conf, stage="assess_diurnal", out_dir=tmp_path)
+    assert summary["radar"]["north"]["status"] == "OK"
+    assert summary["radar"]["north"]["counts"]["radar_candidate"] >= 1
 
 
 def test_the_tables_are_deleted_after_they_are_rasterised(tmp_path):

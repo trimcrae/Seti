@@ -444,6 +444,26 @@ def tic_is_truncated(tic) -> bool:
     return t >= 1.0e8 and int(round(t)) % 10 == 0
 
 
+#: Route markers the verification step writes; a route carrying one of these
+#: was checked against the star's own position, whatever the catalogue said.
+TIC_VERIFIED_MARKS = ("_confirms_", "_over_", "_after_")
+
+
+def record_tic_is_unverified(rec: dict) -> bool:
+    """Was this row measured against a TIC id nobody ever checked?
+
+    True for a row whose TIC could have lost a digit to the old ``"%.8g"``
+    write AND whose route is a bare catalogue route --- neither a
+    position/magnitude fallback nor a verified one.  Such a row's
+    ``QUERY_RETURNED_ZERO_ROWS`` says nothing about the star, and its ``OK``
+    may be another star's light curve, so resume must not accept either.
+    """
+    route = _s(rec.get("tic_route"))
+    if any(m in route for m in TIC_VERIFIED_MARKS) or route in TIC_FALLBACK_ROUTES:
+        return False
+    return tic_is_truncated(rec.get("tic_id"))
+
+
 def shard_of(kepid, n_shards: int) -> int:
     """The shard a star belongs to.  By ``kepid``, so a multi-planet system's
     planets share one shard and one download."""
@@ -1855,10 +1875,19 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         targets = _read_csv(out / "targets.csv")
     mine = select_shard(targets, shard, n_shards)
     done: dict[str, dict] = {}
+    n_redo_unverified = 0
     if resume:
         prev = _read_csv(paths["csv"])
         for r in (prev.to_dict(orient="records") if len(prev) else []):
             if _s(r.get("not_measured_reason")) in (REASON_BUDGET, REASON_NOT_REACHED):
+                continue
+            if record_tic_is_unverified(r):
+                # Measured (or, far more often, NOT measured) against a TIC id
+                # that had been truncated by the old "%.8g" write and was never
+                # checked against the sky.  Its QUERY_RETURNED_ZERO_ROWS is an
+                # artefact of the id, not a fact about the star, and its OK is a
+                # depth that may belong to a different star.  Redo it.
+                n_redo_unverified += 1
                 continue
             done[str(r.get("kepoi_name"))] = r
     prev_members = _read_csv(paths["members"]) if resume else pd.DataFrame()
@@ -2033,6 +2062,7 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
            "n_measure_failed": n_measure_failed,
            "n_tic_rechecked": n_tic_rechecked, "n_tic_repaired": n_tic_repaired,
            "n_tic_suspect_truncation": n_tic_suspect,
+           "n_redone_unverified_tic": n_redo_unverified,
            "n_rows": int(len(df)), "budget_s": fp.shard_budget_s,
            "elapsed_s": round(deadline.elapsed(), 1), "budget_exhausted": bool(deadline.expired()),
            "fetch_status_counts": fetch_status_counts,
@@ -2656,7 +2686,8 @@ __all__ = [
     "REASON_BUDGET", "REASON_NOT_REACHED", "REASON_NO_EPHEMERIS", "REASON_NO_REFERENCE",
     "REASON_NO_TRANSIT", "REASON_QUERY_FAILED", "REASON_TIC_UNRESOLVED", "REASON_ZERO_ROWS",
     "RUN_CANDIDATES", "RUN_NONE", "RUN_NO_DATA", "RUN_VERDICTS", "SAP_COLUMNS", "STAGES",
-    "TIC_FALLBACK_ROUTES", "tic_is_truncated", "ID_COLUMNS", "detectable_change_ppm",
+    "TIC_FALLBACK_ROUTES", "tic_is_truncated", "record_tic_is_unverified", "TIC_VERIFIED_MARKS",
+    "ID_COLUMNS", "detectable_change_ppm",
     "VETOES", "VETO_DISPOSITION", "VETO_DURATION",
     "VETO_DURATION_INCONCLUSIVE", "VETO_EPHEMERIS", "VETO_FPFLAG", "VETO_LOWER_BOUND",
     "VETO_ODD_EVEN", "VETO_ONE_FAMILY", "ClassifyParams", "DurationParams", "EpochSearchParams",

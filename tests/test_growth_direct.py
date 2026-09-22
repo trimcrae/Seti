@@ -924,3 +924,44 @@ def test_direct_control_reopens_every_changed_class_and_records_the_null(tmp_pat
     assert rep["n_above_control"] == 1 and rep["n_control_unavailable"] == 1
     s = json.loads((out / "control" / "summary.json").read_text())
     assert s["control_phases"] and s["caveats"]
+
+
+def test_resume_refuses_a_row_measured_against_an_unverified_tic(tmp_path):
+    """The shards already committed carry non-detections that are artefacts of a
+    truncated id.  Resume must redo them, not lock them in as facts."""
+    assert D.record_tic_is_unverified({"tic_id": 122785300.0, "tic_route": "name_planet"})
+    assert not D.record_tic_is_unverified({"tic_id": 122785305.0, "tic_route": "name_planet"})
+    assert not D.record_tic_is_unverified({"tic_id": 122785300.0,
+                                           "tic_route": "tic_kic_crossid_confirms_name_planet"})
+    assert not D.record_tic_is_unverified({"tic_id": 122785300.0,
+                                           "tic_route": "tic_kic_crossid"})
+
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    names = list(targets["kepoi_name"].astype(str))
+    # what the old code committed: a zero-rows non-detection on a truncated id,
+    # beside a genuine one on a TIC the sky had named
+    D._write_csv(D._shard_paths(out, 0)["csv"], pd.DataFrame([
+        {"kepoi_name": names[0], "tic_id": 122785300.0, "tic_route": "name_planet",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED},
+        {"kepoi_name": names[1], "tic_id": 122785300.0, "tic_route": "tic_kic_crossid",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED}]))
+
+    def pf(tic, **_kw):
+        return []
+
+    def tf(kepid, *a, **k):
+        return float("nan"), ""
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf, tic_fn=tf)
+    assert rep["n_redone_unverified_tic"] == 1
+    df = D._read_csv(D._shard_paths(out, 0)["csv"]).set_index("kepoi_name")
+    # the unverified row came back from the target list, no longer carrying the
+    # truncated id; the row the sky had already named was kept untouched
+    assert int(pd.to_numeric(df.loc[names[0], "tic_id"])) != 122785300
+    assert int(pd.to_numeric(df.loc[names[1], "tic_id"])) == 122785300
+    assert df.loc[names[1], "lc_status"] == D.REASON_ZERO_ROWS
+    assert rep["n_measured_this_run"] == 4      # everything but the kept row

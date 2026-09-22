@@ -648,7 +648,8 @@ targeted**, not broader:
 ```
 src/seti/grave/references.py   reservoir vectors, atomic masses, oxide factors, citations
 src/seti/grave/vectors.py      fission mass vector, mixture fit, vetoes, PGE/alloy classes
-src/seti/grave/agestack.py     boundary table, section keys, the hypergeometric stack
+src/seti/grave/agestack.py     boundary table, section keys, the hypergeometric stack,
+                               Holm correction over the boundary catalogue
 src/seti/grave/acquire.py      SGP / EarthChem / GEOROC, runtime schema discovery
 src/seti/grave/run.py          stages, verdicts, REPORT.md
 config/grave.yaml              every threshold, every candidate field code

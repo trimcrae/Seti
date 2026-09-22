@@ -158,6 +158,54 @@ def test_pyvo_async_is_on_the_ladder_after_the_rung_the_server_parsed():
     assert order.index("pyvo_async") < order.index("gator")
 
 
+def test_a_unit_that_spends_its_budget_stops_the_ladder_and_says_so():
+    """One tile must not be able to eat a shard's whole clock.
+
+    The worst case of the parent ladder --- three ESA shapes at the per-attempt
+    timeout, then IRSA, then VizieR --- is tens of minutes for one tile, and in
+    a time-limited sweep that is paid for in tiles never reached.  With
+    ``unit_budget_s`` set, the attempts after the budget is gone are recorded
+    as ``SKIPPED_ON_UNIT_BUDGET`` and the unit is a recorded ``QUERY_FAILED``
+    --- never an empty answer about the sky --- while the ROUTE ORDER and every
+    science cut stay exactly as they were.
+    """
+    import time as _t
+
+    from seti.ignition.sample import fetch_parent
+
+    field = {"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}
+    tried: list[str] = []
+
+    def slow_dead(q, *_a, **_k):
+        tried.append("esa")
+        _t.sleep(0.15)
+        raise RuntimeError("canceling statement due to statement timeout")
+
+    stars, rep = fetch_parent({"fields": [field], "count_parent": False},
+                              mode="fields", query_fn=slow_dead,
+                              irsa_fetch_fn=_irsa_dead, vizier_fetch_fn=_asu_dead,
+                              unit_budget_s=0.2)
+    assert len(stars) == 0 and rep["status"] == "QUERY_FAILED"
+    # ESA was still asked FIRST, and at least once; the rest of the ladder was cut.
+    assert tried and tried[0] == "esa"
+    skips = rep["skipped_on_unit_budget"]
+    assert skips and all(s["status"] == "SKIPPED_ON_UNIT_BUDGET" for s in skips)
+    assert {"irsa_tap", "vizier_asu"} <= {s["route"] for s in skips}
+    assert any(d.startswith("unit_budget_skips:") for d in rep["degraded"])
+    assert rep["unit_budget_s"] == 0.2
+    u = rep["per_unit"][0]
+    assert u["status"] == "QUERY_FAILED" and u["skipped_on_unit_budget"]
+
+    # With no budget the ladder is walked in full, as before.
+    tried.clear()
+    _stars2, rep2 = fetch_parent({"fields": [field], "count_parent": False},
+                                 mode="fields", query_fn=slow_dead,
+                                 irsa_fetch_fn=_irsa_dead, vizier_fetch_fn=_asu_dead)
+    assert rep2["skipped_on_unit_budget"] == [] and rep2["unit_budget_s"] is None
+    assert len(tried) == 3                       # every joined ESA shape was asked
+    assert not any(d.startswith("unit_budget_skips:") for d in rep2["degraded"])
+
+
 def test_upload_chunk_falls_back_to_cones_when_no_rung_answers(tmp_path):
     stars = _gaia_rows(5)
     cone_calls = {"n": 0}

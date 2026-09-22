@@ -826,7 +826,7 @@ def cradle_run(stage: str = "all", *, out_dir: Path | str | None = None, shard: 
         elif s == "ages":
             rep = stage_ages(conf, out, shard=shard, n_shards=n_shards, backends=backends)
         elif s == "assess":
-            rep = stage_assess(conf, out, n_shards_expected=n_shards if stage == "all" else None)
+            rep = stage_assess(conf, out, n_shards_expected=int(n_shards) if n_shards else None)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + ('all',)}")
     print(f"[cradle] {stage}: done in {_time.monotonic() - t0:.0f}s")
@@ -842,13 +842,20 @@ def main(argv=None):
     p.add_argument("--shards", type=int, default=0,
                    help="number of shards the run is planned for (assess); defaults to the n of --shard")
     p.add_argument("--max-units", type=int, default=0, help="cap on HEALPix units per acquire shard")
+    p.add_argument("--max-stars-per-shard", type=int, default=0,
+                   help="cap on shortlist stars enriched per ages shard (0 = all)")
     p.add_argument("--out-dir", default="", help="results directory (default results/cradle)")
     p.add_argument("--config", default="", help="alternative config yaml")
     a = p.parse_args(argv)
     shard, n = parse_shard(a.shard)
     n_shards = a.shards or n
+    conf = load_cradle_config(a.config or None)
+    if a.max_stars_per_shard:
+        conf.setdefault("enrich", {})
+        conf["enrich"] = {**(conf.get("enrich") or {}),
+                          "max_stars_per_shard": int(a.max_stars_per_shard)}
     rep = cradle_run(a.stage, out_dir=a.out_dir or None, shard=shard, n_shards=n_shards,
-                     max_units=a.max_units or None, config_path=a.config or None)
+                     max_units=a.max_units or None, conf=conf)
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[cradle] verdict: {v}")

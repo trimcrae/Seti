@@ -89,7 +89,13 @@ def _num(d: pd.DataFrame, col: str) -> np.ndarray:
 # Harmonisation onto the OSSUARY column contract
 # ---------------------------------------------------------------------------
 def harmonise(df: pd.DataFrame) -> pd.DataFrame:
-    """``w3mpro`` -> ``W3mag`` etc., ``ks_m`` -> ``Ksmag``, plus ``teff``."""
+    """``w3mpro`` -> ``W3mag`` etc., ``ks_m`` -> ``Ksmag``, plus ``teff``.
+
+    The archive spellings are **kept alongside** the OSSUARY ones: the vetting
+    rules, the shortlist contract and the candidate table all speak
+    ``ks_m`` / ``w3mpro``, and a rename would silently turn every row into
+    ``KS_MISSING`` downstream.
+    """
     out = df.copy()
     out.columns = [str(c).lower() for c in out.columns]
     ren = {}
@@ -99,7 +105,9 @@ def harmonise(df: pd.DataFrame) -> pd.DataFrame:
         ren[f"{lb}mpro_error"] = f"e_{b}mag"
     ren.update({"ks_m": "Ksmag", "ks_msigcom": "e_Ksmag", "j_m": "Jmag", "j_msigcom": "e_Jmag",
                 "h_m": "Hmag", "h_msigcom": "e_Hmag"})
-    out = out.rename(columns={k: v for k, v in ren.items() if k in out.columns})
+    for src, dst in ren.items():
+        if src in out.columns:
+            out[dst] = out[src]
     for b in _BANDS + ("Ks", "J", "H"):
         if f"{b}mag" not in out:
             out[f"{b}mag"] = np.nan

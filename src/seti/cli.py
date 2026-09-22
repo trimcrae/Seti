@@ -1096,6 +1096,14 @@ def _cmd_uline(args, cfg):
     return _uline_main(list(args.rest))
 
 
+# --- CRADLE ---
+def _cmd_cradle(args, cfg):
+    from .cradle.run import main as _cradle_main
+
+    return _cradle_main(list(args.rest))
+# --- /CRADLE ---
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
@@ -2306,6 +2314,15 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- CRADLE ---
+    p = sub.add_parser("cradle",
+                       help="CRADLE (S52/S53): warm debris at the habitable-zone radius of a "
+                            "MATURE star, above the collisional steady-state maximum; "
+                            "flags are passed through to seti.cradle.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_cradle)
+    # --- /CRADLE ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

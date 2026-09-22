@@ -51,6 +51,22 @@ def _pm_for(v_kms: float, d_pc: float) -> float:
     return v_kms * 1000.0 / (K * d_pc)
 
 
+def _g_minus_ks(bp_rp: float) -> float:
+    """A monotonic G - Ks for an FGK dwarf (solar: bp_rp 0.82 -> 1.58)."""
+    return 0.23 + 1.65 * float(bp_rp)
+
+
+def _ms_abs_g(bp_rp: float) -> float:
+    """A main-sequence M_G that sits above the dwarf cut at every colour used."""
+    return 2.8 + 4.3 * (float(bp_rp) - 0.6)
+
+
+def _plx_for_dwarf(ks: float, bp_rp: float) -> float:
+    """The parallax that puts a star of this K_s and colour on the main sequence."""
+    g = float(ks) + _g_minus_ks(bp_rp)
+    return float(10.0 ** ((_ms_abs_g(bp_rp) - g + 10.0) / 5.0))
+
+
 def make_star(i: int, rng, *, ks: float = 6.5, bp_rp: float = 0.85, plx: float = 20.0,
               ra: float = 45.0, dec: float = 30.0, l: float = 160.0, b: float = -30.0,
               v_tan_kms: float = 8.0, rv=np.nan, disk=None, age=(4.0, 2.0, 7.0),
@@ -61,8 +77,10 @@ def make_star(i: int, rng, *, ks: float = 6.5, bp_rp: float = 0.85, plx: float =
     row = {"source_id": lo + 1000 + i, "ra": ra, "dec": dec, "l": l, "b": b, "parallax": plx,
            "parallax_error": plx / 100.0, "parallax_over_error": 100.0, "pmra": pm * 0.8,
            "pmra_error": 0.03, "pmdec": pm * 0.6, "pmdec_error": 0.03, "radial_velocity": rv,
-           "radial_velocity_error": 1.0, "phot_g_mean_mag": ks + 1.6, "phot_bp_mean_mag": ks + 2.0,
-           "phot_rp_mean_mag": ks + 1.2, "bp_rp": bp_rp, "ruwe": 1.0, "astrometric_excess_noise": 0.1,
+           "radial_velocity_error": 1.0, "phot_g_mean_mag": ks + _g_minus_ks(bp_rp),
+           "phot_bp_mean_mag": ks + _g_minus_ks(bp_rp) + 0.5 * bp_rp,
+           "phot_rp_mean_mag": ks + _g_minus_ks(bp_rp) - 0.5 * bp_rp,
+           "bp_rp": bp_rp, "ruwe": 1.0, "astrometric_excess_noise": 0.1,
            "ipd_frac_multi_peak": 0, "phot_variable_flag": "NOT_AVAILABLE", "non_single_star": 0,
            "teff_gspphot": 5600.0, "logg_gspphot": 4.4, "mh_gspphot": 0.0, "ag_gspphot": 0.02,
            "random_index": i, "age_flame": age[0], "age_flame_lower": age[1], "age_flame_upper": age[2],
@@ -102,7 +120,9 @@ def make_star(i: int, rng, *, ks: float = 6.5, bp_rp: float = 0.85, plx: float =
 def make_archive(rng, n_clean: int = 700, extra: list[dict] | None = None) -> pd.DataFrame:
     rows = []
     for i in range(n_clean):
-        rows.append(make_star(i, rng, ks=rng.uniform(4.5, 7.2), bp_rp=rng.uniform(0.5, 1.8),
+        ks = rng.uniform(4.8, 7.2)
+        bp_rp = rng.uniform(0.5, 1.45)
+        rows.append(make_star(i, rng, ks=ks, bp_rp=bp_rp, plx=_plx_for_dwarf(ks, bp_rp),
                               ra=rng.uniform(40, 50), dec=rng.uniform(25, 35),
                               v_tan_kms=rng.uniform(3, 40)))
     for r in (extra or []):
@@ -517,7 +537,7 @@ def test_the_same_excess_on_a_sco_cen_star_is_vetoed(tmp_path):
     f_inj = 10 ** 4.0 * E.wyatt_fmax((278.3 / 300) ** 2 * np.sqrt(0.9), 1000.0, 1.0, 0.9)
     # Upper Sco sky box at 140 pc; a FLAME age that (wrongly) says 3 Gyr and a
     # kinematic tangential velocity that is small: position + distance veto it.
-    star = make_star(998, rng, ks=6.5, bp_rp=0.85, disk=(300.0, f_inj), noise=0.0, plx=7.0,
+    star = make_star(998, rng, ks=6.5, bp_rp=0.85, disk=(300.0, f_inj), noise=0.0, plx=11.0,
                      l=350.0, b=20.0, ra=243.0, dec=-22.0, v_tan_kms=70.0, age=(3.0, 2.0, 5.0))
     arch = FakeArchive(make_archive(rng, extra=[star]))
     rep, out = _run_all(tmp_path, arch, _conf(tmp_path))

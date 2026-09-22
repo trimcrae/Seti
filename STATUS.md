@@ -75,12 +75,18 @@ are clear; there is no `to_numeric(errors="ignore")` in the channel.
 accepted, **114,688 samples** behind the [0, 4000] Ma filter, pages of 5,000
 not capped. Ru and Rh are *not served*, so the light peak rests on Mo, Pd and
 Te. EarthChem's REST service is gone (ten-rung endpoint ladder recorded);
-GEOROC/DIGIS supplies the tephra reference. **No screen has run yet**: the
+GEOROC/DIGIS **is now reached** — run 35742065160's probe, committed before
+that run was cancelled, found 10 matching files (~43 MB) across 30 DIGIS
+datasets: comendite, pantellerite, rhyolite in three parts, rhyodacite, dacite
+in two, trachydacite, and the Parnaíba sedimentary basin. That is exactly the
+distal-tephra reference the `volcanic_ash` kill wants, measured rather than
+assumed. **No screen has run yet**: the
 full-corpus run `35742065160` was dispatched 10:41 EDT, waited 32 min in the
-queue, started 11:13 EDT and is expected to fail at the screen for the reason
-above (it will still commit `acquisition.json`, which is a real measurement of
-what SGP served). The replacement, `35747786123`, was dispatched 11:30 EDT on
-the fixed head. `results/grave/` holds `probe.json` only — **there is no
+queue, started 11:13 EDT, and was **cancelled at 11:34 EDT** once the
+pandas-3 defect above made it certain it would die at the screen; it committed
+its probe ledger first (94 accepted SGP codes, `count` = 114,688, a 5,000-row
+page returned in full, GEOROC reached). The replacement, `35747786123`, was
+dispatched 11:30 EDT on the fixed head and was still queued at 12:02 EDT. `results/grave/` holds `probe.json` only — **there is no
 verdict about the sedimentary record yet**, and nothing in the repo should be
 read as one.
 

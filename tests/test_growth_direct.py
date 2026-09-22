@@ -397,6 +397,53 @@ def test_an_unresolvable_tic_is_not_measured_with_its_own_reason(tmp_path):
     assert set(df["class"]) == {D.CLASS_NOT_MEASURED}
 
 
+def test_a_hopeless_sensitivity_does_not_overflow_the_detectable_change():
+    """The sensitivity of a star TESS cannot reach is +inf, never an exception.
+
+    Run 35738702139 lost a whole shard to ``OverflowError`` here: a shallow
+    reference depth against a huge TESS error drives ``detectable_ln_ratio``
+    past 709, where ``exp`` has no finite double left.
+    """
+    assert D.detectable_change_ppm(300.0, 2000.0) == math.inf
+    assert math.isnan(D.detectable_change_ppm(float("nan"), 1.0))
+    assert D.detectable_change_ppm(1000.0, math.log(2.0)) == pytest.approx(1000.0)
+    cmp = D.compare_family(float("nan"), float("nan"), 1.0e9, 3.0e-4, 1.0e-5)
+    assert cmp["detectable_depth_change_ppm"] == math.inf
+    assert np.isfinite(cmp["detectable_ln_ratio"])
+
+
+def test_one_star_that_raises_costs_only_itself(tmp_path, monkeypatch):
+    """A pathological target is a NON-measurement, not the death of the shard."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    real = D.measure_direct_target
+    seen: list[str] = []
+
+    def boom(entry, products, **kw):
+        seen.append(str(entry.get("kepoi_name")))
+        if len(seen) == 1:
+            raise OverflowError("math range error")
+        return real(entry, products, **kw)
+    monkeypatch.setattr(D, "measure_direct_target", boom)
+
+    def pf(tic, **_kw):
+        return _products(ref, ref, n_transits=10, sectors=(41,))
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf,
+                           tic_fn=lambda *a, **k: (5555.0, "tic_region_kic"))
+    assert rep["n_measure_failed"] == 1
+    assert rep["n_measured_this_run"] == len(seen) >= 2       # it kept going
+    df = D._read_csv(D._shard_paths(out, 0)["csv"]).set_index("kepoi_name")
+    bad = df.loc[seen[0]]
+    assert bad["lc_status"] == D.REASON_MEASURE_FAILED
+    assert "OverflowError" in str(bad["not_measured_reason"])
+    assert bad["class"] == D.CLASS_NOT_MEASURED
+    # and the rest of the shard is real
+    assert (df["class"] != D.CLASS_NOT_MEASURED).any()
+
+
 def test_an_exhausted_shard_budget_leaves_targets_unreached_not_measured(tmp_path):
     out = tmp_path / "direct"
     out.mkdir()

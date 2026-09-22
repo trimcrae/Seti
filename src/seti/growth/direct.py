@@ -164,6 +164,7 @@ REASON_NO_TRANSIT = "NO_USABLE_TRANSIT"
 REASON_BUDGET = "BUDGET_EXHAUSTED"
 REASON_NOT_REACHED = "NOT_REACHED"
 REASON_NO_REFERENCE = "NO_REFERENCE_DEPTH"
+REASON_MEASURE_FAILED = "MEASURE_RAISED"
 REASONS = (REASON_QUERY_FAILED, REASON_ZERO_ROWS, REASON_TIC_UNRESOLVED, REASON_NO_EPHEMERIS,
            REASON_NO_TRANSIT, REASON_BUDGET, REASON_NOT_REACHED, REASON_NO_REFERENCE)
 
@@ -1227,6 +1228,28 @@ def measure_family(products, family: str, *, period_days: float, t0_btjd: float,
 # ---------------------------------------------------------------------------
 # The comparison with the Kepler era, and the sensitivity
 # ---------------------------------------------------------------------------
+_MAX_LN_EXP = 709.0          # e**709.78 is the last finite double
+
+
+def detectable_change_ppm(ref_ppm: float, detectable_ln_ratio: float) -> float:
+    """``ref * (e**dln - 1)`` that cannot overflow.
+
+    On a star with essentially no sensitivity --- a shallow reference depth
+    against an enormous TESS error --- ``dln`` runs to hundreds and the plain
+    ``exp`` raises ``OverflowError``.  The honest value there is "larger than
+    any depth this star could have", i.e. ``+inf``, not a crash that costs the
+    whole shard.  ``expm1`` also keeps the small-``dln`` end accurate.
+    """
+    if not (np.isfinite(ref_ppm) and np.isfinite(detectable_ln_ratio)):
+        return float("nan")
+    if detectable_ln_ratio > _MAX_LN_EXP:
+        return float("inf")
+    try:
+        return float(ref_ppm * math.expm1(float(detectable_ln_ratio)))
+    except (OverflowError, ValueError):
+        return float("inf")
+
+
 def compare_family(depth_ppm: float, stat_err_ppm: float, total_err_ppm: float,
                    ref_ppm: float, ref_err_ppm: float, *, params: ClassifyParams | None = None,
                    n_candidate: float | None = None) -> dict:
@@ -1257,7 +1280,7 @@ def compare_family(depth_ppm: float, stat_err_ppm: float, total_err_ppm: float,
         s_exp = math.sqrt((total_err_ppm / ref_ppm) ** 2 + fr_ref ** 2 + params.sigma_sys_ln ** 2)
         out["sigma_ln_expected"] = s_exp
         out["detectable_ln_ratio"] = ncand * s_exp
-        out["detectable_depth_change_ppm"] = ref_ppm * (math.exp(ncand * s_exp) - 1.0)
+        out["detectable_depth_change_ppm"] = detectable_change_ppm(ref_ppm, ncand * s_exp)
     if np.isfinite(stat_err_ppm) and stat_err_ppm > 0:
         out["expected_snr"] = ref_ppm / stat_err_ppm
     if not (np.isfinite(depth_ppm) and np.isfinite(total_err_ppm) and total_err_ppm > 0):
@@ -1819,7 +1842,7 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     recs: list[dict] = list(done.values())
     members_frames: list[pd.DataFrame] = [prev_members] if len(prev_members) else []
     sector_frames: list[pd.DataFrame] = []
-    n_new, n_skipped, n_budget = 0, 0, 0
+    n_new, n_skipped, n_budget, n_measure_failed = 0, 0, 0, 0
     tic_fallback_by_route: dict = {}
     fetch_status_counts: dict = {}
 
@@ -1877,9 +1900,25 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
             entry["tic_id"] = tic if np.isfinite(tic) else float("nan")
             entry["tic_route"] = route
             t1 = _time.monotonic()
-            rec, mem, sec, _fold_df = measure_direct_target(
-                entry, products, fetch_status=status, fetch_route=lc_route, fit=fit, ensemble=ens,
-                search=search, duration=dur_p, classify=cls_p, ld_table=ld_table)
+            try:
+                rec, mem, sec, _fold_df = measure_direct_target(
+                    entry, products, fetch_status=status, fetch_route=lc_route, fit=fit,
+                    ensemble=ens, search=search, duration=dur_p, classify=cls_p,
+                    ld_table=ld_table)
+            except Exception as exc:                          # noqa: BLE001
+                # One pathological star must never cost the shard its other
+                # hundreds.  The failure is recorded as a NON-measurement with
+                # the exception verbatim --- it is never a statement about the
+                # sky, and `assess` counts it under not_measured.
+                rec = {k: entry.get(k) for k in MEASUREMENT_COLUMNS if k in entry}
+                rec.update({"lc_status": REASON_MEASURE_FAILED, "lc_route": lc_route,
+                            "not_measured_reason": repr(exc)[:300],
+                            "n_products": len(products),
+                            "class": CLASS_NOT_MEASURED, "would_be_candidate_without_vetoes": False})
+                mem, sec, _fold_df = [], pd.DataFrame(), pd.DataFrame()
+                n_measure_failed += 1
+                print(f"[growth-direct] {entry.get('kepoi_name')} (shard {shard}): "
+                      f"{REASON_MEASURE_FAILED} {repr(exc)[:200]}")
             rec["shard"] = int(shard)
             rec["elapsed_s"] = round(_time.monotonic() - t1, 1)
             rec["class_provisional"] = rec.get("class")
@@ -1919,6 +1958,7 @@ def direct_measure(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
            "generated_utc": _now(), "n_targets_in_shard": int(len(mine)),
            "n_stars_in_shard": int(len(groups)), "n_measured_this_run": n_new,
            "n_skipped_already_done": n_skipped, "n_not_reached_budget": n_budget,
+           "n_measure_failed": n_measure_failed,
            "n_rows": int(len(df)), "budget_s": fp.shard_budget_s,
            "elapsed_s": round(deadline.elapsed(), 1), "budget_exhausted": bool(deadline.expired()),
            "fetch_status_counts": fetch_status_counts,
@@ -2047,7 +2087,8 @@ def direct_assess(conf: dict, out: Path) -> dict:
             if len(measured) else pd.Series(dtype=float)
         sens[fam] = ({"n": int(len(d)), "median_detectable_ln_ratio": float(d.median()),
                       "p16": float(d.quantile(0.16)), "p84": float(d.quantile(0.84)),
-                      "median_detectable_depth_change_fraction": float(math.exp(d.median()) - 1.0)}
+                      "median_detectable_depth_change_fraction":
+                          detectable_change_ppm(1.0, float(d.median()))}
                      if len(d) else {"n": 0})
     n_meas = int(len(measured))
     n_cand = int(len(cands))

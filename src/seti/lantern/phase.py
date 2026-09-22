@@ -225,6 +225,51 @@ def _coverage(res: dict) -> dict:
              "in_eclipse", "eclipse_contact", "out_eclipse")}
 
 
+_CLASS_RANK = {"both": 0, "eclipse": 0, "transit": 1, "phase_unresolved": 2}
+
+
+def predict_phase_class(ephemerides: list[Ephemeris], t_min_jd: float, t_max_jd: float,
+                        cfg: dict | None = None, cadence_days: float = 1.0 / 1440.0,
+                        extra_timing_sigma: float = 0.006) -> dict:
+    """Phase class an observation window WOULD get, from its start/end alone.
+
+    Used by the planner to order the archive: the MAST ``t_min``/``t_max``
+    (MJD, UTC, no barycentric correction -- hence the extra timing sigma of
+    ~8 minutes) are turned into a uniform grid at ``cadence_days`` and run
+    through :func:`label_integrations` for every planet of the host, so the
+    prediction uses exactly the labelling the screen will apply.  Returns the
+    best class, the planet that gives it, the event counts and a rank
+    (0 = eclipse-class first, 1 = transit, 2 = unresolved).
+    """
+    c = {**_DEFAULT_PHASE_CFG, **(cfg or {})}
+    best = {"phase_class": "phase_unresolved", "planet": None, "rank": 2,
+            "n_eclipses": 0, "n_transits": 0, "notes": []}
+    try:
+        lo, hi = float(t_min_jd), float(t_max_jd)
+    except (TypeError, ValueError):
+        best["notes"].append("no_window")
+        return best
+    if not (np.isfinite(lo) and np.isfinite(hi)) or hi <= lo:
+        best["notes"].append("no_window")
+        return best
+    n = int(min(20000, max(4, round((hi - lo) / cadence_days))))
+    t = np.linspace(lo, hi, n)
+    for eph in ephemerides:
+        if not eph.valid():
+            continue
+        lab = label_integrations(t, eph, c, extra_timing_sigma=extra_timing_sigma)
+        cls = lab["phase_class"]
+        rank = _CLASS_RANK.get(cls, 2)
+        if rank < best["rank"] or best["planet"] is None:
+            best = {"phase_class": cls, "planet": eph.name, "rank": rank,
+                    "n_eclipses": len([e for e in lab["eclipses"] if not e.get("unplaceable")]),
+                    "n_transits": len([e for e in lab["transits"] if not e.get("unplaceable")]),
+                    "notes": list(lab["notes"]),
+                    "coverage_fraction": {k: round(v / n, 3) for k, v in lab["coverage"].items()
+                                          if k != "n_baseline_before_eclipse_ingress"}}
+    return best
+
+
 def ephemeris_from_archive_row(row: dict, planet_name: str | None = None) -> Ephemeris:
     """Build an :class:`Ephemeris` from a ``pscomppars`` row (dict-like).
 
@@ -276,4 +321,4 @@ def ephemeris_from_archive_row(row: dict, planet_name: str | None = None) -> Eph
 
 __all__ = ["Ephemeris", "eclipse_offset_fraction", "timing_uncertainty",
            "ingress_duration", "events_in_window", "label_integrations",
-           "ephemeris_from_archive_row"]
+           "predict_phase_class", "ephemeris_from_archive_row"]

@@ -99,11 +99,31 @@ residue**. The continuum fixes were still right: they took the per-exposure bias
 several sigma down to −0.4. But the headline number was never what it appeared to be, and
 `median_exposure_sig` is now reported beside it for exactly this reason.
 
-**The stack is the statistic the classification should turn on.** It is measured on the
-same exposures with one continuum fit on their combined spectrum, so it carries neither
-the low-S/N continuum bias nor the √N factor. Rebuilding the rules around it is the next
-substantive change, and it was deliberately not made at the end of the session that found
-this, on a rule that decides what gets killed.
+**What does *not* follow: that the stack is therefore the safe statistic.** I wrote that
+here first, and it is wrong. A continuum error *shared by all the exposures* hits the
+stack **harder**, not less — the stack's errors are √N smaller, so the same flux bias is
+√N *more* significant. Injecting an upward-curving continuum into every exposure of a
+synthetic file with a real line in it:
+
+| | clean | curved |
+|---|---|---|
+| median per-exposure σ | 3.34 | 2.92 |
+| combined σ | 9.84 | **8.57** (−13 %) |
+| stack σ | 12.84 | **2.52** (−80 %) |
+
+The per-exposure combination barely moves — the in-spectrum null sees the curvature at
+the offsets too and takes most of it back out — while the stack collapses. So the stack is
+the stronger statistic on clean data and the *more* fragile one under a shared continuum
+error, and "turn the classification on the stack" is not a safe conclusion from shard 0's
+numbers. This is pinned as a test.
+
+**What remains, then, is an unexplained disagreement.** On real data the stack was
+positive in 24 of 24 while the combination was negative; a shared continuum error would
+have driven *both* negative, and the stack further. Something distinguishes N noisy
+continuum fits from one clean fit on the same pixels in a way neither the null nor this
+synthetic reproduces. Until that is identified, neither statistic should be promoted over
+the other, and the classification stays as it is — every verdict it currently issues on
+these lines is a kill either way.
 
 ### 3. The stack of the exposures, as a second reference
 
@@ -577,12 +597,15 @@ now builds the matrix from `n_shards`, so 35758868818 asks for three.
 
 ### Next decisive action
 
-1. **Rebuild the classification around the stack**, now that shard 0 has shown the
-   per-exposure combination to be √N × a residual bias and the stack to be positive in
-   24 of 24 of the same lines. The per-exposure values still answer the question they
-   were introduced for — *distribution* across exposures, transient vs persistent — but
-   they should be compared with each other, not with zero, and presence should be read
-   off the stack. Needs a `CKPT_VERSION` bump and a fresh run.
+1. **Find out why the stack and the per-exposure combination disagree in sign on 23 of 24
+   real lines.** A shared continuum error does not explain it — that drives both negative
+   and the stack further (measured above). Candidates worth testing: the per-exposure
+   `err_scale` rescaling, which inflates a noisy exposure's error from its own annulus
+   scatter and has no counterpart in the stack; the sigma-clipping of the continuum fit
+   at low S/N; and the interpolation onto the coadd grid inside `stack_exposures`. Until
+   this is identified, neither statistic is promoted over the other. **Do not** simply
+   rebuild the classification around the stack — that was written here as the next step
+   and then withdrawn.
 2. Land 35758868818 so all 167 lines are measured once, with the offset null and the
    stack, by one commit. (Its `absent_in_exposures` verdicts will still be kills, so the
    candidate list is unaffected; what changes under item 1 is what the numbers mean.)

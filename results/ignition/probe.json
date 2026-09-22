@@ -1,152 +1,99 @@
 {
   "stage": "probe",
-  "generated_utc": "2026-09-16T00:14:46Z",
+  "generated_utc": "2026-09-21T21:03:35Z",
   "budget": {
     "per_shape_s": 480.0,
-    "total_s": 1500.0
+    "total_s": 2400.0
   },
-  "allwise_columns_seen": [
-    "allwise_oid",
-    "cc_flags",
-    "dec",
-    "dec_error",
-    "designation",
-    "ext_flag",
-    "ph_qual",
-    "ra",
-    "ra_error",
-    "radec_co_error",
-    "tmass_key",
-    "var_flag",
-    "w1gmag",
-    "w1gmag_error",
-    "w1mjd_mean",
-    "w1mpro",
-    "w1mpro_error",
-    "w2gmag",
-    "w2gmag_error",
-    "w2mjd_mean",
-    "w2mpro",
-    "w2mpro_error",
-    "w3gmag",
-    "w3gmag_error",
-    "w3mjd_mean",
-    "w3mpro",
-    "w3mpro_error",
-    "w4gmag",
-    "w4gmag_error",
-    "w4mjd_mean",
-    "w4mpro",
-    "w4mpro_error"
-  ],
   "allwise_columns_resolved": {
-    "designation": "designation",
-    "ext_flag": "ext_flag",
-    "ph_qual": "ph_qual",
-    "cc_flags": "cc_flags",
-    "var_flag": "var_flag"
+    "timeout_s": 120.0,
+    "status": "TIMED_OUT",
+    "error": "QueryTimeout('no answer within 120 s')",
+    "elapsed_s": 120.0
   },
   "gaia_shapes": [
     {
       "shape": "inner_cone",
       "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
       "timeout_s": 480.0,
-      "elapsed_s": 19.9,
-      "transport": "astroquery_async",
-      "queue": "async",
+      "elapsed_s": 480.0,
       "attempts": [
         {
           "transport": "astroquery_async",
           "queue": "async",
-          "ok": true,
-          "n_rows": 5,
-          "seconds": 19.9
+          "ok": false,
+          "error": "QueryTimeout('no answer within 480 s')",
+          "seconds": 480.0
         }
       ],
-      "status": "OK",
-      "n_rows": 5,
-      "columns": [
-        "source_id",
-        "ra",
-        "dec",
-        "b",
-        "parallax",
-        "parallax_over_error",
-        "pmra",
-        "pmdec",
-        "ruwe",
-        "phot_g_mean_mag",
-        "bp_rp",
-        "phot_variable_flag",
-        "non_single_star",
-        "teff_gspphot",
-        "random_index",
-        "allwise_designation",
-        "w1mpro",
-        "w1mpro_error",
-        "w2mpro",
-        "w2mpro_error",
-        "w3mpro",
-        "w3mpro_error",
-        "cc_flags",
-        "ph_qual",
-        "ext_flag",
-        "allwise_sep_arcsec",
-        "allwise_n_neighbours"
-      ]
+      "status": "TIMED_OUT",
+      "error": "QueryTimeout('no answer within 480 s')"
+    },
+    {
+      "shape": "inner_cone_postfilter",
+      "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id",
+      "timeout_s": 480.0,
+      "elapsed_s": 480.0,
+      "attempts": [
+        {
+          "transport": "astroquery_async",
+          "queue": "async",
+          "ok": false,
+          "error": "QueryTimeout('no answer within 480 s')",
+          "seconds": 480.0
+        }
+      ],
+      "status": "TIMED_OUT",
+      "error": "QueryTimeout('no answer within 480 s')"
+    },
+    {
+      "shape": "flat",
+      "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM gaiadr3.gaia_source AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE 1 = CONTAINS(POINT('ICRS', g.ra, g.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n  AND g.phot_g_mean_mag < 14.5\n  AND g.parallax > 3.0\n  AND g.parallax_over_error > 10.0\n  AND ABS(g.b) > 15.0\n  AND g.ruwe < 1.4\n  AND g.phot_variable_flag != 'VARIABLE'\n  AND g.bp_rp > 0.6 AND g.bp_rp < 2.5\n  AND g.phot_g_mean_mag + 5 * LOG10(g.parallax) - 10 > 2.0 + 3.3 * (g.bp_rp - 0.6)\n  AND w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
+      "timeout_s": 480.0,
+      "elapsed_s": 480.0,
+      "attempts": [
+        {
+          "transport": "astroquery_async",
+          "queue": "async",
+          "ok": false,
+          "error": "QueryTimeout('no answer within 480 s')",
+          "seconds": 480.0
+        }
+      ],
+      "status": "TIMED_OUT",
+      "error": "QueryTimeout('no answer within 480 s')"
     }
   ],
-  "gaia_shape_working": "inner_cone",
+  "gaia_shape_working": null,
   "gaia_shapes_tried": [
-    "inner_cone"
+    "inner_cone",
+    "inner_cone_postfilter",
+    "flat"
   ],
   "gaia_join": {
     "shape": "inner_cone",
     "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
     "timeout_s": 480.0,
-    "elapsed_s": 19.9,
-    "transport": "astroquery_async",
-    "queue": "async",
+    "elapsed_s": 480.0,
     "attempts": [
       {
         "transport": "astroquery_async",
         "queue": "async",
-        "ok": true,
-        "n_rows": 5,
-        "seconds": 19.9
+        "ok": false,
+        "error": "QueryTimeout('no answer within 480 s')",
+        "seconds": 480.0
       }
     ],
-    "status": "OK",
-    "n_rows": 5,
-    "columns": [
-      "source_id",
-      "ra",
-      "dec",
-      "b",
-      "parallax",
-      "parallax_over_error",
-      "pmra",
-      "pmdec",
-      "ruwe",
-      "phot_g_mean_mag",
-      "bp_rp",
-      "phot_variable_flag",
-      "non_single_star",
-      "teff_gspphot",
-      "random_index",
-      "allwise_designation",
-      "w1mpro",
-      "w1mpro_error",
-      "w2mpro",
-      "w2mpro_error",
-      "w3mpro",
-      "w3mpro_error",
-      "cc_flags",
-      "ph_qual",
-      "ext_flag",
-      "allwise_sep_arcsec",
-      "allwise_n_neighbours"
-    ]
+    "status": "TIMED_OUT",
+    "error": "QueryTimeout('no answer within 480 s')"
+  },
+  "irsa_tap": {
+    "status": "TIMED_OUT",
+    "error": "QueryTimeout('no answer within 600 s')",
+    "label": "irsa_tap",
+    "elapsed_s": 600.0,
+    "timeout_s": 600.0,
+    "usable": false
   },
   "vizier_asu": {
     "enabled": true,
@@ -393,40 +340,42 @@
     "status": "OK",
     "usable": true
   },
-  "neowise_star_from_route": "esa_gaia",
+  "neowise_star_from_route": "vizier_asu",
   "neowise_cone": {
-    "label": "neowise_cone_pm0.10as",
+    "label": "neowise_cone_pm0.18as",
     "service": "https://irsa.ipac.caltech.edu/TAP",
     "status": "OK",
-    "n_rows": 4110,
+    "n_rows": 3005,
     "count_star": null,
     "truncated": false,
-    "query": "SELECT ra, dec, mjd, w1mpro, w1sigmpro, w2mpro, w2sigmpro, qual_frame, saa_sep, moon_masked, cc_flags, ph_qual, nb, na FROM neowiser_p1bs_psd WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 267.8618434, 64.6417536, 0.000708122))",
+    "query": "SELECT ra, dec, mjd, w1mpro, w1sigmpro, w2mpro, w2sigmpro, qual_frame, saa_sep, moon_masked, cc_flags, ph_qual, nb, na FROM neowiser_p1bs_psd WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 264.4546112, 64.2602086, 0.000718989))",
     "error": "",
-    "elapsed_s": 15.628940259999979,
+    "elapsed_s": 78.43526356299981,
     "n_rows_raw": null,
     "n_rows_cleaned_out": null,
-    "source_id": "1440754308521967872"
+    "source_id": "1440498637709258624"
   },
   "neowise_upload": {
-    "label": "neowise_upload_2",
+    "label": "neowise_upload[none]_2",
     "service": "https://irsa.ipac.caltech.edu/TAP",
     "status": "QUERY_FAILED",
     "n_rows": 0,
     "count_star": null,
     "truncated": null,
-    "query": "SELECT p.sid, n.ra, n.dec, n.mjd, n.w1mpro, n.w1sigmpro, n.w2mpro, n.w2sigmpro, n.qual_frame, n.saa_sep, n.moon_masked, n.cc_flags, n.ph_qual, n.nb, n.na FROM neowiser_p1bs_psd AS n, TAP_UPLOAD.pos AS p WHERE 1 = CONTAINS(POINT('ICRS', n.ra, n.dec), CIRCLE('ICRS', p.ra, p.dec, p.rad))",
-    "error": "DALQueryError: Query Error: QUERY must be set",
-    "elapsed_s": 50.57383718400001,
+    "query": "SELECT TOP 3000000 p.sid, n.ra, n.dec, n.mjd, n.w1mpro, n.w1sigmpro, n.w2mpro, n.w2sigmpro, n.qual_frame, n.saa_sep, n.moon_masked, n.cc_flags, n.ph_qual, n.nb, n.na FROM neowiser_p1bs_psd AS n, TAP_UPLOAD.pos AS p WHERE 1 = CONTAINS(POINT('ICRS', n.ra, n.dec), CIRCLE('ICRS', p.ra, p.dec, 0.000778337))",
+    "error": "pyvo_sync: DALQueryError: TransientFault: INTERNAL_SERVER_ERROR: Unimplemented data type: unicodeChar | http_sync: RuntimeError('TAP QUERY_STATUS=ERROR: TransientFault: INTERNAL_SERVER_ERROR: Unimplemented data type: unicodeChar') | http_async: RuntimeError('no UWS job URL in the async answer: 200 https://irsa.ipac.caltech.edu/TAP/async?REQUEST=doQuery&LANG=ADQL&FORMAT=votable&QUERY=SELECT+TOP+3000000+p.sid%2C+n.ra%2C+n.dec%2C+n.mjd%2C+n.w1mpro%2C+n.w1sigmpro%2C+n.w2mpro%2C+n.w2sigmpro%2C+n.qual_frame%2C+n.saa_sep%2C+n.moon_masked%2C+n.cc_flags%2C+n.ph_qual%2C+n.nb%2C+n.na+FROM+neowiser_p1bs_psd+AS+n%2C+TAP_UPLOAD.pos+AS+p+WHERE+1+%3D+CONTAINS%28POINT%28%27ICRS%27%2C+n.ra%2C+n.dec%29%2C+CIRCLE%28%27ICRS%27%2C+p.ra%2C+p.dec%2C+0.000778337%29%29&UPLOAD=pos%2Cparam%3Apos') | gator: RuntimeError('Gator answered no IPAC table: [struct stat=\"ERROR\", msg=\"No upload table is defined or the table doesn\\'t exist.\"]\\n')",
+    "elapsed_s": 1.4538326380002218,
     "n_rows_raw": null,
     "n_rows_cleaned_out": null
   },
-  "neowise_route_recommended": "field",
-  "parent_route_recommended": "esa_gaia",
+  "neowise_upload_transport": null,
+  "neowise_route_recommended": "cone",
+  "parent_route_recommended": "vizier_asu",
   "parent_routes_tried": [
     "esa_gaia",
+    "irsa_tap",
     "vizier_asu"
   ],
-  "verdict": "GAIA_AND_NEOWISE_REACHABLE",
-  "elapsed_s": 117.2
+  "verdict": "VIZIER_PARENT_AND_NEOWISE",
+  "elapsed_s": 2263.2
 }

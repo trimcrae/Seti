@@ -54,7 +54,12 @@ rotation away and the clock period is the **rank-1** periodogram peak, at
 0.4232737 d, Baluev FAP 0. The 74 events sit on the crest: Rayleigh r = 0.957,
 p = 3e-28, mean phase 0.936 against a fitted photometric maximum at
 0.936-0.971 -- an offset of **-0.036 cycles, 22 minutes**. At 2P the events do
-not cluster at all (r = 0.107, p = 0.43).
+not cluster at all (r = 0.107, p = 0.43). Run 35797574316 repeated this on the
+**catalogued** epochs -- all 21 of Yang & Liu 2019's, fetched from VizieR by
+the vet itself rather than from a prior run's artifact: r = 0.974, p = 8e-9,
+mean phase **0.943** against the re-detected events' 0.936, and r = 0.141,
+p = 0.66 at 2P. The published flare list and the independent detector are
+counting the same pulsation maxima.
 
 `period_is_photometric: false` was right about what it measured and wrong
 about what it was taken to mean: it compares the clock against the *global*

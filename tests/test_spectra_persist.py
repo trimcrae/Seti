@@ -129,6 +129,23 @@ def test_persistent_line_recovered_with_ew():
     assert not cls["on_sky_line"]
 
 
+def test_power_at_the_weakest_survivor_strength():
+    """The test must be able to SEE the survivors it is being used to reject.
+
+    The 167 narrow-line survivors have coadd significances from 8.0 to 25.5.
+    An "absent in the exposures" verdict on one of them is only meaningful if a
+    real line of that strength would have shown up per exposure, so this pins
+    the sensitivity: a line weaker than the weakest survivor must still come out
+    persistent, present in every exposure, well above the 2.5 sigma
+    per-exposure threshold.
+    """
+    _, fc, ex, cls = _run(make_spec_file([0.25] * 4))
+    assert fc["sig"] < 8.0, fc["sig"]          # weaker in the coadd than any survivor
+    assert cls["persistence_class"] == "persistent", cls
+    assert cls["n_present"] == 4 and cls["n_tested"] == 4
+    assert min(e["sig"] for e in ex) > persist.PRESENT_SIG + 1.0, [e["sig"] for e in ex]
+
+
 def test_transient_single_exposure_spike():
     # One exposure carries a strong spike; the coadd (mean) still shows it.
     parsed, fc, ex, cls = _run(make_spec_file([4.0, 0.0, 0.0, 0.0]))

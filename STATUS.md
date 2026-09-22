@@ -19,10 +19,19 @@ on a clock at 0.42328185 d against the catalogue's 0.42327409 d, jitter 0.048,
 catalogued epochs confirmed as real brightenings (epoch sigma 3.33 vs control
 0.52, p 0.0025, best time-offset 0.0 d), and `period_is_photometric: false`.
 
-**Run 35796061650 (2026-09-22, ~7:13 PM ET) settled it.** New stage
-`vetstar` (`src/seti/metronome/vetstar.py`), one runner, 115 s:
-`MUNDANE_EXPLANATION_FOUND(COHERENT_OSCILLATION_AT_P; EVENTS_ON_THE_CREST)`,
-nothing unreached.
+**Three runs on 2026-09-22 settled it** -- 35796061650 (7:13 PM ET),
+35796768720 (7:22 PM ET) and 35797574316 (7:33 PM ET) -- through the new
+`vetstar` stage (`src/seti/metronome/vetstar.py`), one runner each, ~2 min
+each. Final verdict, nothing unreached:
+
+```
+MUNDANE_EXPLANATION_FOUND(
+  CONTAMINATING_VARIABLE_AT_P:gaia2053563953175635712@13.3arcsec,
+                              KIC 5879583,type=RR,P=0.4232946,in=vsx+ztf_chen2020;
+  COHERENT_OSCILLATION_AT_P:amp=0.00082,p_control=0.00498,z=68.7_with_events_masked;
+  EVENTS_ON_THE_CREST:offset=-0.036cycles;
+  AMPLITUDE_TRACKS_SPACECRAFT_ROLL:F=3.07,p=0.0015,ratio=2.37)  [P=0.423282 d]
+```
 
 **It is not an eclipsing binary, and every catalogue was asked by name.**
 Kepler Eclipsing Binary Catalog (Kirk+2016, `J/AJ/151/68`, all ten tables

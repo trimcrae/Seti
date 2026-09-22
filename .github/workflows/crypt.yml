@@ -136,11 +136,18 @@ jobs:
         run: |
           python -m pytest tests/test_crypt.py -q -p no:cacheprovider \
             -k "injected or lit_rim or empty_archive or pds3 or diurnal or pcp or psr"
+      # NEVER remove $AGENT_TOOLSDIRECTORY (/opt/hostedtoolcache): that is where
+      # setup-python put the interpreter this job installed seti into.  Run
+      # 35744896637 shard 1 did, and the next step ran /usr/bin/python and died
+      # with ModuleNotFoundError: No module named 'seti'.
       - name: Free disk (each PCP table is 262 MB and is deleted after it is rasterised)
         run: |
           df -h /
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+                      /usr/local/lib/android /usr/share/swift || true
           df -h /
+          python -c "import sys, pandas, numpy, scipy; print('python', sys.version); \
+                     print('pandas', pandas.__version__, 'numpy', numpy.__version__, 'scipy', scipy.__version__)"
       - name: Optional override of the local-time bin selection
         if: ${{ github.event.inputs.ltim_bins != '' }}
         run: |

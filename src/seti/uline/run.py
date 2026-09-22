@@ -219,9 +219,43 @@ def _tap_query_fn(conf: dict, query_fn=None):
     return lambda adql: A.tap_query(adql, url=url, retries=retries)
 
 
-def _discover(conf: dict, name: str, spec: dict, *, query_fn, log, cols) -> A.LineTableDiscovery:
+class _DeadlineExpired(Exception):
+    """One source's discovery has spent its share of the probe's wall clock."""
+
+
+def _clocked_query(query_fn, deadline: float | None):
+    """``query_fn`` that refuses to start a new query past ``deadline``.
+
+    The budget has to be enforced INSIDE one source's discovery, not only
+    between sources.  A single slow catalogue runs its whole route ladder —
+    four TAP hosts, each retried, then ASU, then astroquery — and then a
+    column query and a row count for **every** table it lists.  Against a
+    loaded VizieR that is tens of minutes for one id, so a check that only
+    decides whether to *start* the next source cannot stop the one already
+    running.  FORGE diagnosed exactly this live on run 35744731075 (70+
+    minutes in a 25-minute stage); ULINE queries ten sources, so the same
+    failure would be ten times as expensive — and a job killed by its
+    `timeout-minutes` does not run its `if: always()` commit-back, which
+    means no results at all.
+    """
+    if deadline is None:
+        return query_fn
+
+    def q(adql: str):
+        import time as _t
+        if _t.monotonic() > deadline:
+            raise _DeadlineExpired(
+                f"probe wall clock spent before this query: {str(adql)[:160]}")
+        return query_fn(adql)
+
+    return q
+
+
+def _discover(conf: dict, name: str, spec: dict, *, query_fn, log, cols,
+              deadline: float | None = None) -> A.LineTableDiscovery:
     return A.discover_line_table(
-        name, spec["vizier_like"], query_fn=query_fn, log=log, column_patterns=cols,
+        name, spec["vizier_like"], query_fn=_clocked_query(query_fn, deadline), log=log,
+        column_patterns=cols,
         fallback_terms_all=spec.get("fallback_description_all")
         or [conf["archives"].get("discover_description_word") or "nidentified"],
         fallback_terms_any=spec.get("fallback_description_any") or [])
@@ -238,9 +272,33 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=
     _, cdms = _cdms_inventory(conf, fetch_fn=fetch_fn, log=log)
     cols = _column_patterns(conf)
     vizier = {}
-    for name, spec in _enabled_sources(conf, sources).items():
-        d = _discover(conf, name, spec, query_fn=query_fn, log=log, cols=cols)
-        vizier[name] = d.as_dict()
+    # Each source gets its OWN share of the probe's wall clock, enforced inside
+    # its discovery rather than only between sources (see _clocked_query).  A
+    # source whose share runs out is recorded with the reason; one that is
+    # never started is DISCOVERY_NOT_ATTEMPTED.  Neither is a statement about
+    # the sky, and both are better than a job killed by `timeout-minutes`,
+    # which skips the commit-back and leaves no results at all.
+    import time as _time_mod
+    enabled = _enabled_sources(conf, sources)
+    budget = float(conf["archives"].get("probe_budget_s", 0) or 0)
+    t_start = _time_mod.monotonic()
+    per_source = (budget / max(len(enabled), 1)) if budget > 0 else None
+    for name, spec in enabled.items():
+        if budget > 0 and _time_mod.monotonic() - t_start > budget:
+            vizier[name] = {"source": name, "status": "DISCOVERY_NOT_ATTEMPTED",
+                            "error": f"probe wall clock of {budget:g}s spent on earlier sources"}
+            continue
+        # this source's own share, but never past the whole stage's budget —
+        # so a slow source may spend what earlier fast ones left unused
+        dl = min(_time_mod.monotonic() + per_source, t_start + budget) if per_source else None
+        try:
+            d = _discover(conf, name, spec, query_fn=query_fn, log=log, cols=cols, deadline=dl)
+            vizier[name] = d.as_dict()
+        except _DeadlineExpired as exc:
+            log.record(f"discover_{name}", str(spec.get("vizier_like")), error=repr(exc))
+            vizier[name] = {"source": name, "status": "DISCOVERY_TIMED_OUT",
+                            "error": str(exc)[:400],
+                            "budget_s": per_source}
     word = conf["archives"].get("discover_description_word")
     discovered = []
     if word:

@@ -87,6 +87,20 @@ archives:
   litfetch_timeout_s: 30
   litfetch_retries: 1
   litfetch_budget_s: 1800
+  # ---- A WALL CLOCK ON DISCOVERY ----------------------------------------
+  # The probe now walks TEN sources, and one slow catalogue runs its whole
+  # route ladder (four TAP hosts, each retried, then ASU, then astroquery)
+  # plus a column query and a row count for every table it lists.  Against a
+  # loaded VizieR that is tens of minutes for a single id; FORGE diagnosed it
+  # live on run 35744731075, which sat 70+ minutes in a 25-minute stage.  The
+  # budget is therefore enforced INSIDE one source's discovery, not only
+  # between sources, and each source gets its own share of it (spending what
+  # earlier, faster sources left unused).  A source whose share runs out is
+  # DISCOVERY_TIMED_OUT, one never started is DISCOVERY_NOT_ATTEMPTED; both
+  # are statements about the archive and about this clock, never about the
+  # sky.  The alternative is a job killed by `timeout-minutes`, which skips
+  # the `if: always()` commit-back and leaves no results at all.
+  probe_budget_s: 2400
   # Also list any VizieR table whose description mentions this word (recorded
   # in probe.json as further U-line inventories; screened only once they have
   # a `sources:` entry with v_LSR and linewidth).

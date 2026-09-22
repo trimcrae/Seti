@@ -1,0 +1,173 @@
+# RING — rings around the dead (S63): post-biological hosts by construction.
+#
+# The Osmanov (2016, 2018) reading: a Dyson ring around a pulsar or a white
+# dwarf at 300-700 K is a W1/W2 excess, which sits ABOVE the frozen W3/W4
+# ceiling that bounds every warm-dust channel here.  Four legs, one temperature
+# prior:
+#   wd      Gaia EDR3 white dwarfs (Gentile Fusillo+2021) x AllWISE (+2MASS),
+#           the in-archive proper-motion-propagated cross-match; the photosphere
+#           is predicted as in the WD IR-excess channel and the excess is fitted
+#           for a ring temperature.
+#   pulsar  ATNF pulsar catalogue x AllWISE / CatWISE2020 at proper-motion-
+#           propagated positions, with an offset-position control for the
+#           chance-match rate; a pulsar has no photosphere, so ANY counterpart
+#           is an excess and the question is its temperature and its provenance.
+#   bd      Y and late-T dwarfs (Kirkpatrick+2021 20 pc census): NEOWISE
+#           per-epoch W1/W2; a W2 (Wien-peak) series that switches is a duty cycle.
+#   ffp     Young free-floating planetary-mass objects (Faherty+2016): is any
+#           brighter than the cooling ceiling for 13 M_J at its group's age?
+# Every number the code uses is here; nothing is a magic constant.
+
+ring:
+  t_min_k: 250.0          # Osmanov band, widened by the W1/W2 colour resolution
+  t_max_k: 800.0
+  t_nominal_k: [300.0, 500.0, 700.0]   # sensitivities are quoted at these
+companion_t_min_k: 1800.0   # LEDGER: hotter than grains survive => a photosphere
+debris_locus:               # white-dwarf debris disks (sublimation-limited, faint)
+  t_min_k: 800.0
+  t_max_k: 1800.0
+  tau_min: 1.0e-4
+  tau_max: 0.1
+
+survey_limits_jy:           # AllWISE 5-sigma point-source depths (Vega 16.9 / 15.9 / 11.4 / 8.0)
+  W1: 5.4e-5
+  W2: 7.6e-5
+  W3: 8.6e-4
+  W4: 5.2e-3
+epochs:
+  gaia: 2016.0
+  allwise: 2010.5
+  catwise: 2015.4
+
+wd:
+  gaia_table_candidates: ["external.gaiaedr3_wd_main", "external.gaiaedr3_wd_main_v2"]
+  vizier_parent: "J/MNRAS/508/3877/maincat"
+  pwd_min: 0.75
+  parallax_over_error_min: 4.0
+  limit_per_band: 300000
+  dec_band_deg: 15
+  sys_floor_mag: 0.04       # WD blackbody photosphere systematic (WD channel: 0.03; Gaia-anchored fits get more)
+  sys_floor_mag_gaia_anchor: 0.08
+  chi_w1_min: 5.0           # 5 sigma, not 3 (Huang+2025: 5/5 spurious at 3 sigma)
+  chi_w2_min: 5.0
+  color_excess_sigma_min: 3.0
+  # A cool companion (2500-3000 K) raises W1 and W2 almost together, so it
+  # fails the colour test and would never be flagged, fitted or NAMED -- the
+  # contaminant would simply be invisible in the census.  A second admission
+  # route on amplitude: both bands >= chi_min AND excess/photosphere >= this
+  # in both.  0.5 is 0.44 mag, far beyond the 0.02-0.1 mag anchor error the
+  # colour test exists to catch.  Rows admitted this way are recorded with
+  # excess_route = "achromatic" and can never become ring candidates.
+  achromatic_excess_frac_min: 0.5
+  w1_w2_min: -0.05          # LEDGER: negative W1-W2 is a blend
+  # The inherited "AGN wedge" colour cut (W1-W2 > 0.8) is NOT applied here: a
+  # pure 500 K blackbody has W1-W2 = 2.15 and a 300 K one is redder, so the
+  # ring band itself sits in the wedge.  The extragalactic discriminant for
+  # this channel is astrometric (registration at the propagated epoch, CatWISE
+  # co-movement, the chance-superposition prior), not colour.  3.5 mag is the
+  # colour of a ~280 K blackbody, the cold edge of the band.
+  w1_w2_agn_max: 3.5
+  g_max: 20.0
+  bp_rp_min: -0.8
+  bp_rp_max: 2.0
+  shortlist_max: 400        # per-object follow-up cap (Gaia neighbours, CatWISE PM, SIMBAD)
+  mc_draws: 300
+
+pulsar:
+  routes: ["psrqpy", "tarball", "vizier"]
+  tarball_url: "https://www.atnf.csiro.au/research/pulsar/psrcat/downloads/psrcat_pkg.tar.gz"
+  vizier_table: "B/psr/psr"
+  match_radius_arcsec: 1.5          # floor: ~3x the AllWISE positional error; timing positions are mas
+  match_radius_max_arcsec: 8.0      # cap (poorly localised pulsars get up to this)
+  position_error_factor: 2.0        # radius = max(floor, factor x quoted position error)
+  control_offsets_arcsec: [60.0, 90.0]   # rings of 8 offset positions each
+  # Chance probability per pulsar: an empirical-Bayes estimate, the local
+  # control hits pooled with the global control rate (prior weight = the number
+  # of local controls).  For a ring-band counterpart the relevant rate is that
+  # of control matches WITH a ring-band colour, which is what the verdict uses.
+  chance_p_max: 1.0e-2              # a counterpart likelier than this by chance is not evidence
+  xmatch_radius_arcsec: 8.0
+  two_target_vet:
+    - {jname: "J1300+1240", bname: "B1257+12", note: "three planets (Wolszczan & Frail 1992); Spitzer MIPS limits on asteroidal dust (Bryden+2006, verify)"}
+    - {jname: "J1623-2631", bname: "B1620-26", note: "circumbinary planet in M4 (Sigurdsson+2003); globular-cluster sightline, crowded"}
+  known_counterpart_veto:   # pulsars with catalogued optical/IR counterparts or nebulae (not rings)
+    - "J0534+2200"   # Crab
+    - "J0835-4510"   # Vela
+    - "J0633+1746"   # Geminga
+    - "J0659+1414"   # B0656+14
+    - "J1057-5226"   # B1055-52
+    - "J1513-5908"   # B1509-58
+    - "J0540-6919"   # B0540-69 (LMC)
+    - "J0437-4715"   # WD companion
+    - "J1959+2048"   # B1957+20 black widow companion
+    - "J1023+0038"   # transitional MSP, companion
+    - "J1302-6350"   # B1259-63, Be-star companion
+    - "J0045-7319"   # B-star companion (SMC)
+    - "J2032+4127"   # Be-star companion
+    - "J1740-3052"   # B-star companion
+  assoc_veto_tokens: ["SNR", "PWN", "GC:", "OPT:", "XRS"]
+  bincomp_veto_tokens: ["MS", "He", "CO", "UL"]
+
+bd:
+  vizier_catalogue: "J/ApJS/253/7"      # Kirkpatrick+2021, the 20 pc census
+  vizier_fallbacks: ["J/ApJS/240/19"]   # Kirkpatrick+2019 Y dwarfs
+  spt_min_numeric: 26.0                 # >= T6 (L0=10, T0=20, Y0=30)
+  max_targets: 400
+  neowise:
+    route: "cone"
+    cone_radius_arcsec: 3.0
+    epoch_gap_days: 90.0
+    min_exp_per_epoch: 4
+    time_budget_s: 15000.0
+    checkpoint_every: 10
+  min_epochs: 8
+  amp_min_mag: 0.15                 # W2 peak-to-peak beyond which a duty cycle is claimed
+  chi2_red_min: 5.0                 # W2 excess variance over the quoted epoch errors
+  chi2_red_pop_factor: 3.0          # ... and over the population's own median chi2 (the systematic floor)
+  # The population median only estimates the NEOWISE error-underestimate floor
+  # when the sample is large enough for a variable object not to BE the median.
+  # Below this many tested objects the floor is not estimable and the threshold
+  # falls back to chi2_red_min alone (summary records which applied).
+  pop_floor_min_n: 8
+
+ffp:
+  vizier_catalogue: "J/ApJS/225/10"     # Faherty+2016, young ultracool dwarfs with Lbol, group, age
+  mass_limit_mj: 13.0
+  margin_dex: 0.5
+  age_fallback_gyr: {"TWA": 0.010, "beta Pic": 0.024, "Tuc-Hor": 0.045, "Columba": 0.042,
+                     "Carina": 0.045, "Argus": 0.045, "AB Dor": 0.150, "Pleiades": 0.125,
+                     "Ursa Major": 0.400, "Hyades": 0.650, "Carina-Near": 0.200,
+                     "Upper Sco": 0.010, "Taurus": 0.002, "Chamaeleon": 0.005, "32 Ori": 0.024}
+
+contamination:               # the ossuary gates, driven by this block (docs/channel-brief.md section 4)
+  wise_quality:
+    allowed_ph_qual: ["A", "B", "C"]
+    forbidden_cc: "DPHO"
+    w1_bright_limit_mag: 8.0
+    max_number_of_mates: 0
+    max_number_of_neighbours: 1
+  astrometry:
+    gaia_ref_epoch: 2016.0
+    wise_mean_epoch: 2010.5
+    max_registration_arcsec: 1.0
+    pm_consistency_sigma_max: 3.0
+    min_pm_for_leverage_mas_yr: 30.0
+  beam:
+    wise_beam_arcsec: 6.5
+    max_neighbour_flux_frac: 0.10
+  extragalactic:
+    counts_log10_norm_per_deg2: 4.26
+    counts_slope_per_mag: 0.50
+    counts_ref_w1_mag: 16.9
+    hot_dog_density_per_arcsec2: 9.0e-6
+    interloper_w1_minus_w2: 0.8
+    interloper_w1_minus_w3: 3.0
+    interloper_w1_minus_w4: 4.5
+    min_chi_for_prior: 3.0
+    max_chance_superposition_p: 1.0e-3
+  cirrus:
+    max_ebv_sfd: 0.10
+    min_gal_lat_deg: 15.0
+  globular_cluster:
+    veto_radius_arcmin: 10.0
+    veto_radius_multiplier: 3.0

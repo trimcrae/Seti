@@ -664,6 +664,57 @@ def stage_assess(out_dir: Path, conf: dict) -> dict:
                          "delta_chi2_by_nano_t_floor": s.get("delta_chi2_by_nano_t_floor"),
                          "variability": s.get("variability"),
                          "systematics_not_excluded": systematics})
+    # --- the ranked Planck-consistency list -------------------------------
+    # The channel's actual deliverable, and it is NOT the candidate list: it
+    # is every star the Planck test could be applied to, ordered by how much
+    # the grey extrapolation is preferred over the small-grain family.  Nano
+    # is expected to win for the well-constrained systems, so most of this
+    # list is negative by construction; what it shows is WHERE the population
+    # sits and which stars sit closest to the grey end.  A star with no
+    # N-band measurement is not on it at all (it is N_UNTESTED, untested, and
+    # ranking it would invent a result), and the count of those is in the
+    # funnel beside it.
+    #
+    # "Planck-testable" means BOTH legs exist: an H/K detection to extrapolate
+    # FROM and an N-band measurement to test it against.  A star with an N
+    # band but no NIR detection (NO_NIR_EXCESS) has no Delta chi2 at all --
+    # there is nothing to extrapolate -- so it is not ranked; ranking it on a
+    # missing statistic would put a star the test never applied to in a list
+    # that reads as the test's output.
+    def _testable(s: dict) -> bool:
+        g = s.get("gates") or {}
+        d = s.get("delta_chi2")
+        return bool(g.get("n_measured") and g.get("nir_detected")
+                    and d is not None and math.isfinite(float(d)))
+
+    ranked = sorted((s for s in stars if _testable(s)),
+                    key=lambda s: (-float(s["delta_chi2"]), str(s.get("key"))))
+    rank_rows = []
+    for i, s in enumerate(ranked, 1):
+        nb = s.get("n_band") or {}
+        a = s.get("anchor") or {}
+        g = s.get("grey") or {}
+        rank_rows.append({
+            "rank": i, "key": s["key"], "tier": s.get("tier"),
+            "delta_chi2": s.get("delta_chi2"),
+            "delta_chi2_unrestricted": s.get("delta_chi2_unrestricted"),
+            "nir_anchor_band": a.get("band"), "nir_anchor_pct": a.get("value_pct"),
+            "nir_anchor_err_pct": a.get("err_pct"),
+            "n_band": (nb.get("measurement") or {}).get("band"),
+            "n_obs_pct": (nb.get("measurement") or {}).get("value_pct"),
+            "n_err_pct": (nb.get("measurement") or {}).get("err_pct"),
+            "n_grey_pred_pct": nb.get("grey_prediction_pct"),
+            "n_nano_ceiling_pct": nb.get("nano_ceiling_pct"),
+            "n_separation_sigma": nb.get("separation_sigma"),
+            "planck_consistent": nb.get("consistent_with_grey"),
+            "n_detected": nb.get("detected"),
+            "grey_t_k": g.get("t_k"),
+            "polarimetry_ppm": (s.get("polarimetry") or {}).get("limit_ppm"),
+            "driving_verified": (s.get("gates") or {}).get("driving_values_verified"),
+        })
+    if rank_rows:
+        pd.DataFrame(rank_rows).to_csv(out_dir / "planck_ranking.csv", index=False)
+    n_planck_consistent = sum(1 for r in rank_rows if r["planck_consistent"])
     brec = screen.get("broadband_population", {})
     summary = {
         "channel": "forge", "signature": "S47", "generated": _now(),
@@ -702,6 +753,10 @@ def stage_assess(out_dir: Path, conf: dict) -> dict:
         "degraded": degraded,
         "probe_n_tables_usable": probe.get("n_tables_usable"),
         "candidates": cand_out,
+        # the deliverable: every Planck-testable star, best-grey first
+        "planck_ranking_top": rank_rows[:25],
+        "n_planck_ranked": len(rank_rows),
+        "n_planck_consistent": n_planck_consistent,
         "reading": (
             "A COUNT, NOT A LIMIT. The Planck test needs an N-band measurement; every star "
             "without one is N_UNTESTED and says nothing. The broadband leg's sensitivity is "
@@ -709,6 +764,15 @@ def stage_assess(out_dir: Path, conf: dict) -> dict:
     }
     _write(out_dir / "summary.json", summary)
     _write(out_dir / "candidates.json", {"generated": _now(), "candidates": cand_out})
+    _write(out_dir / "planck_ranking.json",
+           {"generated": _now(), "n_ranked": len(rank_rows),
+            "n_planck_consistent": n_planck_consistent,
+            "n_N_UNTESTED": int(tiers.get(TIER_N_UNTESTED, 0)),
+            "note": ("every star with an N-band measurement, ordered by delta chi2 "
+                     "(grey minus nano); nano is expected to win for the well-constrained "
+                     "systems, so most of this list is negative by construction. Stars "
+                     "with no N band are not ranked -- they are N_UNTESTED."),
+            "ranking": rank_rows})
     return summary
 
 

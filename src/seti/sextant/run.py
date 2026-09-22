@@ -243,7 +243,16 @@ def group_observations(rows: list[dict]) -> dict[int, dict]:
         rej = cols.get("is_rejected")
         if rej is not None:
             arr = np.asarray(rej)
-            if arr.dtype == object:
+            # Anything that is not already numeric or boolean goes through
+            # `_truthy`, which decides a string by CONTENT.  `dtype == object`
+            # alone was not enough: a column of Python strings becomes a numpy
+            # '<U5' array, not an object array, and `'false'.astype(float)`
+            # raises rather than mis-reading --- while `bool('false')` is True,
+            # which would drop every FPR observation while looking like a
+            # working quality cut.  The probe listed the column's type as
+            # UNVERIFIED for exactly this reason, so the code refuses to depend
+            # on it.
+            if arr.dtype.kind in ("O", "U", "S", "V"):
                 from .acquire import _truthy
 
                 cols["is_rejected"] = np.array([_truthy(x) for x in arr])
@@ -261,10 +270,25 @@ def rows_to_frame(rows: list[dict]):
 
 
 def frame_to_rows(df) -> list[dict]:
+    """Rows out of a frame, with every flavour of missing value as ``None``.
+
+    ``isinstance(v, float)`` was enough while a missing string sat in an object
+    column as ``float('nan')``.  It is not enough in general: a nullable or
+    arrow-backed column yields ``pd.NA``, and a datetime column ``pd.NaT``,
+    neither of which is a float --- so they would travel downstream as objects
+    that are neither a value nor a null, and ``float(pd.NA)`` raises rather
+    than returning NaN.  ``pd.isna`` answers for all of them, and is applied
+    only to scalars because on a list or array it returns an array.
+    """
+    import pandas as pd
+
     recs = df.to_dict(orient="records")
     for r in recs:
         for k, v in list(r.items()):
-            if isinstance(v, float) and not math.isfinite(v):
+            if isinstance(v, float):
+                if not math.isfinite(v):
+                    r[k] = None
+            elif v is not None and np.ndim(v) == 0 and pd.isna(v):
                 r[k] = None
     return recs
 

@@ -17,24 +17,49 @@ acquire:
   crawl_max_depth: 5
   crawl_max_entries: 8000
 
-  # Diviner level-3/4 (PDS Geosciences; verified reachable 2026-09-13).
+  # Diviner gridded products.  CORRECTED after run 2026-09-22T01:25Z: the
+  # first guess, lro-l-dlre-4-rdr-v1/lrodlr_1002/data/, answers 200 but holds
+  # the PDS4 *calibrated RDR* collection (by-year dirs 2017..2026) and two
+  # collection files — no gridded product at all, hence NO_DATA_REACHED.
+  # The authoritative identifiers come from ODE's own Moon instrument table
+  # (results/crypt/probe.json, ode.instrument_types):
+  #   LRO / DLRE / PCP     lro_diviner_derived_pcp     Polar Cumulative Products
+  #   LRO / DLRE / GDR_L3  lro_diviner_derived_gdr_l3  Gridded Data Record L3
+  #   LRO / DLRE / GCP     lro_diviner_derived_gcp     Global Cumulative Products
+  #   LRO / DLRE / PRP     lro_diviner_derived_prp     Polar Resource Products
   diviner_volume_roots:
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-5-gdr-v1/lrodlr_1001/"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-5-gdr-v1/lrodlr_1002/"
     - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1002/"
-    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/"
   diviner_data_subdirs: ["data/pcp/", "data/prp/", "data/gdr_l3/", "data/gdr_l4/", "data/gcp/", "data/"]
+
+  # The route that needs no knowledge of the directory layout at all: ODE
+  # indexes every product of a type and ``results=f`` returns absolute URLs.
+  diviner_ode:
+    ihid: "LRO"
+    iid: "DLRE"
+    product_types: ["PCP", "GDR_L3", "GCP", "PRP"]
+    limit: 2000
   # subdirectories worth descending (skip the by-year RDR tree of lrodlr_1001)
   diviner_dir_regex: "(?i)^(?!20\\d\\d$)(pcp|prp|gdr|gcp|polar|pole|north|south|n|s|240|cumul|season|summer|winter|all|lbl|img|data|.*pcp.*|.*polar.*|.*pol.*|\\d+m|\\w{1,4})$"
-  # the PDS4 mirror of the same holdings, if the PDS3 tree is empty
+  # the PDS4 mirror of the same holdings, if the PDS3 tree is empty.  Bundle
+  # directory names follow the ODE DataSetId (urn-nasa-pds-<bundle>).
   diviner_pds4_roots:
     - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/"
     - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived2/"
+    - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived_pcp/"
+    - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived_gdr_l3/"
 
   # Mini-RF (PDS Geosciences): the level-5 mosaics and level-4 CDRs.
   minirf_roots:
     - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/"
     - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-4-cdr-v1/"
   minirf_dir_regex: "(?i)^(?!.*(browse|extras|document|catalog|index)).*$"
-  minirf_product_regex: "(?i)(cpr|s1|stokes|pol|polar|mosaic|_n_|_s_|north|south|80n|80s|85n|85s)"
+  # WIDENED after run 2026-09-22T01:25Z.  The polar mosaics that exist are
+  # named lsz_xxxxx_3s1_pfu_90n000_v1.img / ..._90s000_... — the Mini-RF PDS3
+  # code for a CPR mosaic is "cp", not "cpr", so the old pattern could not have
+  # matched one.  Match every Stokes/CPR product code and every polar tag.
+  minirf_product_regex: "(?i)(cpr|\\dcp[_\\-.]|[_\\-.]cp[_\\-.]|\\ds[1-4][_\\-.]|[_\\-.]s[1-4][_\\-.]|stokes|mosaic|polar|90n|90s|85n|85s|80n|80s|north|south)"
 
   # ShadowCam (PDS4, KPLO) and LROC NAC via ODE footprint search.
   shadowcam_roots:
@@ -42,11 +67,15 @@ acquire:
     - "https://pds.shadowcam.im-ldi.com/data/"
     - "https://shadowcam.im-ldi.com/archive"
   ode_rest: "https://oderest.rsl.wustl.edu/live2/"
-  ode_instruments:                     # (ihid, iid, pt) guesses; the iipy probe corrects them
-    shadowcam: {ihid: "KPLO", iid: "SHADOWCAM", pt: null}
+  # CORRECTED from the ODE Moon instrument table returned by the first probe:
+  # the ShadowCam iid is "ShadowCam", not "SHADOWCAM" — the wrong case returned
+  # HTTP 200 with zero products at both poles, which reads like no coverage.
+  ode_instruments:
+    shadowcam: {ihid: "KPLO", iid: "ShadowCam", pt: "CAL"}
+    shadowcam_umos: {ihid: "KPLO", iid: "ShadowCam", pt: "UMOS"}
     lroc_nac: {ihid: "LRO", iid: "LROC", pt: "EDRNAC4"}
-    minirf: {ihid: "LRO", iid: "MRFLRO", pt: null}
-    diviner: {ihid: "LRO", iid: "DLRE", pt: null}
+    minirf: {ihid: "LRO", iid: "MRFLRO", pt: "MOSCDR"}
+    diviner: {ihid: "LRO", iid: "DLRE", pt: "PCP"}
   ode_footprint_half_deg: 0.02
   ode_limit: 25
 
@@ -61,6 +90,33 @@ acquire:
     - "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/illumination/"
     - "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/"
   psr_product_regex: "(?i)(psr|shadow|illum|ill_|_ill|perm|lit|sun)"
+  # ODE indexes the LOLA GDR permanently-shadowed map itself
+  # (LRO / LOLA / GDRPSR, dataset LRO-L-LOLA-4-GDR-V1.0), so the polygons do
+  # not have to be scraped out of a PGDA product page.
+  psr_ode:
+    ihid: "LRO"
+    iid: "LOLA"
+    product_types: ["GDRPSR", "GDRVIS"]
+    limit: 500
+
+  # Read one real product of each kind end to end.  Probe 2026-09-22T14:11Z
+  # showed the Diviner gridded polar products are PDS3 ASCII TABLES
+  # (PCP_AVG_TBOL_POLN_SUM_LTIM01_240.TAB), not rasters; the column layout has
+  # to be read off the label, never guessed.
+  format_probe:
+    - {label: "diviner_pcp_summer", pt: "PCP", match: "^PCP_AVG_TBOL_POLN_SUM_LTIM01_240\\.", head_bytes: 40000}
+    - {label: "diviner_pcp_winter", pt: "PCP", match: "^PCP_AVG_TBOL_POLN_WIN_LTIM01_240\\.", head_bytes: 12000}
+    - {label: "diviner_pcp_south_winter", pt: "PCP", match: "^PCP_AVG_TBOL_POLS_WIN_LTIM01_240\\.", head_bytes: 12000}
+    - {label: "diviner_prp_north", pt: "PRP", match: "^DLRE_PRP_NORTH\\.", head_bytes: 40000}
+    - {label: "diviner_gdr_l3", pt: "GDR_L3", match: "_IMG\\.(LBL|IMG)$", head_bytes: 20000}
+    - {label: "lola_psr_north", pt: "LOLA_GDRPSR", match: "^LPSR_65N_240M.*\\.(LBL|IMG)$", head_bytes: 20000}
+    - {label: "lola_psr_south", pt: "LOLA_GDRPSR", match: "^LPSR_65S_240M.*\\.(LBL|IMG)$", head_bytes: 20000}
+    - {label: "minirf_polar_s1_north", pt: null, match: "^lsz_.*90n000.*\\.lbl$", head_bytes: 20000,
+       extra_files: {
+         "lsz_xxxxx_3s1_pfu_90n000_v1.lbl": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-4-cdr-v1/lromrf_0005/data/sar/mosaics/lsz_xxxxx_3s1_pfu_90n000_v1.lbl"}}
+    - {label: "minirf_global_cpr", pt: null, match: "^global_cpr_128ppd.*\\.lbl$", head_bytes: 20000,
+       extra_files: {
+         "global_cpr_128ppd_simp_0c.lbl": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.lbl"}}
 
 # Which products the screen needs, in priority order.  ``channels`` are the
 # Diviner channels used (6 and 7 are the anisothermal discriminant, 8/9 the
@@ -83,9 +139,12 @@ products:
 # Regexes over the product NAME (then label text) → pole / channel / stat /
 # season.  Corrected from the committed inventory after the first probe.
 patterns:
+  # ``\d{2,4}n\d*`` added so the Mini-RF polar tag 90n000 (latitude 90 N,
+  # longitude 000) is recognised; the old form required a separator straight
+  # after the "n" and so matched none of the polar mosaics.
   pole:
-    north: "(?i)(^|[_\\-.])(n|np|north|npole|80n|85n|75n|\\d{2,4}n)([_\\-.]|$)|north\\s*pol"
-    south: "(?i)(^|[_\\-.])(s|sp|south|spole|80s|85s|75s|\\d{2,4}s)([_\\-.]|$)|south\\s*pol"
+    north: "(?i)(^|[_\\-.])(n|np|north|npole|poln|npol|80n|85n|75n|\\d{2,4}n\\d*)([_\\-.]|$)|north\\s*pol"
+    south: "(?i)(^|[_\\-.])(s|sp|south|spole|pols|spol|80s|85s|75s|\\d{2,4}s\\d*)([_\\-.]|$)|south\\s*pol"
   channel:
     tbol: "(?i)(^|[_\\-.])(tbol|tb|bol|bolo|bolometric)([_\\-.]|$)|bolometric"
     "3": "(?i)(^|[_\\-.])(t3|tb3|ch3|c3|ch03|t03|b3)([_\\-.]|$)|channel\\s*0?3\\b"
@@ -108,7 +167,42 @@ patterns:
   resolution_m: "(?i)(^|[_\\-.])(\\d{2,4})m([_\\-.]|$)"
   subsolar: "(?i)(^|[_\\-.])(ssl|sslon|lon|sl|sub)\\d{2,3}([_\\-.]|$)|sub[- ]?solar"
 
-# The thermal screen (docs/crypt.md §3).
+# The screen the PDS polar holdings support: diurnal/seasonal invariance of
+# bolometric temperature (src/seti/crypt/diurnal.py).
+#
+# Ninety-six local-time bins x 2 seasons x 2 poles at 262 MB each is ~100 GB.
+# The screen does not need every bin, it needs the diurnal curve sampled well
+# enough to measure its amplitude and its floor: "every:16" takes bins
+# 1,17,33,49,65,81 — six bins four hours apart around the clock — in each
+# season, so 12 products and ~3.1 GB per pole.  Raise it once the channel has
+# a measurement; which bins were used is recorded with every result.
+diurnal:
+  min_lat_deg: 80.0          # the PCP cap; sets the 2535 x 2535 grid at 240 m
+  ltim_bins: "every:16"
+  n_bins_fallback: 96        # used ONLY if ODE cannot be reached; the real bin
+                             # count is read off ODE's own PCP file index
+  max_products_per_pole: 0   # 0 = no cap; a hard ceiling on downloads per pole
+  seasons: ["summer", "winter"]
+  psr_tmax_K: 110.0
+  edge_px: 2
+  n_bins_min: 8              # (season, local-time) bins that must carry data
+  n_bins_excess: 5           # bins in which the excess must be present
+  z_min: 5.0
+  z_bin_min: 3.0
+  amp_max_K: 2.0             # winter diurnal amplitude allowed of a candidate
+  dseason_max_K: 2.0         # |summer - winter| allowed of a candidate
+  elevated_frac: 0.5
+  max_cluster_px: 6
+  stripe_min: 4
+  r_in_px: 4
+  r_out_px: 16
+  bg_min_px: 40
+  sigma_floor_K: 0.05
+  floor_t_hot_K: 300.0
+  floor_nsigma: 5.0
+
+# The multi-channel thermal screen (docs/crypt.md §3).  Retained: it runs the
+# moment a per-channel POLAR gridded product exists.  None does today.
 thermal:
   psr_tmax_K: 110.0          # cold trap: never warmer than this (Diviner definition)
   edge_px: 2                 # footprints from the illumination boundary
@@ -130,11 +224,16 @@ thermal:
   floor_nsigma: 5.0
 
 # Injection-recovery on the real maps (the honest sensitivity statement).
+# Every rule in the screen is local (annulus r_out_px, stripe_window along a
+# row), so each trial is run in a window that comfortably contains the widest
+# neighbourhood consulted; re-screening the whole 2535 x 2535 grid per trial
+# would be minutes each and the table would never be produced.
 sensitivity:
   areas_m2: [1, 3, 10, 30, 100, 300, 1000, 3000, 10000]
   t_hot_K: [300.0, 500.0]
   n_per_area: 20
   seed: 11
+  window_px: 301
 
 radar:
   cpr_min: 1.0

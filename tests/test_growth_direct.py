@@ -397,6 +397,162 @@ def test_an_unresolvable_tic_is_not_measured_with_its_own_reason(tmp_path):
     assert set(df["class"]) == {D.CLASS_NOT_MEASURED}
 
 
+def test_a_tic_id_round_trips_through_csv_exactly(tmp_path):
+    """Nine digits survive the write.  ``%.8g`` turned TIC 122785305 into
+    1.227853e+08 --- TIC 122785300, a star that does not exist --- and every
+    product query on it came back empty."""
+    df = pd.DataFrame({"kepoi_name": ["K00889.01", "K00001.01"],
+                       "kepid": [757450, 10666592],
+                       "tic_id": [122785305.0, 351053728.0],
+                       "koi_depth": [16053.4, 14000.123456789]})
+    p = tmp_path / "t.csv"
+    D._write_csv(p, df)
+    text = p.read_text()
+    assert "122785305" in text and "351053728" in text
+    assert "e+08" not in text
+    back = D._read_csv(p)
+    assert list(back["tic_id"]) == [122785305, 351053728]
+    assert list(back["kepid"]) == [757450, 10666592]
+    # a missing id stays missing, and the float columns keep their short format
+    D._write_csv(p, df.assign(tic_id=[122785305.0, float("nan")]))
+    assert D._read_csv(p)["tic_id"].isna().iloc[1]
+
+
+def test_a_truncatable_tic_is_verified_against_the_sky_before_it_is_believed():
+    """The dangerous case is not the empty query --- it is the truncated id that
+    lands on a REAL other star and gets measured silently."""
+    assert D.tic_is_truncated(122785300.0)          # what %.8g leaves of 122785305
+    assert D.tic_is_truncated(351053720.0)
+    assert not D.tic_is_truncated(122785305.0)      # nine digits, not a multiple of ten
+    assert not D.tic_is_truncated(26817004.0)       # eight digits: exact through %.8g
+    assert not D.tic_is_truncated(float("nan")) and not D.tic_is_truncated(0.0)
+
+
+def test_a_truncated_tic_is_never_queried_on_its_own_authority(tmp_path):
+    """It is re-resolved from the sky first; unverifiable means not measured."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    good, wrong = 122785305.0, 122785300.0          # the real id and what %.8g left
+    assert D.tic_is_truncated(wrong) and not D.tic_is_truncated(good)
+    targets = targets.copy()
+    targets["tic_id"] = targets["tic_id"].where(targets["tic_id"].isna(), wrong)
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    asked: list[int] = []
+
+    def pf(tic, **_kw):
+        asked.append(int(tic))
+        return _products(ref, ref, n_transits=10, sectors=(41,))   # ANY tic would serve
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf,
+                           tic_fn=lambda *a, **k: (good, "tic_kic_crossid"))
+    assert int(wrong) not in asked                  # the wrong star was never touched
+    assert rep["n_tic_suspect_truncation"] >= 1 and rep["n_tic_repaired"] >= 1
+
+    # and when the sky cannot name the star, it is a non-measurement, not a guess
+    out2 = tmp_path / "direct2"
+    out2.mkdir()
+    D._write_csv(out2 / "targets.csv", targets)
+    asked.clear()
+    D.direct_measure(_conf(), out2, shard=0, n_shards=1, products_fn=pf,
+                     tic_fn=lambda *a, **k: (float("nan"), ""))
+    assert int(wrong) not in asked
+    df2 = D._read_csv(D._shard_paths(out2, 0)["csv"])
+    assert (df2["lc_status"] == D.REASON_TIC_UNRESOLVED).any()
+    assert set(df2["class"]) == {D.CLASS_NOT_MEASURED}
+
+
+def test_a_catalogue_tic_that_serves_nothing_is_rechecked_against_the_sky(tmp_path):
+    """A stale or truncated catalogue TIC is re-resolved before it is called a
+    non-detection; a star TESS really never observed comes back empty twice."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    good = float(pd.to_numeric(targets["tic_id"], errors="coerce").dropna().iloc[0])
+    wrong = float(int(good) - int(good) % 10)          # what %.8g would have left
+    targets = targets.copy()
+    targets["tic_id"] = targets["tic_id"].where(targets["tic_id"].isna(), wrong)
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    calls: list[int] = []
+
+    def pf(tic, **_kw):
+        calls.append(int(tic))
+        if int(tic) == int(good):
+            return _products(ref, ref, n_transits=10, sectors=(41,))
+        return []                                       # the wrong star serves nothing
+
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf,
+                           tic_fn=lambda *a, **k: (good, "tic_kic_crossid"))
+    assert int(wrong) in calls and int(good) in calls   # tried the catalogue, then the sky
+    assert rep["n_tic_rechecked"] >= 1 and rep["n_tic_repaired"] >= 1
+    df = D._read_csv(D._shard_paths(out, 0)["csv"])
+    ok = df[df["lc_status"] == "OK"]
+    assert len(ok) and ok["tic_route"].str.contains("_after_").any()
+    # the repaired rows carry the TIC that actually served the light curve
+    assert (pd.to_numeric(ok.loc[ok["tic_route"].str.contains("_after_"), "tic_id"])
+            == int(good)).all()
+
+    # and the honest negative: nothing anywhere stays QUERY_RETURNED_ZERO_ROWS
+    out2 = tmp_path / "direct2"
+    out2.mkdir()
+    D._write_csv(out2 / "targets.csv", targets)
+    rep2 = D.direct_measure(_conf(), out2, shard=0, n_shards=1,
+                            products_fn=lambda tic, **_kw: [],
+                            tic_fn=lambda *a, **k: (good, "tic_kic_crossid"))
+    assert rep2["n_tic_repaired"] == 0
+    df2 = D._read_csv(D._shard_paths(out2, 0)["csv"])
+    assert (df2["lc_status"] == D.REASON_ZERO_ROWS).any()
+    assert set(df2["class"]) == {D.CLASS_NOT_MEASURED}
+
+
+def test_a_hopeless_sensitivity_does_not_overflow_the_detectable_change():
+    """The sensitivity of a star TESS cannot reach is +inf, never an exception.
+
+    Run 35738702139 lost a whole shard to ``OverflowError`` here: a shallow
+    reference depth against a huge TESS error drives ``detectable_ln_ratio``
+    past 709, where ``exp`` has no finite double left.
+    """
+    assert D.detectable_change_ppm(300.0, 2000.0) == math.inf
+    assert math.isnan(D.detectable_change_ppm(float("nan"), 1.0))
+    assert D.detectable_change_ppm(1000.0, math.log(2.0)) == pytest.approx(1000.0)
+    cmp = D.compare_family(float("nan"), float("nan"), 1.0e9, 3.0e-4, 1.0e-5)
+    assert cmp["detectable_depth_change_ppm"] == math.inf
+    assert np.isfinite(cmp["detectable_ln_ratio"])
+
+
+def test_one_star_that_raises_costs_only_itself(tmp_path, monkeypatch):
+    """A pathological target is a NON-measurement, not the death of the shard."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    real = D.measure_direct_target
+    seen: list[str] = []
+
+    def boom(entry, products, **kw):
+        seen.append(str(entry.get("kepoi_name")))
+        if len(seen) == 1:
+            raise OverflowError("math range error")
+        return real(entry, products, **kw)
+    monkeypatch.setattr(D, "measure_direct_target", boom)
+
+    def pf(tic, **_kw):
+        return _products(ref, ref, n_transits=10, sectors=(41,))
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf,
+                           tic_fn=lambda *a, **k: (5555.0, "tic_region_kic"))
+    assert rep["n_measure_failed"] == 1
+    assert rep["n_measured_this_run"] == len(seen) >= 2       # it kept going
+    df = D._read_csv(D._shard_paths(out, 0)["csv"]).set_index("kepoi_name")
+    bad = df.loc[seen[0]]
+    assert bad["lc_status"] == D.REASON_MEASURE_FAILED
+    assert "OverflowError" in str(bad["not_measured_reason"])
+    assert bad["class"] == D.CLASS_NOT_MEASURED
+    # and the rest of the shard is real
+    assert (df["class"] != D.CLASS_NOT_MEASURED).any()
+
+
 def test_an_exhausted_shard_budget_leaves_targets_unreached_not_measured(tmp_path):
     out = tmp_path / "direct"
     out.mkdir()
@@ -532,6 +688,62 @@ def test_the_vet_stage_hands_survivors_to_stage2_and_stage3(tmp_path, monkeypatc
     D._write_csv(out / "candidates.csv", pd.DataFrame())
     rep0 = D.direct_vet(_conf(), out)
     assert rep0["n_vetted"] == 0
+
+
+def test_the_vet_stage_shards_round_robin_so_every_candidate_can_be_reached(tmp_path,
+                                                                           monkeypatch):
+    """With more candidates than one job's cap, the shards partition them and
+    the gather says which were never vetted --- an open question, not a pass."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    names = [f"K0{900 + i}.01" for i in range(10)]
+    D._write_csv(out / "candidates.csv", pd.DataFrame([
+        {"kepoi_name": n, "kepler_name": "", "kepid": 7000000 + i, "tic_id": 1.0 * i,
+         "class": D.CLASS_GROWTH, "pdc_z_pop": 20.0 - i, "sap_z": 6.0}
+        for i, n in enumerate(names)]))
+    per_shard: dict = {}
+
+    def fake_stage2_measure(conf, s2_dir, *, shortlist=None, **kw):
+        per_shard.setdefault("s2", []).append(list(shortlist["kepoi_name"]))
+        Path(s2_dir).mkdir(parents=True, exist_ok=True)
+
+    def fake_stage2_assess(conf, s2_dir):
+        return {"primary_verdict": "X", "targets": [
+            {"kepoi_name": n, "like_for_like_verdict": "MEASURED_DEPTH_CHANGED",
+             "z_measured_eras": 6.0, "sap_vs_pdcsap_verdict": "BACKGROUND_TEST_AGREES"}
+            for n in names]}
+
+    def fake_centroid_run(stage, *, out_dir=None, conf=None, shortlist=None, **kw):
+        return {"verdict": "TRANSIT_ON_TARGET", "targets": [
+            {"kepoi_name": n, "verdict": "TRANSIT_ON_TARGET", "offset_arcsec": 0.3,
+             "offset_sigma": 0.2} for n in names]}
+    import seti.growth.centroid as C
+    import seti.growth.stage2 as S2
+    monkeypatch.setattr(S2, "stage2_measure", fake_stage2_measure)
+    monkeypatch.setattr(S2, "stage2_assess", fake_stage2_assess)
+    monkeypatch.setattr(C, "centroid_run", fake_centroid_run)
+    conf = _conf(classify={"vet_max_targets": 3})
+    for sh in range(4):
+        r = D.direct_vet(conf, out, shard=sh, n_shards=4)
+        assert r["shard"] == sh and r["n_candidates"] == 10
+        assert (out / "vet" / f"shard_{sh:02d}" / "vetted.csv").exists()
+    # round-robin BY RANK: no shard gets only the strongest candidates
+    assert per_shard["s2"][0][0] == names[0] and per_shard["s2"][1][0] == names[1]
+    g = D.direct_vet_gather(conf, out)
+    # 4 shards x cap 3, but shards hold 3,3,2,2 candidates -> all 10 reachable
+    assert g["n_vetted"] == 10 and g["n_candidates_not_vetted"] == 0
+    assert g["n_survive_vet"] == 10 and g["n_shards_found"] == 4
+    merged = pd.read_csv(out / "vet" / "vetted.csv")
+    assert len(merged) == 10 and set(merged["kepoi_name"]) == set(names)
+    # a candidate no shard vetted is REPORTED, never silently passed
+    D._write_csv(out / "candidates.csv", pd.DataFrame([
+        *[{"kepoi_name": n, "kepid": 1, "tic_id": 1.0, "class": D.CLASS_GROWTH,
+           "pdc_z_pop": 1.0, "sap_z": 1.0} for n in names],
+        {"kepoi_name": "K00999.99", "kepid": 2, "tic_id": 2.0, "class": D.CLASS_GROWTH,
+         "pdc_z_pop": 1.0, "sap_z": 1.0}]))
+    g2 = D.direct_vet_gather(conf, out)
+    assert g2["n_candidates_not_vetted"] == 1
+    assert g2["not_vetted"][0]["kepoi_name"] == "K00999.99"
 
 
 def test_the_cli_exposes_growth_direct():
@@ -712,3 +924,99 @@ def test_direct_control_reopens_every_changed_class_and_records_the_null(tmp_pat
     assert rep["n_above_control"] == 1 and rep["n_control_unavailable"] == 1
     s = json.loads((out / "control" / "summary.json").read_text())
     assert s["control_phases"] and s["caveats"]
+
+
+def test_resume_refuses_a_row_measured_against_an_unverified_tic(tmp_path):
+    """The shards already committed carry non-detections that are artefacts of a
+    truncated id.  Resume must redo them, not lock them in as facts."""
+    assert D.record_tic_is_unverified({"tic_id": 122785300.0, "tic_route": "name_planet"})
+    assert not D.record_tic_is_unverified({"tic_id": 122785305.0, "tic_route": "name_planet"})
+    assert not D.record_tic_is_unverified({"tic_id": 122785300.0,
+                                           "tic_route": "tic_kic_crossid_confirms_name_planet"})
+    assert not D.record_tic_is_unverified({"tic_id": 122785300.0,
+                                           "tic_route": "tic_kic_crossid"})
+
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    names = list(targets["kepoi_name"].astype(str))
+    # what the old code committed: a zero-rows non-detection on a truncated id,
+    # beside a genuine one on a TIC the sky had named
+    D._write_csv(D._shard_paths(out, 0)["csv"], pd.DataFrame([
+        {"kepoi_name": names[0], "tic_id": 122785300.0, "tic_route": "name_planet",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED},
+        {"kepoi_name": names[1], "tic_id": 122785300.0, "tic_route": "tic_kic_crossid",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED}]))
+
+    def pf(tic, **_kw):
+        return []
+
+    def tf(kepid, *a, **k):
+        return float("nan"), ""
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf, tic_fn=tf)
+    assert rep["n_redone_unverified_tic"] == 1
+    df = D._read_csv(D._shard_paths(out, 0)["csv"]).set_index("kepoi_name")
+    # the unverified row came back from the target list, no longer carrying the
+    # truncated id; the row the sky had already named was kept untouched
+    assert int(pd.to_numeric(df.loc[names[0], "tic_id"])) != 122785300
+    assert int(pd.to_numeric(df.loc[names[1], "tic_id"])) == 122785300
+    assert df.loc[names[1], "lc_status"] == D.REASON_ZERO_ROWS
+    assert rep["n_measured_this_run"] == 4      # everything but the kept row
+
+
+def test_a_flaky_tic_query_is_retried_before_a_star_is_refused(tmp_path):
+    """Refusing a suspect id makes the resolver load-bearing, so one bad call
+    must not become a non-measurement that reads as TESS coverage."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    good = 122785305.0
+    targets = targets.copy()
+    targets["tic_id"] = targets["tic_id"].where(targets["tic_id"].isna(), 122785300.0)
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    tries: list[int] = []
+
+    def tf(kepid, *a, **k):
+        tries.append(int(kepid))
+        if tries.count(int(kepid)) == 1:
+            raise TimeoutError("MAST timed out")
+        return good, "tic_kic_crossid"
+
+    def pf(tic, **_kw):
+        assert int(tic) == int(good)               # the suspect id is never queried
+        return _products(ref, ref, n_transits=10, sectors=(41,))
+    conf = _conf(fetch={"retries": 3, "retry_pause_s": 0.0})
+    rep = D.direct_measure(conf, out, shard=0, n_shards=1, products_fn=pf, tic_fn=tf)
+    assert rep["n_tic_suspect_truncation"] >= 1
+    df = D._read_csv(D._shard_paths(out, 0)["csv"])
+    assert (df["lc_status"] == "OK").any()         # the retry rescued it
+    assert not (df["lc_status"] == D.REASON_TIC_UNRESOLVED).all()
+
+
+def test_assess_declares_the_rows_that_still_rest_on_an_unchecked_tic(tmp_path):
+    """The first summary.json mixes pre-repair shards with repaired ones.  It
+    must say so, or its funnel reads as coverage that was tried and failed."""
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    names = list(targets["kepoi_name"].astype(str))
+    D._write_csv(D._shard_paths(out, 0)["csv"], pd.DataFrame([
+        # written before the repair: a truncated id on a bare catalogue route
+        {"kepoi_name": names[0], "tic_id": 122785300.0, "tic_route": "name_planet",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED},
+        # written after: the sky named this star
+        {"kepoi_name": names[1], "tic_id": 122785305.0,
+         "tic_route": "tic_kic_crossid_over_name_planet",
+         "lc_status": D.REASON_ZERO_ROWS, "not_measured_reason": D.REASON_ZERO_ROWS,
+         "class": D.CLASS_NOT_MEASURED}]))
+    s = D.direct_assess(_conf(), out)
+    assert s["funnel"]["n_rows_pending_tic_recheck"] == 1
+    assert s["funnel"]["tic_routes"].get("tic_kic_crossid_over_name_planet") == 1
+    assert any("never checked against the sky" in d for d in s["degraded"])
+    assert s["verdict"] == D.RUN_NO_DATA          # and still not a statement about the sky

@@ -1125,6 +1125,12 @@ def _cmd_uline(args, cfg):
     return _uline_main(list(args.rest))
 
 
+# --- RING ---
+def _cmd_ring(args, cfg):
+    from .ring.run import run
+
+    run(args.stage, args.leg, out=args.out, shard=args.shard, dec_band=args.dec_band,
+        followup=not args.no_followup)
 # --- CRADLE ---
 def _cmd_cradle(args, cfg):
     from .cradle.run import run_from_args as _cradle_run
@@ -1180,6 +1186,13 @@ def _cmd_sextant(args, cfg):
                  budget_minutes=args.budget_minutes,
                  n_shards_for_all=args.n_shards)
 # --- end SEXTANT ---
+
+
+# --- GRAVE ---
+def _cmd_grave(args, cfg):
+    from .grave.run import main as _grave_main
+
+    return _grave_main(list(args.rest))
 
 
 def main(argv=None):
@@ -2409,6 +2422,18 @@ def main(argv=None):
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
 
+    # --- RING ---
+    # 2026-09-21: RING (S63), rings around the dead — the Osmanov ring-temperature
+    # reading over white dwarfs, pulsars, Y/T dwarfs and free-floating planets;
+    # runnable as `python -m seti.ring.run` (what ring.yml calls) or `seti ring`.
+    from .ring.run import add_arguments as _ring_args
+    p = sub.add_parser("ring",
+                       help="RING (S63): 300-700 K rings around post-biological hosts "
+                            "(WD, pulsar, Y/T dwarf, FFP); same flags as seti.ring.run")
+    _ring_args(p)
+    p.set_defaults(func=_cmd_ring)
+    # --- RING ---
+
     # --- FORGE ---
     p = sub.add_parser("forge",
                        help="FORGE (S47): hot exozodis as ~1500 K swarm candidates — the "
@@ -2513,6 +2538,15 @@ def main(argv=None):
                         "per-chunk Gaia pulls; shared across shards on one runner")
     p.set_defaults(func=_cmd_sextant)
     # --- end SEXTANT ---
+
+    # --- GRAVE ---
+    p = sub.add_parser("grave",
+                       help="GRAVE (S56): the fission-product and refined-particulate vectors in "
+                            "Earth's sedimentary record (SGP / EarthChem / GEOROC), age-stacked "
+                            "across extinction boundaries; flags are passed through to seti.grave.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_grave)
+    # --- /GRAVE ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

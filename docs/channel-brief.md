@@ -24,6 +24,30 @@ hard way. Deviating costs runs.
    costs an hour of queue; a version check costs nothing. Before dispatching,
    check any API you use against the major version the runner will install, and
    where a channel is exposed to it, run its suite under both majors.
+6. **A workflow can only be dispatched if its file is on the default branch.**
+   `POST /actions/workflows/<file>/dispatches` returns a bare `404 Not Found`
+   when `<file>` exists only on a channel branch — the same response as a
+   misspelt filename, which is why it reads as a typo rather than as the rule
+   it is. RING was built, tested and never once run for this reason. Put the
+   `.yml` on `main` early (it is inert there: a `workflow_dispatch`-only
+   trigger fires on nothing), then dispatch with `ref` set to your branch —
+   the run still executes the copy on your ref, so the branch stays the place
+   work happens.
+
+   A second, quieter one, found the same day by GRAVE and worth knowing because
+   it does **not** look like a version problem: under pandas 3's copy-on-write,
+   `DataFrame.to_numpy()` returns a **read-only** array, so the common idiom
+
+   ```python
+   x = df.to_numpy(dtype=float)
+   x[x <= 0] = np.nan          # ValueError: assignment destination is read-only
+   ```
+
+   raises on the runner and nowhere else. Pass `copy=True` whenever the result
+   is mutated. This one is worse than a removed keyword because it fires
+   *after* the acquisition, deep in a stage the sandbox always ran green. The
+   cheapest check is a throwaway venv on the runner's majors — building one and
+   running `pytest tests/test_<channel>.py` under it takes a couple of minutes.
 
 ## 1. Layout
 

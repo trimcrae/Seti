@@ -29,6 +29,7 @@ No network anywhere (``conftest.py`` raises on any socket).  Per
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -408,6 +409,41 @@ def test_ode_helpers():
     rec = {"json": {"ODEResults": {"Count": "2", "Products": {"Product": [{"pdsid": "A"}, {"pdsid": "B"}]}}}}
     assert A.ode_count(rec) == 2 and [x["pdsid"] for x in A.ode_products(rec)] == ["A", "B"]
     assert A.ode_products({"json": None}) == []
+
+
+def test_ode_file_listing_becomes_classifiable_entries():
+    """ODE's ``results=f`` answer is the layout-independent discovery route:
+    its file records must become entries the selector can already place."""
+    rec = {"json": {"ODEResults": {"Count": "2", "Products": {"Product": [
+        {"pdsid": "DGDR_PCP_N_T6_AVG_SUM", "Product_files": {"Product_file": [
+            {"FileName": "dgdr_t6_avg_sum_n_240m.img", "URL": "https://h/dgdr_t6_avg_sum_n_240m.img",
+             "KBytes": "1024", "Type": "Product"},
+            {"FileName": "dgdr_t6_avg_sum_n_240m.lbl", "URL": "https://h/dgdr_t6_avg_sum_n_240m.lbl",
+             "KBytes": "2"}]}},
+        {"pdsid": "NOFILES"},
+    ]}}}}
+    files = A.ode_files(rec)
+    assert [f["name"] for f in files] == ["dgdr_t6_avg_sum_n_240m.img", "dgdr_t6_avg_sum_n_240m.lbl"]
+    assert files[0]["size"] == 1024 * 1024 and files[0]["product_id"] == "DGDR_PCP_N_T6_AVG_SUM"
+    groups = A.pair_products(A.entries_from_ode_files(files))
+    sel = A.select_needed(groups, [{"pole": "north", "season": "summer", "channel": "6", "stat": "avg"}],
+                          CONF["patterns"])
+    assert sel["north/summer/6/avg"]["stem"] == "dgdr_t6_avg_sum_n_240m"
+    # a relative or absent URL is not a download route and must be dropped
+    assert A.ode_files({"json": {"Product_file": {"FileName": "x.img", "URL": "/lro/x.img"}}}) == []
+    assert A.ode_files({"json": None}) == []
+
+
+def test_minirf_polar_tag_and_product_code_are_recognised():
+    """The real Mini-RF polar mosaics (lsz_xxxxx_3s1_pfu_90n000_v1.img) must
+    place on a pole: the 90n000 tag has no separator after the "n"."""
+    assert A.classify_name("lsz_xxxxx_3s1_pfu_90n000_v1.img", CONF["patterns"])["pole"] == "north"
+    assert A.classify_name("lsz_xxxxx_3s1_pfu_90s000_v1.img", CONF["patterns"])["pole"] == "south"
+    assert A.classify_name("lsz_06899_3s1_phu_90n000_e_v1.img", CONF["patterns"])["pole"] == "north"
+    rx = re.compile(CONF["acquire"]["minirf_product_regex"])
+    for n in ("lsz_xxxxx_3s1_pfu_90n000_v1.img", "lsz_xxxxx_3cp_pfu_90s000_v1.img",
+              "global_cpr_128ppd_simp_0c.img"):
+        assert rx.search(n), n
 
 
 # ---------------------------------------------------------------------------

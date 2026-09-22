@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import time as _t
 
 import numpy as np
 import pandas as pd
@@ -219,6 +220,49 @@ def test_undetected_and_missing_difference_image_are_never_on_target():
     few[:3] = True
     assert not P.difference_image(tpf["time"], tpf["flux"], core, few)["ok"]
     assert not P.centroid_shift(tpf["time"], tpf["flux"], tpf["aperture"], core, few)["ok"]
+
+
+def test_a_dead_pixel_does_not_veto_the_whole_cadence():
+    """A NaN column in the stamp must not cost the star its centroid test.
+
+    MEASURED (results/arc/stage2/flares.csv, the first stage-2 run): 11 of 30
+    shortlisted stars came back "no difference image (too few in-flare or
+    baseline cadences)" while the SAME flares carried 5-7 in-flare and 68-82
+    baseline cadences in the aperture centroid, which masks per pixel.  The
+    difference image required EVERY pixel of a cadence to be finite, so one
+    permanently-NaN pixel -- routine in a Kepler postage stamp -- discarded
+    every cadence there was.
+    """
+    tpf = P.synth_flare_tpf(sources=SRC, flare_source=0, t_peak=100.0, amplitude=0.02,
+                            noise=3.0, decay_days=0.04, seed=11)
+    inm, bm, core = P.flare_cadence_masks(tpf["time"], 99.98, 100.1, cadence_days=CAD)
+    good = P.difference_image(tpf["time"], tpf["flux"], core, bm, err_cube=tpf["flux_err"])
+    assert good["ok"] and good["n_in"] >= 1 and good["n_base"] >= 4
+
+    holed = np.array(tpf["flux"], dtype=float)
+    holed[:, 0, 0] = np.nan                       # a column outside the downloaded mask
+    holed[:, -1, -1] = np.nan
+    d = P.difference_image(tpf["time"], holed, core, bm, err_cube=tpf["flux_err"])
+    assert d["ok"], d
+    assert d["n_in"] == good["n_in"] and d["n_base"] == good["n_base"]
+    assert d["n_pixels_used"] == holed[0].size - 2
+    assert not np.isfinite(d["image"][0, 0]) and not np.isfinite(d["image"][-1, -1])
+    # and the flare is still attributed to the target, at the same position
+    sh = P.centroid_shift(tpf["time"], holed, tpf["aperture"], inm, bm)
+    cen, _ = P.census([dict(s) for s in SRC], target_index=0, aperture=tpf["aperture"],
+                      prf_sigma_px=0.7, aperture_amplitude=sh["a"])
+    anc = P.anchor_sources(cen, target_index=0, baseline_xy=(sh["x0"], sh["y0"]))
+    att = P.attribute_flare(d, anc, target_index=0, shift=sh)
+    assert att["outcome"] == P.OUTCOME_ON_TARGET, att["reason"]
+
+    # a stamp with NO usable pixel at all is still honestly untestable, and the
+    # reason now names the count that actually failed
+    dead = np.full_like(holed, np.nan)
+    empty = P.difference_image(tpf["time"], dead, core, bm)
+    assert not empty["ok"] and empty["n_pixels_used"] == 0
+    att_empty = P.attribute_flare(empty, anc, target_index=0, shift=sh)
+    assert att_empty["outcome"] == P.OUTCOME_UNTESTABLE
+    assert "usable pixels 0" in att_empty["reason"]
 
 
 # ---------------------------------------------------------------------------
@@ -544,6 +588,45 @@ def test_stage2_dissolves_when_measured_parameters_close_the_excess(tmp_path):
     assert s["verdict"] == S.VERDICT_S2_DISSOLVED
 
 
+def test_the_sph_range_scale_is_applied_once_whichever_stage_applied_it(tmp_path):
+    """Stage 1 now scales a Santos Sph itself; stage 2 must not scale it again.
+
+    Double-scaling raises the ceiling by 2.828^1.5 = 4.75 and pushes xi DOWN
+    by 0.68 dex — it hides a candidate rather than inventing one, which is
+    the direction that would never be noticed.  A record that carries the
+    scale stage 1 applied is taken as done; only a record from before that
+    fix (no amplitude_scale, no amplitude_scaled) is scaled here.
+    """
+    world = _world()
+    conf = _conf(tmp_path)
+    prm = S.Stage2Params.from_config(conf)
+
+    def _xi(entry):
+        tap, cone, lc_fn, tpf_fn = _scripted(world, tpf_missing_segments=(5, 9))
+        out = tmp_path / f"s2_{abs(hash(json.dumps(entry, sort_keys=True, default=str)))}"
+        S.stage2_run(conf, out, params=prm, query_fn=tap, cone_fn=cone, lc_fn=lc_fn,
+                     tpf_fn=tpf_fn, shortlist=[entry])
+        return json.loads((out / "stars.json").read_text())["stars"][0]["xi"]
+
+    # an OLD record: no scale on it at all -> stage 2 applies 2.828 itself
+    old = _xi(_entry(amplitude_frac=0.000116, amplitude_source="santos2021"))
+    assert old["amplitude_catalogue_scale_applied"] == pytest.approx(prm.sph_to_range)
+    assert old["amplitude_catalogue_as_range"] == pytest.approx(0.000116 * prm.sph_to_range)
+    assert old["amplitude_scale_from_stage1"] is None
+
+    # a NEW record: stage 1 scaled it and says so, twice over
+    for extra in ({"amplitude_scale": 2.828}, {"amplitude_scaled": True},
+                  {"amplitude_scale": 2.828, "amplitude_scaled": True}):
+        new = _xi(_entry(amplitude_frac=0.000116 * prm.sph_to_range,
+                         amplitude_source="santos2021", **extra))
+        assert new["amplitude_catalogue_scale_applied"] == 1.0, extra
+        assert new["amplitude_catalogue_as_range"] == pytest.approx(
+            old["amplitude_catalogue_as_range"])
+        # the same amplitude reaches the ceiling, so the same xi comes out
+        assert new["xi_conservative_measured"] == pytest.approx(
+            old["xi_conservative_measured"], abs=1e-9), extra
+
+
 def test_missing_pixel_file_is_untestable_never_on_target(tmp_path):
     world = _world()
     conf = _conf(tmp_path)
@@ -602,6 +685,67 @@ def test_failed_archive_everywhere_is_no_data_reached(tmp_path):
     del world
 
 
+def test_a_hung_archive_fetch_is_abandoned_inside_its_own_clock(tmp_path):
+    """The stage budget is checked BETWEEN stars, so a fetch that never
+    answers has to be bounded by itself.
+
+    MEASURED (run 35738785437): the stage-2 loop sat inside one star's fetch
+    from the moment its 9,000 s budget was spent until the 240-minute job cap,
+    so the budget check it was meant to obey was never reached.
+    """
+    world = _world()
+    tap, cone, lc_fn, tpf_fn = _scripted(world)
+    conf = _conf(tmp_path)
+    params = S.Stage2Params.from_config(conf)
+    params.product_timeout_s = 0.3
+    params.retries = 1
+    calls = {"n": 0}
+
+    def hung(*a, **k):
+        calls["n"] += 1
+        _t.sleep(30.0)                                    # never answers in time
+        raise AssertionError("the hung fetch was waited out")
+
+    out = tmp_path / "s2"
+    t0 = _t.monotonic()
+    s = S.stage2_run(conf, out, params=params, query_fn=tap, cone_fn=cone, lc_fn=hung,
+                     tpf_fn=hung, shortlist=[_entry()])
+    elapsed = _t.monotonic() - t0
+    # two products (light curve, pixels) abandoned at 0.3 s each; waiting them
+    # out would cost 2 x 30 s on its own, before anything else the star needs
+    assert calls["n"] >= 2 and elapsed < 30.0
+    st = json.loads((out / "stars.json").read_text())["stars"][0]
+    assert st["verdict"] == P.VERDICT_UNTESTABLE
+    assert st["statuses"]["lightcurve"] == "QUERY_FAILED"
+    assert st["statuses"]["pixels"] == "QUERY_FAILED"
+    # a timed-out fetch is a FAILED fetch, never "the archive holds nothing"
+    assert "QUERY_RETURNED_ZERO_ROWS" not in json.dumps(st["statuses"])
+    assert s["verdict"] != ""
+    del world
+
+
+def test_an_in_time_fetch_and_its_exception_pass_straight_through():
+    def ok(star_id, **kw):
+        return [{"star_id": star_id, "kw": kw}]
+
+    assert S._bounded_fetch(ok, "9418692", timeout_s=30.0, mission="kepler")[0][
+        "star_id"] == "9418692"
+    assert S._bounded_fetch(ok, "9418692", timeout_s=None, mission="kepler")[0][
+        "star_id"] == "9418692"
+
+    def boom(star_id, **kw):
+        raise RuntimeError("403 from the archive")
+
+    with pytest.raises(RuntimeError, match="403"):
+        S._bounded_fetch(boom, "9418692", timeout_s=30.0, mission="kepler")
+
+    def hung(star_id, **kw):
+        _t.sleep(30.0)
+
+    with pytest.raises(S.ArcProductTimeout, match="no answer in"):
+        S._bounded_fetch(hung, "9418692", timeout_s=0.2, mission="kepler")
+
+
 def test_budget_exhausted_marks_the_rest_untestable(tmp_path):
     world = _world()
     tap, cone, lc_fn, tpf_fn = _scripted(world)
@@ -628,6 +772,53 @@ def test_shortlist_orders_interest_before_watch_and_caps(tmp_path):
     p2 = S.Stage2Params(missions=("kepler",))
     assert [e["star_id"] for e in S.load_shortlist(tmp_path, params=p2)] == ["2", "1", "3"]
     assert S.load_shortlist(tmp_path / "nowhere", params=p) == []
+
+
+def test_a_hard_vetoed_ceiling_excess_star_is_tested_first_not_dropped(tmp_path):
+    """companion_suspect is a suspicion; the pixels are what can settle it.
+
+    MEASURED (run 35738218021): KIC 9418692 is the ONLY star above the
+    conservative ceiling on measured parameters (xi = +0.462, 4 flares) and
+    its first_veto is companion_suspect, so it sits in no tier and reached
+    no stage-2 shortlist at all.
+    """
+    d = {"candidates": [_entry(star_id="1", tier="interest", xi_conservative_max=0.1)],
+         "watch": [_entry(star_id="3", tier="watch", xi_conservative_max=-0.1)]}
+    (tmp_path / "candidates.json").write_text(json.dumps(d))
+    pd.DataFrame([
+        # above the ceiling but hard-vetoed: belongs in stage 2, first
+        {"star_key": "kepler:9418692", "star_id": "9418692", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "none", "first_veto": "companion_suspect",
+         "xi_conservative_max": 0.462, "amplitude_frac": 2.01e-4,
+         "amplitude_source": "santos2021", "amplitude_scale": 2.828},
+        # above the ceiling but vetoed for a reason the pixels cannot touch
+        {"star_key": "kepler:1", "star_id": "1", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "none", "first_veto": "evolved",
+         "xi_conservative_max": 0.9, "amplitude_frac": 1e-3,
+         "amplitude_source": "mcquillan2014", "amplitude_scale": 1.0},
+        # below the ceiling and vetoed: not a ceiling excess, stays out
+        {"star_key": "kepler:7", "star_id": "7", "mission": "kepler",
+         "catalogue": "kepler_yang2019", "tier": "none", "first_veto": "companion_suspect",
+         "xi_conservative_max": -2.0, "amplitude_frac": 1e-3,
+         "amplitude_source": "mcquillan2014", "amplitude_scale": 1.0},
+    ]).to_csv(tmp_path / "xi_table.csv", index=False)
+
+    p = S.Stage2Params(max_stars=10)
+    short = S.load_shortlist(tmp_path, params=p)
+    assert [e["star_id"] for e in short] == ["9418692", "1", "3"]
+    assert short[0]["tier"] == "vetoed_excess"
+    assert short[0]["amplitude_scale"] == pytest.approx(2.828)
+    # "1" keeps its interest row (deduped by star_key), it is not re-tiered
+    assert short[1]["tier"] == "interest"
+
+    off = S.Stage2Params(max_stars=10, include_vetoed_excess=False)
+    assert [e["star_id"] for e in S.load_shortlist(tmp_path, params=off)] == ["1", "3"]
+
+    # the config turns it on with the measurement that motivated it
+    conf = load_arc_config()
+    assert conf["stage2"]["include_vetoed_excess"] is True
+    assert "companion_suspect" in conf["stage2"]["vetoed_first_vetoes"]
+    assert S.Stage2Params.from_config(conf).include_vetoed_excess is True
 
 
 def test_probe_writes_the_route_and_shortlist(tmp_path):

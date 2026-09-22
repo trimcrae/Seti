@@ -427,9 +427,13 @@ jobs:
           print(json.dumps({k: s[k] for k in s if k != "acquisition"}, indent=1)[:8000])
           if f.get("n_usable", 0) == 0 and v not in ("NO_DATA_REACHED", "NO_TARGETS",
                                                      "NO_LIGHTCURVES_RETURNED",
-                                                     "NO_TESTABLE_LIGHT_CURVES"):
+                                                     "NO_TESTABLE_LIGHT_CURVES",
+                                                     "NO_SHARDS_PRESENT"):
               print(f"::error::verdict {v!r} with 0 usable light curves is a disguised no-data run")
               sys.exit(1)
+          if v == "NO_SHARDS_PRESENT":
+              print("::warning::no shard directory reached assess — the sweep did not run or "
+                    "its artifacts are gone. This is NOT a statement about DASCH.")
           if v == "NO_CANDIDATES":
               print(f"::notice::{f.get('n_usable')} century light curves tested, no cessation / "
                     "fade / rising-scatter candidate at demonstrated sensitivity. "

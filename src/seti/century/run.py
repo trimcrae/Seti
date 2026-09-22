@@ -1190,7 +1190,17 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
         if v.startswith("killed:"):
             kills[v[7:]] = kills.get(v[7:], 0) + 1
 
-    if n_attempted == 0 and n_targets == 0:
+    # A reduce with NO shard directory at all has not failed to reach the
+    # archive --- nobody asked it to.  It happens when the sweep was cancelled
+    # or never ran, or when a reduce-only re-run is pointed at a run id whose
+    # artifacts are gone.  Saying NO_LIGHTCURVES_RETURNED there would read as
+    # "DASCH returned nothing for 384 targets", which is a statement about the
+    # archive that no request was ever made to support.  Observed 2026-09-22:
+    # run 35748748365 was cancelled between its targets and sweep jobs, and
+    # its `assess` job --- guarded by `if: always()` --- was still scheduled.
+    if not acq_reps:
+        verdict = "NO_SHARDS_PRESENT"
+    elif n_attempted == 0 and n_targets == 0:
         verdict = "NO_TARGETS"
     elif n_fetched == 0 and not any_service_ok:
         verdict = "NO_DATA_REACHED"
@@ -1204,7 +1214,7 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
         verdict = "CANDIDATES_ALL_TRACED"
     else:
         verdict = "SURVIVORS_FOR_FOLLOWUP"
-    if degraded and verdict not in ("NO_DATA_REACHED", "NO_TARGETS"):
+    if degraded and verdict not in ("NO_DATA_REACHED", "NO_TARGETS", "NO_SHARDS_PRESENT"):
         verdict_full = f"{verdict} — DEGRADED ({', '.join(degraded)})"
     else:
         verdict_full = verdict

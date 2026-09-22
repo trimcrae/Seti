@@ -171,6 +171,17 @@ acquire:
   retries: 2
   retry_backoff_s: 8.0
 
+  # Wall clock on the SVO probe ladder, per catalogue.  Each probe is short
+  # (probe_timeout_s), but the NUMBER of roots is not bounded by this channel:
+  # RegTAP contributes however many the registry publishes and the index
+  # scrape however many links it mines, so roots x 5 forms x 25 s grows without
+  # limit.  Run 35741075121 spent > 45 min in this step alone, and the route
+  # after it -- the USNO-B1.0 reconstruction, the only one that can restore the
+  # channel's scale -- gets whatever is left of the acquisition deadline.  A
+  # ladder that cannot find a service must not consume the run that would have
+  # worked without it.  Also capped at 25% of the remaining deadline.
+  svo_probe_budget_s: 600
+
   # An INDEPENDENT digitisation of the same POSS-I glass is the strongest kill
   # this channel could have: a detection that a second scan of the same plate
   # does not see is a scan artefact, not a source that vanished.  Solano+2022

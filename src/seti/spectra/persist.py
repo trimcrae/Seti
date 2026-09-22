@@ -158,8 +158,38 @@ def measure_line(wave, flux, ivar, lam0: float, fwhm_A: float, mode: str = "emis
     if cont_good.sum() < 8:
         out["reason"] = "continuum_masked"
         return out
-    c = float(np.median(flux[cont_good]))
-    resid = flux - c
+    # Continuum: a sigma-clipped LINEAR fit across the annulus, not its median.
+    # A median has no slope term, so whenever the annulus is sampled
+    # asymmetrically -- which is the rule, not the exception, near a spectrum's
+    # blue end or beside a masked region -- it returns the mean level of
+    # whichever side survived rather than the continuum *under the line*.  On
+    # the steep blue throughput slope of an SDSS exposure that mis-sets the
+    # continuum by a per cent or two, which at continuum S/N ~ 20 over ~50
+    # annulus pixels is a many-sigma spurious deficit in every spectrum at once.
+    cw = wave[cont_good] - lam0
+    cf = flux[cont_good]
+    keep = np.ones(cw.size, bool)
+    coef = np.array([float(np.median(cf)), 0.0])
+    for _ in range(3):
+        if keep.sum() < 6:
+            break
+        try:
+            coef = np.polyfit(cw[keep], cf[keep], 1)[::-1]
+        except (np.linalg.LinAlgError, ValueError):
+            break
+        r = cf - (coef[0] + coef[1] * cw)
+        s = _mad_std(r)
+        if not (np.isfinite(s) and s > 0):
+            break
+        keep = np.abs(r) <= 3.0 * s
+    cont_at = coef[0] + coef[1] * (wave - lam0)
+    c = float(coef[0])                       # continuum evaluated AT the line
+    resid = flux - cont_at
+    # How lopsided was the annulus?  A one-sided continuum is still fitted (the
+    # slope term handles it) but the imbalance is recorded, because it is the
+    # condition under which a continuum error masquerades as a line.
+    n_blue = int((cw < 0).sum())
+    n_red = int((cw > 0).sum())
     pipe_err = 1.0 / np.sqrt(ivar[cont_good])
     emp = _mad_std(resid[cont_good])
     scale = 1.0
@@ -173,12 +203,21 @@ def measure_line(wave, flux, ivar, lam0: float, fwhm_A: float, mode: str = "emis
     err_i = scale / np.sqrt(ivar[idx])
     F = float(sign * np.sum(resid[idx] * dl[idx]))
     err = float(np.sqrt(np.sum((err_i * dl[idx]) ** 2)))
+    # The continuum is estimated, not known: its uncertainty at the line
+    # propagates into the integrated flux and must not be left out.
+    n_eff = max(int(keep.sum()), 1)
+    cont_err = (emp if np.isfinite(emp) else med_pipe) / np.sqrt(n_eff)
+    width = float(np.sum(dl[idx]))
+    err = float(np.sqrt(err ** 2 + (cont_err * width) ** 2))
     out.update({
         "testable": True, "cont": c, "F": F, "err": err,
         "sig": F / err if err > 0 else float("nan"),
         "ew": F / c if c != 0 else float("nan"),
         "peak_sig": float(sign * np.max(sign * resid[idx]) / noise),
         "err_scale": round(float(scale), 3),
+        "cont_slope_per_A": float(coef[1]),
+        "cont_n_blue": n_blue, "cont_n_red": n_red,
+        "cont_one_sided": bool(min(n_blue, n_red) < 4),
     })
     if sky is not None:
         s = np.asarray(sky, float)

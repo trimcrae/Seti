@@ -203,6 +203,47 @@ def test_untestable_degrades_honestly():
     assert not m["testable"] and m["reason"] == "line_masked"
 
 
+def test_sloped_continuum_does_not_manufacture_a_line():
+    """A steep continuum slope plus a one-sided annulus must not fake a feature.
+
+    This reproduces what run 35738206630 hit on real data: every SDSS survivor
+    came back with a large NEGATIVE significance (-3 to -9 sigma) where genuine
+    absence gives ~0.  These lines sit at 3900-5300 A, on the steep blue
+    throughput slope of an SDSS exposure and close enough to the blue end that
+    part of the continuum annulus is masked.  A median continuum has no slope
+    term, so it returns the level of whichever side survived instead of the
+    level under the line, and the difference reads as a line.
+    """
+    wave = np.linspace(4200.0, 4400.0, 800)
+    lam = 4300.0
+    fwhm = lam / 2000.0
+    rng = np.random.default_rng(11)
+    # 2 % per 100 A continuum slope, no line at all.
+    for one_sided in (False, True):
+        for slope_sign in (+1.0, -1.0):
+            cont = 10.0 * (1.0 + slope_sign * 2e-4 * (wave - lam))
+            flux = cont + rng.normal(0.0, 0.02, wave.size)
+            ivar = np.full(wave.size, 1.0 / 0.02 ** 2)
+            if one_sided:
+                ivar[wave < lam - 2.0 * fwhm] = 0.0      # blue half of the annulus gone
+            m = persist.measure_line(wave, flux, ivar, lam, fwhm, "emission")
+            assert m["testable"], (one_sided, slope_sign, m)
+            assert abs(m["sig"]) < 3.0, (one_sided, slope_sign, m)
+            assert m["cont_one_sided"] is bool(one_sided), m
+    # ... and a real line on the same sloped, one-sided continuum is still found
+    # with the right equivalent width.
+    amp, sigma = 1.0, fwhm / 2.3548
+    cont = 10.0 * (1.0 + 2e-4 * (wave - lam))
+    flux = cont + _gauss(wave, lam, amp, sigma) + rng.normal(0.0, 0.02, wave.size)
+    ivar = np.full(wave.size, 1.0 / 0.02 ** 2)
+    ivar[wave < lam - 2.0 * fwhm] = 0.0
+    m = persist.measure_line(flux=flux, wave=wave, ivar=ivar, lam0=lam, fwhm_A=fwhm,
+                             mode="emission")
+    ew_true = amp * sigma * np.sqrt(2 * np.pi) / 10.0
+    assert m["sig"] > 5.0, m
+    assert abs(m["ew"] - ew_true) / ew_true < 0.3, (m["ew"], ew_true)
+
+
 def test_two_exposure_and_partial_classes():
     _, _, _, cls = _run(make_spec_file([1.0, 1.0], n_exp=2))
     assert cls["persistence_class"] == "persistent_2exp"

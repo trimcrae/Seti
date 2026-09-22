@@ -405,6 +405,17 @@ socket: every route takes an injectable fetch/query callable.
 
 ## 9. What the runs measured (2026-09-22)
 
+> **State of the committed stage-2 files.**  Three stage-2 runs wrote into
+> `results/arc/stage2/` and two of them were cancelled, so the files there are
+> **not all from one run**: `stars.json` is run 35744902798 (4 stars, the
+> per-star checkpoint at 15:26:18 UTC before it hung), while `summary.json`,
+> `flares.csv` and `census.csv` are still run 35675112803 (30 stars) because a
+> cancelled run never reaches the code that writes them.  Run 35738785437's
+> 21-star checkpoint — the one §9.1a tabulates — is at commit `c751f006`.  Run
+> **35774408864** re-runs every star named in this section under the three
+> wall clocks and will replace all four files coherently; until it lands, read
+> each file against the run id above it, not against `summary.json`.
+
 ### 9.1 The stage-1 funnel
 
 Run **35738218021** (`arc.yml`, `stage=all`) is the first stage-1 run whose

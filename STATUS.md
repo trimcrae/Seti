@@ -96,10 +96,14 @@ the same archives as the target, and three catalogues answered:
 | ZTF (Chen+2020) | ZTFJ193127.18+410759.8 | RR | **0.4232946 d** (g: 0.423297) |
 
 against the clock re-detected in kepler:5879574's own photometry at
-0.42328185 d: **agreement to 3.0e-5**. ZTF also publishes that star's Fourier
-shape, R21 = 0.326 -- against **A2/A1 = 0.3168** measured in the fold of the
-*target's* light curve. The signal in KIC 5879574's aperture has the period
-**and** the harmonic shape of the RR Lyrae next door. A 0.575 mag pulsator
+0.42328185 d: a fractional difference of **3.0e-5**, which over Kepler's
+1,340.8 observed days (3,168 cycles) accumulates **0.095 of a cycle** -- 58
+minutes of phase in 3.7 years, and ZTF measured its period a decade after the
+Kepler data anyway. The two are the same period to the precision either
+measurement has. ZTF also publishes that star's Fourier shape, R21 = 0.326,
+against **A2/A1 = 0.3168** measured in the fold of the *target's* light curve
+-- different passbands (ZTF r vs Kepler's broad band), so corroboration rather
+than a second independent identification; the period is the identification. A 0.575 mag pulsator
 diluted into a neighbouring Kepler aperture is an 0.084% oscillation; its
 crests clear the flare detector's running-median sigma on some cycles; the
 result is a catalogue of "flares" on a perfect clock.

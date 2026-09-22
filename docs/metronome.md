@@ -103,10 +103,19 @@ a catalogued RR Lyrae, and three catalogues give its period:
 | ZTF (Chen+2020) | ZTFJ193127.18+410759.8 | `RR` | **0.4232946 d** (g: 0.423297) |
 
 against the clock re-detected in `kepler:5879574`'s photometry at
-0.42328185 d: **agreement to 3.0 × 10⁻⁵**.  And ZTF publishes that star's
-Fourier shape, R₂₁ = 0.326 — against **A₂/A₁ = 0.3168** measured in the fold
-of the *target's* light curve.  The signal in KIC 5879574's aperture has the
-period *and* the harmonic shape of the RR Lyrae 13.3″ away.
+0.42328185 d: a fractional difference of **3.0 × 10⁻⁵**, which over Kepler's
+1,340.8 observed days (3,168 cycles) accumulates **0.095 of a cycle** — 58
+minutes of phase in 3.7 years, and the ZTF period is measured a decade after
+the Kepler data in any case.  The two are the same period to the precision
+either measurement has.
+
+And ZTF publishes that star's Fourier shape, **R₂₁ = 0.326**, against
+**A₂/A₁ = 0.3168** measured in the fold of the *target's* light curve.  (Those
+are different passbands — ZTF *r* against Kepler's broad band — and RR Lyrae
+Fourier parameters do move with wavelength, so this is corroboration and not a
+second independent identification.  The period is the identification.)  The
+signal in KIC 5879574's aperture has the period, and to within the band
+difference the harmonic shape, of the RR Lyrae 13.3″ away.
 
 A 0.575 mag pulsator diluted into a neighbouring Kepler aperture is an 0.084%
 oscillation; its crests clear the flare detector's running-median σ on some

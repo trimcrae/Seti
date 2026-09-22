@@ -221,6 +221,49 @@ def test_undetected_and_missing_difference_image_are_never_on_target():
     assert not P.centroid_shift(tpf["time"], tpf["flux"], tpf["aperture"], core, few)["ok"]
 
 
+def test_a_dead_pixel_does_not_veto_the_whole_cadence():
+    """A NaN column in the stamp must not cost the star its centroid test.
+
+    MEASURED (results/arc/stage2/flares.csv, the first stage-2 run): 11 of 30
+    shortlisted stars came back "no difference image (too few in-flare or
+    baseline cadences)" while the SAME flares carried 5-7 in-flare and 68-82
+    baseline cadences in the aperture centroid, which masks per pixel.  The
+    difference image required EVERY pixel of a cadence to be finite, so one
+    permanently-NaN pixel -- routine in a Kepler postage stamp -- discarded
+    every cadence there was.
+    """
+    tpf = P.synth_flare_tpf(sources=SRC, flare_source=0, t_peak=100.0, amplitude=0.02,
+                            noise=3.0, decay_days=0.04, seed=11)
+    inm, bm, core = P.flare_cadence_masks(tpf["time"], 99.98, 100.1, cadence_days=CAD)
+    good = P.difference_image(tpf["time"], tpf["flux"], core, bm, err_cube=tpf["flux_err"])
+    assert good["ok"] and good["n_in"] >= 1 and good["n_base"] >= 4
+
+    holed = np.array(tpf["flux"], dtype=float)
+    holed[:, 0, 0] = np.nan                       # a column outside the downloaded mask
+    holed[:, -1, -1] = np.nan
+    d = P.difference_image(tpf["time"], holed, core, bm, err_cube=tpf["flux_err"])
+    assert d["ok"], d
+    assert d["n_in"] == good["n_in"] and d["n_base"] == good["n_base"]
+    assert d["n_pixels_used"] == holed[0].size - 2
+    assert not np.isfinite(d["image"][0, 0]) and not np.isfinite(d["image"][-1, -1])
+    # and the flare is still attributed to the target, at the same position
+    sh = P.centroid_shift(tpf["time"], holed, tpf["aperture"], inm, bm)
+    cen, _ = P.census([dict(s) for s in SRC], target_index=0, aperture=tpf["aperture"],
+                      prf_sigma_px=0.7, aperture_amplitude=sh["a"])
+    anc = P.anchor_sources(cen, target_index=0, baseline_xy=(sh["x0"], sh["y0"]))
+    att = P.attribute_flare(d, anc, target_index=0, shift=sh)
+    assert att["outcome"] == P.OUTCOME_ON_TARGET, att["reason"]
+
+    # a stamp with NO usable pixel at all is still honestly untestable, and the
+    # reason now names the count that actually failed
+    dead = np.full_like(holed, np.nan)
+    empty = P.difference_image(tpf["time"], dead, core, bm)
+    assert not empty["ok"] and empty["n_pixels_used"] == 0
+    att_empty = P.attribute_flare(empty, anc, target_index=0, shift=sh)
+    assert att_empty["outcome"] == P.OUTCOME_UNTESTABLE
+    assert "usable pixels 0" in att_empty["reason"]
+
+
 # ---------------------------------------------------------------------------
 # stage-1 fixes
 # ---------------------------------------------------------------------------

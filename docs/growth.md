@@ -1170,3 +1170,71 @@ its budget is resumed by re-dispatching with `resume=true`, which skips the
 targets already committed. Planets with `koi_period > 30 d` are carried
 separately in `long_period.csv`: TESS's 27-day sectors give them few or no
 transits and their sensitivity is stated, not assumed.
+
+
+### 11.9 The truncated TIC id — what run 35738702139 found before it found a planet
+
+The first real dispatch of this stage exposed a defect that had nothing to do
+with astrophysics and everything to do with whether the stage can reach scale
+at all. It is recorded here because it is the kind of error that reads as a
+result.
+
+`_write_csv` wrote every float with `float_format="%.8g"`. That is the right
+format for a depth in ppm. A TIC id is **nine digits**, and eight significant
+digits is not enough: TIC 122785305 went to `targets.csv` as `1.227853e+08`
+and came back as TIC **122785300**. 2,686 of the 2,993 catalogue TIC ids were
+mangled that way. The signature in the first two shards to finish:
+
+| TIC route | zero rows | products |
+|---|---|---|
+| `name_planet` (round-tripped through the float) | 68 | 13 |
+| `tic_kic_crossid` (resolved in memory, never written) | 4 | 36 |
+
+Light-curve coverage was 40%, and the missing 60% was a format string rather
+than a sky that TESS had not observed.
+
+The loud half of the failure is the empty query. **The silent half is worse**:
+TIC 122785300 may itself be a real star with TESS data, in which case the
+depth fitted would belong to a different star and nothing downstream would
+notice. That is the Kepler-718 b error --- a measurement of the wrong source
+--- moved from the vet, where stage 3 catches it, into the depth, where
+nothing does.
+
+Three things follow, and all three are in the code:
+
+1. **Identifiers are written as integers.** `ID_COLUMNS` (`tic_id`, `kepid`,
+   ...) are cast to `Int64` before the CSV write, so a nine- or ten-digit id
+   round-trips exactly.
+2. **A suspect id is never queried on its own authority.**
+   `tic_is_truncated()` flags any catalogue TIC at or above 1e8 that is a
+   multiple of ten (below 1e8 `%.8g` is exact), and the star is re-resolved
+   from its own position and magnitude first. Agreement costs one cone search
+   and writes the route `<r>_confirms_<catalogue>`; disagreement lets the sky
+   win (`<r>_over_<catalogue>`); and if the sky cannot name the star it is
+   `TIC_UNRESOLVED` and not measured. **A star we cannot name is not a star we
+   are allowed to measure.**
+3. **Resume does not inherit the old rows.** `record_tic_is_unverified()`
+   marks a committed row whose TIC could have been truncated and was never
+   checked, and resume redoes it. Its `QUERY_RETURNED_ZERO_ROWS` was a fact
+   about a number, not about a star, and freezing it into the funnel would
+   have turned a bug into a published non-detection.
+
+A star the repair cannot help --- catalogue id empty, sky id empty, or both
+ids serving nothing --- stays `QUERY_RETURNED_ZERO_ROWS`. The repair is not
+allowed to invent coverage, and the shard report carries
+`n_tic_suspect_truncation`, `n_tic_rechecked`, `n_tic_repaired` and
+`n_redone_unverified_tic` so the funnel states how much of the coverage came
+through it.
+
+Two smaller defects from the same run, both of which cost a whole shard:
+
+* `detectable_depth_change_ppm = ref * (exp(n * sigma) - 1)` raised
+  `OverflowError` on a star with essentially no sensitivity, where the
+  exponent runs past 709. The honest value there is `+inf` --- a change larger
+  than any depth the star could have --- so `detectable_change_ppm()` clamps
+  and uses `expm1`.
+* Any exception from `measure_direct_target` killed the shard and every star
+  it had not yet reached. The call is now guarded: a raise becomes a
+  NON-measurement with `lc_status=MEASURE_RAISED` and the exception verbatim,
+  counted as `n_measure_failed`. One pathological target costs itself and
+  nothing else.

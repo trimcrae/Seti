@@ -3,12 +3,71 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-16.
+next. Last updated: 2026-09-22.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### SPECTRA-PERSIST: the narrow lines meet their own exposures, 2026-09-22
+
+The 167 narrow-line survivors had only ever been seen in coadds. They have now been
+measured in the individual exposures that built those coadds — the test no coadded
+spectrum can provide. Three runs were needed, and the first two were measuring the
+estimator rather than the sky.
+
+**The systematic, twice.** Run 35738206630 returned `absent_in_exposures` for every SDSS
+survivor it reached, with combined significances of −2.2 to −9.2 σ. Genuine absence gives
+0. The local continuum was the *median* of an annulus, which has no slope term, and the
+annulus is sampled asymmetrically near the blue end of an SDSS exposure where these
+survivors sit. Replaced with a sigma-clipped linear fit — and run 35740672875 still came
+back at −2.6 to −10.9 σ for 15 of 17. A second continuum model was not going to settle
+it, so the estimator is now measured instead of modelled: `offset_null()` repeats the
+whole measurement at 24 random offsets of 12–200 Å **in the same spectrum**, and its
+median and MAD are subtracted from and divided into every exposure. `combined_sig` is now
+an excess over what that spectrum returns for nothing at all, and `combined_sig_raw`
+keeps the uncorrected number beside it.
+
+`stack_exposures()` adds the second reference: the inverse-variance mean of the exposure
+HDUs on the coadd's own grid, measured with the same estimator. The coadd is supposed to
+*be* that stack. A line the exposures are individually too noisy to show but whose own
+stack shows at ≥ 4 σ is now `stack_only` (OPEN), not `absent_in_exposures` (KILLED).
+
+**A run that split into two estimators.** The summary committed at 182b338e came from a
+reduce whose shards did not all run the same code: the jobs queued for up to 45 minutes
+and `actions/checkout` took the branch head at each job's start, so early shards used the
+median continuum and late ones the linear fit. The `ckpt_version` guard caught it — 36 of
+98 checkpoints ignored as stale — so nothing superseded entered the table, but 96 of 167
+lines went unmeasured. Shards now pin to `github.sha` and every checkpoint records the
+commit that measured it.
+
+**What the incomplete, uncalibrated run says** (`results/spectra_persist/summary.json`,
+62 of 141 spectra, `ckpt_version` 2): 106 lines killed by a rest-frame known line
+(including the two DESI "survivors" that were Balmer H11 and H12 at the star's own
+redshift), 53 `absent_in_exposures` — not to be believed until re-measured against the
+null — 13 `persistent`, and **6 `ALIVE_persistent_unidentified`**. Full table and
+per-candidate kill paths in [`docs/spectra-persist.md`](docs/spectra-persist.md).
+
+The strongest is **0412-51942-0465 at 6809.26 Å** (RA 47.488109, Dec +0.504935): an
+emission line of EW 6.3 Å present in all 5 exposures across two nights at 5.2–7.0 σ, with
+no sky-model line, only one candidate line in the whole spectrum, and **confirmed in a
+second epoch at 19.5 σ** with 8 further epochs available. The next is
+**3241-54884-0388 at 8578.28 Å**: 14 exposures over six nights, every one positive,
+χ²p = 0.76, EW 0.42–0.96 Å.
+
+**Why neither is a detection yet.** Both objects are stars, the first an M dwarf
+(SIMBAD `LM*`), and all six survivors lie between 6403 and 8578 Å — the part of the
+spectrum where the hand-kept OH list has gaps (it jumps from 6753.3 to 6863.9 Å) and the
+telluric bands, which the list did not carry at all, live. More to the point, **no test
+run so far can reject a feature of the spectral type itself**: a gap between TiO band
+heads in an M dwarf is in every exposure of that star and in every epoch of it. That is
+what `--stage control` is for — the same wavelength measured in 40 unrelated stars of the
+same type and in 40 stars of any type, which separates "this spectral type does this"
+from "the sky or the instrument does this" from "this object does this".
+
+Next: land the calibrated full run (35747997902), then the control sample on whatever is
+still standing. The strongest candidate turns on it.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

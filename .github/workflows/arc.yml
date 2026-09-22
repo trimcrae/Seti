@@ -158,7 +158,8 @@ jobs:
             results/arc/candidates.json \
             results/arc/candidates.csv \
             results/arc/xi_table.csv \
-            $(ls results/arc/screen_*.json 2>/dev/null)
+            $(ls results/arc/screen_*.json 2>/dev/null) \
+            $(ls results/arc/xi_kepler_*.csv results/arc/xi_tess_*.csv 2>/dev/null)
       - uses: actions/upload-artifact@v4
         if: always()
         with:

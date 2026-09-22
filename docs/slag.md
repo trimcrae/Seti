@@ -116,6 +116,24 @@ panel whose elements the compilation does not cover reports
 `SUITE_LACKS_ELEMENTS` or `TOO_FEW_BODIES_COVER_THE_PANEL` and is not
 calibrated this way — never silently given a p.
 
+### The calibrated per-element residual
+
+The same draws answer a sharper question at no extra cost. Each of the N
+refits leaves a residual at every element, so the distribution of *one
+element's* residual under the natural model is already in hand:
+`misfit["per_element"][el]["p"]` is the fraction of natural draws left at
+least as badly fitted at that element as the data are.
+
+This is the complement Tier 2 needs. The pair envelope asks whether a ratio
+lies outside everything nature has been *measured* to do, and §1 shows that
+envelope is wide — 2.95 dex for Ti/Al across real stones. The per-element p
+asks instead how unusual this element is *given the model's full freedom*, so
+it does not depend on the envelope at all. With a dozen elements per panel
+the smallest of a dozen p values is small by construction, so
+`_worst.p_min_corrected` (the Bonferroni-corrected minimum) is reported
+beside it and is what any claim must use. It is a diagnostic that points at
+*which element* carries a panel's misfit — never on its own a candidate rule.
+
 `p < 0.01` is `UNEXPLAINED`, `p < 0.05` is `WATCH`. **A low `p` is a
 measurement about the natural family's reach, not a technosignature** — that
 is what Tier 2 is for.

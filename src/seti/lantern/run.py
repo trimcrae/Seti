@@ -72,7 +72,11 @@ VERDICTS = ("NO_DATA_REACHED", "NO_VANISHING_LINE",
 # different version; `assess` reports them as `stale_checkpoint`.  Version 1
 # was the run that read the table-per-segment x1dints layout as one row per
 # HDU (docs/lantern.md section 3.1).
-CHECKPOINT_VERSION = 2
+# Version 2 searched only the out-of-eclipse time-averaged spectrum, which on
+# real x1d products is limited at ~1% of the continuum by the static pixel
+# pattern; version 3 searches the out-minus-in difference, where that pattern
+# cancels (docs/lantern.md section 3.8).
+CHECKPOINT_VERSION = 3
 # Time sources that already carry the barycentric correction (no extra timing
 # sigma): the per-row TDB-MID column and the INT_TIMES BJD_TDB column.
 BARYCENTRIC_TIME_SOURCES = ("int_times_bjd_tdb", "row_bjd_tdb")

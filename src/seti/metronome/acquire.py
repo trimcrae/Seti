@@ -2075,17 +2075,27 @@ def fetch_positions_by_id(ids, mission: str, *, query_fn=None,
 
 
 def _mast_tic_query(ids):                                  # pragma: no cover - network
+    # One id per request, each bounded.  MEASURED 2026-09-23: run
+    # 35869870343's aperture stage hit its 180-minute job limit with no
+    # output; a multi-id `query_criteria` is MAST's slow asynchronous path
+    # and has no timeout of its own.
     from astroquery.mast import Catalogs
 
-    tab = Catalogs.query_criteria(catalog="Tic", ID=[int(i) for i in ids])
-    if tab is None or len(tab) == 0:
-        return pd.DataFrame()
-    df = tab.to_pandas()
-    return df[[c for c in ("ID", "ra", "dec") if c in df.columns]]
+    try:
+        Catalogs.TIMEOUT = 120
+    except Exception:                                     # noqa: BLE001
+        pass
+    frames = []
+    for i in ids:
+        tab = Catalogs.query_criteria(catalog="Tic", ID=int(i))
+        if tab is not None and len(tab):
+            df = tab.to_pandas()
+            frames.append(df[[c for c in ("ID", "ra", "dec") if c in df.columns]])
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
 def fetch_tic_positions_mast(ids, *, query_fn=None, log: AcquisitionLog | None = None,
-                             chunk: int = 100) -> pd.DataFrame:
+                             chunk: int = 20) -> pd.DataFrame:
     """TIC positions from MAST's own catalogue service, for the ids VizieR missed.
 
     MEASURED 2026-09-23: every ``positions_tess`` query against VizieR's
@@ -2151,7 +2161,7 @@ def _vizier_cone(table: str, ra: float, dec: float, radius_arcsec: float):
     from astropy.coordinates import SkyCoord
     from astroquery.vizier import Vizier
 
-    v = Vizier(columns=["**"], row_limit=50)
+    v = Vizier(columns=["**"], row_limit=50, timeout=90)
     res = v.query_region(SkyCoord(ra * u.deg, dec * u.deg), radius=radius_arcsec * u.arcsec,
                          catalog=table)
     if res is None or len(res) == 0:
@@ -2167,7 +2177,7 @@ def _vizier_cone_with_sep(table: str, ra: float, dec: float,
     from astropy.coordinates import SkyCoord
     from astroquery.vizier import Vizier
 
-    v = Vizier(columns=["**", "+_r"], row_limit=500)
+    v = Vizier(columns=["**", "+_r"], row_limit=500, timeout=90)
     res = v.query_region(SkyCoord(ra * u.deg, dec * u.deg), radius=radius_arcsec * u.arcsec,
                          catalog=table)
     if res is None or len(res) == 0:
@@ -2210,7 +2220,7 @@ def row_separation_arcsec(row, ra0: float, dec0: float, roles: dict) -> float:
 def fetch_aperture_neighbours(positions: pd.DataFrame, catalogues: dict, *,
                               radius_arcsec_by_mission: dict, mission: str,
                               identity_radius_arcsec: float = 3.0, cone_fn=None,
-                              log: AcquisitionLog | None = None) -> tuple[dict, dict]:
+                              max_workers: int = 8, log: AcquisitionLog | None = None) -> tuple[dict, dict]:
     """Variable stars NEAR each target -- the aperture-scale cone.
 
     The identity cone (:func:`fetch_variable_context`, 3") asks *is this star a
@@ -2231,24 +2241,39 @@ def fetch_aperture_neighbours(positions: pd.DataFrame, catalogues: dict, *,
         mission, (radius_arcsec_by_mission or {}).get("default", 20.0)))
     out: dict[str, list] = {}
     reached: dict[str, set] = {}
+    from concurrent.futures import ThreadPoolExecutor
+
+    stars = []
+    for _, r in positions.iterrows():
+        ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
+        if np.isfinite(ra) and np.isfinite(dec):
+            stars.append((str(r["star_id"]), ra, dec))
+
+    def _one(args):
+        table, sid, ra, dec = args
+        try:
+            return sid, ra, dec, cone_fn(table, ra, dec, radius), None
+        except Exception as exc:                          # noqa: BLE001
+            return sid, ra, dec, None, exc
+
     for name, spec in (catalogues or {}).items():
         table = spec.get("table")
         n_ok = n_fail = n_hits = 0
-        for _, r in positions.iterrows():
-            sid = str(r["star_id"])
-            ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
-            if not (np.isfinite(ra) and np.isfinite(dec)):
-                continue
-            try:
-                df = cone_fn(table, ra, dec, radius)
-                n_ok += 1
-                reached.setdefault(sid, set()).add(name)
-            except Exception as exc:                      # noqa: BLE001
+        # the cones are independent network calls; eight at a time (MEASURED:
+        # 123 TESS stars x 3 catalogues serially outran a 180-minute job)
+        with ThreadPoolExecutor(max_workers=int(max_workers)) as ex:
+            results = list(ex.map(_one, [(table, s, a, d) for s, a, d in stars]))
+        print(f"[metronome/aperture] {mission} {name}: {len(results)} cones r={radius}\"",
+              flush=True)
+        for sid, ra, dec, df, exc in results:
+            if exc is not None:
                 n_fail += 1
                 if log and n_fail <= 3:
                     log.record(f"aperture_{name}", f"cone {table} ({ra:.5f},{dec:.5f}) "
                                f"r={radius}\"", error=repr(exc))
                 continue
+            n_ok += 1
+            reached.setdefault(sid, set()).add(name)
             if df is None or not len(df):
                 continue
             roles = resolve_columns(df.columns, {

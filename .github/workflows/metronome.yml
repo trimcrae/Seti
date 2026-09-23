@@ -603,7 +603,7 @@ jobs:
   aperture:
     if: ${{ github.event.inputs.stage == 'aperture' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
         with:
@@ -620,7 +620,7 @@ jobs:
       - name: Identity + aperture cones over the shortlist
         id: ap
         run: |
-          python -m seti.metronome.run --stage aperture
+          timeout -k 60 17400 python -u -m seti.metronome.run --stage aperture
           python - <<'PY'
           import json
           a = json.load(open("results/metronome/aperture.json"))
@@ -640,8 +640,10 @@ jobs:
           s = json.load(open("results/metronome/summary.json"))
           print(s["verdict"]); print(s["tiers"], s["funnel"])
           PY
+      # always(): a stage killed by its own timeout still leaves the per-mission
+      # checkpoint (status PARTIAL), and a partial measurement is kept
       - name: Commit the aperture record
-        if: ${{ steps.ap.outcome == 'success' }}
+        if: ${{ always() && steps.ap.outcome != 'skipped' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
@@ -649,7 +651,7 @@ jobs:
             "metronome: identity + aperture-scale variability cones over the shortlist" \
             results/metronome/aperture.json
       - name: Rebuild summary.json from every per-star record on the branch
-        if: ${{ steps.ap.outcome == 'success' }}
+        if: ${{ always() && steps.ap.outcome != 'skipped' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: scripts/metronome_reconcile_landed.sh

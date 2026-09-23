@@ -148,6 +148,14 @@ def stage_aperture(conf: dict, out: Path, *, query_fn=None, cone_fn=None, mast_f
                 "neighbours": a.get(sid, []),
                 "contaminating": bool(chit), "contamination_detail": cdet,
             }
+        # checkpoint after every mission: a job killed at its time limit keeps
+        # what it measured (run 35869870343 lost everything at 180 minutes)
+        rep["per_star"] = per
+        rep["status"] = "PARTIAL"
+        rep["missions_done"] = sorted(set(rep.get("missions_done", [])) | {mission})
+        (out / "aperture.json").write_text(json.dumps(rep, indent=1, default=_jd))
+        print(f"[metronome/aperture] {mission}: {len(sub)} stars, {len(pos)} positioned, "
+              f"checkpoint written", flush=True)
 
     n = len(per)
     rep["n_positioned"] = int(sum(1 for p in per.values() if p["ra"] is not None))

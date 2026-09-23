@@ -1,8 +1,8 @@
 {
-  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); CLOCK_CANDIDATES_PENDING_VET; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_5",
-  "generated_utc": "2026-09-23T13:35:39Z",
+  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); NO_CLOCK_CANDIDATES; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_6",
+  "generated_utc": "2026-09-23T13:35:46Z",
   "n_candidates": 0,
-  "n_interest": 1,
+  "n_interest": 0,
   "n_watch": 53,
   "funnel": {
     "events_in": 1523888,
@@ -13,10 +13,10 @@
     "stars_fdr_watch": 225,
     "stars_fdr_significant": 141,
     "stars_watch": 53,
-    "stars_interest": 1,
+    "stars_interest": 0,
     "stars_candidate": 0,
     "stars_demoted_by_lightcurve": 9,
-    "stars_demoted_by_vetstar": 5,
+    "stars_demoted_by_vetstar": 6,
     "stars_demoted_by_aperture": 0
   },
   "rejection_counters": {
@@ -50,9 +50,9 @@
     }
   },
   "tiers": {
-    "none": 3248,
+    "none": 3249,
     "watch": 53,
-    "interest": 1,
+    "interest": 0,
     "candidate": 0
   },
   "jitter_calibration": {
@@ -1602,9 +1602,10 @@
   },
   "vetstar": {
     "n_vetted": 6,
-    "n_demoted": 5,
+    "n_demoted": 6,
     "demoted": [
       "tess:260128333:vet_narrow_dip_at_p",
+      "tess:350479496:vet_narrow_dip_at_p",
       "kepler:5879574:vet_contaminating_variable_at_p",
       "tess:398943781:vet_catalogued_eclipsing_binary",
       "tess:63834969:vet_narrow_dip_at_p",
@@ -1643,16 +1644,11 @@
         "recovered_from": null
       },
       "tess:350479496": {
-        "verdict": "DEGRADED(gaia:gaia_source); NO_MUNDANE_EXPLANATION_FOUND [P=4.194131 d]",
-        "veto": null,
-        "generated_utc": "2026-09-23T00:34:53Z",
+        "verdict": "MUNDANE_EXPLANATION_FOUND(NARROW_DIP_AT_P:width=0.02; COHERENT_OSCILLATION_AT_P:amp=0.24326,p_control=0.00498,z=232.5_with_events_masked) [P=4.194131 d]",
+        "veto": "vet_narrow_dip_at_p",
+        "generated_utc": "2026-09-23T12:46:50Z",
         "file": "vetstar_tess_350479496.json",
-        "recovered_from": {
-          "commit": "e958d0e5",
-          "run_id": 35802594315,
-          "path": "results/metronome/vetstar.json",
-          "note": "recovered 2026-09-23 from the commit that run landed; five parallel vetstar runs wrote the same vetstar.json and only the last survived at HEAD.  Content unchanged apart from this key."
-        }
+        "recovered_from": null
       },
       "tess:398943781": {
         "verdict": "MUNDANE_EXPLANATION_FOUND(CATALOGUED_ECLIPSING_BINARY:vsx; NARROW_DIP_AT_P:width=0.03; COHERENT_OSCILLATION_AT_P:amp=0.02245,p_control=0.00498,z=211.5_with_events_masked) [P=3.052465 d]",
@@ -1673,15 +1669,15 @@
   },
   "provenance": {
     "vetstar_generated_utc": "2026-09-23T12:49:36Z",
-    "rebuilt_utc": "2026-09-23T13:35:39Z",
+    "rebuilt_utc": "2026-09-23T13:35:46Z",
     "rebuilt_by": "reconcile",
     "assess_generated_utc": "2026-09-21T21:42:31Z",
     "redetect_generated_utc": "2026-09-22T21:57:41Z",
     "tiers_recomputed_from": "stars_vetted.csv overridden by candidates.json",
     "tier_sources": {
       "from_vetted": 3302,
-      "overridden_by_candidates": 14,
-      "n_demoted_rows": 14
+      "overridden_by_candidates": 15,
+      "n_demoted_rows": 15
     },
     "demotions_by_stage": {
       "lightcurve": [
@@ -1699,6 +1695,7 @@
         "kepler:5879574",
         "tess:260128333",
         "tess:32449963",
+        "tess:350479496",
         "tess:398943781",
         "tess:63834969"
       ]

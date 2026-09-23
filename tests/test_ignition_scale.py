@@ -503,8 +503,9 @@ _CIRCLE = re.compile(r"CIRCLE\('ICRS',\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)\)")
 class _TileGaia:
     """Answers the parent query with rows around the cone it was asked for."""
 
-    def __init__(self, n=5, fail_tiles=()):
+    def __init__(self, n=5, fail_tiles=(), int_ids=False):
         self.n, self.fail_tiles, self.queries = n, set(fail_tiles), []
+        self.int_ids = int_ids          # the real archive answers int64 source_ids
 
     def __call__(self, adql):
         self.queries.append(adql)
@@ -519,6 +520,9 @@ class _TileGaia:
         d["ra"] = ra + 0.01 * np.arange(self.n)
         d["dec"] = dec + 0.01 * np.arange(self.n)
         d["source_id"] = [f"{int(ra * 100)}_{int(abs(dec) * 100)}_{i}" for i in range(self.n)]
+        if self.int_ids:
+            d["source_id"] = np.array([int(ra * 100) * 10**7 + int(abs(dec) * 100) * 10 + i
+                                       for i in range(self.n)], dtype=np.int64)
         # One row outside the box on purpose: the ownership cut must drop it.
         d.loc[self.n - 1, "ra"] = (ra + 30.0) % 360.0
         return d
@@ -632,3 +636,23 @@ def test_probe_records_the_upload_rung_and_acquire_starts_from_it(tmp_path):
                        irsa_fetch_fn=_irsa_dead)
     assert rep["route"] == "upload" and rep["upload_transport_preferred"] == "gator"
     assert seen[-1] == "gator" and rep["n_ok"] == 4
+
+
+def test_sweep_resume_that_adds_a_tile_writes_the_parent(tmp_path):
+    """Run 35859572295: every resumed shard died writing parent_s*.parquet.
+
+    The resumed parent comes back with str source_ids and a new tile's are
+    int64; the concatenation was a mixed object column pyarrow refused.  The
+    existing resume test never added a tile after resuming, so it never met it.
+    """
+    conf = _sweep_conf()
+    gaia = _TileGaia(n=5, int_ids=True)
+    kw = dict(route="cone", query_fn=gaia, cone_fn=_cone_factory("constant"),
+              asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead)
+    rep = stage_sweep(conf, tmp_path, shard=0, n_shards=4, max_tiles=2, **kw)
+    assert rep["tiles_done"] == 2
+    rep2 = stage_sweep(conf, tmp_path, shard=0, n_shards=4, max_tiles=3, **kw)
+    assert rep2["tiles_done"] == 3 and rep2["tiles_new_this_run"] == 1
+    parent = pd.read_parquet(tmp_path / "parent_s0of4.parquet")
+    assert len(parent) == 12 and parent["source_id"].is_unique
+    assert parent["tile"].nunique() == 3

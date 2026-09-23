@@ -90,7 +90,8 @@ DEFAULT_DEEPVET: dict = {
     "ls_chi_min": 3.0,
     "w4_snr_threshold_flag": 7.0,
     "frame_fraction_flag": 0.5,
-    "wall_budget_s": 5400.0,          # candidates are first in the queue
+    "wall_budget_s": 12600.0,         # candidates are first in the queue
+    "image_timeout_s": 1500.0,        # run 35864699584: 600 s cut every unWISE fetch off
     # per-axis registration floor of W3 (W4) against W1 in the unWISE coadds,
     # used when the pooled in-cutout calibration has < 8 sources.  Run
     # 35860601552's calibrated fields gave median 2-D offsets 0.44-0.58" at W3.
@@ -1066,11 +1067,11 @@ def build_targets(summary: dict, shortlist: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for cnd in summary.get("candidates", []):
         rows.append({"source_id": str(cnd["source_id"]), "role": "CANDIDATE"})
-    for cnd in summary.get("in_cell_age_undetermined", []):
-        rows.append({"source_id": str(cnd["source_id"]), "role": "IN_CELL_AGE_UNDETERMINED"})
     for cnd in summary.get("controls", []):
         if cnd.get("found") and cnd.get("source_id") is not None:
             rows.append({"source_id": str(cnd["source_id"]), "role": f"CONTROL:{cnd['name']}"})
+    for cnd in summary.get("in_cell_age_undetermined", []):
+        rows.append({"source_id": str(cnd["source_id"]), "role": "IN_CELL_AGE_UNDETERMINED"})
     tg = pd.DataFrame(rows).drop_duplicates("source_id")
     sl = shortlist.copy()
     sl["source_id"] = sl["source_id"].astype(str)
@@ -1160,7 +1161,7 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
         if full:
             chk["density"] = density_check(t, c, rt["tap"])
             try:
-                chk["image"] = call_with_timeout(rt["image"], 600.0, t, c)
+                chk["image"] = call_with_timeout(rt["image"], float(c.get("image_timeout_s", 1500.0)), t, c)
             except Exception as exc:                      # noqa: BLE001
                 chk["image"] = {"status": "UNTESTED", "error": repr(exc)[:300]}
             try:

@@ -20,6 +20,14 @@ anything; the 2026-09-06 run scanned zero stars and is not a result).
 | Catalogues reached | Yang+2019 162,262 / Okamoto+2021 2,344 / Shibayama+2013 1,547 / Günther+2020 8,695 / Tu+2022 15,638.  Pietras+2022 `QUERY_RETURNED_ZERO_ROWS` under its bibcode and under an author keyword |
 | Significant at the watch FDR / at α = 0.05 | 225 / 141 |
 | Tiers as first reported | 53 `watch`, 14 `interest`, 1 `candidate` |
+| **Tiers as they stand**, after both light-curve reconciliations | **53 `watch`, 5 `interest`, 0 `candidate`**, 3,244 `none` |
+
+Those two rows are the same 3,302 records; nine `interest` stars were demoted
+by `catalogue_epochs_absent` (§4.7b) and the one `candidate` by the vet
+(§4.7d).  `summary.json` is **regenerated** from the per-star records on every
+reconciliation rather than patched, and carries a `provenance` block dating
+each part — because patching it is how it came to hold `n_candidates: 0`
+beside `tiers: {..., "candidate": 1}` (§8b).
 
 Then the contamination work, which is where the numbers move.
 
@@ -190,7 +198,14 @@ worst of all at small N, and stars below 35 events now carry
 `quality_uninformative`.  13 of the 15 `interest`/`candidate` stars have
 N ≤ 33.  §5 carries the measured table.
 
-**Not yet answered, and named as such:** 13 of the 14 `interest` stars carry
+**Still not answered, and named as such.**  Five `interest` stars survive, all
+`tess_tu2022`, and **none of them has been through the vet** — `interest`
+means the vet is incomplete, not that it passed, and the verdict string keeps
+`CLOCK_CANDIDATES_PENDING_VET` for exactly that reason.  The vet is a
+one-star-at-a-time stage; running it on those five is the cheapest outstanding
+work in this channel.
+
+**Not yet answered at the time of that run, and named as such:** 13 of the 14 `interest` stars carry
 `variability_catalogue_unreached` (the 2026-09-21 run reached 45.3% of its
 shortlist with the KIC/TIC round trip, so the periodic-variable veto could
 not be applied to them at all), and none of the 3,131 had the pool null,
@@ -951,7 +966,7 @@ the sky, and the workflow refuses to let either read as a science null.
 
 ---
 
-## 8b. One operational hazard, measured
+## 8b. Two operational hazards, measured
 
 Run 35741300225 was dispatched at 14:34 UTC on 2026-09-22 from commit
 22e7b3d2, queued nine hours behind the account's Actions ceiling while two
@@ -975,6 +990,25 @@ channel's own sources differ between the two — so a re-run of identical code
 still commits.  It fails open on every unknown: shallow history, no recorded
 writer, any git error.  The run stays green and its artifacts still upload;
 only the commit-back is skipped.
+
+**A second one, in the same family.**  `summary.json` is written by assess and
+then *amended* by the light-curve and vet reconciliations, and amending it
+field by field let it drift into contradicting itself.  On 2026-09-22 it
+carried `n_candidates: 0` beside `tiers: {..., "candidate": 1}`, a
+`generated_utc` 26 hours older than the vet result patched into it, a
+`degraded` entry calling three variability catalogues unreached beside a vet
+that had reached all three and quoted them, and a verdict with
+`CLOCK_CANDIDATES_PENDING_VET` removed although five `interest` stars were
+still unvetted.  Every one of those would mislead a reader who trusted it, and
+`summary.json` is the file `docs/channels.md` and `alerts.py` read.
+
+`redetect.rebuild_summary` now **recomputes** every derived field —  tiers,
+the tier counts, the funnel's star counts, the degradation list and the
+verdict — from `stars_vetted.csv` overridden by `candidates.json`, on every
+reconciliation.  `generated_utc` becomes the regeneration time and a
+`provenance` block dates each part from its own artefact and names which
+fields are re-derived and which are the assess run's.  The rule is the one
+`commit_results.sh` already states for files: **regenerate, never patch.**
 
 Two things follow for any other channel here.  A dispatch that has been queued
 for hours should be **cancelled rather than left to land**.  And a

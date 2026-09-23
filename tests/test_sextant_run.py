@@ -521,6 +521,199 @@ def test_a_shard_with_room_on_the_clock_finishes_every_chunk(tmp_path, monkeypat
 
 
 # ---------------------------------------------------------------------------
+# 4b. Run 35746692260: four hours of fitting that assess read as NO_DATA_REACHED
+# ---------------------------------------------------------------------------
+def _legacy_csv_value(v):
+    """The shard writer as it was when run 35746692260 wrote its 4250 rows."""
+    if v is None:
+        return ""
+    if isinstance(v, bool):
+        return "1" if v else "0"
+    if isinstance(v, (list, tuple)):
+        return "|".join(str(x) for x in v)
+    if isinstance(v, float):
+        return "" if not math.isfinite(v) else repr(v)
+    s = str(v)
+    return '"' + s.replace('"', '""') + '"' if ("," in s or '"' in s) else s
+
+
+def _legacy_write_shard_csv(path, records):
+    import gzip
+
+    lines = [",".join(RUN.CSV_COLUMNS)]
+    for r in records:
+        lines.append(",".join(_legacy_csv_value(r.get(c)) for c in RUN.CSV_COLUMNS))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(path, "wt") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+
+def _real_shaped_records(n_fitted=40, n_controls=6, seed=4):
+    """Records with the SHAPES the real shard carried, screened by the real screen.
+
+    The real shard's funnel: FITTED, RESIDUALS_FAILED, NO_EPHEMERIS, FIT_REFUSED,
+    TOO_FEW_TRANSITS, NO_OBSERVATIONS_RETURNED.  The failure verdicts carry an
+    exception string as ``reason``, and the screen copies it into ``reasons``
+    --- the list cell the old writer left unquoted.  Fitted values arrive as
+    numpy scalars, as they do from the fit.
+    """
+    rng = np.random.default_rng(seed)
+    recs = []
+    for k in range(n_fitted):
+        h = float(rng.uniform(12, 17))
+        err = 2e-15
+        a2 = np.float64(rng.normal(0, err))
+        r = {"number_mp": 1000 + k, "denomination": f"obj{k}", "route": "horizons",
+             "verdict": "FITTED", "n_transits": np.int64(30), "arc_days": np.float64(1500.0),
+             "a2": a2, "a2_err": np.float64(err), "a2_snr": np.float64(abs(a2) / err),
+             "a2_err_pessimistic": np.float64(err * 1.3),
+             "a2_snr_pessimistic": np.float64(abs(a2) / err / 1.3),
+             "a2_absorbed_fraction": np.float64(0.5), "excess_scatter": np.float64(1.0),
+             "h": h, "a": 2.5, "e": 0.1, "i": 5.0, "node": 30.0,
+             "mjd_min": 56900.0, "mjd_max": 58800.0,
+             "ceiling_hard": float(RUN.NG.momentum_ceiling_a2(h)),
+             "model_verdict": "NO_MODEL_PREFERRED", "is_control": False,
+             "jpl_a2": float("nan"), "jpl_a2_sigma": float("nan")}
+        r["ratio_hard"] = float(abs(a2) / r["ceiling_hard"])
+        if k < n_controls:
+            r.update({"is_control": True, "jpl_a2": -5e-14, "jpl_a2_sigma": 3e-15,
+                      "a2": np.float64(-5.2e-14), "a2_err": np.float64(5e-15),
+                      "a2_snr": np.float64(10.4)})
+        recs.append(RUN.screen_record(r, CONF))
+    failures = [
+        ("RESIDUALS_FAILED", "ValueError: shapes (3,4) and (5,) not aligned: 4 (dim 1) != 5 (dim 0)"),
+        ("FIT_REFUSED", 'LinAlgError: Singular matrix, rank 5 < 6, "ill-posed"'),
+        ("NO_EPHEMERIS", "horizons: No ephemeris for target, 2 matches"),
+        ("TOO_FEW_TRANSITS", "7_transits_below_12"),
+        ("RESIDUALS_FAILED", "RuntimeError: two-line\nmessage, with a comma"),
+    ]
+    for j, (verdict, reason) in enumerate(failures):
+        r = {"number_mp": 5000 + j, "denomination": f"f{j}", "route": "horizons",
+             "verdict": verdict, "reason": reason}
+        recs.append(RUN.screen_record(r, CONF))
+    recs.append({"number_mp": 6000, "denomination": "ghost", "route": "horizons",
+                 "verdict": "NO_OBSERVATIONS_RETURNED", "tier": "untestable",
+                 "reasons": ["no_rows_from_gaia"], "vetoes": []})
+    return recs
+
+
+def _shard_dir(tmp_path, records, writer, *, verdict="OK_PARTIAL_BUDGET"):
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    writer(paths.results / "fits" / "shard_0_of_1.csv.gz", records)
+    E.save_json(paths.results / "fits" / "shard_0_of_1.json",
+                {"verdict": verdict, "n_records": len(records), "n_assigned": 156793,
+                 "budget_stop": {"after_chunks": 17, "of_chunks": 628}})
+    # The Greenberg catalogue cached empty: the suite must not open a socket.
+    E.save_json(paths.results / "controls_greenberg2020.json", {"rows": {}})
+    return paths
+
+
+def test_the_old_writer_really_did_produce_an_unreadable_shard(tmp_path):
+    """Reproduce the failure first: the exact pandas error run 35746692260 logged."""
+    paths = _shard_dir(tmp_path, _real_shaped_records(), _legacy_write_shard_csv)
+    with pytest.raises(pd.errors.ParserError, match="Expected 83 fields"):
+        pd.read_csv(paths.results / "fits" / "shard_0_of_1.csv.gz")
+
+
+def test_a_legacy_shard_is_repaired_and_assessed_not_reported_as_no_data(tmp_path):
+    """The reduce-only path: the surviving artifact must assess WITHOUT a refit."""
+    import json
+
+    recs = _real_shaped_records()
+    paths = _shard_dir(tmp_path, recs, _legacy_write_shard_csv)
+    out = RUN.stage_assess(CONF, paths, log=lambda *a: None)
+    assert out["n_objects"] == len(recs)
+    assert not out["verdict"].startswith("NO_DATA_REACHED")
+    assert out["funnel"]["n_fitted"] == 40
+    rep = out["shard_csv_repairs"]["shard_0_of_1.csv.gz"]
+    assert rep["n_dropped"] == 0 and rep["n_repaired_overflow"] >= 2
+    assert rep["n_rejoined_newline"] >= 1 and rep["n_numpy_repr_cells"] > 0
+    # Values survive the repair exactly: the comma-bearing reason is whole again...
+    df, _ = RUN.read_shard_csvs(paths, log=lambda *a: None)
+    by = df.set_index("number_mp")
+    for r in recs:
+        if r.get("reason"):
+            assert by.loc[r["number_mp"], "reasons"] == r["reasons"][0]
+            assert by.loc[r["number_mp"], "reason"] == r["reason"]
+    # ...and the numpy-repr cells are numbers again.
+    assert by["a2"].dtype.kind == "f"
+    assert float(by.loc[1010, "a2"]) == float(recs[10]["a2"])
+    # The controls reach the scorer and are scored, and controls.json lands
+    # BEFORE the summary that quotes it.
+    c = out["controls"]
+    assert c["n_controls"] == 6 and c["verdict"] == "CONTROLS_RECOVERED"
+    cj = paths.results / "controls.json"
+    sj = paths.results / "summary.json"
+    assert cj.stat().st_mtime_ns <= sj.stat().st_mtime_ns
+    summ = json.loads(sj.read_text())
+    assert summ["coverage"]["n_objects"] == len(recs)
+    assert summ["controls"]["n_controls"] == 6
+
+
+def test_the_new_writer_round_trips_commas_quotes_and_newlines(tmp_path):
+    recs = _real_shaped_records()
+    paths = _shard_dir(tmp_path, recs, RUN.write_shard_csv)
+    df = pd.read_csv(paths.results / "fits" / "shard_0_of_1.csv.gz")   # strict parse
+    assert len(df) == len(recs)
+    by = df.set_index("number_mp")
+    for r in recs:
+        if r.get("reason"):
+            assert by.loc[r["number_mp"], "reason"] == r["reason"]
+            assert by.loc[r["number_mp"], "reasons"] == "|".join(r["reasons"])
+    assert by["a2"].dtype.kind == "f"            # no np.float64(...) text
+    out = RUN.stage_assess(CONF, paths, log=lambda *a: None)
+    assert out["n_objects"] == len(recs) and out["shard_csv_repairs"] == {}
+
+
+def test_a_budget_stopped_shard_with_failed_objects_keeps_every_completed_record(
+        tmp_path, monkeypatch):
+    """The failure end to end: stop on the clock, with comma-bearing failures,
+    then assess --- the completed objects and the controls must all arrive."""
+    numbers = list(range(1, 41))
+    worked = _stub_shard_io(monkeypatch, numbers, controls={37, 38})
+
+    def fit_or_fail(n, cols, b, row, *a, **k):
+        if n % 3 == 0:
+            return ({"number_mp": n, "route": "integrator", "verdict": "RESIDUALS_FAILED",
+                     "reason": f"ValueError: shapes ({n},4) and (5,) not aligned"}, None)
+        ctrl = n in (37, 38)
+        return ({"number_mp": n, "route": "integrator", "verdict": "FITTED",
+                 "a2": np.float64(-5.1e-14 if ctrl else 1e-16),
+                 "a2_err": np.float64(5e-15 if ctrl else 1e-16),
+                 "a2_snr": np.float64(10.2 if ctrl else 1.0), "a2_absorbed_fraction": 0.9,
+                 "excess_scatter": 1.0, "n_transits": 30, "arc_days": 900.0,
+                 "h": 15.0, "is_control": ctrl,
+                 "jpl_a2": -5e-14 if ctrl else float("nan"),
+                 "jpl_a2_sigma": 3e-15 if ctrl else float("nan")}, None)
+
+    monkeypatch.setattr(RUN, "fit_object", fit_or_fail)
+    monkeypatch.setattr(RUN, "annotate_orbit", lambda r, row, conf: r)
+    conf = RUN.load_config({"sextant": {"objects_per_chunk": 10}})
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    E.save_json(paths.results / "controls_greenberg2020.json", {"rows": {}})
+    clock = iter([0.0] + [60.0 * k for k in range(0, 40)])
+    rec = RUN.stage_shard(conf, paths, 0, 1, gaia=_FakeGaia(), client=_FakeGaia(),
+                          budget_minutes=1.5, now=lambda: next(clock), log=lambda *a: None)
+    assert rec["verdict"] == "OK_PARTIAL_BUDGET" and rec["n_records"] > 0
+    assert rec["funnel"]["verdicts"].get("RESIDUALS_FAILED", 0) > 0
+    assert worked[:2] == [37, 38]                      # controls were fitted first
+    out = RUN.stage_assess(conf, paths, log=lambda *a: None)
+    assert out["n_objects"] == rec["n_records"]
+    assert out["shard_csv_repairs"] == {}              # the new writer needs no repair
+    assert out["controls"]["n_controls"] == 2
+    assert out["controls"]["verdict"] == "CONTROLS_RECOVERED"
+
+
+def test_unreadable_shard_output_is_named_a_pipeline_defect_not_an_empty_sky(tmp_path):
+    paths = _shard_dir(tmp_path, _real_shaped_records(), _legacy_write_shard_csv)
+    (paths.results / "fits" / "shard_0_of_1.csv.gz").write_bytes(b"not gzip")
+    out = RUN.stage_assess(CONF, paths, log=lambda *a: None)
+    assert out["n_objects"] == 0
+    assert out["verdict"] == "NO_DATA_REACHED__SHARD_OUTPUT_UNREADABLE"
+    assert "error" in out["shard_csv_repairs"]["shard_0_of_1.csv.gz"]
+
+
+# ---------------------------------------------------------------------------
 # 5. The assessment
 # ---------------------------------------------------------------------------
 def _table(n=300, seed=2, n_controls=6, n_exceed=0, exceed_vetoed=True):

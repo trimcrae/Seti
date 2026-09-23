@@ -629,6 +629,32 @@ between chunks, records `budget_stop` (`after_chunks`, `of_chunks`,
 and `shard_verdicts`, so the objects never reached read as **unmeasured** and
 never as a null. The workflow default is 290 minutes inside a 330-minute job.
 
+### Run 35746692260: four hours fitted, zero objects assessed (fixed 2026-09-23)
+
+The solo run fitted 17 chunks (4250 records, 3742 `FITTED`, 69 controls) and
+`assess` reported `NO_DATA_REACHED`. Two defects, neither a measurement:
+
+1. **The shard CSV was malformed.** `_csv_value` quoted scalar strings with
+   commas but left list cells bare, and `screen_record` copies a failed
+   object's exception text (`"ValueError: shapes (3,4) ..."`) into `reasons`.
+   The first such row had 84 fields against an 83-column header, `pd.read_csv`
+   refused the whole file, and the reader's `except` turned that into an empty
+   table. The same writer also passed `numpy.float64` to `repr`, which numpy 2
+   spells `np.float64(…)`. Every cell now goes through `csv.writer`, and
+   `read_shard_csv` repairs a file from the old writer losslessly (the overflow
+   can only be `reasons`; numpy reprs are unwrapped; an irreparable row is
+   dropped and *counted*, never guessed). `summary.json` reports the repair
+   under `coverage.shard_csv_repairs`, and a table that comes back empty while
+   the shard JSON reports records is now
+   `NO_DATA_REACHED__SHARD_OUTPUT_UNREADABLE`, a named pipeline defect.
+2. **Nothing was committed.** `scripts/commit_results.sh` judged
+   `results/sextant` unchanged because `git diff HEAD` sees only tracked files,
+   and the directory's one tracked file (`probe.json`) was untouched. A tracked
+   directory is now expanded into the files the run changed or created.
+
+`assess_only_run_id` now also reads a **solo** run's `sextant-solo` artifact,
+so a surviving shard can be re-assessed without a refit.
+
 ## 10. Related channels
 
 - **LOOM** (`docs/loom.md`) — the same observable at arcsecond scale on Rubin,

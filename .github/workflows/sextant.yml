@@ -426,13 +426,41 @@ jobs:
           pip install -e ".[dev]"
       - name: Purge checkout-inherited shard outputs
         run: rm -rf results/sextant/fits
+      # A sharded run uploads sextant-fits-<i>; a SOLO run uploads one
+      # sextant-solo artifact holding the whole results/sextant tree.  Both are
+      # tried, and neither's absence fails the job: which one exists depends on
+      # the path the prior run took.  Before 2026-09-23 only the first was
+      # looked for, so `assess_only_run_id` on a solo run found nothing.
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           pattern: sextant-fits-*
           merge-multiple: true
           path: results/sextant/fits/
           run-id: ${{ github.event.inputs.assess_only_run_id || github.run_id }}
           github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v4
+        if: ${{ github.event.inputs.assess_only_run_id != '' }}
+        continue-on-error: true
+        with:
+          name: sextant-solo
+          path: solo-artifact/
+          run-id: ${{ github.event.inputs.assess_only_run_id }}
+          github-token: ${{ github.token }}
+      - name: Lay a solo run's shard files (and its cached control catalogues) in place
+        if: ${{ github.event.inputs.assess_only_run_id != '' }}
+        run: |
+          if [ -d solo-artifact/fits ]; then
+            mkdir -p results/sextant/fits
+            cp -v solo-artifact/fits/shard_* results/sextant/fits/ || true
+          fi
+          # The fit run's own records.  controls_greenberg2020.json is NOT
+          # carried: run 35746692260 cached it EMPTY (0 da/dt rows), and a
+          # cached empty catalogue would be re-used forever; assess re-pulls it.
+          for f in binaries_liberato2024.json probe_ephemeris.json conventions.json; do
+            [ -f "solo-artifact/$f" ] && cp -v "solo-artifact/$f" results/sextant/ || true
+          done
+          rm -rf solo-artifact
       - name: Assess --- controls FIRST, then the A2 distribution and the population
         run: |
           ls -la results/sextant/fits/ || true

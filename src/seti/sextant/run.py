@@ -46,10 +46,12 @@ known injected ``A2``.
 
 from __future__ import annotations
 
+import csv
 import gzip
 import io
 import json
 import math
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -1161,40 +1163,149 @@ CSV_COLUMNS = (
 
 
 def _csv_value(v) -> str:
+    """One cell's TEXT.  Quoting is the csv module's job, not this function's.
+
+    This used to quote a scalar string containing a comma and leave list cells
+    bare, on the assumption that a list of reason tokens never holds a comma.
+    It does: ``screen_record`` copies a failed object's ``reason`` --- usually
+    ``f"{type(exc).__name__}: {exc}"`` --- into ``reasons``, and exception text
+    is full of commas (array shapes, tuples).  Run 35746692260 wrote 4250 rows
+    that way; the first failure on line 3 had 84 fields against an 83-column
+    header, ``pd.read_csv`` refused the whole file, and ``assess`` reported
+    four hours of fitting as NO_DATA_REACHED.  Every cell now goes through
+    :func:`csv.writer`, which quotes commas, quotes and newlines wherever they
+    occur.
+    """
     if v is None:
         return ""
-    if isinstance(v, bool):
+    if isinstance(v, (bool, np.bool_)):
         return "1" if v else "0"
     if isinstance(v, (list, tuple)):
         return "|".join(str(x) for x in v)
     if isinstance(v, float):
-        return "" if not math.isfinite(v) else repr(v)
-    s = str(v)
-    return '"' + s.replace('"', '""') + '"' if ("," in s or '"' in s) else s
+        return "" if not math.isfinite(v) else repr(float(v))
+    return str(v)
 
 
 def write_shard_csv(path: Path, records: list[dict]) -> None:
     buf = io.StringIO()
-    buf.write(",".join(CSV_COLUMNS) + "\n")
+    w = csv.writer(buf, quoting=csv.QUOTE_MINIMAL, lineterminator="\n")
+    w.writerow(CSV_COLUMNS)
     for r in records:
-        buf.write(",".join(_csv_value(r.get(c)) for c in CSV_COLUMNS) + "\n")
+        w.writerow([_csv_value(r.get(c)) for c in CSV_COLUMNS])
     path.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(path, "wt") as fh:
+    # Write-then-rename: a job killed mid-write must leave the previous
+    # checkpoint readable, not a truncated gzip stream.
+    tmp = path.with_name(path.name + ".tmp")
+    with gzip.open(tmp, "wt", newline="") as fh:
         fh.write(buf.getvalue())
+    tmp.replace(path)
 
 
-def read_shard_csvs(paths: Paths):
+_NUMPY_REPR = re.compile(r"^np\.(?:float|int|uint)\d*\((.*)\)$")
+
+
+def repair_legacy_shard_text(text: str) -> tuple[str, dict]:
+    """Re-serialise a shard CSV written by the pre-fix writer, losslessly.
+
+    The old writer's only defect was an unquoted list cell, and the only list
+    cell that can carry free text is ``reasons`` (``vetoes`` tokens are built
+    from fixed prefixes plus a model name).  A row with too many fields
+    therefore has every column before ``reasons`` intact, and ``vetoes`` and
+    ``reason`` as its last two fields (``reason`` WAS quoted by the old writer);
+    the overflow belongs to ``reasons`` and is joined back with the commas it
+    lost.  A row broken across lines by an unquoted newline is short, and is
+    re-joined with the following line(s) until it has its fields.
+
+    The same writer passed a ``numpy.float64`` to ``repr``, which under numpy 2
+    is ``np.float64(1.5e-14)`` rather than ``1.5e-14``: such a cell is unwrapped
+    to the number it spells, since leaving it would turn the whole numeric
+    column into text.
+
+    A row that still cannot be put back to the header's width is DROPPED and
+    counted --- never guessed at --- and the count is reported.
+    """
+    rows = list(csv.reader(io.StringIO(text)))
+    stats = {"n_rows_in": max(len(rows) - 1, 0), "n_repaired_overflow": 0,
+             "n_rejoined_newline": 0, "n_numpy_repr_cells": 0, "n_dropped": 0}
+    if not rows:
+        return text, stats
+    header = rows[0]
+    ncol = len(header)
+    try:
+        i_reasons = header.index("reasons")
+    except ValueError:
+        i_reasons = None
+    out = io.StringIO()
+    w = csv.writer(out, quoting=csv.QUOTE_MINIMAL, lineterminator="\n")
+    w.writerow(header)
+    k = 1
+    while k < len(rows):
+        row = rows[k]
+        k += 1
+        if not row:
+            continue
+        while len(row) < ncol and k < len(rows) and i_reasons is not None:
+            nxt = rows[k]
+            k += 1
+            row = row[:-1] + [row[-1] + "\n" + (nxt[0] if nxt else "")] + nxt[1:]
+            stats["n_rejoined_newline"] += 1
+        if len(row) > ncol and i_reasons is not None and i_reasons == ncol - 3:
+            row = (row[:i_reasons] + [",".join(row[i_reasons:len(row) - 2])]
+                   + row[len(row) - 2:])
+            stats["n_repaired_overflow"] += 1
+        if len(row) != ncol:
+            stats["n_dropped"] += 1
+            continue
+        for j, cell in enumerate(row):
+            m = _NUMPY_REPR.match(cell)
+            if m:
+                row[j] = m.group(1)
+                stats["n_numpy_repr_cells"] += 1
+        w.writerow(row)
+    stats["n_rows_out"] = stats["n_rows_in"] - stats["n_dropped"]
+    return out.getvalue(), stats
+
+
+def read_shard_csv(f: Path):
+    """One shard file as a DataFrame, repairing a pre-fix file if it must.
+
+    Returns ``(frame, repair_stats_or_None)``.  A strict parse is tried first;
+    only a file the strict parser refuses goes through the repair, so a
+    well-formed file is read exactly as before.
+    """
+    import pandas as pd
+
+    with gzip.open(f, "rt", newline="") if str(f).endswith(".gz") else open(
+            f, newline="") as fh:
+        text = fh.read()
+    if "np.float" not in text and "np.int" not in text:
+        try:
+            return pd.read_csv(io.StringIO(text), low_memory=False), None
+        except (pd.errors.ParserError, ValueError):
+            pass
+    fixed, stats = repair_legacy_shard_text(text)
+    return pd.read_csv(io.StringIO(fixed), low_memory=False), stats
+
+
+def read_shard_csvs(paths: Paths, log=print, repairs: dict | None = None):
     import pandas as pd
 
     files = sorted((paths.results / "fits").glob("shard_*.csv.gz"))
     frames = []
     for f in files:
         try:
-            df = pd.read_csv(f, low_memory=False)
+            df, stats = read_shard_csv(f)
+            if stats is not None:
+                log(f"assess: {f.name} was malformed (pre-fix writer); repaired: {stats}")
+                if repairs is not None:
+                    repairs[f.name] = stats
             df["shard_file"] = f.name
             frames.append(df)
         except Exception as exc:                              # noqa: BLE001
-            print(f"assess: could not read {f}: {exc}")
+            log(f"assess: could not read {f}: {exc}")
+            if repairs is not None:
+                repairs[f.name] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
     if not frames:
         return pd.DataFrame(), files
     df = pd.concat(frames, ignore_index=True)
@@ -1751,7 +1862,8 @@ def assess_frame(df, conf: dict, details: dict | None = None,
 
 
 def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
-    df, files = read_shard_csvs(paths)
+    repairs: dict = {}
+    df, files = read_shard_csvs(paths, log=log, repairs=repairs)
     details: dict = {}
     shard_meta = []
     for f in sorted((paths.results / "fits").glob("shard_*.json")):
@@ -1770,8 +1882,19 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
         except Exception as exc:                              # noqa: BLE001
             shard_meta.append({"file": f.name, "error": str(exc)[:120]})
     out = assess_frame(df, conf, details, yarkovsky=load_yarkovsky_catalogue(paths, log=log))
+    n_rec_json = sum(int(m.get("n_records") or 0) for m in shard_meta)
+    if out.get("n_objects", 0) == 0 and n_rec_json > 0:
+        # The shards SAY they fitted objects and the table came back empty:
+        # that is this pipeline failing, not the sky returning nothing, and the
+        # verdict must not read as an empty measurement.  (It keeps the
+        # NO_DATA_REACHED stem so commit_results.sh still refuses to lay it
+        # over a summary that carries a real measurement.)
+        out["verdict"] = "NO_DATA_REACHED__SHARD_OUTPUT_UNREADABLE"
+        out["note"] = (f"shard JSON reports {n_rec_json} records but no shard CSV row "
+                       "could be read; see shard_csv_repairs")
     out["shards"] = shard_meta
     out["shard_files"] = [f.name for f in files]
+    out["shard_csv_repairs"] = repairs
     out["assessed_utc"] = _utc()
     timing = [m["timing_offset"] for m in shard_meta if m.get("timing_offset")]
     dts = [t.get("dt_seconds") for t in timing if _fin(t.get("dt_seconds"))]
@@ -1792,6 +1915,13 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
         "timing_offset_seconds_by_shard": dts,
         "coverage": {"n_shard_files": len(files),
                      "n_objects": out.get("n_objects", 0),
+                     # A shard file the strict parser refused and the legacy
+                     # repair had to rebuild (or could not read at all).  A
+                     # file with records that yields n_objects == 0 is a
+                     # pipeline defect, and this field is where it shows.
+                     "shard_csv_repairs": repairs,
+                     "n_records_in_shard_json": sum(int(m.get("n_records") or 0)
+                                                    for m in shard_meta),
                      # How much of the assigned sample was actually reached.  A
                      # shard that stopped on its clock leaves objects UNMEASURED,
                      # and an unmeasured object is not a null --- the funnel

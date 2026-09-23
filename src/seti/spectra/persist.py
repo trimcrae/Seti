@@ -2116,7 +2116,11 @@ def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
                 # one fibre confirm a detector defect exactly as well as they
                 # confirm a source, and the summary's best-of number cannot say
                 # which.
-                ids_ = sdss_ids_from_record(r) or {}
+                # SDSS only: a DESI TARGETID is > 2**50 and would be decoded
+                # as a specObjID into a fictitious "plate 2048" (control run
+                # 35863951810 did exactly that).
+                ids_ = (sdss_ids_from_record(r) or {}) if rel.upper().startswith(
+                    ("SDSS", "BOSS")) else {}
                 fibre_key = (ids_.get("plate"), ids_.get("fiberid"))
                 if fibre_key != (None, None):
                     seen_fibres.add(fibre_key)

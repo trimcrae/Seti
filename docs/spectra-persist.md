@@ -390,7 +390,7 @@ line by default), in two samples and two frames:
 
 ## State
 
-### 2026-09-23 — complete and calibrated: run 35860950765, controls 35861127506
+### 2026-09-23 — complete and calibrated: run 35860950765, controls 35861127506 + 35863951810 (41 lines)
 
 **Which run the summary describes.** Until today `summary.json` carried no timestamp and
 still described run 35738206630 (reduce committed 2026-09-22 15:12 UTC): its keys predate
@@ -453,11 +453,11 @@ single-exposure CR is excluded for all.
 |---|---|---|
 | 0412-51942-0465 @ 6809.26 Å (M1V) | **KILLED — background galaxy** | 9 epochs, 5 distinct fibres on 2 plates (412, 1564), EW spread 4 % → not a CCD column, not cross-talk (fibres ±1…3 ≤ 1.4 σ). Stacked over the 9 epochs, at the Hα redshift z = 0.037268: [O II] 3727 **10.0 σ**, [O II] 3729 8.4 σ, [O III] 5007 **8.1 σ**, [S II] 6716 6.2 σ, Hβ 6.2 σ, [N II] 6584 4.5 σ (calibrated). Width 0.99 ± 0.08 × LSF. A star-forming galaxy (or H II region) in the fibre. |
 | 3241-54884-0388 @ 8578.28 Å (K1) | **KILLED — resolved, not monochromatic** | FWHM 6.69 ± 0.51 Å = 1.97 × the wdisp LSF (3.39 Å), 1.49 × the sky-line LSF (4.49 Å): resolved at ≥ 4 σ even against the wider LSF. 11/14 exposures present, χ²p 0.73, so it is real in the star — but not a CW laser. Same-type K1 0/38 ≥ 5 σ, same plate 0/24, neighbours ≤ 3.3 σ, no nebular family (best 2.7 σ). A broad stellar/unidentified feature, no longer a narrow-line candidate. |
-| 2027-53433-0246 @ 6969.47 Å (DA WD) | **KILLED — recurrent wavelength** | Same pixel ±1 as 3327-54951-0356 @ 6967.87 (Δ = 1.605 Å = one SDSS pixel), an unrelated sightline, both inside the H₂O 7200 telluric band. 4/4 exposures at 2.6–5.1 σ. |
+| 2027-53433-0246 @ 6969.47 Å (DA WD) | **KILLED — recurrent wavelength** | Same pixel ±1 as 3327-54951-0356 @ 6967.87 (Δ = 1.605 Å = one SDSS pixel), an unrelated sightline, both inside the H₂O 7200 telluric band. 4/4 exposures at 2.6–5.1 σ; width 0.92 ± 0.13 × sky LSF (1.20 × wdisp); same-type A 0/16, same plate 1/24 ≥ 5 σ, neighbours ≤ 0.7 σ, no nebular family (best 2.6 σ). An emission line in a DA white dwarf at a telluric-band pixel another star also spikes on is a reduction feature. |
 | 3327-54951-0356 @ 6967.87 Å | **KILLED — recurrent wavelength, sub-LSF** | The partner of the above; FWHM 0.46 ± 0.21 × sky LSF (0.61 × wdisp), Gaussian amplitude only 2.2 σ, 3/5 exposures. |
 | 2750-54242-0547 @ 6856.46 Å (F5) | **UNRESOLVED — weak, plate-suspect** | Only 3 exposures (2 present), calibrated coadd 5.9 σ; OH line 9.3 Å away. Width 0.93 × sky LSF. Same-type F5 0/40, any-star 0/39, but **3 of 24 random fibres of plate 2750** read 4.8, 6.3, 14.3 σ at the same wavelength (two in the same spectrograph) against ~1/24 on other plates — not significant on its own (p ≈ 0.25) and not yet checked for being galaxies. No nebular family (best 3.4 σ). |
 | 0571-52286-0247 @ 7490.31 Å (M1V) | **KILLED — not significant / galaxy-like** | Calibrated coadd **3.3 σ**, stack 2.7 σ, 2/5 exposures; its two SPARCL epochs (571-247, 481-328) read 3.9 and 4.7 σ. Weak Hα-family at z = 0.1410 over 2 epochs ([N II] 6584 4.3 σ, [O II] 4.1 σ, [O III] 3.6 σ, [S II] 3.5 σ). Not detection-grade either way. |
-| DESI 2305843020429263121 @ 5078.4 Å (abs.) | **KILLED — not significant** | Absorption; calibrated coadd **4.0 σ** (< 5), 2/4 exposures, a line-rich star (24 candidates in the spectrum). Not detection-grade. |
+| DESI 2305843020429263121 @ 5078.4 Å (abs.) | **KILLED — not significant** | Absorption; calibrated coadd **4.0 σ** (< 5), 2/4 exposures, a line-rich K star (24 candidates in the spectrum). Width 1.19 ± 0.19 × LSF, same-type K 0/40 and any-star 0/40 ≥ 5 σ. Not detection-grade. |
 
 The other persistent lines the control stage measured: 2076-53442-0479 (8733.7 and
 6599.3 Å) is a z = 0.3304 galaxy ([O III] 5007 at 16 σ calibrated) — killed upstream by a

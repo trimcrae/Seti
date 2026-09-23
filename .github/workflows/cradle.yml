@@ -486,7 +486,9 @@ jobs:
           # numpy 2.3 (run 35877629887 died importing pandas).  Install it
           # without its pins; deepvet records DESI UNTESTED if it cannot import.
           pip install --no-deps "sparclclient>=1.2" || true
-          pip install pyjwt spectres || true   # sparclclient imports jwt (run 35884499464: ModuleNotFoundError)
+          # its other requirements, minus the pandas pin (runs 35884499464 / 35891332109:
+          # ModuleNotFoundError jwt, then specutils)
+          pip install pyjwt spectres "specutils>=1.13,<3" || true
           python -c "import pandas, numpy; print('pandas', pandas.__version__, 'numpy', numpy.__version__)"
           python -c "import sparcl.client; print('sparclclient OK')" || echo "sparclclient unavailable"
       - name: Offline gate (deep vet)

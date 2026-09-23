@@ -158,10 +158,10 @@ def _images(offset_px: float, excess_frac: float):
 
 
 def test_image_offset_blend_is_killed_and_centred_excess_survives():
-    blend = dv.image_check(T, C, fetch_primary=lambda ra, dec, n: (_images(1.2, 0.35), {}),
+    blend = dv.image_check(T, C, fetch_primary=lambda ra, dec, n: (_images(2.0, 0.6), {}),
                            fetch_fallback=lambda *a: ({}, {}))
     assert blend["status"] == "TESTED"
-    assert blend["result"]["w3"]["offset_from_w1_arcsec"] > 0.8
+    assert blend["result"]["w3"]["offset_from_w1_arcsec"] > 1.4
     assert any(k.startswith("w3_centroid_offset") for k in dv.judge(T, {"image": blend}, C)["kills"])
     ok = dv.image_check(T, C, fetch_primary=lambda ra, dec, n: (_images(0.0, 0.35), {}),
                         fetch_fallback=lambda *a: ({}, {}))
@@ -189,7 +189,47 @@ def test_run_deepvet_end_to_end_offline(tmp_path):
     rep = dv.run_deepvet(tmp_path, routes={
         "tap": fake_tap({"FROM basic": "fail"}),
         "vizier": lambda t, c, footprint=True: {"status": "UNTESTED"},
-        "image": lambda t, c: {"status": "UNTESTED"}})
+        "image": lambda t, c: {"status": "UNTESTED"},
+        "desi": lambda t, c: {"status": "UNTESTED"}})
     assert rep["n_candidates_in"] == 1
     assert rep["targets"][0]["verdict"] == "SURVIVES_WITH_UNTESTED"
     assert (tmp_path / "deepvet_targets.csv").exists()
+
+
+def test_w4_beam_confusion_kills():
+    row = {"designation": "J1", "ra": 150.0, "dec": 40.0, "nb": 1, "ext_flg": 0, "cc_flags": "0000",
+           "w3snr": 40.0, "w4snr": 6.0, "w4mpro": 8.20, "w3mpro": 9.0}
+    nb = {"designation": "J2", "ra": 150.0, "dec": 40.0 + 4.6 / 3600, "nb": 1, "ext_flg": 0,
+          "cc_flags": "0000", "w3snr": None, "w4snr": 2.2, "w4mpro": 8.88, "w3mpro": None}
+    aw = dv.allwise_check(T, C, fake_tap({"allwise_p3as_psd WHERE CONTAINS": [row, nb]}))
+    assert any(k.startswith("w4_beam_confusion") for k in dv.judge(T, {"allwise": aw}, C)["kills"])
+
+
+def test_ir_type_flags_but_does_not_kill_the_positive_control():
+    tap = fake_tap({"FROM basic": [{"oid": 7, "main_id": "BD+20 307", "otype": "SB*", "sp_type": "",
+                                    "nbref": 3, "ra": 150.0, "dec": 40.0}],
+                    "FROM otypes": [{"otype": "IR"}, {"otype": "SB*"}]})
+    v = dv.judge(T, {"simbad": dv.simbad_check(T, C, tap)}, C)
+    assert not v["kills"] and "simbad_IR_type" in v["flags"]
+
+
+def test_wds_binary_and_youth_catalogue_kill():
+    sb = {"status": "TESTED", "double_star_type": True, "self_types": ["**"]}
+    vz = {"status": "TESTED", "cones": {"B/wds/wds": {"what": "WDS", "status": "OK", "rows": [{}]}},
+          "footprint": [{"catalog": "J/ApJ/835/61/table4", "classes": ["youth"]}]}
+    k = dv.judge(T, {"simbad": sb, "vizier": vz}, C)["kills"]
+    assert any(x.startswith("close_binary") for x in k)
+    assert any(x.startswith("youth_catalogue") for x in k)
+
+
+def test_pooled_floor_and_desi_lithium():
+    per = [{"checks": {"image": {"result": {"w3": {"field_offsets_arcsec": [0.5] * 10}}}}}]
+    fl = dv.pooled_offset_floor(per, C)
+    assert fl["w3"]["used"] and fl["w3"]["sigma_per_axis_arcsec"] == pytest.approx(0.5 / 1.177)
+    assert not fl["w4"]["used"]
+    w = np.arange(6680.0, 6740.0, 0.3)
+    f = np.ones_like(w) - 0.25 * np.exp(-0.5 * ((w - dv.LI_VAC) / 0.6) ** 2)
+    m = dv.measure_desi(w, f)
+    assert m["li_ew_A"] == pytest.approx(0.25 * 0.6 * np.sqrt(2 * np.pi), rel=0.1)
+    v = dv.judge(T, {"desi": {"status": "TESTED", "li_ew_A": m["li_ew_A"]}}, C)
+    assert any(x.startswith("lithium_youth") for x in v["kills"])

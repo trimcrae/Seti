@@ -91,9 +91,19 @@ DEFAULT_DEEPVET: dict = {
     "w4_snr_threshold_flag": 7.0,
     "frame_fraction_flag": 0.5,
     "wall_budget_s": 5400.0,          # candidates are first in the queue
+    # per-axis registration floor of W3 (W4) against W1 in the unWISE coadds,
+    # used when the pooled in-cutout calibration has < 8 sources.  Run
+    # 35860601552's calibrated fields gave median 2-D offsets 0.44-0.58" at W3.
+    "offset_floor_sigma_w3": 0.45,
+    "offset_floor_sigma_w4": 0.90,
+    "w4_offset_sigma_kill": 4.0,
+    "w4_confusion_dmag": 1.0,
+    "youth_catalogues": {"J/ApJ/835/61": "Zerjal+2017 young active RAVE dwarfs (Ca II IRT)"},
+    "known_excess_catalogues": ["J/ApJS/225/15", "J/MNRAS/471/770", "J/MNRAS/427/343",
+                                "J/ApJS/212/10", "J/AJ/167/275", "J/ApJ/910/27"],
     "simbad_kill_types": ["G", "AGN", "QSO", "Sy", "LIN", "BLL", "Bla", "YSO", "TTau", "TT*",
                           "Or*", "AGB", "Mi*", "LP*", "C*", "S*", "PN", "pA*", "RG*", "HII",
-                          "Ae*", "Be*", "EmO", "Y*O", "Y*?", "IR", "sg*", "s*b", "s*r", "s*y",
+                          "Ae*", "Be*", "EmO", "Y*O", "Y*?", "sg*", "s*b", "s*r", "s*y",
                           "HH", "out", "MoC", "cor", "glb", "RNe", "DNe", "Cld"],
     "simbad_blend_types": ["G", "AGN", "QSO", "Sy", "LIN", "BLL", "Bla", "IR", "Rad", "rG",
                            "ClG", "GrG", "LSB", "EmG", "SBG", "bCG", "H2G", "PaG", "YSO",
@@ -296,7 +306,7 @@ def simbad_check(t: dict, c: dict, tap=tap_query) -> dict:
                  f"simbad_otypes:{t['source_id']}")
         if r2.data is not None and len(r2.data):
             types = sorted(set(str(x) for x in r2.data["otype"]))
-        r3 = tap(SIMBAD_TAP, "SELECT r.bibcode, r.year, r.title FROM has_ref AS h "
+        r3 = tap(SIMBAD_TAP, "SELECT r.bibcode, r.\"year\", r.title FROM has_ref AS h "
                  f"JOIN ref AS r ON h.oidbibref = r.oidbib WHERE h.oidref = {oid}",
                  f"simbad_refs:{t['source_id']}")
         if r3.data is not None and len(r3.data):
@@ -444,8 +454,10 @@ def ls_check(t: dict, c: dict, tap=tap_query) -> dict:
     for table in ("ls_dr10.tractor", "ls_dr9.tractor"):
         # q3c first: it is the index Data Lab's tables carry; a bare ADQL
         # CONTAINS may not be translated onto it and then scans the table.
-        for where in (f"q3c_radial_query(ra, dec, {ra:.8f}, {dec:.8f}, {r:.8f}) = 1",
-                      _cone("ra", "dec", ra, dec, r)):
+        # run 35860601552: "= 1" -> "operator does not exist: boolean = integer",
+        # and ADQL CONTAINS -> "function point(unknown, ...) does not exist".
+        for where in (f"q3c_radial_query(ra, dec, {ra:.8f}, {dec:.8f}, {r:.8f})",
+                      f"q3c_radial_query(ra, dec, {ra:.8f}, {dec:.8f}, {r:.8f}) = 'true'"):
             rt = tap(DATALAB_TAP, f"SELECT {_LS_COLS} FROM {table} WHERE {where}",
                      f"ls:{table}:{t['source_id']}", retries=2)
             tried.append(rt.ledger())
@@ -801,6 +813,7 @@ def image_check(t: dict, c: dict, fetch_primary=fetch_unwise, fetch_fallback=fet
         res[f"w{band}"] = {"ok": True, "snr": cb["snr"], "offset_from_w1_arcsec": off,
                            "sigma_stat_arcsec": sig_stat, "field_median_offset_arcsec": sig_sys,
                            "n_field_sources": int(cal_off.size),
+                           "field_offsets_arcsec": [round(float(x), 3) for x in cal_off],
                            # offset in units of the per-axis sigma: > 3 happens by
                            # chance with P = exp(-4.5) ~ 1 % for a 2-D Gaussian
                            "offset_significance": off / sig_tot if sig_tot > 0 else float("nan"),
@@ -809,6 +822,100 @@ def image_check(t: dict, c: dict, fetch_primary=fetch_unwise, fetch_fallback=fet
     out["status"] = "TESTED" if res.get("w3", {}).get("ok") else "UNTESTED"
     out["pixel_arcsec"] = px_as
     out["result"] = res
+    return out
+
+
+# --- 8. DESI spectrum (SPARCL) -------------------------------------------------
+#: vacuum wavelengths (DESI is vacuum)
+LI_VAC = 6709.66
+HA_VAC = 6564.61
+
+
+def _band_ew(w, f, cont_windows, band) -> float:
+    """Equivalent width (A, absorption positive) against a linear continuum."""
+    m = np.zeros_like(w, dtype=bool)
+    for lo, hi in cont_windows:
+        m |= (w >= lo) & (w <= hi)
+    ok = m & np.isfinite(f)
+    if ok.sum() < 6:
+        return float("nan")
+    a, b = np.polyfit(w[ok], f[ok], 1)
+    sel = (w >= band[0]) & (w <= band[1]) & np.isfinite(f)
+    if sel.sum() < 3:
+        return float("nan")
+    cont = a * w[sel] + b
+    return float(np.trapezoid(1.0 - f[sel] / cont, w[sel]))
+
+
+def measure_desi(wave, flux, model=None) -> dict:
+    w = np.asarray(wave, float)
+    f = np.asarray(flux, float)
+    out = {"li_ew_A": _band_ew(w, f, [(6697.0, 6704.0), (6716.0, 6723.0)], (6707.6, 6711.8))}
+    if model is not None and len(model) == len(f):
+        mdl = np.asarray(model, float)
+        sel = (w >= HA_VAC - 3.0) & (w <= HA_VAC + 3.0) & np.isfinite(f) & np.isfinite(mdl)
+        cw = ((w >= 6545) & (w <= 6555)) | ((w >= 6575) & (w <= 6585))
+        cont = float(np.nanmedian(mdl[cw])) if cw.any() else float("nan")
+        if sel.sum() >= 3 and np.isfinite(cont) and cont > 0:
+            out["halpha_resid_ew_A"] = float(np.trapezoid((f[sel] - mdl[sel]) / cont, w[sel]))
+    out["halpha_ew_A"] = _band_ew(w, f, [(6545.0, 6555.0), (6575.0, 6585.0)],
+                                  (HA_VAC - 3.0, HA_VAC + 3.0))
+    return out
+
+
+def desi_check(t: dict, c: dict) -> dict:
+    """Any DESI/SDSS spectrum within 2 arcsec: redshift/spectype, Li 6708 EW, H-alpha."""
+    out = {"status": "UNTESTED"}
+    try:
+        from sparcl.client import SparclClient  # noqa: PLC0415
+    except Exception as exc:                              # noqa: BLE001
+        out["error"] = f"sparclclient unavailable: {exc!r}"[:200]
+        return out
+    try:
+        client = SparclClient(connect_timeout=30.0)
+    except Exception:                                     # noqa: BLE001
+        client = SparclClient()
+    ra, dec = t["ra_gaia"], t["dec_gaia"]
+    d = 2.5 / 3600.0
+    cosd = max(math.cos(math.radians(dec)), 1e-3)
+    cons = {"ra": [ra - d / cosd, ra + d / cosd], "dec": [dec - d, dec + d]}
+    try:
+        found = client.find(outfields=["sparcl_id", "ra", "dec", "redshift", "spectype",
+                                       "data_release"], constraints=cons, limit=20)
+        recs = list(getattr(found, "records", found) or [])
+    except Exception as exc:                              # noqa: BLE001
+        out["error"] = repr(exc)[:300]
+        return out
+    out["status"] = "TESTED"
+    out["n_spectra"] = len(recs)
+
+    def g(r, k):
+        return r.get(k) if isinstance(r, dict) else getattr(r, k, None)
+    out["spectra"] = [{"sparcl_id": str(g(r, "sparcl_id")), "redshift": g(r, "redshift"),
+                       "spectype": g(r, "spectype"), "data_release": g(r, "data_release")}
+                      for r in recs]
+    if not recs:
+        out["status"] = "NO_SPECTRUM"
+        return out
+    ids = [str(g(r, "sparcl_id")) for r in recs][:3]
+    try:
+        got = client.retrieve(uuid_list=ids, include=["sparcl_id", "wavelength", "flux",
+                                                      "model", "data_release"])
+        grec = list(getattr(got, "records", got) or [])
+    except Exception as exc:                              # noqa: BLE001
+        out["retrieve_error"] = repr(exc)[:300]
+        return out
+    meas = []
+    for r in grec:
+        m = measure_desi(g(r, "wavelength") or [], g(r, "flux") or [], g(r, "model"))
+        m["sparcl_id"] = str(g(r, "sparcl_id"))
+        m["data_release"] = g(r, "data_release")
+        meas.append(m)
+    out["measurements"] = meas
+    li = [m["li_ew_A"] for m in meas if np.isfinite(m.get("li_ew_A", float("nan")))]
+    ha = [m["halpha_resid_ew_A"] for m in meas if np.isfinite(m.get("halpha_resid_ew_A", float("nan")))]
+    out["li_ew_A"] = float(np.median(li)) if li else float("nan")
+    out["halpha_resid_ew_A"] = float(np.median(ha)) if ha else float("nan")
     return out
 
 
@@ -834,6 +941,9 @@ def judge(t: dict, chk: dict, c: dict) -> dict:
             flags.append("simbad_blend_object_in_w4_beam")
         if sb.get("double_star_type"):
             flags.append("simbad_double_or_binary_type")
+        if "IR" in sb.get("self_types", []):
+            # not a kill: BD+20 307, the positive control, carries it
+            flags.append("simbad_IR_type")
         if sb.get("ref_class_counts", {}).get("debris_or_excess"):
             flags.append(f"literature_debris_or_excess_refs:{sb['ref_class_counts']['debris_or_excess']}")
         if sb.get("ref_class_counts", {}).get("youth"):
@@ -864,6 +974,17 @@ def judge(t: dict, chk: dict, c: dict) -> dict:
                          " (T_bb set by a W4 flux selected at >=5 sigma; Eddington-biased high, T_bb low)")
         if aw.get("n_neighbours_w3_detected_w4beam"):
             flags.append(f"allwise_w3_neighbour_in_w4_beam:{aw['n_neighbours_w3_detected_w4beam']}")
+        # W4 confusion: an AllWISE neighbour inside the W4 FWHM whose own W4
+        # magnitude (whatever its SNR) is within dmag of the target's --- the
+        # target's W4, which sets T_bb, is then not the star's alone.
+        m4 = row.get("w4mpro")
+        for nbr in aw.get("neighbours", []):
+            if m4 is None or nbr.get("w4mpro") is None or nbr["sep_arcsec"] > W4_FWHM:
+                continue
+            if float(nbr["w4mpro"]) - float(m4) < c["w4_confusion_dmag"]:
+                kills.append(f"w4_beam_confusion:neighbour {nbr['sep_arcsec']}\" W4={nbr['w4mpro']:.2f}"
+                             f" vs {float(m4):.2f}")
+                break
     ls = chk.get("ls", {})
     mark("legacy_surveys", "TESTED" if ls.get("status") == "TESTED" else "UNTESTED")
     if ls.get("status") == "TESTED":
@@ -883,17 +1004,57 @@ def judge(t: dict, chk: dict, c: dict) -> dict:
     im = chk.get("image", {})
     mark("image_centroid", im.get("status"))
     if im.get("status") == "TESTED":
-        w3 = im["result"].get("w3", {})
-        if w3.get("ok"):
-            off, sig = w3["offset_from_w1_arcsec"], w3.get("offset_significance", float("nan"))
-            if np.isfinite(sig) and sig > c["offset_sigma_kill"] and off > c["offset_floor_arcsec"]:
-                kills.append(f"w3_centroid_offset_from_star:{off:.2f}\" ({sig:.1f} sigma)")
+        # significance against the statistical error PLUS the registration floor
+        # (pooled over every cutout of the run; see run_deepvet).  Without the
+        # floor, run 35860601552 called 0.4" offsets 13-15 sigma while its own
+        # calibrated fields showed 0.44-0.58" for ordinary stars.
+        for band, kill_sig in (("w3", c["offset_sigma_kill"]), ("w4", c["w4_offset_sigma_kill"])):
+            r = im["result"].get(band, {})
+            if not r.get("ok"):
+                continue
+            floor = float(c[f"offset_floor_sigma_{band}"])
+            st = r.get("sigma_stat_arcsec", float("nan"))
+            sig_tot = math.hypot(st if np.isfinite(st) else 0.0, floor)
+            off = r["offset_from_w1_arcsec"]
+            z = off / sig_tot if sig_tot > 0 else float("nan")
+            r["offset_significance_with_floor"] = z
+            if np.isfinite(z) and z > kill_sig and off > c["offset_floor_arcsec"]:
+                kills.append(f"{band}_centroid_offset_from_star:{off:.2f}\" ({z:.1f} sigma incl. "
+                             f"{floor:.2f}\" floor)")
+            elif np.isfinite(z) and z > 2.5:
+                flags.append(f"{band}_centroid_offset:{off:.2f}\" ({z:.1f} sigma)")
     vz = chk.get("vizier", {})
     mark("vizier", vz.get("status"))
     if vz.get("status") == "TESTED":
         for cat, rr in vz.get("cones", {}).items():
             if rr.get("status") == "OK":
                 flags.append(f"vizier:{cat}:{rr['what']}")
+                if cat == "B/wds/wds" and sb.get("double_star_type"):
+                    kills.append("close_binary:WDS+SIMBAD ** (photosphere, Teff and isochrone age "
+                                 "fitted to a blended SED)")
+        fp = vz.get("footprint") or []
+        ids = {str(f["catalog"]) for f in fp}
+        for cat, what in c["youth_catalogues"].items():
+            if any(i.startswith(cat) for i in ids):
+                kills.append(f"youth_catalogue:{cat} ({what})")
+        known = sorted({k for k in c["known_excess_catalogues"] if any(i.startswith(k) for i in ids)}
+                       | {k for k, rr in vz.get("cones", {}).items()
+                          if rr.get("status") == "OK" and k in c["known_excess_catalogues"]})
+        if known:
+            flags.append("previously_published_ir_excess:" + ",".join(known))
+        gal = [f["catalog"] for f in fp if "extragalactic" in f.get("classes", [])]
+        if gal:
+            flags.append("extragalactic_catalogue_entry_within_6arcsec:" + ",".join(gal[:4]))
+    ds = chk.get("desi", {})
+    if ds:
+        mark("desi_spectrum", ds.get("status"))
+        if ds.get("status") == "TESTED":
+            li = ds.get("li_ew_A")
+            if li is not None and np.isfinite(li) and li > c.get("li_youth_ew_A", 0.10):
+                kills.append(f"lithium_youth:EW(Li 6708)={li * 1000:.0f} mA")
+            ha = ds.get("halpha_resid_ew_A")
+            if ha is not None and np.isfinite(ha) and ha > c.get("halpha_emission_ew_A", 0.5):
+                flags.append(f"halpha_filled_or_emission:{ha:.2f} A above model")
     dn = chk.get("density", {})
     mark("blend_density", dn.get("status"))
     verdict = "KILLED" if kills else ("SURVIVES_DEEP_VET" if not untested else "SURVIVES_WITH_UNTESTED")
@@ -931,6 +1092,30 @@ def build_targets(summary: dict, shortlist: pd.DataFrame) -> pd.DataFrame:
     return tg
 
 
+def pooled_offset_floor(per: list[dict], c: dict, min_n: int = 8) -> dict:
+    """Per-axis W3/W4-vs-W1 registration sigma from every cutout's field sources.
+
+    The median 2-D offset of a circular Gaussian is 1.177 sigma per axis.  The
+    field sources carry their own statistical noise too, so this is an upper
+    bound on the floor --- conservative for a kill.
+    """
+    out = {}
+    for b in ("w3", "w4"):
+        vals = []
+        for x in per:
+            r = x["checks"].get("image", {}).get("result", {}).get(b, {})
+            vals += [float(v) for v in r.get("field_offsets_arcsec", []) if np.isfinite(v)]
+        rec = {"n": len(vals), "default_sigma": float(c[f"offset_floor_sigma_{b}"])}
+        if len(vals) >= min_n:
+            rec.update({"median_2d_arcsec": float(np.median(vals)),
+                        "sigma_per_axis_arcsec": max(float(np.median(vals)) / 1.177, 0.2),
+                        "used": True})
+        else:
+            rec["used"] = False
+        out[b] = rec
+    return out
+
+
 def population_blend_estimate(per: list[dict], n_parent: int) -> dict:
     """Expected number of parent stars carrying a blend at least as bright as a typical excess."""
     p = [x["checks"].get("density", {}).get("by_fraction_of_excess", {}).get("frac1", {}).get("p_blend_w3w4")
@@ -951,7 +1136,8 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
                 routes: dict | None = None, roles: tuple = ("CANDIDATE", "IN_CELL_AGE_UNDETERMINED",
                                                             "CONTROL")) -> dict:
     c = {**DEFAULT_DEEPVET, **(conf or {})}
-    rt = {"tap": tap_query, "vizier": vizier_check, "image": image_check, **(routes or {})}
+    rt = {"tap": tap_query, "vizier": vizier_check, "image": image_check, "desi": desi_check,
+          **(routes or {})}
     out_dir = Path(out_dir)
     summary = json.loads((out_dir / "summary.json").read_text())
     shortlist = pd.read_csv(out_dir / "shortlist.csv", low_memory=False)
@@ -981,6 +1167,10 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
                 chk["vizier"] = call_with_timeout(rt["vizier"], 420.0, t, c, footprint=True)
             except Exception as exc:                      # noqa: BLE001
                 chk["vizier"] = {"status": "UNTESTED", "error": repr(exc)[:300]}
+            try:
+                chk["desi"] = call_with_timeout(rt["desi"], 300.0, t, c)
+            except Exception as exc:                      # noqa: BLE001
+                chk["desi"] = {"status": "UNTESTED", "error": repr(exc)[:300]}
         v = judge(t, chk, c)
         per.append({"source_id": t["source_id"], "role": t["role"],
                     "t_bb_k": t.get("t_bb_k"), "log_f_fmax_1gyr": t.get("log_f_fmax_1gyr"),
@@ -991,6 +1181,14 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
              "n_planned": int(len(tg)), "targets": per}, indent=1, default=_json_default))
         print(f"[deepvet]   -> {v['verdict']} kills={v['kills']} untested={v['untested']} "
               f"({_time.monotonic() - t0:.0f}s elapsed)", flush=True)
+    # the registration floor, pooled over every cutout's calibration sources,
+    # then every verdict re-judged against it
+    floors = pooled_offset_floor(per, c)
+    c.update({f"offset_floor_sigma_{b}": v["sigma_per_axis_arcsec"] for b, v in floors.items()
+              if v.get("used")})
+    for x in per:
+        v = judge({"source_id": x["source_id"]}, x["checks"], c)
+        x.update(v)
     n_parent = int(summary.get("funnel", {}).get("n_ks_w1_photospheric") or 0)
     cand = [x for x in per if x["role"] == "CANDIDATE"]
     rep = {
@@ -1006,6 +1204,7 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
                               1 for x in cand if x["checks"]["simbad"].get("status") == "TESTED"
                               and not x["checks"]["simbad"].get("in_simbad"))},
         "population_blend": population_blend_estimate(per, n_parent),
+        "centroid_registration_floor": floors,
         "elapsed_s": round(_time.monotonic() - t0, 1),
         "skipped_on_wall_budget": skipped,
         "targets": per,

@@ -3795,8 +3795,11 @@ def recheck_second_epoch_and_template(root: Path, spec_id: str, ra: float, dec: 
             try:
                 rr = _session().get(url, timeout=60, allow_redirects=True)
                 statuses.append(f"{rr.status_code} {len(rr.content)}B {url}")
-                data = rr.content if rr.status_code == 200 and rr.content[:6] == b"SIMPLE" \
-                    else None
+                body = rr.content
+                if body[:2] == b"\x1f\x8b":          # LAMOST serves .fits.gz
+                    import gzip
+                    body = gzip.decompress(body)
+                data = body if rr.status_code == 200 and body[:6] == b"SIMPLE" else None
             except Exception as exc:  # noqa: BLE001
                 statuses.append(f"ERR {type(exc).__name__} {url}")
                 data = None

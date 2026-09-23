@@ -3821,11 +3821,54 @@ def recheck_second_epoch_and_template(root: Path, spec_id: str, ra: float, dec: 
         exp_sig = None
         if m.get("testable") and m.get("cont") and m.get("err"):
             exp_sig = float(1.6 * abs(m["cont"]) / m["err"])
+        fit = fit_line_profile(sp["wave"], sp["flux"], iv, lam0, lam0 / 1800.0, "emission")
+        # the strong OH line 9.4 A redward (6863.96 air = 6865.86 vac): how big is
+        # the sky residual there in this spectrum?
+        m_oh = measure_line(sp["wave"], sp["flux"], iv, 6865.86, lam0 / 1800.0, "emission")
+        out["lamost_fit"] = _json_safe({**fit, "oh6866_sig": m_oh.get("sig"),
+                                        "oh6866_ew": m_oh.get("ew")})
         out["lamost"].append(_json_safe({"obsid": ob, "url": url, "header": sp["header"],
                                          "sig": m.get("sig"), "ew": m.get("ew"),
                                          "testable": m.get("testable"),
                                          "reason": m.get("reason"),
                                          "expected_sig_for_ew_1p6": exp_sig}))
+    # ---- galaxies with a redshift that puts Halpha near lam0, within 20 arcmin
+    try:
+        zc = lam0 / 6564.61 - 1.0
+        dd = 20.0 / 60.0
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release"],
+            constraints={"ra": [ra - dd / cosd, ra + dd / cosd], "dec": [dec - dd, dec + dd],
+                         "redshift": [zc - 0.01, zc + 0.01]}, limit=500))
+        grp = []
+        for r in _records(found):
+            gra, gde = float(_rget(r, "ra")), float(_rget(r, "dec"))
+            sep = 3600.0 * np.hypot((gra - ra) * cosd, gde - dec)
+            grp.append({"sparcl_id": str(_rget(r, "sparcl_id")), "ra": gra, "dec": gde,
+                        "z": float(_rget(r, "redshift")), "spectype": _rget(r, "spectype"),
+                        "data_release": _rget(r, "data_release"),
+                        "sep_arcsec": round(float(sep), 1),
+                        "dv_kms_vs_halpha_z": round(
+                            (float(_rget(r, "redshift")) - zc) / (1 + zc) * 299792.458, 0)})
+        out["halpha_z"] = zc
+        out["galaxies_near_halpha_z"] = sorted(grp, key=lambda g: g["sep_arcsec"])
+    except Exception as exc:  # noqa: BLE001
+        out["galaxies_error"] = repr(exc)[:300]
+    # ---- SDSS photometric objects within 12 arcsec (is there a galaxy under the star?)
+    try:
+        sql = ("SELECT n.objID, n.distance, p.ra, p.dec, p.type, p.r, p.petroRad_r, p.clean "
+               f"FROM dbo.fGetNearbyObjEq({ra}, {dec}, 0.2) n JOIN PhotoObj p "
+               "ON n.objID = p.objID ORDER BY n.distance")
+        rr = _session().get("https://skyserver.sdss.org/dr17/SkyServerWS/SearchTools/SqlSearch",
+                            params={"cmd": sql, "format": "json"}, timeout=120)
+        js = rr.json()
+        rows = js[0].get("Rows", []) if isinstance(js, list) and js else []
+        out["sdss_photo_within_12arcsec"] = [
+            {**row, "distance_arcsec": round(60.0 * float(row.get("distance", 0)), 2),
+             "type_name": {3: "GALAXY", 6: "STAR"}.get(int(row.get("type", 0)), "OTHER")}
+            for row in rows]
+    except Exception as exc:  # noqa: BLE001
+        out["sdss_photo_error"] = repr(exc)[:300]
     # ---- template from same-subclass stars
     try:
         tpl = {"subclass": subclass}

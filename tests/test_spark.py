@@ -514,9 +514,10 @@ class FakeIRSA:
     """An IRSA TAP that serves the Euclid Q1 schema, a joined strip, Gaia, and obscore."""
 
     def __init__(self, strip_rows: pd.DataFrame, spec_rows: pd.DataFrame, gaia: pd.DataFrame,
-                 products: pd.DataFrame | None = None, empty: bool = False, fail_lines: bool = False):
+                 products: pd.DataFrame | None = None, empty: bool = False, fail_lines: bool = False,
+                 fail_range: bool = False):
         self.strip_rows, self.spec_rows, self.gaia, self.products = strip_rows, spec_rows, gaia, products
-        self.empty, self.fail_lines = empty, fail_lines
+        self.empty, self.fail_lines, self.fail_range = empty, fail_lines, fail_range
         self.queries: list[str] = []
 
     def __call__(self, adql: str, maxrec=None):
@@ -558,6 +559,8 @@ class FakeIRSA:
         if "euclid_q1_spe_lines_line_features l join" in a:
             if self.fail_lines:
                 raise RuntimeError("statement timeout")
+            if self.fail_range and "contains(point" not in a:
+                raise RuntimeError("statement timeout on the range predicate")
             if self.empty:
                 return self.strip_rows.head(0)
             m = re.search(r"BETWEEN ([-\d.]+) AND ([-\d.]+)", adql)
@@ -660,6 +663,21 @@ def test_euclid_empty_and_failed_archives_are_not_null_results(tmp_path):
     s2 = R.assess(conf, out2)
     assert s2["verdict"].startswith("DEGRADED") or s2["verdict"] == R.VERDICT_NO_DATA
     assert s2["stage_counts"]["euclid_survivors"] == 0
+
+
+def test_euclid_switches_the_footprint_clause_when_the_range_query_fails(tmp_path):
+    """Which footprint clause the archive can answer is a property of the archive."""
+    rng = np.random.default_rng(13)
+    field, gaia, strip, spec = _euclid_world(rng)
+    conf = _conf_for(field)
+    irsa = FakeIRSA(strip, spec, gaia, fail_range=True)
+    led = R.euclid_stage(conf, tmp_path / "sw", shard=0, n_shards=1, irsa_query=irsa, with_denominator=False)
+    assert led["footprint_clause"] == "spatial"
+    assert led["footprint_probe"]["first"]["status"] == "QUERY_FAILED"
+    assert led["footprint_probe"]["alternative"]["status"] in ("OK", "QUERY_RETURNED_ZERO_ROWS")
+    assert led["status"] == "OK" and any("switched the footprint clause" in x for x in led["degraded"])
+    assert all(u.get("footprint_clause") == "spatial" for u in led["units"])
+    assert sum(u["n_raw_rows"] for u in led["units"]) == len(strip)
 
 
 class FakeSpherexArchive:
@@ -892,3 +910,117 @@ def test_fits_roundtrip_of_the_fake_cutout_is_readable_by_the_pipeline():
     assert wm.method == "manual_tab"
     planes = S.image_planes(hd2)
     assert planes["variance"] is not None and planes["flags"] is not None and planes["zodi"] is not None
+
+
+# --------------------------------------------------------------------------
+# The survivor vet (the slitless neighbour, from Euclid's own catalogues)
+# --------------------------------------------------------------------------
+def _mer_neighbour(oid, ra, dec, flux_h=1.0):
+    return {"m_object_id": oid, "m_ra": ra, "m_dec": dec, "m_flux_h": flux_h,
+            "m_point_like_prob": 0.2, "m_spurious_flag": 0}
+
+
+def test_classify_neighbours_separates_corridor_blend_and_redshift():
+    conf = dict(R.DEFAULTS["euclid"])
+    sv = {"object_id": 7, "ra": 100.0, "dec": 10.0, "wl_um": 1.5500}
+    arcsec = 1.0 / 3600.0
+    cosd = math.cos(math.radians(10.0))
+    nbrs = pd.DataFrame([
+        _mer_neighbour(7, 100.0, 10.0, 10.0),                              # the star itself
+        _mer_neighbour(8, 100.0 + 60 * arcsec / cosd, 10.0, 4.0),          # in the dispersion corridor
+        _mer_neighbour(9, 100.0, 10.0 + 60 * arcsec, 8.0),                 # across dispersion: not a neighbour
+        _mer_neighbour(10, 100.0 + 3 * arcsec / cosd, 10.0 + 2 * arcsec, 0.05),  # inside 6", far too faint
+    ])
+    out = E.classify_neighbours(sv, nbrs, conf)
+    # object 10 sits inside both the 6" blend radius and the corridor; object 9 is across dispersion
+    assert out["n_in_corridor"] == 2 and out["n_in_blend_radius"] == 1
+    assert out["neighbour_trace_overlap"] is True                          # object 8 carries 40 % of the star's H flux
+    assert [o["object_id"] for o in out["offenders"]] == [8]
+    # the faint one alone is not an overlap
+    out2 = E.classify_neighbours(sv, nbrs.drop(index=1).reset_index(drop=True), conf)
+    assert out2["neighbour_trace_overlap"] is False and out2["n_in_blend_radius"] == 1
+    # a corridor neighbour at z = 1.3617 puts H-alpha at 1.55 um: that is the feature
+    z = 1.5500 / 0.656461 - 1.0
+    zr = pd.DataFrame([{"s_object_id": 8, "s_spe_z": z}, {"s_object_id": 99, "s_spe_z": z}])
+    out3 = E.classify_neighbours(sv, nbrs, conf, z_rows=zr)
+    assert out3["neighbour_line_at_z"] is True
+    assert [m["object_id"] for m in out3["z_matches"]] == [8]               # 99 is not a neighbour
+    assert out3["z_matches"][0]["line"] == "H-alpha"
+    # a neighbour carrying a feature at the same observed wavelength
+    lr = pd.DataFrame([{"l_object_id": 8, "l_wl": 1.5502}])
+    out4 = E.classify_neighbours(sv, nbrs, conf, line_rows=lr)
+    assert out4["neighbour_line_at_z"] is True and "same_wavelength_feature_um" in out4["z_matches"][0]
+
+
+class FakeVetIRSA:
+    """Serves the three vet queries; everything else is an error."""
+
+    def __init__(self, nbrs: pd.DataFrame, z_rows: pd.DataFrame, line_rows: pd.DataFrame):
+        self.nbrs, self.z_rows, self.line_rows = nbrs, z_rows, line_rows
+        self.queries: list[str] = []
+
+    def __call__(self, adql: str, maxrec=None):
+        self.queries.append(adql)
+        a = adql.lower()
+        if "tap_schema.columns" in a:
+            t = re.search(r"table_name = '([^']+)'", adql).group(1)
+            cols = {"euclid_q1_spectro_zcatalog_spe_classification": ["object_id", "spe_z", "spe_class"]}.get(t, [])
+            return pd.DataFrame({"column_name": cols, "datatype": ["x"] * len(cols)})
+        if "from euclid_q1_mer_catalogue m" in a:
+            m = re.search(r"BETWEEN ([-\d.]+) AND ([-\d.]+)", adql)
+            lo, hi = float(m.group(1)), float(m.group(2))
+            return self.nbrs[(self.nbrs["m_dec"] >= lo) & (self.nbrs["m_dec"] <= hi)].reset_index(drop=True)
+        if "from euclid_q1_spectro_zcatalog_spe_classification s" in a:
+            ids = {int(x) for x in re.findall(r"\d+", adql.split("IN (")[1])}
+            return self.z_rows[self.z_rows["s_object_id"].isin(ids)].reset_index(drop=True)
+        if "from euclid_q1_spe_lines_line_features l" in a:
+            ids = {int(x) for x in re.findall(r"\d+", adql.split("IN (")[1])}
+            return self.line_rows[self.line_rows["l_object_id"].isin(ids)].reset_index(drop=True)
+        raise AssertionError(f"unexpected vet ADQL: {adql[:200]}")
+
+
+def _vet_setup(tmp_path):
+    out = tmp_path / "spark"
+    (out / "euclid").mkdir(parents=True)
+    R._write_json(out / "probe.json", {"euclid": {
+        "roles_mer": {"object_id": "object_id", "ra": "right_ascension", "dec": "declination",
+                      "flux_h": "flux_h_2fwhm_aper"},
+        "roles_line": {"object_id": "object_id", "wl": "spe_line_central_wl_gf", "snr": "spe_line_snr_gf"},
+        "spectra_table": "euclid_q1_spectro_zcatalog_spe_classification"}})
+    feats = pd.DataFrame([
+        {"object_id": 7, "gaia_source_id": 1007, "field": "F", "ra": 100.0, "dec": 10.0,
+         "wl_um": 1.55, "snr": 11.0, "survivor": True, "low_snr": False},
+        {"object_id": 11, "gaia_source_id": 1011, "field": "F", "ra": 101.0, "dec": 10.0,
+         "wl_um": 1.61, "snr": 9.0, "survivor": True, "low_snr": False},
+        {"object_id": 12, "gaia_source_id": 1012, "field": "F", "ra": 102.0, "dec": 10.0,
+         "wl_um": 1.40, "snr": 4.0, "survivor": False, "low_snr": True}])
+    feats.to_csv(out / "euclid" / "features_all.csv", index=False)
+    return out
+
+
+def test_vet_euclid_kills_the_trace_overlap_and_keeps_the_clean_survivor(tmp_path):
+    out = _vet_setup(tmp_path)
+    arcsec = 1.0 / 3600.0
+    cosd = math.cos(math.radians(10.0))
+    nbrs = pd.DataFrame([
+        _mer_neighbour(7, 100.0, 10.0, 10.0), _mer_neighbour(8, 100.0 + 50 * arcsec / cosd, 10.0, 5.0),
+        _mer_neighbour(11, 101.0, 10.0, 10.0), _mer_neighbour(13, 101.0, 10.0 + 400 * arcsec, 9.0)])
+    irsa = FakeVetIRSA(nbrs, pd.DataFrame(columns=["s_object_id", "s_spe_z"]),
+                       pd.DataFrame(columns=["l_object_id", "l_wl"]))
+    conf = R.load_spark_config()
+    rec = R.vet_euclid(conf, out, irsa_query=irsa)
+    assert rec["status"] == "OK" and rec["n_vetted"] == 2
+    assert rec["n_trace_overlap"] == 1 and rec["n_clean_after_vet"] == 1
+    got = {r["object_id"]: r["neighbour_trace_overlap"] for r in rec["survivors"]}
+    assert got == {7: True, 11: False}
+    d = pd.read_csv(out / "euclid" / "features_all.csv")
+    assert list(d.sort_values("object_id")["survivor_after_vet"]) == [False, True, False]
+
+
+def test_vet_euclid_is_honest_when_it_cannot_run(tmp_path):
+    out = _vet_setup(tmp_path)
+    rec = R.vet_euclid(R.load_spark_config(), out, irsa_query=None)
+    assert rec["status"] == R.VERDICT_NO_DATA and rec["degraded"]
+    empty = tmp_path / "empty"
+    (empty / "euclid").mkdir(parents=True)
+    assert R.vet_euclid(R.load_spark_config(), empty, irsa_query=None)["status"] == "NO_FEATURE_TABLE"

@@ -1,0 +1,156 @@
+{
+  "stage": "spherex",
+  "shard": 2,
+  "n_shards": 4,
+  "generated_at": "2026-09-22T16:13:47Z",
+  "boxes": [
+    {
+      "box": "NEP-2",
+      "ra": 269.1,
+      "dec": 66.56,
+      "degraded": [
+        "every image failed: OSError('No SIMPLE card found, this file does not appear to ; RuntimeError('HTTP 503 for https://irsa.ipac.caltech.edu/dat"
+      ],
+      "seeds": {
+        "route": "irsa:gaia_dr3_source",
+        "status": "OK",
+        "n_rows": 411,
+        "n_in_box_mag_plx": 19,
+        "n_isolated": 17,
+        "n_seeds": 17
+      },
+      "images": {
+        "count_query": {
+          "status": "OK",
+          "seconds": 9.4
+        },
+        "n_products_covering_centre": 25736,
+        "list_query": {
+          "status": "OK",
+          "seconds": 240.6
+        },
+        "n_products": 25736,
+        "n_selected": 360,
+        "per_detector": {
+          "D1": 60,
+          "D2": 60,
+          "D3": 60,
+          "D4": 60,
+          "D5": 60,
+          "D6": 60
+        }
+      },
+      "cutouts": {
+        "n_images_tried": 360,
+        "n_images_ok": 0,
+        "n_images_failed": 360,
+        "n_samples": 0,
+        "n_samples_ok": 0,
+        "route_counts": {},
+        "wavemap_methods": {},
+        "fail_reasons": {
+          "OSError('No SIMPLE card found, this file does not appear to ": 171,
+          "RuntimeError('HTTP 503 for https://irsa.ipac.caltech.edu/dat": 189
+        }
+      },
+      "n_full_downloads": 0,
+      "seconds": 3645.6,
+      "status": "NO_DATA_REACHED"
+    },
+    {
+      "box": "SEP-2",
+      "ra": 89.1,
+      "dec": -66.56,
+      "degraded": [
+        "every image failed: OSError('No SIMPLE card found, this file does not appear to "
+      ],
+      "seeds": {
+        "route": "irsa:gaia_dr3_source",
+        "status": "OK",
+        "n_rows": 3437,
+        "n_in_box_mag_plx": 40,
+        "n_isolated": 21,
+        "n_seeds": 21
+      },
+      "images": {
+        "count_query": {
+          "status": "OK",
+          "seconds": 11.1
+        },
+        "n_products_covering_centre": 6851,
+        "list_query": {
+          "status": "OK",
+          "seconds": 63.5
+        },
+        "n_products": 6851,
+        "n_selected": 360,
+        "per_detector": {
+          "D1": 60,
+          "D2": 60,
+          "D3": 60,
+          "D4": 60,
+          "D5": 60,
+          "D6": 60
+        }
+      },
+      "cutouts": {
+        "n_images_tried": 360,
+        "n_images_ok": 0,
+        "n_images_failed": 360,
+        "n_samples": 0,
+        "n_samples_ok": 0,
+        "route_counts": {},
+        "wavemap_methods": {},
+        "fail_reasons": {
+          "OSError('No SIMPLE card found, this file does not appear to ": 360
+        }
+      },
+      "n_full_downloads": 0,
+      "seconds": 7671.1,
+      "status": "NO_DATA_REACHED"
+    }
+  ],
+  "queries": [
+    {
+      "label": "seeds_NEP-2",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 411,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 411,
+          "seconds": 9.3
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 269.100000, 66.560000, 0.192332)) AND phot_g_mean_mag < 19.000"
+    },
+    {
+      "label": "seeds_SEP-2",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 3437,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 3437,
+          "seconds": 4.7
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 89.100000, -66.560000, 0.192332)) AND phot_g_mean_mag < 19.000"
+    }
+  ],
+  "degraded": [
+    "NEP-2: every image failed: OSError('No SIMPLE card found, this file does not appear to ; RuntimeError('HTTP 503 for https://irsa.ipac.caltech.edu/dat",
+    "SEP-2: every image failed: OSError('No SIMPLE card found, this file does not appear to "
+  ],
+  "elapsed_s": 11316.7,
+  "status": "NO_DATA_REACHED",
+  "screen": {
+    "n_stars_with_samples": 0,
+    "n_channels_tested": 0,
+    "n_survivors": 0
+  }
+}

@@ -311,11 +311,22 @@ def fold_amplitude_significance(t, y, period: float, *, n_bins: int = 100, mask=
     span = float(tt.max() - tt.min()) if len(tt) > 1 else 0.0
     excl = max(0.02, 20.0 / (span * f0)) if span > 0 else 0.02
     out["exclusion_frac"] = float(excl)
+    # MEASURED 2026-09-23 (tess:350479496, P = 4.19 d over ~240 d; and
+    # tess:32449963, P = 6.52 d): the exclusion reached 0.345 of the 0.35 band,
+    # every draw landed inside it or on a rational alias, the null came back
+    # EMPTY -- and an empty null was then read as "not significant", so a
+    # 24%-deep narrow eclipse passed as NO_MUNDANE_EXPLANATION_FOUND.  The band
+    # now widens to leave room outside the exclusion (still in frequency, still
+    # the star's own light curve), and ``band_used`` records what was drawn.
+    band_used = float(band)
+    if 3.0 * excl > band_used:
+        band_used = float(min(0.9, 3.0 * excl))
+    out["band_used"] = band_used
     amps = []
     tries = 0
     while len(amps) < int(n_control) and tries < 40 * int(n_control):
         tries += 1
-        f = f0 * (1.0 + float(band) * rng.uniform(-1.0, 1.0))
+        f = f0 * (1.0 + band_used * rng.uniform(-1.0, 1.0))
         if f <= 0:
             continue
         p_try = 1.0 / f
@@ -1143,7 +1154,12 @@ def vet_verdict(report: dict) -> tuple[str, list[str]]:
         surviving.append("no coherent photometric oscillation survives masking the events")
 
     off = _f(report.get("event_phase_offset_from_photometric_max"))
-    if np.isfinite(off) and abs(off) <= 0.15 and oscillates:
+    # a mean phase of UNclustered events is noise, not a location: MEASURED
+    # 2026-09-23, tess:260128333 was called EVENTS_ON_THE_CREST with Rayleigh
+    # p = 0.91 over its 11 events
+    ray_p = _f((report.get("event_phase_rayleigh_at_p") or {}).get("p"))
+    clustered = bool(np.isfinite(ray_p) and ray_p < 0.01)
+    if np.isfinite(off) and abs(off) <= 0.15 and oscillates and clustered:
         reasons.append(f"EVENTS_ON_THE_CREST:offset={off:.3f}cycles")
 
     g = (report.get("gaia") or {}).get("match") or {}
@@ -1191,6 +1207,12 @@ def vet_verdict(report: dict) -> tuple[str, list[str]]:
                 unreached.append(f"{key}:{name}")
     if (report.get("gaia") or {}).get("status") == STATUS_UNREACHED:
         unreached.append("gaia:gaia_source")
+    if report.get("status") == "analysed":
+        for key in ("fold_significance", "fold_significance_flares_masked",
+                    "fold_significance_2p"):
+            d = report.get(key) or {}
+            if int(d.get("n_control") or 0) == 0:
+                unreached.append(f"control_null:{key}")
     report["unreached"] = unreached
 
     if reasons:
@@ -1237,78 +1259,31 @@ def reconcile_vetstar(out: Path, report: dict) -> dict:
     """Fold the vet's answer back into `summary.json` and `candidates.json`.
 
     Without this the channel's headline artefact would still read
-    ``CLOCK_CANDIDATES_PENDING_VET`` with one candidate while the vet's own
-    file said the candidate is a neighbouring RR Lyrae — the overclaim living
-    on in the file a machine reads, corrected only in the one it does not.
-    ``reconcile_summary`` does the same job for the re-detection, and this
-    follows it deliberately: **demotion only ever removes a claim.**  Nothing
-    here can promote a star, and a vet that found nothing mundane leaves every
-    tier exactly as it was.
+    ``CLOCK_CANDIDATES_PENDING_VET`` while the vet's own file said the
+    candidate is a neighbouring RR Lyrae.  **Demotion only ever removes a
+    claim.**
+
+    It is a REBUILD from every per-star vet file present, not an edit for this
+    star alone: MEASURED 2026-09-23, five parallel vets each demoted their own
+    star in their own checkout of ``candidates.json`` and the last to commit
+    erased the other four's demotions.  The report must already be on disk as
+    its per-star file (``stage_vetstar`` writes it first).
     """
-    res: dict = {"status": "NO_SUMMARY", "n_annotated": 0, "demoted": []}
-    sp, cp = Path(out) / "summary.json", Path(out) / "candidates.json"
-    if not sp.exists():
-        return res
-    try:
-        summary = json.loads(sp.read_text())
-    except (OSError, ValueError) as exc:                  # noqa: BLE001
-        res["status"] = f"SUMMARY_UNREADABLE:{exc!r}"[:200]
-        return res
+    from .reconcile import reconcile_all, vetstar_filename
 
     key = str((report or {}).get("star_key") or "")
     veto = vetstar_veto(report)
-    slim = {k: report.get(k) for k in
-            ("verdict", "period", "period_double", "fetch_status",
-             "n_flares_redetected", "n_catalogue_epochs", "catalogue_epochs_source",
-             "event_phase_offset_from_photometric_max", "unreached",
-             "surviving_explanations", "neighbour_period_matches",
-             "fold_significance_flares_masked", "roll_season", "odd_even",
-             "harmonics_at_period")}
-
-    demoted: list[str] = []
-    if cp.exists():
-        try:
-            cj = json.loads(cp.read_text())
-        except (OSError, ValueError):
-            cj = None
-        if isinstance(cj, dict):
-            for bucket in ("candidates", "watch"):
-                for row in cj.get(bucket) or []:
-                    if str(row.get("star_key")) == key:
-                        row["vetstar"] = slim
-                        if veto and str(row.get("tier")) in ("candidate", "interest"):
-                            row["tier"] = "none"
-                            row["first_veto"] = veto
-                            row["flags"] = ";".join(
-                                [f for f in str(row.get("flags") or "").split(";") if f]
-                                + [veto])
-                            demoted.append(f"{key}:{veto}")
-            cp.write_text(json.dumps(cj, indent=2, default=_json_default_r))
-            res["n_annotated"] = sum(len(cj.get(b) or []) for b in ("candidates", "watch"))
-
-    f = summary.get("funnel") or {}
-    f["stars_demoted_by_vetstar"] = len(demoted)
-    summary["funnel"] = f
-    summary["vetstar"] = {
-        "star_key": key, "verdict": slim.get("verdict"), "veto": veto,
-        "n_demoted": len(demoted), "demoted": demoted, "vetoes": list(VETSTAR_VETOES),
-        "note": ("the single-star vet asks every mundane explanation by name and demotes "
-                 "on any of them; NO_CLOCK_CANDIDATES here is a count after vetting and "
-                 "is not an occurrence limit, and per CLAUDE.md is not written up"),
-        "generated_utc": (report or {}).get("generated_utc"),
-    }
-    # REBUILD, never patch.  Patching is how this file came to carry
-    # `n_candidates: 0` beside `tiers: {..., "candidate": 1}`; see
-    # redetect.rebuild_summary for the measured failure.
-    from .redetect import rebuild_summary
-
-    n_lc = int(((summary.get("redetect") or {}).get("n_demoted")) or 0)
-    rebuild_summary(out, summary, stage="vetstar", extra_tokens=[
-        f"REDETECT_DEMOTED_{n_lc}" if n_lc else "",
-        f"VETSTAR_DEMOTED_{len(demoted)}" if demoted else ""])
-    sp.write_text(json.dumps(summary, indent=2, default=_json_default_r))
-    res.update({"status": STATUS_OK, "demoted": demoted, "veto": veto})
-    return res
+    if key:
+        # the per-star file IS the record the rebuild reads
+        report = dict(report)
+        report.setdefault("generated_utc", _now())
+        (Path(out) / vetstar_filename(key)).write_text(_dumps(report))
+    res = reconcile_all(Path(out), stage="vetstar")
+    mine = [d for d in (res.get("demoted_vetstar") or []) if d.startswith(key + ":")]
+    return {"status": res.get("status"), "n_annotated": res.get("n_rows", 0),
+            "demoted": mine, "veto": veto,
+            "n_vetstar_files": res.get("n_vetstar_files", 0),
+            "all_demoted_vetstar": res.get("demoted_vetstar", [])}
 
 
 def _json_default_r(o):
@@ -1345,12 +1320,50 @@ DEFAULT_VETSTAR = {
 }
 
 
+def one_product_per_segment(segments) -> tuple[list, int]:
+    """Keep ONE light-curve product per quarter/sector.
+
+    MEASURED 2026-09-23: tess:260128333's fetch returned sectors 27-31 twice
+    (a 20-s and a 2-min product), tess:398943781 and tess:63834969 each sector
+    twice.  Stitched, the two are interleaved at different cadences; per
+    segment they are counted as two independent sectors, which doubles the
+    weight of those sectors in the amplitude-variation test.  The product with
+    the LONGER cadence is kept (the flare catalogues were built on it and its
+    per-point noise is the lower), ties broken by point count.
+    """
+    from .redetect import _segment_cadence_days
+
+    best: dict = {}
+    order: list = []
+    loose = []
+    for s in segments or []:
+        if s is None:
+            continue
+        key = s.get("sector")
+        if key is None:
+            loose.append(s)
+            continue
+        cad = _segment_cadence_days(s)
+        n = len(np.asarray(s.get("time"), dtype=float))
+        score = (cad if np.isfinite(cad) else -1.0, n)
+        if key not in best:
+            order.append(key)
+            best[key] = (score, s)
+        elif score > best[key][0]:
+            best[key] = (score, s)
+    kept = [best[k][1] for k in order] + loose
+    n_in = sum(1 for s in (segments or []) if s is not None)
+    return kept, n_in - len(kept)
+
+
 def analyse_lightcurve(segments, period: float, *, conf: dict | None = None,
                        catalogue_times=None) -> dict:
     """Every light-curve test in one place, on already-fetched segments."""
     vc = dict(DEFAULT_VETSTAR, **(conf or {}))
     det = dict(DEFAULT_VETSTAR["detector"], **(vc.get("detector") or {}))
+    segments, n_dup = one_product_per_segment(segments)
     t, f, meta = stitch_segments(segments, cadence="long")
+    meta = dict(meta, n_duplicate_products_dropped=int(n_dup))
     out: dict = {"period": float(period), "lightcurve": meta}
     if len(t) < 200:
         out["status"] = "TOO_FEW_POINTS"
@@ -1394,12 +1407,14 @@ def analyse_lightcurve(segments, period: float, *, conf: dict | None = None,
     out["odd_even"] = odd_even_minima(td, yd, 2.0 * period, n_bins=n_bins)
     out["odd_even_flares_masked"] = odd_even_minima(td, yd, 2.0 * period, n_bins=n_bins,
                                                     mask=mask)
+    # the band must contain the clock: at max 5 d a 6.52 d clock returned NaN
+    p_hi = max(5.0, 3.0 * float(period))
     out["periodogram_detrended"] = periodogram_at(
         td, yd, period, cadence_days=cad, min_period_days=max(0.1, 2.5 * cad),
-        max_period_days=5.0, mask=mask)
+        max_period_days=p_hi, mask=mask)
     out["periodogram_detrended_unmasked"] = periodogram_at(
         td, yd, period, cadence_days=cad, min_period_days=max(0.1, 2.5 * cad),
-        max_period_days=5.0)
+        max_period_days=p_hi)
     out["n_points_detrended"] = int(ok.sum())
 
     # event phases
@@ -1432,11 +1447,45 @@ def analyse_lightcurve(segments, period: float, *, conf: dict | None = None,
     return out
 
 
+def shortlist_catalogue(out: Path, star_key: str) -> str | None:
+    """The flare catalogue that put ``star_key`` on the shortlist, read from
+    ``candidates.json`` (then ``stars_vetted.csv``)."""
+    out = Path(out)
+    cp = out / "candidates.json"
+    if cp.exists():
+        try:
+            cj = json.loads(cp.read_text())
+        except (OSError, ValueError):
+            cj = {}
+        for bucket in ("candidates", "watch"):
+            for row in (cj or {}).get(bucket) or []:
+                if str(row.get("star_key")) == str(star_key) and row.get("catalogue"):
+                    return str(row["catalogue"])
+    vp = out / "stars_vetted.csv"
+    if vp.exists():
+        try:
+            df = pd.read_csv(vp, dtype={"star_key": str},
+                             usecols=lambda c: c in ("star_key", "catalogue"))
+            hit = df[df["star_key"].astype(str) == str(star_key)]
+            if len(hit) and isinstance(hit["catalogue"].iloc[0], str):
+                return str(hit["catalogue"].iloc[0])
+        except (OSError, ValueError, KeyError):
+            pass
+    return None
+
+
 def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
                   period: float | None = None, kepler_lc_fn=None, lc_fn=None,
                   query_fn=None, gaia_query_fn=None, cone_fn=None,
-                  position=None, log=None, budget_s: float | None = None) -> dict:
-    """The full single-star vet.  Writes ``results/metronome/vetstar.json``."""
+                  position=None, log=None, budget_s: float | None = None,
+                  catalogue: str | None = None, mast_fn=None) -> dict:
+    """The full single-star vet.
+
+    Writes ``results/metronome/vetstar_<mission>_<id>.json`` (and
+    ``vetstar_fold_<mission>_<id>.csv``) -- ONE FILE PER STAR, so parallel vets
+    of different stars never write the same path -- then rebuilds
+    ``candidates.json`` / ``summary.json`` from every per-star file present
+    (:func:`seti.metronome.reconcile.reconcile_all`)."""
     from ..growth.stage2 import Deadline, MastParams, fetch_kepler_lightcurves, fetch_lightcurves
 
     vc = dict(DEFAULT_VETSTAR, **(conf.get("vetstar") or {}))
@@ -1452,10 +1501,26 @@ def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
     key = str(vc["star_key"])
     mission, _, sid = key.partition(":")
     sid = sid or key
+    # The star's OWN catalogue, from the shortlist that named it.  MEASURED
+    # 2026-09-23: five TESS stars from Tu+2022 were vetted with the config
+    # default `kepler_yang2019`, so their catalogued epochs were looked up by
+    # TIC in a KIC table and came back NOT_LISTED -- n_catalogue_epochs = 0.
+    cat_src = "supplied" if catalogue else None
+    if not catalogue:
+        catalogue = shortlist_catalogue(out, key)
+        cat_src = "shortlist" if catalogue else None
+    if not catalogue and (conf.get("vetstar") or {}).get("catalogue") \
+            and str(key) == str((conf.get("vetstar") or {}).get("star_key")):
+        catalogue = (conf.get("vetstar") or {}).get("catalogue")
+        cat_src = "config"
+    if not catalogue and mission.startswith("kep"):
+        catalogue, cat_src = DEFAULT_VETSTAR["catalogue"], "default_for_kepler"
+    vc["catalogue"] = catalogue
     p = float(vc["period_days"])
     rep: dict = {"stage": "vetstar", "generated_utc": _now(), "star_key": key,
                  "mission": mission, "star_id": sid, "period": p,
-                 "period_double": 2.0 * p, "catalogue": vc.get("catalogue")}
+                 "period_double": 2.0 * p, "catalogue": catalogue,
+                 "catalogue_source": cat_src}
 
     # ---- position ----------------------------------------------------
     ra = dec = float("nan")
@@ -1464,15 +1529,26 @@ def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
         rep["position_source"] = "supplied"
     else:
         try:
-            from .acquire import fetch_positions_by_id
+            from .acquire import fetch_positions
             tabs = conf.get("position_tables") or None
-            pos = fetch_positions_by_id([sid], mission, query_fn=query_fn, log=log,
-                                        tables=tabs)
+            pos = fetch_positions([sid], mission, query_fn=query_fn, mast_fn=mast_fn,
+                                  log=log, tables=tabs)
             if pos is not None and len(pos):
                 ra, dec = float(pos.iloc[0]["ra"]), float(pos.iloc[0]["dec"])
-                rep["position_source"] = ",".join((tabs or {}).get(mission, []) or ["default"])
+                rep["position_source"] = "vizier_or_mast_tic"
         except Exception as exc:                          # noqa: BLE001
             rep["position_error"] = repr(exc)
+        if not (np.isfinite(ra) and np.isfinite(dec)):
+            # the flare catalogue's own star table, on disk from an acquire
+            try:
+                from .run import _fill_positions_from_rotation, _load_rotation
+                rot = _load_rotation(out, mission)
+                pos = _fill_positions_from_rotation(pd.DataFrame(), [sid], rot)
+                if len(pos):
+                    ra, dec = float(pos.iloc[0]["ra"]), float(pos.iloc[0]["dec"])
+                    rep["position_source"] = "flare_catalogue_star_table"
+            except Exception as exc:                      # noqa: BLE001
+                rep["position_error_rotation"] = repr(exc)
     rep["ra"] = None if not np.isfinite(ra) else ra
     rep["dec"] = None if not np.isfinite(dec) else dec
 
@@ -1555,8 +1631,11 @@ def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
     rep["acquisition"] = log.as_dict() if hasattr(log, "as_dict") else {}
     rep["elapsed_s"] = round(_time.monotonic() - t_start, 1)
 
+    from .reconcile import vetstar_filename
+
+    (out / vetstar_filename(key)).write_text(_dumps(rep))
     rep["reconciliation"] = reconcile_vetstar(out, rep)
-    (out / "vetstar.json").write_text(_dumps(rep))
+    (out / vetstar_filename(key)).write_text(_dumps(rep))
     _write_fold_csv(out, rep)
     print(f"[metronome/vetstar] {key}: {verdict}")
     return rep
@@ -1578,7 +1657,11 @@ def _write_fold_csv(out: Path, rep: dict) -> None:
                          "err": err[i] if i < len(err) else None,
                          "n": cnt[i] if i < len(cnt) else None})
     if rows:
-        pd.DataFrame(rows).to_csv(Path(out) / "vetstar_fold.csv", index=False)
+        from .reconcile import vetstar_filename
+
+        name = vetstar_filename(str(rep.get("star_key") or "unknown"), suffix=".csv",
+                                prefix="vetstar_fold_")
+        pd.DataFrame(rows).to_csv(Path(out) / name, index=False)
 
 
 def _dumps(obj) -> str:

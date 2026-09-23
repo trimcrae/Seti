@@ -1,8 +1,8 @@
 {
-  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); CLOCK_CANDIDATES_PENDING_VET; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_2; VETSTAR_DEMOTED_1",
-  "generated_utc": "2026-09-23T00:58:06Z",
+  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); CLOCK_CANDIDATES_PENDING_VET; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_5",
+  "generated_utc": "2026-09-23T12:39:55Z",
   "n_candidates": 0,
-  "n_interest": 4,
+  "n_interest": 1,
   "n_watch": 53,
   "funnel": {
     "events_in": 1523888,
@@ -13,10 +13,10 @@
     "stars_fdr_watch": 225,
     "stars_fdr_significant": 141,
     "stars_watch": 53,
-    "stars_interest": 4,
+    "stars_interest": 1,
     "stars_candidate": 0,
     "stars_demoted_by_lightcurve": 9,
-    "stars_demoted_by_vetstar": 2
+    "stars_demoted_by_vetstar": 5
   },
   "rejection_counters": {
     "first_veto": {
@@ -49,9 +49,9 @@
     }
   },
   "tiers": {
-    "none": 3245,
+    "none": 3248,
     "watch": 53,
-    "interest": 4,
+    "interest": 1,
     "candidate": 0
   },
   "jitter_calibration": {
@@ -697,6 +697,7 @@
   },
   "note": "a clock candidate here is a STATISTICAL statement about catalogued peak times and is pending light-curve inspection; NO_CLOCK_CANDIDATES is a count, not an occurrence limit, and is not written up (CLAUDE.md)",
   "redetect": {
+    "generated_utc": "2026-09-22T21:57:41Z",
     "verdict": "REDETECT_CONFIRMS_1; PHOTOMETRIC_OSCILLATION_3; CATALOGUE_EPOCHS_ABSENT_17",
     "n_demoted": 9,
     "demoted": [
@@ -1599,41 +1600,102 @@
     "note": "the light curve has the last word.  catalogue_epochs_absent: the flux at the catalogue's own epochs is no higher than at random epochs in the same windows, so the events the clock is built from are not in the photometry.  photometric_oscillation: the re-detected period IS the star's dominant photometric period, so the 'flares' are a detrending residual.  Either demotes, whatever the catalogue statistics said"
   },
   "vetstar": {
-    "star_key": "tess:32449963",
-    "verdict": "MUNDANE_EXPLANATION_FOUND(EVENTS_CLUSTER_MORE_TIGHTLY_AT_2P) [P=6.520392 d]",
-    "veto": "vet_events_cluster_more_tightly_at_2p",
-    "n_demoted": 1,
+    "n_vetted": 6,
+    "n_demoted": 5,
     "demoted": [
+      "tess:260128333:vet_narrow_dip_at_p",
+      "kepler:5879574:vet_contaminating_variable_at_p",
+      "tess:398943781:vet_narrow_dip_at_p",
+      "tess:63834969:vet_narrow_dip_at_p",
       "tess:32449963:vet_events_cluster_more_tightly_at_2p"
     ],
-    "vetoes": [
-      "CONTAMINATING_VARIABLE_AT_P",
-      "CATALOGUED_ECLIPSING_BINARY",
-      "UNEQUAL_MINIMA_AT_2P",
-      "NARROW_DIP_AT_P",
-      "AMPLITUDE_TRACKS_SPACECRAFT_ROLL",
-      "COHERENT_OSCILLATION_AT_P",
-      "EVENTS_ON_THE_CREST",
-      "GAIA_NON_SINGLE_STAR",
-      "GAIA_RUWE",
-      "GAIA_RV_AMPLITUDE",
-      "EVENTS_CLUSTER_MORE_TIGHTLY_AT_2P",
-      "AMPLITUDE_VARIES_BETWEEN_SEGMENTS"
-    ],
-    "note": "the single-star vet asks every mundane explanation by name and demotes on any of them; NO_CLOCK_CANDIDATES here is a count after vetting and is not an occurrence limit, and per CLAUDE.md is not written up",
-    "generated_utc": "2026-09-23T00:35:17Z"
+    "per_star": {
+      "kepler:5879574": {
+        "verdict": "MUNDANE_EXPLANATION_FOUND(CONTAMINATING_VARIABLE_AT_P:gaia2053563953175635712@13.3arcsec,KIC 5879583,type=RR,P=0.4232946,in=vsx+ztf_chen2020; COHERENT_OSCILLATION_AT_P:amp=0.00082,p_control=0.00498,z=68.7_with_events_masked; EVENTS_ON_THE_CREST:offset=-0.036cycles; AMPLITUDE_TRACKS_SPACECRAFT_ROLL:F=3.07,p=0.0015,ratio=2.37) [P=0.423282 d]",
+        "veto": "vet_contaminating_variable_at_p",
+        "generated_utc": "2026-09-23T00:24:54Z",
+        "file": "vetstar_kepler_5879574.json",
+        "recovered_from": {
+          "commit": "53261f792736b2d0ba512f220c40bfff8757dbff",
+          "run_id": null,
+          "path": "results/metronome/vetstar.json",
+          "note": "recovered 2026-09-23 from the commit that run landed; five parallel vetstar runs wrote the same vetstar.json and only the last survived at HEAD.  Content unchanged apart from this key."
+        }
+      },
+      "tess:260128333": {
+        "verdict": "MUNDANE_EXPLANATION_FOUND(NARROW_DIP_AT_P:width=0.05; COHERENT_OSCILLATION_AT_P:amp=0.00250,p_control=0.00498,z=19.7_with_events_masked; EVENTS_ON_THE_CREST:offset=0.064cycles) [P=2.921710 d]",
+        "veto": "vet_narrow_dip_at_p",
+        "generated_utc": "2026-09-23T00:34:56Z",
+        "file": "vetstar_tess_260128333.json",
+        "recovered_from": {
+          "commit": "b6ec8da2",
+          "run_id": 35802589042,
+          "path": "results/metronome/vetstar.json",
+          "note": "recovered 2026-09-23 from the commit that run landed; five parallel vetstar runs wrote the same vetstar.json and only the last survived at HEAD.  Content unchanged apart from this key."
+        }
+      },
+      "tess:32449963": {
+        "verdict": "MUNDANE_EXPLANATION_FOUND(EVENTS_CLUSTER_MORE_TIGHTLY_AT_2P) [P=6.520392 d]",
+        "veto": "vet_events_cluster_more_tightly_at_2p",
+        "generated_utc": "2026-09-23T00:35:17Z",
+        "file": "vetstar_tess_32449963.json",
+        "recovered_from": {
+          "commit": "e7b7542b",
+          "run_id": 35802603859,
+          "path": "results/metronome/vetstar.json",
+          "note": "recovered 2026-09-23 from the commit that run landed; five parallel vetstar runs wrote the same vetstar.json and only the last survived at HEAD.  Content unchanged apart from this key."
+        }
+      },
+      "tess:350479496": {
+        "verdict": "DEGRADED(gaia:gaia_source); NO_MUNDANE_EXPLANATION_FOUND [P=4.194131 d]",
+        "veto": null,
+        "generated_utc": "2026-09-23T00:34:53Z",
+        "file": "vetstar_tess_350479496.json",
+        "recovered_from": {
+          "commit": "e958d0e5",
+          "run_id": 35802594315,
+          "path": "results/metronome/vetstar.json",
+          "note": "recovered 2026-09-23 from the commit that run landed; five parallel vetstar runs wrote the same vetstar.json and only the last survived at HEAD.  Content unchanged apart from this key."
+        }
+      },
+      "tess:398943781": {
+        "verdict": "MUNDANE_EXPLANATION_FOUND(NARROW_DIP_AT_P:width=0.03; COHERENT_OSCILLATION_AT_P:amp=0.02195,p_control=0.00498,z=158.4_with_events_masked; AMPLITUDE_VARIES_BETWEEN_SEGMENTS:ratio=245.8) [P=3.052465 d]",
+        "veto": "vet_narrow_dip_at_p",
+        "generated_utc": "2026-09-23T00:35:09Z",
+        "file": "vetstar_tess_398943781.json",
+        "recovered_from": {
+          "commit": "a528a2ed",
+          "run_id": 35802596474,
+          "path": "results/metronome/vetstar.json",
+          "note": "recovered 2026-09-23 from the commit that run landed; five parallel vetstar runs wrote the same vetstar.json and only the last survived at HEAD.  Content unchanged apart from this key."
+        }
+      },
+      "tess:63834969": {
+        "verdict": "MUNDANE_EXPLANATION_FOUND(NARROW_DIP_AT_P:width=0.03; COHERENT_OSCILLATION_AT_P:amp=0.11385,p_control=0.00498,z=157.8_with_events_masked) [P=2.055465 d]",
+        "veto": "vet_narrow_dip_at_p",
+        "generated_utc": "2026-09-23T00:35:52Z",
+        "file": "vetstar_tess_63834969.json",
+        "recovered_from": {
+          "commit": "b2eea8e6",
+          "run_id": 35802601869,
+          "path": "results/metronome/vetstar.json",
+          "note": "recovered 2026-09-23 from the commit that run landed; five parallel vetstar runs wrote the same vetstar.json and only the last survived at HEAD.  Content unchanged apart from this key."
+        }
+      }
+    },
+    "note": "one file per vetted star (vetstar_<mission>_<id>.json); every file present is re-applied on every reconciliation, so parallel vets cannot overwrite one another's demotions.  A count after vetting is not an occurrence limit and per CLAUDE.md is not written up"
   },
   "provenance": {
-    "rebuilt_utc": "2026-09-23T00:58:06Z",
-    "rebuilt_by": "vetstar",
+    "rebuilt_utc": "2026-09-23T12:39:55Z",
+    "rebuilt_by": "reconcile",
     "assess_generated_utc": "2026-09-21T21:42:31Z",
     "redetect_generated_utc": "2026-09-22T21:57:41Z",
-    "vetstar_generated_utc": "2026-09-23T00:35:17Z",
+    "vetstar_generated_utc": "2026-09-23T00:35:52Z",
     "tiers_recomputed_from": "stars_vetted.csv overridden by candidates.json",
     "tier_sources": {
       "from_vetted": 3302,
-      "overridden_by_candidates": 11,
-      "n_demoted_rows": 11
+      "overridden_by_candidates": 14,
+      "n_demoted_rows": 14
     },
     "note": "counts, tiers and the verdict are RECOMPUTED from the per-star records on every reconciliation; funnel totals upstream of the tiers, rejection_counters, coverage, jitter_calibration and the acquisition logs are the assess run's and are not re-derived",
     "demotions_by_stage": {
@@ -1650,7 +1712,10 @@
       ],
       "vetstar": [
         "kepler:5879574",
-        "tess:32449963"
+        "tess:260128333",
+        "tess:32449963",
+        "tess:398943781",
+        "tess:63834969"
       ]
     }
   }

@@ -1008,6 +1008,18 @@ def _stage_generated(out: Path, name: str) -> str | None:
     return d.get("generated_utc") if isinstance(d, dict) else None
 
 
+def _latest_vetstar_generated(out: Path) -> str | None:
+    """The newest ``generated_utc`` over every vet file (per-star and legacy)."""
+    import glob as _glob
+
+    stamps = []
+    for fp in _glob.glob(str(Path(out) / "vetstar*.json")):
+        s = _stage_generated(Path(out), Path(fp).name)
+        if s:
+            stamps.append(str(s))
+    return max(stamps) if stamps else None
+
+
 def _vetstar_token(summary: dict) -> str:
     n = int(((summary.get("vetstar") or {}).get("n_demoted")) or 0)
     return f"VETSTAR_DEMOTED_{n}" if n else ""
@@ -1057,7 +1069,16 @@ def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
         parts.append(f"REDETECT_DEMOTED_{len(dem['lightcurve'])}")
     if dem["vetstar"]:
         parts.append(f"VETSTAR_DEMOTED_{len(dem['vetstar'])}")
+    # REDETECT_/VETSTAR_DEMOTED_n are DERIVED from the records just above.  A
+    # caller's own count of what its invocation changed is a different number
+    # (MEASURED 2026-09-23: "VETSTAR_DEMOTED_2; VETSTAR_DEMOTED_1" in one
+    # verdict -- two demoted stars in the records, one by the run that wrote
+    # it), so any such token passed in is dropped rather than appended.
+    import re as _re
+
     for tok in (extra_tokens or []):
+        if tok and _re.fullmatch(r"(REDETECT|VETSTAR)_DEMOTED_\d+", str(tok)):
+            continue
         if tok and str(tok) not in parts:
             parts.append(str(tok))
     verdict = "; ".join(parts)
@@ -1076,7 +1097,7 @@ def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
         "redetect_generated_utc": (summary.get("redetect") or {}).get("generated_utc")
         or _stage_generated(out, "redetect.json") or prev.get("redetect_generated_utc"),
         "vetstar_generated_utc": (summary.get("vetstar") or {}).get("generated_utc")
-        or _stage_generated(out, "vetstar.json") or prev.get("vetstar_generated_utc"),
+        or _latest_vetstar_generated(out) or prev.get("vetstar_generated_utc"),
         "tiers_recomputed_from": "stars_vetted.csv overridden by candidates.json",
         "tier_sources": {k: v for k, v in prov.items() if k != "vetoes"},
         "demotions_by_stage": dem,

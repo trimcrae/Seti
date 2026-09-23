@@ -535,16 +535,24 @@ jobs:
       - name: Offline gate — the vet must recover an injected EB and null a real clock
         run: python -m pytest tests/test_metronome_vetstar.py -q -n auto -p no:cacheprovider
       - name: Vet the star
+        id: vet
         run: |
           ls results/metronome/ | head -40
           ls results/metronome/data 2>/dev/null | head -20
+          STAR="${{ github.event.inputs.vet_star || 'kepler:5879574' }}"
+          # ONE FILE PER STAR: parallel vets of different stars never write
+          # the same path (2026-09-23: five runs, one vetstar.json, four lost)
+          VJ=$(python -c "from seti.metronome.reconcile import vetstar_filename as f; print(f('$STAR'))")
+          VF=$(python -c "from seti.metronome.reconcile import vetstar_filename as f; print(f('$STAR', suffix='.csv', prefix='vetstar_fold_'))")
+          echo "vj=results/metronome/$VJ" >> "$GITHUB_OUTPUT"
+          echo "vf=results/metronome/$VF" >> "$GITHUB_OUTPUT"
           python -m seti.metronome.run --stage vetstar \
-            --star-key "${{ github.event.inputs.vet_star || 'kepler:5879574' }}" \
+            --star-key "$STAR" \
             --period "${{ github.event.inputs.vet_period || '-1' }}" \
             --budget-s 7200
       - name: Report the vet verbatim
         if: always()
-        run: python scripts/metronome_vetstar_report.py results/metronome/vetstar.json
+        run: python scripts/metronome_vetstar_report.py "${{ steps.vet.outputs.vj }}"
       # A run that queued for hours commits at the code it was DISPATCHED
       # from, and commit_results.sh is last-writer-wins by design, so a late
       # arrival silently overwrites newer results (measured: run 35741300225,
@@ -553,25 +561,30 @@ jobs:
       - name: Guard — do not overwrite newer results
         id: guard
         if: always()
-        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/vetstar.json results/metronome/summary.json
-      - name: Commit results
+        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" "${{ steps.vet.outputs.vj }}"
+      - name: Commit this star's record
         if: ${{ always() && steps.guard.outputs.stale != 'true' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
           scripts/commit_results.sh \
-            "metronome: the single-star vet on the surviving clock" \
-            results/metronome/vetstar.json \
-            results/metronome/vetstar_fold.csv \
-            results/metronome/summary.json \
-            results/metronome/candidates.json
+            "metronome: the single-star vet (${{ github.event.inputs.vet_star }})" \
+            "${{ steps.vet.outputs.vj }}" \
+            "${{ steps.vet.outputs.vf }}"
+      # The summary follows the RECORDS on the branch, rebuilt after this
+      # star's record has landed -- never this run's private copy of it.
+      - name: Rebuild summary.json from every per-star record on the branch
+        if: ${{ always() && steps.guard.outputs.stale != 'true' }}
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: scripts/metronome_reconcile_landed.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: metronome-vetstar
           path: |
-            results/metronome/vetstar.json
-            results/metronome/vetstar_fold.csv
+            results/metronome/vetstar_*.json
+            results/metronome/vetstar_fold_*.csv
             results/metronome/summary.json
             results/metronome/candidates.json
           if-no-files-found: warn
@@ -591,6 +604,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # The prior run's artifacts include ITS redetect.json and vet files,
+      # which predate the branch's.  Keep the branch's per-star records aside
+      # and put them back after the download, so assess re-applies the newest.
+      - name: Keep the branch's downstream records
+        run: |
+          mkdir -p /tmp/keep
+          cp results/metronome/redetect.json results/metronome/stars_redetect.csv \
+             results/metronome/vetstar_*.json /tmp/keep/ 2>/dev/null || true
+          ls /tmp/keep
       - name: Fetch artifacts from a prior run
         uses: actions/download-artifact@v4
         with:
@@ -599,10 +621,38 @@ jobs:
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}
           path: results/metronome/
+      - name: Restore the branch's downstream records
+        run: |
+          rm -f results/metronome/vetstar.json results/metronome/vetstar_fold.csv
+          cp /tmp/keep/* results/metronome/ 2>/dev/null || true
+          ls results/metronome/ | head -80
+      - name: Offline gate — the aperture cone must flag KIC 5879574 / KIC 5879583
+        run: python -m pytest tests/test_metronome_aperture.py -q -p no:cacheprovider
       - name: Assess
         run: |
           python -m seti.metronome.run --stage assess
-          cat results/metronome/summary.json | head -120
+          python - <<'PY'
+          import json
+          s = json.load(open("results/metronome/summary.json"))
+          print(s["verdict"])
+          print("tiers", s["tiers"], "n_interest", s["n_interest"], "n_candidates", s["n_candidates"])
+          ap = s.get("aperture_contamination") or {}
+          print(json.dumps({k: v for k, v in ap.items()
+                            if k not in ("variable_neighbour_no_period_match",)}, indent=1)[:8000])
+          for r in ap.get("variable_neighbour_no_period_match", [])[:80]:
+              print("   neighbour-no-match", r)
+          print("vari reached", s.get("variability_catalogues_reached"))
+          print("degraded", s.get("degraded"))
+          PY
+          python - <<'PY'
+          import json
+          c = json.load(open("results/metronome/candidates.json"))
+          for r in c["candidates"]:
+              print(r["star_key"], r["tier"], r.get("first_veto"), r.get("period"),
+                    "|", r.get("flags"), "|", json.dumps((r.get("veto_detail") or {}).get(
+                        "aperture_contaminating_variable") or (r.get("veto_detail") or {}).get(
+                        "aperture_variable_neighbour"))[:600])
+          PY
       # A run that queued for hours commits at the code it was DISPATCHED
       # from, and commit_results.sh is last-writer-wins by design, so a late
       # arrival silently overwrites newer results (measured: run 35741300225,
@@ -622,6 +672,11 @@ jobs:
             results/metronome/summary.json \
             results/metronome/candidates.json \
             results/metronome/stars_vetted.csv
+      - name: Rebuild summary.json from every per-star record on the branch
+        if: ${{ always() && steps.guard.outputs.stale != 'true' }}
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: scripts/metronome_reconcile_landed.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

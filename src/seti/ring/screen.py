@@ -74,6 +74,18 @@ def text_column(df: pd.DataFrame, col: str) -> pd.Series:
                  (isinstance(v, float) and not np.isfinite(v)) else str(v)).astype(object)
 
 
+def _numcol(df: pd.DataFrame, col: str) -> pd.Series:
+    """A float Series for ``col``, all-NaN (same index) when the column is absent.
+
+    ``pd.to_numeric(df.get(col))`` returns a bare scalar for an absent column,
+    which then breaks ``.notna()`` / ``.to_numpy()`` -- the free-floating leg
+    would have crashed on Faherty+2016, which has no age column.
+    """
+    if col in df.columns:
+        return pd.to_numeric(df[col], errors="coerce").astype(float)
+    return pd.Series(np.nan, index=df.index, dtype=float)
+
+
 def _ph_qual_ok(df: pd.DataFrame, band: str, allowed=("A", "B", "C")) -> np.ndarray:
     """A band is a detection only when its ph_qual letter is a detection grade.
 
@@ -366,25 +378,66 @@ def _split_id(s: pd.Series) -> tuple[pd.Series, pd.Series]:
     return parts[0], parts[1] if parts.shape[1] > 1 else pd.Series("t", index=s.index)
 
 
+def _allwise_colour_ok(df: pd.DataFrame, w1="W1mag", w2="W2mag") -> pd.Series:
+    """AllWISE W1 and W2 are both MEASUREMENTS (ph_qual A/B/C with an error).
+
+    ``ph_qual = U`` is an upper limit whose magnitude column holds the limit,
+    not a flux.  Run 35752692549 turned the UUBU source near J1633-2009 into a
+    "W1-W2 = 1.38, 720 K" counterpart from two upper limits.
+    """
+    ph_ = text_column(df, "ph_qual").str.upper()
+    ok = ph_.str.slice(0, 1).isin(["A", "B", "C"]) & ph_.str.slice(1, 2).isin(["A", "B", "C"])
+    e1 = _numcol(df, "e_W1mag")
+    e2 = _numcol(df, "e_W2mag")
+    m = _numcol(df, w1).notna() & \
+        _numcol(df, w2).notna()
+    return (ok & e1.notna() & e2.notna() & m).reindex(df.index).fillna(False).astype(bool)
+
+
 def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.DataFrame, dict]:
     """Per pulsar: the counterpart (if any), its colour temperature, its chance
-    probability from the controls, its provenance vetoes, and the sensitivity."""
+    probability from the controls, its provenance vetoes, and the sensitivity.
+
+    Chance probability (per catalogue).  The 16 offset positions give a local
+    hit rate ``h/16`` -- an unbiased but coarse estimate.  It is pooled with a
+    global prior that is scaled by the host's OWN aperture area: the control
+    density per arcsec^2 over every control position, times ``pi r^2``.  The
+    earlier unscaled prior averaged 8-arcsec and 1.5-arcsec apertures together,
+    so it over-predicted chance matches for well-timed pulsars by ~3x and
+    under-predicted them for the poorly localised ones.
+
+    For a ring-band counterpart the relevant rate is that of control sources
+    WITH a ring-band colour in the catalogue that supplied the colour -- not the
+    smaller of the two catalogues' rates (run 35752692549 used the AllWISE ring
+    rate for CatWISE-only counterparts).
+    """
     p = cfg["pulsar"]
     if psr is None or not len(psr):
         return pd.DataFrame(), {"status": "NO_DATA_REACHED", "n_hosts": 0}
     out = psr.copy().reset_index(drop=True)
     r_floor, r_max = float(p["match_radius_arcsec"]), float(p["match_radius_max_arcsec"])
     fac = float(p["position_error_factor"])
+    pos_err = pd.to_numeric(out["pos_err_arcsec"], errors="coerce").fillna(np.inf)
     out["match_radius_arcsec"] = np.clip(
-        np.maximum(r_floor, fac * pd.to_numeric(out["pos_err_arcsec"], errors="coerce")
-                   .fillna(r_max).to_numpy(float)), r_floor, r_max)
+        np.maximum(r_floor, fac * pos_err.replace(np.inf, r_max).to_numpy(float)),
+        r_floor, r_max)
+    # A pulsar whose error region is larger than the widest aperture searched
+    # has no position to associate a WISE source with: the radius was capped,
+    # the pulsar may be anywhere in the error region, and any source inside the
+    # cap is a draw from the field.
+    out["localised"] = (fac * pos_err <= r_max).to_numpy(bool)
     n_ctrl = 8 * len(p["control_offsets_arcsec"])
+    beam = float(cfg.get("contamination", {}).get("beam", {}).get("wise_beam_arcsec", 6.5))
+    area = np.pi * out["match_radius_arcsec"].to_numpy(float) ** 2
 
     t_lo, t_hi = float(cfg["ring"]["t_min_k"]), float(cfg["ring"]["t_max_k"])
+    census: dict = {}
     for key in ("allwise", "catwise"):
         m = matches.get(key)
         out[f"{key}_match"] = False
         out[f"{key}_dist_arcsec"] = np.nan
+        out[f"{key}_n_sources_in_radius"] = 0
+        out[f"{key}_n_sources_in_beam"] = 0
         out[f"{key}_n_control_hits"] = 0
         out[f"{key}_n_control_ring_hits"] = 0
         out[f"{key}_p_chance"] = np.nan
@@ -397,13 +450,22 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
         m = m.assign(_d=d)
         rad = out.set_index("jname")["match_radius_arcsec"]
         m = m[m["_jname"].isin(rad.index)]
+        # Aperture-scale neighbours at the TARGET, before the radius cut: how
+        # many catalogue sources share the WISE beam with the candidate.
+        tall = m[m["_kind"] == "t"]
+        nb = tall[tall["_d"] <= beam].groupby("_jname").size()
+        out[f"{key}_n_sources_in_beam"] = out["jname"].map(nb).fillna(0).astype(int)
         m = m[m["_d"] <= m["_jname"].map(rad).to_numpy(float)]
         w1c = "W1mag" if key == "allwise" else "W1mag_cat"
         w2c = "W2mag" if key == "allwise" else "W2mag_cat"
         mcol = pd.to_numeric(m.get(w1c), errors="coerce") - pd.to_numeric(m.get(w2c),
                                                                           errors="coerce")
+        if key == "allwise":
+            mcol = mcol.where(_allwise_colour_ok(m))
         mt = ph.colour_to_temperature(mcol.to_numpy(float))
         m = m.assign(_ring=(mt >= t_lo) & (mt <= t_hi))
+        nin = m[m["_kind"] == "t"].groupby("_jname").size()
+        out[f"{key}_n_sources_in_radius"] = out["jname"].map(nin).fillna(0).astype(int)
         tgt = m[m["_kind"] == "t"].sort_values("_d").drop_duplicates("_jname")
         ctrl = m[m["_kind"] != "t"].drop_duplicates(["_jname", "_kind"])
         hits = ctrl.groupby("_jname").size()
@@ -412,17 +474,16 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
         hr = out["jname"].map(ring_hits).fillna(0).astype(int)
         out[f"{key}_n_control_hits"] = h
         out[f"{key}_n_control_ring_hits"] = hr
-        # Empirical-Bayes chance probability: the local control hits pooled with
-        # the global control rate, prior weight = the number of local controls.
-        # Sixteen local positions alone cannot measure a rate of 1 %; the whole
-        # control set (16 x N_pulsars positions on the same sky) can.
-        n_pos = float(n_ctrl * len(out))
-        p_g_any = float(h.sum()) / n_pos if n_pos else 0.0
-        p_g_ring = float(hr.sum()) / n_pos if n_pos else 0.0
-        out[f"{key}_p_chance"] = (h + n_ctrl * p_g_any) / (2.0 * n_ctrl)
-        out[f"{key}_p_chance_ring"] = (hr + n_ctrl * p_g_ring) / (2.0 * n_ctrl)
-        out.attrs[f"{key}_global_control_rate"] = p_g_any
-        out.attrs[f"{key}_global_control_ring_rate"] = p_g_ring
+        # Area-scaled empirical-Bayes prior (see the docstring).
+        tot_area = float(n_ctrl * area.sum())
+        dens_any = float(h.sum()) / tot_area if tot_area else 0.0
+        dens_ring = float(hr.sum()) / tot_area if tot_area else 0.0
+        prior_any = np.clip(dens_any * area, 0.0, 1.0)
+        prior_ring = np.clip(dens_ring * area, 0.0, 1.0)
+        out[f"{key}_p_chance"] = (h.to_numpy(float) + n_ctrl * prior_any) / (2.0 * n_ctrl)
+        out[f"{key}_p_chance_ring"] = (hr.to_numpy(float) + n_ctrl * prior_ring) / (2.0 * n_ctrl)
+        out.attrs[f"{key}_control_density_per_arcsec2"] = dens_any
+        out.attrs[f"{key}_control_ring_density_per_arcsec2"] = dens_ring
         t = tgt.set_index("_jname")
         has = out["jname"].isin(t.index)
         out[f"{key}_match"] = has
@@ -436,19 +497,50 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
         for col in cols:
             if col in t.columns:
                 out[col] = out["jname"].map(t[col])
+        # The census: observed counterparts against the unbiased local
+        # expectation (sum of h/16), overall and split by localisation.
+        loc = out["localised"].to_numpy(bool)
+        hr_obs = has & out["jname"].map(t["_ring"]).fillna(False).astype(bool)
+        census[key] = {
+            "observed": int(has.sum()),
+            "expected_by_chance": round(float((h / n_ctrl).sum()), 1),
+            "observed_localised": int(has[loc].sum()),
+            "expected_localised": round(float((h[loc] / n_ctrl).sum()), 1),
+            "observed_unlocalised": int(has[~loc].sum()),
+            "expected_unlocalised": round(float((h[~loc] / n_ctrl).sum()), 1),
+            "ring_colour_observed": int(hr_obs.sum()),
+            "ring_colour_expected_by_chance": round(float((hr / n_ctrl).sum()), 2),
+            "ring_colour_observed_localised": int(hr_obs[loc].sum()),
+            "ring_colour_expected_localised": round(float((hr[loc] / n_ctrl).sum()), 2),
+        }
 
-    # Colour temperature of the counterpart (AllWISE first, CatWISE as fallback).
-    w1 = pd.to_numeric(out.get("W1mag"), errors="coerce")
-    w2 = pd.to_numeric(out.get("W2mag"), errors="coerce")
-    w1c = pd.to_numeric(out.get("W1mag_cat"), errors="coerce")
-    w2c = pd.to_numeric(out.get("W2mag_cat"), errors="coerce")
-    colour = (w1 - w2).where((w1 - w2).notna(), w1c - w2c)
+    # Colour: AllWISE only where both bands are measurements, else CatWISE.
+    aw_ok = _allwise_colour_ok(out) & out["allwise_match"].astype(bool)
+    w1 = _numcol(out, "W1mag")
+    w2 = _numcol(out, "W2mag")
+    w1c = _numcol(out, "W1mag_cat")
+    w2c = _numcol(out, "W2mag_cat")
+    e_aw = np.hypot(_numcol(out, "e_W1mag"),
+                    _numcol(out, "e_W2mag"))
+    e_cw = np.hypot(_numcol(out, "e_W1mag_cat"),
+                    _numcol(out, "e_W2mag_cat"))
+    cw_ok = out["catwise_match"].astype(bool) & (w1c - w2c).notna()
+    colour = (w1 - w2).where(aw_ok, (w1c - w2c).where(cw_ok))
     out["w1_w2"] = colour
+    out["w1_w2_err"] = pd.Series(np.where(aw_ok, e_aw, np.where(cw_ok, e_cw, np.nan)),
+                                 index=out.index)
+    out["colour_source"] = np.where(aw_ok, "allwise", np.where(cw_ok, "catwise", ""))
     out["t_colour_k"] = ph.colour_to_temperature(colour.to_numpy(float))
     out["shape_class"] = [ph.classify_excess_shape(t, np.nan, cfg) if np.isfinite(t)
                           else ("no_counterpart" if not (a or b) else "unfit")
                           for t, a, b in zip(out["t_colour_k"], out["allwise_match"],
                                              out["catwise_match"], strict=False)]
+    # A ring-band colour must stay in the band at 2 sigma toward the blue: a
+    # colour whose 2-sigma interval reaches stellar/companion colours is not a
+    # temperature measurement.  An unknown error counts as too large.
+    blue = (colour - 2.0 * out["w1_w2_err"].fillna(np.inf)).to_numpy(float)
+    t_blue = ph.colour_to_temperature(blue)
+    out["colour_secure"] = np.isfinite(t_blue) & (t_blue <= t_hi)
 
     # Provenance vetoes: nebulae, clusters, companions, catalogued counterparts.
     assoc = text_column(out, "assoc").str.upper()
@@ -463,9 +555,15 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
     out["globular_cluster"] = assoc.str.contains("GC:", regex=False)
     # The chance probability that matters is the one for the hypothesis being
     # tested: for a ring-band counterpart, a random source with a ring-band
-    # colour; for anything else, any random source.
-    p_any = out[["allwise_p_chance", "catwise_p_chance"]].min(axis=1)
-    p_ring = out[["allwise_p_chance_ring", "catwise_p_chance_ring"]].min(axis=1)
+    # colour IN THE CATALOGUE THAT GAVE THE COLOUR; for anything else, any
+    # random source in a catalogue that matched.
+    p_any_aw = out["allwise_p_chance"].where(out["allwise_match"].astype(bool))
+    p_any_cw = out["catwise_p_chance"].where(out["catwise_match"].astype(bool))
+    p_any = pd.concat([p_any_aw, p_any_cw], axis=1).min(axis=1)
+    p_ring = pd.Series(np.where(out["colour_source"] == "allwise", out["allwise_p_chance_ring"],
+                                np.where(out["colour_source"] == "catwise",
+                                         out["catwise_p_chance_ring"], np.nan)),
+                       index=out.index)
     out["p_chance_any"] = p_any
     out["p_chance_ring"] = p_ring
     out["p_chance"] = np.where(out["shape_class"] == "ring_band", p_ring, p_any)
@@ -481,44 +579,73 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
         out[f"ring_radius_{int(t)}K_au"] = ph.ring_equilibrium_radius_au(edot, t)
 
     has = out["allwise_match"] | out["catwise_match"]
+    is_ring = out["shape_class"] == "ring_band"
     reason = pd.Series("", index=out.index, dtype=object)
-    for col, name in (("known_counterpart_veto", "catalogued_counterpart"),
+    for col, name in (("_unloc", "position_not_localised"),
+                      ("known_counterpart_veto", "catalogued_counterpart"),
                       ("assoc_veto", "nebula_cluster_or_optical_association"),
                       ("companion_veto", "non_degenerate_companion"),
                       ("globular_cluster", "globular_cluster_sightline")):
-        f = out[col].astype(bool) & (reason == "")
+        v = ~out["localised"] if col == "_unloc" else out[col].astype(bool)
+        f = v & (reason == "")
         reason[f] = name
     f = ~out["chance_ok"].fillna(False) & (reason == "")
     reason[f] = "chance_coincidence"
+    f = is_ring & ~out["colour_secure"] & (reason == "")
+    reason[f] = "colour_not_secure"
+    f = is_ring & (out[["allwise_n_sources_in_beam", "catwise_n_sources_in_beam"]].max(axis=1)
+                   >= 2) & (reason == "")
+    reason[f] = "aperture_confusion"
     f = (out["shape_class"] == "companion") & (reason == "")
     reason[f] = "companion_colour"
     f = (out["shape_class"].isin(["unfit"])) & (reason == "")
     reason[f] = "single_band_no_colour"
+    # Look-elsewhere: chance_p_max is a PER-HOST screen, and ~2,800 localised
+    # hosts were searched.  A survivor must also be improbable across all of
+    # them: p_trials = 1 - (1 - p)^N_localised.  Run 35860901093's single
+    # survivor (J0418-4154, p = 0.006, W1-W2 = 0.48 +/- 0.52) has p_trials ~ 1.
+    n_trials = max(int(out["localised"].sum()), 1)
+    p_host = pd.to_numeric(pd.Series(out["p_chance"], index=out.index), errors="coerce")
+    out["p_chance_trials"] = 1.0 - np.power(1.0 - p_host.clip(0.0, 1.0), n_trials)
+    f = (out["p_chance_trials"] > float(p.get("trials_p_max", 1.0))) & (reason == "")
+    reason[f] = "not_significant_after_trials"
     out["veto_reason"] = np.where(has, reason, "")
     out["verdict"] = np.where(~has, "no_counterpart",
                               np.where(out["veto_reason"] == "", "surviving", "rejected"))
-    out["ring_candidate"] = (out["verdict"] == "surviving") & \
-        (out["shape_class"] == "ring_band")
+    out["ring_candidate"] = (out["verdict"] == "surviving") & is_ring
     f500 = out["f_min_500K_W2"].to_numpy(float)
+    fate_cols = ["jname", "bname", "localised", "pos_err_arcsec", "match_radius_arcsec",
+                 "allwise_dist_arcsec", "catwise_dist_arcsec", "colour_source", "w1_w2",
+                 "w1_w2_err", "t_colour_k", "ph_qual", "W1mag", "W2mag", "W1mag_cat",
+                 "W2mag_cat", "catwise_n_control_hits", "catwise_n_control_ring_hits",
+                 "allwise_n_control_ring_hits", "catwise_n_sources_in_beam",
+                 "allwise_n_sources_in_beam", "p_chance_ring", "p_chance_any", "assoc",
+                 "bincomp", "dist_kpc", "edot_w", "p_chance_trials", "veto_reason", "verdict"]
+    fates = out.loc[has & is_ring, [c for c in fate_cols if c in out.columns]]
     summary = {
         "status": "OK",
         "n_hosts": int(len(out)),
+        "n_localised": int(out["localised"].sum()),
         "n_with_allwise_counterpart": int(out["allwise_match"].sum()),
         "n_with_catwise_counterpart": int(out["catwise_match"].sum()),
         "n_with_any_counterpart": int(has.sum()),
+        "n_with_any_counterpart_localised": int((has & out["localised"]).sum()),
         "control_positions_per_host": n_ctrl,
         "median_allwise_control_hits": float(out["allwise_n_control_hits"].median()),
-        "global_control_rate": {k: float(v) for k, v in out.attrs.items()
-                                if k.endswith("control_rate") or k.endswith("ring_rate")},
-        # The census: counterparts observed against the number the controls predict.
-        "n_counterparts_expected_by_chance": float(np.nansum(p_any.to_numpy(float))),
-        "n_ring_band_expected_by_chance": float(np.nansum(p_ring.to_numpy(float))),
+        "median_catwise_control_hits": float(out["catwise_n_control_hits"].median()),
+        "control_density_per_arcsec2": {k: float(v) for k, v in out.attrs.items()
+                                        if k.endswith("per_arcsec2")},
+        # Observed vs the unbiased local expectation, per catalogue.
+        "chance_census": census,
         "shape_counts": {k: int(v) for k, v in out.loc[has, "shape_class"]
                          .value_counts().items()},
+        "colour_source_counts": {k: int(v) for k, v in out.loc[has, "colour_source"]
+                                 .value_counts().items()},
         "veto_reasons": {k: int(v) for k, v in out.loc[has, "veto_reason"]
                          .value_counts().items() if k},
         "n_surviving": int((out["verdict"] == "surviving").sum()),
         "n_ring_candidates": int(out["ring_candidate"].sum()),
+        "ring_band_fates": _records(fates),
         "sensitivity": {
             "n_hosts_with_edot_and_distance": int(np.isfinite(f500).sum()),
             "n_hosts_500K_ring_detectable_at_f_lt_1": int((f500 < 1.0).sum()),
@@ -528,6 +655,23 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
         },
     }
     return out, summary
+
+
+def _records(df: pd.DataFrame) -> list[dict]:
+    """JSON-safe records: NaN/inf -> None, numpy scalars -> Python."""
+    recs = []
+    for r in df.to_dict("records"):
+        rec = {}
+        for k, v in r.items():
+            if hasattr(v, "item"):
+                v = v.item()
+            if isinstance(v, float) and not np.isfinite(v):
+                v = None
+            if v is pd.NA:
+                v = None
+            rec[k] = v
+        recs.append(rec)
+    return recs
 
 
 # --------------------------------------------------------------------------
@@ -623,14 +767,39 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
 # Free-floating planets: hotter than cooling allows
 # --------------------------------------------------------------------------
 
+def _norm_group(s) -> str:
+    t = str(s or "").lower().replace("β", "b").replace("beta", "b")
+    return "".join(ch for ch in t if ch.isascii() and ch.isalnum())
+
+
 def _group_age_gyr(group, cfg: dict) -> float:
-    s = str(group or "").strip().lower()
-    if not s or s in ("nan", "none", "field", "--"):
+    """Age of a named young group, through the config's names and aliases.
+
+    Membership catalogues abbreviate (BANYAN: ``BPMG``, ``THA``, ``ABDMG``;
+    Faherty+2016 also ``bPMG``, ``THMG``); the old substring test matched
+    none of those against "beta Pic" / "Tuc-Hor", so an object with a group
+    would still have had no age.  Matching is on the alphanumeric lower-case
+    form, exact first, alias second; a suffix like "?" or "(amb)" is dropped
+    by the normalisation.  An unmatched non-empty name stays NaN and is
+    counted in the screen summary rather than guessed.
+    """
+    s = _norm_group(group)
+    if not s or s in ("nan", "none", "field", "na", "fld", "old", "young"):
         return np.nan
-    for k, v in cfg["ffp"]["age_fallback_gyr"].items():
-        kl = k.lower()
-        if kl in s or s in kl:
-            return float(v)
+    ages = {_norm_group(k): float(v) for k, v in cfg["ffp"]["age_fallback_gyr"].items()}
+    if s in ages:
+        return ages[s]
+    aliases = {_norm_group(k): _norm_group(v)
+               for k, v in (cfg["ffp"].get("group_aliases") or {}).items()}
+    if s in aliases and aliases[s] in ages:
+        return ages[aliases[s]]
+    # Tolerate a trailing qualifier ("ABDMGamb", "TWAcand"): longest alias prefix.
+    best = ""
+    for k in list(ages) + list(aliases):
+        if s.startswith(k) and len(k) >= 3 and len(k) > len(best):
+            best = k
+    if best:
+        return ages.get(best, ages.get(aliases.get(best, ""), np.nan))
     return np.nan
 
 
@@ -639,12 +808,12 @@ def screen_ffp(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
     if df is None or not len(df):
         return pd.DataFrame(), {"status": "NO_DATA_REACHED", "n_objects": 0}
     out = df.copy().reset_index(drop=True)
-    lbol = pd.to_numeric(out.get("lbol"), errors="coerce").to_numpy(float)
+    lbol = _numcol(out, "lbol").to_numpy(float)
     # Accept either log10(L/Lsun) or L/Lsun; a value above zero is not a log.
     with np.errstate(invalid="ignore", divide="ignore"):
         lbol = np.where(lbol > 0, np.log10(np.where(lbol > 0, lbol, 1.0)), lbol)
     out["log_lbol"] = lbol
-    age = pd.to_numeric(out.get("age"), errors="coerce").to_numpy(float)
+    age = _numcol(out, "age").to_numpy(float)
     # Ages catalogued in Myr are the norm for young groups.
     age_gyr = np.where(age > 5.0, age / 1000.0, age)
     fallback = np.array([_group_age_gyr(g, cfg) for g in
@@ -652,7 +821,7 @@ def screen_ffp(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
     out["age_gyr"] = np.where(np.isfinite(age_gyr), age_gyr, fallback)
     out["age_source"] = np.where(np.isfinite(age_gyr), "catalogue",
                                  np.where(np.isfinite(fallback), "group_fallback", "none"))
-    mass = pd.to_numeric(out.get("mass"), errors="coerce").to_numpy(float)
+    mass = _numcol(out, "mass").to_numpy(float)
     out["mass_mj"] = np.where(mass < 1.0, mass / ph.M_JUP_MSUN, mass)   # M_sun -> M_J
     ceiling = ph.planetary_cooling_ceiling_log_lsun(out["age_gyr"].to_numpy(float),
                                                     margin_dex=float(f["margin_dex"]),
@@ -667,17 +836,22 @@ def screen_ffp(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
     out["flag"] = out["hotter_than_cooling"] & planetary
     out["systematics_not_excluded"] = np.where(
         out["flag"], "age_misassignment|mass_underestimate|unresolved_binary", "")
+    grp = text_column(out, "group").str.strip()
+    unmatched = grp[(grp != "") & (out["age_source"] == "none")]
     summary = {
         "status": "OK" if testable.any() else "NO_TESTABLE_OBJECTS",
         "n_objects": int(len(out)),
+        "n_with_lbol": int(np.isfinite(out["log_lbol"]).sum()),
+        "n_with_group": int((grp != "").sum()),
+        "age_source_counts": {k: int(v) for k, v in out["age_source"].value_counts().items()},
+        "unmatched_group_names": {k: int(v) for k, v in unmatched.value_counts().head(20).items()},
         "n_testable": int(testable.sum()),
         "n_catalogued_planetary_mass": int((planetary & testable).sum()),
         "n_hotter_than_ceiling": int(out["hotter_than_cooling"].sum()),
         "n_flags_planetary_and_hot": int(out["flag"].sum()),
-        "flagged": out.loc[out["flag"], ["name", "spt", "group", "age_gyr", "age_source",
-                                         "log_lbol", "log_l_ceiling_13mj",
-                                         "excess_over_ceiling_dex", "mass_mj"]]
-        .to_dict("records") if "name" in out.columns else [],
+        "flagged": out.loc[out["flag"], [c for c in (
+            "name", "spt", "group", "age_gyr", "age_source", "log_lbol", "log_l_ceiling_13mj",
+            "excess_over_ceiling_dex", "mass_mj") if c in out.columns]].to_dict("records"),
     }
     return out, summary
 

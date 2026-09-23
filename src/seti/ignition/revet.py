@@ -18,7 +18,14 @@ The ensemble correction (``seti.ignition.ensemble``) assumes the NEOWISE drift
 is the same at every brightness.  If bright stars drift *less* than the
 median star, subtracting the median drift makes every bright star "rise" by
 the difference, smoothly, monotonically and nearly grey -- precisely the
-signature the screen was asked to find.  This module tests that directly:
+signature the screen was asked to find.  This module tests that directly.
+
+(Outcome on run 35740159635, run 35860165284: the drift IS brightness
+dependent -- W1 0.24 -> 1.45 mmag/yr and W2 1.7 -> 3.5 mmag/yr from W1 8-9 to
+11.5-12 -- but at the candidates' brightness the over-correction is only
+~0.2-0.5 mmag/yr, an order of magnitude below their 2-11 mmag/yr slopes.
+The hypothesis explains none of them outright; the candidates are 6-29 MAD
+outliers of their own brightness/|beta| population.  See docs/ignition.md 7.4.)
 
 1. ``drift_by_magnitude`` -- the raw and corrected slope distributions of the
    whole screened population in W1-magnitude bins (and ecliptic-latitude
@@ -428,7 +435,9 @@ def simbad_cone(c: pd.Series, radius_arcsec: float = 10.0) -> dict:
     q = ("SELECT main_id, otype, sp_type, ra, dec FROM basic WHERE "
          f"CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', {float(c['ra'])}, {float(c['dec'])}, "
          f"{radius_arcsec / 3600.0})) = 1")
-    df, err = _timed(lambda: _tap("https://simbad.cds.unistra.fr/simbad/sim-tap", q), 90)
+    df, err = _timed(lambda: _tap("https://simbad.cds.unistra.fr/simbad/sim-tap", q), 180)
+    if df is None:                                    # one retry: SIMBAD TAP is bursty
+        df, err = _timed(lambda: _tap("https://simbad.cds.unistra.fr/simbad/sim-tap", q), 180)
     if df is None:
         return {"status": "FAILED", "error": err}
     return {"status": "OK", "rows": json.loads(df.astype(str).to_json(orient="records"))}
@@ -461,7 +470,7 @@ def _vizier_asu(source: str, c: pd.Series, radius_arcsec: float, out_cols: str) 
 
 
 def allwise_neighbours(c: pd.Series, radius_arcsec: float = 20.0) -> dict:
-    q = ("SELECT designation, ra, dec, w1mpro, w2mpro, w3mpro, ph_qual, cc_flags, ext_flag, nb, na "
+    q = ("SELECT designation, ra, dec, w1mpro, w2mpro, w3mpro, ph_qual, cc_flags, ext_flg, nb, na "
          "FROM allwise_p3as_psd WHERE CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', "
          f"{float(c['ra'])}, {float(c['dec'])}, {radius_arcsec / 3600.0})) = 1")
     df, err = _timed(lambda: _tap("https://irsa.ipac.caltech.edu/TAP", q), 180)
@@ -509,6 +518,111 @@ def ztf_lightcurve(c: pd.Series, vet_conf: dict | None = None) -> dict:
     return out
 
 
+def _camera_slope(t, m, e, cam) -> dict:
+    """mag = offset[camera] + slope * t, weighted, 5-sigma clipped once."""
+    t = np.asarray(t, float)
+    m = np.asarray(m, float)
+    e = np.maximum(np.asarray(e, float), 0.005)
+    cam = np.asarray(cam).astype(str)
+    ok = np.isfinite(t) & np.isfinite(m) & np.isfinite(e)
+    t, m, e, cam = t[ok], m[ok], e[ok], cam[ok]
+    res = {"n": int(t.size)}
+    for _ in range(2):
+        cams = sorted(set(cam))
+        if t.size < 20 or not cams:
+            res["status"] = "insufficient"
+            return res
+        X = np.column_stack([(cam == c).astype(float) for c in cams] + [t - 2019.0])
+        w = 1.0 / e
+        beta, *_ = np.linalg.lstsq(X * w[:, None], m * w, rcond=None)
+        r = m - X @ beta
+        chi2 = float(np.sum((r / e) ** 2) / max(t.size - X.shape[1], 1))
+        keep = np.abs(r / e) < 5.0 * np.sqrt(max(chi2, 1.0))
+        if keep.all():
+            break
+        t, m, e, cam = t[keep], m[keep], e[keep], cam[keep]
+    cov = np.linalg.pinv((X * w[:, None]).T @ (X * w[:, None]))
+    se = float(np.sqrt(cov[-1, -1]) * np.sqrt(max(chi2, 1.0)))
+    res.update({"status": "OK", "n_used": int(t.size), "n_cameras": len(cams),
+                "t_span_yr": round(float(t.max() - t.min()), 2),
+                "slope_mmag_yr": round(1e3 * float(beta[-1]), 3),
+                "slope_err_mmag_yr": round(1e3 * se, 3),
+                "slope_sigma": round(float(beta[-1]) / se, 2) if se > 0 else None,
+                "rms_mag": round(float(np.std(r)), 4), "chi2_red": round(chi2, 2),
+                "median_mag": round(float(np.median(m)), 3)})
+    return res
+
+
+def asassn_lightcurve(c: pd.Series, radius_arcsec: float = 5.0) -> dict:
+    """ASAS-SN Sky Patrol (V 2012-2018, g 2017-): a camera-offset linear trend per filter."""
+    try:
+        from pyasassn.client import SkyPatrolClient
+    except Exception as exc:                          # noqa: BLE001
+        return {"status": "CLIENT_MISSING", "error": repr(exc)[:200]}
+
+    def _q():
+        cl = SkyPatrolClient()
+        return cl.cone_search(ra_deg=float(c["ra"]), dec_deg=float(c["dec"]),
+                              radius=radius_arcsec / 3600.0, catalog="master_list",
+                              download=True, threads=1)
+    lcs, err = _timed(_q, 300)
+    if lcs is None:
+        return {"status": "FAILED", "error": err}
+    d = getattr(lcs, "data", None)
+    if d is None or not len(d):
+        return {"status": "NO_ROWS"}
+    d = d.copy()
+    if "quality" in d:
+        d = d[d["quality"].astype(str) == "G"]
+    if "mag_err" in d:
+        d = d[pd.to_numeric(d["mag_err"], errors="coerce") < 0.1]
+    ids = d["asas_sn_id"].value_counts() if "asas_sn_id" in d else None
+    if ids is not None and len(ids):
+        d = d[d["asas_sn_id"] == ids.index[0]]
+    out = {"status": "OK", "n_rows": int(len(d)), "n_ids": int(len(ids)) if ids is not None else None}
+    jd = pd.to_numeric(d["jd"], errors="coerce").to_numpy(float)
+    t = 2000.0 + (jd - 2451545.0) / 365.25
+    for flt, g in d.assign(t=t).groupby("phot_filter"):
+        out[str(flt)] = _camera_slope(g["t"], pd.to_numeric(g["mag"], errors="coerce"),
+                                      pd.to_numeric(g["mag_err"], errors="coerce"),
+                                      g["camera"] if "camera" in g else np.zeros(len(g)))
+    return out
+
+
+def _bnu_ratio(temp_k: float, lam1_um: float = 3.35, lam2_um: float = 4.60) -> float:
+    """B_nu(lam2) / B_nu(lam1) for a blackbody."""
+    c2 = 14387.77
+    x1, x2 = c2 / (lam1_um * temp_k), c2 / (lam2_um * temp_k)
+    return float((lam1_um / lam2_um) ** 3 * np.expm1(x1) / np.expm1(x2))
+
+
+def dust_colour_test(w1_slope, w1_sigma, w2_slope, w2_sigma, teff: float = 5000.0) -> dict:
+    """Is the rise the colour of warm dust, or of a star?
+
+    For small changes the magnitude rise in a band is the fractional flux
+    excess, so W2rise/W1rise = [B(Td,4.6)/B(Td,3.35)] / [B(T*,4.6)/B(T*,3.35)].
+    Dust at 1000 K on a 5000 K photosphere gives ~2.0, at 1500 K ~1.5
+    (sublimation); a stellar-coloured contributor (or the star itself, or a
+    multiplicative calibration term) gives ~1.
+    """
+    try:
+        s1, s2 = float(w1_slope), float(w2_slope)
+        e1, e2 = abs(s1 / float(w1_sigma)), abs(s2 / float(w2_sigma))
+    except Exception:                                 # noqa: BLE001
+        return {}
+    if not (np.isfinite(s1) and np.isfinite(s2) and s1 != 0):
+        return {}
+    ratio = s2 / s1
+    err = abs(ratio) * float(np.hypot(e1 / s1, e2 / s2))
+    phot = _bnu_ratio(teff if np.isfinite(teff) else 5000.0)
+    out = {"w2_over_w1_rise": round(ratio, 3), "err": round(err, 3), "teff_used": teff}
+    for td in (800.0, 1000.0, 1500.0):
+        pred = _bnu_ratio(td) / phot
+        out[f"pred_dust_{int(td)}K"] = round(pred, 3)
+        out[f"z_vs_dust_{int(td)}K"] = round((pred - ratio) / err, 2) if err > 0 else None
+    return out
+
+
 def archive_checks(cands: pd.DataFrame) -> dict:
     res = {}
     for _, c in cands.iterrows():
@@ -518,7 +632,8 @@ def archive_checks(cands: pd.DataFrame) -> dict:
              "vsx_30as": _vizier_asu("B/vsx/vsx", c, 30, "Name,Type,max,min,Period"),
              "milliquas_10as": _vizier_asu("VII/294/catalog", c, 10, "Name,Type,z"),
              "allwise_20as": allwise_neighbours(c),
-             "ztf": ztf_lightcurve(c)}
+             "ztf": ztf_lightcurve(c),
+             "asassn": asassn_lightcurve(c)}
         res[sid] = r
         print(f"[revet] archive {sid}: " + ", ".join(f"{k}={v.get('status')}"
                                                      for k, v in r.items()), flush=True)
@@ -560,7 +675,9 @@ def stage_revet(conf: dict, out: Path, n_shards: int, *, run_id: str = "",
     rep["rescreen"] = rsrep
     rs.to_csv(out / "revet_rescreen.csv", index=False)
     # the raw (uncorrected) re-screen of the candidates alone, for the record
-    raw = ep_corr[ep_corr["source_id"].isin(set(cands["source_id"]))].copy()
+    raw = ep_corr[ep_corr["source_id"].isin(
+        set(cands["source_id"]) | set(rs.loc[rs["is_candidate"], "source_id"].astype(str))
+    )].copy()
     raw["mag"] = raw["mag_raw"]
     raw_rows = []
     for sid, g in raw.groupby("source_id"):
@@ -568,10 +685,16 @@ def stage_revet(conf: dict, out: Path, n_shards: int, *, run_id: str = "",
         raw_rows.append({"source_id": sid, "raw_verdict": v.verdict})
     raw_v = pd.DataFrame(raw_rows)
 
+    new_ids = sorted(set(rs.loc[rs["is_candidate"], "source_id"].astype(str))
+                     - set(cands["source_id"]))
+    targets = pd.concat([cands.assign(original=True),
+                         stars[stars["source_id"].isin(new_ids)].assign(original=False)],
+                        ignore_index=True)
     rows = []
-    for _, c in cands.iterrows():
+    for _, c in targets.iterrows():
         sid = str(c["source_id"])
-        rec = {"source_id": sid, "ra": float(c["ra"]), "dec": float(c["dec"]),
+        rec = {"source_id": sid, "original_candidate": bool(c["original"]),
+               "ra": float(c["ra"]), "dec": float(c["dec"]),
                "abs_beta": round(float(c["abs_beta"]), 2),
                "g": float(c["phot_g_mean_mag"]), "bp_rp": float(c["bp_rp"]),
                "w1_median": float(c["w1_median"]), "w2_median": float(c["w2_median"]),
@@ -594,6 +717,11 @@ def stage_revet(conf: dict, out: Path, n_shards: int, *, run_id: str = "",
                         "w2_slope_strat_sigma": float(r.get("w2_slope_sigma")),
                         "w1_strat_reasons": r.get("w1_reasons"),
                         "w2_strat_reasons": r.get("w2_reasons")})
+            teff = float(c.get("teff_gspphot", np.nan)) if "teff_gspphot" in c else np.nan
+            dc = dust_colour_test(r.get("w1_slope_mag_yr"), r.get("w1_slope_sigma"),
+                                  r.get("w2_slope_mag_yr"), r.get("w2_slope_sigma"),
+                                  teff if np.isfinite(teff) and teff > 2500 else 5000.0)
+            rec.update({f"colour_{k}": v for k, v in dc.items()})
         v = raw_v[raw_v["source_id"] == sid]
         rec["raw_verdict"] = v.iloc[0]["raw_verdict"] if len(v) else None
         rows.append(rec)
@@ -601,10 +729,9 @@ def stage_revet(conf: dict, out: Path, n_shards: int, *, run_id: str = "",
     rep["candidates"] = json.loads(cdf.to_json(orient="records"))
     rep["n_survive_stratified"] = int((cdf.get("strat_verdict") == "IGNITION_CANDIDATE").sum()) \
         if len(cdf) else 0
-    rep["new_candidates_stratified"] = sorted(
-        set(rs.loc[rs["is_candidate"], "source_id"].astype(str)) - set(cands["source_id"]))
-    if online and len(cands):
-        rep["archive"] = archive_checks(cands)
+    rep["new_candidates_stratified"] = new_ids
+    if online and len(targets):
+        rep["archive"] = archive_checks(targets)
     rep["elapsed_s"] = round(time.monotonic() - t0, 1)
     cdf.to_csv(out / "revet_candidates.csv", index=False)
     (out / "revet.json").write_text(json.dumps(rep, indent=1, default=str))

@@ -566,6 +566,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: ASAS-SN Sky Patrol client (optical trend; a failed install is recorded, not fatal)
+        continue-on-error: true
+        run: pip install "git+https://github.com/asas-sn/skypatrol.git"
       - name: Offline gate — a brightness-dependent drift is removed by the stratified ensemble
         run: python -m pytest tests/test_ignition_revet.py -q -p no:cacheprovider
       - name: Start from a clean results tree

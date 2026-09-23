@@ -74,7 +74,11 @@ wd:
   mc_draws: 300
 
 pulsar:
-  routes: ["psrqpy", "tarball", "vizier"]
+  # The tarball first: its parser keeps every position's own precision (the
+  # quoted digits and error), which decides whether a pulsar is localised at
+  # all.  psrqpy returns RAJ/DECJ with NaN errors for positions quoted without
+  # one, which the normaliser would read as ~1.4 arcsec.
+  routes: ["tarball", "psrqpy", "vizier"]
   tarball_url: "https://www.atnf.csiro.au/research/pulsar/psrcat/downloads/psrcat_pkg.tar.gz"
   vizier_table: "B/psr/psr"
   match_radius_arcsec: 1.5          # floor: ~3x the AllWISE positional error; timing positions are mas
@@ -118,8 +122,12 @@ bd:
     cone_radius_arcsec: 3.0
     epoch_gap_days: 90.0
     min_exp_per_epoch: 4
-    time_budget_s: 15000.0
+    # Below the workflow's `timeout 5400` on the acquire step, so the loop
+    # stops itself and writes its record (run 35752692549 set 15000 s, was
+    # killed at 5400 s, and left no acquisition record).
+    time_budget_s: 4500.0
     checkpoint_every: 10
+    cone_workers: 4
   min_epochs: 8
   amp_min_mag: 0.15                 # W2 peak-to-peak beyond which a duty cycle is claimed
   chi2_red_min: 5.0                 # W2 excess variance over the quoted epoch errors
@@ -129,6 +137,8 @@ bd:
   # Below this many tested objects the floor is not estimable and the threshold
   # falls back to chi2_red_min alone (summary records which applied).
   pop_floor_min_n: 8
+  # Below this fraction of targets with epochs the leg is reported DEGRADED.
+  min_epoch_coverage: 0.5
 
 ffp:
   vizier_catalogue: "J/ApJS/225/10"     # Faherty+2016, young ultracool dwarfs with Lbol, group, age
@@ -137,7 +147,18 @@ ffp:
   age_fallback_gyr: {"TWA": 0.010, "beta Pic": 0.024, "Tuc-Hor": 0.045, "Columba": 0.042,
                      "Carina": 0.045, "Argus": 0.045, "AB Dor": 0.150, "Pleiades": 0.125,
                      "Ursa Major": 0.400, "Hyades": 0.650, "Carina-Near": 0.200,
-                     "Upper Sco": 0.010, "Taurus": 0.002, "Chamaeleon": 0.005, "32 Ori": 0.024}
+                     "Upper Sco": 0.010, "Taurus": 0.002, "Chamaeleon": 0.005, "32 Ori": 0.024,
+                     "Octans": 0.035}
+  # Membership catalogues abbreviate (BANYAN codes; Faherty+2016 spellings).
+  # Matched on the alphanumeric lower-case form; unmatched names are counted
+  # in the screen summary, never guessed.
+  group_aliases: {"BPMG": "beta Pic", "betaPMG": "beta Pic", "bPic": "beta Pic",
+                  "THA": "Tuc-Hor", "THMG": "Tuc-Hor", "TucHor": "Tuc-Hor",
+                  "ABDMG": "AB Dor", "COL": "Columba", "COLMG": "Columba",
+                  "CAR": "Carina", "CARMG": "Carina", "ARG": "Argus", "ARGMG": "Argus",
+                  "TWHya": "TWA", "PLE": "Pleiades", "UMA": "Ursa Major",
+                  "HYA": "Hyades", "CARN": "Carina-Near", "USCO": "Upper Sco", "TAU": "Taurus",
+                  "CHA": "Chamaeleon", "32OR": "32 Ori", "THOR": "32 Ori", "OCT": "Octans"}
 
 contamination:               # the ossuary gates, driven by this block (docs/channel-brief.md section 4)
   wise_quality:

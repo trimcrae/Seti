@@ -404,8 +404,10 @@ def test_pulsar_screen_measures_colour_chance_and_provenance(cfg):
     # safe even though random sources of SOME colour are common in this field.
     assert good["p_chance_ring"] < cfg["pulsar"]["chance_p_max"]
     assert good["p_chance_any"] > cfg["pulsar"]["chance_p_max"]
-    assert s["n_ring_band_expected_by_chance"] == pytest.approx(0.0)
-    assert s["n_counterparts_expected_by_chance"] > 0.5
+    cen = s["chance_census"]["allwise"]
+    assert cen["ring_colour_expected_by_chance"] == pytest.approx(0.0)
+    assert cen["expected_by_chance"] == pytest.approx(12 / 16, abs=0.06)
+    assert cen["observed"] == 3 and cen["ring_colour_observed"] == 1
     assert good["t_colour_k"] == pytest.approx(500.0, rel=0.05)
     assert good["shape_class"] == "ring_band" and good["verdict"] == "surviving"
     assert bool(good["ring_candidate"])
@@ -633,3 +635,286 @@ def test_a_missing_leg_is_named_not_hidden(cfg, tmp_path):
     assert s["verdict"].startswith("DEGRADED (")
     assert "wd" in s["degraded_legs"] and "bd" in s["degraded_legs"]
     assert "RING_CANDIDATES_PENDING_VET" in s["verdict"]
+
+
+# ==========================================================================
+# Regressions from run 35752692549 (the first solo run)
+# ==========================================================================
+
+import re as _re  # noqa: E402
+
+# The real J/MNRAS/508/3877/maincat listing does not contain "chi2H"/"chi2He";
+# TAPVizieR refuses a SELECT naming ANY unknown column, which is how the whole
+# white-dwarf leg reached nothing.
+_GF21_COLUMNS = ["WDJname", "DR3Name", "GaiaEDR3", "RA_ICRS", "DE_ICRS", "Plx", "e_Plx",
+                 "pmRA", "pmDE", "Gmag", "BPmag", "RPmag", "Pwd", "TeffH", "e_TeffH",
+                 "loggH", "e_loggH", "MassH", "e_MassH", "TeffHe", "loggHe", "MassHe", "RUWE"]
+
+
+def _strict_vizier(listing, rows_per_band=2):
+    """A fake TAPVizieR: refuses unknown columns, answers dec-band SELECTs."""
+    calls = []
+
+    def q(adql):
+        calls.append(adql)
+        sel = _re.search(r"SELECT\s+(?:TOP \d+\s+)?(.*?)\s+FROM", adql).group(1)
+        cols = [c.strip().strip('"') for c in sel.split(",")]
+        where = adql.split("WHERE", 1)[1]
+        bad = [c for c in cols + _re.findall(r'"([^"]+)"', where) if c not in listing]
+        if bad:
+            raise RuntimeError(f"Incorrect ADQL query: unresolved identifiers {bad}")
+        lo = float(_re.search(r'"DE_ICRS" >= (-?\d+(\.\d+)?)', where).group(1))
+        n = rows_per_band
+        data = {c: np.arange(n, dtype=float) + 1.0 for c in cols}
+        data["GaiaEDR3"] = [int((lo + 90) * 1000 + k) for k in range(n)]
+        data["DE_ICRS"] = [lo + 1.0] * n
+        data["Plx"] = [10.0] * n
+        data["e_Plx"] = [0.5] * n
+        return pd.DataFrame(data)
+    return q, calls
+
+
+def test_wd_vizier_parent_resolves_its_columns_at_run_time(cfg):
+    q, calls = _strict_vizier(set(_GF21_COLUMNS))
+    df = racq.fetch_wd_vizier_parent(cfg, query_fn=q, columns_fn=lambda t: _GF21_COLUMNS)
+    assert "chi2H" not in " ".join(calls)             # never asks for what is not there
+    assert {"source_id", "ra", "dec", "pwd", "teff_h", "teff_he"} <= set(df.columns)
+    assert "chisq_h" not in df.columns
+    assert (df["parallax_over_error"] == 20.0).all()
+    bands = df.attrs["bands"]
+    assert len(bands) == 6 and sum(b["n"] for b in bands) == len(df) == 12
+    # harmonise_wd must cope with the absent chi-square columns (H chosen).
+    h = racq.harmonise_wd(df)
+    assert (h["atmosphere"] == "H").all() and h["teff"].notna().all()
+
+
+def test_wd_vizier_parent_names_a_missing_required_column(cfg):
+    listing = [c for c in _GF21_COLUMNS if c != "Pwd"]
+    q, _ = _strict_vizier(set(listing))
+    with pytest.raises(RuntimeError, match="pwd"):
+        racq.fetch_wd_vizier_parent(cfg, query_fn=q, columns_fn=lambda t: listing)
+
+
+def test_wd_leg_reaches_data_through_route_b_when_the_archive_table_is_absent(cfg, tmp_path):
+    q_viz, _ = _strict_vizier(set(_GF21_COLUMNS))
+
+    def probe(table, want, tag=""):
+        if "allwise" in table:
+            return {"designation": "designation", "W1mag": "w1mpro", "W2mag": "w2mpro"}
+        return {}
+
+    def gaia(q, tag="", upload=None, upload_name=None):
+        ids = upload.to_pandas()["source_id"]
+        return pd.DataFrame({"source_id": ids, "w1mag": 15.0, "w2mag": 14.9,
+                             "wise_angdist": 0.2, "phot_g_mean_mag": 99.0, "bp_rp": 9.0})
+
+    df, meta = racq.fetch_wd_leg(tmp_path, cfg, query=gaia, probe=probe, vizier_fn=q_viz,
+                                 columns_fn=lambda t: _GF21_COLUMNS)
+    assert meta["route"] == "vizier_parent+gaia_upload_join"
+    assert len(df) == 12 and "w1mag" in df.columns
+    # Shared columns keep the parent's values and are never suffixed _x/_y.
+    assert not [c for c in df.columns if c.endswith(("_x", "_y"))]
+    assert (df["phot_g_mean_mag"] < 99.0).all()
+    assert [r["status"] for r in meta["routes_tried"]] == ["FAILED", "OK", "OK"]
+
+
+_PSRCAT_ECL = """
+PSRJ     J1453+1902
+ELONG    213.074651230                 3
+ELAT     30.580214560                  2
+P0       0.005792
+P1       1.2E-20
+DIST_DM  1.15
+@-----------------------------------------------------------------
+PSRJ     J9999+0000
+ELONG    100.12
+ELAT     5.3
+P0       1.0
+@-----------------------------------------------------------------
+"""
+
+
+def test_ecliptic_positions_keep_their_own_precision():
+    """Run 35752692549 gave every ecliptic-position pulsar a 49-arcsec error."""
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_ECL), "tarball")
+    o = psr.set_index("jname")
+    assert o.loc["J1453+1902", "pos_err_arcsec"] < 0.05       # a timing position
+    assert o.loc["J9999+0000", "pos_err_arcsec"] > 300.0      # 0.1 deg in latitude
+
+
+def test_psrqpy_version_property_does_not_discard_the_query(monkeypatch):
+    import sys
+    import types
+
+    class _Tbl:
+        def to_pandas(self):
+            return pd.DataFrame({"JNAME": ["J0001+0002"], "RAJD": [0.29], "DECJD": [0.03]})
+
+    class QueryATNF:
+        def __init__(self, params=None):
+            self.table = _Tbl()
+
+        @property
+        def get_version(self):
+            return "2.6.1"
+
+    monkeypatch.setitem(sys.modules, "psrqpy", types.SimpleNamespace(QueryATNF=QueryATNF))
+    df = racq.fetch_pulsars_psrqpy()
+    assert df.attrs["catalogue_version"] == "2.6.1" and "PSRJ" in df.columns
+
+
+_PSRCAT_VET = """
+PSRJ     J0100+0100
+RAJ      01:00:00.0000                 1
+DECJ     +01:00:00.000                 1
+P0       0.5
+P1       1.0E-15
+DIST_DM  1.0
+@-----------------------------------------------------------------
+PSRJ     J0200+02
+RAJ      02:00
+DECJ     +02:00
+P0       1.0
+P1       1.0E-15
+DIST_DM  2.0
+@-----------------------------------------------------------------
+PSRJ     J0300+0300
+RAJ      03:00:00.0000                 1
+DECJ     +03:00:00.000                 1
+P0       0.7
+P1       1.0E-15
+DIST_DM  1.0
+@-----------------------------------------------------------------
+PSRJ     J0400+0400
+RAJ      04:00:00.0000                 1
+DECJ     +04:00:00.000                 1
+P0       0.7
+P1       1.0E-15
+DIST_DM  1.0
+@-----------------------------------------------------------------
+"""
+
+
+def test_pulsar_vet_kills_each_run_35752692549_failure_mode(cfg):
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_VET), "tarball")
+    ring = float(ph.blackbody_colour(600.0))
+    aw = pd.DataFrame([
+        # J0300: AllWISE W1/W2 are UPPER LIMITS (UUBU) with a ring-like difference.
+        {"source_id": "J0300+0300|t", "match_dist_arcsec": 0.5, "W1mag": 18.5,
+         "W2mag": 18.5 - ring, "W3mag": 11.4, "W4mag": 8.6, "ph_qual": "UUBU",
+         "cc_flags": "0000"},
+    ])
+    cw = pd.DataFrame([
+        # J0100: a clean, well-measured 600 K CatWISE counterpart -> survives.
+        {"source_id": "J0100+0100|t", "match_dist_arcsec": 0.4, "W1mag_cat": 15.0,
+         "e_W1mag_cat": 0.03, "W2mag_cat": 15.0 - ring, "e_W2mag_cat": 0.03},
+        # J0200: position known to an arcminute; a ring-coloured source at 3" means nothing.
+        {"source_id": "J0200+02|t", "match_dist_arcsec": 3.0, "W1mag_cat": 15.0,
+         "e_W1mag_cat": 0.03, "W2mag_cat": 15.0 - ring, "e_W2mag_cat": 0.03},
+        # J0300: CatWISE sees the same source with a stellar colour.
+        {"source_id": "J0300+0300|t", "match_dist_arcsec": 0.6, "W1mag_cat": 18.1,
+         "e_W1mag_cat": 0.2, "W2mag_cat": 17.8, "e_W2mag_cat": 0.3},
+        # J0400: a ring colour, but 0.25 mag errors per band: 2 sigma reaches stars.
+        {"source_id": "J0400+0400|t", "match_dist_arcsec": 0.5, "W1mag_cat": 18.8,
+         "e_W1mag_cat": 0.25, "W2mag_cat": 18.8 - ring, "e_W2mag_cat": 0.25},
+    ])
+    out, s = rscr.screen_pulsars(psr, {"allwise": aw, "catwise": cw}, cfg)
+    o = out.set_index("jname")
+    assert o.loc["J0100+0100", "verdict"] == "surviving"
+    assert o.loc["J0100+0100", "colour_source"] == "catwise"
+    assert not bool(o.loc["J0200+02", "localised"])
+    assert o.loc["J0200+02", "veto_reason"] == "position_not_localised"
+    # Upper limits are not a colour: CatWISE's stellar colour is used instead.
+    assert o.loc["J0300+0300", "colour_source"] == "catwise"
+    assert o.loc["J0300+0300", "shape_class"] != "ring_band"
+    assert o.loc["J0400+0400", "veto_reason"] == "colour_not_secure"
+    assert s["n_ring_candidates"] == 1
+    assert len(s["ring_band_fates"]) == s["shape_counts"]["ring_band"] == 3
+    assert rass.consistency_checks({"legs": {"pulsar": {**s, "survivors": [{}]}}})["ok"]
+
+
+def test_ring_chance_rate_comes_from_the_catalogue_that_gave_the_colour(cfg):
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_VET), "tarball")
+    ring = float(ph.blackbody_colour(600.0))
+    rows = [{"source_id": "J0100+0100|t", "match_dist_arcsec": 0.4, "W1mag_cat": 15.0,
+             "e_W1mag_cat": 0.03, "W2mag_cat": 15.0 - ring, "e_W2mag_cat": 0.03}]
+    # Ring-coloured CatWISE sources at 6 of J0100's 16 controls; AllWISE has none.
+    rows += [{"source_id": f"J0100+0100|c{k}", "match_dist_arcsec": 0.5, "W1mag_cat": 16.0,
+              "e_W1mag_cat": 0.05, "W2mag_cat": 16.0 - ring, "e_W2mag_cat": 0.05}
+             for k in range(6)]
+    out, s = rscr.screen_pulsars(psr, {"allwise": pd.DataFrame(),
+                                       "catwise": pd.DataFrame(rows)}, cfg)
+    g = out.set_index("jname").loc["J0100+0100"]
+    assert g["catwise_n_control_ring_hits"] == 6
+    assert g["p_chance_ring"] > 0.1 and g["veto_reason"] == "chance_coincidence"
+
+
+def test_bd_roles_prefer_the_infrared_type_and_catwise_position():
+    cols = ["recno", "T", "Name", "SpTO", "SpTIR", "SpAd", "plx", "pmRA", "pmDE", "RACdeg",
+            "DECdeg", "pmRAC2", "pmDEC2", "W1mag", "W2mag", "_RA", "_DE"]
+    r = racq.resolve_roles(cols, racq.BD_ROLES)
+    assert r["spt"] == "SpTIR" and r["spt_opt"] == "SpTO"
+    assert r["ra"] == "RACdeg" and r["dec"] == "DECdeg" and r["pmra"] == "pmRA"
+
+
+def _fake_vizier_catalogue(tables: dict):
+    """query_fn serving TAP_SCHEMA.tables / .columns and SELECTs for ``tables``."""
+    def q(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": list(tables), "description": ""})
+        if "TAP_SCHEMA.columns" in adql:
+            t = _re.search(r"table_name = '([^']+)'", adql).group(1)
+            return pd.DataFrame({"column_name": list(tables[t].columns)})
+        m = _re.search(r'SELECT\s+(?:TOP \d+\s+)?(.*?)\s+FROM\s+"([^"]+)"', adql)
+        cols = [c.strip().strip('"') for c in m.group(1).split(",")]
+        return tables[m.group(2)][cols].copy()
+    return q
+
+
+def test_ffp_leg_resolves_2mass_names_and_joins_membership(cfg):
+    t14 = pd.DataFrame({"recno": [1, 2, 3], "2MASS": ["J0001", "J0002", "J0003"],
+                        "OSpT": ["L4", "L7", "M9"], "IRSpT": ["L4", "L7", "M9"],
+                        "Lbol": [-2.6, -4.2, -3.0], "Teff": [1700, 1200, 2300],
+                        "Mass": [8.0, 8.0, 40.0]})
+    lsg = pd.DataFrame({"recno": [1, 2, 3], "2MASS": ["J0001", "J0002", "J0003"],
+                        "Mm": ["TWA", "bPMG", "FIELD"], "_RA": [1.0, 2.0, 3.0],
+                        "_DE": [0.0, 0.0, 0.0]})
+    q = _fake_vizier_catalogue({"J/ApJS/225/10/table14": t14,
+                                "J/ApJS/225/10/lsgdwarf": lsg})
+    df, meta = racq.fetch_ffp_targets(cfg, query_fn=q)
+    assert meta["status"] == "OK" and meta["table"] == "J/ApJS/225/10/table14"
+    assert meta["membership_table"] == "J/ApJS/225/10/lsgdwarf"
+    assert meta["n_with_group"] == 3
+    out, s = rscr.screen_ffp(df, cfg)       # no age column: must not crash
+    o = out.set_index("name")
+    assert o.loc["J0002", "age_gyr"] == pytest.approx(0.024)    # bPMG -> beta Pic
+    assert o.loc["J0001", "age_source"] == "group_fallback"
+    assert o.loc["J0003", "age_source"] == "none"
+    assert s["n_testable"] == 2 and s["age_source_counts"]["group_fallback"] == 2
+
+
+def test_summary_is_strict_json_with_provenance_and_names_a_killed_bd_leg(cfg, tmp_path,
+                                                                          monkeypatch):
+    monkeypatch.setenv("GITHUB_RUN_ID", "123")
+    out = tmp_path / "ring"
+    f = _fetchers()
+    for leg in rrun.LEGS:
+        rrun.stage_acquire(cfg, out, leg, fetchers=f)
+        rrun.stage_screen(cfg, out, leg, rng=np.random.default_rng(1))
+    # The NEOWISE loop was killed by the job clock: its record says IN_PROGRESS.
+    rec = json.loads((out / "bd" / "acquire_shard0.json").read_text())
+    rec["status"] = "IN_PROGRESS"
+    (out / "bd" / "acquire_shard0.json").write_text(json.dumps(rec))
+    s = rrun.stage_assess(cfg, out, followup=False)
+
+    def _no_nan(x):
+        raise ValueError(f"non-strict JSON constant {x}")
+    js = json.loads((out / "summary.json").read_text(), parse_constant=_no_nan)
+    assert js["run_id"] == "123" and js["generated_at"]
+    assert js["leg_provenance"]["pulsar"]["run_id"] == "123"
+    assert "bd partial: acquisition KILLED_IN_PROGRESS" in s["verdict"]
+    assert "bd" in s["degraded_legs"]
+    assert js["consistency"]["ok"], js["consistency"]
+    for leg in rrun.LEGS:
+        sj = json.loads((out / leg / "screen.json").read_text(), parse_constant=_no_nan)
+        assert sj["provenance"]["run_id"] == "123"

@@ -936,6 +936,9 @@ STAGE_VETSTAR = "vetstar"
 #: Rebuild candidates.json / summary.json from every per-star record on disk
 #: (stars_vetted.csv, redetect.json, vetstar_*.json).  No network.
 STAGE_RECONCILE = "reconcile"
+#: The identity + aperture-scale variability cones over the COMMITTED
+#: shortlist, without re-tiering the population (see aperture.py).
+STAGE_APERTURE = "aperture"
 
 
 def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int = 0,
@@ -967,6 +970,10 @@ def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int =
         elif s == STAGE_REDETECT:
             rep = stage_redetect(conf, out, lc_fn=lc_fn, kepler_lc_fn=kepler_lc_fn,
                                  max_stars=max_stars, seed=seed, budget_s=budget_s)
+        elif s == STAGE_APERTURE:
+            from .aperture import stage_aperture
+
+            rep = stage_aperture(conf, out, query_fn=query_fn, cone_fn=cone_fn)
         elif s == STAGE_RECONCILE:
             from .reconcile import check_consistency, reconcile_all
 
@@ -981,7 +988,7 @@ def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int =
                                 cone_fn=cone_fn, budget_s=budget_s)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from "
-                             f"{STAGES + (STAGE_REDETECT, STAGE_VETSTAR, STAGE_RECONCILE)}")
+                             f"{STAGES + (STAGE_REDETECT, STAGE_VETSTAR, STAGE_RECONCILE, STAGE_APERTURE)}")
     return rep
 
 

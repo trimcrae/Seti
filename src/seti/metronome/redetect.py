@@ -953,13 +953,18 @@ def demotions_by_stage(vetoes: dict) -> dict:
     So the counts are derived from the state instead, and are the same however
     many times reconciliation runs.
     """
-    lc, vet = [], []
+    lc, vet, ap = [], [], []
     for k, v in (vetoes or {}).items():
         if str(v).startswith("vet_"):
             vet.append(k)
         elif str(v) in LIGHTCURVE_VETOES:
             lc.append(k)
-    return {"lightcurve": sorted(lc), "vetstar": sorted(vet)}
+        elif str(v).startswith("aperture_"):
+            ap.append(k)
+    out = {"lightcurve": sorted(lc), "vetstar": sorted(vet)}
+    if ap:
+        out["aperture"] = sorted(ap)
+    return out
 
 
 def precise_degraded(summary: dict) -> list[str]:
@@ -1059,6 +1064,7 @@ def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
     dem = demotions_by_stage(prov.get("vetoes") or {})
     f["stars_demoted_by_lightcurve"] = len(dem["lightcurve"])
     f["stars_demoted_by_vetstar"] = len(dem["vetstar"])
+    f["stars_demoted_by_aperture"] = len(dem.get("aperture", []))
     summary["funnel"] = f
 
     summary["degraded"] = precise_degraded(summary)
@@ -1069,6 +1075,8 @@ def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
         parts.append(f"REDETECT_DEMOTED_{len(dem['lightcurve'])}")
     if dem["vetstar"]:
         parts.append(f"VETSTAR_DEMOTED_{len(dem['vetstar'])}")
+    if dem.get("aperture"):
+        parts.append(f"APERTURE_DEMOTED_{len(dem['aperture'])}")
     # REDETECT_/VETSTAR_DEMOTED_n are DERIVED from the records just above.  A
     # caller's own count of what its invocation changed is a different number
     # (MEASURED 2026-09-23: "VETSTAR_DEMOTED_2; VETSTAR_DEMOTED_1" in one
@@ -1077,7 +1085,7 @@ def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
     import re as _re
 
     for tok in (extra_tokens or []):
-        if tok and _re.fullmatch(r"(REDETECT|VETSTAR)_DEMOTED_\d+", str(tok)):
+        if tok and _re.fullmatch(r"(REDETECT|VETSTAR|APERTURE)_DEMOTED_\d+", str(tok)):
             continue
         if tok and str(tok) not in parts:
             parts.append(str(tok))

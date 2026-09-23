@@ -157,7 +157,18 @@ def reconcile_all(out: Path, *, stage: str = "reconcile") -> dict:
         if k:
             rd_by_key[k] = {kk: t.get(kk) for kk in RECONCILE_KEYS}
     vets = load_vetstar_reports(out)
+    from .aperture import aperture_veto
 
+    ap: dict = {}
+    app = out / "aperture.json"
+    if app.exists():
+        try:
+            ap = json.loads(app.read_text())
+        except (OSError, ValueError):
+            ap = {}
+    ap_per = ap.get("per_star") or {}
+
+    demoted_ap: list[str] = []
     demoted_lc: list[str] = []
     demoted_vet: list[str] = []
     n_rows = 0
@@ -191,6 +202,23 @@ def reconcile_all(out: Path, *, stage: str = "reconcile") -> dict:
                             and f not in ("catalogue_epochs_absent",
                                           "photometric_oscillation"))
                 # with no baseline row the star is left as it stands
+                # the sky around the star first: it is the assess-time question
+                arec = ap_per.get(key)
+                if arec is not None:
+                    row["aperture"] = {k: arec.get(k) for k in (
+                        "identity_reached", "aperture_reached", "identity_hit",
+                        "identity_detail", "contaminating", "contamination_detail")}
+                    row["aperture"]["n_neighbours"] = len(arec.get("neighbours") or [])
+                    aveto = aperture_veto(arec)
+                    if aveto and str(row.get("tier")) in ("candidate", "interest"):
+                        row["tier"] = "none"
+                        row["first_veto"] = aveto
+                        row["flags"] = ";".join(
+                            [f for f in str(row.get("flags") or "").split(";") if f
+                             and f != "None" and f != "nan"] + [aveto])
+                        demoted_ap.append(f"{key}:{aveto}")
+                else:
+                    row.pop("aperture", None)
                 rd = rd_by_key.get(key)
                 row["redetect"] = rd or {"status": "not_attempted"}
                 veto = _lightcurve_veto(rd)
@@ -230,6 +258,25 @@ def reconcile_all(out: Path, *, stage: str = "reconcile") -> dict:
             "note": ((summary.get("redetect") or {}).get("note")
                      or "the light curve has the last word; see redetect.json"),
         }
+    if ap:
+        summary["aperture_contamination"] = {
+            k: ap.get(k) for k in (
+                "generated_utc", "radius_arcsec", "identity_radius_arcsec", "sources",
+                "aperture_tol", "identity_tol", "shortlist_definition", "n_shortlist",
+                "n_positioned", "positions", "frac_identity_reached", "frac_aperture_reached",
+                "n_flagged", "flagged", "flagged_detail", "n_with_variable_neighbour", "note")}
+        summary["aperture_contamination"]["n_demoted"] = len(demoted_ap)
+        summary["aperture_contamination"]["demoted"] = demoted_ap
+        deg = [d for d in (summary.get("degraded") or [])
+               if not str(d).startswith("aperture_stage:")]
+        fa = ap.get("frac_aperture_reached")
+        fi = ap.get("frac_identity_reached")
+        if not (isinstance(fa, (int, float)) and fa >= 1.0
+                and isinstance(fi, (int, float)) and fi >= 1.0):
+            deg.append(f"aperture_stage:identity_reached_{float(fi or 0):.2f}"
+                       f"_aperture_reached_{float(fa or 0):.2f}_of_shortlist")
+        summary["degraded"] = deg
+        summary.setdefault("provenance", {})["aperture_generated_utc"] = ap.get("generated_utc")
     summary["vetstar"] = {
         "n_vetted": len(vets),
         "n_demoted": len(demoted_vet), "demoted": demoted_vet,
@@ -257,7 +304,8 @@ def reconcile_all(out: Path, *, stage: str = "reconcile") -> dict:
             "assess_generated_utc")
         cp.write_text(json.dumps(cj, indent=2, default=_json_default))
     sp.write_text(json.dumps(summary, indent=2, default=_json_default))
-    res.update({"status": "OK", "n_rows": n_rows, "demoted_lightcurve": demoted_lc,
+    res.update({"status": "OK", "n_rows": n_rows, "demoted_aperture": demoted_ap,
+                "demoted_lightcurve": demoted_lc,
                 "demoted_vetstar": demoted_vet, "n_vetstar_files": len(vets),
                 "verdict": summary.get("verdict")})
     return res

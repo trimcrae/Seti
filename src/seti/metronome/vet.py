@@ -352,11 +352,20 @@ def _f(rec: dict, key: str) -> float:
         return float("nan")
 
 
+def _int(rec: dict, key: str) -> int:
+    """An integer count, 0 when absent.  A record read back from CSV carries
+    NaN for a column its shard never wrote (MEASURED 2026-09-23: the
+    2026-09-21 shards predate the pool null, and ``int(nan or 0)`` crashed
+    the re-assess, because NaN is truthy)."""
+    v = _f(rec, key)
+    return int(v) if np.isfinite(v) else 0
+
+
 def core_pass(rec: dict, conf: dict, *, strict: bool) -> tuple[bool, list[str]]:
     """The core route: enough events AT the clock phase, and those events a
     clock.  Robust to a natural flare background the rms route is not."""
     c = dict(DEFAULT_VET, **(conf or {}))
-    f_in, jc, nc = _f(rec, "f_in_window"), _f(rec, "jitter_core"), int(rec.get("n_core", 0) or 0)
+    f_in, jc, nc = _f(rec, "f_in_window"), _f(rec, "jitter_core"), _int(rec, "n_core")
     f_min = float(c["f_core_min"] if strict else c["f_core_watch"])
     j_max = float(c["jitter_max"] if strict else c["jitter_watch"])
     why = []
@@ -393,8 +402,8 @@ def quality_pass(rec: dict, conf: dict, *, strict: bool) -> tuple[bool, list[str
         why.extend(rms_why)
         why.extend("core:" + w for w in core_why)
     if strict:
-        gf, ng = _f(rec, "gap_integer_frac"), int(rec.get("n_gaps_used", 0) or 0)
-        gfc, ngc = _f(rec, "gap_integer_frac_core"), int(rec.get("n_gaps_core", 0) or 0)
+        gf, ng = _f(rec, "gap_integer_frac"), _int(rec, "n_gaps_used")
+        gfc, ngc = _f(rec, "gap_integer_frac_core"), _int(rec, "n_gaps_core")
         best_n = max(ng, ngc)
         if best_n >= int(c["gap_min_count"]):
             ok_all = ng >= int(c["gap_min_count"]) and np.isfinite(gf) \
@@ -438,7 +447,7 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     # catalogue's own sampling reproduces the coherence), and unlike the
     # window null it needs no model of the cadence to say so.
     p_pool = _f(rec, "p_pool")
-    n_pool = int(rec.get("pn_n_trials", 0) or 0)
+    n_pool = _int(rec, "pn_n_trials")
     if n_pool > 0:
         if np.isfinite(p_pool) and p_pool >= float(c["pool_alpha"]):
             flags.append("pool_null_explains")
@@ -513,9 +522,9 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
 
     p_sh = _f(rec, "p_shuffle")
     gf = _f(rec, "gap_integer_frac")
-    ng = int(rec.get("n_gaps_used", 0) or 0)
+    ng = _int(rec, "n_gaps_used")
     gfc = _f(rec, "gap_integer_frac_core")
-    ngc = int(rec.get("n_gaps_core", 0) or 0)
+    ngc = _int(rec, "n_gaps_core")
     # clock-like gaps among ALL events or among the CORE events both clear the
     # star of "bursty"; a background flare between two ticks is not burstiness
     gaps_clocklike = (ng >= int(c["gap_min_count"]) and np.isfinite(gf)
@@ -540,7 +549,7 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
         flags.append("p_extrapolated")
     if bool(rec.get("wn_truncated_by_budget", False)):
         flags.append("null_truncated_by_budget")
-    if int(rec.get("n_events", 0) or 0) < int(c["n_quality_informative"]):
+    if _int(rec, "n_events") < int(c["n_quality_informative"]):
         flags.append("quality_uninformative")
 
     hard = [f for f in HARD_VETO_ORDER if f in flags]

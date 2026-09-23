@@ -446,6 +446,64 @@ def test_the_crest_needs_the_events_to_cluster():
     assert "EVENTS_ON_THE_CREST" in v2
 
 
+def test_vet_star_tolerates_nan_counts_from_old_shards():
+    """The 2026-09-21 shards have no pool-null columns; read back from CSV
+    they are NaN, and int(nan or 0) crashed the re-assess (run 35862296965)."""
+    rec = {"status": "scanned", "fdr_significant": True, "fdr_watch": True,
+           "period": 3.0, "pn_n_trials": float("nan"), "n_gaps_used": float("nan"),
+           "n_core": float("nan"), "n_gaps_core": float("nan"), "n_events": float("nan")}
+    v = vet_star(rec, {"mission": "tess"})
+    assert "pool_null_unreached" in v["flags"]
+
+
+def test_stage_aperture_flags_the_shortlist_and_reconciles(tmp_path):
+    from seti.metronome.aperture import stage_aperture
+    from seti.metronome.reconcile import check_consistency
+    from seti.metronome.run import load_metronome_config
+
+    pd.DataFrame({
+        "star_key": ["kepler:5879574", "kepler:42", "kepler:43"],
+        "star_id": ["5879574", "42", "43"], "mission": ["kepler"] * 3,
+        "catalogue": ["kepler_yang2019"] * 3,
+        "period": [P_CLOCK, 2.5, 7.0], "tier": ["candidate", "interest", "none"],
+        "first_veto": [None, None, "not_significant"], "flags": ["", "", ""],
+        "fdr_watch": [True, True, False]}).to_csv(tmp_path / "stars_vetted.csv", index=False)
+    (tmp_path / "candidates.json").write_text(json.dumps({
+        "candidates": [{"star_key": "kepler:5879574", "tier": "candidate"},
+                       {"star_key": "kepler:42", "tier": "interest"}], "watch": []}))
+    (tmp_path / "summary.json").write_text(json.dumps({
+        "verdict": "x", "degraded": [], "funnel": {}, "generated_utc": "2026-09-21T21:42:31Z"}))
+
+    class Tap:
+        def __call__(self, adql):
+            if "TAP_SCHEMA.columns" in adql:
+                return pd.DataFrame({"column_name": ["KIC", "RAJ2000", "DEJ2000"]})
+            ids = [s.strip() for s in adql.split("IN (")[1].rstrip(")").split(",")]
+            # kepler:42 is far from the RR Lyrae
+            return pd.DataFrame({"KIC": ids,
+                                 "RAJ2000": [TGT_RA if i == "5879574" else 10.0 for i in ids],
+                                 "DEJ2000": [TGT_DEC if i == "5879574" else 10.0 for i in ids]})
+
+    conf = load_metronome_config()
+    conf["variability_catalogues"] = VARI
+    rep = stage_aperture(conf, tmp_path, query_fn=Tap(), cone_fn=sky_cone)
+    assert rep["n_shortlist"] == 2 and rep["n_positioned"] == 2
+    assert rep["frac_aperture_reached"] == 1.0 and rep["frac_identity_reached"] == 1.0
+    assert rep["flagged"] == ["kepler:5879574"]
+    s = json.loads((tmp_path / "summary.json").read_text())
+    assert s["n_candidates"] == 0 and s["n_interest"] == 1
+    assert "APERTURE_DEMOTED_1" in s["verdict"]
+    assert s["funnel"]["stars_demoted_by_aperture"] == 1
+    assert s["aperture_contamination"]["demoted"] == [
+        "kepler:5879574:aperture_contaminating_variable"]
+    c = json.loads((tmp_path / "candidates.json").read_text())
+    row = c["candidates"][0]
+    assert row["first_veto"] == "aperture_contaminating_variable"
+    assert row["aperture"]["contamination_detail"]["matches"][0]["sep_arcsec"] == \
+        pytest.approx(13.3, abs=0.05)
+    assert check_consistency(tmp_path) == []
+
+
 def test_one_product_per_sector():
     from seti.metronome.vetstar import one_product_per_segment
 

@@ -1,8 +1,8 @@
 {
-  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); CLOCK_CANDIDATES_PENDING_VET; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_1",
-  "generated_utc": "2026-09-23T00:52:45Z",
+  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); CLOCK_CANDIDATES_PENDING_VET; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_2; VETSTAR_DEMOTED_1",
+  "generated_utc": "2026-09-23T00:53:39Z",
   "n_candidates": 0,
-  "n_interest": 5,
+  "n_interest": 4,
   "n_watch": 53,
   "funnel": {
     "events_in": 1523888,
@@ -13,10 +13,10 @@
     "stars_fdr_watch": 225,
     "stars_fdr_significant": 141,
     "stars_watch": 53,
-    "stars_interest": 5,
+    "stars_interest": 4,
     "stars_candidate": 0,
     "stars_demoted_by_lightcurve": 9,
-    "stars_demoted_by_vetstar": 1
+    "stars_demoted_by_vetstar": 2
   },
   "rejection_counters": {
     "first_veto": {
@@ -49,9 +49,9 @@
     }
   },
   "tiers": {
-    "none": 3244,
+    "none": 3245,
     "watch": 53,
-    "interest": 5,
+    "interest": 4,
     "candidate": 0
   },
   "jitter_calibration": {
@@ -1599,11 +1599,13 @@
     "note": "the light curve has the last word.  catalogue_epochs_absent: the flux at the catalogue's own epochs is no higher than at random epochs in the same windows, so the events the clock is built from are not in the photometry.  photometric_oscillation: the re-detected period IS the star's dominant photometric period, so the 'flares' are a detrending residual.  Either demotes, whatever the catalogue statistics said"
   },
   "vetstar": {
-    "star_key": "tess:350479496",
-    "verdict": "DEGRADED(gaia:gaia_source); NO_MUNDANE_EXPLANATION_FOUND [P=4.194131 d]",
-    "veto": null,
-    "n_demoted": 0,
-    "demoted": [],
+    "star_key": "tess:260128333",
+    "verdict": "MUNDANE_EXPLANATION_FOUND(NARROW_DIP_AT_P:width=0.05; COHERENT_OSCILLATION_AT_P:amp=0.00250,p_control=0.00498,z=19.7_with_events_masked; EVENTS_ON_THE_CREST:offset=0.064cycles) [P=2.921710 d]",
+    "veto": "vet_narrow_dip_at_p",
+    "n_demoted": 1,
+    "demoted": [
+      "tess:260128333:vet_narrow_dip_at_p"
+    ],
     "vetoes": [
       "CONTAMINATING_VARIABLE_AT_P",
       "CATALOGUED_ECLIPSING_BINARY",
@@ -1619,19 +1621,19 @@
       "AMPLITUDE_VARIES_BETWEEN_SEGMENTS"
     ],
     "note": "the single-star vet asks every mundane explanation by name and demotes on any of them; NO_CLOCK_CANDIDATES here is a count after vetting and is not an occurrence limit, and per CLAUDE.md is not written up",
-    "generated_utc": "2026-09-23T00:34:53Z"
+    "generated_utc": "2026-09-23T00:34:56Z"
   },
   "provenance": {
-    "rebuilt_utc": "2026-09-23T00:52:45Z",
+    "rebuilt_utc": "2026-09-23T00:53:39Z",
     "rebuilt_by": "vetstar",
     "assess_generated_utc": "2026-09-21T21:42:31Z",
     "redetect_generated_utc": "2026-09-22T21:57:41Z",
-    "vetstar_generated_utc": "2026-09-23T00:34:53Z",
+    "vetstar_generated_utc": "2026-09-23T00:34:56Z",
     "tiers_recomputed_from": "stars_vetted.csv overridden by candidates.json",
     "tier_sources": {
       "from_vetted": 3302,
-      "overridden_by_candidates": 10,
-      "n_demoted_rows": 10
+      "overridden_by_candidates": 11,
+      "n_demoted_rows": 11
     },
     "note": "counts, tiers and the verdict are RECOMPUTED from the per-star records on every reconciliation; funnel totals upstream of the tiers, rejection_counters, coverage, jitter_calibration and the acquisition logs are the assess run's and are not re-derived",
     "demotions_by_stage": {
@@ -1647,7 +1649,8 @@
         "tess:458478250"
       ],
       "vetstar": [
-        "kepler:5879574"
+        "kepler:5879574",
+        "tess:260128333"
       ]
     }
   }

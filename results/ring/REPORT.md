@@ -1,19 +1,19 @@
 # RING — rings around the dead (S63)
 
-**Verdict:** `DEGRADED (wd, ffp not reached; bd partial: acquisition NOT_RUN; 28/232 targets with epochs); NO_RING_SURVIVOR`
+**Verdict:** `DEGRADED (ffp not reached; bd partial: acquisition PARTIAL; 47/232 targets with epochs); NO_RING_SURVIVOR; SECONDARY_FLAGS_PENDING_VET`
 
-Generated 2026-09-23T12:35:04Z by run `35860901093`. Leg provenance (the run whose files each leg's numbers come from): wd: `None` (None), pulsar: `35860901093` (2026-09-23T12:34:37Z), bd: `None` (None), ffp: `35860901093` (2026-09-23T12:35:04Z)
+Generated 2026-09-23T14:32:09Z by run `35860904385`. Leg provenance (the run whose files each leg's numbers come from): wd: `35860904385` (2026-09-23T13:12:53Z), pulsar: `35860904385` (2026-09-23T12:37:30Z), bd: `35860904385` (2026-09-23T14:32:09Z), ffp: `35860904385` (2026-09-23T12:37:51Z)
 
 ## White dwarfs
 
-* input hosts with an AllWISE counterpart: 0 (route: `none`)
-* SED anchor: None
-* W1 / W2 detections: 0 / 0
-* excess-flagged: 0; shapes: None
-* surviving the catalogue gates: 0; gate rejections: None
+* input hosts with an AllWISE counterpart: 25,932 (route: `vizier_parent+cds_xmatch_propagated`)
+* SED anchor: {'gaia': 18491, 'nir': 6137, 'none': 1304}
+* W1 / W2 detections: 25,903 / 17,773
+* excess-flagged: 4,694; shapes: {'companion': 3222, 'debris_disk': 705, 'warm_ambiguous': 587, 'ring_band': 179, 'unfit': 1}
+* surviving the catalogue gates: 0; gate rejections: {'unresolved_companion': 1907, 'astrometric_registration': 1055, 'ledger': 926, 'wise_quality': 806}
 * ring-band candidates before follow-up: 0
 * after follow-up: **n/a** (None)
-* sensitivity: None
+* sensitivity: {'n_hosts_with_500K_ring_detectable_at_f_lt_1': 24626, 'median_f_min_500K': 0.0855302469981484, 'n_hosts_with_500K_ring_detectable_at_f_lt_0p01': 3955}
 
 ## Pulsars
 
@@ -47,11 +47,12 @@ Generated 2026-09-23T12:35:04Z by run `35860901093`. Leg provenance (the run who
 
 ## Brown dwarfs (Y / late T): W2 duty cycle
 
-* targets: 232; with NEOWISE epochs: 28; tested (>= min epochs): 11
-* population W2 reduced-chi2 median: 3.50242083657619; threshold 10.50726250972857
-* duty-cycle flags: **0**
-* coverage: 0.121 -- DEGRADED: acquisition NOT_RUN; 28/232 targets with epochs
+* targets: 232; with NEOWISE epochs: 47; tested (>= min epochs): 19
+* population W2 reduced-chi2 median: 4.411020177613055; threshold 13.233060532839165
+* duty-cycle flags: **1**
+* coverage: 0.203 -- DEGRADED: acquisition PARTIAL; 47/232 targets with epochs
 
+  * `WISE J181329.40+283533.3` T8: n=9, chi2_red=17.4, amp=0.70 mag, high-state fraction 0.5555555555555556
 
 ## Free-floating planetary-mass objects: hotter than cooling allows
 

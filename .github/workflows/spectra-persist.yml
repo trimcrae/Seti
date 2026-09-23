@@ -239,17 +239,33 @@ jobs:
           git fetch --quiet origin ${{ github.ref_name }} || true
           git checkout --quiet FETCH_HEAD -- results/spectra_persist/ckpt || true
           git reset --quiet || true
+          # Mark time AFTER the fetched checkpoints land: only files written
+          # by THIS shard are uploaded (see the upload step).
+          sleep 1; touch "$RUNNER_TEMP/ckpt_marker"; sleep 1
           ARGS="--stage run --shard ${{ matrix.shard }} --n-shards ${{ github.event.inputs.n_shards || '4' }}"
           ARGS="$ARGS --top ${{ github.event.inputs.top || '0' }} --max-exposures ${{ github.event.inputs.max_exposures || '10' }}"
           if [ -n "${{ github.event.inputs.release }}" ]; then ARGS="$ARGS --release ${{ github.event.inputs.release }}"; fi
           echo "seti.spectra.persist $ARGS"
           python -m seti.spectra.persist $ARGS
           ls results/spectra_persist/ckpt | wc -l
+      # Upload ONLY the checkpoints this shard wrote.  Run 35758868818 uploaded
+      # the whole directory from every shard; the reduce then unpacked the
+      # archives concurrently into one place and the overlapping files raced
+      # (14 came out interleaved, not JSON; 35 as the stale copy).
+      - name: Collect this shard's checkpoints
+        if: always() && steps.gate.outputs.skip == 'false'
+        run: |
+          mkdir -p "$RUNNER_TEMP/ckpt_out"
+          if [ -f "$RUNNER_TEMP/ckpt_marker" ]; then
+            find results/spectra_persist/ckpt -name '*.json' -newer "$RUNNER_TEMP/ckpt_marker" \
+              -exec cp {} "$RUNNER_TEMP/ckpt_out/" \;
+          fi
+          echo "this shard wrote $(ls "$RUNNER_TEMP/ckpt_out" | wc -l) checkpoints"
       - uses: actions/upload-artifact@v4
         if: always() && steps.gate.outputs.skip == 'false'
         with:
           name: persist-ckpt-${{ matrix.shard }}
-          path: results/spectra_persist/ckpt/
+          path: ${{ runner.temp }}/ckpt_out/
           if-no-files-found: warn
 
   reduce:
@@ -270,16 +286,21 @@ jobs:
           pip install -e ".[dev,spectra]"
           pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
           pip install requests
+      # One directory per shard artifact (no merge-multiple): the choice between
+      # two copies of a checkpoint is made per file by merge_checkpoints, never
+      # by which concurrent unzip happened to write last.
       - uses: actions/download-artifact@v4
         if: ${{ github.event.inputs.stage != 'reduce' }}
         with:
           pattern: persist-ckpt-*
-          path: results/spectra_persist/ckpt/
-          merge-multiple: true
+          path: ${{ runner.temp }}/ckpt_incoming/
+          merge-multiple: false
       - name: Reduce (merge checkpoints; SIMBAD; NIST context; rest-frame IDs; summary)
         run: |
+          mkdir -p "$RUNNER_TEMP/ckpt_incoming"
           ls results/spectra_persist/ckpt | wc -l
-          python -m seti.spectra.persist --stage reduce
+          find "$RUNNER_TEMP/ckpt_incoming" -name '*.json' | wc -l
+          python -m seti.spectra.persist --stage reduce --incoming "$RUNNER_TEMP/ckpt_incoming"
           echo "=== summary ==="
           python - <<'PY'
           import json

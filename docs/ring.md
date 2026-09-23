@@ -247,6 +247,24 @@ epoch coverage reported DEGRADED; the psrqpy `get_version` property; strict
 JSON; provenance (`generated_at`, `run_id`, `git_sha`) on every JSON and per
 leg in the summary; and a self-consistency block in `summary.json`.
 
+**Re-run with the fixes (run 35860901093, legs pulsar + ffp, 2026-09-23
+12:30–12:35 UTC).** Pulsars: 4,318 hosts, 2,770 localised (the 244 ecliptic
+positions recovered); 1,445 with a counterpart, 1,120 of them vetoed
+`position_not_localised`. The chance census is now calibrated: unlocalised
+hosts 549/1,071 AllWISE/CatWISE counterparts vs 527/1,059 expected; localised
+160/253 vs 80/213, the excess being catalogued associations. Ring-band
+colours: 8 observed vs 9.6 expected by chance in CatWISE (2 vs 1.6 among
+localised hosts) — no population excess. All 8 ring-band counterparts are
+vetoed (three globular-cluster/SMC-PWN associations, five unlocalised
+positions), so **0 ring candidates**. One counterpart survived the per-host
+screen: J0418−4154, an AllWISE source at 0.47″ with W1 = 18.1 and
+W1−W2 = 0.48 ± 0.52 (not a ring colour), p_chance = 0.006 — which across
+2,770 localised hosts is p_trials ≈ 1; the look-elsewhere veto added after
+this run removes it. The free-floating leg reached data for the first time
+(69 objects, 63 with L_bol) but tested none: the membership column taken,
+`Mm`, holds the membership *class* (HLM/AM/BM/NM), not a group, so no object
+had an age. Fixed by choosing the group column by content.
+
 A note on the brown-dwarf leg's scope: it tests *W2 variability* (a duty
 cycle), not a static W1/W2 excess. The static test would be wrong here as
 built — CH₄ absorption in W1 makes late-T/Y dwarfs intrinsically very red in

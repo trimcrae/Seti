@@ -265,6 +265,19 @@ this run removes it. The free-floating leg reached data for the first time
 `Mm`, holds the membership *class* (HLM/AM/BM/NM), not a group, so no object
 had an age. Fixed by choosing the group column by content.
 
+**Verification run with both follow-up fixes (run 35864331050, legs pulsar +
+ffp, on the side branch `claude/handoff-ring-verify` so it could not race the
+full run, 13:02–13:08 UTC).** Pulsars: identical census; J0418−4154 now
+vetoed `not_significant_after_trials`; **0 survivors, 0 ring candidates**.
+Free-floating objects: group column chosen = BANYAN II `GBII` (148 resolvable
+values vs 0 for `Mm`), 67/69 with a group age, **61 testable**, 8 catalogued
+planetary-mass (≤ 13 M_J); **0 flags** — every planetary-mass object sits at
+or below the 13 M_J cooling ceiling plus its 0.5 dex margin (closest:
+2MASS J00470038+6803543, AB Dor, 11.8 M_J, 0.004 dex below; the TW Hya and
+β Pic members are 1.0–1.5 dex below). 43 objects exceed the ceiling, all
+catalogued above 13 M_J, i.e. ordinary brown dwarfs. Self-consistency block:
+11 checks, 0 failures.
+
 A note on the brown-dwarf leg's scope: it tests *W2 variability* (a duty
 cycle), not a static W1/W2 excess. The static test would be wrong here as
 built — CH₄ absorption in W1 makes late-T/Y dwarfs intrinsically very red in

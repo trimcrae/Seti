@@ -1,6 +1,6 @@
 {
   "stage": "acquire",
-  "generated_utc": "2026-09-22T19:06:05Z",
+  "generated_utc": "2026-09-22T23:52:03Z",
   "jpl": {
     "n_entries": 403,
     "n_unparsed_lines": 0,
@@ -4261,11 +4261,19 @@
       ]
     },
     "sgrb2_nummelin1998_u": {
-      "table": null,
-      "roles": {},
-      "units": {},
-      "frame_hint": "",
-      "discovery_status": "QUERY_RETURNED_ZERO_ROWS",
+      "table": "J/ApJS/117/427/table46",
+      "roles": {
+        "freq": "Freq",
+        "freq_err": null,
+        "ident": null,
+        "intensity": null,
+        "transition": null
+      },
+      "units": {
+        "freq": "I6"
+      },
+      "frame_hint": "observed",
+      "discovery_status": "OK",
       "n_rows_catalogue": null,
       "queries": [
         {
@@ -4281,496 +4289,16 @@
           "rows": 6
         },
         {
-          "stage": "fallback_sgrb2_nummelin1998_u",
-          "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+          "stage": "tables_sgrb2_nummelin1998_u",
+          "adql": "ASU meta -source=J/ApJS/117/427/table46",
           "status": "OK",
-          "rows": 34
-        },
-        {
-          "stage": "fallback_sgrb2_nummelin1998_u",
-          "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-          "status": "OK",
-          "rows": 38
+          "rows": 1,
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
         }
       ],
       "errors": [],
-      "fallback": {
-        "terms_all": [
-          "nidentified"
-        ],
-        "terms_any": [
-          "Sgr B2",
-          "unidentified",
-          "line survey"
-        ],
-        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "status": "OK",
-        "n_tables": 34,
-        "tables": [
-          {
-            "table_name": "J/A+A/323/739/table1",
-            "description": "DELTA(VLA-RASS)<40\" unidentified RGB sources ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/323/739/table2",
-            "description": "40\"<DELTA(VLA-RASS)<100\" unidentified RGB sources ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/323/739/table3",
-            "description": "DELTA(VLA-RASS)<100\" unidentified RGB sources, low resolution data ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/323/739/table4",
-            "description": "Previously unidentified RGB sources: VLA empty fields ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/370/468/table1",
-            "description": "Unidentified 3EG sources without known possible galactic counterparts ( Torres D.F., Romero G.E., Combi J.A., Benaglia P., Andernach H., Punsly B.)"
-          },
-          {
-            "table_name": "J/A+A/370/468/table8",
-            "description": "Variability index I for all low latitude unidentified sources ( Torres D.F., Romero G.E., Combi J.A., Benaglia P., Andernach H., Punsly B.)"
-          },
-          {
-            "table_name": "J/A+A/421/175/tableb1",
-            "description": "Unidentified X-ray source positions and properties ( Pillitteri I., Micela G., Sciortino S., Damiani F., Harnden F.R.JR)"
-          },
-          {
-            "table_name": "J/A+A/423/469/table2",
-            "description": "Unidentified Sources ( Sazonov S.Yu., Revnivtsev M.G.)"
-          },
-          {
-            "table_name": "J/A+A/564/L2/table4",
-            "description": "Unidentified lines in comet Lovejoy ( Agundez M., Biver N., Santos Sanz P., Bockelee-Morvan D., Moreno R.)"
-          },
-          {
-            "table_name": "J/A+A/583/A85/tablea2",
-            "description": "Unresolved or unidentified systems ( Alonso-Floriano F.J., Caballero J.A., Cortes-Contreras M., Solano E., Montes D.)"
-          },
-          {
-            "table_name": "J/A+A/681/A50/tablea4",
-            "description": "All unidentified lines ( Wallstrom S.H.J., Danilovich T., Muller H.S.P., et al.)"
-          },
-          {
-            "table_name": "J/A+AS/133/201/table6",
-            "description": "Spectral type of IRAS unidentified sources which have quality-3 flux density data at 12, 25, and 60{mu}m ( Iyengar K.V.K., MacConnell D.J.)"
-          },
-          {
-            "table_name": "J/A+AS/134/287/table5",
-            "description": "Uncertainty regions for unidentified EXMS entries ( Reynolds A.P., Parmar A.N., Hakala P.J., Pollock A.M.T., Williams O.R., Peacock A., Taylor B.G.)"
-          },
-          {
-            "table_name": "J/A+AS/142/181/table3",
-            "description": "Unidentified lines ( Cernicharo J., Guelin M., Kahane C.)"
-          },
-          {
-            "table_name": "J/ApJ/694/222/table2",
-            "description": "Unidentified point sources from five-year Q-, V-, and W-band ILC (internal linear combination) map ( Chen X., Wright E.L.)"
-          },
-          {
-            "table_name": "J/ApJ/752/61/table2",
-            "description": "Unidentified gamma-ray sources (UGS) associations for 156 2FGL ( Massaro F., D'Abrusco R., Tosti G., Ajello M., Paggi A., Gasparrini D.)"
-          },
-          {
-            "table_name": "J/ApJ/846/L19/table1",
-            "description": "LOFAR survey of unidentified Fermi-LAT sources: source information ( Pleunis Z., Bassa C.G., Hessels J.W.T., Kondratiev V.I., Camilo F., Cognard I., Griessmeier J.-M., Stappers B.W., van Amesfoort A.S., Sanidas S.)"
-          },
-          {
-            "table_name": "J/ApJS/117/427/table46",
-            "description": "Unidentified lines ( Nummelin A., Bergman P., Hjalmarson A., Friberg P., Irvine W.M., Millar T.J., Ohishi M., Saito S.)"
-          },
-          {
-            "table_name": "J/ApJS/156/69/table6",
-            "description": "Blends containing unidentified lines ( Weidenspointner G., Harris M.J., Sturner S., Teegarden B.J., Ferguson C.)"
-          },
-          {
-            "table_name": "J/ApJS/179/306/table3",
-            "description": "Unidentified radio sources ( Russell J., Ryan R.E.Jr, Cohen S.H., Windhorst R.A., Waddington I.)"
-          },
-          {
-            "table_name": "J/ApJS/206/13/ugs",
-            "description": "Unidentified gamma-ray sources without gamma-ray analysis flag photometry (tables 3 and 8) ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/206/13/ugsw",
-            "description": "Unidentified gamma-ray sources with gamma-ray analysis flag photometry (tables 4 and 9) ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/206/17/table2",
-            "description": "List of correspondences between unidentified 3PBC hard X-ray sources and WISE {gamma}-ray blazar candidates ( Maselli A., Massaro F., Cusumano G., D'Abrusco R., La Parola V., Paggi A., Segreto A., Smith H.A., Tosti G.)"
-          },
-          {
-            "table_name": "J/ApJS/207/4/table2",
-            "description": "Unidentified {gamma}-ray sources (32 unique 2FGL) ( Massaro F., D'Abrusco R., Giroletti M., Paggi A., Masetti N., Tosti G., Nori M., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/209/10/ugs",
-            "description": "Unidentified Gamma-ray Sources in the Northern  and Southern samples  and in the SDA sample ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/235/4/table2",
-            "description": "Unidentified sources with 2MASS counterpart in the Swift-BAT 105-month catalog ( Oh K., Koss M., Markwardt C.B., Schawinski K., Baumgartner W.H., Barthelmy S.D., Cenko S.B., Gehrels N., Mushotzky R., Petulante A., Ricci C., Lien A., Trakhtenbrot B.)"
-          },
-          {
-            "table_name": "J/ApJS/91/461/table6",
-            "description": "Unidentified lines in solar active region EUV spectrum ( THOMAS R.J., NEUPERT W.M.)"
-          },
-          {
-            "table_name": "J/MNRAS/243/1/table8",
-            "description": "Unidentified Objects ( Boyle B.J., Fong R., Shanks T., Peterson B.A.)"
-          },
-          {
-            "table_name": "J/MNRAS/287/293/tab2-8",
-            "description": "BR photometry for unidentified EUV sources ( Maoz D., Ofek E.O., Shemi A.)"
-          },
-          {
-            "table_name": "J/MNRAS/287/293/table1",
-            "description": "Unidentified EUV sources ( Maoz D., Ofek E.O., Shemi A.)"
-          },
-          {
-            "table_name": "J/MNRAS/412/1853/table1",
-            "description": "Swift XRT observations of unidentified XMM-Newton Slew Survey sources ( Starling R.L.C., Evans P.A., Read A.M., Saxton R.D., Esquej P., Krimm H., O'Brien P.T., Osborne J.P., Mateos S., Warwick R., Wiersema K.)"
-          },
-          {
-            "table_name": "J/MNRAS/500/4749/table3",
-            "description": "Properties of the unidentified sources ( Baldi R.D., Williams D.R.A., McHardy I.M., et al.)"
-          },
-          {
-            "table_name": "J/MNRAS/502/1299/table3",
-            "description": "from 301 previously unidentified stellar variables and related characteristics, not including rotators and unknown variables ( Thiemann H.B., Norton A.J., Dickinson H.J., Mcmaster A., Kolb U.C.)"
-          },
-          {
-            "table_name": "J/other/APh/26.282/tableb5",
-            "description": "Unidentified and weakly identified extragalactic EGRET sources, possibly blazars ( Achterberg A., Ackermann M., Adams J., et al.)"
-          }
-        ],
-        "by_column": {
-          "terms_any": [
-            "nidentified",
-            "Sgr B2",
-            "unidentified",
-            "line survey"
-          ],
-          "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-          "status": "OK",
-          "n_columns": 38,
-          "n_tables": 32,
-          "tables": [
-            {
-              "table_name": "J/A+A/450/993/tablea1",
-              "columns": [
-                {
-                  "column": "\"Un\"",
-                  "description": "[U] U: unidentified source"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/461/789/table3",
-              "columns": [
-                {
-                  "column": "\"Species\"",
-                  "description": "Molecule name (or \"Unid\" when the line is unidentified) (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/553/A12/table1",
-              "columns": [
-                {
-                  "column": "\"un\"",
-                  "description": "Number of unidentified sources (2)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/564/L2/table4",
-              "columns": [
-                {
-                  "column": "\"Freq\"",
-                  "description": "[251766/264753] Frequency of Unidentified line"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/586/A50/temp",
-              "columns": [
-                {
-                  "column": "\"IsAbs\"",
-                  "description": "[F/T] Flag indicating the source is associated with absorption in Sgr B2 (IsAbsorption)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/103/83/table1",
-              "columns": [
-                {
-                  "column": "\"Atom\"",
-                  "description": "Identification: atom and multiplet or molecule and vibrational band or \"?\" for an unidentified line"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/129/541/tableb1",
-              "columns": [
-                {
-                  "column": "\"El\"",
-                  "description": "Ion (UN = unidentified lines)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/142/181/table3",
-              "columns": [
-                {
-                  "column": "\"Name\"",
-                  "description": "Unidentified lines (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/143/145/fluxes",
-              "columns": [
-                {
-                  "column": "\"n_Source\"",
-                  "description": "[a] Unidentified source (2)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/152/80/obs",
-              "columns": [
-                {
-                  "column": "\"Dis\"",
-                  "description": "[*] Indicates a discovery or new/unidentified observation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/158/235/table2",
-              "columns": [
-                {
-                  "column": "\"CXOU\"",
-                  "description": "Chandra X-ray Observatory Unidentified source (HHMMSS.ss+DDMMSS.s)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/158/235/table3",
-              "columns": [
-                {
-                  "column": "\"CXOU\"",
-                  "description": "Chandra X-ray Observatory Unidentified source (HHMMSS.ss+DDMMSS.s)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AZh/71/684/table2",
-              "columns": [
-                {
-                  "column": "\"z(min)\"",
-                  "description": "Photometric redshift or minimum photometric redshift for unidentified objects"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/716/30/blazars",
-              "columns": [
-                {
-                  "column": "\"OClass\"",
-                  "description": "Optical spectrum classification (BL Lac, BZU (blazar of unknown type), FSRQ or Unidentified)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/742/27/agns",
-              "columns": [
-                {
-                  "column": "\"Opt\"",
-                  "description": "[UBQG] Optical classification (B=BL Lac, Q=quasar, G=radio galaxy, U=unidentified)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/752/61/table2",
-              "columns": [
-                {
-                  "column": "\"2FGL\"",
-                  "description": "Unidentified {gamma}-ray source (UGS) identifier (JHHMM.m+DDMM)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/766/37/table1",
-              "columns": [
-                {
-                  "column": "\"OT\"",
-                  "description": "[GQU] Nature of optical object: G=Galaxy, Q=Quasar, U=Unidentified"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/976/175/tablea",
-              "columns": [
-                {
-                  "column": "\"n_RMT\"",
-                  "description": "[U/I ] U/I for Unidentified line by Nave et al. (1994ApJS...94..221N, Cat. J/ApJS/94/221)."
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/106/463/table3",
-              "columns": [
-                {
-                  "column": "\"Id\"",
-                  "description": "[]? ID status; 1=identified; 0=unidentified"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/117/427/tab6-45",
-              "columns": [
-                {
-                  "column": "\"N\"",
-                  "description": "? Observed integrated intensity at Sgr B2(N) (6)"
-                },
-                {
-                  "column": "\"M\"",
-                  "description": "? Observed integrated intensity at Sgr B2(M)(6)"
-                },
-                {
-                  "column": "\"NW\"",
-                  "description": "? Observed integrated intensity at Sgr B2(NW)(6)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/117/427/table46",
-              "columns": [
-                {
-                  "column": "\"N\"",
-                  "description": "? Observed integrated intensity at Sgr B2(N)"
-                },
-                {
-                  "column": "\"M\"",
-                  "description": "? Observed integrated intensity at Sgr B2(M)"
-                },
-                {
-                  "column": "\"NW\"",
-                  "description": "? Observed integrated intensity at Sgr B2(NW) (2)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/119/159/table34",
-              "columns": [
-                {
-                  "column": "\"OName3\"",
-                  "description": "Cross-identification from UV-excess and emission-line surveys (4)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/201/30/catalog",
-              "columns": [
-                {
-                  "column": "\"fID\"",
-                  "description": "[1/100]? Final identification flag (1=secure, 10=ambiguous, blank=unidentified, 100=subthreshold)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/206/9/EGOs",
-              "columns": [
-                {
-                  "column": "\"3mm\"",
-                  "description": "[Y ] Included in the 3mm line survey? (5)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/263/27/table1",
-              "columns": [
-                {
-                  "column": "\"q_zspec\"",
-                  "description": "[-3/4] Redshift confidence grade (4=very secure, 3=secure, 2=probable, 1=insecure, 0=unidentified spectrum) (3)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/524/1826/bdcand",
-              "columns": [
-                {
-                  "column": "\"SpType\"",
-                  "description": "[-] Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/524/1826/colour",
-              "columns": [
-                {
-                  "column": "\"SpType\"",
-                  "description": "Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/524/1826/memcand",
-              "columns": [
-                {
-                  "column": "\"SpType\"",
-                  "description": "Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
-                }
-              ]
-            },
-            {
-              "table_name": "J/PAZh/30/946/table",
-              "columns": [
-                {
-                  "column": "\"Lambda\"",
-                  "description": "Spectral line wavelength of unidentified cometary band"
-                }
-              ]
-            },
-            {
-              "table_name": "V/135A/catalog",
-              "columns": [
-                {
-                  "column": "\"n_G\"",
-                  "description": "[*?] Unnumbered or unidentified star (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "VI/132C/lunarocc",
-              "columns": [
-                {
-                  "column": "\"Double\"",
-                  "description": "[BEFNSUW?] Double star or unidentified star (12)"
-                }
-              ]
-            },
-            {
-              "table_name": "VII/5A/catalog",
-              "columns": [
-                {
-                  "column": "\"Code1\"",
-                  "description": "Unidentified code"
-                },
-                {
-                  "column": "\"Code2\"",
-                  "description": "Unidentified code"
-                },
-                {
-                  "column": "\"Code3\"",
-                  "description": "Unidentified code"
-                }
-              ]
-            }
-          ]
-        }
-      },
+      "fallback": {},
       "scoreboard": [
         {
           "table": "J/ApJS/117/427/table46",
@@ -4805,7 +4333,7 @@
             "transition": null
           },
           "n_rows": null,
-          "usable": false,
+          "usable": true,
           "columns": [
             "recno",
             "Freq",
@@ -4816,9 +4344,16 @@
           ]
         }
       ],
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "n_lines": 0,
-      "n_unidentified": 0
+      "status": "OK",
+      "n_lines": 370,
+      "n_unidentified": 0,
+      "freq_scale": "guessed:MHz_from_magnitude",
+      "fmin_mhz": 219216.0,
+      "fmax_mhz": 263436.0,
+      "has_intensity": false,
+      "ident_values_sample": [
+        ""
+      ]
     },
     "sgrb2_nummelin1998": {
       "table": null,
@@ -5579,11 +5114,20 @@
       "n_unidentified": 0
     },
     "comet_lovejoy_agundez2014_u": {
-      "table": null,
-      "roles": {},
-      "units": {},
+      "table": "J/A+A/564/L2/table4",
+      "roles": {
+        "freq": "Freq",
+        "freq_err": null,
+        "ident": null,
+        "intensity": "T(MB)dv",
+        "transition": null
+      },
+      "units": {
+        "freq": "F8.1",
+        "intensity": "F6.3"
+      },
       "frame_hint": "",
-      "discovery_status": "QUERY_RETURNED_ZERO_ROWS",
+      "discovery_status": "OK",
       "n_rows_catalogue": null,
       "queries": [
         {
@@ -5599,1119 +5143,16 @@
           "rows": 8
         },
         {
-          "stage": "fallback_comet_lovejoy_agundez2014_u",
-          "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
+          "stage": "tables_comet_lovejoy_agundez2014_u",
+          "adql": "ASU meta -source=J/A+A/564/L2/table4",
           "status": "OK",
-          "rows": 34
-        },
-        {
-          "stage": "fallback_comet_lovejoy_agundez2014_u",
-          "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-          "status": "OK",
-          "rows": 122
+          "rows": 1,
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
         }
       ],
       "errors": [],
-      "fallback": {
-        "terms_all": [
-          "nidentified"
-        ],
-        "terms_any": [
-          "Lovejoy",
-          "comet",
-          "unidentified",
-          "line survey"
-        ],
-        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "status": "OK",
-        "n_tables": 34,
-        "tables": [
-          {
-            "table_name": "J/A+A/323/739/table1",
-            "description": "DELTA(VLA-RASS)<40\" unidentified RGB sources ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/323/739/table2",
-            "description": "40\"<DELTA(VLA-RASS)<100\" unidentified RGB sources ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/323/739/table3",
-            "description": "DELTA(VLA-RASS)<100\" unidentified RGB sources, low resolution data ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/323/739/table4",
-            "description": "Previously unidentified RGB sources: VLA empty fields ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
-          },
-          {
-            "table_name": "J/A+A/370/468/table1",
-            "description": "Unidentified 3EG sources without known possible galactic counterparts ( Torres D.F., Romero G.E., Combi J.A., Benaglia P., Andernach H., Punsly B.)"
-          },
-          {
-            "table_name": "J/A+A/370/468/table8",
-            "description": "Variability index I for all low latitude unidentified sources ( Torres D.F., Romero G.E., Combi J.A., Benaglia P., Andernach H., Punsly B.)"
-          },
-          {
-            "table_name": "J/A+A/421/175/tableb1",
-            "description": "Unidentified X-ray source positions and properties ( Pillitteri I., Micela G., Sciortino S., Damiani F., Harnden F.R.JR)"
-          },
-          {
-            "table_name": "J/A+A/423/469/table2",
-            "description": "Unidentified Sources ( Sazonov S.Yu., Revnivtsev M.G.)"
-          },
-          {
-            "table_name": "J/A+A/564/L2/table4",
-            "description": "Unidentified lines in comet Lovejoy ( Agundez M., Biver N., Santos Sanz P., Bockelee-Morvan D., Moreno R.)"
-          },
-          {
-            "table_name": "J/A+A/583/A85/tablea2",
-            "description": "Unresolved or unidentified systems ( Alonso-Floriano F.J., Caballero J.A., Cortes-Contreras M., Solano E., Montes D.)"
-          },
-          {
-            "table_name": "J/A+A/681/A50/tablea4",
-            "description": "All unidentified lines ( Wallstrom S.H.J., Danilovich T., Muller H.S.P., et al.)"
-          },
-          {
-            "table_name": "J/A+AS/133/201/table6",
-            "description": "Spectral type of IRAS unidentified sources which have quality-3 flux density data at 12, 25, and 60{mu}m ( Iyengar K.V.K., MacConnell D.J.)"
-          },
-          {
-            "table_name": "J/A+AS/134/287/table5",
-            "description": "Uncertainty regions for unidentified EXMS entries ( Reynolds A.P., Parmar A.N., Hakala P.J., Pollock A.M.T., Williams O.R., Peacock A., Taylor B.G.)"
-          },
-          {
-            "table_name": "J/A+AS/142/181/table3",
-            "description": "Unidentified lines ( Cernicharo J., Guelin M., Kahane C.)"
-          },
-          {
-            "table_name": "J/ApJ/694/222/table2",
-            "description": "Unidentified point sources from five-year Q-, V-, and W-band ILC (internal linear combination) map ( Chen X., Wright E.L.)"
-          },
-          {
-            "table_name": "J/ApJ/752/61/table2",
-            "description": "Unidentified gamma-ray sources (UGS) associations for 156 2FGL ( Massaro F., D'Abrusco R., Tosti G., Ajello M., Paggi A., Gasparrini D.)"
-          },
-          {
-            "table_name": "J/ApJ/846/L19/table1",
-            "description": "LOFAR survey of unidentified Fermi-LAT sources: source information ( Pleunis Z., Bassa C.G., Hessels J.W.T., Kondratiev V.I., Camilo F., Cognard I., Griessmeier J.-M., Stappers B.W., van Amesfoort A.S., Sanidas S.)"
-          },
-          {
-            "table_name": "J/ApJS/117/427/table46",
-            "description": "Unidentified lines ( Nummelin A., Bergman P., Hjalmarson A., Friberg P., Irvine W.M., Millar T.J., Ohishi M., Saito S.)"
-          },
-          {
-            "table_name": "J/ApJS/156/69/table6",
-            "description": "Blends containing unidentified lines ( Weidenspointner G., Harris M.J., Sturner S., Teegarden B.J., Ferguson C.)"
-          },
-          {
-            "table_name": "J/ApJS/179/306/table3",
-            "description": "Unidentified radio sources ( Russell J., Ryan R.E.Jr, Cohen S.H., Windhorst R.A., Waddington I.)"
-          },
-          {
-            "table_name": "J/ApJS/206/13/ugs",
-            "description": "Unidentified gamma-ray sources without gamma-ray analysis flag photometry (tables 3 and 8) ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/206/13/ugsw",
-            "description": "Unidentified gamma-ray sources with gamma-ray analysis flag photometry (tables 4 and 9) ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/206/17/table2",
-            "description": "List of correspondences between unidentified 3PBC hard X-ray sources and WISE {gamma}-ray blazar candidates ( Maselli A., Massaro F., Cusumano G., D'Abrusco R., La Parola V., Paggi A., Segreto A., Smith H.A., Tosti G.)"
-          },
-          {
-            "table_name": "J/ApJS/207/4/table2",
-            "description": "Unidentified {gamma}-ray sources (32 unique 2FGL) ( Massaro F., D'Abrusco R., Giroletti M., Paggi A., Masetti N., Tosti G., Nori M., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/209/10/ugs",
-            "description": "Unidentified Gamma-ray Sources in the Northern  and Southern samples  and in the SDA sample ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
-          },
-          {
-            "table_name": "J/ApJS/235/4/table2",
-            "description": "Unidentified sources with 2MASS counterpart in the Swift-BAT 105-month catalog ( Oh K., Koss M., Markwardt C.B., Schawinski K., Baumgartner W.H., Barthelmy S.D., Cenko S.B., Gehrels N., Mushotzky R., Petulante A., Ricci C., Lien A., Trakhtenbrot B.)"
-          },
-          {
-            "table_name": "J/ApJS/91/461/table6",
-            "description": "Unidentified lines in solar active region EUV spectrum ( THOMAS R.J., NEUPERT W.M.)"
-          },
-          {
-            "table_name": "J/MNRAS/243/1/table8",
-            "description": "Unidentified Objects ( Boyle B.J., Fong R., Shanks T., Peterson B.A.)"
-          },
-          {
-            "table_name": "J/MNRAS/287/293/tab2-8",
-            "description": "BR photometry for unidentified EUV sources ( Maoz D., Ofek E.O., Shemi A.)"
-          },
-          {
-            "table_name": "J/MNRAS/287/293/table1",
-            "description": "Unidentified EUV sources ( Maoz D., Ofek E.O., Shemi A.)"
-          },
-          {
-            "table_name": "J/MNRAS/412/1853/table1",
-            "description": "Swift XRT observations of unidentified XMM-Newton Slew Survey sources ( Starling R.L.C., Evans P.A., Read A.M., Saxton R.D., Esquej P., Krimm H., O'Brien P.T., Osborne J.P., Mateos S., Warwick R., Wiersema K.)"
-          },
-          {
-            "table_name": "J/MNRAS/500/4749/table3",
-            "description": "Properties of the unidentified sources ( Baldi R.D., Williams D.R.A., McHardy I.M., et al.)"
-          },
-          {
-            "table_name": "J/MNRAS/502/1299/table3",
-            "description": "from 301 previously unidentified stellar variables and related characteristics, not including rotators and unknown variables ( Thiemann H.B., Norton A.J., Dickinson H.J., Mcmaster A., Kolb U.C.)"
-          },
-          {
-            "table_name": "J/other/APh/26.282/tableb5",
-            "description": "Unidentified and weakly identified extragalactic EGRET sources, possibly blazars ( Achterberg A., Ackermann M., Adams J., et al.)"
-          }
-        ],
-        "by_column": {
-          "terms_any": [
-            "nidentified",
-            "Lovejoy",
-            "comet",
-            "unidentified",
-            "line survey"
-          ],
-          "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-          "status": "OK",
-          "n_columns": 122,
-          "n_tables": 89,
-          "tables": [
-            {
-              "table_name": "B/comets/comets",
-              "columns": [
-                {
-                  "column": "\"Cnote\"",
-                  "description": "Number of the associated \"Note Cometaire\" (1)"
-                },
-                {
-                  "column": "\"Udate\"",
-                  "description": "Date of \"Note Cometaire\" update"
-                },
-                {
-                  "column": "\"Code\"",
-                  "description": "IAU code for the comet"
-                },
-                {
-                  "column": "\"Name\"",
-                  "description": "IAU Name of the comet"
-                }
-              ]
-            },
-            {
-              "table_name": "II/241/out",
-              "columns": [
-                {
-                  "column": "\"mp_flg\"",
-                  "description": "[0,1]? Association with asteroid or comet (8)"
-                }
-              ]
-            },
-            {
-              "table_name": "II/246/out",
-              "columns": [
-                {
-                  "column": "\"Aflg\"",
-                  "description": "[0,1] (mp_flg) Association with asteroid or comet (11)"
-                }
-              ]
-            },
-            {
-              "table_name": "IX/48/xgustwra",
-              "columns": [
-                {
-                  "column": "\"Aflg\"",
-                  "description": "[0/1]? (mp_flg) Association with asteroid or comet (11) (tmass_Aflg)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/287/990/table3b",
-              "columns": [
-                {
-                  "column": "\"n_P\"",
-                  "description": "[ :*i] : is an uncertainty flag on P * means that P is orbital period of parent comet i means infinity"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/295/206/table1a",
-              "columns": [
-                {
-                  "column": "\"ComType\"",
-                  "description": "Comet type (1)"
-                },
-                {
-                  "column": "\"E-C\"",
-                  "description": "? Time in days or years that the Earth follows (+) or leads (-) the comet at passing the node"
-                },
-                {
-                  "column": "\"DE-C\"",
-                  "description": "? Minimum distance that the comet passes outside (+) or inside (-) the Earth's orbit"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/295/206/table1b",
-              "columns": [
-                {
-                  "column": "\"ComType\"",
-                  "description": "Comet type (1)"
-                },
-                {
-                  "column": "\"dE-C\"",
-                  "description": "? Difference between time of maximum activity and the node of the comet dE-C=lomax/Omega_c (or between maximum activity and point of closest approach when n_dE-C = 1 )"
-                },
-                {
-                  "column": "\"Pc\"",
-                  "description": "? Orbital period of the comet"
-                },
-                {
-                  "column": "\"n_Pc\"",
-                  "description": "[i] When 'i', the orbital period of the comet is infinity"
-                },
-                {
-                  "column": "\"Mtot\"",
-                  "description": "? Total mass in the stream. I assume cylindrical geometry. Masses are taken to be a factor less than this for near-comet type outbursts, where matter is concentrated near the comet's position."
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/295/206/table1c",
-              "columns": [
-                {
-                  "column": "\"ComType\"",
-                  "description": "Comet type (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/393/1053/index",
-              "columns": [
-                {
-                  "column": "\"Seq\"",
-                  "description": "Sequential number of the comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/393/1053/tablesa",
-              "columns": [
-                {
-                  "column": "\"Seq\"",
-                  "description": "Sequential number of the comet (see index.dat)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/393/1053/tablesb",
-              "columns": [
-                {
-                  "column": "\"Seq\"",
-                  "description": "Sequential number of the comet (see index.dat)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/393/1053/tablesc",
-              "columns": [
-                {
-                  "column": "\"Seq\"",
-                  "description": "Sequential number of the comet (see index.dat)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/450/993/tablea1",
-              "columns": [
-                {
-                  "column": "\"Un\"",
-                  "description": "[U] U: unidentified source"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/461/789/table3",
-              "columns": [
-                {
-                  "column": "\"Species\"",
-                  "description": "Molecule name (or \"Unid\" when the line is unidentified) (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/520/A92/object",
-              "columns": [
-                {
-                  "column": "\"Code\"",
-                  "description": "IAU code for the comet"
-                },
-                {
-                  "column": "\"Name\"",
-                  "description": "IAU Name of the comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/544/A28/comet",
-              "columns": [
-                {
-                  "column": "\"Dbcmag\"",
-                  "description": "? Differential blue comet continuum magnitude 4450/4467{AA}"
-                },
-                {
-                  "column": "\"Dgcmag\"",
-                  "description": "Differential green comet continuum magnitude 5260/5256{AA}"
-                },
-                {
-                  "column": "\"Drcmag\"",
-                  "description": "? Differential red comet continuum magnitude 7128/7158{AA}"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/553/A12/table1",
-              "columns": [
-                {
-                  "column": "\"un\"",
-                  "description": "Number of unidentified sources (2)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/559/A48/objects",
-              "columns": [
-                {
-                  "column": "\"IAU\"",
-                  "description": "IAU code for the comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/564/L2/table3",
-              "columns": [
-                {
-                  "column": "\"T(MB)dvL\"",
-                  "description": "? C/2013 R1 (Lovejoy) velocity-integrated main beam brightness temperature"
-                },
-                {
-                  "column": "\"DvL\"",
-                  "description": "? C/2013 R1 (Lovejoy) line width (Full width at half maximum)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/564/L2/table4",
-              "columns": [
-                {
-                  "column": "\"Freq\"",
-                  "description": "[251766/264753] Frequency of Unidentified line"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/566/L5/list",
-              "columns": [
-                {
-                  "column": "\"Name\"",
-                  "description": "Comet name"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/567/A126/tablea1",
-              "columns": [
-                {
-                  "column": "\"Ns\"",
-                  "description": "Number of different observation periods for this comet"
-                },
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                },
-                {
-                  "column": "\"Cname\"",
-                  "description": "Comet's name"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/567/A126/tableb",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/567/A126/tableb4",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/567/A126/tablec",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/567/A126/tabled",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/571/A63/comets",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet's designation"
-                },
-                {
-                  "column": "\"Ncms\"",
-                  "description": "Number of (comet-star)-type of observations"
-                },
-                {
-                  "column": "\"Ncmsr\"",
-                  "description": "Number of (comet-star)-type of observations recalculated using PPM Catalogue (for more informations see paper)"
-                },
-                {
-                  "column": "\"Ncmsf\"",
-                  "description": "[0/100] Per cent of (comet-star)-type of observations recalculated using PPM Catalogue"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/571/A63/tableb1",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/571/A63/tableb2",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/571/A63/tablec1",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/571/A63/tabled1",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/571/A63/tablee1",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/589/A78/list",
-              "columns": [
-                {
-                  "column": "\"Name\"",
-                  "description": "Comet name"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/603/A87/miroq17",
-              "columns": [
-                {
-                  "column": "\"Rh\"",
-                  "description": "Heliocentric distance of comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/617/L5/figure4",
-              "columns": [
-                {
-                  "column": "\"OCCP\"",
-                  "description": "Ablation rate from OCC (Oort-Cloud Comets) in Pluto atmosphere"
-                },
-                {
-                  "column": "\"OCCT\"",
-                  "description": "Ablation rate from OCC (Oort-Cloud Comets) in Triton atmosphere"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/633/A80/table1",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/633/A80/table3",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/633/A80/tablea1",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                },
-                {
-                  "column": "\"Cname\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/633/A80/tablea2",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                },
-                {
-                  "column": "\"Cname\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/633/A80/tablea3",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                },
-                {
-                  "column": "\"Cname\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/633/A80/tablea4",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                },
-                {
-                  "column": "\"Cname\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/672/A136/tablea1",
-              "columns": [
-                {
-                  "column": "\"Region\"",
-                  "description": "67P comet region name where a bright spot is found"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+A/673/A129/appenb",
-              "columns": [
-                {
-                  "column": "\"Note\"",
-                  "description": "Cometary activities"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/103/83/table1",
-              "columns": [
-                {
-                  "column": "\"Atom\"",
-                  "description": "Identification: atom and multiplet or molecule and vibrational band or \"?\" for an unidentified line"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/129/541/tableb1",
-              "columns": [
-                {
-                  "column": "\"El\"",
-                  "description": "Ion (UN = unidentified lines)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/142/181/table3",
-              "columns": [
-                {
-                  "column": "\"Name\"",
-                  "description": "Unidentified lines (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/143/145/fluxes",
-              "columns": [
-                {
-                  "column": "\"n_Source\"",
-                  "description": "[a] Unidentified source (2)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/A+AS/146/73/table5",
-              "columns": [
-                {
-                  "column": "\"Name\"",
-                  "description": "Name of the comet"
-                },
-                {
-                  "column": "\"Npas\"",
-                  "description": "Number of perihelion passages during which the comet was observed"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/144/173/table1",
-              "columns": [
-                {
-                  "column": "\"Type\"",
-                  "description": "Principle morphology (bubble or cometary)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/152/80/obs",
-              "columns": [
-                {
-                  "column": "\"Dis\"",
-                  "description": "[*] Indicates a discovery or new/unidentified observation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/154/53/table1",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet designation"
-                },
-                {
-                  "column": "\"Delta\"",
-                  "description": "[1.73/11.85] Comet-spacecraft distance {Delta}"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/154/53/table3",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet designation"
-                },
-                {
-                  "column": "\"f_Comet\"",
-                  "description": "[*] Flag on Comet (1)"
-                },
-                {
-                  "column": "\"Obs\"",
-                  "description": "indicates comet observations in Table1"
-                },
-                {
-                  "column": "\"efrho\"",
-                  "description": "[0/30]? Log emissivity-fractional area-comet centric distance {epsilon}f{rho} (3)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/154/87/table3",
-              "columns": [
-                {
-                  "column": "\"Aflg\"",
-                  "description": "[0]? Association with asteroid or comet (Aflg) (3)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/156/223/obslog",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/156/223/previousobs",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "Comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/156/68/table4",
-              "columns": [
-                {
-                  "column": "\"Flux\"",
-                  "description": "[0.06/112.59]? Flux of the cometary line at top of the Earth atmosphere"
-                },
-                {
-                  "column": "\"Transm\"",
-                  "description": "[0.1111/0.9963]? Atmospheric transmittance at the Doppler-shifted position of the cometary line"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/158/235/table2",
-              "columns": [
-                {
-                  "column": "\"CXOU\"",
-                  "description": "Chandra X-ray Observatory Unidentified source (HHMMSS.ss+DDMMSS.s)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AJ/158/235/table3",
-              "columns": [
-                {
-                  "column": "\"CXOU\"",
-                  "description": "Chandra X-ray Observatory Unidentified source (HHMMSS.ss+DDMMSS.s)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/AZh/71/684/table2",
-              "columns": [
-                {
-                  "column": "\"z(min)\"",
-                  "description": "Photometric redshift or minimum photometric redshift for unidentified objects"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/688/1142/table4",
-              "columns": [
-                {
-                  "column": "\"Type\"",
-                  "description": "Comet (for cometary) or Trunk (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/716/30/blazars",
-              "columns": [
-                {
-                  "column": "\"OClass\"",
-                  "description": "Optical spectrum classification (BL Lac, BZU (blazar of unknown type), FSRQ or Unidentified)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/742/27/agns",
-              "columns": [
-                {
-                  "column": "\"Opt\"",
-                  "description": "[UBQG] Optical classification (B=BL Lac, Q=quasar, G=radio galaxy, U=unidentified)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/752/61/table2",
-              "columns": [
-                {
-                  "column": "\"2FGL\"",
-                  "description": "Unidentified {gamma}-ray source (UGS) identifier (JHHMM.m+DDMM)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/766/37/table1",
-              "columns": [
-                {
-                  "column": "\"OT\"",
-                  "description": "[GQU] Nature of optical object: G=Galaxy, Q=Quasar, U=Unidentified"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/933/L44/table1",
-              "columns": [
-                {
-                  "column": "\"theta\"",
-                  "description": "[2.6/2.9] Sun-comet-observer (phase) angle"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJ/976/175/tablea",
-              "columns": [
-                {
-                  "column": "\"n_RMT\"",
-                  "description": "[U/I ] U/I for Unidentified line by Nave et al. (1994ApJS...94..221N, Cat. J/ApJS/94/221)."
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/106/463/table3",
-              "columns": [
-                {
-                  "column": "\"Id\"",
-                  "description": "[]? ID status; 1=identified; 0=unidentified"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/119/159/table34",
-              "columns": [
-                {
-                  "column": "\"OName3\"",
-                  "description": "Cross-identification from UV-excess and emission-line surveys (4)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/169/458/table2",
-              "columns": [
-                {
-                  "column": "\"Comet\"",
-                  "description": "[A2 WM1] Comet identification (4)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/201/30/catalog",
-              "columns": [
-                {
-                  "column": "\"fID\"",
-                  "description": "[1/100]? Final identification flag (1=secure, 10=ambiguous, blank=unidentified, 100=subthreshold)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/206/9/EGOs",
-              "columns": [
-                {
-                  "column": "\"3mm\"",
-                  "description": "[Y ] Included in the 3mm line survey? (5)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/ApJS/263/27/table1",
-              "columns": [
-                {
-                  "column": "\"q_zspec\"",
-                  "description": "[-3/4] Redshift confidence grade (4=very secure, 3=secure, 2=probable, 1=insecure, 0=unidentified spectrum) (3)"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/472/4634/tablea1",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                },
-                {
-                  "column": "\"Cname\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/472/4634/tableb1",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/472/4634/tablec1",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/472/4634/tabled1",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/472/4634/tablee3",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/472/4634/tablef3",
-              "columns": [
-                {
-                  "column": "\"Desig\"",
-                  "description": "Comet's designation"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/524/1826/bdcand",
-              "columns": [
-                {
-                  "column": "\"SpType\"",
-                  "description": "[-] Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/524/1826/colour",
-              "columns": [
-                {
-                  "column": "\"SpType\"",
-                  "description": "Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
-                }
-              ]
-            },
-            {
-              "table_name": "J/MNRAS/524/1826/memcand",
-              "columns": [
-                {
-                  "column": "\"SpType\"",
-                  "description": "Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
-                }
-              ]
-            },
-            {
-              "table_name": "J/PAZh/30/946/table",
-              "columns": [
-                {
-                  "column": "\"Lambda\"",
-                  "description": "Spectral line wavelength of unidentified cometary band"
-                }
-              ]
-            },
-            {
-              "table_name": "J/other/KFNT/34.270/table",
-              "columns": [
-                {
-                  "column": "\"Id\"",
-                  "description": "Identifier of asteroid or comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/other/OAP/31.235/catalog",
-              "columns": [
-                {
-                  "column": "\"Name\"",
-                  "description": "Name of asteroid or comet"
-                }
-              ]
-            },
-            {
-              "table_name": "J/other/SciA/1.9/list",
-              "columns": [
-                {
-                  "column": "\"Name\"",
-                  "description": "Comet name"
-                }
-              ]
-            },
-            {
-              "table_name": "V/135A/catalog",
-              "columns": [
-                {
-                  "column": "\"n_G\"",
-                  "description": "[*?] Unnumbered or unidentified star (1)"
-                }
-              ]
-            },
-            {
-              "table_name": "VI/132C/lunarocc",
-              "columns": [
-                {
-                  "column": "\"Double\"",
-                  "description": "[BEFNSUW?] Double star or unidentified star (12)"
-                }
-              ]
-            },
-            {
-              "table_name": "VII/5A/catalog",
-              "columns": [
-                {
-                  "column": "\"Code1\"",
-                  "description": "Unidentified code"
-                },
-                {
-                  "column": "\"Code2\"",
-                  "description": "Unidentified code"
-                },
-                {
-                  "column": "\"Code3\"",
-                  "description": "Unidentified code"
-                }
-              ]
-            },
-            {
-              "table_name": "VII/91/comsight",
-              "columns": [
-                {
-                  "column": "\"CSdist\"",
-                  "description": "Comet-sun distance"
-                },
-                {
-                  "column": "\"CEdist\"",
-                  "description": "Comet-earth distance"
-                }
-              ]
-            }
-          ]
-        }
-      },
+      "fallback": {},
       "scoreboard": [
         {
           "table": "J/A+A/564/L2/table4",
@@ -6748,7 +5189,7 @@
             "transition": null
           },
           "n_rows": null,
-          "usable": false,
+          "usable": true,
           "columns": [
             "recno",
             "Freq",
@@ -6761,9 +5202,16 @@
           ]
         }
       ],
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "n_lines": 0,
-      "n_unidentified": 0
+      "status": "OK",
+      "n_lines": 3,
+      "n_unidentified": 0,
+      "freq_scale": "guessed:MHz_from_magnitude",
+      "fmin_mhz": 251766.4,
+      "fmax_mhz": 264752.7,
+      "has_intensity": true,
+      "ident_values_sample": [
+        ""
+      ]
     },
     "sgrb2_belloche2013": {
       "table": null,
@@ -8190,7 +6638,7 @@
             "endpoint": "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",
             "status": "QUERY_FAILED",
             "what": "exists? J/A+A/517/A96/",
-            "error": "the ASU body names ['J/MNRAS/430/1125', 'J/MNRAS/430/1125/sources', 'J/MNRAS/430/1125/emlines', 'J/MNRAS/430/1125/tableb3', 'J/ApJ/910/42', 'J/ApJ/910/42/table1', 'J/ApJ/910/42/table2', 'J/A+A/572/L5', 'J/A+A/572/L5/table1', 'J/AJ/139/2034', 'J/AJ/139/2034/stars', 'J/AJ/139/2034/table1', 'J/AJ/139/2034/table2', 'J/AJ/139/2034/table3', 'J/AJ/139/2034/table4', 'J/ApJ/789/104', 'J/ApJ/789/104/table1', 'J/ApJ/789/104/refs', 'J/ApJ/789/104/table2', 'J/ApJ/789/104/table5', 'J/ApJ/773/L36', 'J/ApJ/773/L36/gcdata', 'J/ApJ/773/L36/table2', 'J/ApJ/697/1741', 'J/ApJ/697/1741/table1', 'J/A+A/468/353', 'J/A+A/468/353/table14', 'J/A+A/617/A77', 'J/A+A/617/A77/list', 'J/A+A/560/A73', 'J/A+A/560/A73/list', 'J/ApJ/659/1040', 'J/ApJ/659/1040/table1', 'J/ApJ/659/1040/table5', 'J/ApJ/794/107', 'J/ApJ/794/107/sample', 'J/ApJ/794/107/table1', 'J/A+A/625/A68', 'J/A+A/625/A68/tableb1', 'J/AJ/101/625', 'J/AJ/101/625/table1', 'J/AJ/101/625/table2', 'J/AJ/101/625/table3', 'J/AJ/101/625/table4', 'J/AJ/101/625/notes', 'J/ApJ/891/129', 'J/ApJ/891/129/table2', 'J/ApJ/891/129/table3', 'J/ApJ/709/447', 'J/ApJ/709/447/table1', 'J/ApJ/620/961', 'J/ApJ/620/961/table1', 'J/ApJ/620/961/table2', 'J/ApJ/620/961/table4', 'J/ApJ/620/961/table5', 'J/ApJ/703/1672', 'J/ApJ/703/1672/table1', 'J/ApJ/703/1672/table2', 'J/ApJ/703/1672/refs', 'J/AJ/156/204', 'J/AJ/156/204/table1', 'J/AJ/156/204/table3', 'J/AJ/156/204/table4', 'J/MNRAS/468/3499', 'J/MNRAS/468/3499/table2', 'J/MNRAS/466/163', 'J/MNRAS/466/163/absorber', 'J/MNRAS/466/163/bluesrc', 'J/MNRAS/466/163/emitters', 'J/ApJ/910/134', 'J/ApJ/910/134/novae', 'J/ApJ/910/134/xrtlcs', 'J/A+A/638/A130', 'J/A+A/638/A130/list', 'J/ApJ/818/43', 'J/ApJ/818/43/table3', 'J/ApJS/236/51', 'J/ApJS/236/51/table1', 'J/ApJS/236/51/cores', 'J/ApJ/870/123', 'J/ApJ/870/123/table1', 'J/ApJ/870/123/table2', 'J/ApJ/870/123/table8', 'J/ApJ/870/123/table9', 'J/A+A/638/A3', 'J/A+A/638/A3/s1', 'J/AJ/162/184', 'J/AJ/162/184/table1', 'J/AJ/162/184/table3', 'J/AJ/162/184/dr17samp', 'J/AJ/16"
+            "error": "ChunkedEncodingError(ProtocolError('Response ended prematurely'))"
           }
         ]
       },
@@ -8220,7 +6668,7 @@
         "status": "QUERY_FAILED",
         "rows": 0,
         "what": "ASU meta ~ 'J/ApJ/806/239/'",
-        "error": "no non-TAP metadata for 'J/ApJ/806/239/' -- https://vizier.cds.unistra.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.u-strasbg.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe') | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe') | https://vizier.cds.unistra.fr/viz-bin/asu-tsv: no column header in the ASU body | https://vizier.u-strasbg.fr/viz-bin/asu-tsv: no column header in the ASU body | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv: no column header in the ASU body",
+        "error": "no non-TAP metadata for 'J/ApJ/806/239/' -- https://vizier.cds.unistra.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.u-strasbg.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv: ChunkedEncodingError(ProtocolError('Response ended prematurely')) | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe') | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/806/239/ReadMe') | https://vizier.cds.unistra.fr/viz-bin/asu-tsv: no column header in the ASU body | https://vizier.u-strasbg.fr/viz-bin/asu-tsv: no column header in the ASU body | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv: no column header in the ASU body",
         "route": "asu_tsv",
         "route_attempts": [
           {
@@ -8240,9 +6688,9 @@
           {
             "route": "asu_tsv",
             "endpoint": "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",
-            "status": "QUERY_RETURNED_ZERO_ROWS",
+            "status": "QUERY_FAILED",
             "what": "meta J/ApJ/806/239",
-            "rows": 0
+            "error": "ChunkedEncodingError(ProtocolError('Response ended prematurely'))"
           },
           {
             "route": "readme",
@@ -8343,22 +6791,15 @@
         "rows": 1,
         "what": "ASU meta ~ 'J/ApJS/117/427/table46'",
         "route": "asu_tsv",
-        "usable": false,
+        "usable": true,
         "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
       },
       {
-        "stage": "fallback_sgrb2_nummelin1998_u",
+        "stage": "fetch_sgrb2_nummelin1998_u",
         "status": "OK",
-        "rows": 34,
-        "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
-      },
-      {
-        "stage": "column_census_sgrb2_nummelin1998_u",
-        "status": "OK",
-        "rows": 38,
-        "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Sgr B2%' OR description LIKE '%sgr b2%' OR description LIKE '%Sgr b2%' OR description LIKE '%SGR B2%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+        "rows": 370,
+        "what": "SELECT TOP 200000 \"Freq\" FROM \"J/ApJS/117/427/table46\"",
+        "route": "tap"
       },
       {
         "stage": "tables_sgrb2_nummelin1998",
@@ -8439,22 +6880,15 @@
         "rows": 1,
         "what": "ASU meta ~ 'J/A+A/564/L2/table4'",
         "route": "asu_tsv",
-        "usable": false,
+        "usable": true,
         "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
       },
       {
-        "stage": "fallback_comet_lovejoy_agundez2014_u",
+        "stage": "fetch_comet_lovejoy_agundez2014_u",
         "status": "OK",
-        "rows": 34,
-        "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
-      },
-      {
-        "stage": "column_census_comet_lovejoy_agundez2014_u",
-        "status": "OK",
-        "rows": 122,
-        "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Lovejoy%' OR description LIKE '%lovejoy%' OR description LIKE '%LOVEJOY%') OR (description LIKE '%comet%' OR description LIKE '%Comet%' OR description LIKE '%COMET%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+        "rows": 3,
+        "what": "SELECT TOP 200000 \"Freq\", \"T(MB)dv\" FROM \"J/A+A/564/L2/table4\"",
+        "route": "tap"
       },
       {
         "stage": "tables_sgrb2_belloche2013",
@@ -8564,8 +6998,8 @@
         "route": "tap"
       }
     ],
-    "n_stages": 101,
-    "n_ok": 90,
+    "n_stages": 99,
+    "n_ok": 88,
     "n_query_failed": 8,
     "n_query_returned_zero_rows": 3,
     "any_query_failed": true

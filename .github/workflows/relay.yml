@@ -124,6 +124,8 @@ jobs:
           v = s.get("verdict", ""); f = s.get("funnel", {})
           if f.get("n_stars_100pc", 0) == 0 and "NO_DATA_REACHED" not in v:
               print(f"::error::verdict {v!r} with no Gaia sample is a disguised no-data run"); sys.exit(1)
+          if "PAIRLINE_MATCHES_AT_CHANCE" in v:
+              print("::notice::pair-line matches at the chance expectation (chance.py) -- not a detection")
           if "PAIRLINE_DRIFT_MATCH" in v:
               print(f"::notice::{len(s.get('candidates', []))} hit-beam matches inside the prior — see results/relay/hits.json for the chance expectation per beam")
           if "NO_PAIRLINE_HIT" in v or "PAIRLINE_HITS_OFF_PRIOR" in v:
@@ -151,6 +153,7 @@ jobs:
             results/relay/acquisition_log.json \
             results/relay/pairs_targets.csv.gz \
             results/relay/bl_files.csv.gz \
+            $(ls results/relay/targetlist.json results/relay/targetlist.csv.gz results/relay/chance_*.json 2>/dev/null) \
             $(ls results/relay/pairs_full_*.csv.gz 2>/dev/null)
       - uses: actions/upload-artifact@v4
         if: always()

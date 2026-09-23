@@ -202,10 +202,21 @@ window from the hit's own frequency, epoch and telescope; `drift_match` if
 inside `match_window_sigma` tight half-widths; `candidate` if also not RFI.
 RFI rules: |drift| below one resolution element (co-rotating source); a
 frequency recurring on ≥ 3 unrelated sightlines within 1 kHz (instrumental).
-The chance expectation per beam is the fraction of *off-pair-line* hits whose
-drift falls inside a window of the same width at the same centre, times the
-number of pair-line hits — the trials are the pair-line hits. →
-`hits.json`, `hits_crossmatch.csv`, `summary.json`.
+The chance expectation per beam (`src/seti/relay/chance.py`, since
+2026-09-23) is Σᵢ pᵢ over the pair-line hits, with pᵢ the fraction of every
+*other* valid hit whose drift falls inside hit i's own window; the tail
+P(N ≥ observed) is the Poisson-binomial tail. (The earlier estimator used only
+the off-pair-line hits on sample stars — two hits in run 35745111146 — and was
+uninformative.) The verdict is `PAIRLINE_DRIFT_MATCH` only when some beam's
+p < 0.01, otherwise `PAIRLINE_MATCHES_AT_CHANCE`. Hygiene before any count:
+rows read from a non-frequency column ("Frequency rank"), injection-table rows
+and duplicate rows are invalid; RFI now also includes the known L-band
+allocations (`assess.known_rfi_bands_mhz`) and recurrence on ≥ 3 sightlines
+within 500 kHz. → `hits.json`, `hits_crossmatch.csv`, `summary.json`.
+
+**targetlist** (not in `all`; needs the geometry stage's parquet sample in the
+same job) — see §9.2. → `targetlist.json`, `targetlist.csv.gz`, and a
+`targetlist` pointer in `summary.json` carrying its own timestamp.
 
 Verdicts: `GEOMETRY_COMPUTED` (`_ON_PARTIAL_SAMPLE` when a shell was lost),
 `TARGETS_RESOLVED (n/m via route)`, `RECUT_COMPLETE` (or
@@ -401,3 +412,86 @@ remembered, on identical rules. Every paper that fails to resolve, fails to
 download or yields no hit table is written to `hits.json` with the reason, and
 the verdict says so: an empty harvest is `NO_HIT_CATALOGUE_REACHED (…)`, which
 is a statement about what was reachable and never about the sky.
+
+## 9. The 22 "drift matches" of run 35745111146, priced — and the question that replaced them
+
+### 9.1 What matched, and why it means nothing
+
+Run 35745111146 (dispatched 2026-09-22T15:07Z, summary 16:58Z) reported
+`PAIRLINE_DRIFT_MATCH (22 hit-beam matches)`. The committed files are
+self-consistent — summary 3 s after `hits.json`, 135 hits in all three files,
+per-beam counts equal to the CSV's flags, 22 = 1 + 2 + 8 + 11 — but the count
+describes almost nothing. Recomputed offline from those committed files
+(`python -m seti.relay.chance --source-run 35745111146`, written to
+`results/relay/chance_run35745111146.json` and as `chance_offline` in that
+run's `summary.json`):
+
+* **22 matches are 11 hits**, the same hit counted at up to four beams.
+* **3 of the 11 are not frequencies.** HIP 13402 at "989 MHz" and HIP 62207
+  at "980/998 MHz" were read from the *Frequency rank* column of
+  arXiv:2505.03927's candidate table. They account for 8 of the 22. The
+  parser now refuses rank/index columns, refuses injection-recovery tables
+  (arXiv:2011.05265's two injected signals had also been read as hits) and
+  reads an e-print once even when two seeds resolve to it (42 duplicate rows
+  from arXiv:1901.04057).
+* **The other 8 are Enriquez+2017's own "most significant events"**, which that
+  paper did not claim as signals. Six lie inside the GPS L3 main lobe
+  (1379.28–1384.21 MHz; five of them — plus HIP 4436 and HIP 82860, which did
+  not match the sample — within 1380.88–1381.21 MHz on seven unrelated stars:
+  recurrence across sightlines, i.e. terrestrial) and two in the Inmarsat/MSS
+  downlink (1522.18, 1528.46 MHz). The run's 1 kHz recurrence rule missed the
+  family because a drifting emitter seen on different days does not repeat to
+  1 kHz.
+* **The count is the chance count.** The prior's width is the pipeline
+  resolution plus the Earth term (the kinematic part is 10⁻⁸ Hz/s, §8.1), and
+  published hits cluster at small |drift|, so the 3σ window at 1.48° contains
+  ~64 % of all hits' drifts and at 5° ~94 %. Against the hits' own drift
+  distribution:
+
+  | beam | trials | matches | expected | p(≥) |
+  |---|---|---|---|---|
+  | 100 m L | 3 | 1 | 1.11 | 0.90 |
+  | 10 m 8 GHz | 5 | 2 | 1.55 | 0.50 |
+  | 10 m L (1.48°) | 12 | 8 | 7.73 | 0.57 |
+  | 5° | 12 | 11 | 11.25 | 0.83 |
+  | **total** | | **22** | **21.6** | |
+
+  After hygiene: 14 observed vs 14.6 expected. After hygiene and the band /
+  wide-recurrence RFI rules: **0 candidates**.
+* **The geometry selects nothing at the wide beams either**: 99.7 % of the
+  in-sample BL targets are the transmitter of some qualifying pair at 1.48°
+  and 5° (29 % at 100 m, 62 % at 15.7′). "On a pair line" there is a property
+  of every star.
+
+Verdict: **chance-level, and every matched hit is traced to a systematic**
+(a parse error or a named terrestrial allocation). RELAY's hit re-cut is empty
+by construction — the Gaia kinematic prior is too weak to narrow the drift and
+the wide beams put every star on a pair line — so no future hit list will make
+it informative. That question is retired; the channel keeps the chance model
+so any rerun says so automatically.
+
+### 9.2 The question that is not empty: whose *short* links cross Earth?
+
+A network links nearest neighbours (link cost ∝ distance²). For a link only a
+few parsecs long, Earth — tens of parsecs away — is inside the beam only if R
+sits almost exactly on T's sightline to Earth; a random link does so with
+probability (1 − cos θ/2)/2 = 4 × 10⁻⁷ at 100 m L band. Over the ~1.3 × 10⁶
+five-nearest-neighbour links of the 100 pc sample that is ~0.5 links expected
+at the narrow beam and ~600 at 5°. So the list of stars whose ordinary
+neighbour traffic would cross Earth is short, exact and specific — and set
+against BL's pointings it is a list of targets nobody has chosen for this
+reason.
+
+`stage_targetlist` (`src/seti/relay/targetlist.py`): 5 nearest neighbours
+within 10 pc (≥ 0.05 pc) per star; exact α; P(α ≤ θ/2) per beam from 400
+parallax Monte-Carlo draws (the T/R ordering along the sightline is exactly
+what a parallax error flips); pairs with |Δϖ| < 3σ (radial separation not
+measured) and comoving pairs (Δv_tan ≤ 3 km/s at ≤ 1 pc projected: likely
+bound, true depth far below the noise) are counted and never ranked; "observed"
+= within half the GBT L-band beam of a resolved BL target (the unresolved BL
+names are counted, not checked). Ranked by the narrowest beam at which
+P ≥ 0.5, then P, then distance; the isotropic expectation is printed beside
+every count. It is a target list, not evidence: a count at the isotropic
+expectation is what geometry predicts. Dispatched on `claude/handoff-relay`
+with `stage=probe,targets,geometry,recut,assess,targetlist`; the numbers land
+in `targetlist.json`.

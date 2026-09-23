@@ -908,7 +908,13 @@ def desi_check(t: dict, c: dict) -> dict:
         return out
     meas = []
     for r in grec:
-        m = measure_desi(g(r, "wavelength") or [], g(r, "flux") or [], g(r, "model"))
+        # NOT `g(r, "wavelength") or []`: these are numpy arrays, and their
+        # truth value raises (run of 18:13Z lost both DESI spectra to it)
+        wl, fl, md = g(r, "wavelength"), g(r, "flux"), g(r, "model")
+        try:
+            m = measure_desi([] if wl is None else wl, [] if fl is None else fl, md)
+        except Exception as exc:                          # noqa: BLE001
+            m = {"li_ew_A": float("nan"), "measure_error": repr(exc)[:200]}
         m["sparcl_id"] = str(g(r, "sparcl_id"))
         m["data_release"] = g(r, "data_release")
         meas.append(m)

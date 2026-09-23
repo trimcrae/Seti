@@ -468,3 +468,54 @@ def test_a_measured_summary_still_replaces_an_earlier_no_data_one(remote_and_clo
     run_script(work, "the archive answered", "results/summary.json")
 
     assert "MEASURED" in remote_file(origin, "results/summary.json")
+
+
+# --------------------------------------------------------------------------
+# SEXTANT run 35746692260: new files under a TRACKED directory were invisible.
+# `results/sextant` held one tracked file; the run created a dozen beside it,
+# and `git diff HEAD -- results/sextant` (tracked files only) called the
+# directory unchanged, so neither the probe nor the assess commit happened.
+# --------------------------------------------------------------------------
+
+def test_new_files_under_a_tracked_directory_are_this_runs_output(remote_and_clone):
+    """THE REGRESSION: a directory passed whole, whose tracked file is untouched."""
+    origin, work, _seed = remote_and_clone
+    (work / "results" / "fits").mkdir()
+    (work / "results" / "fits" / "shard_0_of_1.json").write_text('{"n_records": 4250}\n')
+    (work / "results" / "summary.json").write_text('{"verdict": "MEASURED"}\n')
+
+    r = run_script(work, "sextant", "results")
+
+    assert "nothing to commit" not in r.stdout
+    assert "4250" in remote_file(origin, "results/fits/shard_0_of_1.json")
+    assert "MEASURED" in remote_file(origin, "results/summary.json")
+
+
+def test_expanding_a_directory_does_not_commit_its_untouched_files_over_newer_ones(
+        remote_and_clone):
+    """The ZTF rule must hold INSIDE a directory as well: only what the run wrote."""
+    origin, work, seed = remote_and_clone
+    (seed / "results" / "census.json").write_text('{"n": 777, "newer": true}\n')
+    git(seed, "commit", "-qam", "someone else, later")
+    git(seed, "push", "-q", "origin", "main")
+
+    (work / "results" / "probe_ephemeris.json").write_text('{"route": "horizons"}\n')
+    run_script(work, "probe", "results")
+
+    assert "horizons" in remote_file(origin, "results/probe_ephemeris.json")
+    assert "newer" in remote_file(origin, "results/census.json")
+
+
+def test_a_no_data_summary_inside_a_directory_is_still_guarded(remote_and_clone):
+    origin, work, seed = remote_and_clone
+    (seed / "results" / "summary.json").write_text('{"verdict": "MEASURED", "n": 9}\n')
+    git(seed, "add", "-A")
+    git(seed, "commit", "-qm", "a measurement")
+    git(seed, "push", "-q", "origin", "main")
+
+    (work / "results" / "summary.json").write_text('{"verdict": "NO_DATA_REACHED"}\n')
+    (work / "results" / "extra.json").write_text('{"x": 1}\n')
+    run_script(work, "empty", "results")
+
+    assert "MEASURED" in remote_file(origin, "results/summary.json")
+    assert "NO_DATA_REACHED" in remote_file(origin, "results/summary_attempt.json")

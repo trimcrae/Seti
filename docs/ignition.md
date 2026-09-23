@@ -731,7 +731,7 @@ resume_run_id=35859572295` (its shard artifacts carry all prior progress).
 **The nine candidates.** All nine are grey, small (0.026–0.083 mag over
 2014–2024), W1 9.4–11.2, at |β| 47–75°, with 2010 W1−W2 within ±0.03.
 
-**Re-vet (`src/seti/ignition/revet.py`; runs 35860165284, 35861792980).**
+**Re-vet (`src/seti/ignition/revet.py`; runs 35860165284, 35861792980, 35866906720 — the last is the record in `results/ignition/revet.json`, generated 13:30:23Z).**
 
 1. *Brightness-dependent drift — real, but not the explanation.* Over all
    169,749 screened stars the NEOWISE drift depends on brightness: W1
@@ -761,34 +761,41 @@ resume_run_id=35859572295` (its shard artifacts carry all prior progress).
 | 4787733051398426240 | pass | −10.9 (10.2) / −7.1 (10.1) | 0.65±0.09 | **Out of scope — active young star.** VSX ASASSN-V ROT P = 3.68 d, 0.16 mag; FLAME age 1.4 (0.2–4.7) Gyr. A spot/activity-cycle brightening is the mundane reading; the host is not old. |
 | 6371268909112212864 (new) | pass | −3.7 (8.1) / −3.5 (5.7) | 0.95±0.20 | **Out of scope — active star.** VSX ASASSN-V ROT P = 1.14 d. |
 | 5498602919742073088 (new) | pass | −5.0 (8.4) / −3.0 (5.9) | 0.60±0.13 | **Out of scope — active star.** VSX ASASSN-V ROT P = 5.53 d (M0, Teff 4070 K). |
-| **5802068055991339904** | pass | −6.9 (12.0) / −7.3 (10.8) | 1.06±0.13 | **Open.** No VSX/SIMBAD/Milliquas/Gaia-vari/QSO; static neighbour G=16.8 at 4.2″ (1.5 % of the optical flux; would have to brighten ×3.5 in W1 and W2 to do this). FLAME 13.5 Gyr, GSP-Phot [M/H] −1.19. Optical untested (δ = −75.7°: no ZTF; ASAS-SN unreachable). |
-| **4867872438154507904** | pass | −5.9 (11.0) / −4.2 (7.6) | 0.72±0.12 | **Open.** No neighbour within 24″; no catalogue entry. GSP-Phot [M/H] −1.25; v_tan 10.6 km/s (not kinematically old). Optical untested. |
-| **4646037549114081792** (TYC 9155-878-1) | pass | −3.3 (8.6) / −3.0 (6.6) | 0.91±0.18 | **Open.** No neighbour within 22″; SIMBAD PM* only. GSP-Phot [M/H] −1.11. Optical untested. |
+| 5802068055991339904 | pass | −6.9 (12.0) / −7.3 (10.8) | 1.06±0.13 | **Killed — optical not flat.** ASAS-SN g −37.6±0.6 mmag/yr (63σ), V −12.9±2.1 (6σ): the star brightens 2–5× faster in the optical than in the IR. Gaia DR3 per-obs scatter A_G = 16.5 mmag vs 4.3 for 300 G/BP-RP peers (99th pct). No catalogue entry; static neighbour G=16.8 at 4.2″ (1.5 % flux) irrelevant. |
+| 4867872438154507904 | pass | −5.9 (11.0) / −4.2 (7.6) | 0.72±0.12 | **Killed — optical not flat.** ASAS-SN g −24.6±0.6 (42σ), V −40.4±3.0 (13σ) mmag/yr; A_G 39.9 mmag vs 4.3 (99th pct). Uncatalogued optical variable. |
+| 4646037549114081792 (TYC 9155-878-1) | pass | −3.3 (8.6) / −3.0 (6.6) | 0.91±0.18 | **Killed — optical follows the IR.** ASAS-SN V −2.1±0.5 (4.4σ), g −3.5±0.9 (3.9σ) mmag/yr: the same rate as W1/W2 — a grey brightening of the star from 0.5 to 4.6 µm, not an IR excess. A_G 14.5 mmag vs 4.3 (98.7th pct). |
 
 (Slopes are from the stratified re-screen's ramp fit; negative = brightening.
 None of the 14 is saturated: W1 ≥ 9.41, W2 ≥ 9.44. Milliquas and Gaia
 `qso_candidates` returned nothing for any of them; Gaia `vari_summary`
 returned nothing — none is a DR3-classified variable.)
 
-**What is left, stated plainly.** Three stars — 5802068055991339904,
-4867872438154507904, 4646037549114081792 — brighten by 3–7 % in W1 and W2
-over 2014–2024, significantly, monotonically, against peers of their own
-brightness and cadence, with no neighbour, catalogued variability or AGN to
-blame. **They are not an infrared excess being born**: the rise is grey,
-excluding ≤ 1500 K dust at 3.4–6.7σ each, which is what the star itself
-brightening (or a source-specific NEOWISE systematic) looks like. The
-decisive missing measurement is a decade optical light curve; ZTF cannot see
-them, ASAS-SN Sky Patrol (`asassn-lb01.ifa.hawaii.edu:9006`) timed out on
-connect from the runner for every target, and Gaia DR3 publishes epoch
-photometry only for its variables. The Gaia DR3 per-observation scatter proxy
-against G/BP-RP peers is the one optical constraint in reach; its result is
-in `results/ignition/revet.json` → `gaia_variability_proxy`. Three of three
-survivors being metal-poor by GSP-Phot is noted, not interpreted (GSP-Phot
-[M/H] is biased low for many dwarfs).
+**Optical, all fourteen.** ASAS-SN Sky Patrol answered in run 35866906720
+(it had timed out on connect for every target in 35861792980). Nine of the
+eleven non-blend stars with an ASAS-SN series brighten in both V and g, most
+by 2–7× the IR rate (g −9 to −47 mmag/yr); the other two are mixed
+(4593063967944867968: V +13.6, g −25.0, V near saturation at 12.5;
+6383068554366896000: V flat, g −4.0) and are already killed by the stratified
+screen. The two proper-motion blends
+are the only stars whose optical is flat or fading (LP 387-28: V +2.0, g +2.5
+mmag/yr; LP 578-16: ZTF g/r flat), which is exactly the blend prediction. The
+Gaia DR3 excess-scatter proxy says the same thing independently: the twelve
+non-blends sit at the 95–100th percentile of their G/BP-RP peers, the two
+blends at the 50th–85th. (ASAS-SN g-band trends carry camera zero-point terms
+of a few mmag/yr; the fit carries a per-camera offset, and for every star
+killed on the optical here V and g — or ZTF g and r — agree in sign.)
+
+**What is left: nothing.** Of 14 stars (9 original, 5 from the stratified
+screen), 2 are proper-motion blends, 4 fail the stratified screen, 3 are
+catalogued spotted rapid rotators (active, not old), and 5 have an optical
+light curve that rises with or faster than the IR. None has the colour of
+warm dust. The tiles sweep's 31.75 % of the `|b| > 15°` sky holds **no
+IGNITION candidate**. That is a count over 169,749 stars, not an occurrence
+limit, and per CLAUDE.md it is not written up.
 
 Nothing here is a technosignature candidate. The screen as built selects a
 grey stellar-brightening population at the 10⁻⁵ level plus proper-motion
 blends; the next version must (a) apply the stratified ensemble, (b) require
 the rise colour to be dust-like (the table's W2/W1 test, now in
 `revet.dust_colour_test`), and (c) kill any Gaia neighbour closing inside 9″.
-Under (b) alone, all nine original and all five new candidates fail.
+Under (b) alone all fourteen fail; (d) the optical must be checked in the screen itself (ASAS-SN and the Gaia proxy both answered), not left as `optical_untested`.

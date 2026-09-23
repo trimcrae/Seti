@@ -1380,3 +1380,64 @@ def test_provenance_dates_each_stage_from_its_own_artefact(tmp_path):
     out2 = rebuild_summary(tmp_path / "empty", {"verdict": "x", "funnel": {}},
                            stage="test")
     assert out2["provenance"]["redetect_generated_utc"] is None
+
+
+def test_demotion_counts_come_from_the_records_not_the_invocation(tmp_path):
+    """Run reconciliation twice and the second demotes nothing, because the
+    first already did.  MEASURED 2026-09-23: that made the regenerated file
+    report `stars_demoted_by_vetstar: 0` and drop VETSTAR_DEMOTED_1 from the
+    verdict, which reads as "the vet demoted nothing"."""
+    import json as _json
+
+    from seti.metronome.redetect import demotions_by_stage, rebuild_summary
+
+    pd.DataFrame({"star_key": ["a", "b", "c"],
+                  "tier": ["candidate", "interest", "watch"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    (tmp_path / "candidates.json").write_text(_json.dumps({
+        "candidates": [
+            {"star_key": "a", "tier": "none",
+             "first_veto": "vet_contaminating_variable_at_p"},
+            {"star_key": "b", "tier": "none",
+             "first_veto": "catalogue_epochs_absent"}],
+        "watch": [{"star_key": "c", "tier": "watch", "first_veto": None}]}))
+    out = rebuild_summary(tmp_path, {"verdict": "x", "degraded": [], "funnel": {}},
+                          stage="vetstar")
+    assert out["funnel"]["stars_demoted_by_vetstar"] == 1
+    assert out["funnel"]["stars_demoted_by_lightcurve"] == 1
+    assert "VETSTAR_DEMOTED_1" in out["verdict"]
+    assert "REDETECT_DEMOTED_1" in out["verdict"]
+    assert out["provenance"]["demotions_by_stage"] == {"lightcurve": ["b"],
+                                                       "vetstar": ["a"]}
+    # a star demoted for a reason that is neither stage is counted as neither
+    assert demotions_by_stage({"z": "rotation_alias"}) == {"lightcurve": [],
+                                                           "vetstar": []}
+
+
+def test_reconciliation_is_stable_across_repeated_runs(tmp_path):
+    """Every re-dispatch reconciles again.  The file must reach a fixed point:
+    same verdict, same counts, no nested or duplicated tokens."""
+    import json as _json
+
+    from seti.metronome.redetect import rebuild_summary
+
+    pd.DataFrame({"star_key": ["a", "b"], "tier": ["candidate", "interest"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    (tmp_path / "candidates.json").write_text(_json.dumps({
+        "candidates": [{"star_key": "a", "tier": "none", "first_veto": "vet_x"},
+                       {"star_key": "b", "tier": "interest", "first_veto": None}],
+        "watch": []}))
+    base = {"verdict": "old", "funnel": {},
+            "degraded": ["variability_catalogues:gaia_dr3_vari,vsx"],
+            "variability_catalogues_reached": {"gaia_dr3_vari": 0.45, "vsx": 0.45}}
+    first = rebuild_summary(tmp_path, dict(base), stage="vetstar")
+    second = rebuild_summary(tmp_path, dict(first), stage="vetstar")
+    third = rebuild_summary(tmp_path, dict(second), stage="vetstar")
+    assert first["verdict"] == second["verdict"] == third["verdict"]
+    assert first["degraded"] == second["degraded"] == third["degraded"]
+    assert first["tiers"] == second["tiers"] == third["tiers"]
+    # the precise wording must not nest on itself
+    assert second["degraded"][0].count("reached_") == 1
+    assert second["verdict"].count("VETSTAR_DEMOTED_1") == 1
+    # and the count survives the rerun that demotes nothing new
+    assert third["funnel"]["stars_demoted_by_vetstar"] == 1

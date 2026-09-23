@@ -903,6 +903,7 @@ def current_tiers(out: Path) -> tuple[dict, dict]:
     ``({star_key: tier}, {"from_vetted": n, "overridden_by_candidates": n})``.
     """
     tiers: dict[str, str] = {}
+    vetoes: dict[str, str] = {}
     prov = {"from_vetted": 0, "overridden_by_candidates": 0, "n_demoted_rows": 0}
     vp = Path(out) / "stars_vetted.csv"
     if vp.exists():
@@ -934,7 +935,31 @@ def current_tiers(out: Path) -> tuple[dict, dict]:
                         if t == "none":
                             prov["n_demoted_rows"] += 1
                     tiers[k] = t
+                    fv = row.get("first_veto")
+                    if fv:
+                        vetoes[k] = str(fv)
+    prov["vetoes"] = vetoes
     return tiers, prov
+
+
+def demotions_by_stage(vetoes: dict) -> dict:
+    """Which stage demoted each star, read off the stars' own ``first_veto``.
+
+    A count of what THIS invocation changed is not a property of the data: run
+    the reconciliation twice and the second run demotes nothing, because the
+    first already did.  MEASURED: the 2026-09-23 regeneration reported
+    ``stars_demoted_by_vetstar: 0`` and dropped ``VETSTAR_DEMOTED_1`` from the
+    verdict for exactly that reason, which reads as "the vet demoted nothing".
+    So the counts are derived from the state instead, and are the same however
+    many times reconciliation runs.
+    """
+    lc, vet = [], []
+    for k, v in (vetoes or {}).items():
+        if str(v).startswith("vet_"):
+            vet.append(k)
+        elif str(v) in LIGHTCURVE_VETOES:
+            lc.append(k)
+    return {"lightcurve": sorted(lc), "vetstar": sorted(vet)}
 
 
 def precise_degraded(summary: dict) -> list[str]:
@@ -954,6 +979,9 @@ def precise_degraded(summary: dict) -> list[str]:
     for entry in (summary.get("degraded") or []):
         e = str(entry)
         if not e.startswith("variability_catalogues:"):
+            out.append(e)
+            continue
+        if "reached_" in e:            # already precise; reconciliation reruns
             out.append(e)
             continue
         names = [n for n in e.split(":", 1)[1].split(",") if n]
@@ -1016,12 +1044,21 @@ def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
     f["stars_watch"] = summary["n_watch"]
     summary["funnel"] = f
 
+    dem = demotions_by_stage(prov.get("vetoes") or {})
+    f["stars_demoted_by_lightcurve"] = len(dem["lightcurve"])
+    f["stars_demoted_by_vetstar"] = len(dem["vetstar"])
+    summary["funnel"] = f
+
     summary["degraded"] = precise_degraded(summary)
     core = VERDICT_PENDING if (summary["n_candidates"] or summary["n_interest"]) \
         else VERDICT_NONE
     parts = [core]
+    if dem["lightcurve"]:
+        parts.append(f"REDETECT_DEMOTED_{len(dem['lightcurve'])}")
+    if dem["vetstar"]:
+        parts.append(f"VETSTAR_DEMOTED_{len(dem['vetstar'])}")
     for tok in (extra_tokens or []):
-        if tok:
+        if tok and str(tok) not in parts:
             parts.append(str(tok))
     verdict = "; ".join(parts)
     if summary["degraded"]:
@@ -1041,7 +1078,8 @@ def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
         "vetstar_generated_utc": (summary.get("vetstar") or {}).get("generated_utc")
         or _stage_generated(out, "vetstar.json") or prev.get("vetstar_generated_utc"),
         "tiers_recomputed_from": "stars_vetted.csv overridden by candidates.json",
-        "tier_sources": prov,
+        "tier_sources": {k: v for k, v in prov.items() if k != "vetoes"},
+        "demotions_by_stage": dem,
         "note": ("counts, tiers and the verdict are RECOMPUTED from the per-star "
                  "records on every reconciliation; funnel totals upstream of the "
                  "tiers, rejection_counters, coverage, jitter_calibration and the "

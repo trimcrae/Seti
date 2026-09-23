@@ -10,6 +10,205 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### METRONOME: the last clock is settled -- it is the RR Lyrae next door, 2026-09-22
+
+`kepler:5879574` was the channel's only `candidate` and the one open question
+in the repository: 21 catalogued flares and 74 independently re-detected ones
+on a clock at 0.42328185 d against the catalogue's 0.42327409 d, jitter 0.048,
+`rd_p_window` 2.4e-55 over 17 quarters and 1,340.8 observed days, its
+catalogued epochs confirmed as real brightenings (epoch sigma 3.33 vs control
+0.52, p 0.0025, best time-offset 0.0 d), and `period_is_photometric: false`.
+
+**Three runs on 2026-09-22 settled it** -- 35796061650 (7:13 PM ET),
+35796768720 (7:22 PM ET) and 35797574316 (7:33 PM ET) -- through the new
+`vetstar` stage (`src/seti/metronome/vetstar.py`), one runner each, ~2 min
+each. Final verdict, nothing unreached:
+
+```
+MUNDANE_EXPLANATION_FOUND(
+  CONTAMINATING_VARIABLE_AT_P:gaia2053563953175635712@13.3arcsec,
+                              KIC 5879583,type=RR,P=0.4232946,in=vsx+ztf_chen2020;
+  COHERENT_OSCILLATION_AT_P:amp=0.00082,p_control=0.00498,z=68.7_with_events_masked;
+  EVENTS_ON_THE_CREST:offset=-0.036cycles;
+  AMPLITUDE_TRACKS_SPACECRAFT_ROLL:F=3.07,p=0.0015,ratio=2.37)  [P=0.423282 d]
+```
+
+**It is not an eclipsing binary, and every catalogue was asked by name.**
+Kepler Eclipsing Binary Catalog (Kirk+2016, `J/AJ/151/68`, all ten tables
+enumerated from TAP_SCHEMA and queried by KIC): **not listed**. Gaia DR3
+`vari_summary`, `vari_classifier_result`, `vari_eclipsing_binary`,
+`vari_rotation_modulation`, `vari_short_timescale`, `nss_two_body_orbit`: all
+**not listed**. Gaia's VizieR mirrors `I/358/veb` and `I/358/vclassre`, and
+ZTF (Chen+2020): **not listed**. VSX **is** listed -- as `ROT`, P = 11.107 d,
+amplitude 0.014 Kp, which is the rotation and matches McQuillan+2014's
+11.107 +- 0.079 d, not the clock. Astrometry: Gaia DR3 2053563953175632768,
+0.049" away once proper motion is propagated back to the KIC epoch, **RUWE
+0.995**, `non_single_star` 0, astrometric excess noise 0.0,
+`ipd_frac_multi_peak` 0, `duplicated_source` 0. No Gaia RV at G = 14.79, so
+that route is silent rather than clean.
+
+**It is not an EB folded at half its period either** -- the trap the vet was
+built for. At 2P the two half-phase minima are equal to 0.14 sigma, and the
+Fourier fit at 2P gives A1 = 3.2e-6 against A2 = 3.78e-4, a factor 117: there
+is no signal at 2P at all. At P the extremum is a **crest**, not a dip (height
+5.75e-4 vs depth 2.65e-4), and `frac_below_half_depth` = 0.32 -- the 1/3 of a
+sinusoid, not the few percent of an eclipse.
+
+**What it is: a coherent 0.084% photometric oscillation at exactly the clock
+period, whose crests the flare detector counts as flares.** Folded amplitude
+8.40e-4 peak-to-peak, and **8.21e-4 with all 74 detected events masked out**,
+so the oscillation is not made by the events. Against 200 control-period folds
+of the same light curve: z = 68.7, p at the 1/201 floor. Detrend the 11.05 d
+rotation away and the clock period is the **rank-1** periodogram peak, at
+0.4232737 d, Baluev FAP 0. The 74 events sit on the crest: Rayleigh r = 0.957,
+p = 3e-28, mean phase 0.936 against a fitted photometric maximum at
+0.936-0.971 -- an offset of **-0.036 cycles, 22 minutes**. At 2P the events do
+not cluster at all (r = 0.107, p = 0.43). Run 35797574316 repeated this on the
+**catalogued** epochs -- all 21 of Yang & Liu 2019's, fetched from VizieR by
+the vet itself rather than from a prior run's artifact: r = 0.974, p = 8e-9,
+mean phase **0.943** against the re-detected events' 0.936, and r = 0.141,
+p = 0.66 at 2P. The published flare list and the independent detector are
+counting the same pulsation maxima.
+
+`period_is_photometric: false` was right about what it measured and wrong
+about what it was taken to mean: it compares the clock against the *global*
+Lomb-Scargle maximum of the raw light curve, where a 0.6%-amplitude 11.05 d
+rotation buries a 0.084% signal. **That veto cannot see any oscillation that
+is not the largest thing in the light curve -- which is every oscillation that
+matters, because a large one would already have been catalogued.**
+
+**And the signal is not this star's.** The folded amplitude,
+measured independently in each of the 17 quarters, is a function of
+`quarter % 4` -- the Kepler roll orientation:
+
+| season (`quarter % 4`) | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| mean folded amplitude | 6.59e-4 | 5.96e-4 | 1.41e-3 | 1.18e-3 |
+| quarters | 4 | 5 | 4 | 4 |
+
+Every quarter respects the grouping; the phase of maximum does not move
+(0.89-0.99 in all seventeen). Between-season over within-season scatter
+F = 3.07, **p = 5.0e-4** from 20,000 relabellings, ratio 2.37. `quarter % 4`
+is a fact about the spacecraft, not about the sky. An intrinsic signal is
+diluted by crowding, which moves with the mask by tens of percent; a
+neighbour's signal scales with how much of *that* star's flux the mask
+catches, which moves by factors. Gaia names the source: **DR3 2053563953175635712, 13.3" away (3.3 Kepler
+pixels), G = 14.37 against the target's 14.79 -- brighter -- and flagged
+`VARIABLE`.**
+
+
+**The signal has an owner: KIC 5879583, an RR Lyrae 13.3" away.** Run
+35796768720's neighbour census put the Gaia source the roll test pointed at to
+the same archives as the target, and three catalogues answered:
+
+| catalogue | name | type | period |
+|---|---|---|---|
+| VSX | **KIC 5879583** | RR | **0.4232946 d**, amplitude 0.575 mag (r) |
+| Gaia DR3 `I/358/vclassre` | 2053563953175635712 | RR, score 0.982 | -- |
+| ZTF (Chen+2020) | ZTFJ193127.18+410759.8 | RR | **0.4232946 d** (g: 0.423297) |
+
+against the clock re-detected in kepler:5879574's own photometry at
+0.42328185 d: a fractional difference of **3.0e-5**, which over Kepler's
+1,340.8 observed days (3,168 cycles) accumulates **0.095 of a cycle** -- 58
+minutes of phase in 3.7 years, and ZTF measured its period a decade after the
+Kepler data anyway. The two are the same period to the precision either
+measurement has. ZTF also publishes that star's Fourier shape, R21 = 0.326,
+against **A2/A1 = 0.3168** measured in the fold of the *target's* light curve
+-- different passbands (ZTF r vs Kepler's broad band), so corroboration rather
+than a second independent identification; the period is the identification.
+
+**The arithmetic closes too.** 0.575 mag peak-to-peak is 51.8% in flux, and
+Gaia makes the RR Lyrae 0.419 mag brighter than the target (G 14.373 vs
+14.792), so F_nb/F_tgt = 1.471. To show up as the measured 0.084% folded
+amplitude, the fraction of the neighbour's flux inside the target's aperture
+must be f = A_obs / [(F_nb/F_tgt)(A_nb - A_obs)] = **0.00110** -- 0.11% of the
+RR Lyrae, and 0.083% to 0.171% across the roll seasons. At 3.3 Kepler pixels
+the PRF wings are at exactly that level and a factor 2.1 between mask
+orientations is ordinary. (Approximations: Gaia G stands in for Kepler's band
+on both stars; third-party aperture flux ignored; PDC's crowding correction
+not undone. Tens of percent on f, not orders of magnitude.) A 0.575 mag pulsator
+diluted into a neighbouring Kepler aperture is an 0.084% oscillation; its
+crests clear the flare detector's running-median sigma on some cycles; the
+result is a catalogue of "flares" on a perfect clock.
+
+**Why the channel missed it, and the fix.** The `periodic_variable` veto runs
+its VSX / Gaia-vari / ZTF cone at **3 arcsec** -- a radius set by positional
+uncertainty, which is right for *is this star a variable* and wrong for *is a
+variable putting flux in this star's aperture*. A Kepler pixel is 3.98" and
+the optimal mask is several of them, so the contaminating radius is 10-20";
+at 13.3" the RR Lyrae was outside every cone the assess stage ran. **The fix
+is a second cone at the aperture scale whose hit is a contamination flag, not
+an identity flag.** The vet does this (`neighbour_context`); the assess stage
+does not. Until it does, no shortlist from this channel should be believed on
+the variability veto alone -- and the same question is worth asking of every
+other channel in this repository that vetoes on a positional-uncertainty cone.
+
+**What is still not proved.** Five independent lines -- period to 0.095 of a
+cycle, harmonic shape, roll-season amplitude, the required leakage fraction,
+and the events sitting on the crest -- all say the 0.4233 d signal is KIC
+5879583's. None of them is pixel-level photometry. Fitting the RR Lyrae out of
+the target's target-pixel files, or measuring the flux centroid's motion in
+phase with it, would make the case direct. It is not done here because the
+candidate is already dead whichever star the oscillation belongs to: either
+way it is a pulsation and not a flare clock.
+
+Per `CLAUDE.md` this is a clean result and is **not** written up. METRONOME
+has no candidate.
+
+### METRONOME: 17 of 39 shortlisted stars' catalogued flares are not in the photometry, 2026-09-22
+
+This may outlast the star. Run 35746944111's threshold-free epoch stack
+(`results/metronome/redetect.json`) asked, of every shortlisted star, the
+simplest possible question: **is there any flux at the times the catalogue
+published?** It reads the detrended residual in units of the run's own robust
+sigma at the catalogued epochs and compares it to the same statistic at
+thousands of random times inside the same observing windows. No detection
+threshold enters anywhere.
+
+Of 40 shortlisted stars, 39 were fetched and 39 got a verdict:
+
+| | stars | epoch sigma (median) | control sigma (median) |
+|---|---|---|---|
+| catalogued epochs **are** brightenings | 22 | 3.91 | 0.82 |
+| catalogued epochs are **not** | **17** | 1.19 | 0.95 |
+
+Per catalogue: **14 of 28** tested stars from Tu+2022 (TESS), **2 of 10** from
+Yang & Liu 2019 (Kepler), **1 of 1** from Shibayama+2013. **18 of the 39
+recover exactly 0.000** of their catalogued flares with an independent
+detector on the same light curve; the median recovery is 0.064. Nine stars
+were demoted on `catalogue_epochs_absent`, all of them `tess_tu2022`.
+
+It is not a time-system error: the stack is repeated at +-2400000.5 and
++-2457000 applied to every epoch, and not one of the 17 picked up a shifted
+peak (`cat_best_offset_days` is 0.0 for eight of them, |offset| <= 0.1 d for
+five more). It is not the detector's threshold: the stack has no threshold in
+it. And the instrument separates the populations cleanly -- among the 17 the
+epoch sigma (1.19) is indistinguishable from its own control (0.95), while
+among the 22 the epochs stand 4.8x above theirs.
+
+**Three caveats bound the claim.** (i) These 40 are *not* a random sample:
+they are the clock shortlist, selected because their catalogued times form an
+unusually regular pattern -- exactly what a pipeline's own periodic
+systematics would produce. **44% is not a catalogue-wide false-positive rate
+and this channel cannot produce one from this run.** (ii) Tu+2022 publishes
+superflare *candidates* and says so. (iii) The light-curve product fetched
+here need not be the one the catalogue was built on, and for TESS that gap is
+real.
+
+What stands: **for a substantial fraction of shortlisted stars the published
+flare epochs carry no more flux than random times in the same observing
+windows.** Any analysis that treats a flare catalogue's timing as a
+measurement of the star, without going back to the photometry, is in these
+cases resting on times that are not events.
+
+**Also fixed here:** the metronome workflow's `permissions:` block granted only
+`contents: write`, and a permissions block *replaces* the defaults -- so
+`actions: read` was missing and every cross-run `actions/download-artifact`
+(`reduce_only_run_id`, in `assess-only`, `redetect-only` and `vetstar`) 403'd
+and silently returned nothing. Run 35796061650 reported
+`n_catalogue_epochs = 0` for that reason. Any other channel whose workflow
+sets `permissions:` and downloads artifacts from a prior run has the same bug.
+
 ### ARC: NO candidate — KIC 9418692's excess is inside its own energy systematic, 2026-09-22
 
 **Correction to the entry as first written**, which called this star a

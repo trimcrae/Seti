@@ -294,6 +294,30 @@ redetect:
   confirm_Q_min: 0.85
   confirm_jitter_max: 0.05
 
+# THE SINGLE-STAR VET (src/seti/metronome/vetstar.py, docs/metronome.md §"the
+# vet").  The redetection's `period_is_photometric` veto asks only whether the
+# clock period is the star's DOMINANT photometric periodicity.  A grazing or
+# diluted eclipsing binary, a g-mode pulsator or a blended neighbour is never
+# dominant and still makes a strict clock, and 0.4233 d sits squarely in the
+# contact-binary and fast-rotator range.  So one star is asked every mundane
+# question explicitly.
+vetstar:
+  star_key: "kepler:5879574"          # the one clock that survived the redetection
+  catalogue: kepler_yang2019
+  period_days: 0.42328185409991       # the re-detected period (catalogue: 0.42327409)
+  # LONG compared with the clock, short compared with the 11.05 d rotation: a
+  # running median of this length leaves the clock in and takes the rotation
+  # out.  The detector's own 0.5 d window would eat the signal under test.
+  detrend_window_days: 2.0
+  n_bins: 100
+  # 3.98 arcsec per Kepler pixel, so 20 arcsec covers anything that can put
+  # flux in the aperture; the cones for the variable catalogues are tight.
+  gaia_radius_arcsec: 20.0
+  vizier_radius_arcsec: 5.0
+  max_quarters: 20
+  per_target_budget_s: 1800.0
+  budget_s: 5400.0
+
 # The VizieR ROUTE LADDER shared by every channel that imports
 # seti.metronome.acquire (METRONOME, ARC, ULINE).  On 2026-09-13 TAPVizieR
 # answered 503 to five attempts over EACH of https and http, and two channels

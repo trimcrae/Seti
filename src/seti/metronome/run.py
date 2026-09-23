@@ -832,15 +832,19 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
 STAGES = ("probe", "acquire", "screen", "assess")
 #: Runs only when asked: it opens MAST for every shortlisted star.
 STAGE_REDETECT = "redetect"
+#: Runs only when asked: the single-star vet (docs/metronome.md, "the vet").
+STAGE_VETSTAR = "vetstar"
 
 
 def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int = 0,
                   n_shards: int = 1, max_stars: int | None = None, max_rows: int | None = None,
                   offline: bool = False, seed: int = 20260906, out_root=None,
                   query_fn=None, cone_fn=None, lc_fn=None, kepler_lc_fn=None,
-                  budget_s: float | None = None) -> dict:
+                  budget_s: float | None = None, star_key: str | None = None,
+                  period: float | None = None) -> dict:
     """Run one stage or all of them.  Returns the last stage's report."""
     from .redetect import stage_redetect
+    from .vetstar import stage_vetstar
 
     conf = load_metronome_config(cfg)
     out = _out_root(cfg, out_root)
@@ -861,8 +865,13 @@ def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int =
         elif s == STAGE_REDETECT:
             rep = stage_redetect(conf, out, lc_fn=lc_fn, kepler_lc_fn=kepler_lc_fn,
                                  max_stars=max_stars, seed=seed, budget_s=budget_s)
+        elif s == STAGE_VETSTAR:
+            rep = stage_vetstar(conf, out, star_key=star_key, period=period,
+                                lc_fn=lc_fn, kepler_lc_fn=kepler_lc_fn, query_fn=query_fn,
+                                cone_fn=cone_fn, budget_s=budget_s)
         else:
-            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + (STAGE_REDETECT,)}")
+            raise SystemExit(f"unknown stage {s!r}; choose from "
+                             f"{STAGES + (STAGE_REDETECT, STAGE_VETSTAR)}")
     return rep
 
 
@@ -871,7 +880,8 @@ def main(argv=None):
                                 description="METRONOME: clocks in stellar flare timing (S28)")
     p.add_argument("--stage", default="all",
                    help="probe|acquire|screen|assess|all or a comma list; 'redetect' (MAST "
-                        "light curves for the shortlist) only when named")
+                        "light curves for the shortlist) and 'vetstar' (the single-star "
+                        "eclipsing-binary vet) only when named")
     p.add_argument("--budget-s", type=float, default=-1.0,
                    help="redetect wall-clock budget in seconds (-1 = config)")
     p.add_argument("--catalogues", default="",
@@ -883,6 +893,9 @@ def main(argv=None):
     p.add_argument("--offline", action="store_true", help="assess without network crossmatches")
     p.add_argument("--seed", type=int, default=20260906)
     p.add_argument("--out-root", default="", help="results directory (default results/metronome)")
+    p.add_argument("--star-key", default="", help="vetstar: the star to vet, e.g. kepler:5879574")
+    p.add_argument("--period", type=float, default=-1.0,
+                   help="vetstar: the clock period in days (-1 = config)")
     a = p.parse_args(argv)
     cats = [c for c in a.catalogues.split(",") if c.strip()] or None
     from ..config import load_config
@@ -890,7 +903,9 @@ def main(argv=None):
     rep = metronome_run(cfg, stage=a.stage, catalogues=cats, shard=a.shard, n_shards=a.n_shards,
                         max_stars=a.max_stars or None, max_rows=None if a.max_rows < 0 else a.max_rows,
                         offline=a.offline, seed=a.seed, out_root=a.out_root or None,
-                        budget_s=None if a.budget_s < 0 else a.budget_s)
+                        budget_s=None if a.budget_s < 0 else a.budget_s,
+                        star_key=a.star_key or None,
+                        period=None if a.period < 0 else a.period)
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[metronome] verdict: {v}")

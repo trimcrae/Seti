@@ -299,6 +299,11 @@ screen:
   ensemble_correct: true
   ensemble_bin_yr: 0.25
   ensemble_min_stars: 8
+  # Applied correction: per (W1/W2 magnitude bin x |ecliptic latitude| band),
+  # falling back to the magnitude bin, then the global median.  The drift is
+  # brightness dependent (run 35860165284, docs/ignition.md 7.4).
+  ensemble_mode: stratified
+  stratum_min_stars: 40
 
 rise:
   min_epochs: 10

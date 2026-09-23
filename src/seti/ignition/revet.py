@@ -63,12 +63,11 @@ import numpy as np
 import pandas as pd
 
 from .acquire import ecliptic_latitude_deg, epochs_to_series
+from .ensemble import BETA_EDGES, MAG_EDGES, stratified_offsets
 from .rise import assess_series
+from .vet import _bnu_ratio, dust_colour_test  # noqa: F401  (re-exported)
 
 GAIA_EPOCH = 2016.0
-MAG_EDGES = [6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0, 16.0]
-BETA_EDGES = [0.0, 40.0, 65.0, 90.1]
-STRATUM_MIN_STARS = 40
 
 
 def _now() -> str:
@@ -198,59 +197,6 @@ def load_epochs(out: Path, n_shards: int) -> pd.DataFrame:
     ep = ep.dropna(subset=["t_yr", "mag"])
     # a resumed shard's CSV is append-only: one star's epochs must appear once
     return ep.drop_duplicates(["source_id", "band", "t_yr"])
-
-
-def stratified_offsets(ep: pd.DataFrame, beta_by_sid: pd.Series, bin_yr: float = 0.25,
-                       mag_edges=MAG_EDGES, beta_edges=BETA_EDGES,
-                       min_stars: int = STRATUM_MIN_STARS) -> tuple[pd.DataFrame, dict]:
-    """Median (mag - star median) per (band, mag bin, |beta| band, time bin).
-
-    The star's magnitude bin is set by its own median in that band.  A stratum
-    x time bin with fewer than ``min_stars`` stars falls back to the magnitude
-    bin over all |beta| (and records that it did).  Returns the corrected epoch
-    table (``mag`` corrected, ``mag_raw`` kept) and a small report.
-    """
-    d = ep.copy()
-    med = d.groupby(["source_id", "band"])["mag"].transform("median")
-    d["resid"] = d["mag"] - med
-    d["mbin"] = np.digitize(med.to_numpy(float), mag_edges)
-    d["bband"] = np.digitize(beta_by_sid.reindex(d["source_id"]).to_numpy(float), beta_edges)
-    d["tbin"] = np.round(np.floor(d["t_yr"].to_numpy(float) / bin_yr) * bin_yr, 3)
-    fine = (d.groupby(["band", "mbin", "bband", "tbin"])
-            .agg(off=("resid", "median"), n=("source_id", "nunique")).reset_index())
-    coarse = (d.groupby(["band", "mbin", "tbin"])
-              .agg(off_c=("resid", "median"), n_c=("source_id", "nunique")).reset_index())
-    d = d.merge(fine, on=["band", "mbin", "bband", "tbin"], how="left")
-    d = d.merge(coarse, on=["band", "mbin", "tbin"], how="left")
-    use_fine = d["n"] >= min_stars
-    use_coarse = ~use_fine & (d["n_c"] >= min_stars)
-    corr = np.where(use_fine, d["off"], np.where(use_coarse, d["off_c"], np.nan))
-    d["mag_raw"] = d["mag"]
-    applied = np.isfinite(corr)
-    d["mag"] = np.where(applied, d["mag"].to_numpy(float) - np.nan_to_num(corr), d["mag"])
-    d["strat_applied"] = applied
-    rep = {"bin_yr": bin_yr, "mag_edges": list(mag_edges), "beta_edges": list(beta_edges),
-           "min_stars": min_stars,
-           "frac_epochs_fine": round(float(use_fine.mean()), 4),
-           "frac_epochs_coarse": round(float(use_coarse.mean()), 4),
-           "frac_epochs_uncorrected": round(float((~applied).mean()), 4)}
-    # end-to-end drift per band and magnitude bin (first to last applied time bin)
-    drift = []
-    for (band, mbin), g in coarse[coarse["n_c"] >= min_stars].groupby(["band", "mbin"]):
-        g = g.sort_values("tbin")
-        if len(g) < 8:
-            continue
-        # a straight-line fit through the offsets, in mmag/yr
-        s = np.polyfit(g["tbin"].to_numpy(float), g["off_c"].to_numpy(float), 1)[0]
-        lo = mag_edges[mbin - 1] if 0 < mbin <= len(mag_edges) - 1 else None
-        hi = mag_edges[mbin] if 0 <= mbin < len(mag_edges) else None
-        drift.append({"band": band, "mag_lo": lo, "mag_hi": hi,
-                      "n_stars_median": int(np.median(g["n_c"])),
-                      "offset_slope_mmag_yr": round(1e3 * float(s), 3),
-                      "offset_ptp_mmag": round(1e3 * float(g["off_c"].max() - g["off_c"].min()), 2)})
-    rep["drift_by_mag"] = drift
-    keep = ["source_id", "band", "t_yr", "mag", "err", "mag_raw", "strat_applied"]
-    return d[keep], rep
 
 
 def _screen_one(args):
@@ -586,40 +532,6 @@ def asassn_lightcurve(c: pd.Series, radius_arcsec: float = 5.0) -> dict:
         out[str(flt)] = _camera_slope(g["t"], pd.to_numeric(g["mag"], errors="coerce"),
                                       pd.to_numeric(g["mag_err"], errors="coerce"),
                                       g["camera"] if "camera" in g else np.zeros(len(g)))
-    return out
-
-
-def _bnu_ratio(temp_k: float, lam1_um: float = 3.35, lam2_um: float = 4.60) -> float:
-    """B_nu(lam2) / B_nu(lam1) for a blackbody."""
-    c2 = 14387.77
-    x1, x2 = c2 / (lam1_um * temp_k), c2 / (lam2_um * temp_k)
-    return float((lam1_um / lam2_um) ** 3 * np.expm1(x1) / np.expm1(x2))
-
-
-def dust_colour_test(w1_slope, w1_sigma, w2_slope, w2_sigma, teff: float = 5000.0) -> dict:
-    """Is the rise the colour of warm dust, or of a star?
-
-    For small changes the magnitude rise in a band is the fractional flux
-    excess, so W2rise/W1rise = [B(Td,4.6)/B(Td,3.35)] / [B(T*,4.6)/B(T*,3.35)].
-    Dust at 1000 K on a 5000 K photosphere gives ~2.0, at 1500 K ~1.5
-    (sublimation); a stellar-coloured contributor (or the star itself, or a
-    multiplicative calibration term) gives ~1.
-    """
-    try:
-        s1, s2 = float(w1_slope), float(w2_slope)
-        e1, e2 = abs(s1 / float(w1_sigma)), abs(s2 / float(w2_sigma))
-    except Exception:                                 # noqa: BLE001
-        return {}
-    if not (np.isfinite(s1) and np.isfinite(s2) and s1 != 0):
-        return {}
-    ratio = s2 / s1
-    err = abs(ratio) * float(np.hypot(e1 / s1, e2 / s2))
-    phot = _bnu_ratio(teff if np.isfinite(teff) else 5000.0)
-    out = {"w2_over_w1_rise": round(ratio, 3), "err": round(err, 3), "teff_used": teff}
-    for td in (800.0, 1000.0, 1500.0):
-        pred = _bnu_ratio(td) / phot
-        out[f"pred_dust_{int(td)}K"] = round(pred, 3)
-        out[f"z_vs_dust_{int(td)}K"] = round((pred - ratio) / err, 2) if err > 0 else None
     return out
 
 

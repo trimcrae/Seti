@@ -172,7 +172,8 @@ jobs:
       - name: Offline gate — injected ramp recovered, impact rejected, drift removed, on this runner
         run: |
           python -m pytest tests/test_ignition.py -q -p no:cacheprovider -k "injected or impact or no_data or one_band"
-          python -m pytest tests/test_ignition_scale.py -q -p no:cacheprovider -k "ladder or drift or tile_grid or sweep_stage"
+          python -m pytest tests/test_ignition_scale.py -q -p no:cacheprovider -k "ladder or drift or tile_grid or sweep_stage or adds_a_tile"
+          python -m pytest tests/test_ignition_vetladder.py -q -p no:cacheprovider
       - name: Reuse a prior run's parent sample (skip probe + sample)
         if: ${{ github.event.inputs.sample_from_run_id != '' }}
         uses: actions/download-artifact@v4
@@ -393,6 +394,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: ASAS-SN Sky Patrol client for the optical rung (a failed install is a recorded degradation)
+        continue-on-error: true
+        run: pip install "git+https://github.com/asas-sn/skypatrol.git"
       - name: Start from a clean results tree (stale shard files of earlier dispatches)
         run: |
           rm -f results/ignition/epochs_s*.csv results/ignition/neowise_stars_s*.csv \
@@ -415,7 +419,7 @@ jobs:
           fi
       - name: Assess (merge shards, contaminant ladder, candidates.csv, summary.json)
         run: |
-          python -m seti.ignition.run --stage assess --shards ${{ needs.plan.outputs.n_shards }}
+          python -m seti.ignition.run --stage assess --shards ${{ needs.plan.outputs.n_shards }} --online-vet
           echo "=== summary ==="
           python - <<'PY'
           import json
@@ -474,6 +478,7 @@ jobs:
             $(ls results/ignition/summary_*.json 2>/dev/null) \
             results/ignition/candidates.csv \
             results/ignition/stars_vetted.csv \
+            $(ls results/ignition/vet_online.json 2>/dev/null) \
             $(ls results/ignition/screen_s*.json 2>/dev/null) \
             $(ls results/ignition/sweep_s*.json 2>/dev/null) \
             $(ls results/ignition/acquire_s*.json 2>/dev/null)
@@ -499,6 +504,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: ASAS-SN Sky Patrol client for the optical rung (a failed install is a recorded degradation)
+        continue-on-error: true
+        run: pip install "git+https://github.com/asas-sn/skypatrol.git"
       - name: Start from a clean results tree
         run: |
           rm -f results/ignition/epochs_s*.csv results/ignition/neowise_stars_s*.csv \
@@ -526,7 +534,7 @@ jobs:
           if [ "${{ github.event.inputs.shards || '0' }}" != "0" ]; then
             SH="--shards ${{ github.event.inputs.shards }}"
           fi
-          python -m seti.ignition.run --stage assess $SH
+          python -m seti.ignition.run --stage assess $SH --online-vet
           head -c 8000 results/ignition/summary.json
       - name: Commit results
         if: always()

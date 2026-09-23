@@ -829,6 +829,26 @@ def gaia_neighbourhood(ra: float, dec: float, *, radius_arcsec: float = 20.0,
     return out
 
 
+def _cell(v):
+    """One table cell as JSON-able data.  MEASURED 2026-09-23 (run
+    35862302623, tess:260128333): ``nss_two_body_orbit`` carries ARRAY-valued
+    columns (``corr_vec``), ``pd.isna`` of an array is an array, and the vet
+    crashed on the one star Gaia lists as an orbital binary."""
+    if isinstance(v, (list, tuple, np.ndarray)):
+        arr = np.asarray(v, dtype=object).ravel()
+        return [_cell(x) for x in arr[:64]]
+    try:
+        if pd.isna(v):
+            return None
+    except (TypeError, ValueError):
+        return str(v)
+    if isinstance(v, (bool, np.bool_)):
+        return bool(v)
+    if isinstance(v, (int, float, np.floating, np.integer)):
+        return float(v)
+    return str(v)
+
+
 def gaia_variability(source_id: str, *, tables=GAIA_VARI_TABLES, query_fn=None,
                      log: AcquisitionLog | None = None) -> dict:
     """One row per Gaia DR3 variability / non-single-star table for the source.
@@ -857,11 +877,7 @@ def gaia_variability(source_id: str, *, tables=GAIA_VARI_TABLES, query_fn=None,
         rec["status"] = STATUS_OK if n else STATUS_ABSENT
         if n:
             r = df.iloc[0]
-            rec["row"] = {c: (None if pd.isna(r.get(c)) else
-                              (float(r.get(c)) if isinstance(
-                                  r.get(c), (int, float, np.floating, np.integer))
-                               else str(r.get(c))))
-                          for c in df.columns}
+            rec["row"] = {c: _cell(r.get(c)) for c in df.columns}
         if log:
             log.record(f"vetstar_{table}", adql[:300], rows=n)
         out[table] = rec

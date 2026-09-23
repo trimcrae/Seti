@@ -546,6 +546,10 @@ jobs:
           VF=$(python -c "from seti.metronome.reconcile import vetstar_filename as f; print(f('$STAR', suffix='.csv', prefix='vetstar_fold_'))")
           echo "vj=results/metronome/$VJ" >> "$GITHUB_OUTPUT"
           echo "vf=results/metronome/$VF" >> "$GITHUB_OUTPUT"
+          # a vet that crashes must not leave the branch's PREVIOUS record to
+          # be reported as its own (MEASURED: run 35862302623 printed the
+          # recovered 00:34 verdict after a traceback)
+          rm -f "results/metronome/$VJ" "results/metronome/$VF"
           python -m seti.metronome.run --stage vetstar \
             --star-key "$STAR" \
             --period "${{ github.event.inputs.vet_period || '-1' }}" \

@@ -504,6 +504,23 @@ def test_stage_aperture_flags_the_shortlist_and_reconciles(tmp_path):
     assert check_consistency(tmp_path) == []
 
 
+def test_gaia_rows_with_array_columns_do_not_crash_the_vet():
+    """nss_two_body_orbit carries array-valued columns (run 35862302623)."""
+    from seti.metronome.vetstar import gaia_variability
+
+    def gq(adql):
+        if "nss_two_body_orbit" in adql:
+            return pd.DataFrame({"source_id": [1], "period": [2.92],
+                                 "corr_vec": [np.array([0.1, np.nan, 0.3])],
+                                 "nss_solution_type": ["SB1"]})
+        return pd.DataFrame()
+
+    out = gaia_variability("1", query_fn=gq)
+    row = out["gaiadr3.nss_two_body_orbit"]["row"]
+    assert row["period"] == 2.92 and row["corr_vec"] == [0.1, None, 0.3]
+    assert row["nss_solution_type"] == "SB1"
+
+
 def test_one_product_per_sector():
     from seti.metronome.vetstar import one_product_per_segment
 

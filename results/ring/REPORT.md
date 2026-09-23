@@ -1,8 +1,8 @@
 # RING — rings around the dead (S63)
 
-**Verdict:** `DEGRADED (wd, ffp not reached; bd partial: acquisition NOT_RUN; 28/232 targets with epochs); NO_RING_SURVIVOR`
+**Verdict:** `DEGRADED (wd not reached; bd partial: acquisition NOT_RUN; 28/232 targets with epochs); NO_RING_SURVIVOR`
 
-Generated 2026-09-23T12:35:04Z by run `35860901093`. Leg provenance (the run whose files each leg's numbers come from): wd: `None` (None), pulsar: `35860901093` (2026-09-23T12:34:37Z), bd: `None` (None), ffp: `35860901093` (2026-09-23T12:35:04Z)
+Generated 2026-09-23T13:08:30Z by run `35864331050`. Leg provenance (the run whose files each leg's numbers come from): wd: `None` (None), pulsar: `35864331050` (2026-09-23T13:08:08Z), bd: `None` (None), ffp: `35864331050` (2026-09-23T13:08:30Z)
 
 ## White dwarfs
 
@@ -21,8 +21,8 @@ Generated 2026-09-23T12:35:04Z by run `35860901093`. Leg provenance (the run who
 * with an AllWISE / CatWISE counterpart inside the per-pulsar radius: 709 / 1,324 (any: 1,445)
 * median control hits per host over 16 offset positions: 1.0
 * counterpart shapes: {'unfit': 1195, 'companion': 173, 'debris_disk': 69, 'ring_band': 8}
-* vetoes: {'position_not_localised': 1120, 'chance_coincidence': 188, 'nebula_cluster_or_optical_association': 86, 'single_band_no_colour': 23, 'non_degenerate_companion': 18, 'catalogued_counterpart': 5, 'companion_colour': 4}
-* surviving: 1; ring-band: **0**
+* vetoes: {'position_not_localised': 1120, 'chance_coincidence': 188, 'nebula_cluster_or_optical_association': 86, 'single_band_no_colour': 23, 'non_degenerate_companion': 18, 'catalogued_counterpart': 5, 'companion_colour': 4, 'not_significant_after_trials': 1}
+* surviving: 0; ring-band: **0**
 * localised hosts (2 x position error <= the widest aperture): 2770
 * chance census (observed vs the local-control expectation): {'allwise': {'observed': 709, 'expected_by_chance': 607.4, 'observed_localised': 160, 'expected_localised': 80.4, 'observed_unlocalised': 549, 'expected_unlocalised': 527.0, 'ring_colour_observed': 1, 'ring_colour_expected_by_chance': 1.38, 'ring_colour_observed_localised': 1, 'ring_colour_expected_localised': 0.06}, 'catwise': {'observed': 1324, 'expected_by_chance': 1271.9, 'observed_localised': 253, 'expected_localised': 212.6, 'observed_unlocalised': 1071, 'expected_unlocalised': 1059.4, 'ring_colour_observed': 8, 'ring_colour_expected_by_chance': 9.56, 'ring_colour_observed_localised': 2, 'ring_colour_expected_localised': 1.62}}
 * sensitivity: {'n_hosts_with_edot_and_distance': 2771, 'n_hosts_500K_ring_detectable_at_f_lt_1': 1572, 'n_hosts_500K_ring_detectable_at_f_lt_0p1': 911, 'median_f_min_500K': 7.298767902304851}
@@ -55,9 +55,9 @@ Generated 2026-09-23T12:35:04Z by run `35860901093`. Leg provenance (the run who
 
 ## Free-floating planetary-mass objects: hotter than cooling allows
 
-* with L_bol: 63; with a group: 69; age sources: {'none': 69}; unmatched group names: {'HLM': 29, 'AM': 21, 'BM': 10, 'NM': 9}
-* objects: 69; testable (L_bol and an age): 0; catalogued planetary-mass: 0
-* above the 13 M_J cooling ceiling (with the 0.5 dex margin): 0; of which catalogued planetary-mass: **0**
+* with L_bol: 63; with a group: 69; age sources: {'group_fallback': 67, 'none': 2}; unmatched group names: {'FIELD': 1, 'NONE': 1}
+* objects: 69; testable (L_bol and an age): 61; catalogued planetary-mass: 8
+* above the 13 M_J cooling ceiling (with the 0.5 dex margin): 43; of which catalogued planetary-mass: **0**
 * every flag carries `age_misassignment|mass_underestimate|unresolved_binary` as systematics not excluded
 
 See `docs/ring.md` for the claim, the prior art and the contamination model.

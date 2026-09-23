@@ -1,6 +1,6 @@
 {
-  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); NO_CLOCK_CANDIDATES; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_6",
-  "generated_utc": "2026-09-23T13:35:46Z",
+  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020); aperture_stage:identity_reached_0.45_aperture_reached_0.45_of_shortlist); NO_CLOCK_CANDIDATES; REDETECT_DEMOTED_9; VETSTAR_DEMOTED_5; APERTURE_DEMOTED_1",
+  "generated_utc": "2026-09-23T13:46:03Z",
   "n_candidates": 0,
   "n_interest": 0,
   "n_watch": 53,
@@ -16,8 +16,8 @@
     "stars_interest": 0,
     "stars_candidate": 0,
     "stars_demoted_by_lightcurve": 9,
-    "stars_demoted_by_vetstar": 6,
-    "stars_demoted_by_aperture": 0
+    "stars_demoted_by_vetstar": 5,
+    "stars_demoted_by_aperture": 1
   },
   "rejection_counters": {
     "first_veto": {
@@ -183,7 +183,8 @@
   },
   "degraded": [
     "tess_pietras2022:QUERY_RETURNED_ZERO_ROWS",
-    "variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)"
+    "variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)",
+    "aperture_stage:identity_reached_0.45_aperture_reached_0.45_of_shortlist"
   ],
   "offline": false,
   "variability_catalogues_reached": {
@@ -1602,11 +1603,10 @@
   },
   "vetstar": {
     "n_vetted": 6,
-    "n_demoted": 6,
+    "n_demoted": 5,
     "demoted": [
       "tess:260128333:vet_narrow_dip_at_p",
       "tess:350479496:vet_narrow_dip_at_p",
-      "kepler:5879574:vet_contaminating_variable_at_p",
       "tess:398943781:vet_catalogued_eclipsing_binary",
       "tess:63834969:vet_narrow_dip_at_p",
       "tess:32449963:vet_catalogued_eclipsing_binary"
@@ -1669,7 +1669,7 @@
   },
   "provenance": {
     "vetstar_generated_utc": "2026-09-23T12:49:36Z",
-    "rebuilt_utc": "2026-09-23T13:35:46Z",
+    "rebuilt_utc": "2026-09-23T13:46:03Z",
     "rebuilt_by": "reconcile",
     "assess_generated_utc": "2026-09-21T21:42:31Z",
     "redetect_generated_utc": "2026-09-22T21:57:41Z",
@@ -1692,14 +1692,167 @@
         "tess:458478250"
       ],
       "vetstar": [
-        "kepler:5879574",
         "tess:260128333",
         "tess:32449963",
         "tess:350479496",
         "tess:398943781",
         "tess:63834969"
+      ],
+      "aperture": [
+        "kepler:5879574"
       ]
     },
-    "note": "counts, tiers and the verdict are RECOMPUTED from the per-star records on every reconciliation; funnel totals upstream of the tiers, rejection_counters, coverage, jitter_calibration and the acquisition logs are the assess run's and are not re-derived"
+    "note": "counts, tiers and the verdict are RECOMPUTED from the per-star records on every reconciliation; funnel totals upstream of the tiers, rejection_counters, coverage, jitter_calibration and the acquisition logs are the assess run's and are not re-derived",
+    "aperture_generated_utc": "2026-09-23T12:54:01Z"
+  },
+  "aperture_contamination": {
+    "generated_utc": "2026-09-23T12:54:01Z",
+    "radius_arcsec": {
+      "kepler": 20.0,
+      "tess": 120.0,
+      "default": 20.0
+    },
+    "identity_radius_arcsec": 3.0,
+    "sources": [
+      "gaia_dr3_vari",
+      "vsx",
+      "ztf_chen2020"
+    ],
+    "aperture_tol": 0.01,
+    "identity_tol": 0.03,
+    "shortlist_definition": "stars_vetted.csv fdr_watch == True (every star at the watch FDR, whatever tier the gauntlet then gave it)",
+    "n_shortlist": 225,
+    "n_positioned": 102,
+    "positions": {
+      "kepler": {
+        "n_ids": 102,
+        "n_from_kic_tic": 102,
+        "n_total": 102
+      },
+      "tess": {
+        "n_ids": 123,
+        "n_from_kic_tic": 0,
+        "n_total": 0
+      }
+    },
+    "frac_identity_reached": 0.4533333333333333,
+    "frac_aperture_reached": 0.4533333333333333,
+    "n_flagged": 7,
+    "flagged": [
+      "kepler:10384891",
+      "kepler:3448787",
+      "kepler:3626325",
+      "kepler:5879574",
+      "kepler:7465605",
+      "kepler:8560364",
+      "kepler:9595743"
+    ],
+    "flagged_detail": [
+      {
+        "star_key": "kepler:10384891",
+        "tier_assess": "none",
+        "veto": "aperture_identity_periodic_variable",
+        "period": 0.407785261595255,
+        "identity_detail": "vsx:ROT:P=0.413x1",
+        "matches": [],
+        "p_chance_any": 0.0,
+        "n_distinct_with_period": 0
+      },
+      {
+        "star_key": "kepler:3448787",
+        "tier_assess": "none",
+        "veto": "aperture_contaminating_variable",
+        "period": 0.5431468924818448,
+        "identity_detail": null,
+        "matches": [
+          {
+            "source": "vsx",
+            "name": "PS1-3PI J193101.00+383530.7",
+            "vtype": "RRAB",
+            "period": 0.543161,
+            "harmonic": 1.0,
+            "sep_arcsec": 13.799643492886595,
+            "frac_diff": 2.597299540141318e-05
+          }
+        ],
+        "p_chance_any": 0.010097452990122768,
+        "n_distinct_with_period": 1
+      },
+      {
+        "star_key": "kepler:3626325",
+        "tier_assess": "none",
+        "veto": "aperture_identity_periodic_variable",
+        "period": 0.7891725146533431,
+        "identity_detail": "vsx:VAR:P=1.618x0.5",
+        "matches": [],
+        "p_chance_any": 0.0,
+        "n_distinct_with_period": 0
+      },
+      {
+        "star_key": "kepler:5879574",
+        "tier_assess": "candidate",
+        "veto": "aperture_contaminating_variable",
+        "period": 0.4232740931317277,
+        "identity_detail": null,
+        "matches": [
+          {
+            "source": "vsx",
+            "name": "KIC 5879583",
+            "vtype": "RR",
+            "period": 0.4232946,
+            "harmonic": 1.0,
+            "sep_arcsec": 13.287714362959381,
+            "frac_diff": 4.844585372054677e-05
+          },
+          {
+            "source": "ztf_chen2020",
+            "name": "ZTFJ193127.18+410759.8",
+            "vtype": "RR",
+            "period": 0.4232946,
+            "harmonic": 1.0,
+            "sep_arcsec": 13.334215640932532,
+            "frac_diff": 4.844585372054677e-05
+          }
+        ],
+        "p_chance_any": 0.010097452990122768,
+        "n_distinct_with_period": 1
+      },
+      {
+        "star_key": "kepler:7465605",
+        "tier_assess": "none",
+        "veto": "aperture_identity_periodic_variable",
+        "period": 6.02993732903695,
+        "identity_detail": "vsx:BY:P=6.007x1",
+        "matches": [],
+        "p_chance_any": 0.0,
+        "n_distinct_with_period": 0
+      },
+      {
+        "star_key": "kepler:8560364",
+        "tier_assess": "none",
+        "veto": "aperture_identity_periodic_variable",
+        "period": 3.12561065895289,
+        "identity_detail": "vsx:ROT:P=3.149x1",
+        "matches": [],
+        "p_chance_any": 0.0,
+        "n_distinct_with_period": 0
+      },
+      {
+        "star_key": "kepler:9595743",
+        "tier_assess": "none",
+        "veto": "aperture_identity_periodic_variable",
+        "period": 0.5783062290389748,
+        "identity_detail": "vsx:GDOR:P=0.5781x1",
+        "matches": [],
+        "p_chance_any": 0.0,
+        "n_distinct_with_period": 0
+      }
+    ],
+    "n_with_variable_neighbour": 15,
+    "note": "a contaminating hit is a CONTAMINATION flag -- a catalogued variable neighbour inside the photometric aperture at the clock period or a low harmonic -- not an identity flag; p_chance_any is the probability that any of the star's distinct periodic neighbours would match by chance. An identity hit is the 3\" cone the 2026-09-21 assess could not reach for TESS stars (no positions)",
+    "n_demoted": 1,
+    "demoted": [
+      "kepler:5879574:aperture_contaminating_variable"
+    ]
   }
 }

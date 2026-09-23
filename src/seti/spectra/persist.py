@@ -3476,9 +3476,181 @@ def diagnose(root: Path, n: int = 8, release: str = "SDSS") -> dict:
     return out
 
 
+def _sdss_lite_specobj(plate: int, mjd: int, fiber: int, run2d: str | None) -> dict:
+    """Pipeline CLASS / SUBCLASS / Z of one fibre from its lite file's SPECOBJ HDU."""
+    from astropy.io import fits
+    for url in sdss_lite_urls(plate, mjd, fiber, run2d):
+        data = fetch_bytes(url, max_bytes=60_000_000, tries=2)
+        if data is None:
+            continue
+        try:
+            with fits.open(io.BytesIO(data), memmap=False) as hd:
+                got = parse_sdss_spec(hd)
+                so = {}
+                for h in hd[1:]:
+                    if str(h.header.get("EXTNAME", "")).upper() == "SPECOBJ":
+                        row = h.data[0]
+                        names = [n.upper() for n in h.columns.names]
+                        for k in ("CLASS", "SUBCLASS", "Z", "Z_ERR", "ZWARNING", "OBJTYPE",
+                                  "SN_MEDIAN_ALL"):
+                            if k in names:
+                                v = row[names.index(k)]
+                                so[k.lower()] = v.strip() if isinstance(v, str) else (
+                                    float(v) if np.ndim(v) == 0 else None)
+                return {"url": url, "coadd": got.get("coadd"), "specobj": _json_safe(so)}
+        except Exception:  # noqa: BLE001
+            continue
+    return {}
+
+
+def _galaxy_lines_at(lam0: float, z: float, tol_A: float = 4.0) -> list[str]:
+    """Which nebular lines land within ``tol_A`` of ``lam0`` at redshift ``z``."""
+    from .galaxy_reject import GALAXY_LINES
+    return [n for n, r in GALAXY_LINES.items() if abs(r * (1 + z) - lam0) <= tol_A]
+
+
+def _sky_peak_near(wave, sky, lam0: float, half_A: float = 15.0) -> dict:
+    w = np.asarray(wave, float)
+    s = np.asarray(sky, float) if sky is not None else None
+    if s is None or s.size != w.size:
+        return {}
+    sel = np.abs(w - lam0) <= half_A
+    if sel.sum() < 5:
+        return {}
+    idx = np.where(sel)[0]
+    i = idx[int(np.nanargmax(s[idx]))]
+    base = float(np.nanmedian(s[idx]))
+    at = np.abs(w - lam0) <= 2.0
+    return {"sky_peak_A": round(float(w[i]), 2), "sky_peak_dA": round(float(w[i] - lam0), 2),
+            "sky_peak_over_median": round(float(s[i] / base), 2) if base > 0 else None,
+            "sky_at_line_over_median": round(float(np.nanmax(s[at]) / base), 2)
+            if base > 0 and at.any() else None}
+
+
+def recheck_line(root: Path, plate: int, mjd: int, fibers: list[int], lam0: float,
+                 run2d: str = "26", n_plate: int = 160, n_other: int = 60,
+                 max_other_plates: int = 10) -> dict:
+    """Close one open line: are the same-plate co-detections galaxies, a shared
+    sky-subtraction residual, or a same-night instrument feature?
+
+    For the target fibre and each same-plate co-detection: the pipeline class
+    and redshift, whether a nebular line of that redshift sits at ``lam0``, the
+    spectrum's own best nebular family, and -- from the FULL spec file -- the
+    per-exposure line flux against the per-exposure sky model at ``lam0`` (a
+    sky residual scales with the sky), and where the nearest sky-model peak
+    actually is on the vacuum grid.  Then ``n_plate`` fibres of the same plate
+    for the rate, and ``n_other`` fibres on every other plate observed the same
+    MJD (from the SAS platelist) for a same-night feature.
+    """
+    from astropy.io import fits
+    out: dict = {**_provenance(), "plate": plate, "mjd": mjd, "lam0": lam0, "fibres": []}
+    fw = lsf_fwhm_A(lam0, "SDSS-DR17")
+    for f in fibers:
+        rec: dict = {"fiber": int(f)}
+        lite = _sdss_lite_specobj(plate, mjd, f, run2d)
+        co = lite.get("coadd")
+        rec["specobj"] = lite.get("specobj")
+        if co is not None:
+            m = measure_line(co["wave"], co["flux"], co["ivar"], lam0, fw, "emission",
+                             sky=co.get("sky"))
+            rec["coadd"] = _json_safe({k: m.get(k) for k in ("sig", "F", "ew", "cont",
+                                                             "sky_peak_sig")})
+            rec["coadd_sky_peak"] = _sky_peak_near(co["wave"], co.get("sky"), lam0)
+            rec["nebular_scan"] = _json_safe(background_galaxy_scan(
+                co["wave"], co["flux"], co["ivar"], lam0, "SDSS-DR17"))
+            z = (rec["specobj"] or {}).get("z")
+            if z is not None:
+                rec["lines_at_lam0_for_pipeline_z"] = _galaxy_lines_at(lam0, float(z))
+                # at the pipeline z, measure the whole nebular family directly
+                rec["nebular_at_pipeline_z"] = _json_safe(nebular_family_calibrated(
+                    [co], lam0, "SDSS-DR17")) if rec["lines_at_lam0_for_pipeline_z"] else None
+        # per-exposure: line flux vs sky
+        for url in sdss_spec_urls(plate, mjd, f, run2d)[:2]:
+            data = fetch_bytes(url, max_bytes=200_000_000, tries=2)
+            if data is None:
+                continue
+            try:
+                with fits.open(io.BytesIO(data), memmap=False) as hd:
+                    parsed = parse_sdss_spec(hd)
+            except Exception:  # noqa: BLE001
+                continue
+            if not parsed.get("exposures"):
+                continue
+            _fc, ex = sdss_exposure_measurements(parsed, lam0, "emission")
+            peaks = [_sky_peak_near(e["wave"], e.get("sky"), lam0)
+                     for e in parsed["exposures"] if abs(np.nanmedian(e["wave"]) - lam0) < 3000]
+            rec["exposures"] = [_json_safe({k: e.get(k) for k in
+                                            ("expid", "sig", "F", "err", "sky_level",
+                                             "sky_peak_sig", "n_cosmic")}) for e in ex]
+            rec["exposure_sky_peaks"] = [p for p in peaks if p]
+            F = np.array([e.get("F", np.nan) for e in ex], float)
+            S = np.array([e.get("sky_level", np.nan) for e in ex], float)
+            ok = np.isfinite(F) & np.isfinite(S)
+            if ok.sum() >= 3 and np.std(S[ok]) > 0 and np.std(F[ok]) > 0:
+                rec["corr_F_vs_sky"] = float(np.corrcoef(F[ok], S[ok])[0, 1])
+            rec["full_file"] = url
+            break
+        out["fibres"].append(_json_safe(rec))
+
+    def _rate(pl: int, mj: int, r2d: str, n: int, seed: int) -> dict:
+        rng = np.random.default_rng(seed)
+        per_spec = 320 if r2d in ("26", "103", "104") else 500
+        fibs = sorted(int(x) for x in rng.choice(np.arange(1, 2 * per_spec + 1),
+                                                 size=min(n, 2 * per_spec), replace=False))
+        sig, hits = [], []
+        for f in fibs:
+            if pl == plate and f in fibers:
+                continue
+            co = _fetch_sdss_coadd(pl, mj, f, r2d)
+            if co is None:
+                continue
+            m = measure_line(co["wave"], co["flux"], co["ivar"], lam0, fw, "emission")
+            if m.get("testable") and np.isfinite(m["sig"]):
+                sig.append(float(m["sig"]))
+                if m["sig"] >= 4.5:
+                    hits.append({"fiber": f, "sig": round(float(m["sig"]), 2)})
+        a = np.asarray(sig, float)
+        return {"plate": pl, "mjd": mj, "run2d": r2d, "n_measured": int(a.size),
+                "n_ge4p5": int((a >= 4.5).sum()), "n_ge5": int((a >= 5).sum()),
+                "sig_median": float(np.median(a)) if a.size else None, "hits": hits}
+
+    out["same_plate_rate"] = _rate(plate, mjd, run2d, n_plate, 101)
+    # every other plate observed the same MJD (same night)
+    others = []
+    for url in (f"{SDSS_SAS}/sdss/spectro/redux/platelist.fits",):
+        data = fetch_bytes(url, max_bytes=300_000_000, tries=2)
+        if data is None:
+            out["platelist_error"] = f"unreachable: {url}"
+            continue
+        try:
+            with fits.open(io.BytesIO(data), memmap=False) as hd:
+                d = hd[1].data
+                names = [n.upper() for n in hd[1].columns.names]
+                P = np.asarray(d[hd[1].columns.names[names.index("PLATE")]]).astype(int)
+                M = np.asarray(d[hd[1].columns.names[names.index("MJD")]]).astype(int)
+                R = np.asarray(d[hd[1].columns.names[names.index("RUN2D")]]).astype(str)
+                sel = (M == int(mjd)) & (P != int(plate))
+                seen = set()
+                for p_, r_ in zip(P[sel], R[sel], strict=True):
+                    if p_ not in seen:
+                        seen.add(int(p_))
+                        others.append((int(p_), str(r_).strip()))
+        except Exception as exc:  # noqa: BLE001
+            out["platelist_error"] = repr(exc)[:300]
+    out["same_mjd_plates"] = [p for p, _ in others]
+    out["same_mjd_rates"] = [_rate(p, mjd, r or run2d, n_other, 200 + k)
+                             for k, (p, r) in enumerate(others[:max_other_plates])]
+    od = Path(root) / "results" / "spectra_persist"
+    od.mkdir(parents=True, exist_ok=True)
+    (od / f"recheck_{plate}_{mjd}_{int(round(lam0))}.json").write_text(
+        json.dumps(_json_safe(out), indent=1))
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="seti.spectra.persist")
-    ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose", "control"],
+    ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose", "control",
+                                        "recheck"],
                     default="run")
     ap.add_argument("--root", default=".")
     ap.add_argument("--shard", type=int, default=0)
@@ -3491,6 +3663,9 @@ def main(argv=None) -> int:
     ap.add_argument("--incoming", default="",
                     help="reduce: a directory of per-shard checkpoint directories to "
                          "merge into ckpt/ first (see merge_checkpoints)")
+    ap.add_argument("--recheck", default="", help="recheck: PLATE:MJD:FIB1,FIB2,...")
+    ap.add_argument("--recheck-lam", default="0")
+    ap.add_argument("--recheck-run2d", default="26")
     ap.add_argument("--no-simbad", action="store_true")
     ap.add_argument("--no-nist", action="store_true")
     a = ap.parse_args(argv)
@@ -3501,6 +3676,11 @@ def main(argv=None) -> int:
         diagnose(root, n=a.top or 8, release=a.release or "SDSS")
     elif a.stage == "control":
         controls(root, n=a.n_control)
+    elif a.stage == "recheck":
+        pl, mj, fibs = a.recheck.split(":")
+        rep = recheck_line(root, int(pl), int(mj), [int(x) for x in fibs.split(",")],
+                           float(a.recheck_lam), run2d=a.recheck_run2d)
+        print(json.dumps({k: v for k, v in rep.items() if k != "fibres"}, default=str)[:4000])
     elif a.stage == "run":
         st = run_shard(root, a.shard, a.n_shards, a.top, a.max_exposures, a.release)
         print("[persist] shard stats:", json.dumps(st))

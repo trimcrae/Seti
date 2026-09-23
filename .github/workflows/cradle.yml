@@ -481,7 +481,13 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev,spectra]"
+          pip install -e ".[dev]"
+          # sparclclient pins pandas 2.1.1, whose wheel is ABI-incompatible with
+          # numpy 2.3 (run 35877629887 died importing pandas).  Install it
+          # without its pins; deepvet records DESI UNTESTED if it cannot import.
+          pip install --no-deps "sparclclient>=1.2" || true
+          python -c "import pandas, numpy; print('pandas', pandas.__version__, 'numpy', numpy.__version__)"
+          python -c "import sparcl.client; print('sparclclient OK')" || echo "sparclclient unavailable"
       - name: Offline gate (deep vet)
         run: python -m pytest tests/test_cradle_deepvet.py -q -p no:cacheprovider
       - name: Deep vet

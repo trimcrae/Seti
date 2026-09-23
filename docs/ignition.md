@@ -799,3 +799,34 @@ blends; the next version must (a) apply the stratified ensemble, (b) require
 the rise colour to be dust-like (the table's W2/W1 test, now in
 `revet.dust_colour_test`), and (c) kill any Gaia neighbour closing inside 9″.
 Under (b) alone all fourteen fail; (d) the optical must be checked in the screen itself (ASAS-SN and the Gaia proxy both answered), not left as `optical_untested`.
+
+### 7.5 The re-vet folded into every dispatch (2026-09-23, commit a48471a4)
+
+The re-vet stages that retired the 14 stars of §7.4 by hand now run inside
+every dispatch, so each new tile is vetted automatically:
+
+| where | rule | kills / records |
+|---|---|---|
+| screen (`ensemble.stratified_offsets`) | ensemble correction per W1/W2 magnitude bin × \|β\| band (≥ 40 stars), falling back to the magnitude bin, then to the global per-bin median; fractions per level recorded in `screen_*.json → ensemble.stratified` | the bright-star over-correction; `ensemble_mode: global` restores the old correction |
+| vet, pure (`vet.rise_colour_verdict`) | W2rise/W1rise and its σ against 1500 K dust on the star's Teff (GSP-Phot, else 5000 K) | `rejected_rise_stellar_coloured` at ≥ 3σ below dust |
+| assess `--online-vet` (`vet_online`) | Gaia DR3 30″ cone; neighbours propagated to 2010.5 / 2014.0 / 2024.5; Gaussian-PSF (FWHM 6.1″) flux change at the co-moving target vs the observed W1 rise | `rejected_approaching_neighbour` if the predicted brightening is ≥ 0.3× the rise |
+| assess `--online-vet` | ZTF (IRSA) + ASAS-SN Sky Patrol per-filter trends, saturation-aware; "moving" = ≥ 5σ and ≥ 0.3× the W1 rate; bands disagreeing in sign are `inconsistent` (untested) | `rejected_optical_not_flat` (brightening), `rejected_rcrb_like` (fading) |
+| assess `--online-vet` | Gaia DR3 per-observation scatter percentile vs up to 300 G/BP-RP peers | `rejected_optical_variable_gaia` if ≥ 99th percentile in G, BP and RP |
+
+An archive that does not answer is an **untested check** on the star and a
+`vet_unreachable:<rung>:<n>/<m>` entry in `summary.json → degraded`; only a
+star with every rung answered and passed is `clean` (otherwise
+`clean_optical_untested` / `clean_checks_untested`). Per-star archive records
+go to `results/ignition/vet_online.json`. Offline tests:
+`tests/test_ignition_vetladder.py` (14). The synthetic end-to-end ignition now
+carries a dust-coloured W2 ramp (2× W1); a grey ramp is tested to be rejected.
+The injection sensitivity in `summary.json` is still the rise test alone on
+grey ramps, i.e. measured before the colour rung.
+
+**Sweep plan.** Shard count stays 12: the resume restores `ignition-shard-<i>`
+by index and tiles are dealt by `tiles_for_shard(sky, i, n)`, so a different
+*n* would re-deal tiles across shards whose checkpoints do not match — not
+attempted. Each dispatch resumes from the previous one's artifacts;
+`budget_min` goes from 150 to 280 (job timeout 340 min), about doubling the
+tiles per dispatch and leaving ~60 min for the re-screen of the accumulated
+shard, the upload and the commit.

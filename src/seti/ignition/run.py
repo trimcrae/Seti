@@ -49,6 +49,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import threading
 import time as _time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -117,6 +118,7 @@ DEFAULT_SWEEP: dict = {
     "sample_timeout_s": 300.0,      # one tile's parent query, per attempt
     "sample_unit_budget_s": 600.0,  # one tile's parent query, across the WHOLE ladder
     "max_tiles": 0,                 # 0 = every tile of the shard
+    "sample_prefetch": 2,           # parent queries run this many tiles ahead
 }
 
 #: The probe's wall-clock discipline.  Run 34787803862 spent 1,490 s on four
@@ -720,20 +722,51 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         rec.update(extra or {})
         _write(out / f"sweep_{tag}.json", rec)
 
-    for _, t in mine.iterrows():
+    # Parent queries run AHEAD of the tile being acquired.  Run 35859572295
+    # measured 150-280 s per ESA parent query and 100-190 s per acquire, done
+    # one after the other: ~22 tiles per shard in 150 min where the previous
+    # night did ~60.  The next `sample_prefetch` tiles' queries now run on
+    # daemon threads while the current tile is acquired; tiles are still
+    # PROCESSED (acquired, checkpointed) strictly in order, so the checkpoint
+    # and resume semantics are unchanged.  A prefetched query whose tile is
+    # never reached before the deadline is simply dropped.
+    todo = [t for _, t in mine.iterrows() if str(t["tile"]) not in done_tiles]
+    ahead = max(0, int(sw.get("sample_prefetch", 2) or 0))
+    pending: dict[int, tuple] = {}
+
+    def _start(i: int) -> None:
+        box: dict = {}
+        fld_i = tile_field(todo[i])
+
+        def _go():
+            t_s = _time.monotonic()
+            try:
+                box["res"] = fetch_parent(sc, mode="fields", fields=[fld_i], n_shards=1,
+                                          cap_per_shard=top, query_fn=query_fn, shape=shape,
+                                          vizier=vizier, vizier_fetch_fn=asu_fetch_fn,
+                                          irsa=irsa, irsa_fetch_fn=irsa_fetch_fn,
+                                          unit_budget_s=unit_budget)
+            except BaseException as exc:               # noqa: BLE001
+                box["error"] = exc
+            box["dt"] = _time.monotonic() - t_s
+
+        th = threading.Thread(target=_go, daemon=True)
+        th.start()
+        pending[i] = (th, box)
+
+    for i, t in enumerate(todo):
         tile_id = str(t["tile"])
-        if tile_id in done_tiles:
-            continue
         if _time.monotonic() > deadline:
             stopped = True
             break
-        fld = tile_field(t)
-        ts = _time.monotonic()
-        stars, srep = fetch_parent(sc, mode="fields", fields=[fld], n_shards=1,
-                                   cap_per_shard=top, query_fn=query_fn, shape=shape,
-                                   vizier=vizier, vizier_fetch_fn=asu_fetch_fn,
-                                   irsa=irsa, irsa_fetch_fn=irsa_fetch_fn,
-                                   unit_budget_s=unit_budget)
+        for j in range(i, min(len(todo), i + 1 + ahead)):
+            if j not in pending and (j == i or _time.monotonic() < deadline):
+                _start(j)
+        th, box = pending.pop(i)
+        th.join()
+        if "error" in box:
+            raise box["error"]
+        stars, srep = box["res"]
         n_cone = int(srep.get("n_rows_pulled") or 0)
         if len(stars):
             stars = stars[owns(t, stars["ra"].to_numpy(float),
@@ -743,7 +776,7 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
                "status": srep.get("status"), "parent_route": srep.get("route_used"),
                "shape": srep.get("query_shape_used"), "n_cone_rows": n_cone,
                "n_parent": int(len(stars)), "capped": bool(n_cone >= top),
-               "sample_s": round(_time.monotonic() - ts, 1),
+               "sample_s": round(float(box.get("dt", 0.0)), 1),
                "errors": [e for e in (srep.get("route_errors") or [])[:3]]}
         if srep.get("status") == "QUERY_FAILED":
             tiles_rec.append(rec)

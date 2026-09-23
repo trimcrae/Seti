@@ -390,6 +390,86 @@ line by default), in two samples and two frames:
 
 ## State
 
+### 2026-09-23 — complete and calibrated: run 35860950765, controls 35861127506 + 35863951810 (41 lines)
+
+**Which run the summary describes.** Until today `summary.json` carried no timestamp and
+still described run 35738206630 (reduce committed 2026-09-22 15:12 UTC): its keys predate
+`checkpoint_code_shas` / `pixel_coincidence`, and its 98 checkpoints were 62 at v2 and 36
+unversioned. Two later runs had not replaced it. Summaries and `control.json` now carry
+`generated_utc`, `github_run_id` and `code_sha`.
+
+**Why 35758868818 failed.** It measured all 141 spectra (shard logs: 71 + 70 processed)
+and then lost them in the merge. Each shard uploaded the *whole* ckpt directory — the
+checkpoints it had fetched from the branch as well as its own — and the reduce's
+`download-artifact` with `merge-multiple` unpacked both archives **concurrently** into
+one directory. Where both held a file (shard 0's fresh v4, shard 1's stale copy) the
+writes raced: 14 files came out interleaved (not JSON; the reduce died on the first,
+`JSONDecodeError … char 2924`) and 35 came out as the stale copy. Fixed three ways:
+shards upload only files newer than a marker touched after the fetch; the reduce
+downloads each artifact into its own directory and `merge_checkpoints()` chooses per
+file (parseable > highest `ckpt_version` > dispatched sha); `reduce_results` counts an
+unreadable checkpoint instead of crashing.
+
+**Coverage.** 141 / 141 spectra, 167 / 167 lines, all measured by one commit
+(`f5cef23c1366`), 0 stale, 0 unreadable, `ckpt_version` 5. The per-exposure statistic is
+calibrated against the in-spectrum offset null for 166 / 167 lines, and — new in v5 —
+the DESI coadd significance too (the DESI null now re-measures the SPARCL coadd).
+Calibrated / raw coadd significance: median 0.54 (SDSS), 0.85 (DESI).
+
+| class | n | | verdict | n |
+|---|---|---|---|---|
+| absent_in_exposures | 81 | | KILLED_known_line_rest_frame | 106 |
+| single_exposure_only | 39 | | KILLED_not_significant_in_coadd | 39 |
+| persistent | 23 | | KILLED_shared_ccd_column | 2 |
+| partial | 9 | | ALIVE_persistent_unidentified | 7 |
+| stack_only | 7 | | OPEN_single_exposure_only / stack_only / partial | 6 / 3 / 2 |
+| ambiguous / untestable / persistent_2exp | 3 / 3 / 2 | | UNTESTED_untestable | 2 |
+
+**Three defects in the first control run (35751666444), found and fixed.**
+
+1. *The LSF was in the wrong unit.* SDSS `wave_sigma` is the pipeline `wdisp`, in
+   log-λ **pixels**; read as ångströms it gave 1.7–2.2 Å FWHM (R = 3400–5100, impossible
+   for the SDSS spectrographs) and made every line look 2–4× resolved. Confirmed on the
+   runner: SPARCL `wave_sigma` / SAS-file `wdisp` = **1.000** for all 14 lines. Corrected
+   LSF 3.1–3.8 Å. A sky-line LSF fitted in the same spectrum runs ~25 % wider (OH
+   Λ-doublets, coadd resampling) and is reported beside it; widths below are quoted
+   against both.
+2. *The same-type sample was the any-star sample.* SPARCL `find` refuses `subclass`
+   (`UnknownField`), the code fell back to "any star" with the same seed, and every
+   same-type number was a byte copy. Now drawn from a 2000-star pool whose `subclass` is
+   retrieved.
+3. *The same-plate sample never ran* (`plate` is not a `find` field either). Now read
+   from SAS lite files: 24 random fibres of the plate, plus fibres ±1…3 on the slit for
+   cross-talk.
+
+And one test added: the background-galaxy scan on **every epoch at once**, each companion
+quoted against its own 24-offset null in the same spectra.
+
+**The seven ALIVE lines, traced.** Per-exposure: no cosmic-ray flag in the line window
+in any exposure of any of the seven, and each is present across ≥ 2 exposures, so a
+single-exposure CR is excluded for all.
+
+| line | fate | mechanism and numbers |
+|---|---|---|
+| 0412-51942-0465 @ 6809.26 Å (M1V) | **KILLED — background galaxy** | 9 epochs, 5 distinct fibres on 2 plates (412, 1564), EW spread 4 % → not a CCD column, not cross-talk (fibres ±1…3 ≤ 1.4 σ). Stacked over the 9 epochs, at the Hα redshift z = 0.037268: [O II] 3727 **10.0 σ**, [O II] 3729 8.4 σ, [O III] 5007 **8.1 σ**, [S II] 6716 6.2 σ, Hβ 6.2 σ, [N II] 6584 4.5 σ (calibrated). Width 0.99 ± 0.08 × LSF. A star-forming galaxy (or H II region) in the fibre. |
+| 3241-54884-0388 @ 8578.28 Å (K1) | **KILLED — resolved, not monochromatic** | FWHM 6.69 ± 0.51 Å = 1.97 × the wdisp LSF (3.39 Å), 1.49 × the sky-line LSF (4.49 Å): resolved at ≥ 4 σ even against the wider LSF. 11/14 exposures present, χ²p 0.73, so it is real in the star — but not a CW laser. Same-type K1 0/38 ≥ 5 σ, same plate 0/24, neighbours ≤ 3.3 σ, no nebular family (best 2.7 σ). A broad stellar/unidentified feature, no longer a narrow-line candidate. |
+| 2027-53433-0246 @ 6969.47 Å (DA WD) | **KILLED — recurrent wavelength** | Same pixel ±1 as 3327-54951-0356 @ 6967.87 (Δ = 1.605 Å = one SDSS pixel), an unrelated sightline, both inside the H₂O 7200 telluric band. 4/4 exposures at 2.6–5.1 σ; width 0.92 ± 0.13 × sky LSF (1.20 × wdisp); same-type A 0/16, same plate 1/24 ≥ 5 σ, neighbours ≤ 0.7 σ, no nebular family (best 2.6 σ). An emission line in a DA white dwarf at a telluric-band pixel another star also spikes on is a reduction feature. |
+| 3327-54951-0356 @ 6967.87 Å | **KILLED — recurrent wavelength, sub-LSF** | The partner of the above; FWHM 0.46 ± 0.21 × sky LSF (0.61 × wdisp), Gaussian amplitude only 2.2 σ, 3/5 exposures. |
+| 2750-54242-0547 @ 6856.46 Å (F5) | **UNRESOLVED — weak, plate-suspect** | Only 3 exposures (2 present), calibrated coadd 5.9 σ; OH line 9.3 Å away. Width 0.93 × sky LSF. Same-type F5 0/40, any-star 0/39, but **3 of 24 random fibres of plate 2750** read 4.8, 6.3, 14.3 σ at the same wavelength (two in the same spectrograph) against ~1/24 on other plates — not significant on its own (p ≈ 0.25) and not yet checked for being galaxies. No nebular family (best 3.4 σ). |
+| 0571-52286-0247 @ 7490.31 Å (M1V) | **KILLED — not significant / galaxy-like** | Calibrated coadd **3.3 σ**, stack 2.7 σ, 2/5 exposures; its two SPARCL epochs (571-247, 481-328) read 3.9 and 4.7 σ. Weak Hα-family at z = 0.1410 over 2 epochs ([N II] 6584 4.3 σ, [O II] 4.1 σ, [O III] 3.6 σ, [S II] 3.5 σ). Not detection-grade either way. |
+| DESI 2305843020429263121 @ 5078.4 Å (abs.) | **KILLED — not significant** | Absorption; calibrated coadd **4.0 σ** (< 5), 2/4 exposures, a line-rich K star (24 candidates in the spectrum). Width 1.19 ± 0.19 × LSF, same-type K 0/40 and any-star 0/40 ≥ 5 σ. Not detection-grade. |
+
+The other persistent lines the control stage measured: 2076-53442-0479 (8733.7 and
+6599.3 Å) is a z = 0.3304 galaxy ([O III] 5007 at 16 σ calibrated) — killed upstream by a
+rest-frame "N I" match that is the wrong identification for the right verdict;
+2701-54154-0455, 2190-54386-0467, 2858-54464-0621, 3241-54884-0611, 1987-53765-0371 and
+2076-53442-0558 are killed by rest-frame matches. 2076-53442-0329 @ 6403.2 Å is now
+`partial` (2/7 exposures), OPEN, one pixel (1.64 Å) from another sightline's candidate.
+
+**Verdict for this channel:** no line survives as a persistent, unresolved,
+unidentified narrow emission line. The one survivor not killed outright (2750-54242-0547)
+is a 3-exposure, 5.9 σ feature with a plate-level warning, and is not a candidate.
+
 **Run 35738206630 (reduce committed 2026-09-22 11:12 EDT) — the first real measurement,
 and it is incomplete.**
 

@@ -3617,11 +3617,22 @@ def recheck_line(root: Path, plate: int, mjd: int, fibers: list[int], lam0: floa
     out["same_plate_rate"] = _rate(plate, mjd, run2d, n_plate, 101)
     # every other plate observed the same MJD (same night)
     others = []
-    for url in (f"{SDSS_SAS}/sdss/spectro/redux/platelist.fits",):
+    tried = []
+    for url in (f"{SDSS_SAS}/sdss/spectro/redux/platelist.fits",
+                f"{SDSS_SAS}/sdss/spectro/redux/plates-dr17.fits",
+                f"{SDSS_SAS}/sdss/spectro/redux/26/platelist.fits",
+                f"{SDSS_SAS}/eboss/spectro/redux/platelist.fits",
+                "https://data.sdss.org/sas/dr16/sdss/spectro/redux/platelist.fits",
+                "https://data.sdss.org/sas/dr12/sdss/spectro/redux/platelist.fits",
+                "https://data.sdss.org/sas/dr9/sdss/spectro/redux/platelist.fits"):
+        if others:
+            break
         data = fetch_bytes(url, max_bytes=300_000_000, tries=2)
         if data is None:
-            out["platelist_error"] = f"unreachable: {url}"
+            tried.append(url)
+            out["platelist_error"] = f"unreachable: {', '.join(tried)}"
             continue
+        out["platelist_url"] = url
         try:
             with fits.open(io.BytesIO(data), memmap=False) as hd:
                 d = hd[1].data

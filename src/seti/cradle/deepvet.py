@@ -938,6 +938,12 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
         per.append({"source_id": t["source_id"], "role": t["role"],
                     "t_bb_k": t.get("t_bb_k"), "log_f_fmax_1gyr": t.get("log_f_fmax_1gyr"),
                     **v, "checks": chk})
+        # checkpoint after every target: a killed job keeps what it finished
+        (out_dir / "deepvet_partial.json").write_text(json.dumps(
+            {"stage": "deepvet_partial", "generated_utc": _now(), "n_done": len(per),
+             "n_planned": int(len(tg)), "targets": per}, indent=1, default=_json_default))
+        print(f"[deepvet]   -> {v['verdict']} kills={v['kills']} untested={v['untested']} "
+              f"({_time.monotonic() - t0:.0f}s elapsed)", flush=True)
     n_parent = int(summary.get("funnel", {}).get("n_ks_w1_photospheric") or 0)
     cand = [x for x in per if x["role"] == "CANDIDATE"]
     rep = {

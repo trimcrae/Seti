@@ -495,6 +495,7 @@ jobs:
           path: |
             results/cradle/deepvet.json
             results/cradle/deepvet_targets.csv
+            results/cradle/deepvet_partial.json
           if-no-files-found: warn
       - name: Commit the deep vet
         if: always()
@@ -504,4 +505,5 @@ jobs:
           scripts/commit_results.sh \
             "cradle: deep vet of the candidates (SIMBAD/AllWISE/LS/Gaia/VizieR/unWISE)" \
             results/cradle/deepvet.json \
-            results/cradle/deepvet_targets.csv
+            results/cradle/deepvet_targets.csv \
+            results/cradle/deepvet_partial.json

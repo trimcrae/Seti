@@ -1,30 +1,28 @@
 {
-  "verdict": "NO_IGNITION_CANDIDATE",
-  "generated_utc": "2026-09-22T16:15:33Z",
+  "verdict": "DEGRADED (neowise_queries_failed:3); IGNITION_CANDIDATES",
+  "generated_utc": "2026-09-22T22:47:17Z",
   "endpoints": {
     "parent": {
-      "esa_gaia": "https://gea.esac.esa.int/tap-server/tap",
-      "vizier_asu": [
-        "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-        "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",
-        "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv"
-      ]
+      "esa_gaia": "https://gea.esac.esa.int/tap-server/tap"
     },
-    "parent_route_recommended_by_probe": "vizier_asu",
+    "parent_route_recommended_by_probe": "esa_gaia",
     "parent_routes_tried": [
       "esa_gaia",
       "irsa_tap",
       "vizier_asu"
     ],
     "irsa_tap_probe": {
-      "status": "TIMED_OUT",
-      "usable": false,
-      "endpoints": null,
-      "table": null,
-      "table_requested": null,
-      "gaia_only_status": null,
-      "error": "QueryTimeout('no answer within 600 s')",
-      "n_rows": null
+      "status": "OK",
+      "usable": true,
+      "endpoints": {
+        "gaia": "https://gea.esac.esa.int/tap-server/tap",
+        "allwise": "https://irsa.ipac.caltech.edu/TAP"
+      },
+      "table": "allwise_p3as_psd",
+      "table_requested": "allwise_p3as_psd",
+      "gaia_only_status": "OK",
+      "error": null,
+      "n_rows": 4
     },
     "vizier_asu_probe": {
       "status": "OK",
@@ -43,157 +41,139 @@
       "n_rows": 5
     },
     "gaia_shapes_tried": [
-      "inner_cone",
-      "inner_cone_postfilter",
-      "flat"
+      "inner_cone"
     ],
     "errors": []
   },
-  "n_candidates": 0,
+  "n_candidates": 9,
   "n_clean": 0,
-  "n_candidates_optical_untested": 0,
+  "n_candidates_optical_untested": 9,
   "denominators": {
-    "parent_count_archive": 846,
-    "n_rows_pulled": 846,
-    "n_stars_in_parent_file": 846,
+    "parent_count_archive": 168203,
+    "n_rows_pulled": 168203,
+    "n_stars_in_parent_file": 168203,
     "subsample_fraction": 1.0,
-    "n_stars_attempted_neowise": 846,
-    "n_stars_with_neowise_rows": 846,
-    "n_stars_screened": 846,
-    "sample_mode": "fields",
-    "local_cut_counters": {
-      "n_in": 846,
-      "cut_g_max": 0,
-      "cut_parallax": 0,
-      "cut_parallax_over_error": 0,
-      "cut_galactic_latitude": 0,
-      "cut_ruwe": 0,
-      "cut_gaia_variable": 0,
-      "cut_colour": 0,
-      "cut_dwarf": 0,
-      "cut_w1w2_photospheric": 0,
-      "cut_ext_flag": 0,
-      "cut_ph_qual": 0,
-      "n_out": 846,
-      "n_kinematically_old": 565
-    },
+    "n_stars_attempted_neowise": 171483,
+    "n_stars_with_neowise_rows": 169788,
+    "n_stars_screened": 169749,
+    "sample_mode": "tiles",
+    "local_cut_counters": null,
     "parent_routes": {
-      "esa_gaia": {
-        "units": 20,
-        "rows": 846
-      }
+      "esa_gaia": 650
     },
-    "parent_route_fractions": {
-      "esa_gaia": 1.0
-    },
+    "parent_route_fractions": null,
     "parent_route_used": "esa_gaia",
     "parent_routes_mixed": false,
-    "vizier_capped_units": [],
-    "route_note": "routes/route_fractions say which SOURCE served each unit: esa_gaia is the authoritative ESA archive (with its own allwise_best_neighbour cross-match), vizier_asu is the non-TAP VizieR mirror with a positional cross-match. Rows obtained over vizier_asu are bounded by the ASU -out.max cap, which is a row cap and NOT a COUNT(*); a sample drawn from both routes is DEGRADED."
+    "vizier_capped_units": null,
+    "route_note": null
   },
   "stage_counts": {
-    "screened": 846,
-    "rise_candidates": 0,
-    "vetted": 0,
-    "survivors": 0,
+    "screened": 169749,
+    "rise_candidates": 9,
+    "vetted": 9,
+    "survivors": 9,
     "clean": 0
   },
   "veto_counters": {
     "screen": {
-      "NOT_RISING": 780,
-      "INSUFFICIENT_EPOCHS": 23,
-      "FADING": 17,
-      "SCAN_SYSTEMATIC": 1,
-      "IMPULSIVE_SHAPE": 25
+      "NOT_RISING": 155256,
+      "IMPULSIVE_SHAPE": 13310,
+      "FADING": 851,
+      "INSUFFICIENT_EPOCHS": 168,
+      "ONE_BAND_ONLY": 97,
+      "SCAN_SYSTEMATIC": 56,
+      "IGNITION_CANDIDATE": 9,
+      "NOT_MONOTONIC": 2
     },
     "vet": {
-      "verdicts": {},
+      "verdicts": {
+        "clean_optical_untested": 9
+      },
       "flags": {}
     }
   },
   "sensitivity": {
-    "n_stars": 823,
+    "n_stars": 2400,
     "amps": {
       "0.10": {
-        "n": 823,
-        "n_recovered": 690,
-        "fraction": 0.8383961117861483
+        "n": 2400,
+        "n_recovered": 1604,
+        "fraction": 0.6683333333333333
       },
       "0.20": {
-        "n": 823,
-        "n_recovered": 788,
-        "fraction": 0.9574726609963548
+        "n": 2400,
+        "n_recovered": 2247,
+        "fraction": 0.93625
       },
       "0.40": {
-        "n": 823,
-        "n_recovered": 818,
-        "fraction": 0.9939246658566221
+        "n": 2400,
+        "n_recovered": 2382,
+        "fraction": 0.9925
       }
     },
     "note": "linear ramps of the stated amplitude over 10 yr injected on both bands of screened, non-rising stars; fraction recovered as IGNITION_CANDIDATE by the rise test alone (before the contaminant ladder)"
   },
-  "coverage": null,
+  "coverage": {
+    "mode": "tiles",
+    "tile_deg": 4.0,
+    "tiles_in_sky": 2047,
+    "area_sky_deg2": 32451.309199148283,
+    "tiles_assigned": 2047,
+    "sky_fraction_done": 0.3175,
+    "n_shards": 12,
+    "shards_reporting": [
+      "s0of12",
+      "s10of12",
+      "s11of12",
+      "s1of12",
+      "s2of12",
+      "s3of12",
+      "s4of12",
+      "s5of12",
+      "s6of12",
+      "s7of12",
+      "s8of12",
+      "s9of12"
+    ],
+    "shards_stopped_on_budget": [
+      "s0of12",
+      "s10of12",
+      "s11of12",
+      "s1of12",
+      "s2of12",
+      "s3of12",
+      "s4of12",
+      "s5of12",
+      "s6of12",
+      "s7of12",
+      "s8of12",
+      "s9of12"
+    ],
+    "parent_routes": {
+      "esa_gaia": 650
+    },
+    "route_used": "esa_gaia",
+    "mixed_routes": false,
+    "dec_range_done": [
+      -84.0,
+      88.0
+    ],
+    "tiles_done": 650,
+    "tiles_failed": 0,
+    "tiles_partial": 12,
+    "tiles_capped": 0,
+    "area_done_deg2": 10303.3,
+    "n_parent_done_tiles": 168203,
+    "n_stars_attempted": 171483,
+    "n_stars_ok": 169788,
+    "n_stars_failed": 3,
+    "n_stars_fallback_cone": 339,
+    "note": "a DONE tile is a complete selection over its box (its parent query was uncapped unless `tiles_capped`), so every count here is exact for the area covered and says nothing about the rest of the sky"
+  },
   "ensemble": {
     "per_shard_drift": [
       {
-        "tag": "s0of8",
-        "drift": {
-          "W1": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0206,
-            "first_to_last_mag": 0.0206,
-            "span_yr": 10.75
-          },
-          "W2": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0604,
-            "first_to_last_mag": 0.0574,
-            "span_yr": 10.75
-          }
-        }
-      },
-      {
-        "tag": "s1of8",
-        "drift": {
-          "W1": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.02,
-            "first_to_last_mag": 0.02,
-            "span_yr": 10.75
-          },
-          "W2": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0577,
-            "first_to_last_mag": 0.0537,
-            "span_yr": 10.75
-          }
-        }
-      },
-      {
-        "tag": "s2of8",
-        "drift": {
-          "W1": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0175,
-            "first_to_last_mag": 0.0175,
-            "span_yr": 10.75
-          },
-          "W2": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0573,
-            "first_to_last_mag": 0.0545,
-            "span_yr": 10.75
-          }
-        }
-      },
-      {
-        "tag": "s3of8",
+        "tag": "s0of12",
         "drift": {
           "W1": {
             "n_bins": 44,
@@ -205,109 +185,248 @@
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0595,
-            "first_to_last_mag": 0.058,
+            "ptp_mag": 0.0633,
+            "first_to_last_mag": 0.0633,
             "span_yr": 10.75
           }
         }
       },
       {
-        "tag": "s4of8",
+        "tag": "s10of12",
         "drift": {
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.022,
-            "first_to_last_mag": 0.022,
+            "ptp_mag": 0.0198,
+            "first_to_last_mag": 0.0198,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.064,
-            "first_to_last_mag": 0.064,
+            "ptp_mag": 0.0615,
+            "first_to_last_mag": 0.0615,
             "span_yr": 10.75
           }
         }
       },
       {
-        "tag": "s5of8",
+        "tag": "s11of12",
         "drift": {
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0175,
-            "first_to_last_mag": 0.0175,
+            "ptp_mag": 0.018,
+            "first_to_last_mag": 0.018,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0579,
-            "first_to_last_mag": 0.0545,
+            "ptp_mag": 0.0573,
+            "first_to_last_mag": 0.0573,
             "span_yr": 10.75
           }
         }
       },
       {
-        "tag": "s6of8",
+        "tag": "s1of12",
         "drift": {
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0175,
-            "first_to_last_mag": 0.0175,
+            "ptp_mag": 0.018,
+            "first_to_last_mag": 0.018,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0555,
-            "first_to_last_mag": 0.046,
+            "ptp_mag": 0.0585,
+            "first_to_last_mag": 0.0585,
             "span_yr": 10.75
           }
         }
       },
       {
-        "tag": "s7of8",
+        "tag": "s2of12",
         "drift": {
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.017,
-            "first_to_last_mag": 0.017,
+            "ptp_mag": 0.0195,
+            "first_to_last_mag": 0.0195,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0625,
-            "first_to_last_mag": 0.0625,
+            "ptp_mag": 0.0633,
+            "first_to_last_mag": 0.0633,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s3of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0181,
+            "first_to_last_mag": 0.0181,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0619,
+            "first_to_last_mag": 0.0619,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s4of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0187,
+            "first_to_last_mag": 0.0187,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.063,
+            "first_to_last_mag": 0.063,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s5of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0192,
+            "first_to_last_mag": 0.0192,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0633,
+            "first_to_last_mag": 0.0633,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s6of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.019,
+            "first_to_last_mag": 0.019,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.062,
+            "first_to_last_mag": 0.062,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s7of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.019,
+            "first_to_last_mag": 0.019,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.063,
+            "first_to_last_mag": 0.063,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s8of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0195,
+            "first_to_last_mag": 0.0195,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.063,
+            "first_to_last_mag": 0.063,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s9of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0205,
+            "first_to_last_mag": 0.0205,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.069,
+            "first_to_last_mag": 0.069,
             "span_yr": 10.75
           }
         }
       }
     ],
-    "raw_two_band_fading_5sigma": 18,
-    "raw_two_band_rising_5sigma": 0,
+    "raw_two_band_fading_5sigma": 516,
+    "raw_two_band_rising_5sigma": 11,
     "note": "per-shard median zero-point offsets by 0.25-yr bin were subtracted before the rise test (seti.ignition.ensemble); raw_* count stars whose UNCORRECTED bare linear slope is >= 5 sigma in both bands"
   },
   "shards": {
-    "expected": 8,
-    "found": 8,
+    "expected": 12,
+    "found": 12,
     "found_tags": [
-      "s0of8",
-      "s1of8",
-      "s2of8",
-      "s3of8",
-      "s4of8",
-      "s5of8",
-      "s6of8",
-      "s7of8"
+      "s0of12",
+      "s10of12",
+      "s11of12",
+      "s1of12",
+      "s2of12",
+      "s3of12",
+      "s4of12",
+      "s5of12",
+      "s6of12",
+      "s7of12",
+      "s8of12",
+      "s9of12"
     ],
     "missing": []
   },
-  "degraded": [],
+  "degraded": [
+    "neowise_queries_failed:3"
+  ],
   "offline": true,
   "optical_dir": null,
   "config": {

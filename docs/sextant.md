@@ -629,6 +629,51 @@ between chunks, records `budget_stop` (`after_chunks`, `of_chunks`,
 and `shard_verdicts`, so the objects never reached read as **unmeasured** and
 never as a null. The workflow default is 290 minutes inside a 330-minute job.
 
+### Run 35746692260: four hours fitted, zero objects assessed (fixed 2026-09-23)
+
+The solo run fitted 17 chunks (4250 records, 3742 `FITTED`, 69 controls) and
+`assess` reported `NO_DATA_REACHED`. Two defects, neither a measurement:
+
+1. **The shard CSV was malformed.** `_csv_value` quoted scalar strings with
+   commas but left list cells bare, and `screen_record` copies a failed
+   object's exception text (`"ValueError: shapes (3,4) ..."`) into `reasons`.
+   The first such row had 84 fields against an 83-column header, `pd.read_csv`
+   refused the whole file, and the reader's `except` turned that into an empty
+   table. The same writer also passed `numpy.float64` to `repr`, which numpy 2
+   spells `np.float64(…)`. Every cell now goes through `csv.writer`, and
+   `read_shard_csv` repairs a file from the old writer losslessly (the overflow
+   can only be `reasons`; numpy reprs are unwrapped; an irreparable row is
+   dropped and *counted*, never guessed). `summary.json` reports the repair
+   under `coverage.shard_csv_repairs`, and a table that comes back empty while
+   the shard JSON reports records is now
+   `NO_DATA_REACHED__SHARD_OUTPUT_UNREADABLE`, a named pipeline defect.
+2. **Nothing was committed.** `scripts/commit_results.sh` judged
+   `results/sextant` unchanged because `git diff HEAD` sees only tracked files,
+   and the directory's one tracked file (`probe.json`) was untouched. A tracked
+   directory is now expanded into the files the run changed or created.
+
+`assess_only_run_id` now also reads a **solo** run's `sextant-solo` artifact,
+so a surviving shard can be re-assessed without a refit.
+
+The re-assessment (run 35863065371) then exposed two more defects that left
+the run with **no control scored**, so nothing in it can be believed:
+
+3. **The integrator route was broken by extrapolated perturbers.** The grid
+   covered only the Gaia window (JD 2456820–2458930), but the integrator starts
+   at SBDB's osculation epoch, JD 2461200.5 (2026). `hermite_cubic` clips its
+   interval index, so the Sun and planets there were extrapolated (Sun ~0.02 au
+   off in a synthetic check, Jupiter ~27 au) and the probe measured the
+   integrator against Horizons at a median 1.4×10⁷ mas. The grid now spans
+   `perturber_window` (Gaia window out to the latest SBDB epoch), the
+   perturbers raise rather than extrapolate, and an object whose epoch the grid
+   does not reach is skipped with a named reason.
+4. **Controls were measurable only on the integrator route.** With the probe
+   choosing Horizons, every control's bulk fit was refused as circular (all 78
+   `RESIDUALS_FAILED`), and the pinned gravity-only route ran only when
+   `route == "integrator"`. A control now always gets the pinned route, and
+   where its bulk fit was refused the pinned fit becomes its record
+   (`bulk_route`/`bulk_verdict`/`bulk_reason` kept beside it).
+
 ## 10. Related channels
 
 - **LOOM** (`docs/loom.md`) — the same observable at arcsecond scale on Rubin,

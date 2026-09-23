@@ -1,6 +1,6 @@
 {
-  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:gaia_dr3_vari,vsx,ztf_chen2020); VETSTAR_DEMOTED_1; REDETECT_DEMOTED_9",
-  "generated_utc": "2026-09-21T21:42:31Z",
+  "verdict": "DEGRADED_SOURCE (tess_pietras2022:QUERY_RETURNED_ZERO_ROWS; variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)); CLOCK_CANDIDATES_PENDING_VET; REDETECT_DEMOTED_9",
+  "generated_utc": "2026-09-23T00:20:11Z",
   "n_candidates": 0,
   "n_interest": 5,
   "n_watch": 53,
@@ -16,7 +16,7 @@
     "stars_interest": 5,
     "stars_candidate": 0,
     "stars_demoted_by_lightcurve": 9,
-    "stars_demoted_by_vetstar": 1
+    "stars_demoted_by_vetstar": 0
   },
   "rejection_counters": {
     "first_veto": {
@@ -49,10 +49,10 @@
     }
   },
   "tiers": {
-    "none": 3234,
+    "none": 3244,
     "watch": 53,
-    "interest": 14,
-    "candidate": 1
+    "interest": 5,
+    "candidate": 0
   },
   "jitter_calibration": {
     "thresholds": {
@@ -182,7 +182,7 @@
   },
   "degraded": [
     "tess_pietras2022:QUERY_RETURNED_ZERO_ROWS",
-    "variability_catalogues:gaia_dr3_vari,vsx,ztf_chen2020"
+    "variability_catalogues:reached_0.45_of_shortlist(gaia_dr3_vari,vsx,ztf_chen2020)"
   ],
   "offline": false,
   "variability_catalogues_reached": {
@@ -1602,10 +1602,8 @@
     "star_key": "kepler:5879574",
     "verdict": "MUNDANE_EXPLANATION_FOUND(CONTAMINATING_VARIABLE_AT_P:gaia2053563953175635712@13.3arcsec,KIC 5879583,type=RR,P=0.4232946,in=vsx+ztf_chen2020; COHERENT_OSCILLATION_AT_P:amp=0.00082,p_control=0.00498,z=68.7_with_events_masked; EVENTS_ON_THE_CREST:offset=-0.036cycles; AMPLITUDE_TRACKS_SPACECRAFT_ROLL:F=3.07,p=0.0015,ratio=2.37) [P=0.423282 d]",
     "veto": "vet_contaminating_variable_at_p",
-    "n_demoted": 1,
-    "demoted": [
-      "kepler:5879574:vet_contaminating_variable_at_p"
-    ],
+    "n_demoted": 0,
+    "demoted": [],
     "vetoes": [
       "CONTAMINATING_VARIABLE_AT_P",
       "CATALOGUED_ECLIPSING_BINARY",
@@ -1620,6 +1618,21 @@
       "EVENTS_CLUSTER_MORE_TIGHTLY_AT_2P",
       "AMPLITUDE_VARIES_BETWEEN_SEGMENTS"
     ],
-    "note": "the single-star vet asks every mundane explanation by name and demotes on any of them; NO_CLOCK_CANDIDATES here is a count after vetting and is not an occurrence limit, and per CLAUDE.md is not written up"
+    "note": "the single-star vet asks every mundane explanation by name and demotes on any of them; NO_CLOCK_CANDIDATES here is a count after vetting and is not an occurrence limit, and per CLAUDE.md is not written up",
+    "generated_utc": "2026-09-23T00:17:39Z"
+  },
+  "provenance": {
+    "rebuilt_utc": "2026-09-23T00:20:11Z",
+    "rebuilt_by": "vetstar",
+    "assess_generated_utc": "2026-09-21T21:42:31Z",
+    "redetect_generated_utc": "2026-09-22T21:57:41Z",
+    "vetstar_generated_utc": "2026-09-23T00:17:39Z",
+    "tiers_recomputed_from": "stars_vetted.csv overridden by candidates.json",
+    "tier_sources": {
+      "from_vetted": 3302,
+      "overridden_by_candidates": 10,
+      "n_demoted_rows": 10
+    },
+    "note": "counts, tiers and the verdict are RECOMPUTED from the per-star records on every reconciliation; funnel totals upstream of the tiers, rejection_counters, coverage, jitter_calibration and the acquisition logs are the assess run's and are not re-derived"
   }
 }

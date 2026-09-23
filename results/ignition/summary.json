@@ -1,28 +1,25 @@
 {
-  "verdict": "DEGRADED (tiles_failed:22; neowise_queries_failed:3); IGNITION_CANDIDATES",
-  "generated_utc": "2026-09-23T15:45:21Z",
+  "verdict": "DEGRADED (tiles_failed:747; neowise_queries_failed:3); NO_IGNITION_CANDIDATE",
+  "generated_utc": "2026-09-23T21:38:25Z",
   "endpoints": {
     "parent": {
       "esa_gaia": "https://gea.esac.esa.int/tap-server/tap"
     },
-    "parent_route_recommended_by_probe": "esa_gaia",
+    "parent_route_recommended_by_probe": "vizier_asu",
     "parent_routes_tried": [
       "esa_gaia",
       "irsa_tap",
       "vizier_asu"
     ],
     "irsa_tap_probe": {
-      "status": "OK",
-      "usable": true,
-      "endpoints": {
-        "gaia": "https://gea.esac.esa.int/tap-server/tap",
-        "allwise": "https://irsa.ipac.caltech.edu/TAP"
-      },
-      "table": "allwise_p3as_psd",
-      "table_requested": "allwise_p3as_psd",
-      "gaia_only_status": "OK",
-      "error": null,
-      "n_rows": 4
+      "status": "TIMED_OUT",
+      "usable": false,
+      "endpoints": null,
+      "table": null,
+      "table_requested": null,
+      "gaia_only_status": null,
+      "error": "QueryTimeout('no answer within 600 s')",
+      "n_rows": null
     },
     "vizier_asu_probe": {
       "status": "OK",
@@ -41,20 +38,22 @@
       "n_rows": 5
     },
     "gaia_shapes_tried": [
-      "inner_cone"
+      "inner_cone",
+      "inner_cone_postfilter",
+      "flat"
     ],
     "errors": []
   },
-  "n_candidates": 5,
+  "n_candidates": 0,
   "n_clean": 0,
-  "n_candidates_optical_untested": 5,
+  "n_candidates_optical_untested": 0,
   "denominators": {
     "parent_count_archive": 180066,
     "n_rows_pulled": 180066,
     "n_stars_in_parent_file": 180066,
     "subsample_fraction": 1.0,
-    "n_stars_attempted_neowise": 182090,
-    "n_stars_with_neowise_rows": 180850,
+    "n_stars_attempted_neowise": 179666,
+    "n_stars_with_neowise_rows": 179651,
     "n_stars_screened": 181210,
     "sample_mode": "tiles",
     "local_cut_counters": null,
@@ -69,29 +68,32 @@
   },
   "stage_counts": {
     "screened": 181210,
-    "rise_candidates": 9,
-    "vetted": 9,
-    "survivors": 5,
+    "rise_candidates": 8,
+    "vetted": 8,
+    "survivors": 0,
     "clean": 0
   },
   "veto_counters": {
     "screen": {
-      "NOT_RISING": 165793,
-      "IMPULSIVE_SHAPE": 14167,
-      "FADING": 902,
+      "NOT_RISING": 165088,
+      "IMPULSIVE_SHAPE": 15316,
+      "FADING": 518,
       "INSUFFICIENT_EPOCHS": 173,
-      "ONE_BAND_ONLY": 102,
-      "SCAN_SYSTEMATIC": 62,
-      "IGNITION_CANDIDATE": 9,
-      "NOT_MONOTONIC": 2
+      "ONE_BAND_ONLY": 65,
+      "SCAN_SYSTEMATIC": 41,
+      "IGNITION_CANDIDATE": 8,
+      "NOT_MONOTONIC": 1
     },
     "vet": {
       "verdicts": {
-        "clean_optical_untested": 5,
-        "rejected_rise_stellar_coloured": 4
+        "rejected_rise_stellar_coloured": 5,
+        "rejected_optical_not_flat": 2,
+        "rejected_optical_variable_gaia": 1
       },
       "flags": {
-        "rise_stellar_coloured": 4
+        "rise_stellar_coloured": 5,
+        "optical_not_flat": 2,
+        "optical_variable_gaia": 2
       }
     }
   },
@@ -100,18 +102,18 @@
     "amps": {
       "0.10": {
         "n": 2400,
-        "n_recovered": 1615,
-        "fraction": 0.6729166666666667
+        "n_recovered": 1677,
+        "fraction": 0.69875
       },
       "0.20": {
         "n": 2400,
-        "n_recovered": 2236,
-        "fraction": 0.9316666666666666
+        "n_recovered": 2251,
+        "fraction": 0.9379166666666666
       },
       "0.40": {
         "n": 2400,
-        "n_recovered": 2379,
-        "fraction": 0.99125
+        "n_recovered": 2376,
+        "fraction": 0.99
       }
     },
     "note": "linear ramps of the stated amplitude over 10 yr injected on both bands of screened, non-rising stars; fraction recovered as IGNITION_CANDIDATE by the rise test alone (before the contaminant ladder)"
@@ -162,15 +164,15 @@
       88.0
     ],
     "tiles_done": 695,
-    "tiles_failed": 22,
-    "tiles_partial": 9,
+    "tiles_failed": 747,
+    "tiles_partial": 0,
     "tiles_capped": 0,
     "area_done_deg2": 11016.6,
     "n_parent_done_tiles": 180066,
-    "n_stars_attempted": 182090,
-    "n_stars_ok": 180850,
+    "n_stars_attempted": 179666,
+    "n_stars_ok": 179651,
     "n_stars_failed": 3,
-    "n_stars_fallback_cone": 339,
+    "n_stars_fallback_cone": 139,
     "note": "a DONE tile is a complete selection over its box (its parent query was uncapped unless `tiles_capped`), so every count here is exact for the area covered and says nothing about the rest of the sky"
   },
   "ensemble": {
@@ -428,11 +430,11 @@
     "missing": []
   },
   "degraded": [
-    "tiles_failed:22",
+    "tiles_failed:747",
     "neowise_queries_failed:3"
   ],
   "offline": true,
-  "online_vet": false,
+  "online_vet": true,
   "optical_dir": null,
   "config": {
     "rise": {

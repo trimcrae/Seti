@@ -43,10 +43,14 @@ import yaml
 from ..herdsman.acquire import apply_rv_zero_point
 from ..metronome.acquire import STATUS_FAILED, STATUS_OK, STATUS_ZERO, AcquisitionLog, tap_query
 from . import acquire as acq
+from . import chance as ch
 from . import geometry as geo
 from . import papers as pap
+from . import targetlist as tl
 
 STAGES = ("probe", "targets", "geometry", "recut", "assess")
+# not in "all": it needs the geometry stage's parquet sample in the same job
+EXTRA_STAGES = ("targetlist",)
 
 V_GEOMETRY = "GEOMETRY_COMPUTED"
 V_GEOMETRY_PARTIAL = "GEOMETRY_COMPUTED_ON_PARTIAL_SAMPLE"
@@ -57,6 +61,8 @@ V_NO_HIT_CATALOGUE = "NO_HIT_CATALOGUE_REACHED"
 V_NO_PAIRLINE_HIT = "NO_PAIRLINE_HIT"
 V_PAIRLINE_OFF_PRIOR = "PAIRLINE_HITS_OFF_PRIOR"
 V_PAIRLINE_MATCH = "PAIRLINE_DRIFT_MATCH"
+V_PAIRLINE_CHANCE = "PAIRLINE_MATCHES_AT_CHANCE"
+V_TARGETLIST = "TARGETLIST_BUILT"
 
 CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "relay.yaml"
 
@@ -1030,7 +1036,19 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
     hits["_fbin"] = bins
     n_sight = hits.groupby("_fbin")["target"].nunique()
     hits["rfi_recurrent"] = hits["_fbin"].map(n_sight).fillna(0) >= int(aconf["recurrence_min_sightlines"])
-    hits["rfi_flag"] = hits["rfi_zero_drift"] | hits["rfi_recurrent"]
+    # hygiene: a row read from a non-frequency column, an injection-table row or a
+    # duplicate is never a hit (chance.hit_hygiene); flagged, kept in the csv
+    hyg = ch.hit_hygiene(hits)
+    for c in ("artefact_not_frequency", "artefact_injection_table", "duplicate_row", "valid_hit"):
+        hits[c] = hyg[c].to_numpy()
+    # the same recurrence rule at the width a drifting emitter family occupies,
+    # and the known terrestrial / satellite allocations
+    hits["rfi_recurrent_wide"] = ch.wide_recurrence(hits, float(aconf.get("recurrence_wide_khz", 500.0)),
+                                                    int(aconf["recurrence_min_sightlines"]),
+                                                    valid=hits["valid_hit"])
+    hits["rfi_known_band"] = ch.known_rfi_band(hits["freq_mhz"], aconf.get("known_rfi_bands_mhz"))
+    hits["rfi_flag"] = (hits["rfi_zero_drift"] | hits["rfi_recurrent"] | hits["rfi_recurrent_wide"]
+                        | hits["rfi_known_band"].notna() | ~hits["valid_hit"])
 
     # --- the geometry and the prior per hit per beam -------------------------------------
     k_sig = float(aconf["match_window_sigma"])
@@ -1082,27 +1100,36 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
         n_on = int(sum(on))
         n_match = int(sum(match))
         n_cand = int(sum(cand))
-        # chance rate: the fraction of OFF-pair-line hits whose drift falls inside a
-        # window of the same width placed at the same Earth-term centre
-        off = hits[(~np.asarray(on)) & (hits["gaia_idx"] >= 0)]
-        exp_chance = None
-        if len(off) and n_on:
-            hw_med = float(np.nanmedian(halfs)) if np.isfinite(halfs).any() else sigma0
-            c_med = float(np.nanmedian(centres)) if np.isfinite(centres).any() else 0.0
-            frac = float(np.mean(np.abs(off["drift_hz_s"].to_numpy(float) - c_med) <= k_sig * hw_med))
-            exp_chance = frac * n_on
         n_magic = int(sum(1 for m in magic if m))
         rep["beams"][name] = {"theta_label": b["theta_label"], "n_hits_on_pair_line": n_on,
                               "n_drift_match": n_match, "n_candidates_after_rfi": n_cand,
-                              "n_expected_by_chance": exp_chance,
                               "n_trials": n_on,
                               "n_magic_line_match": n_magic,
                               "n_magic_line_tests": n_magic_tested,
                               "n_magic_expected_by_chance": _magic_chance(n_magic_tested, conf, aconf)}
     hits = hits.drop(columns=["_fbin"])
+    # chance: each pair-line hit's window priced against the drift distribution
+    # of every OTHER valid hit (docs/relay.md §4; the prior's width is set by the
+    # pipeline resolution and the Earth term, so this is the only honest yardstick)
+    chance = ch.assess_chance(hits, [_beam_name(b) for b in beams], k_sig=k_sig,
+                              drift_range_hz_s=float(aconf.get("uniform_drift_range_hz_s", 4.0)))
+    for name, c in chance.items():
+        rep["beams"][name].update({
+            "n_expected_by_chance": c["n_expected_candidates"],
+            "p_value_candidates": c["p_value_candidates"],
+            "n_trials_valid": c["n_trials"],
+            "n_expected_drift_match": c["n_expected_drift_match"],
+            "mean_window_fraction_of_hits": c["mean_window_fraction_of_hits"],
+            "mean_window_fraction_of_uniform_drift_range": c["mean_window_fraction_of_uniform_drift_range"]})
     hits.to_csv(out / "hits_crossmatch.csv", index=False)
     rep["n_rfi_zero_drift"] = int(hits["rfi_zero_drift"].sum())
     rep["n_rfi_recurrent"] = int(hits["rfi_recurrent"].sum())
+    rep["n_rfi_recurrent_wide"] = int(hits["rfi_recurrent_wide"].sum())
+    rep["n_rfi_known_band"] = int(hits["rfi_known_band"].notna().sum())
+    rep["hygiene"] = {"n_not_a_frequency": int(hits["artefact_not_frequency"].sum()),
+                      "n_injection_rows": int(hits["artefact_injection_table"].sum()),
+                      "n_duplicate_rows": int(hits["duplicate_row"].sum()),
+                      "n_valid": int(hits["valid_hit"].sum())}
     cands = []
     for b in beams:
         name = _beam_name(b)
@@ -1125,7 +1152,13 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
     elif not cands:
         rep["verdict"] = f"{V_PAIRLINE_OFF_PRIOR} ({any_on} pair-line hit tests, 0 inside the prior after RFI)"
     else:
-        rep["verdict"] = f"{V_PAIRLINE_MATCH} ({len(cands)} hit-beam matches; see n_expected_by_chance per beam)"
+        n_exp = sum(float(v.get("n_expected_by_chance") or 0.0) for v in rep["beams"].values())
+        n_uniq = len({(str(c["target"]), float(c["freq_mhz"]), float(c["drift_hz_s"])) for c in cands})
+        p_min = min((v.get("p_value_candidates") for v in rep["beams"].values()
+                     if v.get("p_value_candidates") is not None), default=None)
+        tag = V_PAIRLINE_MATCH if (p_min is not None and p_min < 0.01) else V_PAIRLINE_CHANCE
+        rep["verdict"] = (f"{tag} ({len(cands)} hit-beam matches from {n_uniq} hits vs "
+                          f"{n_exp:.1f} expected by chance; min per-beam p = {p_min})")
     rep["acquisition"] = log.as_dict()
     _write(out / "hits.json", rep)
     return _finish(conf, out, rep, geom, recut, beams, started)
@@ -1223,6 +1256,7 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
                           "n_hits_on_pair_line": a.get("n_hits_on_pair_line"),
                           "n_candidates": a.get("n_candidates_after_rfi"),
                           "n_expected_by_chance": a.get("n_expected_by_chance"),
+                          "p_value_candidates": a.get("p_value_candidates"),
                           "n_trials": a.get("n_trials"),
                           "n_magic_line_match": a.get("n_magic_line_match"),
                           "n_magic_line_tests": a.get("n_magic_line_tests"),
@@ -1244,6 +1278,77 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# targetlist: short links whose beam contains Earth (src/seti/relay/targetlist.py)
+# ---------------------------------------------------------------------------
+def stage_targetlist(conf: dict, out: Path, *, sample: pd.DataFrame | None = None,
+                     beams=None) -> dict:
+    """Rank the nearest-neighbour links that put Earth in the beam; flag BL coverage."""
+    tconf = conf["targetlist"]
+    started = time.monotonic()
+    rep = {"stage": "targetlist", "generated_utc": _now()}
+    if sample is None:
+        try:
+            sample = _load_sample(out)
+        except Exception as exc:                          # noqa: BLE001
+            sample, rep["load_error"] = pd.DataFrame(), repr(exc)[:300]
+    if not len(sample) or not {"ra", "dec", "parallax", "parallax_error"} <= set(sample.columns):
+        rep["verdict"] = (f"{V_NO_DATA} (no Gaia sample in {out}: the geometry stage must run in "
+                          f"the same job)")
+        _write(out / "targetlist.json", rep)
+        print(f"[relay] targetlist: {rep['verdict']}")
+        return rep
+    beams = beams or geo.beam_grid(conf["beams"])
+    mpath = out / "targets_matched.csv"
+    bl_idx = []
+    if mpath.exists():
+        m = pd.read_csv(mpath)
+        if "gaia_idx" in m:
+            bl_idx = [int(i) for i in m["gaia_idx"] if int(i) >= 0]
+    tj = _read(out / "targets.json") or {}
+    n_unres = (int(tj["n_names"]) - int(tj["n_resolved"])) if ("n_names" in tj and "n_resolved" in tj) else None
+    tel = conf["telescopes"].get(tconf.get("observed_telescope", "GBT"), {})
+    radius = 0.5 * float((tel.get("hpbw_arcmin") or {}).get(tel.get("default_band", "L"), 8.7))
+    lt, trep = tl.build_targetlist(sample, beams, tconf, bl_idx=bl_idx, bl_names_unresolved=n_unres,
+                                   observed_radius_arcmin=radius)
+    rep.update(trep)
+    n_rep = int(tconf.get("n_report", 40))
+    cols = [c for c in lt.columns if not c.startswith("t_idx") and c != "r_idx"]
+    if len(lt):
+        rank = lt[lt["rankable"]]
+        rep["top_unobserved"] = rank[~rank["t_bl_observed"]].head(n_rep)[cols].to_dict("records")
+        rep["top_observed"] = rank[rank["t_bl_observed"]].head(10)[cols].to_dict("records")
+        pcols = [c for c in lt.columns if c.startswith("p_in_beam:")]
+        keep = lt[pcols].max(axis=1) >= float(tconf.get("commit_p_min", 0.05))
+        _write_csv_gz(lt[keep], out / "targetlist.csv.gz")
+        rep["n_rows_committed"] = int(keep.sum())
+    first = min(rep["beams"], key=lambda k: rep["beams"][k]["theta_rad"]) if rep["beams"] else None
+    if first:
+        b = rep["beams"][first]
+        rep["verdict"] = (f"{V_TARGETLIST} ({rep['n_links']} nearest-neighbour links; at {first}: "
+                          f"{b.get('n_links_p50_rankable', 0)} rankable links with P(Earth in beam) >= 0.5 "
+                          f"vs {b['n_expected_isotropic']:.2f} isotropic; "
+                          f"{b.get('n_links_p50_rankable_t_unobserved', 0)} with the transmitter unobserved by BL)")
+    else:
+        rep["verdict"] = f"{V_TARGETLIST} (no radio beam configured)"
+    rep["elapsed_s"] = round(time.monotonic() - started, 1)
+    _write(out / "targetlist.json", rep)
+    # the summary carries a pointer with the stage's OWN timestamp, so a reader
+    # can see it was written after the summary's other stages
+    sp = out / "summary.json"
+    if sp.exists():
+        summ = _read(sp)
+        summ["targetlist"] = {"generated_utc": rep["generated_utc"], "verdict": rep["verdict"],
+                              "file": "targetlist.json",
+                              "beams": {k: {kk: v.get(kk) for kk in ("n_expected_isotropic", "sum_p_rankable",
+                                                                    "n_links_p50_rankable",
+                                                                    "n_links_p50_rankable_t_unobserved")}
+                                        for k, v in rep["beams"].items()}}
+        _write(sp, summ)
+    print(f"[relay] targetlist: {rep['verdict']}")
+    return rep
+
+
+# ---------------------------------------------------------------------------
 # entry points
 # ---------------------------------------------------------------------------
 def relay_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, bl_fetch=None,
@@ -1252,7 +1357,8 @@ def relay_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, bl_
     conf = conf or load_relay_config()
     out = Path(out_dir) if out_dir else Path("results") / "relay"
     out.mkdir(parents=True, exist_ok=True)
-    stages = STAGES if stage in ("all", "", None) else tuple(s.strip() for s in stage.split(","))
+    stages = STAGES if stage in ("all", "", None) else tuple(
+        x for s in stage.split(",") for x in (STAGES if s.strip() == "all" else (s.strip(),)))
     log = log or AcquisitionLog(prefix="relay")
     rep: dict = {}
     for s in stages:
@@ -1278,8 +1384,10 @@ def relay_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, bl_
                                log=log, hits_df=hits_df,
                                get_text_fn=get_text_fn or pap.default_get_text,
                                get_fn=get_fn or pap.default_get_bytes)
+        elif s == "targetlist":
+            rep = stage_targetlist(conf, out)
         else:
-            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
+            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + EXTRA_STAGES}")
         log.write(out / "acquisition_log.json")
     return rep
 
@@ -1309,4 +1417,4 @@ __all__ = ["STAGES", "V_GEOMETRY", "V_NO_DATA", "V_NO_HIT_CATALOGUE", "V_NO_PAIR
            "V_PAIRLINE_MATCH", "V_PAIRLINE_OFF_PRIOR", "V_RECUT", "V_TARGETS",
            "in_beam_neighbours", "load_relay_config", "main", "match_targets_to_sample",
            "name_key", "pointing_windows", "relay_run", "stage_assess", "stage_geometry",
-           "stage_probe", "stage_recut", "stage_targets"]
+           "stage_probe", "stage_recut", "stage_targets", "stage_targetlist"]

@@ -1,0 +1,337 @@
+{
+  "stage": "euclid",
+  "shard": 4,
+  "n_shards": 8,
+  "generated_at": "2026-09-22T20:32:33Z",
+  "units": [
+    {
+      "field": "EDF-N",
+      "k": 4,
+      "dec_lo": 65.31,
+      "dec_hi": 65.81,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 254740,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 254740
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 176498,
+      "n_stars_with_spectra": 6471,
+      "seconds": 4186.0
+    },
+    {
+      "field": "EDF-S",
+      "k": 1,
+      "dec_lo": -50.82,
+      "dec_hi": -50.32,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 81090,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 81090
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 58018,
+      "n_stars_with_spectra": 1425,
+      "seconds": 4318.8
+    },
+    {
+      "field": "EDF-S",
+      "k": 9,
+      "dec_lo": -46.82,
+      "dec_hi": -46.32,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 116651,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 116651
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 81762,
+      "n_stars_with_spectra": 2051,
+      "seconds": 6364.4
+    },
+    {
+      "field": "EDF-F",
+      "k": 5,
+      "dec_lo": -27.59,
+      "dec_hi": -27.09,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 144933,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 144933
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 92611,
+      "n_stars_with_spectra": 1803,
+      "seconds": 9815.0
+    }
+  ],
+  "gaia": {
+    "EDF-N": {
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 188584
+    },
+    "EDF-S": {
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 116306
+    },
+    "EDF-F": {
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 43861
+    }
+  },
+  "queries": [
+    {
+      "label": "gaia_EDF-N",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 188584,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 188584,
+          "seconds": 48.6
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 269.730000, 66.010000, 2.750000)) AND phot_g_mean_mag < 21.500"
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-N",
+        "dec_lo": 65.31,
+        "dec_hi": 65.81,
+        "ra_lo": 263.30645,
+        "ra_hi": 276.15355
+      },
+      "status": "OK",
+      "n_rows": 254740,
+      "depth": 0,
+      "seconds": 1270.9,
+      "truncated": false
+    },
+    {
+      "label": "lines_alt_footprint",
+      "unit": {
+        "field": "EDF-N",
+        "dec_lo": 65.31,
+        "dec_hi": 65.81,
+        "ra_lo": 263.30645,
+        "ra_hi": 276.15355
+      },
+      "status": "OK",
+      "n_rows": 257118,
+      "depth": 0,
+      "seconds": 2145.1,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-N",
+        "dec_lo": 65.31,
+        "dec_hi": 65.81,
+        "ra_lo": 263.30645,
+        "ra_hi": 276.15355
+      },
+      "status": "OK",
+      "n_rows": 176498,
+      "depth": 0,
+      "seconds": 707.0,
+      "truncated": false
+    },
+    {
+      "label": "gaia_EDF-S",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 116306,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 116306,
+          "seconds": 32.5
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 61.240000, -48.420000, 2.950000)) AND phot_g_mean_mag < 21.500"
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-S",
+        "dec_lo": -50.82,
+        "dec_hi": -50.32,
+        "ra_lo": 58.59823,
+        "ra_hi": 63.88177
+      },
+      "status": "OK",
+      "n_rows": 81090,
+      "depth": 0,
+      "seconds": 84.5,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-S",
+        "dec_lo": -50.82,
+        "dec_hi": -50.32,
+        "ra_lo": 58.59823,
+        "ra_hi": 63.88177
+      },
+      "status": "OK",
+      "n_rows": 58018,
+      "depth": 0,
+      "seconds": 13.4,
+      "truncated": false
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-S",
+        "dec_lo": -46.82,
+        "dec_hi": -46.32,
+        "ra_lo": 58.25804,
+        "ra_hi": 64.22196
+      },
+      "status": "OK",
+      "n_rows": 116651,
+      "depth": 0,
+      "seconds": 862.5,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-S",
+        "dec_lo": -46.82,
+        "dec_hi": -46.32,
+        "ra_lo": 58.25804,
+        "ra_hi": 64.22196
+      },
+      "status": "OK",
+      "n_rows": 81762,
+      "depth": 0,
+      "seconds": 1181.2,
+      "truncated": false
+    },
+    {
+      "label": "gaia_EDF-F",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 43861,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 43861,
+          "seconds": 19.8
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 52.930000, -28.090000, 2.050000)) AND phot_g_mean_mag < 21.500"
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-F",
+        "dec_lo": -27.59,
+        "dec_hi": -27.09,
+        "ra_lo": 50.92386,
+        "ra_hi": 54.93614
+      },
+      "status": "OK",
+      "n_rows": 144933,
+      "depth": 0,
+      "seconds": 2937.9,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-F",
+        "dec_lo": -27.59,
+        "dec_hi": -27.09,
+        "ra_lo": 50.92386,
+        "ra_hi": 54.93614
+      },
+      "status": "OK",
+      "n_rows": 92611,
+      "depth": 0,
+      "seconds": 490.2,
+      "truncated": false
+    }
+  ],
+  "degraded": [],
+  "roles_line": {
+    "object_id": "object_id",
+    "rank": "spe_rank",
+    "line_id": "spe_line_id",
+    "line_name": "spe_line_name",
+    "line_flag": "spe_line_flag",
+    "n_dith": "spe_line_n_dith",
+    "wl": "spe_line_central_wl_gf",
+    "wl_err": "spe_line_central_wl_err_gf",
+    "flux": "spe_line_flux_gf",
+    "flux_err": "spe_line_flux_err_gf",
+    "ew": "spe_line_ew_gf",
+    "fwhm": "spe_line_fwhm_gf",
+    "fwhm_err": "spe_line_fwhm_err_gf",
+    "snr": "spe_line_snr_gf",
+    "snr_di": "spe_line_snr_di",
+    "cont": "spe_line_cont_gf",
+    "qual": "spe_line_qual_gf",
+    "aon": "spe_line_aon"
+  },
+  "roles_mer": {
+    "object_id": "object_id",
+    "ra": "ra",
+    "dec": "dec",
+    "point_like_prob": "point_like_prob",
+    "point_like_flag": "point_like_flag",
+    "spurious_flag": "spurious_flag",
+    "det_quality_flag": "det_quality_flag",
+    "mumax_minus_mag": "mumax_minus_mag",
+    "flux_h": "flux_h_2fwhm_aper",
+    "flux_vis": "flux_vis_psf",
+    "segmentation_area": "segmentation_area"
+  },
+  "spectra_table": "euclid_q1_spectro_zcatalog_spe_classification",
+  "n_units": 4,
+  "footprint_probe": {
+    "first": {
+      "spatial": false,
+      "status": "OK",
+      "seconds": 1270.9,
+      "n_rows": 254740
+    },
+    "alternative": {
+      "spatial": true,
+      "status": "OK",
+      "seconds": 2145.1,
+      "n_rows": 257118
+    }
+  },
+  "footprint_clause": "range",
+  "elapsed_s": 9815.0,
+  "status": "OK",
+  "screen": {
+    "n_features_on_stars": 8406,
+    "n_stars_with_features": 5425,
+    "n_survivors": 0
+  }
+}

@@ -66,13 +66,33 @@ on:
         required: false
         default: "1.0"
       n_shards:
-        description: "Number of parallel acquire+screen shards"
+        description: >-
+          Number of parallel acquire+screen shards, or "auto" = ceil(n_targets /
+          stars_per_shard), capped at 16.  The target count is only known after
+          selection, so "auto" is the default.
         required: false
-        default: "6"
+        default: "auto"
+      stars_per_shard:
+        description: >-
+          Stars per shard when n_shards=auto.  Sized so ONE shard's acquire
+          (querycat + lightcurve + a per-pulsator queryexps, ~40 s a star) fits
+          time_budget_s and its screen (~20 s a star, ~150 s worst case) fits
+          screen_budget_s.
+        required: false
+        default: "220"
       max_variables:
-        description: "Cap on catalogued variables per field"
+        description: >-
+          Cap on field-cone VSX variables per field (default 0: those were
+          eclipsers, whose geometric period cannot cease; the cessation
+          population is max_pulsators)
         required: false
-        default: "150"
+        default: "0"
+      max_pulsators:
+        description: >-
+          Cap on ALL-SKY catalogued pulsators (Cepheids, RR Lyrae, HADS/SX Phe,
+          RV Tau, Miras, SRa) carrying the cessation test; 0 = none
+        required: false
+        default: "2400"
       max_bright:
         description: "Cap on bright reference stars per field (0 = variables only)"
         required: false
@@ -82,16 +102,19 @@ on:
         required: false
         default: "0"
       time_budget_s:
-        description: "Per-shard DASCH wall-clock budget (s)"
+        description: >-
+          Per-shard DASCH wall-clock budget (s).  time_budget_s + screen_budget_s
+          must stay <= 300 min inside the sweep job's 350-minute timeout
+          (checked by the targets job and by tests/test_century.py).
         required: false
-        default: "9000"
+        default: "10800"
       screen_budget_s:
         description: >-
           Per-shard SCREEN wall-clock budget (s).  Acquire + screen share one
           job's timeout-minutes; the sum of the two budgets must leave room for
           the install and the upload.
         required: false
-        default: "9000"
+        default: "7200"
       pause_s:
         description: "Pause between DASCH requests (s)"
         required: false
@@ -239,8 +262,9 @@ jobs:
           fi
           eval python -m seti.century.run --stage targets \
             --radius-deg ${{ github.event.inputs.radius_deg || '1.0' }} \
-            --max-variables ${{ github.event.inputs.max_variables || '150' }} \
+            --max-variables ${{ github.event.inputs.max_variables || '0' }} \
             --max-bright ${{ github.event.inputs.max_bright || '80' }} \
+            --max-pulsators ${{ github.event.inputs.max_pulsators || '2400' }} \
             $EXTRA
           echo "=== targets summary ==="
           python - <<'PY'
@@ -257,12 +281,27 @@ jobs:
           s = json.loads(p.read_text()) if p.exists() else {}
           print(f"n={int(s.get('n_targets', 0))}")
           PY
+      # Shard count from the REAL target count, and a hard check that one
+      # shard's two wall clocks fit inside the sweep job's timeout-minutes.
       - id: mk
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          n = int("${{ github.event.inputs.n_shards || '6' }}" or 6)
-          print("shards=" + json.dumps([f"{i}/{n}" for i in range(max(n, 1))]))
+          import json, math, pathlib, sys
+          p = pathlib.Path("results/century/targets_summary.json")
+          s = json.loads(p.read_text()) if p.exists() else {}
+          n_t = int(s.get("n_targets", 0))
+          raw = "${{ github.event.inputs.n_shards || 'auto' }}".strip() or "auto"
+          per = max(int("${{ github.event.inputs.stars_per_shard || '220' }}" or 220), 1)
+          n = (min(max(math.ceil(n_t / per), 1), 16) if raw == "auto" else max(int(raw), 1))
+          acq = float("${{ github.event.inputs.time_budget_s || '10800' }}")
+          scr = float("${{ github.event.inputs.screen_budget_s || '7200' }}")
+          if acq + scr > 300 * 60:
+              print(f"::error::time_budget_s + screen_budget_s = {acq + scr:.0f}s exceeds 300 min "
+                    "inside the 350-minute sweep timeout", file=sys.stderr)
+              sys.exit(1)
+          print(f"[century] {n_t} targets -> {n} shards (~{math.ceil(n_t / n) if n else 0} each)",
+                file=sys.stderr)
+          print("shards=" + json.dumps([f"{i}/{n}" for i in range(n)]))
           PY
       - name: Commit targets
         if: always()
@@ -313,7 +352,10 @@ jobs:
     timeout-minutes: 350
     strategy:
       fail-fast: false
-      max-parallel: 3          # be a good citizen toward the DASCH API
+      # Six concurrent clients, each pausing 0.5 s between requests that take
+      # seconds apiece, is still a light load on the DASCH API; three made a
+      # 13-shard all-sky sweep take five waves.
+      max-parallel: 6
       matrix:
         shard: ${{ fromJSON(needs.targets.outputs.shards) }}
     steps:

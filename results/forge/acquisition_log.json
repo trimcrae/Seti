@@ -1,0 +1,217 @@
+{
+  "stages": [
+    {
+      "stage": "discover_absil2013_preferred",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/555/A104'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_absil2013_keyword",
+      "status": "OK",
+      "rows": 9,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/555/A104'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_ertel2014_preferred",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/570/A128'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_ertel2014_keyword",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/570/A128'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_nunez2017_preferred",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/608/A113'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_nunez2017_keyword",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/608/A113'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_absil2021_preferred",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/651/A45'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_absil2021_keyword",
+      "status": "OK",
+      "rows": 1,
+      "query": "TAP_SCHEMA.tables ~ 'J/A+A/651/A45'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_ertel2018_preferred",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/AJ/155/194'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_ertel2018_keyword",
+      "status": "OK",
+      "rows": 52,
+      "query": "TAP_SCHEMA.tables ~ 'J/AJ/155/194'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_ertel2020_preferred",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/177'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_ertel2020_keyword",
+      "status": "OK",
+      "rows": 54,
+      "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/177'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "fetch_mennesson2014",
+      "status": "OK",
+      "rows": 33,
+      "query": "SELECT TOP 5000 \"ID\", \"Ratio\", \"E_Ratio\", \"RAJ2000\", \"DEJ2000\" FROM \"J/ApJ/833/270/table1\"",
+      "route": "tap"
+    },
+    {
+      "stage": "discover_millangabet2011_preferred",
+      "status": "OK",
+      "rows": 3,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/734/67'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "discover_millangabet2011_keyword",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/734/67'",
+      "route": "tap",
+      "route_attempts": []
+    },
+    {
+      "stage": "fetch_marshall2016",
+      "status": "OK",
+      "rows": 1083,
+      "query": "SELECT TOP 5000 \"HD\", \"Star\", \"Pol\", \"e_Pol\" FROM \"J/A+AS/130/133/table1\""
+    },
+    {
+      "stage": "simbad_positions",
+      "status": "OK",
+      "rows": 60,
+      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.sp_type, b.plx_value FROM ident AS i JOIN basic AS b ON b.oid = i.oidref WHERE i.id IN ('HD 166', 'HD 2262', 'HD 4614', 'HD 7788', 'HD 9826', 'HD 10476', 'HD 10647', 'HD 10700', 'HD 12311', 'HD 14412', 'HD 15008', 'HD 16160', 'HD 17925', 'HD 20630', 'H"
+    },
+    {
+      "stage": "simbad_positions",
+      "status": "OK",
+      "rows": 52,
+      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.sp_type, b.plx_value FROM ident AS i JOIN basic AS b ON b.oid = i.oidref WHERE i.id IN ('HD 116842', 'HD 120136', 'HD 126660', 'HD 128167', 'HD 131156', 'HD 135379', 'HD 139006', 'HD 139664', 'HD 141004', 'HD 141795', 'HD 141891', 'HD 142091', 'HD 1428"
+    },
+    {
+      "stage": "simbad_positions",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "rows": 0,
+      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.sp_type, b.plx_value FROM ident AS i JOIN basic AS b ON b.oid = i.oidref WHERE i.id IN ('J100412+292121', 'J101347+065015', 'J103018+164633', 'J103048+391234', 'J104057+514505', 'J105830+333859', 'J110236+460101', 'J111957+281354', 'J113608+250322', 'J"
+    },
+    {
+      "stage": "gaia_cone",
+      "status": "OK",
+      "rows": 112,
+      "query": "112 cones on I/355/gaiadr3 r=12.0\"",
+      "n_cones_ok": 112,
+      "n_cones_failed": 0
+    },
+    {
+      "stage": "wds_cone",
+      "status": "OK",
+      "rows": 112,
+      "query": "113 cones on B/wds/wds r=3.0\""
+    },
+    {
+      "stage": "sample_2mass",
+      "status": "OK",
+      "rows": 112,
+      "query": "112 cones on II/246/out"
+    },
+    {
+      "stage": "sample_allwise",
+      "status": "OK",
+      "rows": 112,
+      "query": "112 cones on II/328/allwise"
+    }
+  ],
+  "n_stages": 23,
+  "n_ok": 14,
+  "n_query_failed": 0,
+  "n_query_returned_zero_rows": 9,
+  "any_query_failed": false,
+  "total_rows": 1796,
+  "routes": {
+    "routes": {
+      "tap": {
+        "n_ok": 136,
+        "n_failed": 0,
+        "endpoints": [
+          "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+        ]
+      }
+    },
+    "n_attempts": 136,
+    "served_by": "tap",
+    "breaker": {
+      "fail_limit": 2,
+      "cooldown_s": 45.0,
+      "endpoints": {
+        "https://tapvizier.cds.unistra.fr/TAPVizieR/tap": {
+          "state": "closed",
+          "consecutive_failures": 0,
+          "ever_ok": true
+        }
+      },
+      "n_transitions": 0
+    }
+  },
+  "breaker": {
+    "fail_limit": 2,
+    "cooldown_s": 45.0,
+    "endpoints": {
+      "https://tapvizier.cds.unistra.fr/TAPVizieR/tap": {
+        "state": "closed",
+        "consecutive_failures": 0,
+        "ever_ok": true
+      }
+    },
+    "transitions": [],
+    "n_transitions": 0
+  }
+}

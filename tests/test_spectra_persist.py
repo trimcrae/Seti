@@ -1323,3 +1323,26 @@ def test_desi_null_now_calibrates_the_coadd_too():
     assert c is not None and c["testable"] and len(ex) == 4
     null = persist.offset_null(at, lam, n=16, lo_A=12.0, hi_A=120.0)
     assert null["n_coadd_measurements"] >= 12
+
+
+def test_recheck_line_runs_offline_and_writes_its_report(tmp_path, monkeypatch):
+    """The one-line recheck degrades honestly when nothing is reachable and
+    reports the pipeline class/z and line family when a lite file is."""
+    lam = 6856.46
+    loglam = np.arange(np.log10(3800), np.log10(9200), 1e-4)
+    w = 10.0 ** loglam
+    z = lam / 6564.61 - 1
+    sig = lam / 2000 / 2.3548
+    f = 10 + _gauss(w, lam, 3.0, sig) + _gauss(w, 6585.27 * (1 + z), 1.5, sig) \
+        + np.random.default_rng(1).normal(0, 0.05, w.size)
+    co = {"wave": w, "flux": f, "ivar": np.full(w.size, 400.0)}
+    monkeypatch.setattr(persist, "_sdss_lite_specobj", lambda *a, **k: {
+        "coadd": co, "specobj": {"class": "GALAXY", "z": z}})
+    monkeypatch.setattr(persist, "fetch_bytes", lambda *a, **k: None)
+    monkeypatch.setattr(persist, "_fetch_sdss_coadd", lambda *a, **k: None)
+    rep = persist.recheck_line(tmp_path, 2750, 54242, [547], lam, n_plate=5, n_other=5)
+    r = rep["fibres"][0]
+    assert "Ha6563" in r["lines_at_lam0_for_pipeline_z"]
+    assert r["coadd"]["sig"] > 5
+    assert rep["platelist_error"].startswith("unreachable")
+    assert (tmp_path / "results/spectra_persist/recheck_2750_54242_6856.json").exists()

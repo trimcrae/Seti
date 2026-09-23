@@ -522,7 +522,7 @@ finishes. Item 4 of the read order is the live one.
 | run | what it settles | inputs |
 |---|---|---|
 | **35738088082** ✅ | Step 1: do the 846 parents get full 10-year series now? **Yes — 846/846, see §7.3** | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
-| **35740159635** ⏳ | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers — *sweeping* | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
+| **35740159635** ✅ | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers — **650/2,047 tiles (0.3175 of the area), 169,749 stars, 9 candidates; see §7.4** | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
 
 `route=upload` with `upload_fallback_cone: true` is deliberate: it tests the
 `unicodeChar` fix on the real service, and a chunk no rung answers still goes
@@ -693,3 +693,102 @@ sensitivity above. That is a clean result on a channel that now demonstrably
 works end to end, and per `CLAUDE.md` it is a reason to widen the question, not
 a deliverable: 846 stars is a pilot, and the `|b| > 15` tiles sweep — 2,047
 tiles, 32,451 deg2, 517x this area — is the scale axis that follows.
+
+### 7.4 Tiles run 35740159635 — nine candidates, the re-vet, and what is left (2026-09-23)
+
+**What the files on the branch describe.** `summary.json` (generated
+2026-09-22T22:47:17Z, committed 22:47:18Z by the run itself) is the **tiles**
+sweep: `sample_mode: tiles`, 12/12 shards found, verdict `DEGRADED
+(neowise_queries_failed:3); IGNITION_CANDIDATES`. It is self-consistent: the
+eight screen verdicts sum to 169,749 = `n_stars_screened`; the twelve
+`screen_s*of12.json` sum to 169,749 screened and 9 rise candidates;
+`candidates.csv` and `stars_vetted.csv` hold the same 9 rows. It **replaced**
+the pilot's `summary.json` (run 35738088082, 846 stars, 0 candidates, 16:15Z);
+that record now survives only in git history and in the `*_s*of8.json` files,
+which describe the pilot, not the sweep. There is no `summary_<mode>.json`.
+`sample.json` (2026-09-16, `mode: fields`) is a stale fields-mode record and
+says nothing about the tiles sweep; `probe.json` is the sweep's own probe
+(15:42Z) until the resume below replaced it.
+
+**Coverage — incomplete.** 650 of 2,047 tiles done (10,303 of 32,451 deg²,
+sky fraction 0.3175), 12 tiles partial, 0 failed, 1,385 never started; **every
+shard stopped on its 150-min budget**. Parents 168,203 in done tiles; 171,483
+attempted (partial tiles included), 169,788 with NEOWISE rows, 3 failed
+queries (all shard 9). Shards 3 and 9 covered only 18 and 28 tiles.
+
+**Resume — first attempt broke, fixed.** Run 35859572295 (`resume_run_id=
+35740159635`, 12 shards) died in every shard two minutes in:
+`ArrowTypeError: Expected bytes, got a 'int' object ... column source_id`. A
+resumed `parent_s*.parquet` returns str ids, a new tile's are int64, and the
+concatenation could not be written. Fixed in `stage_sweep` (commit 3f7d4396,
+test `test_sweep_resume_that_adds_a_tile_writes_the_parent`, which fails
+without the fix). Shards 0–8 of 35859572295 had already failed and only
+re-screened their old data; shards 9–11 checked out the fixed code and are
+sweeping. **Next action for the coordinator:** when 35859572295 completes,
+dispatch `stage=all mode=tiles shards=12 max_parallel=12
+resume_run_id=35859572295` (its shard artifacts carry all prior progress).
+
+**The nine candidates.** All nine are grey, small (0.026–0.083 mag over
+2014–2024), W1 9.4–11.2, at |β| 47–75°, with 2010 W1−W2 within ±0.03.
+
+**Re-vet (`src/seti/ignition/revet.py`; runs 35860165284, 35861792980).**
+
+1. *Brightness-dependent drift — real, but not the explanation.* Over all
+   169,749 screened stars the NEOWISE drift depends on brightness: W1
+   0.24 → 1.45 mmag/yr and W2 1.7 → 3.5 mmag/yr from W1 8–9 to 11.5–12. The
+   per-shard median correction therefore over-corrects bright stars, but by
+   only ~0.2–0.5 mmag/yr at W1 9.4–10.3, against candidate slopes of 2–11
+   mmag/yr. The candidates' **raw** slopes are 6–29 MAD outliers of stars of
+   their own W1 (±0.25) and |β| band (1,756–7,786 peers each). Re-screening
+   with a (W1-bin × |β|-band) stratified ensemble pooled over all shards:
+   5 of 9 survive, 5 new stars pass (10 total from 497 fully re-tested).
+2. *Dust colour.* For small changes W2rise/W1rise equals the ratio of
+   fractional excesses; warm dust on these photospheres predicts ~2.0 (1000 K)
+   or ~1.5 (1500 K, sublimation). Every one of the 14 stars has a ratio of
+   0.60–1.18, excluding 1000 K dust at 3.6–16σ and 1500 K at 1.4–9σ. **No
+   rise has the colour of a born warm excess**; they have the colour of a star.
+
+| source_id | stratified | W1 / W2 slope (mmag/yr, σ) | W2/W1 | fate and mechanism |
+|---|---|---|---|---|
+| 4572744241447044352 (LP 387-28) | pass | −5.0 (10.4) / −4.5 (5.9) | 0.90±0.18 | **Killed — proper-motion blend.** PM 212 mas/yr; Gaia neighbour G=15.34 (ΔG=1.95) closes from 7.5″ (2010) → 6.7″ (2014) → 4.4″ (2024) into the 6″ beam; AllWISE resolves it at 6.1″ (W1 13.15). ZTF r/i flat (+0.5/+0.3 mmag/yr) at 1.4″, as a blend predicts. |
+| 2698668556422137728 (LP 578-16, new) | pass | −3.9 (6.3) / −3.3 (5.6) | 0.84±0.20 | **Killed — proper-motion blend.** PM 209 mas/yr; an equal-brightness neighbour (ΔG=−0.05) closes 10.4″ → 9.6″ → 7.3″. ZTF g/r flat. |
+| 5747379623232417792 (new) | pass | −5.9 (6.9) / −7.0 (6.4) | 1.18±0.25 | **Killed — optical not flat.** ZTF g −27.8 (31σ), r −21.8 (32σ) mmag/yr: the star brightens 3–4× more in the optical than in the IR — stellar variability, not an excess. |
+| 1421075180688797952 (new) | pass | −4.5 (12.2) / −3.4 (7.4) | 0.77±0.12 | **Killed — optical not flat.** ZTF r −19.0 (13σ), g −39.6 (9σ) mmag/yr. |
+| 4593063967944867968 | fail (W2 scan) | −5.6 / −5.0 | 0.90 | **Killed** — fails the stratified screen (`ONE_BAND_ONLY`, W2 `scan_systematic`); ZTF g brightening but saturated (g 12.9). |
+| 4619030382440742144 | fail (W1 not monotonic) | −5.9 / −4.9 | 0.82 | **Killed** — fails stratified; VSX ASASSN-V ROT, P = 1.13 d (spotted rapid rotator). |
+| 4614613575512315648 | fail | −2.9 / −2.7 | 0.91 | **Killed** — fails stratified; VSX ASASSN-V ROT, P = 0.84 d. |
+| 6383068554366896000 | fail | −2.9 (4.6) / −2.9 (4.3) | 1.01 | **Killed** — fails stratified (its W2 rise was 0.16σ raw: made by the global correction); also an unresolved common-PM pair (G=13.21 at 1.44″). |
+| 4787733051398426240 | pass | −10.9 (10.2) / −7.1 (10.1) | 0.65±0.09 | **Out of scope — active young star.** VSX ASASSN-V ROT P = 3.68 d, 0.16 mag; FLAME age 1.4 (0.2–4.7) Gyr. A spot/activity-cycle brightening is the mundane reading; the host is not old. |
+| 6371268909112212864 (new) | pass | −3.7 (8.1) / −3.5 (5.7) | 0.95±0.20 | **Out of scope — active star.** VSX ASASSN-V ROT P = 1.14 d. |
+| 5498602919742073088 (new) | pass | −5.0 (8.4) / −3.0 (5.9) | 0.60±0.13 | **Out of scope — active star.** VSX ASASSN-V ROT P = 5.53 d (M0, Teff 4070 K). |
+| **5802068055991339904** | pass | −6.9 (12.0) / −7.3 (10.8) | 1.06±0.13 | **Open.** No VSX/SIMBAD/Milliquas/Gaia-vari/QSO; static neighbour G=16.8 at 4.2″ (1.5 % of the optical flux; would have to brighten ×3.5 in W1 and W2 to do this). FLAME 13.5 Gyr, GSP-Phot [M/H] −1.19. Optical untested (δ = −75.7°: no ZTF; ASAS-SN unreachable). |
+| **4867872438154507904** | pass | −5.9 (11.0) / −4.2 (7.6) | 0.72±0.12 | **Open.** No neighbour within 24″; no catalogue entry. GSP-Phot [M/H] −1.25; v_tan 10.6 km/s (not kinematically old). Optical untested. |
+| **4646037549114081792** (TYC 9155-878-1) | pass | −3.3 (8.6) / −3.0 (6.6) | 0.91±0.18 | **Open.** No neighbour within 22″; SIMBAD PM* only. GSP-Phot [M/H] −1.11. Optical untested. |
+
+(Slopes are from the stratified re-screen's ramp fit; negative = brightening.
+None of the 14 is saturated: W1 ≥ 9.41, W2 ≥ 9.44. Milliquas and Gaia
+`qso_candidates` returned nothing for any of them; Gaia `vari_summary`
+returned nothing — none is a DR3-classified variable.)
+
+**What is left, stated plainly.** Three stars — 5802068055991339904,
+4867872438154507904, 4646037549114081792 — brighten by 3–7 % in W1 and W2
+over 2014–2024, significantly, monotonically, against peers of their own
+brightness and cadence, with no neighbour, catalogued variability or AGN to
+blame. **They are not an infrared excess being born**: the rise is grey,
+excluding ≤ 1500 K dust at 3.4–6.7σ each, which is what the star itself
+brightening (or a source-specific NEOWISE systematic) looks like. The
+decisive missing measurement is a decade optical light curve; ZTF cannot see
+them, ASAS-SN Sky Patrol (`asassn-lb01.ifa.hawaii.edu:9006`) timed out on
+connect from the runner for every target, and Gaia DR3 publishes epoch
+photometry only for its variables. The Gaia DR3 per-observation scatter proxy
+against G/BP-RP peers is the one optical constraint in reach; its result is
+in `results/ignition/revet.json` → `gaia_variability_proxy`. Three of three
+survivors being metal-poor by GSP-Phot is noted, not interpreted (GSP-Phot
+[M/H] is biased low for many dwarfs).
+
+Nothing here is a technosignature candidate. The screen as built selects a
+grey stellar-brightening population at the 10⁻⁵ level plus proper-motion
+blends; the next version must (a) apply the stratified ensemble, (b) require
+the rise colour to be dust-like (the table's W2/W1 test, now in
+`revet.dust_colour_test`), and (c) kill any Gaia neighbour closing inside 9″.
+Under (b) alone, all nine original and all five new candidates fail.

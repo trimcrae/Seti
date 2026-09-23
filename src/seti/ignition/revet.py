@@ -623,17 +623,88 @@ def dust_colour_test(w1_slope, w1_sigma, w2_slope, w2_sigma, teff: float = 5000.
     return out
 
 
+def gaia_variability_proxy(targets: pd.DataFrame, stars: pd.DataFrame, n_comp: int = 300,
+                           seed: int = 20260923) -> dict:
+    """Gaia DR3 G-band excess scatter of each target against its own G / BP-RP peers.
+
+    A_G = sqrt(phot_g_n_obs) / phot_g_mean_flux_over_error is the fractional
+    per-observation flux scatter over the DR3 window (2014.6-2017.4).  A star
+    brightening by D mag across that window has an rms of ~D/sqrt(12) from the
+    trend alone, so a star whose optical follows a 5-10 mmag/yr IR rise (or
+    exceeds it, as spot/activity brightening does) sits above its peers.  The
+    peers are screened stars of the same sample within 0.1 mag in G and 0.15
+    in BP-RP; the result is the target's percentile among them.
+    """
+    rng = np.random.default_rng(seed)
+    g_all = _num(stars["phot_g_mean_mag"])
+    c_all = _num(stars["bp_rp"])
+    ids_t = [str(x) for x in targets["source_id"]]
+    comp: dict[str, list[str]] = {}
+    pool: set[str] = set(ids_t)
+    for _, t in targets.iterrows():
+        sel = ((g_all - float(t["phot_g_mean_mag"])).abs() < 0.1) & \
+              ((c_all - float(t["bp_rp"])).abs() < 0.15) & (stars["source_id"] != str(t["source_id"]))
+        ids = stars.loc[sel, "source_id"].astype(str).to_numpy()
+        if len(ids) > n_comp:
+            ids = rng.choice(ids, n_comp, replace=False)
+        comp[str(t["source_id"])] = list(ids)
+        pool.update(ids)
+    rows = []
+    pool_l = sorted(pool)
+    for i in range(0, len(pool_l), 400):
+        chunk = ",".join(pool_l[i:i + 400])
+        q = ("SELECT source_id, phot_g_mean_mag, phot_g_n_obs, phot_g_mean_flux_over_error, "
+             "phot_bp_n_obs, phot_bp_mean_flux_over_error, phot_rp_n_obs, "
+             "phot_rp_mean_flux_over_error FROM gaiadr3.gaia_source "
+             f"WHERE source_id IN ({chunk})")
+        df, err = _timed(lambda q=q: _tap("https://gea.esac.esa.int/tap-server/tap", q), 240)
+        if df is None:
+            return {"status": "FAILED", "error": err}
+        df.columns = [x.lower() for x in df.columns]
+        rows.append(df)
+    d = pd.concat(rows, ignore_index=True)
+    d["source_id"] = d["source_id"].astype(str)
+    for b in ("g", "bp", "rp"):
+        d[f"a_{b}"] = np.sqrt(_num(d[f"phot_{b}_n_obs"])) / _num(d[f"phot_{b}_mean_flux_over_error"])
+    d = d.set_index("source_id")
+    out = {"status": "OK", "note": "A = sqrt(n_obs)/flux_over_error, fractional per-obs scatter"}
+    for sid in ids_t:
+        if sid not in d.index:
+            out[sid] = {"status": "TARGET_NOT_RETURNED"}
+            continue
+        peers = d.reindex([x for x in comp[sid] if x in d.index])
+        rec = {"n_peers": int(len(peers))}
+        for b in ("g", "bp", "rp"):
+            a_t = float(d.at[sid, f"a_{b}"])
+            a_p = peers[f"a_{b}"].dropna().to_numpy(float)
+            rec[f"a_{b}_mmag"] = round(1085.7 * a_t, 2)
+            if a_p.size:
+                rec[f"a_{b}_peers_median_mmag"] = round(1085.7 * float(np.median(a_p)), 2)
+                rec[f"a_{b}_percentile"] = round(100.0 * float(np.mean(a_p < a_t)), 1)
+        out[sid] = rec
+    return out
+
+
 def archive_checks(cands: pd.DataFrame) -> dict:
     res = {}
+    asassn_dead = None
     for _, c in cands.iterrows():
         sid = str(c["source_id"])
+        if asassn_dead:
+            asa = {"status": "SKIPPED", "error": f"service unreachable earlier: {asassn_dead}"}
+        else:
+            asa = asassn_lightcurve(c)
+            if asa.get("status") in ("FAILED", "CLIENT_MISSING") and \
+                    any(s in str(asa.get("error")) for s in ("ConnectTimeout", "Max retries",
+                                                             "No module", "CLIENT")):
+                asassn_dead = str(asa.get("error"))[:120]
         r = {"gaia_neighbours": gaia_neighbours(c),
              "simbad_10as": simbad_cone(c),
              "vsx_30as": _vizier_asu("B/vsx/vsx", c, 30, "Name,Type,max,min,Period"),
              "milliquas_10as": _vizier_asu("VII/294/catalog", c, 10, "Name,Type,z"),
              "allwise_20as": allwise_neighbours(c),
              "ztf": ztf_lightcurve(c),
-             "asassn": asassn_lightcurve(c)}
+             "asassn": asa}
         res[sid] = r
         print(f"[revet] archive {sid}: " + ", ".join(f"{k}={v.get('status')}"
                                                      for k, v in r.items()), flush=True)
@@ -732,6 +803,7 @@ def stage_revet(conf: dict, out: Path, n_shards: int, *, run_id: str = "",
     rep["new_candidates_stratified"] = new_ids
     if online and len(targets):
         rep["archive"] = archive_checks(targets)
+        rep["gaia_variability_proxy"] = gaia_variability_proxy(targets, stars)
     rep["elapsed_s"] = round(time.monotonic() - t0, 1)
     cdf.to_csv(out / "revet_candidates.csv", index=False)
     (out / "revet.json").write_text(json.dumps(rep, indent=1, default=str))

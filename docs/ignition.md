@@ -830,3 +830,42 @@ attempted. Each dispatch resumes from the previous one's artifacts;
 `budget_min` goes from 150 to 280 (job timeout 340 min), about doubling the
 tiles per dispatch and leaving ~60 min for the re-screen of the accumulated
 shard, the upload and the commit.
+
+### 7.6 Run 35884646233 — the automated ladder on real data; ESA Gaia dark (2026-09-23)
+
+`stage=all mode=tiles shards=12 max_parallel=12 budget_min=280
+resume_run_id=35859572295`, 15:51–21:40 UTC (11:51–17:40 EDT).
+
+**Sweep: zero new tiles.** Every parent query to the ESA Gaia archive failed
+for the whole dispatch: 90 × `DALServiceError … Read timed out`, the rest
+300-s `QueryTimeout`s and dropped connections. The probe itself found no
+working ESA shape (`VIZIER_PARENT_AND_NEOWISE`). Each shard attempted ~61
+tiles, all `QUERY_FAILED`. The preceding run, 35859572295 (serial, 12:28–15:30
+UTC), was already seeing 150–280 s queries and 22 timeouts, so the archive was
+degrading before the parent-query prefetch (c093fa07) went in. Prefetch is cut
+from 2 tiles to 1 to halve the concurrent load (24 queries across 12 shards).
+A failed tile is not checkpointed as done, so every one is retried on the next
+resume. Coverage is still **695 / 2,047 tiles (0.3395 of the |b| > 15° area)**,
+181,210 stars screened.
+
+**The folded-in ladder worked end to end.** All 12 shards re-screened their
+accumulated epochs with the stratified ensemble (`ensemble.mode: stratified`).
+8 rise candidates came out, and `assess --online-vet` rejected all of them
+with no manual step:
+
+| rejected by | n | stars |
+|---|---|---|
+| `rise_stellar_coloured` (W2/W1 0.74–1.01, 3.3–6.6σ below 1500 K dust) | 5 | 5802068055991339904, 4572744241447044352, 2277422630796756096 (new), 4867872438154507904, 1421075180688797952 |
+| `optical_not_flat` (ZTF / ASAS-SN brightening) | 2 | 5747379623232417792, 4614613575512315648 |
+| `optical_variable_gaia` (≥ 99th percentile in G, BP and RP) | 1 | 4646037549114081792 |
+
+The Gaia cone, ZTF, ASAS-SN and the Gaia-scatter query all answered for the
+three stars that reached the online rungs, so the summary carries no
+`vet_unreachable`. Verdict: `DEGRADED (tiles_failed:747;
+neowise_queries_failed:3); NO_IGNITION_CANDIDATE`. That is a count over
+181,210 stars, not a limit.
+
+**Next:** `stage=all mode=tiles shards=12 max_parallel=12 budget_min=280
+resume_run_id=<the latest completed resume>`, chained until every tile is
+done. If ESA stays dark, a sweep only accumulates failed tiles; the probe's
+`gaia_shape_working` says whether a dispatch is worth its runner hours.

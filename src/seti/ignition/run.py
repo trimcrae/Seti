@@ -118,7 +118,7 @@ DEFAULT_SWEEP: dict = {
     "sample_timeout_s": 300.0,      # one tile's parent query, per attempt
     "sample_unit_budget_s": 600.0,  # one tile's parent query, across the WHOLE ladder
     "max_tiles": 0,                 # 0 = every tile of the shard
-    "sample_prefetch": 2,           # parent queries run this many tiles ahead
+    "sample_prefetch": 1,           # parent queries run this many tiles ahead (ESA load)
 }
 
 #: The probe's wall-clock discipline.  Run 34787803862 spent 1,490 s on four
@@ -731,7 +731,7 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     # and resume semantics are unchanged.  A prefetched query whose tile is
     # never reached before the deadline is simply dropped.
     todo = [t for _, t in mine.iterrows() if str(t["tile"]) not in done_tiles]
-    ahead = max(0, int(sw.get("sample_prefetch", 2) or 0))
+    ahead = max(0, int(sw.get("sample_prefetch", 1) or 0))
     pending: dict[int, tuple] = {}
 
     def _start(i: int) -> None:

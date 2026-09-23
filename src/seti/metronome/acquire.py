@@ -2129,8 +2129,12 @@ def fetch_positions(ids, mission: str, *, query_fn=None, mast_fn=None,
     if len(pos):
         pos = pos.dropna(subset=["ra", "dec"])
     # an injected VizieR query_fn with no MAST stand-in is an offline caller:
-    # the fallback is not taken rather than opening a socket behind its back
-    if str(mission).startswith("tess") and (mast_fn is not None or query_fn is None):
+    # the fallback is not taken rather than opening a socket behind its back.
+    # The REAL tap_query is not an injection (MEASURED: run 35863149850's
+    # aperture stage passed it explicitly, skipped MAST, and positioned 0 of
+    # 123 TESS stars).
+    live = query_fn is None or query_fn is tap_query
+    if str(mission).startswith("tess") and (mast_fn is not None or live):
         have =set(pos["star_id"].astype(str)) if len(pos) else set()
         want = [i for i in ids if i not in have]
         if want:

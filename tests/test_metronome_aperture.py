@@ -232,6 +232,22 @@ def test_tess_positions_fall_back_to_mast():
     assert len(pos2) == 0
 
 
+def test_the_live_tap_query_still_takes_the_mast_fallback(monkeypatch):
+    """Run 35863149850 passed the real tap_query explicitly and the guard read
+    it as an offline injection: 0 of 123 TESS stars positioned."""
+    calls = []
+
+    def fake_mast(ids):
+        calls.append(list(ids))
+        return pd.DataFrame({"ID": ids, "ra": [1.0] * len(ids), "dec": [2.0] * len(ids)})
+
+    monkeypatch.setattr(acq, "fetch_positions_by_id",
+                        lambda *a, **k: pd.DataFrame(columns=["star_id", "ra", "dec"]))
+    monkeypatch.setattr(acq, "_mast_tic_query", fake_mast)
+    pos = acq.fetch_positions(["7"], "tess", query_fn=acq.tap_query)
+    assert list(pos["star_id"]) == ["7"] and calls == [["7"]]
+
+
 # ---------------------------------------------------------------------------
 # the assess stage end to end, with the aperture cone
 # ---------------------------------------------------------------------------

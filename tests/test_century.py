@@ -991,7 +991,9 @@ def test_vet_row_trips_every_kill():
             "cess_flags": "", "vtype": "RRAB", "mag_cat": 11.0, "period_cat": 0.5}
     assert vet_row(dict(base))["verdict"] == "survivor"
     assert vet_row(dict(base, pm_total_masyr=120))["verdict"] == "killed:high_pm"
-    assert vet_row(dict(base, vtype="M"))["verdict"] == "killed:long_period_giant"
+    # An irregular LPV (SRB) is killed; a catalogued Mira in the cessation
+    # population is not (test_lpv_cessation_is_a_note_but_lpv_fade_is_killed).
+    assert vet_row(dict(base, vtype="SRB"))["verdict"] == "killed:long_period_giant"
     assert vet_row(dict(base, mag_cat=6.0))["verdict"] == "killed:too_bright"
     assert vet_row(dict(base, cess_flags="vanished_not_ceased"))["verdict"] == \
         "killed:vanished_not_ceased"

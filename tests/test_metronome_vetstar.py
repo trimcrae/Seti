@@ -1082,9 +1082,20 @@ def test_guard_blocks_only_the_file_whose_writer_is_ahead(monkeypatch, tmp_path)
 def _summary_pair(tmp_path, tier="candidate"):
     import json as _json
 
+    # stars_vetted.csv is the assess stage's verdict; candidates.json is the
+    # later word on the same stars.  A real run has both, and the rebuild
+    # reads both.
+    pd.DataFrame({
+        "star_key": ["kepler:5879574", "tess:398943781", "kepler:9999",
+                     "kepler:1", "kepler:2"],
+        "tier": [tier, "interest", "watch", "none", "none"],
+    }).to_csv(tmp_path / "stars_vetted.csv", index=False)
     (tmp_path / "summary.json").write_text(_json.dumps({
         "verdict": "DEGRADED_SOURCE (x); CLOCK_CANDIDATES_PENDING_VET",
         "n_candidates": 1, "n_interest": 1,
+        "tiers": {"none": 2, "watch": 1, "interest": 1, "candidate": 1},
+        "generated_utc": "2026-09-21T21:42:31Z",
+        "degraded": ["x"],
         "funnel": {"stars_scanned": 3131, "stars_candidate": 1, "stars_interest": 1}}))
     (tmp_path / "candidates.json").write_text(_json.dumps({
         "candidates": [
@@ -1128,9 +1139,23 @@ def test_the_vet_demotes_the_star_in_summary_and_candidates(tmp_path):
     assert s["n_candidates"] == 0
     assert s["n_interest"] == 1
     assert s["funnel"]["stars_demoted_by_vetstar"] == 1
-    assert "CLOCK_CANDIDATES_PENDING_VET" not in s["verdict"]
     assert "VETSTAR_DEMOTED_1" in s["verdict"]
     assert s["vetstar"]["veto"] == "vet_contaminating_variable_at_p"
+    # the tier counts are RECOMPUTED, not patched: they must agree with
+    # n_candidates, which is the contradiction this file once carried
+    assert s["tiers"]["candidate"] == 0 == s["n_candidates"]
+    assert s["tiers"]["interest"] == 1 == s["n_interest"]
+    assert s["tiers"]["watch"] == 1 == s["n_watch"]
+    assert sum(s["tiers"].values()) == 5
+    assert s["funnel"]["stars_candidate"] == 0
+    # one interest star is still unvetted, so the headline stays PENDING_VET
+    assert "CLOCK_CANDIDATES_PENDING_VET" in s["verdict"]
+    assert "NO_CLOCK_CANDIDATES" not in s["verdict"]
+    # and the file says when it was rebuilt and out of what
+    assert s["generated_utc"] != "2026-09-21T21:42:31Z"
+    assert s["provenance"]["rebuilt_by"] == "vetstar"
+    assert s["provenance"]["assess_generated_utc"] == "2026-09-21T21:42:31Z"
+    assert s["provenance"]["rebuilt_utc"] == s["generated_utc"]
 
 
 def test_no_candidates_left_says_so_in_the_verdict(tmp_path):
@@ -1141,12 +1166,17 @@ def test_no_candidates_left_says_so_in_the_verdict(tmp_path):
     cj = _read(cp)
     cj["candidates"] = [cj["candidates"][0]]        # only the vetted star remains
     cp.write_text(_json.dumps(cj))
+    pd.DataFrame({"star_key": ["kepler:5879574", "kepler:9999"],
+                  "tier": ["candidate", "watch"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
     reconcile_vetstar(tmp_path, {
         "star_key": "kepler:5879574",
         "verdict": "MUNDANE_EXPLANATION_FOUND(COHERENT_OSCILLATION_AT_P:amp=1)"})
     s = _read(sp)
     assert s["n_candidates"] == 0 and s["n_interest"] == 0
     assert "NO_CLOCK_CANDIDATES" in s["verdict"]
+    assert "CLOCK_CANDIDATES_PENDING_VET" not in s["verdict"]
+    assert s["tiers"]["candidate"] == 0
 
 
 def test_a_clean_vet_demotes_nothing(tmp_path):
@@ -1159,6 +1189,7 @@ def test_a_clean_vet_demotes_nothing(tmp_path):
     assert res["demoted"] == []
     s, c = _read(sp), _read(cp)
     assert s["n_candidates"] == 1
+    assert s["tiers"]["candidate"] == 1
     assert "CLOCK_CANDIDATES_PENDING_VET" in s["verdict"]
     assert "VETSTAR_DEMOTED" not in s["verdict"]
     row = next(r for r in c["candidates"] if r["star_key"] == "kepler:5879574")
@@ -1197,3 +1228,216 @@ def test_the_veto_name_is_the_most_mundane_one_present():
     assert vetstar_veto({"verdict": v}) == "vet_contaminating_variable_at_p"
     assert vetstar_veto({"verdict": "NO_MUNDANE_EXPLANATION_FOUND"}) is None
     assert vetstar_veto({}) is None
+
+
+# ---------------------------------------------------------------------------
+# summary.json is REGENERATED, never patched
+#
+# MEASURED, 2026-09-22: patching left the file holding `n_candidates: 0`
+# beside `tiers: {..., "candidate": 1}`, a `generated_utc` 26 hours older than
+# the vet whose result it carried, and a blanket "variability catalogues
+# unreached" beside a vet that had reached all three and quoted them.
+# ---------------------------------------------------------------------------
+def test_rebuild_recomputes_tiers_from_the_records_not_the_old_counts(tmp_path):
+    import json as _json
+
+    from seti.metronome.redetect import rebuild_summary
+
+    pd.DataFrame({"star_key": ["a", "b", "c", "d"],
+                  "tier": ["candidate", "interest", "watch", "none"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    # the later word: both shortlisted stars were demoted
+    (tmp_path / "candidates.json").write_text(_json.dumps({
+        "candidates": [{"star_key": "a", "tier": "none"},
+                       {"star_key": "b", "tier": "none"}],
+        "watch": [{"star_key": "c", "tier": "watch"}]}))
+    summary = {"verdict": "DEGRADED_SOURCE (q:ZERO); CLOCK_CANDIDATES_PENDING_VET",
+               "generated_utc": "2026-09-21T21:42:31Z", "degraded": ["q:ZERO"],
+               "n_candidates": 1, "n_interest": 1,
+               "tiers": {"none": 1, "watch": 1, "interest": 1, "candidate": 1},
+               "funnel": {"stars_scanned": 4, "stars_candidate": 1}}
+    out = rebuild_summary(tmp_path, summary, stage="test")
+    assert out["tiers"] == {"none": 3, "watch": 1, "interest": 0, "candidate": 0}
+    assert out["n_candidates"] == 0 and out["n_interest"] == 0 and out["n_watch"] == 1
+    assert out["funnel"]["stars_candidate"] == 0
+    # nothing left to vet, so the headline changes
+    assert out["verdict"].endswith("NO_CLOCK_CANDIDATES")
+    assert out["verdict"].startswith("DEGRADED_SOURCE (q:ZERO)")
+    assert out["provenance"]["tier_sources"]["overridden_by_candidates"] == 2
+
+
+def test_rebuild_keeps_the_assess_stage_records_it_did_not_derive(tmp_path):
+    from seti.metronome.redetect import rebuild_summary
+
+    pd.DataFrame({"star_key": ["a"], "tier": ["watch"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    summary = {"verdict": "x", "generated_utc": "2026-09-21T21:42:31Z",
+               "funnel": {"events_in": 1523888, "stars_scanned": 3131},
+               "rejection_counters": {"first_veto": {"not_significant": 2906}},
+               "coverage": {"catalogues": {"k": {"status": "OK"}}},
+               "jitter_calibration": {"thresholds": {"jitter_max": 0.05}}}
+    out = rebuild_summary(tmp_path, summary, stage="test")
+    assert out["funnel"]["events_in"] == 1523888        # upstream totals untouched
+    assert out["funnel"]["stars_scanned"] == 3131
+    assert out["rejection_counters"]["first_veto"]["not_significant"] == 2906
+    assert out["coverage"]["catalogues"]["k"]["status"] == "OK"
+    assert out["jitter_calibration"]["thresholds"]["jitter_max"] == 0.05
+    assert out["provenance"]["assess_generated_utc"] == "2026-09-21T21:42:31Z"
+    assert "not re-derived" in out["provenance"]["note"]
+
+
+def test_a_partly_reached_catalogue_is_not_reported_as_unreached(tmp_path):
+    """The vet reached VSX, Gaia vari and ZTF for the star it examined and
+    quoted them; the assess cone reached 45% of the shortlist.  Saying flatly
+    "unreached" tells the reader something false."""
+    from seti.metronome.redetect import precise_degraded, rebuild_summary
+
+    summary = {"degraded": ["tess_pietras2022:QUERY_RETURNED_ZERO_ROWS",
+                            "variability_catalogues:gaia_dr3_vari,vsx,ztf_chen2020"],
+               "variability_catalogues_reached": {"gaia_dr3_vari": 0.4533,
+                                                  "vsx": 0.4533,
+                                                  "ztf_chen2020": 0.4533}}
+    d = precise_degraded(summary)
+    assert d[0] == "tess_pietras2022:QUERY_RETURNED_ZERO_ROWS"
+    assert d[1] == ("variability_catalogues:reached_0.45_of_shortlist("
+                    "gaia_dr3_vari,vsx,ztf_chen2020)")
+    # and it reaches the verdict string
+    pd.DataFrame({"star_key": ["a"], "tier": ["none"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    out = rebuild_summary(tmp_path, dict(summary, funnel={}), stage="test")
+    assert "reached_0.45_of_shortlist" in out["verdict"]
+
+
+def test_a_genuinely_unreached_catalogue_still_says_so(tmp_path):
+    from seti.metronome.redetect import precise_degraded
+
+    assert precise_degraded({
+        "degraded": ["variability_catalogues:vsx"],
+        "variability_catalogues_reached": {"vsx": 0.0},
+    }) == ["variability_catalogues:vsx"]
+    # and with no record of what was reached, the original wording stands
+    assert precise_degraded({
+        "degraded": ["variability_catalogues:vsx"],
+    }) == ["variability_catalogues:vsx"]
+
+
+def test_rebuild_is_idempotent(tmp_path):
+    """Reconciliation runs again on every re-dispatch; running it twice must
+    not append a second VETSTAR_DEMOTED or move any count."""
+    import json as _json
+
+    from seti.metronome.redetect import rebuild_summary
+
+    pd.DataFrame({"star_key": ["a", "b"], "tier": ["candidate", "watch"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    (tmp_path / "candidates.json").write_text(_json.dumps({
+        "candidates": [{"star_key": "a", "tier": "none"}], "watch": []}))
+    base = {"verdict": "old", "degraded": [], "funnel": {},
+            "generated_utc": "2026-09-21T21:42:31Z"}
+    first = rebuild_summary(tmp_path, dict(base), stage="vetstar",
+                            extra_tokens=["VETSTAR_DEMOTED_1"])
+    second = rebuild_summary(tmp_path, dict(first), stage="vetstar",
+                             extra_tokens=["VETSTAR_DEMOTED_1"])
+    assert first["verdict"] == second["verdict"]
+    assert first["verdict"].count("VETSTAR_DEMOTED_1") == 1
+    assert first["tiers"] == second["tiers"]
+    assert second["provenance"]["assess_generated_utc"] == "2026-09-21T21:42:31Z"
+
+
+def test_rebuild_without_any_records_does_not_invent_counts(tmp_path):
+    from seti.metronome.redetect import rebuild_summary
+
+    out = rebuild_summary(tmp_path, {"verdict": "x", "degraded": [], "funnel": {}},
+                          stage="test")
+    assert out["tiers"] == {"none": 0, "watch": 0, "interest": 0, "candidate": 0}
+    assert out["n_candidates"] == 0
+    assert out["verdict"] == "NO_CLOCK_CANDIDATES"
+
+
+def test_provenance_dates_each_stage_from_its_own_artefact(tmp_path):
+    """A reader must be able to date every part of summary.json.  The stage
+    result files are the authority on when each stage ran; summary.json's own
+    generated_utc is only the assess stage's."""
+    import json as _json
+
+    from seti.metronome.redetect import rebuild_summary
+
+    pd.DataFrame({"star_key": ["a"], "tier": ["watch"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    (tmp_path / "redetect.json").write_text(
+        _json.dumps({"generated_utc": "2026-09-22T21:57:41Z"}))
+    (tmp_path / "vetstar.json").write_text(
+        _json.dumps({"generated_utc": "2026-09-22T23:53:39Z"}))
+    out = rebuild_summary(tmp_path, {"verdict": "x", "degraded": [], "funnel": {},
+                                     "generated_utc": "2026-09-21T21:42:31Z"},
+                          stage="vetstar")
+    p = out["provenance"]
+    assert p["assess_generated_utc"] == "2026-09-21T21:42:31Z"
+    assert p["redetect_generated_utc"] == "2026-09-22T21:57:41Z"
+    assert p["vetstar_generated_utc"] == "2026-09-22T23:53:39Z"
+    assert p["rebuilt_utc"] == out["generated_utc"] != "2026-09-21T21:42:31Z"
+    # a stage that never ran is null, not guessed
+    out2 = rebuild_summary(tmp_path / "empty", {"verdict": "x", "funnel": {}},
+                           stage="test")
+    assert out2["provenance"]["redetect_generated_utc"] is None
+
+
+def test_demotion_counts_come_from_the_records_not_the_invocation(tmp_path):
+    """Run reconciliation twice and the second demotes nothing, because the
+    first already did.  MEASURED 2026-09-23: that made the regenerated file
+    report `stars_demoted_by_vetstar: 0` and drop VETSTAR_DEMOTED_1 from the
+    verdict, which reads as "the vet demoted nothing"."""
+    import json as _json
+
+    from seti.metronome.redetect import demotions_by_stage, rebuild_summary
+
+    pd.DataFrame({"star_key": ["a", "b", "c"],
+                  "tier": ["candidate", "interest", "watch"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    (tmp_path / "candidates.json").write_text(_json.dumps({
+        "candidates": [
+            {"star_key": "a", "tier": "none",
+             "first_veto": "vet_contaminating_variable_at_p"},
+            {"star_key": "b", "tier": "none",
+             "first_veto": "catalogue_epochs_absent"}],
+        "watch": [{"star_key": "c", "tier": "watch", "first_veto": None}]}))
+    out = rebuild_summary(tmp_path, {"verdict": "x", "degraded": [], "funnel": {}},
+                          stage="vetstar")
+    assert out["funnel"]["stars_demoted_by_vetstar"] == 1
+    assert out["funnel"]["stars_demoted_by_lightcurve"] == 1
+    assert "VETSTAR_DEMOTED_1" in out["verdict"]
+    assert "REDETECT_DEMOTED_1" in out["verdict"]
+    assert out["provenance"]["demotions_by_stage"] == {"lightcurve": ["b"],
+                                                       "vetstar": ["a"]}
+    # a star demoted for a reason that is neither stage is counted as neither
+    assert demotions_by_stage({"z": "rotation_alias"}) == {"lightcurve": [],
+                                                           "vetstar": []}
+
+
+def test_reconciliation_is_stable_across_repeated_runs(tmp_path):
+    """Every re-dispatch reconciles again.  The file must reach a fixed point:
+    same verdict, same counts, no nested or duplicated tokens."""
+    import json as _json
+
+    from seti.metronome.redetect import rebuild_summary
+
+    pd.DataFrame({"star_key": ["a", "b"], "tier": ["candidate", "interest"]}).to_csv(
+        tmp_path / "stars_vetted.csv", index=False)
+    (tmp_path / "candidates.json").write_text(_json.dumps({
+        "candidates": [{"star_key": "a", "tier": "none", "first_veto": "vet_x"},
+                       {"star_key": "b", "tier": "interest", "first_veto": None}],
+        "watch": []}))
+    base = {"verdict": "old", "funnel": {},
+            "degraded": ["variability_catalogues:gaia_dr3_vari,vsx"],
+            "variability_catalogues_reached": {"gaia_dr3_vari": 0.45, "vsx": 0.45}}
+    first = rebuild_summary(tmp_path, dict(base), stage="vetstar")
+    second = rebuild_summary(tmp_path, dict(first), stage="vetstar")
+    third = rebuild_summary(tmp_path, dict(second), stage="vetstar")
+    assert first["verdict"] == second["verdict"] == third["verdict"]
+    assert first["degraded"] == second["degraded"] == third["degraded"]
+    assert first["tiers"] == second["tiers"] == third["tiers"]
+    # the precise wording must not nest on itself
+    assert second["degraded"][0].count("reached_") == 1
+    assert second["verdict"].count("VETSTAR_DEMOTED_1") == 1
+    # and the count survives the rerun that demotes nothing new
+    assert third["funnel"]["stars_demoted_by_vetstar"] == 1

@@ -838,7 +838,6 @@ def reconcile_summary(out: Path, records, *, verdict: str = "") -> dict:
         res["status"] = f"SUMMARY_UNREADABLE:{exc!r}"[:200]
         return res
     demoted: list[str] = []
-    cands: list[dict] = []
     if cp.exists():
         try:
             cj = json.loads(cp.read_text())
@@ -857,21 +856,13 @@ def reconcile_summary(out: Path, records, *, verdict: str = "") -> dict:
                         row["flags"] = ";".join(
                             [f for f in str(row.get("flags") or "").split(";") if f] + [veto])
                         demoted.append(f"{key}:{veto}")
-                    if bucket == "candidates":
-                        cands.append(row)
             cp.write_text(json.dumps(cj, indent=2, default=_json_default))
             res["n_annotated"] = sum(len(cj.get(b) or []) for b in ("candidates", "watch"))
-    if demoted:
-        summary["n_candidates"] = int(sum(1 for r in cands if r.get("tier") == "candidate"))
-        summary["n_interest"] = int(sum(1 for r in cands if r.get("tier") == "interest"))
-        f = summary.get("funnel") or {}
-        f["stars_candidate"] = summary["n_candidates"]
-        f["stars_interest"] = summary["n_interest"]
-        f["stars_demoted_by_lightcurve"] = len(demoted)
-        summary["funnel"] = f
-        base = str(summary.get("verdict") or "")
-        summary["verdict"] = f"{base}; REDETECT_DEMOTED_{len(demoted)}"
+    f = summary.get("funnel") or {}
+    f["stars_demoted_by_lightcurve"] = len(demoted)
+    summary["funnel"] = f
     summary["redetect"] = {
+        "generated_utc": _now(),
         "verdict": str(verdict), "n_demoted": len(demoted), "demoted": demoted,
         "vetoes": list(LIGHTCURVE_VETOES), "per_star": by_key,
         "note": ("the light curve has the last word.  catalogue_epochs_absent: the flux at "
@@ -881,9 +872,223 @@ def reconcile_summary(out: Path, records, *, verdict: str = "") -> dict:
                  "photometric period, so the 'flares' are a detrending residual.  Either "
                  "demotes, whatever the catalogue statistics said"),
     }
+    tokens = [f"REDETECT_DEMOTED_{len(demoted)}" if demoted else "",
+              _vetstar_token(summary)]
+    rebuild_summary(out, summary, stage="redetect", extra_tokens=tokens)
     sp.write_text(json.dumps(summary, indent=2, default=_json_default))
     res.update({"status": "OK", "demoted": demoted})
     return res
+
+
+#: Fields of ``summary.json`` that are DERIVED from the per-star records and
+#: must therefore be recomputed, never patched.  Everything else in the file
+#: is a record of one stage's run and is left alone (and attributed).
+DERIVED_FIELDS = ("verdict", "n_candidates", "n_interest", "n_watch", "tiers",
+                  "funnel.stars_candidate", "funnel.stars_interest",
+                  "funnel.stars_watch", "funnel.stars_none", "degraded",
+                  "generated_utc", "provenance")
+
+VERDICT_NONE = "NO_CLOCK_CANDIDATES"
+VERDICT_PENDING = "CLOCK_CANDIDATES_PENDING_VET"
+DEGRADED_PREFIX = "DEGRADED_SOURCE"
+
+
+def current_tiers(out: Path) -> tuple[dict, dict]:
+    """Every scanned star's tier AS IT STANDS, and where each one came from.
+
+    ``stars_vetted.csv`` is the assess stage's verdict, one row per record.
+    ``candidates.json`` carries the same stars AFTER the light-curve and vet
+    reconciliations have demoted any of them, so where the two disagree the
+    candidates file is the later word and wins.  Returns
+    ``({star_key: tier}, {"from_vetted": n, "overridden_by_candidates": n})``.
+    """
+    tiers: dict[str, str] = {}
+    vetoes: dict[str, str] = {}
+    prov = {"from_vetted": 0, "overridden_by_candidates": 0, "n_demoted_rows": 0}
+    vp = Path(out) / "stars_vetted.csv"
+    if vp.exists():
+        try:
+            df = pd.read_csv(vp, dtype={"star_key": str, "star_id": str},
+                             usecols=lambda c: c in ("star_key", "tier"))
+        except (OSError, ValueError):                     # noqa: BLE001
+            df = pd.DataFrame()
+        for _, r in df.iterrows():
+            k = str(r.get("star_key"))
+            if k and k != "nan":
+                tiers[k] = str(r.get("tier"))
+        prov["from_vetted"] = len(tiers)
+    cp = Path(out) / "candidates.json"
+    if cp.exists():
+        try:
+            cj = json.loads(cp.read_text())
+        except (OSError, ValueError):
+            cj = None
+        if isinstance(cj, dict):
+            for bucket in ("candidates", "watch"):
+                for row in cj.get(bucket) or []:
+                    k = str(row.get("star_key"))
+                    t = str(row.get("tier"))
+                    if not k or t == "None":
+                        continue
+                    if tiers.get(k) != t:
+                        prov["overridden_by_candidates"] += 1
+                        if t == "none":
+                            prov["n_demoted_rows"] += 1
+                    tiers[k] = t
+                    fv = row.get("first_veto")
+                    if fv:
+                        vetoes[k] = str(fv)
+    prov["vetoes"] = vetoes
+    return tiers, prov
+
+
+def demotions_by_stage(vetoes: dict) -> dict:
+    """Which stage demoted each star, read off the stars' own ``first_veto``.
+
+    A count of what THIS invocation changed is not a property of the data: run
+    the reconciliation twice and the second run demotes nothing, because the
+    first already did.  MEASURED: the 2026-09-23 regeneration reported
+    ``stars_demoted_by_vetstar: 0`` and dropped ``VETSTAR_DEMOTED_1`` from the
+    verdict for exactly that reason, which reads as "the vet demoted nothing".
+    So the counts are derived from the state instead, and are the same however
+    many times reconciliation runs.
+    """
+    lc, vet = [], []
+    for k, v in (vetoes or {}).items():
+        if str(v).startswith("vet_"):
+            vet.append(k)
+        elif str(v) in LIGHTCURVE_VETOES:
+            lc.append(k)
+    return {"lightcurve": sorted(lc), "vetstar": sorted(vet)}
+
+
+def precise_degraded(summary: dict) -> list[str]:
+    """The degradation list, with the blanket variability-catalogue entry made
+    precise.
+
+    Assess flags a variability catalogue as degraded when it failed to reach
+    **any** shortlist star, which reads as "this catalogue was not reached" —
+    and that is not what happened.  ``variability_catalogues_reached`` records
+    the fraction that WAS reached, and the vet then reached all three at
+    aperture scale for the star it examined.  A reader who is told a source
+    was unreached, when it was reached for 45% of the shortlist and quoted
+    verbatim for the star that mattered, has been told something false.
+    """
+    reached = summary.get("variability_catalogues_reached") or {}
+    out = []
+    for entry in (summary.get("degraded") or []):
+        e = str(entry)
+        if not e.startswith("variability_catalogues:"):
+            out.append(e)
+            continue
+        if "reached_" in e:            # already precise; reconciliation reruns
+            out.append(e)
+            continue
+        names = [n for n in e.split(":", 1)[1].split(",") if n]
+        fracs = [float(reached.get(n, float("nan"))) for n in names]
+        fracs = [f for f in fracs if np.isfinite(f)]
+        if fracs and min(fracs) > 0.0:
+            f = min(fracs)
+            out.append(f"variability_catalogues:reached_{f:.2f}_of_shortlist("
+                       + ",".join(names) + ")")
+        else:
+            out.append(e)
+    return out
+
+
+def _stage_generated(out: Path, name: str) -> str | None:
+    """``generated_utc`` out of a stage's own result file, if it is there."""
+    q = Path(out) / name
+    if not q.exists():
+        return None
+    try:
+        d = json.loads(q.read_text())
+    except (OSError, ValueError):
+        return None
+    return d.get("generated_utc") if isinstance(d, dict) else None
+
+
+def _vetstar_token(summary: dict) -> str:
+    n = int(((summary.get("vetstar") or {}).get("n_demoted")) or 0)
+    return f"VETSTAR_DEMOTED_{n}" if n else ""
+
+
+def rebuild_summary(out: Path, summary: dict, *, stage: str = "",
+                    extra_tokens=None) -> dict:
+    """Recompute every derived field of ``summary.json`` from the records.
+
+    MEASURED, 2026-09-22: patching the file in place is how it came to hold
+    ``n_candidates: 0`` beside ``tiers: {... "candidate": 1}``, a
+    ``generated_utc`` 26 hours older than the vet whose result it carried, and
+    a blanket "variability catalogues unreached" beside a vet that had reached
+    all three and quoted them.  A summary that no longer describes the records
+    it carries is worse than no summary, because it reads as authoritative.
+
+    So the counts come back from ``stars_vetted.csv`` and ``candidates.json``
+    every time, the verdict is rebuilt from those counts rather than string-
+    edited, ``generated_utc`` becomes the regeneration time, and
+    ``provenance`` names which run produced each part.  ``extra_tokens`` are
+    appended to the verdict (``REDETECT_DEMOTED_9``, ``VETSTAR_DEMOTED_1``).
+    """
+    tiers_by_star, prov = current_tiers(out)
+    counts = {t: 0 for t in ("none", "watch", "interest", "candidate")}
+    for t in tiers_by_star.values():
+        counts[t] = counts.get(t, 0) + 1
+    summary["tiers"] = counts
+    summary["n_candidates"] = int(counts.get("candidate", 0))
+    summary["n_interest"] = int(counts.get("interest", 0))
+    summary["n_watch"] = int(counts.get("watch", 0))
+    f = dict(summary.get("funnel") or {})
+    f["stars_candidate"] = summary["n_candidates"]
+    f["stars_interest"] = summary["n_interest"]
+    f["stars_watch"] = summary["n_watch"]
+    summary["funnel"] = f
+
+    dem = demotions_by_stage(prov.get("vetoes") or {})
+    f["stars_demoted_by_lightcurve"] = len(dem["lightcurve"])
+    f["stars_demoted_by_vetstar"] = len(dem["vetstar"])
+    summary["funnel"] = f
+
+    summary["degraded"] = precise_degraded(summary)
+    core = VERDICT_PENDING if (summary["n_candidates"] or summary["n_interest"]) \
+        else VERDICT_NONE
+    parts = [core]
+    if dem["lightcurve"]:
+        parts.append(f"REDETECT_DEMOTED_{len(dem['lightcurve'])}")
+    if dem["vetstar"]:
+        parts.append(f"VETSTAR_DEMOTED_{len(dem['vetstar'])}")
+    for tok in (extra_tokens or []):
+        if tok and str(tok) not in parts:
+            parts.append(str(tok))
+    verdict = "; ".join(parts)
+    if summary["degraded"]:
+        verdict = f"{DEGRADED_PREFIX} ({'; '.join(summary['degraded'])}); {verdict}"
+    summary["verdict"] = verdict
+
+    prev = summary.get("provenance") or {}
+    prev.update({
+        "rebuilt_utc": _now(),
+        "rebuilt_by": str(stage) or "reconcile",
+        "assess_generated_utc": prev.get("assess_generated_utc")
+        or summary.get("generated_utc"),
+        # each stage's own artefact is the authority on when that stage ran,
+        # so a reader can date every part of this file independently
+        "redetect_generated_utc": (summary.get("redetect") or {}).get("generated_utc")
+        or _stage_generated(out, "redetect.json") or prev.get("redetect_generated_utc"),
+        "vetstar_generated_utc": (summary.get("vetstar") or {}).get("generated_utc")
+        or _stage_generated(out, "vetstar.json") or prev.get("vetstar_generated_utc"),
+        "tiers_recomputed_from": "stars_vetted.csv overridden by candidates.json",
+        "tier_sources": {k: v for k, v in prov.items() if k != "vetoes"},
+        "demotions_by_stage": dem,
+        "note": ("counts, tiers and the verdict are RECOMPUTED from the per-star "
+                 "records on every reconciliation; funnel totals upstream of the "
+                 "tiers, rejection_counters, coverage, jitter_calibration and the "
+                 "acquisition logs are the assess run's and are not re-derived"),
+    })
+    summary["provenance"] = prev
+    summary["generated_utc"] = prev["rebuilt_utc"]
+    return summary
+
 
 
 def _json_default(o):

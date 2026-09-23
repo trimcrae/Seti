@@ -1266,7 +1266,6 @@ def reconcile_vetstar(out: Path, report: dict) -> dict:
              "harmonics_at_period")}
 
     demoted: list[str] = []
-    cands: list[dict] = []
     if cp.exists():
         try:
             cj = json.loads(cp.read_text())
@@ -1284,34 +1283,29 @@ def reconcile_vetstar(out: Path, report: dict) -> dict:
                                 [f for f in str(row.get("flags") or "").split(";") if f]
                                 + [veto])
                             demoted.append(f"{key}:{veto}")
-                    if bucket == "candidates":
-                        cands.append(row)
             cp.write_text(json.dumps(cj, indent=2, default=_json_default_r))
             res["n_annotated"] = sum(len(cj.get(b) or []) for b in ("candidates", "watch"))
 
-    if demoted:
-        summary["n_candidates"] = int(sum(1 for r in cands if r.get("tier") == "candidate"))
-        summary["n_interest"] = int(sum(1 for r in cands if r.get("tier") == "interest"))
-        f = summary.get("funnel") or {}
-        f["stars_candidate"] = summary["n_candidates"]
-        f["stars_interest"] = summary["n_interest"]
-        f["stars_demoted_by_vetstar"] = len(demoted)
-        summary["funnel"] = f
-        base = str(summary.get("verdict") or "")
-        base = base.replace("CLOCK_CANDIDATES_PENDING_VET",
-                            f"VETSTAR_DEMOTED_{len(demoted)}")
-        if f"VETSTAR_DEMOTED_{len(demoted)}" not in base:
-            base = f"{base}; VETSTAR_DEMOTED_{len(demoted)}"
-        if summary["n_candidates"] == 0 and summary["n_interest"] == 0:
-            base = f"{base}; NO_CLOCK_CANDIDATES"
-        summary["verdict"] = base
+    f = summary.get("funnel") or {}
+    f["stars_demoted_by_vetstar"] = len(demoted)
+    summary["funnel"] = f
     summary["vetstar"] = {
         "star_key": key, "verdict": slim.get("verdict"), "veto": veto,
         "n_demoted": len(demoted), "demoted": demoted, "vetoes": list(VETSTAR_VETOES),
         "note": ("the single-star vet asks every mundane explanation by name and demotes "
                  "on any of them; NO_CLOCK_CANDIDATES here is a count after vetting and "
                  "is not an occurrence limit, and per CLAUDE.md is not written up"),
+        "generated_utc": (report or {}).get("generated_utc"),
     }
+    # REBUILD, never patch.  Patching is how this file came to carry
+    # `n_candidates: 0` beside `tiers: {..., "candidate": 1}`; see
+    # redetect.rebuild_summary for the measured failure.
+    from .redetect import rebuild_summary
+
+    n_lc = int(((summary.get("redetect") or {}).get("n_demoted")) or 0)
+    rebuild_summary(out, summary, stage="vetstar", extra_tokens=[
+        f"REDETECT_DEMOTED_{n_lc}" if n_lc else "",
+        f"VETSTAR_DEMOTED_{len(demoted)}" if demoted else ""])
     sp.write_text(json.dumps(summary, indent=2, default=_json_default_r))
     res.update({"status": STATUS_OK, "demoted": demoted, "veto": veto})
     return res

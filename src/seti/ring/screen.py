@@ -600,6 +600,15 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
     reason[f] = "companion_colour"
     f = (out["shape_class"].isin(["unfit"])) & (reason == "")
     reason[f] = "single_band_no_colour"
+    # Look-elsewhere: chance_p_max is a PER-HOST screen, and ~2,800 localised
+    # hosts were searched.  A survivor must also be improbable across all of
+    # them: p_trials = 1 - (1 - p)^N_localised.  Run 35860901093's single
+    # survivor (J0418-4154, p = 0.006, W1-W2 = 0.48 +/- 0.52) has p_trials ~ 1.
+    n_trials = max(int(out["localised"].sum()), 1)
+    p_host = pd.to_numeric(pd.Series(out["p_chance"], index=out.index), errors="coerce")
+    out["p_chance_trials"] = 1.0 - np.power(1.0 - p_host.clip(0.0, 1.0), n_trials)
+    f = (out["p_chance_trials"] > float(p.get("trials_p_max", 1.0))) & (reason == "")
+    reason[f] = "not_significant_after_trials"
     out["veto_reason"] = np.where(has, reason, "")
     out["verdict"] = np.where(~has, "no_counterpart",
                               np.where(out["veto_reason"] == "", "surviving", "rejected"))
@@ -611,7 +620,7 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
                  "W2mag_cat", "catwise_n_control_hits", "catwise_n_control_ring_hits",
                  "allwise_n_control_ring_hits", "catwise_n_sources_in_beam",
                  "allwise_n_sources_in_beam", "p_chance_ring", "p_chance_any", "assoc",
-                 "bincomp", "dist_kpc", "edot_w", "veto_reason", "verdict"]
+                 "bincomp", "dist_kpc", "edot_w", "p_chance_trials", "veto_reason", "verdict"]
     fates = out.loc[has & is_ring, [c for c in fate_cols if c in out.columns]]
     summary = {
         "status": "OK",
@@ -759,7 +768,8 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
 # --------------------------------------------------------------------------
 
 def _norm_group(s) -> str:
-    return "".join(ch for ch in str(s or "").lower() if ch.isalnum())
+    t = str(s or "").lower().replace("β", "b").replace("beta", "b")
+    return "".join(ch for ch in t if ch.isascii() and ch.isalnum())
 
 
 def _group_age_gyr(group, cfg: dict) -> float:

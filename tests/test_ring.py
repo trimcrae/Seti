@@ -849,6 +849,26 @@ def test_ring_chance_rate_comes_from_the_catalogue_that_gave_the_colour(cfg):
     assert g["p_chance_ring"] > 0.1 and g["veto_reason"] == "chance_coincidence"
 
 
+def test_a_per_host_pass_must_survive_the_look_elsewhere_correction(cfg):
+    """p = 0.006 passes the per-host screen but not across ~N localised hosts."""
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_VET), "tarball")
+    # Replicate J0100 into many localised hosts so N_trials is large.
+    many = pd.concat([psr[psr["jname"] == "J0100+0100"]] * 400, ignore_index=True)
+    many["jname"] = [f"J{k:04d}+0100" for k in range(400)]
+    rows = [{"source_id": "J0000+0100|t", "match_dist_arcsec": 0.4, "W1mag": 15.0,
+             "e_W1mag": 0.03, "W2mag": 14.52, "e_W2mag": 0.03, "ph_qual": "AAUU"}]
+    # One any-colour control hit per 50 hosts -> p_any ~ 0.01 per host.
+    rows += [{"source_id": f"J{k:04d}+0100|c0", "match_dist_arcsec": 0.5, "W1mag": 16.0,
+              "e_W1mag": 0.05, "W2mag": 15.9, "e_W2mag": 0.05, "ph_qual": "AAUU"}
+             for k in range(1, 400, 25)]
+    out, s = rscr.screen_pulsars(many, {"allwise": pd.DataFrame(rows),
+                                        "catwise": pd.DataFrame()}, cfg)
+    g = out.set_index("jname").loc["J0000+0100"]
+    assert g["p_chance"] < cfg["pulsar"]["chance_p_max"]
+    assert g["p_chance_trials"] > 0.3 > cfg["pulsar"]["trials_p_max"]
+    assert g["veto_reason"] == "not_significant_after_trials"
+
+
 def test_bd_roles_prefer_the_infrared_type_and_catwise_position():
     cols = ["recno", "T", "Name", "SpTO", "SpTIR", "SpAd", "plx", "pmRA", "pmDE", "RACdeg",
             "DECdeg", "pmRAC2", "pmDEC2", "W1mag", "W2mag", "_RA", "_DE"]
@@ -876,15 +896,18 @@ def test_ffp_leg_resolves_2mass_names_and_joins_membership(cfg):
                         "OSpT": ["L4", "L7", "M9"], "IRSpT": ["L4", "L7", "M9"],
                         "Lbol": [-2.6, -4.2, -3.0], "Teff": [1700, 1200, 2300],
                         "Mass": [8.0, 8.0, 40.0]})
+    # As on the runner (run 35860901093): "Mm" is the membership CLASS, and
+    # the group lives elsewhere -- here in the BANYAN II group column.
     lsg = pd.DataFrame({"recno": [1, 2, 3], "2MASS": ["J0001", "J0002", "J0003"],
-                        "Mm": ["TWA", "bPMG", "FIELD"], "_RA": [1.0, 2.0, 3.0],
-                        "_DE": [0.0, 0.0, 0.0]})
+                        "Mm": ["HLM", "HLM", "NM"], "GBII": ["TWA", "βPMG", "FIELD"],
+                        "_RA": [1.0, 2.0, 3.0], "_DE": [0.0, 0.0, 0.0]})
     q = _fake_vizier_catalogue({"J/ApJS/225/10/table14": t14,
                                 "J/ApJS/225/10/lsgdwarf": lsg})
     df, meta = racq.fetch_ffp_targets(cfg, query_fn=q)
     assert meta["status"] == "OK" and meta["table"] == "J/ApJS/225/10/table14"
     assert meta["membership_table"] == "J/ApJS/225/10/lsgdwarf"
-    assert meta["n_with_group"] == 3
+    assert meta["membership_column"] == "GBII" and meta["member_class_column"] == "Mm"
+    assert meta["n_with_group"] == 3 and "member_class" in df.columns
     out, s = rscr.screen_ffp(df, cfg)       # no age column: must not crash
     o = out.set_index("name")
     assert o.loc["J0002", "age_gyr"] == pytest.approx(0.024)    # bPMG -> beta Pic

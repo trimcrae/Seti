@@ -931,6 +931,13 @@ FFP_ROLES = {
 }
 
 
+# Columns that may name a young group in a membership table (BANYAN I/II,
+# LACEwING, convergent point, adopted), matched against lower-case names.
+FFP_GROUP_CANDIDATES = (r"^(group|grp|assoc\w*|ymg|mg|mm|mcat|gbii|gbi|gl|gc|member\w*|"
+                        r"adopted\w*|final\w*)$")
+MEMBER_CLASSES = {"HLM", "AM", "BM", "NM", "LM", "HM", "CM", "YES", "NO", "?"}
+
+
 def resolve_roles(columns, patterns: dict) -> dict:
     """First column (case-insensitive regex, in pattern priority order) per role."""
     cols = [str(c) for c in columns]
@@ -1070,19 +1077,27 @@ def fetch_ffp_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.Da
     meta["n_rows"] = int(len(df))
     meta["route"] = "vizier"
     # The luminosity table carries no group (hence no age) in Faherty+2016:
-    # membership lives in a sibling table keyed by the same designation.  Join
-    # the first sibling that resolves (name, group); without it every object is
-    # untestable, and the screen says so.
+    # membership lives in a sibling table keyed by the same designation.
+    # WHICH column holds the group is decided by content, not by name: run
+    # 35860901093 took "Mm" by pattern and found it holds the membership
+    # CLASS (HLM/AM/BM/NM), not a group, so all 69 objects had no age.  Every
+    # group-like column is fetched and the one whose values resolve to a known
+    # group age most often is used; a column of membership classes is kept as
+    # ``member_class``.
     if "group" not in df.columns and "name" in df.columns:
         sib = [e for e in disc.get("scoreboard", [])
                if e.get("table") and e["table"] != disc.get("table")
-               and {"name", "group"} <= set(e.get("roles") or {})]
+               and "name" in (e.get("roles") or {})]
         meta["membership_table"] = None
         for e in sib:
+            cand = [c for c in (e.get("columns") or [])
+                    if re.search(FFP_GROUP_CANDIDATES, str(c).lower())
+                    and c != e["roles"]["name"]]
+            if not cand:
+                continue
+            roles = {"name": e["roles"]["name"], **{f"g::{c}": c for c in cand}}
             try:
-                mem = fetch_vizier_roles({"table": e["table"],
-                                          "roles": {"name": e["roles"]["name"],
-                                                    "group": e["roles"]["group"]}},
+                mem = fetch_vizier_roles({"table": e["table"], "roles": roles},
                                          query_fn=query_fn)
             except Exception as exc:                    # noqa: BLE001
                 meta.setdefault("membership_errors", []).append(
@@ -1090,12 +1105,31 @@ def fetch_ffp_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.Da
                 continue
             if not len(mem):
                 continue
+            from .screen import _group_age_gyr
+
+            scores, klass = {}, None
+            for c in cand:
+                vals = mem[f"g::{c}"].astype(str).str.strip()
+                scores[c] = int(np.isfinite([_group_age_gyr(v, cfg) for v in vals]).sum())
+                up = vals.str.upper()
+                if klass is None and up.isin(MEMBER_CLASSES).mean() > 0.5:
+                    klass = c
+            best = max(scores, key=scores.get) if scores else None
+            meta["group_column_scores"] = scores
+            if not best or scores[best] == 0:
+                meta.setdefault("membership_errors", []).append(
+                    {"table": e["table"], "error": f"no column resolves to a group age: {scores}"})
+                continue
             mem["name"] = mem["name"].astype(str).str.strip()
-            mem = mem.drop_duplicates("name")
-            df = df.assign(name=df["name"].astype(str).str.strip()).merge(
-                mem[["name", "group"]], on="name", how="left")
+            keep = mem[["name"]].assign(group=mem[f"g::{best}"].astype(str).str.strip())
+            if klass:
+                keep["member_class"] = mem[f"g::{klass}"].astype(str).str.strip()
+            keep = keep.drop_duplicates("name")
+            df = df.assign(name=df["name"].astype(str).str.strip()).merge(keep, on="name",
+                                                                          how="left")
             meta["membership_table"] = e["table"]
-            meta["membership_column"] = e["roles"]["group"]
+            meta["membership_column"] = best
+            meta["member_class_column"] = klass
             meta["n_with_group"] = int(df["group"].notna().sum())
             break
     return df, meta

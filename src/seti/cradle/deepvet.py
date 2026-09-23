@@ -90,6 +90,7 @@ DEFAULT_DEEPVET: dict = {
     "ls_chi_min": 3.0,
     "w4_snr_threshold_flag": 7.0,
     "frame_fraction_flag": 0.5,
+    "wall_budget_s": 5400.0,          # candidates are first in the queue
     "simbad_kill_types": ["G", "AGN", "QSO", "Sy", "LIN", "BLL", "Bla", "YSO", "TTau", "TT*",
                           "Or*", "AGB", "Mi*", "LP*", "C*", "S*", "PN", "pA*", "RG*", "HII",
                           "Ae*", "Be*", "EmO", "Y*O", "Y*?", "IR", "sg*", "s*b", "s*r", "s*y",
@@ -188,14 +189,51 @@ class Route:
                 if np.isfinite(self.elapsed_s) else None}
 
 
-def tap_query(url: str, adql: str, label: str, retries: int = 3) -> Route:
-    """Synchronous TAP call: OK / QUERY_RETURNED_ZERO_ROWS / QUERY_FAILED."""
+#: wall-clock cap per TAP attempt.  pyvo's sync search has no timeout of its
+#: own, and the first deepvet dispatch (run 35860601552) sat > 40 min in one
+#: stage with nothing written --- an unindexed cone on a billion-row table
+#: never returns, it just holds the job.
+TAP_TIMEOUT_S = 150.0
+
+
+def call_with_timeout(fn, timeout_s: float, *args, **kw):
+    """Run fn in a DAEMON thread; raise TimeoutError past the cap.
+
+    A daemon thread, not a ThreadPoolExecutor: the executor's workers are joined
+    at interpreter exit, so an abandoned hung call would hold the job open anyway.
+    """
+    import threading  # noqa: PLC0415
+    box: dict = {}
+
+    def run():
+        try:
+            box["v"] = fn(*args, **kw)
+        except BaseException as exc:                      # noqa: BLE001
+            box["e"] = exc
+    th = threading.Thread(target=run, daemon=True)
+    th.start()
+    th.join(timeout_s)
+    if th.is_alive():
+        raise TimeoutError(f"no answer in {timeout_s:.0f} s")
+    if "e" in box:
+        raise box["e"]
+    return box.get("v")
+
+
+def _search_df(url: str, adql: str) -> pd.DataFrame:
+    import pyvo  # noqa: PLC0415
+    return pyvo.dal.TAPService(url).search(adql).to_table().to_pandas()
+
+
+def tap_query(url: str, adql: str, label: str, retries: int = 3,
+              timeout_s: float | None = None) -> Route:
+    """Synchronous TAP call: OK / QUERY_RETURNED_ZERO_ROWS / QUERY_FAILED (incl. timeout)."""
     t0 = _time.monotonic()
     last = ""
+    tmo = TAP_TIMEOUT_S if timeout_s is None else timeout_s
     for attempt in range(retries):
         try:
-            import pyvo  # noqa: PLC0415
-            df = pyvo.dal.TAPService(url).search(adql).to_table().to_pandas()
+            df = call_with_timeout(_search_df, tmo, url, adql)
             n = int(len(df))
             return Route(label, "OK" if n else "QUERY_RETURNED_ZERO_ROWS", n,
                          elapsed_s=_time.monotonic() - t0, data=df)
@@ -404,8 +442,10 @@ def ls_check(t: dict, c: dict, tap=tap_query) -> dict:
     tried = []
     rt = None
     for table in ("ls_dr10.tractor", "ls_dr9.tractor"):
-        for where in (_cone("ra", "dec", ra, dec, r),
-                      f"q3c_radial_query(ra, dec, {ra:.8f}, {dec:.8f}, {r:.8f}) = 1"):
+        # q3c first: it is the index Data Lab's tables carry; a bare ADQL
+        # CONTAINS may not be translated onto it and then scans the table.
+        for where in (f"q3c_radial_query(ra, dec, {ra:.8f}, {dec:.8f}, {r:.8f}) = 1",
+                      _cone("ra", "dec", ra, dec, r)):
             rt = tap(DATALAB_TAP, f"SELECT {_LS_COLS} FROM {table} WHERE {where}",
                      f"ls:{table}:{t['source_id']}", retries=2)
             tried.append(rt.ledger())
@@ -919,8 +959,12 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
     tg = tg[tg["role"].map(lambda r: any(r.startswith(x) for x in roles))]
     per = []
     t0 = _time.monotonic()
+    skipped = []
     for _, r in tg.iterrows():
         t = r.to_dict()
+        if _time.monotonic() - t0 > float(c.get("wall_budget_s", 5400.0)):
+            skipped.append({"source_id": t["source_id"], "role": t["role"]})
+            continue
         full = t["role"] == "CANDIDATE" or t["role"].startswith("CONTROL")
         print(f"[deepvet] {t['role']} {t['source_id']}")
         chk = {"simbad": simbad_check(t, c, rt["tap"]),
@@ -930,10 +974,13 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
         if full:
             chk["density"] = density_check(t, c, rt["tap"])
             try:
-                chk["image"] = rt["image"](t, c)
+                chk["image"] = call_with_timeout(rt["image"], 600.0, t, c)
             except Exception as exc:                      # noqa: BLE001
                 chk["image"] = {"status": "UNTESTED", "error": repr(exc)[:300]}
-            chk["vizier"] = rt["vizier"](t, c, footprint=True)
+            try:
+                chk["vizier"] = call_with_timeout(rt["vizier"], 420.0, t, c, footprint=True)
+            except Exception as exc:                      # noqa: BLE001
+                chk["vizier"] = {"status": "UNTESTED", "error": repr(exc)[:300]}
         v = judge(t, chk, c)
         per.append({"source_id": t["source_id"], "role": t["role"],
                     "t_bb_k": t.get("t_bb_k"), "log_f_fmax_1gyr": t.get("log_f_fmax_1gyr"),
@@ -960,6 +1007,7 @@ def run_deepvet(out_dir: str | Path = "results/cradle", conf: dict | None = None
                               and not x["checks"]["simbad"].get("in_simbad"))},
         "population_blend": population_blend_estimate(per, n_parent),
         "elapsed_s": round(_time.monotonic() - t0, 1),
+        "skipped_on_wall_budget": skipped,
         "targets": per,
     }
     (out_dir / "deepvet.json").write_text(json.dumps(rep, indent=1, default=_json_default))

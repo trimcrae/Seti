@@ -3768,19 +3768,38 @@ def recheck_second_epoch_and_template(root: Path, spec_id: str, ra: float, dec: 
                     try:
                         obsids.append((cat, t.meta.get("name", cat), int(row[key])))
                     except (TypeError, ValueError):
-                        pass
+                        continue
+                    keep = {}
+                    for cn in t.colnames:
+                        if cn.lower() in ("obsid", "obsdate", "class", "subclass", "teff",
+                                          "logg", "feh", "[fe/h]", "snrr", "snrg", "z",
+                                          "rv", "hrv", "_r"):
+                            v = row[cn]
+                            keep[cn] = v.item() if hasattr(v, "item") else str(v)
+                    out.setdefault("lamost_catalogue", []).append(
+                        _json_safe({"catalog": t.meta.get("name", cat), **keep}))
     except Exception as exc:  # noqa: BLE001
         out["lamost_errors"].append(f"vizier: {exc!r}"[:300])
     out["lamost_obsids"] = sorted({o[2] for o in obsids})
     for ob in out["lamost_obsids"]:
         got = None
-        for url in (f"https://www.lamost.org/dr10/v2.0/spectrum/fits/{ob}",
-                    f"https://www.lamost.org/dr9/v2.0/spectrum/fits/{ob}",
-                    f"https://www.lamost.org/dr8/v2.0/spectrum/fits/{ob}",
-                    f"https://dr7.lamost.org/v2.0/spectrum/fits/{ob}",
-                    f"https://dr5.lamost.org/v3/spectrum/fits/{ob}",
-                    f"http://dr5.lamost.org/v3/spectrum/fits/{ob}"):
-            data = fetch_bytes(url, max_bytes=50_000_000, tries=2)
+        statuses = []
+        urls = []
+        for dr, ver in (("dr11", "v1.0"), ("dr10", "v2.0"), ("dr9", "v2.0"), ("dr8", "v2.0"),
+                        ("dr7", "v2.0"), ("dr6", "v2.0"), ("dr5", "v3")):
+            urls += [f"https://www.lamost.org/{dr}/{ver}/spectrum/fits/{ob}",
+                     f"https://www.lamost.org/{dr}/{ver}/lrs/spectrum/fits/{ob}",
+                     f"https://{dr}.lamost.org/{ver}/spectrum/fits/{ob}",
+                     f"http://{dr}.lamost.org/{ver}/spectrum/fits/{ob}"]
+        for url in urls:
+            try:
+                rr = _session().get(url, timeout=60, allow_redirects=True)
+                statuses.append(f"{rr.status_code} {len(rr.content)}B {url}")
+                data = rr.content if rr.status_code == 200 and rr.content[:6] == b"SIMPLE" \
+                    else None
+            except Exception as exc:  # noqa: BLE001
+                statuses.append(f"ERR {type(exc).__name__} {url}")
+                data = None
             if not data:
                 continue
             sp = _parse_lamost_fits(data)
@@ -3789,7 +3808,8 @@ def recheck_second_epoch_and_template(root: Path, spec_id: str, ra: float, dec: 
             got = (url, sp)
             break
         if got is None:
-            out["lamost"].append({"obsid": ob, "error": "spectrum unreachable"})
+            out["lamost"].append({"obsid": ob, "error": "spectrum unreachable",
+                                  "http": statuses})
             continue
         url, sp = got
         iv = sp["ivar"] if sp["ivar"] is not None else np.ones_like(sp["flux"])

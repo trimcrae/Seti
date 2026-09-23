@@ -348,6 +348,12 @@ def integrator_bundles(objects: dict[int, dict], sbdb: dict[int, dict],
             if not all(math.isfinite(_f(v)) for v in vals) or e >= 0.999 or a <= 0:
                 skipped[n] = "elements_unusable"
                 continue
+            if not pert.covers(float(row["epoch_jd"]), float(row["epoch_jd"])):
+                # Never start from an epoch the perturbers do not reach: the
+                # state there would be built on an extrapolated Sun.
+                skipped[n] = (f"osculation_epoch_{float(row['epoch_jd']):.1f}"
+                              "_outside_perturber_grid")
+                continue
             st_h = E.elements_to_heliocentric_state(
                 a, e, row["i"], row["node"], row["argperi"], row["ma"])[0]
             sun = pert.sun_state(np.array([row["epoch_jd"]]))[0]
@@ -829,17 +835,27 @@ def chunked(seq: list, size: int) -> list[list]:
 # ---------------------------------------------------------------------------
 # Runner-side catalogue helpers
 # ---------------------------------------------------------------------------
-def load_perturbers(paths: Paths, client: E.HorizonsClient | None, log=print
-                    ) -> E.PerturberSet:
+def load_perturbers(paths: Paths, client: E.HorizonsClient | None, log=print,
+                    jd_hi: float | None = None) -> E.PerturberSet:
+    """The perturber grid, spanning the Gaia window AND out to ``jd_hi``.
+
+    ``jd_hi`` is the latest SBDB osculation epoch (:func:`E.perturber_window`):
+    the integrator starts there, so a grid that stops at the Gaia window's end
+    is extrapolated for the whole stretch in between.  A cached grid that does
+    not reach ``jd_hi`` is re-fetched, not reused.
+    """
+    lo = E.WINDOW_JD[0]
+    hi = max(E.WINDOW_JD[1], float(jd_hi) if jd_hi is not None else E.WINDOW_JD[1])
     p = paths.work / "perturbers.npz"
     if p.exists():
         ps = E.PerturberSet.load(p)
-        if ps.covers(E.WINDOW_JD[0], E.WINDOW_JD[1]) and ps.n_bodies == len(E.PERTURBERS):
+        if ps.covers(lo, hi) and ps.n_bodies == len(E.PERTURBERS):
             return ps
     if client is None:
         raise E.EphemerisError("no perturber cache and no Horizons client")
-    log("fetching perturber grids from Horizons")
-    ps = E.PerturberSet.from_horizons(client, on_body=lambda b, n: log(f"  {b}: {n} nodes"))
+    log(f"fetching perturber grids from Horizons over JD {lo:.1f}..{hi:.1f}")
+    ps = E.PerturberSet.from_horizons(client, jd_lo=lo, jd_hi=hi,
+                                      on_body=lambda b, n: log(f"  {b}: {n} nodes"))
     ps.save(p)
     return ps
 
@@ -962,18 +978,21 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
     gaia = gaia or GaiaSSO()
     client = client or E.HorizonsClient(min_interval=float(conf["horizons_min_interval_s"]))
     try:
-        pert = load_perturbers(paths, client, log=log)
+        # SBDB FIRST: the perturber grid has to reach its osculation epoch.
+        cat = load_sbdb(paths, log=log)
+        sbdb = cat["rows"]
+        rec["sbdb"] = cat["meta"]
+        rec["sbdb"]["n_rows"] = len(sbdb)
+        win = E.perturber_window(r.get("epoch_jd") for r in sbdb.values())
+        pert = load_perturbers(paths, client, log=log, jd_hi=win[1])
         rec["perturbers"] = {"n_bodies": pert.n_bodies, "labels": pert.labels,
                              "t_grid": [float(pert.t_grid[0]), float(pert.t_grid[-1])],
+                             "required_window": list(win),
                              "retrieved_utc": pert.retrieved_utc}
         checkpoint()
         objs = load_gaia_objects(paths, gaia, conf["release"], log=log)
         numbers = [o["number_mp"] for o in objs]
         denom = {o["number_mp"]: o.get("denomination") for o in objs}
-        cat = load_sbdb(paths, log=log)
-        sbdb = cat["rows"]
-        rec["sbdb"] = cat["meta"]
-        rec["sbdb"]["n_rows"] = len(sbdb)
         rec["n_gaia_objects"] = len(numbers)
         checkpoint()
         # Warm the two VizieR catalogues HERE, once, rather than letting four
@@ -1476,12 +1495,15 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
         rec["route"] = want
         conv = load_conventions(paths, conf)
         rec["conventions"] = conv.as_dict()
-        pert = load_perturbers(paths, client, log=log)
+        cat = load_sbdb(paths, numbers_needed=None, log=log)
+        sbdb = cat["rows"]
+        win = E.perturber_window(r.get("epoch_jd") for r in sbdb.values())
+        pert = load_perturbers(paths, client, log=log, jd_hi=win[1])
+        if pert is not None:
+            rec["perturber_grid"] = [float(pert.t_grid[0]), float(pert.t_grid[-1])]
         objs = load_gaia_objects(paths, gaia, conf["release"], log=log)
         numbers = [o["number_mp"] for o in objs]
         denom = {o["number_mp"]: o.get("denomination") for o in objs}
-        cat = load_sbdb(paths, numbers_needed=None, log=log)
-        sbdb = cat["rows"]
         cap = int(max_objects if max_objects is not None else conf["max_objects"])
         chosen = choose_objects(numbers, sbdb, cap, int(conf["seed"]))
         mine = order_objects(shard_slice(chosen, shard, n_shards), sbdb,
@@ -1547,11 +1569,27 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
                           "verdict": "REFUSED_PROVENANCE", "reason": str(exc)[:160]}
                     series = None
                 annotate_orbit(r1, row, conf)
-                if r1.get("is_control") and want == "integrator":
+                # A control ALWAYS gets the pinned gravity-only route, whatever
+                # the bulk route.  On the Horizons route the bulk fit of every
+                # control is refused as circular (Horizons integrates JPL's own
+                # A2), so gating this on the integrator route --- as it was ---
+                # meant a Horizons-route run could score no control at all: run
+                # 35746692260 put all 78 controls in RESIDUALS_FAILED.  Where the
+                # bulk fit was refused and the pinned fit succeeds, the pinned
+                # fit IS the control's record, and the refusal is kept beside it.
+                if (sbdb.get(n) or {}).get("nongrav_fitted"):
                     try:
                         pb = pinned_bundle(n, cols, client, pert, conv, sbdb)
-                        r2, _ = fit_object(n, cols, pb, row, pert, conv, conf,
-                                           denomination=denom.get(n))
+                        r2, s2 = fit_object(n, cols, pb, row, pert, conv, conf,
+                                            denomination=denom.get(n))
+                        if r1.get("verdict") != "FITTED" and r2.get("verdict") == "FITTED":
+                            bulk = {"bulk_route": r1.get("route"),
+                                    "bulk_verdict": r1.get("verdict"),
+                                    "bulk_reason": r1.get("reason")}
+                            r1 = dict(r2)
+                            r1.update(bulk)
+                            annotate_orbit(r1, row, conf)
+                            series = s2
                         r1["pinned_a2"] = _f(r2.get("a2"))
                         r1["pinned_a2_err"] = _f(r2.get("a2_err"))
                         r1["pinned_a2_snr"] = _f(r2.get("a2_snr"))

@@ -655,6 +655,25 @@ The solo run fitted 17 chunks (4250 records, 3742 `FITTED`, 69 controls) and
 `assess_only_run_id` now also reads a **solo** run's `sextant-solo` artifact,
 so a surviving shard can be re-assessed without a refit.
 
+The re-assessment (run 35863065371) then exposed two more defects that left
+the run with **no control scored**, so nothing in it can be believed:
+
+3. **The integrator route was broken by extrapolated perturbers.** The grid
+   covered only the Gaia window (JD 2456820–2458930), but the integrator starts
+   at SBDB's osculation epoch, JD 2461200.5 (2026). `hermite_cubic` clips its
+   interval index, so the Sun and planets there were extrapolated (Sun ~0.02 au
+   off in a synthetic check, Jupiter ~27 au) and the probe measured the
+   integrator against Horizons at a median 1.4×10⁷ mas. The grid now spans
+   `perturber_window` (Gaia window out to the latest SBDB epoch), the
+   perturbers raise rather than extrapolate, and an object whose epoch the grid
+   does not reach is skipped with a named reason.
+4. **Controls were measurable only on the integrator route.** With the probe
+   choosing Horizons, every control's bulk fit was refused as circular (all 78
+   `RESIDUALS_FAILED`), and the pinned gravity-only route ran only when
+   `route == "integrator"`. A control now always gets the pinned route, and
+   where its bulk fit was refused the pinned fit becomes its record
+   (`bulk_route`/`bulk_verdict`/`bulk_reason` kept beside it).
+
 ## 10. Related channels
 
 - **LOOM** (`docs/loom.md`) — the same observable at arcsecond scale on Rubin,

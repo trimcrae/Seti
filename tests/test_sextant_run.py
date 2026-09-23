@@ -9,6 +9,7 @@ built to trip each rule; the assessment against a table with known contents.
 from __future__ import annotations
 
 import math
+import types
 
 import numpy as np
 import pandas as pd
@@ -49,7 +50,8 @@ def test_propagator_matches_kepler_to_centimetres_over_two_thousand_days():
     jd0 = 2457000.0
     els = (2.5, 0.15, 8.0, 100.0, 40.0, 0.0)
     st = E.elements_to_heliocentric_state(*[[x] for x in els])
-    pert = E.synthetic_perturbers(jd0 - 100, jd0 + 2200)
+    # The grid spans every requested epoch: the perturbers refuse to extrapolate.
+    pert = E.synthetic_perturbers(jd0 - 600, jd0 + 2200)
     prop = E.NBodyPropagator(pert, relativity=False)
     ev = jd0 + np.array([-500.0, -1.03, 1.0, 10.77, 100.0, 500.31, 2000.0])
     r, v, a = prop.propagate(st, jd0, E.EvalRequest(np.zeros(ev.size, int), ev), h=0.05)
@@ -711,6 +713,127 @@ def test_unreadable_shard_output_is_named_a_pipeline_defect_not_an_empty_sky(tmp
     assert out["n_objects"] == 0
     assert out["verdict"] == "NO_DATA_REACHED__SHARD_OUTPUT_UNREADABLE"
     assert "error" in out["shard_csv_repairs"]["shard_0_of_1.csv.gz"]
+
+
+def _moving_sun_grid(jd_lo, jd_hi):
+    """A Sun on a Jupiter-period reflex circle: extrapolation errors are visible."""
+    t = np.arange(jd_lo, jd_hi + 1.0, 1.0)
+    w, r = 2 * np.pi / 4332.6, 0.005
+    pos = np.stack([r * np.cos(w * t), r * np.sin(w * t), 0 * t], -1)[None]
+    vel = np.stack([-r * w * np.sin(w * t), r * w * np.cos(w * t), 0 * t], -1)[None]
+    return E.PerturberSet(t_grid=t, pos=pos, vel=vel, gm=np.array([MU]), labels=["sun"])
+
+
+def test_the_perturbers_refuse_to_extrapolate_past_their_grid():
+    """Run 35746692260's integrator failure, reproduced and refused.
+
+    The grid ended at JD 2458930 and SBDB's osculation epoch is 2461200.5.
+    The clipped cubic then puts the Sun ~0.02 au from where it is --- which is
+    what the probe measured as a median integrator-vs-Horizons disagreement of
+    1.4e7 mas.  It must raise instead of answering.
+    """
+    ps = _moving_sun_grid(2456820.0, 2458930.0)
+    p, _v = E.hermite_cubic(ps.t_grid, ps.pos, ps.vel, np.array([2461200.5]))
+    w, r = 2 * np.pi / 4332.6, 0.005
+    truth = np.array([r * np.cos(w * 2461200.5), r * np.sin(w * 2461200.5), 0.0])
+    assert np.linalg.norm(p[0, 0] - truth) > 0.01          # the silent failure
+    with pytest.raises(E.EphemerisError, match="refusing to extrapolate"):
+        ps.sun_state(np.array([2461200.5]))
+    with pytest.raises(E.EphemerisError):
+        ps.states(2461200.5)
+    ps.sun_state(np.array([2457000.0, 2458930.5]))           # inside (+1 step) is fine
+
+
+def test_the_perturber_window_reaches_the_sbdb_osculation_epoch():
+    lo, hi = E.perturber_window([2461200.5, 2461000.5, None, float("nan"), 2450000.5])
+    assert lo == E.WINDOW_JD[0] and hi == 2461200.5
+    assert E.perturber_window([]) == E.WINDOW_JD
+    # An absurd epoch cannot demand an unbounded grid.
+    assert E.perturber_window([2499999.5])[1] == E.WINDOW_JD[1] + E.MAX_EPOCH_EXTENSION_DAYS
+
+
+def test_the_integrator_skips_an_epoch_its_grid_does_not_reach_and_names_why():
+    jd0 = 2457500.0
+    pert = _moving_sun_grid(jd0 - 400, jd0 + 400)
+    sbdb = {7: {"a": 2.5, "e": 0.1, "i": 5.0, "node": 30.0, "argperi": 40.0, "ma": 10.0,
+                "epoch_jd": 2461200.5}}
+    cols = {"epoch": np.array([jd0, jd0 + 10.0]), "ra": np.zeros(2)}
+    bundles, skipped = RUN.integrator_bundles({7: cols}, sbdb, pert, SYN_CONV)
+    assert 7 not in bundles
+    assert "outside_perturber_grid" in skipped[7]
+
+
+def test_load_perturbers_refetches_a_cached_grid_that_stops_short(tmp_path, monkeypatch):
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    short = _moving_sun_grid(E.WINDOW_JD[0] - 30, E.WINDOW_JD[1] + 30)
+    short.labels = [lab for lab, _c, _g in E.PERTURBERS][:1]
+    monkeypatch.setattr(E, "PERTURBERS", E.PERTURBERS[:1])
+    short.save(paths.work / "perturbers.npz")
+    asked = {}
+
+    def fake_from_horizons(client, jd_lo, jd_hi, on_body=None, **k):
+        asked["span"] = (jd_lo, jd_hi)
+        return _moving_sun_grid(jd_lo - 30, jd_hi + 30)
+
+    monkeypatch.setattr(E.PerturberSet, "from_horizons", staticmethod(fake_from_horizons))
+    # Covers the Gaia window only: reused when nothing later is needed...
+    assert RUN.load_perturbers(paths, None, log=lambda *a: None).t_grid[-1] == short.t_grid[-1]
+    # ...and re-fetched out to the osculation epoch when it is.
+    ps = RUN.load_perturbers(paths, object(), log=lambda *a: None, jd_hi=2461200.5)
+    assert asked["span"] == (E.WINDOW_JD[0], 2461200.5)
+    assert ps.covers(E.WINDOW_JD[0], 2461200.5)
+
+
+def test_a_control_refused_on_the_horizons_route_is_scored_through_the_pinned_route(
+        tmp_path, monkeypatch):
+    """Run 35746692260: all 78 controls RESIDUALS_FAILED, controls={} in assess.
+
+    On the Horizons route a control's bulk fit is refused as circular by
+    design; the pinned gravity-only route is the one that can measure it, and
+    it used to run only when the bulk route was the integrator.
+    """
+    numbers = list(range(1, 21))
+    _stub_shard_io(monkeypatch, numbers, controls={3, 4})
+    monkeypatch.setattr(RUN, "horizons_bundle",
+                        lambda n, cols, client, pert, conv: types.SimpleNamespace(route="horizons"))
+    monkeypatch.setattr(RUN, "pinned_bundle",
+                        lambda n, cols, client, pert, conv, sbdb: types.SimpleNamespace(
+                            route="horizons_pinned_gravity_only"))
+
+    def fit(n, cols, b, row, *a, **k):
+        if b.route == "horizons" and row.get("nongrav_fitted"):
+            return ({"number_mp": n, "route": "horizons", "verdict": "RESIDUALS_FAILED",
+                     "reason": "CircularOrbitSourceError: orbit source 'jpl_horizons' carried "
+                               "fitted non-gravitational parameters, so ..."}, None)
+        ctrl = bool(row.get("nongrav_fitted"))
+        return ({"number_mp": n, "route": b.route, "verdict": "FITTED",
+                 "a2": -5.1e-14 if ctrl else 1e-16, "a2_err": 5e-15 if ctrl else 1e-16,
+                 "a2_snr": 10.2 if ctrl else 1.0, "a2_absorbed_fraction": 0.9,
+                 "excess_scatter": 1.0, "n_transits": 30, "arc_days": 900.0, "h": 15.0,
+                 "_fits": {"k": 1}}, None)
+
+    def annotate(r, row, conf):
+        ctrl = bool(row.get("nongrav_fitted"))
+        r.update({"is_control": ctrl, "jpl_nongrav_fitted": ctrl,
+                  "jpl_a2": -5e-14 if ctrl else float("nan"),
+                  "jpl_a2_sigma": 3e-15 if ctrl else float("nan")})
+        return r
+
+    monkeypatch.setattr(RUN, "fit_object", fit)
+    monkeypatch.setattr(RUN, "annotate_orbit", annotate)
+    conf = RUN.load_config({"sextant": {"objects_per_chunk": 10}})
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    E.save_json(paths.results / "controls_greenberg2020.json", {"rows": {}})
+    rec = RUN.stage_shard(conf, paths, 0, 1, gaia=_FakeGaia(), client=_FakeGaia(),
+                          route="horizons", budget_minutes=600.0, log=lambda *a: None)
+    assert rec["route"] == "horizons"
+    assert rec["funnel"]["verdicts"].get("RESIDUALS_FAILED", 0) == 0
+    df = pd.read_csv(paths.results / "fits" / "shard_0_of_1.csv.gz")
+    ctrl = df[df["number_mp"].isin([3, 4])]
+    assert set(ctrl["route"]) == {"horizons_pinned_gravity_only"}
+    out = RUN.stage_assess(conf, paths, log=lambda *a: None)
+    assert out["controls"]["n_controls"] == 2
+    assert out["controls"]["verdict"] == "CONTROLS_RECOVERED"
 
 
 # ---------------------------------------------------------------------------

@@ -180,6 +180,79 @@ about the sky and both cost a dispatch:
   float-`NaN` column came back as the *string* `"nan"` and the veto tokens
   were being matched against that.
 
+## Run 35752692549 (2026-09-22, the first solo run): what it said and why it was wrong
+
+Its summary read `DEGRADED (wd, ffp not reached); RING_CANDIDATES_PENDING_VET`
+with six pulsar "ring candidates", and had no generation timestamp. Every one
+of those statements traced to the pipeline, not the sky.
+
+**Why the legs were not reached** (job 106830605498 log):
+
+* *wd* — route A's Gaia-archive tables (`external.gaiaedr3_wd_main[_v2]`) do
+  not exist (HTTP 500/400 on the probe). Route B's VizieR SELECT hard-coded
+  `"chi2H"`/`"chi2He"`, which `J/MNRAS/508/3877/maincat` does not have, and
+  TAPVizieR rejects a query naming any unknown column (`Unknown column
+  ""chi2H""`), on every mirror. Had it got past that, `harmonise_wd` would have
+  crashed on the absent chi-square columns, and the upload-join merge would
+  have suffixed the Gaia photometry to `_x`/`_y`.
+* *ffp* — Faherty+2016 names objects in a column literally called `2MASS`; no
+  `name` pattern matched it, so no table carried the required (name, L_bol)
+  pair (`table14` scored 1 of 2). The luminosity table also has no group or
+  age column, and the screen would have crashed on the absent `age`.
+* *bd*, reported `OK`, was not: `SpTO` (optical type, which late-T/Y dwarfs do
+  not have) was picked over `SpTIR` on the 20 pc census, giving 0 of 682 late
+  targets and a fallback to Kirkpatrick+2019 without proper motions; only 28
+  of 232 targets returned NEOWISE epochs and 11 were tested. The loop's
+  15 000 s budget exceeded the step's `timeout 5400`, so it was killed without
+  writing an acquisition record — hence `acquisition.bd = NOT_RUN` beside a
+  screen that said `OK`, the internal inconsistency in that summary.
+
+**Every ring-band pulsar counterpart and its fate** (numbers from that run's
+`pulsars_screened.csv`; the chance rate is the local control count):
+
+| pulsar | pos. err | colour (source) | fate |
+|---|---|---|---|
+| J1453+1902 | 49.5″ (artefact) | 1.55 (CatWISE, W1 18.8) | an MSP with an ecliptic timing position; the parser gave every ecliptic position a fixed 0.01° unit (244 hosts), inflating its radius to 8″. The CatWISE source at 5.7″ is not at the pulsar. |
+| J1633−2009 | 5.1″ | 1.38 (AllWISE, `ph_qual` UUBU) | the "colour" was two upper limits; CatWISE measures the same source at W1−W2 = 0.31 (stellar); 14/16 CatWISE controls hit. |
+| J1847−0308_P | 60″ | 1.64 (CatWISE, W1 14.0) | position known to an arcminute, Galactic plane, 13/16 controls hit. |
+| J1854+40 | 900″ | 1.82 (CatWISE, W1 18.9) | discovery position only; 11/16 controls hit. |
+| J2016+4231 | 895″ | 1.27 (CatWISE) | discovery position only, Cygnus; 11/16 controls hit. |
+| J2201+33 | 600″ | 1.53 (CatWISE, W1 18.8) | discovery position only; DM distance 50 kpc (saturated). |
+| J0040−7337 | 3.2″ | 1.37 (CatWISE) | vetoed then and now: SMC, SNR DEM S5 / PWN. |
+| J1750−3703D | 0.02″ | 1.44 (CatWISE) | vetoed: NGC 6441 globular cluster. |
+| J1823−3021D | 0.36″ | 1.23 (AllWISE, W1 6.4) | vetoed: NGC 6624 globular cluster (a bright cluster giant). |
+| J1929+2355_P | 60″ | 2.10 (CatWISE) | vetoed: He-WD companion; also unlocalised. |
+
+The six "survivors" passed because the ring chance probability used the
+*global* AllWISE ring-colour rate (p = 3.0×10⁻⁴ identically for all ten)
+whatever catalogue supplied the colour, unscaled for aperture, with the 8″ cap
+standing in for positions uncertain by up to 15′. On the sky the census is
+pure chance where it should be: over the 1,792 hosts whose 2σ error exceeds
+the 8″ cap, AllWISE/CatWISE counterparts number 626/1,226 against 604/1,211
+expected from their own offset positions; only the 2,526 localised hosts show
+an excess (152 vs 70 AllWISE, 222 vs 184 CatWISE), which is the known
+companions, clusters and nebulae. The two pulsar-planet systems have no
+counterpart in either catalogue (radius 1.5″, 0 control hits each).
+
+**Fixes** (branch `claude/handoff-ring`, offline tests for each): runtime
+VizieR column resolution with declination-banded pulls; `2MASS` name role,
+membership-table join and BANYAN-style group aliases; ecliptic positions
+keep their own precision; AllWISE colours only from `ph_qual` A/B/C;
+aperture-area-scaled chance prior, ring rate from the colour catalogue; new
+vetoes `position_not_localised` (2σ error > 8″), `colour_not_secure` (the 2σ
+blue edge leaves the band), `aperture_confusion` (≥2 sources in the 6.5″
+beam); IR spectral type and CatWISE positions for the brown dwarfs, a NEOWISE
+budget under the step timeout, an `IN_PROGRESS` marker, and a leg below 50%
+epoch coverage reported DEGRADED; the psrqpy `get_version` property; strict
+JSON; provenance (`generated_at`, `run_id`, `git_sha`) on every JSON and per
+leg in the summary; and a self-consistency block in `summary.json`.
+
+A note on the brown-dwarf leg's scope: it tests *W2 variability* (a duty
+cycle), not a static W1/W2 excess. The static test would be wrong here as
+built — CH₄ absorption in W1 makes late-T/Y dwarfs intrinsically very red in
+W1−W2 (≳2–3 mag), so any excess must be measured against an empirical
+spectral-type–colour relation, never a blackbody — which is why it is not run.
+
 ## Why the hotter question, in one number
 
 OSSUARY asked the warm-dust question of 6,192,472 stars that cannot have made

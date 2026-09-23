@@ -294,6 +294,145 @@ the in-cell / age-undetermined / killed breakdown. Never an occurrence limit.
 `CRADLE_CANDIDATES` — ≥ 1 star in the cell with ≥ 2 old indicators and no kill.
 A `DEGRADED (…)` prefix names missing shards, failed units and untested vetoes.
 
+## Run 35741356662 and the deep vet (2026-09-23)
+
+### What the run did
+
+The run went red because of **one job**: `probe` failed its offline gate at
+15:05Z (11:05 a.m. EDT) on `pd.to_numeric(errors="ignore")` under pandas 3
+(already fixed in `mineralogy.py`). No other job needed the probe: all 8
+`acquire` shards (768/768 HEALPix units, 0 failed, 0 past the deadline, 39,763
+parent stars), `screen`, all 4 `ages` shards (523 shortlisted stars) and
+`assess` succeeded, and their files are self-consistent. The class counts add
+up to 523. 103 stars are in the cell (66 killed, 25 age-undetermined, 12
+mature), and the T_bb histogram sums to 916 = `n_above_fmax_3dex`. The one
+labelling quirk is that `ages_s*.json`'s `generated_utc` is the stage's
+*start*, not its write time: shards 0 and 1 are stamped 22:41Z and finished
+at 02:25Z. Shards 0 and 1 also have identical age-class counts (89/30/12),
+but their neighbour, SIMBAD and NEOWISE counts differ, so they processed
+different stars.
+
+**Verdict: `DEGRADED (vetoes_untested_in_cell:simbad_type=24); CRADLE_CANDIDATES` — 12 candidates.**
+
+The SIMBAD veto was "untested" for 165 stars because
+`vigil.acquire.fetch_simbad_type` returns `""` both for "nothing within 5″"
+and for "the query raised". `deepvet` asks SIMBAD by TAP, where an empty cone
+is a *tested* answer and a failed call an untested one.
+
+### The deep vet — `python -m seti.cradle.deepvet` (`stage=deepvet`)
+
+This stage reads the committed `summary.json`/`shortlist.csv` and does not
+re-screen anything. It runs seven checks per target: SIMBAD (types, otypes,
+refs, neighbours within 15″); the full AllWISE row (nb, `w3nm/w3m`,
+`w4nm/w4m`, aperture-vs-profile, neighbours within 30″); the local chance-blend
+rate from every AllWISE W3/W4 source in 10′; Legacy Surveys Tractor deblended
+forced W3/W4; Gaia neighbours of every magnitude within 15″; VizieR (the full
+6″ footprint plus 12″ cones on VSX, WDS, Gaia variability, 2MASX and the
+published WISE-excess catalogues); unWISE W3/W4-vs-W1 centroids; and a
+DESI/SDSS spectrum (Li 6708, Hα) via SPARCL.
+
+Deep-vet dispatches, all on `claude/handoff-cradle`:
+
+- 35860601552 was the first full pass. Its centroid significances had no
+  registration floor, which made them overstated.
+- 35864699584 cut every unWISE fetch off at 600 s. It then overwrote the
+  complete output with an 8-target partial.
+- 35868341936 and 35877629887 never ran. They died at the offline gate:
+  sparclclient's `pandas==2.1.1` is ABI-incompatible with numpy 2.3.
+- 35884499464 (16:27Z) was the first complete pass: 38 targets, nothing
+  skipped. Its DESI check failed on a missing `jwt`.
+- 35891332109 (17:26Z) reproduced every verdict. Its DESI check failed on a
+  missing `specutils`.
+- 35896124736 (18:13Z) reached SPARCL. Both DESI spectra then raised on a
+  numpy truth-test bug.
+- **35901988646 is the pass of record** (19:08Z, 3:08 p.m. EDT): 38 targets,
+  nothing skipped, and verdicts identical to the three passes before it.
+
+The W3-vs-W1 centroid floor, measured from 24 field stars in the candidates'
+own unWISE cutouts, is **0.39″ per axis** (median 2-D offset 0.46″). W4 had
+too few field sources, so it uses a conservative 0.90″.
+
+**The SIMBAD veto is closed.** All 12 candidates were tested. Three have no
+SIMBAD object within 15″: 6225457312033584384, 3168144078565656832 and
+5295632592220066688. None of the 12 carries a young, evolved or galaxy type.
+One of the 25 age-undetermined stars (1722706885596251264) sits on UGC 10222,
+a galaxy.
+
+| Gaia DR3 | T_bb (K) | log f/f_max | fate | mechanism (numbers) |
+|---|---|---|---|---|
+| 1394698167320555648 | 268 | 4.28 | **killed: galaxy blend** | W3 centroid 1.84″ off (4.7σ), W4 5.14″ off (5.2σ). An SDSS galaxy-morphology entry at 4.2″ and a parallax-less G = 21.5 Gaia source at 3.6″. W4 SNR 5.5, detected in 1/42 frames |
+| 1276273278883611264 | 276 | 4.11 | **killed: galaxy blend** | W3 2.53″ off (6.4σ), W4 4.15″ off (4.4σ). W3 aperture 0.20 mag brighter than the profile fit (5.1σ). Deblended LS forced photometry gives W3 0.62× AllWISE and **no W4 excess (χ = −0.7)**. Gaia/SDSS galaxy candidates and a DESI entry within 6″ |
+| 2415134847267401472 | 282 | 4.00 | **killed: blend + youth** | W3 1.26″ off (3.2σ), W4 4.61″ off (5.0σ). LS forced: no W4 excess (χ = −0.4), W3 0.69×. Listed in Žerjal+2017 young active RAVE dwarfs, so the "mature" age is contradicted |
+| 4659120294392894848 | 263 | 3.28 | **killed: blend** | AllWISE nb = 2, with a W3-bright neighbour (W3 = 9.90, SNR 24) at 4.0″. That neighbour's W4 = 8.47 vs the star's 8.09. LMC outskirts |
+| 4926561345188246400 | 281 | 3.51 | **killed: W4 confusion** | AllWISE neighbour at 4.6″ with W4 = 8.88 vs the star's 8.20, inside the 12″ beam |
+| 5054402421143189248 | 258 | 3.37 | **killed: close binary** | WDS J03184−3244AB (TDS 2518), with SIMBAD components at 0.24″ and 0.5″. The photosphere, Teff (GSP-Spec 2750 K for BP−RP 0.81) and isochrone age all come from a blended SED |
+| 1289707176373257856 | 270 | 3.40 | survives, **already published** | Centroids 0.40″ (1.0σ) and 1.84″ (1.9σ). LS forced W3 χ = 5.9, W4 χ = 5.4. It is in J/AJ/167/275, the 2024 catalogue of 1047 warm debris disks from Gaia, WISE and Spitzer. W4 SNR 6.0 |
+| 1757504263952843776 | 254 | 3.94 | survives, **T_bb unsupported, already published** | LS forced **W4 χ = 1.3**: the W4 excess that fixes T_bb is not confirmed after deblending. In Cotten & Song 2016, McDonald+2017 and J/AJ/167/275 |
+| 2120651376692536960 | 264 | 3.80 | survives, **already published, age tension** | LS forced W3 χ = 5.1, W4 χ = 7.7. In Cotten & Song 2016, McDonald+2017 and J/AJ/167/275. SIMBAD V*: a SuperWASP single-sinusoid (rotational) variable, i.e. a spotted, active star |
+| 3168144078565656832 | 261 | 3.69 | survives with untested | Outside LS. W4 centroid 4.02″ off (3.9σ, just under the 4σ kill). W4 SNR 5.7, detected in 2/14 frames. Not in SIMBAD |
+| 5295632592220066688 | 298 | 4.41 | survives with untested | Outside LS. W4 SNR 6.0, detected in 2/47 frames. SFD E(B−V) = 0.199 at b = −15°, against a 0.20 cirrus kill. Not in SIMBAD |
+| **6225457312033584384** | **262 (254–272)** | **4.86** | **SURVIVES_DEEP_VET (nothing untested)** | See below |
+
+Ten of the 12 candidates (every one except 6225457312033584384 and
+4659120294392894848) have W4 SNR 5.5–6.5 against a 5σ
+archive cut, and 4 to 40 % single-frame detection. Their T_bb is fixed by a
+W4 flux that was *selected* at threshold. That biases it high, so T_bb comes
+out low. The cell membership of those rows is weak even where nothing kills
+them.
+
+**6225457312033584384** (WISEA J144944.62−272822.6; G = 12.84, BP−RP = 0.92,
+ϖ = 2.67 mas, l = 332.8°, b = +28.4°):
+
+- **Excess and temperature.** W1−W3 = 2.37, with W3 at SNR 45 and W4 at SNR
+  15 (W4 detected in 17/24 frames). f = 1.5 × 10⁻², T_bb = 262 K,
+  r_bb = 1.08 AU, and log f/f_max = 4.86 at 1 Gyr.
+- **Blends ruled out.** There is no SIMBAD object within 15″ and no published
+  IR-excess catalogue entry. There is no Gaia source inside 10.6″ and no Legacy
+  Surveys DR10 source inside 10.6″ to r ≈ 24.7. The deblended forced
+  photometry keeps the excess on the star (W3 χ = 17.7, W4 χ = 8.8, W3 1.06×
+  AllWISE). The W3 and W4 centroids sit on the star (0.26″, 0.7σ; 0.75″,
+  0.8σ). The local density of W3 sources at this flux gives an expected ~1
+  chance blend across the whole 38,848-star parent, and the deblending above
+  is what rules it out here.
+- **Age and variability.** Age is OLD from iso + kin: FLAME 5.6 (4.4–6.8) Gyr,
+  kinematic log LR = +2.3 with v_tan = 76 km s⁻¹ and RV = −36 km s⁻¹. NEOWISE
+  W1/W2 are variable (χ²_red 4.1 and 14.2). So are 14 of 17 known extreme
+  debris disks.
+- **DESI DR1 spectrum.** Redrock classifies it `STAR` at z = −1.4 × 10⁻⁴
+  (cz ≈ −43 km s⁻¹, against Gaia RV −36). Hα is 0.20 Å *deeper* than the
+  model, with no chromospheric filling and no emission, so there is no
+  accretion or YSO signature. The EW over 6707.6–6711.8 Å (vac) is 58 mÅ.
+  That figure **includes the Fe I 6709.3 Å (vac) blend** and has no formal
+  error. It is below the 100 mÅ youth threshold, but it is not old-diagnostic
+  either: it allows ages from about the Hyades to a few Gyr. The Marton+2016
+  "Class I/II YSO candidate" tag is a WISE-colour classification, so it is not
+  independent of the excess.
+
+It remains **the one star in the empty cell that has passed every test the
+vet ran** (`SURVIVES_DEEP_VET`, nothing untested). **It is not a
+technosignature.** Natural late instability, as for BD+20 307 and
+TYC 4479-3-1, is the default reading. What is still open:
+
+- a proper Li abundance, deblended from Fe I, with an error;
+- a Ca II H&K activity age;
+- mid-IR spectroscopy (JWST/MIRI), which is S53's test, since there is no IRS
+  spectrum;
+- the NEOWISE light-curve shape, where an EDD-like brightening/decay is
+  expected;
+- a literature search beyond what SIMBAD and VizieR index (2025–26 papers).
+
+**Pipeline defects the vet exposed:**
+
+- `assess` kills on a main SIMBAD type of `IR`. BD+20 307, the positive
+  control, carries `IR` among its otypes (its main type is `SB*`), so any
+  debris disk SIMBAD files primarily as an IR source is killed. The deep vet
+  flags `IR` instead. The 17 `simbad_type` kills have not been re-examined.
+- As a sanity check, the pipeline recovers a known extreme debris disk:
+  TYC 8105-370-1 (Moór+2021) is among the 25 `IN_CELL_AGE_UNDETERMINED` stars.
+- `ages`'s known-disk crossmatch missed Cotten & Song 2016 table 4, McDonald+2017
+  and J/AJ/167/275 for 4 candidates.
+- `harmonise` prefers GSP-Spec Teff even when it is unphysical (2750 K).
+
 ## The honest weakness
 
 Natural late instability explains both known old extreme debris disks, and it

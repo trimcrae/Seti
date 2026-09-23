@@ -748,8 +748,17 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         if len(stars):
             stars = stars.copy()
             stars["tile"] = tile_id
-            parent = (pd.concat([parent, stars], ignore_index=True).drop_duplicates("source_id")
-                      if len(parent) else stars)
+            # A resumed parent comes back from parquet with source_id as str
+            # (_load_parent) while a fresh tile's is int64; concatenating the two
+            # gives a mixed object column that pyarrow refuses to write (run
+            # 35859572295 lost every shard's resume to that, two minutes in).
+            # The stored parent keys on str; `stars` itself is left as it is.
+            new = stars.assign(source_id=stars["source_id"].astype(str))
+            if len(parent):
+                parent = parent.assign(source_id=parent["source_id"].astype(str))
+                parent = pd.concat([parent, new], ignore_index=True).drop_duplicates("source_id")
+            else:
+                parent = new
             parent.to_parquet(parent_p, index=False)
             roll = acquire_stars(stars, store, ac, route=route, cone_fn=cone_fn,
                                  upload_fn=upload_fn, upload_transport=transport,

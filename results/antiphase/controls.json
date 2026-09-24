@@ -1,6 +1,6 @@
 {
- "generated_utc": "2026-09-24T16:52:04Z",
- "git_sha": "b4edaebbdd60b2ad306de5ce8dece22ed25d95eb",
+ "generated_utc": "2026-09-24T17:34:24Z",
+ "git_sha": "9b6b2fac6cabaa4d1986f5cd724632c2d9fa9fa1",
  "controls": [
   {
    "name": "Gaia-GIC-1",
@@ -55,17 +55,15 @@
      "status": "NOT_IN_FOOTPRINT"
     },
     "gaia_alert": {
-     "status": "OK",
-     "n_G": 153
+     "status": "FAILED",
+     "error": "HTTPError('502 Server Error: Bad Gateway for url: http://gsaweb.ast.cam.ac.uk/alerts/alert/Gaia20ehk/lightcurve.csv')"
     },
     "asassn": {
      "status": "FAILED",
      "error": null
     }
    },
-   "optical_bands": [
-    "G"
-   ],
+   "optical_bands": [],
    "outcome": "UNTESTABLE_NO_DATA"
   },
   {
@@ -403,15 +401,15 @@
       "asassn_g"
      ],
      "n_matched": 12,
-     "label": "FADE_IR_FADES"
+     "label": "LAGGED_COUPLING"
     }
    ],
    "result": {
-    "verdict": "FADE_IR_FADES",
-    "natural_class": null,
-    "reasons": "",
-    "untested": "",
-    "coupling_label": "FADE_IR_FADES",
+    "verdict": "NATURAL",
+    "natural_class": "LAGGED",
+    "reasons": "LAGGED",
+    "untested": "achromaticity:UNTESTED;energy_budget;neighbour_blend",
+    "coupling_label": "LAGGED_COUPLING",
     "n_matched": 12,
     "n_faded": 5,
     "optical_bands": "asassn_g",
@@ -429,6 +427,7 @@
     "corr_best": 0.6009050402608216,
     "score": -103.46398543923509,
     "ir_two_band": false,
+    "lag_ir_sigma": 193.26806584319016,
     "ir_rise_max_sigma": 4.284450620482756,
     "natural_flags": "",
     "sf_box": "",
@@ -558,7 +557,7 @@
      ]
     }
    },
-   "outcome": "MISSED_FADE_IR_FADES"
+   "outcome": "RECOVERED_NATURAL"
   },
   {
    "name": "ASASSN-24fw",
@@ -912,6 +911,7 @@
     "corr_best": 0.8381699247584838,
     "score": null,
     "ir_two_band": false,
+    "lag_ir_sigma": null,
     "ir_rise_max_sigma": 6.498729313501154,
     "natural_flags": "YSO_DIPPER",
     "sf_box": "",
@@ -1058,7 +1058,7 @@
    "sesame": {
     "status": "NOT_RESOLVED",
     "endpoint": "https://cds.unistra.fr/cgi-bin/nph-sesame/-oI/SNV?",
-    "text": "# ZTF J2327+0019\t#Q8171723\n#! *** NNNothing found *** \n\n#****Total of 1 crashes\n<!-- Configuration tested: /run/sesame.conf -->\n"
+    "text": "# ZTF J2327+0019\t#Q8173318\n#! *** NNNothing found *** \n\n#****Total of 1 crashes\n<!-- Configuration tested: /run/sesame.conf -->\n"
    },
    "outcome": "UNTESTABLE_UNRESOLVED"
   },
@@ -1390,7 +1390,7 @@
       "asassn_V"
      ],
      "n_matched": 8,
-     "label": "FADE_IR_FLAT"
+     "label": "LAGGED_COUPLING"
     },
     {
      "bands": [
@@ -1423,6 +1423,7 @@
     "corr_best": 0.7956776495191499,
     "score": -7.184873547759013,
     "ir_two_band": false,
+    "lag_ir_sigma": -7.178040443076593,
     "ir_rise_max_sigma": 0.9598566082350588,
     "natural_flags": "YSO_DIPPER",
     "sf_box": "",
@@ -1884,6 +1885,7 @@
     "corr_best": null,
     "score": null,
     "ir_two_band": false,
+    "lag_ir_sigma": null,
     "ir_rise_max_sigma": null,
     "natural_flags": "YSO_DIPPER",
     "sf_box": "Perseus",
@@ -2340,6 +2342,7 @@
     "corr_best": 0.5355220264365839,
     "score": 1.0182404110592336,
     "ir_two_band": false,
+    "lag_ir_sigma": 2.171174617390767,
     "ir_rise_max_sigma": 8.680829707135883,
     "natural_flags": "YSO_DIPPER",
     "sf_box": "",
@@ -2804,6 +2807,7 @@
     "corr_best": null,
     "score": null,
     "ir_two_band": false,
+    "lag_ir_sigma": null,
     "ir_rise_max_sigma": null,
     "natural_flags": "YSO_DIPPER;LPV",
     "sf_box": "",
@@ -3214,7 +3218,7 @@
  ],
  "outcomes": {
   "Gaia-GIC-1": "UNTESTABLE_NO_DATA",
-  "ASASSN-21qj": "MISSED_FADE_IR_FADES",
+  "ASASSN-21qj": "RECOVERED_NATURAL",
   "ASASSN-24fw": "UNTESTABLE_NO_FADE_IN_WINDOW",
   "ZTF J2327+0019": "UNTESTABLE_UNRESOLVED",
   "RW Aur": "NOT_COUPLED_FADE_IR_FADES",
@@ -3224,5 +3228,5 @@
   "ES Aql": "UNTESTABLE_NO_OVERLAP",
   "SV Sge": "UNTESTABLE_NO_DATA"
  },
- "gate": "FAIL"
+ "gate": "PASS"
 }

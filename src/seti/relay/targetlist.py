@@ -111,7 +111,8 @@ def mc_in_beam(sample: pd.DataFrame, t: np.ndarray, r: np.ndarray, thetas: dict,
 
 
 def comoving_flags(sample: pd.DataFrame, t: np.ndarray, r: np.ndarray, *, z_min: float,
-                   dv_tan_max_kms: float, proj_sep_max_pc: float) -> pd.DataFrame:
+                   dv_tan_max_kms: float, proj_sep_max_pc: float, m_tot_msun: float = 2.0,
+                   dv_margin_kms: float = 1.0, min_sky_sep_arcsec: float = 0.0) -> pd.DataFrame:
     plx = sample["parallax"].to_numpy(float)
     eplx = sample["parallax_error"].to_numpy(float)
     z = np.abs(plx[t] - plx[r]) / np.sqrt(eplx[t] ** 2 + eplx[r] ** 2)
@@ -124,10 +125,21 @@ def comoving_flags(sample: pd.DataFrame, t: np.ndarray, r: np.ndarray, *, z_min:
     dmu = np.hypot(pmra[t] - pmra[r], pmdec[t] - pmdec[r])
     dv = geo.K_TAN * dmu * d_mean / 1000.0
     comoving = (dv <= float(dv_tan_max_kms)) & (proj <= float(proj_sep_max_pc))
+    # bound-consistent: the tangential velocity difference is below the escape
+    # speed at the projected separation for a system of mass m_tot (plus a
+    # margin for the measurement).  Run 35992222801's first list was 13 pairs
+    # 1-2" apart (20-150 AU projected) with dv_tan 3-5 km/s -- orbital motion,
+    # not field pairs -- whose 3-6 sigma parallax differences are the known
+    # close-pair astrometry bias.  v_esc = 42.1 km/s sqrt(M/Msun / (s/AU)).
+    s_au = np.maximum(proj * 206264.806, 1e-6)
+    v_esc = 42.1 * np.sqrt(float(m_tot_msun) / s_au)
+    bound = dv <= v_esc + float(dv_margin_kms)
+    close = (sep / geo.ARCSEC) < float(min_sky_sep_arcsec)
     return pd.DataFrame({"parallax_diff_sigma": z, "sky_sep_arcsec": sep / geo.ARCSEC,
-                         "proj_sep_pc": proj, "dv_tan_kms": dv,
+                         "proj_sep_pc": proj, "dv_tan_kms": dv, "v_esc_kms": v_esc,
+                         "bound_consistent": bound, "close_pair_astrometry": close,
                          "radial_separation_resolved": z >= float(z_min),
-                         "comoving_likely_bound": comoving})
+                         "comoving_likely_bound": comoving | bound | close})
 
 
 def observed_mask(sample: pd.DataFrame, bl_idx, radius_arcmin: float) -> np.ndarray:
@@ -176,7 +188,10 @@ def build_targetlist(sample: pd.DataFrame, beams: list[dict], tconf: dict, *,
         fl = comoving_flags(sample, lt["t_idx"].to_numpy(), lt["r_idx"].to_numpy(),
                             z_min=float(tconf["parallax_diff_sigma_min"]),
                             dv_tan_max_kms=float(tconf["comoving_dv_tan_max_kms"]),
-                            proj_sep_max_pc=float(tconf["comoving_proj_sep_max_pc"]))
+                            proj_sep_max_pc=float(tconf["comoving_proj_sep_max_pc"]),
+                            m_tot_msun=float(tconf.get("bound_m_tot_msun", 2.0)),
+                            dv_margin_kms=float(tconf.get("bound_dv_margin_kms", 1.0)),
+                            min_sky_sep_arcsec=float(tconf.get("min_sky_sep_arcsec", 0.0)))
         lt = pd.concat([lt, fl], axis=1)
         obs = observed_mask(sample, bl_idx, observed_radius_arcmin)
         lt["t_bl_observed"] = obs[lt["t_idx"].to_numpy()]
@@ -210,6 +225,8 @@ def build_targetlist(sample: pd.DataFrame, beams: list[dict], tconf: dict, *,
     if len(lt):
         rep["n_excluded_radial_unresolved"] = int((~lt["radial_separation_resolved"]).sum())
         rep["n_excluded_comoving"] = int(lt["comoving_likely_bound"].sum())
+        rep["n_excluded_bound_consistent"] = int(lt["bound_consistent"].sum())
+        rep["n_excluded_close_pair"] = int(lt["close_pair_astrometry"].sum())
         first = order[0] if order else None
         lt = lt.sort_values(["rankable", "_best", f"p_in_beam:{first}", "d_t_pc"],
                             ascending=[False, True, False, True]).drop(columns=["_best"]).reset_index(drop=True)

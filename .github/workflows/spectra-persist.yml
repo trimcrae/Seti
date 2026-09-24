@@ -177,7 +177,7 @@ jobs:
   recheck:
     # Close one open line: same-plate co-detections (galaxies?), per-exposure
     # sky residual, and every other plate observed the same MJD.
-    if: ${{ github.event.inputs.stage == 'recheck' }}
+    if: ${{ github.event.inputs.stage == 'recheck' || github.event.inputs.stage == 'recheck2' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -195,7 +195,7 @@ jobs:
           pip install requests
       - name: Recheck
         run: |
-          python -m seti.spectra.persist --stage recheck \
+          python -m seti.spectra.persist --stage "${{ github.event.inputs.stage }}" \
             --recheck "${{ github.event.inputs.recheck }}" \
             --recheck-lam "${{ github.event.inputs.recheck_lam }}"
       - name: Commit recheck

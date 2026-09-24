@@ -7,13 +7,101 @@
     },
     {
       "route": "vizier_parent",
+      "status": "OK",
+      "n": 359074,
+      "served_by": "tap",
+      "columns": {
+        "source_id": "GaiaEDR3",
+        "ra": "RA_ICRS",
+        "dec": "DE_ICRS",
+        "parallax": "Plx",
+        "parallax_error": "e_Plx",
+        "pmra": "pmRA",
+        "pmdec": "pmDE",
+        "pwd": "Pwd",
+        "teff_h": "TeffH",
+        "logg_h": "loggH",
+        "mass_h": "MassH",
+        "chisq_h": "chisqH",
+        "teff_he": "TeffHe",
+        "logg_he": "loggHe",
+        "mass_he": "MassHe",
+        "chisq_he": "chisqHe",
+        "phot_g_mean_mag": "Gmag",
+        "phot_bp_mean_mag": "BPmag",
+        "phot_rp_mean_mag": "RPmag",
+        "ruwe": "RUWE"
+      },
+      "bands": [
+        {
+          "dec": [
+            -90,
+            -60
+          ],
+          "n": 30768,
+          "route": "tap"
+        },
+        {
+          "dec": [
+            -60,
+            -30
+          ],
+          "n": 78090,
+          "route": "tap"
+        },
+        {
+          "dec": [
+            -30,
+            0
+          ],
+          "n": 78559,
+          "route": "tap"
+        },
+        {
+          "dec": [
+            0,
+            30
+          ],
+          "n": 79198,
+          "route": "tap"
+        },
+        {
+          "dec": [
+            30,
+            60
+          ],
+          "n": 68246,
+          "route": "tap"
+        },
+        {
+          "dec": [
+            60,
+            90
+          ],
+          "n": 24213,
+          "route": "tap"
+        }
+      ]
+    },
+    {
+      "route": "gaia_upload_join",
       "status": "FAILED",
-      "error": "VizierRouteError('TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError(\\'TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALQueryError: Incorrect ADQL query: 3 unresolved identifiers: chi2H [l.1 c.108 - l.1 c.115], chi"
+      "error": "RuntimeError(\"Gaia query failed after 4 attempts: SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:2437)')\")"
+    },
+    {
+      "route": "cds_xmatch_propagated",
+      "status": "OK",
+      "n": 25932
     }
   ],
-  "route": "none",
-  "n": 0,
-  "status": "NO_DATA_REACHED",
+  "route": "vizier_parent+cds_xmatch_propagated",
+  "n": 25932,
+  "status": "OK",
   "dec_band": null,
-  "elapsed_s": 82.6
+  "elapsed_s": 2094.5,
+  "provenance": {
+    "generated_at": "2026-09-23T13:12:46Z",
+    "run_id": "35860904385",
+    "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
+  }
 }

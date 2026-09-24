@@ -305,8 +305,13 @@ def test_sensitivity_injections_report_recovery_fractions():
 # --------------------------------------------------------------------------
 # Frame cleaning and epoch binning
 # --------------------------------------------------------------------------
-def _frames(n_visits=20, n_exp=12, seed=0, ramp=0.0, w1=10.0, w2=9.95, sigma=0.03):
-    """Synthetic single exposures: n_visits ~183 d apart, n_exp per visit."""
+def _frames(n_visits=20, n_exp=12, seed=0, ramp=0.0, w1=10.0, w2=9.95, sigma=0.03,
+            w2_ratio=1.0):
+    """Synthetic single exposures: n_visits ~183 d apart, n_exp per visit.
+
+    ``w2_ratio`` scales the W2 ramp: 2.0 is warm (~1000 K) dust on a 5000 K
+    photosphere, 1.0 a grey (stellar-coloured) rise.
+    """
     r = np.random.default_rng(seed)
     t = np.concatenate([56700.0 + 183.0 * k + np.sort(r.uniform(0.0, 1.5, n_exp))
                         for k in range(n_visits)])
@@ -317,7 +322,7 @@ def _frames(n_visits=20, n_exp=12, seed=0, ramp=0.0, w1=10.0, w2=9.95, sigma=0.0
         "mjd": t,
         "w1mpro": w1 - ramp * yr / 10.0 + r.normal(0, sigma, t.size),
         "w1sigmpro": sigma,
-        "w2mpro": w2 - ramp * yr / 10.0 + r.normal(0, sigma, t.size),
+        "w2mpro": w2 - w2_ratio * ramp * yr / 10.0 + r.normal(0, sigma, t.size),
         "w2sigmpro": sigma,
         "qual_frame": 10, "saa_sep": 30.0, "moon_masked": "00", "cc_flags": "0000",
         "ph_qual": "AA", "nb": 1, "na": 0})
@@ -612,6 +617,9 @@ def _cone_factory(kind="constant", status="OK"):
                                query="SELECT ...", error="synthetic")
         seed = int(round(ra * 1000)) % 997
         if kind == "ramp":
+            # a born excess has the colour of warm dust (docs/ignition.md 7.4)
+            d = _frames(seed=seed, ramp=0.3, w2_ratio=2.0)
+        elif kind == "grey_ramp":
             d = _frames(seed=seed, ramp=0.3)
         elif kind == "impact":
             d = _frames(seed=seed)

@@ -152,7 +152,9 @@ def _tl_sample(n=3000, seed=3):
                      pmra=pm[0], pmdec=pm[1]),
                 dict(source_id=sid + "R", ra=ra + sep_arcsec / 3600 / np.cos(np.radians(dec)), dec=dec,
                      parallax=1000 / dr, parallax_error=e, pmra=pm[2], pmdec=pm[3])]
-    rows = (pair("A", 30.0, 10.0, 50.0, 48.0, 2.0, 0.02, (40, -10, -25, 60))
+    # (A) is 10" apart at a 5 pc depth (alpha ~ 45 * 10" / 5 pc ~ 90"): wider than
+    # the close-pair astrometry cut, still inside every radio beam
+    rows = (pair("A", 30.0, 10.0, 50.0, 45.0, 10.0, 0.02, (40, -10, -25, 60))
             + pair("B", 120.0, -30.0, 50.0, 48.0, 2.0, 1.0, (40, -10, -25, 60))
             + pair("C", 250.0, 40.0, 40.0, 38.0, 500.0, 0.02, (80, 20, 80.3, 20.1)))
     return pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
@@ -182,7 +184,7 @@ def test_targetlist_ranks_the_resolved_link_and_excludes_the_confounders(conf):
     a = lt[(lt["t_source_id"] == "AT") & (lt["r_source_id"] == "AR")].iloc[0]
     assert a["rankable"] and a["p_in_beam:radio_100m_1p4ghz"] > 0.95
     assert a["narrowest_beam_p50"] == "radio_100m_1p4ghz" and a["t_bl_observed"]
-    assert a["geometry"] == geo.GEOM_SPILLOVER and a["flux_ratio_earth_over_receiver"] < 0.01
+    assert a["geometry"] == geo.GEOM_SPILLOVER and a["flux_ratio_earth_over_receiver"] < 0.02
     # the reverse link (R -> T) points away from Earth
     assert lt[(lt["t_source_id"] == "AR") & (lt["r_source_id"] == "AT")].empty or \
         lt[(lt["t_source_id"] == "AR") & (lt["r_source_id"] == "AT")]["p_in_beam:overfilled_5deg"].max() < 0.05
@@ -196,6 +198,21 @@ def test_targetlist_ranks_the_resolved_link_and_excludes_the_confounders(conf):
     assert r100["n_expected_isotropic"] < 0.1 and r100["n_links_p50_rankable"] >= 1
     assert r100["n_links_p50_rankable_t_unobserved"] == r100["n_links_p50_rankable"] - 1
     assert "optical_10m_1um" not in rep["beams"] and rep["bl_names_unresolved"] == 7
+
+
+def test_close_bound_pairs_are_not_ranked(conf):
+    # run 35992222801's first list: 1-2" pairs with dv_tan 3-5 km/s (orbital
+    # motion at 20-150 AU) and 3-6 sigma parallax differences (close-pair bias)
+    s = _tl_sample()
+    extra = pd.DataFrame([
+        dict(source_id="DT", ra=200.0, dec=5.0, parallax=1000 / 40.0, parallax_error=0.02, pmra=50.0, pmdec=0.0),
+        dict(source_id="DR", ra=200.0 + 1.5 / 3600, dec=5.0, parallax=1000 / 39.0, parallax_error=0.02,
+             pmra=70.0, pmdec=0.0)])
+    s = pd.concat([s, extra], ignore_index=True)
+    lt, rep = tl.build_targetlist(s, geo.beam_grid(conf["beams"]), dict(conf["targetlist"], n_mc=100))
+    d = lt[lt["t_source_id"] == "DT"]
+    assert len(d) and d["close_pair_astrometry"].all() and not d["rankable"].any()
+    assert rep["n_excluded_close_pair"] >= 1
 
 
 def test_targetlist_stage_without_a_sample_is_no_data(tmp_path, conf):

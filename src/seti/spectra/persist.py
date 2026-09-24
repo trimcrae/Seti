@@ -3658,10 +3658,281 @@ def recheck_line(root: Path, plate: int, mjd: int, fibers: list[int], lam0: floa
     return out
 
 
+def _parse_lamost_fits(data: bytes) -> dict | None:
+    """wave (vacuum), flux, ivar from a LAMOST low-resolution spectrum file.
+
+    Two layouts exist: DR1-DR7 put a 5-row image in the primary HDU (flux,
+    invvar, wavelength, andmask, ormask); DR8+ put a binary table in HDU 1 with
+    FLUX / IVAR / WAVELENGTH array columns.
+    """
+    from astropy.io import fits
+    try:
+        with fits.open(io.BytesIO(data), memmap=False) as hd:
+            p = hd[0].data
+            if p is not None and np.ndim(p) == 2 and p.shape[0] >= 3:
+                return {"wave": np.asarray(p[2], float), "flux": np.asarray(p[0], float),
+                        "ivar": np.asarray(p[1], float),
+                        "header": {k: str(hd[0].header.get(k)) for k in
+                                   ("OBSID", "DATE-OBS", "CLASS", "SUBCLASS", "Z", "SNRR",
+                                    "VACUUM") if k in hd[0].header}}
+            for h in hd[1:]:
+                names = [n.upper() for n in getattr(h, "columns", []).names] \
+                    if hasattr(h, "columns") else []
+                if "FLUX" in names and "WAVELENGTH" in names:
+                    d = h.data
+                    cn = h.columns.names
+                    return {"wave": np.asarray(d[cn[names.index("WAVELENGTH")]][0], float),
+                            "flux": np.asarray(d[cn[names.index("FLUX")]][0], float),
+                            "ivar": np.asarray(d[cn[names.index("IVAR")]][0], float)
+                            if "IVAR" in names else None,
+                            "header": {k: str(hd[0].header.get(k)) for k in
+                                       ("OBSID", "DATE-OBS", "CLASS", "SUBCLASS", "Z",
+                                        "SNRR", "VACUUM") if k in hd[0].header}}
+    except Exception:  # noqa: BLE001
+        return None
+    return None
+
+
+def recheck_second_epoch_and_template(root: Path, spec_id: str, ra: float, dec: float,
+                                      lam0: float, subclass: str, radius_arcsec: float = 3.0,
+                                      n_template: int = 40) -> dict:
+    """Second epoch from every reachable archive, and a same-subclass template.
+
+    * SPARCL at ``radius_arcsec`` (SDSS DR16/17, BOSS, eBOSS, DESI DR1): every
+      spectrum at the position, the line measured in each.
+    * LAMOST low-resolution (R ~ 1800, vacuum wavelengths): VizieR catalogues
+      give the obsid; the spectrum is pulled from the LAMOST data release sites.
+    * An empirical template: the median of ``n_template`` continuum-normalised
+      spectra of the survey's own ``subclass``, the detector run on the template
+      at ``lam0`` and on the target divided by it.  A pseudo-continuum peak
+      between molecular band heads shows up in the template itself.
+    """
+    out: dict = {**_provenance(), "spec_id": spec_id, "ra": ra, "dec": dec, "lam0": lam0,
+                 "subclass": subclass, "sparcl": [], "lamost": [], "lamost_errors": []}
+    fw = lsf_fwhm_A(lam0, "SDSS-DR17")
+    client = _make_client()
+    # ---- SPARCL, every release, 3 arcsec
+    d = radius_arcsec / 3600.0
+    cosd = max(np.cos(np.radians(dec)), 1e-3)
+    cons = {"ra": [ra - d / cosd, ra + d / cosd], "dec": [dec - d, dec + d]}
+    try:
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "ra", "dec", "data_release", "dateobs_center"],
+            constraints=cons, limit=100))
+        recs = list(_records(found))
+    except Exception as exc:  # noqa: BLE001
+        recs = []
+        out["sparcl_error"] = repr(exc)[:300]
+    by_rel: dict[str, list[str]] = {}
+    for r in recs:
+        by_rel.setdefault(str(_rget(r, "data_release", "")), []).append(
+            str(_rget(r, "sparcl_id")))
+    target = None
+    for rel, ids in by_rel.items():
+        for r in sparcl_retrieve(client, ids, rel):
+            w = np.asarray(r.get("wavelength", []), float)
+            if w.size < 50:
+                continue
+            m = measure_line(w, np.asarray(r.get("flux", []), float),
+                             np.asarray(r.get("ivar", []), float), lam0,
+                             lsf_fwhm_A(lam0, rel), "emission")
+            ids_ = (sdss_ids_from_record(r) or {}) if rel.upper().startswith(
+                ("SDSS", "BOSS")) else {}
+            out["sparcl"].append(_json_safe({
+                "sparcl_id": r.get("sparcl_id"), "data_release": rel,
+                "plate": ids_.get("plate"), "mjd": ids_.get("mjd"),
+                "fiberid": ids_.get("fiberid"), "sig": m.get("sig"), "ew": m.get("ew"),
+                "testable": m.get("testable"), "subclass": r.get("subclass")}))
+            if str(r.get("sparcl_id")) == str(spec_id):
+                target = r
+    # ---- LAMOST
+    obsids = []
+    try:
+        from astropy import units as u
+        from astropy.coordinates import SkyCoord
+        from astroquery.vizier import Vizier
+        viz = Vizier(columns=["**"], row_limit=50)
+        c = SkyCoord(ra * u.deg, dec * u.deg)
+        for cat in ("V/164", "V/156", "V/153", "V/149", "V/146"):
+            try:
+                res = viz.query_region(c, radius=radius_arcsec * u.arcsec, catalog=cat)
+            except Exception as exc:  # noqa: BLE001
+                out["lamost_errors"].append(f"{cat}: {exc!r}"[:200])
+                continue
+            for t in res:
+                cols = {k.lower(): k for k in t.colnames}
+                key = cols.get("obsid") or cols.get("obsid_")
+                if key is None:
+                    continue
+                for row in t:
+                    try:
+                        obsids.append((cat, t.meta.get("name", cat), int(row[key])))
+                    except (TypeError, ValueError):
+                        continue
+                    keep = {}
+                    for cn in t.colnames:
+                        if cn.lower() in ("obsid", "obsdate", "class", "subclass", "teff",
+                                          "logg", "feh", "[fe/h]", "snrr", "snrg", "z",
+                                          "rv", "hrv", "_r"):
+                            v = row[cn]
+                            keep[cn] = v.item() if hasattr(v, "item") else str(v)
+                    out.setdefault("lamost_catalogue", []).append(
+                        _json_safe({"catalog": t.meta.get("name", cat), **keep}))
+    except Exception as exc:  # noqa: BLE001
+        out["lamost_errors"].append(f"vizier: {exc!r}"[:300])
+    out["lamost_obsids"] = sorted({o[2] for o in obsids})
+    for ob in out["lamost_obsids"]:
+        got = None
+        statuses = []
+        urls = []
+        for dr, ver in (("dr11", "v1.0"), ("dr10", "v2.0"), ("dr9", "v2.0"), ("dr8", "v2.0"),
+                        ("dr7", "v2.0"), ("dr6", "v2.0"), ("dr5", "v3")):
+            urls += [f"https://www.lamost.org/{dr}/{ver}/spectrum/fits/{ob}",
+                     f"https://www.lamost.org/{dr}/{ver}/lrs/spectrum/fits/{ob}",
+                     f"https://{dr}.lamost.org/{ver}/spectrum/fits/{ob}",
+                     f"http://{dr}.lamost.org/{ver}/spectrum/fits/{ob}"]
+        for url in urls:
+            try:
+                rr = _session().get(url, timeout=60, allow_redirects=True)
+                statuses.append(f"{rr.status_code} {len(rr.content)}B {url}")
+                body = rr.content
+                if body[:2] == b"\x1f\x8b":          # LAMOST serves .fits.gz
+                    import gzip
+                    body = gzip.decompress(body)
+                data = body if rr.status_code == 200 and body[:6] == b"SIMPLE" else None
+            except Exception as exc:  # noqa: BLE001
+                statuses.append(f"ERR {type(exc).__name__} {url}")
+                data = None
+            if not data:
+                continue
+            sp = _parse_lamost_fits(data)
+            if sp is None:
+                continue
+            got = (url, sp)
+            break
+        if got is None:
+            out["lamost"].append({"obsid": ob, "error": "spectrum unreachable",
+                                  "http": statuses})
+            continue
+        url, sp = got
+        iv = sp["ivar"] if sp["ivar"] is not None else np.ones_like(sp["flux"])
+        m = measure_line(sp["wave"], sp["flux"], iv, lam0, lam0 / 1800.0, "emission")
+        # sensitivity: what an EW 1.6 A line would give here
+        exp_sig = None
+        if m.get("testable") and m.get("cont") and m.get("err"):
+            exp_sig = float(1.6 * abs(m["cont"]) / m["err"])
+        fit = fit_line_profile(sp["wave"], sp["flux"], iv, lam0, lam0 / 1800.0, "emission")
+        # the strong OH line 9.4 A redward (6863.96 air = 6865.86 vac): how big is
+        # the sky residual there in this spectrum?
+        m_oh = measure_line(sp["wave"], sp["flux"], iv, 6865.86, lam0 / 1800.0, "emission")
+        out["lamost_fit"] = _json_safe({**fit, "oh6866_sig": m_oh.get("sig"),
+                                        "oh6866_ew": m_oh.get("ew")})
+        out["lamost"].append(_json_safe({"obsid": ob, "url": url, "header": sp["header"],
+                                         "sig": m.get("sig"), "ew": m.get("ew"),
+                                         "testable": m.get("testable"),
+                                         "reason": m.get("reason"),
+                                         "expected_sig_for_ew_1p6": exp_sig}))
+    # ---- galaxies with a redshift that puts Halpha near lam0, within 20 arcmin
+    try:
+        zc = lam0 / 6564.61 - 1.0
+        dd = 20.0 / 60.0
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release"],
+            constraints={"ra": [ra - dd / cosd, ra + dd / cosd], "dec": [dec - dd, dec + dd],
+                         "redshift": [zc - 0.01, zc + 0.01]}, limit=500))
+        grp = []
+        for r in _records(found):
+            gra, gde = float(_rget(r, "ra")), float(_rget(r, "dec"))
+            sep = 3600.0 * np.hypot((gra - ra) * cosd, gde - dec)
+            grp.append({"sparcl_id": str(_rget(r, "sparcl_id")), "ra": gra, "dec": gde,
+                        "z": float(_rget(r, "redshift")), "spectype": _rget(r, "spectype"),
+                        "data_release": _rget(r, "data_release"),
+                        "sep_arcsec": round(float(sep), 1),
+                        "dv_kms_vs_halpha_z": round(
+                            (float(_rget(r, "redshift")) - zc) / (1 + zc) * 299792.458, 0)})
+        out["halpha_z"] = zc
+        out["galaxies_near_halpha_z"] = sorted(grp, key=lambda g: g["sep_arcsec"])
+    except Exception as exc:  # noqa: BLE001
+        out["galaxies_error"] = repr(exc)[:300]
+    # ---- SDSS photometric objects within 12 arcsec (is there a galaxy under the star?)
+    try:
+        sql = ("SELECT n.objID, n.distance, p.ra, p.dec, p.type, p.r, p.petroRad_r, p.clean "
+               f"FROM dbo.fGetNearbyObjEq({ra}, {dec}, 0.2) n JOIN PhotoObj p "
+               "ON n.objID = p.objID ORDER BY n.distance")
+        rr = _session().get("https://skyserver.sdss.org/dr17/SkyServerWS/SearchTools/SqlSearch",
+                            params={"cmd": sql, "format": "json"}, timeout=120)
+        js = rr.json()
+        rows = js[0].get("Rows", []) if isinstance(js, list) and js else []
+        out["sdss_photo_within_12arcsec"] = [
+            {**row, "distance_arcsec": round(60.0 * float(row.get("distance", 0)), 2),
+             "type_name": {3: "GALAXY", 6: "STAR"}.get(int(row.get("type", 0)), "OTHER")}
+            for row in rows]
+    except Exception as exc:  # noqa: BLE001
+        out["sdss_photo_error"] = repr(exc)[:300]
+    # ---- template from same-subclass stars
+    try:
+        tpl = {"subclass": subclass}
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "redshift"],
+            constraints={"data_release": ["SDSS-DR17"], "spectype": ["STAR"]}, limit=3000))
+        ids = [str(_rget(r, "sparcl_id")) for r in _records(found)
+               if str(_rget(r, "sparcl_id")) != str(spec_id)]
+        typed = []
+        for k in range(0, len(ids), 500):
+            got = _find_with_retry(lambda c=ids[k:k + 500]: client.retrieve(
+                uuid_list=c, include=["sparcl_id", "subclass"], dataset_list=["SDSS-DR17"]))
+            typed += [str(_rget(r, "sparcl_id")) for r in _records(got)
+                      if str(_rget(r, "subclass") or "").strip().upper().startswith(
+                          subclass.upper())]
+        rng = np.random.default_rng(5)
+        pick = [typed[int(i)] for i in rng.permutation(len(typed))[:n_template]]
+        grid = np.arange(lam0 - 150.0, lam0 + 150.0, 0.5)
+        stack = []
+        for r in sparcl_retrieve(client, pick, "SDSS-DR17"):
+            w = np.asarray(r.get("wavelength", []), float)
+            f = np.asarray(r.get("flux", []), float)
+            if w.size < 50 or not (w.min() < grid[0] and w.max() > grid[-1]):
+                continue
+            fi = np.interp(grid, w, f)
+            med = np.nanmedian(fi)
+            if np.isfinite(med) and med > 0:
+                stack.append(fi / med)
+        tpl["n_used"] = len(stack)
+        tpl["n_typed_pool"] = len(typed)
+        if len(stack) >= 10:
+            T = np.nanmedian(np.asarray(stack), axis=0)
+            iv_t = np.full(grid.size, 1.0 / max(_mad_std(np.diff(T)) / np.sqrt(2), 1e-4) ** 2)
+            mt = measure_line(grid, T, iv_t, lam0, fw, "emission")
+            tpl["template_line"] = _json_safe({k: mt.get(k) for k in ("sig", "ew", "F")})
+            if target is not None:
+                w = np.asarray(target["wavelength"], float)
+                f = np.asarray(target["flux"], float)
+                iv = np.asarray(target["ivar"], float)
+                sel = (w > grid[0]) & (w < grid[-1])
+                Ti = np.interp(w[sel], grid, T)
+                fn = f[sel] / np.nanmedian(f[sel])
+                ratio = fn / Ti
+                ivr = iv[sel] * (np.nanmedian(f[sel]) * Ti) ** 2
+                mr = measure_line(w[sel], ratio, ivr, lam0, fw, "emission")
+                mo = measure_line(w[sel], fn, iv[sel] * np.nanmedian(f[sel]) ** 2, lam0, fw,
+                                  "emission")
+                tpl["target_line"] = _json_safe({k: mo.get(k) for k in ("sig", "ew")})
+                tpl["target_over_template_line"] = _json_safe({k: mr.get(k)
+                                                               for k in ("sig", "ew")})
+        out["template"] = tpl
+    except Exception as exc:  # noqa: BLE001
+        out["template"] = {"error": repr(exc)[:300]}
+    od = Path(root) / "results" / "spectra_persist"
+    od.mkdir(parents=True, exist_ok=True)
+    (od / f"recheck_epochs_{str(spec_id)[:8]}_{int(round(lam0))}.json").write_text(
+        json.dumps(_json_safe(out), indent=1))
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="seti.spectra.persist")
     ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose", "control",
-                                        "recheck"],
+                                        "recheck", "recheck2"],
                     default="run")
     ap.add_argument("--root", default=".")
     ap.add_argument("--shard", type=int, default=0)
@@ -3687,6 +3958,11 @@ def main(argv=None) -> int:
         diagnose(root, n=a.top or 8, release=a.release or "SDSS")
     elif a.stage == "control":
         controls(root, n=a.n_control)
+    elif a.stage == "recheck2":
+        sid, ra, dec, sub = a.recheck.split(":")
+        rep = recheck_second_epoch_and_template(root, sid, float(ra), float(dec),
+                                                float(a.recheck_lam), sub)
+        print(json.dumps(rep, default=str)[:6000])
     elif a.stage == "recheck":
         pl, mj, fibs = a.recheck.split(":")
         rep = recheck_line(root, int(pl), int(mj), [int(x) for x in fibs.split(",")],

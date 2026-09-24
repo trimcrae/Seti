@@ -131,6 +131,65 @@ class Event:
         return Event(self.name, self.t[mask], self.f[mask], self.e[mask], self.ds[mask],
                      self.datasets, dict(self.meta))
 
+    def replace(self, f=None, e=None, name=None) -> Event:
+        return Event(name or self.name, self.t, self.f if f is None else f,
+                     self.e if e is None else e, self.ds, self.datasets, dict(self.meta))
+
+    def parallax_offsets(self):
+        """(dn, de): the Sun's projected position relative to its t0par tangent line, or None.
+
+        Needs ``meta['ra']``, ``meta['dec']`` (deg) and ``meta['t0par']``
+        (HJD-2450000); cached per event.
+        """
+        m = self.meta
+        if m.get("ra") is None or m.get("dec") is None or m.get("t0par") is None:
+            return None
+        key = (self.t.size, float(m["t0par"]))
+        c = self.__dict__.get("_par_cache")
+        if c is None or c[0] != key:
+            c = (key, sky_offsets(self.t, float(m["ra"]), float(m["dec"]), float(m["t0par"])))
+            self.__dict__["_par_cache"] = c
+        return c[1]
+
+
+def _sun_vector(t):
+    """Geocentric Sun position (AU, equatorial J2000-ish) at HJD-2450000 ``t``.
+
+    Low-precision solar coordinates (Astronomical Almanac; ~0.01 deg), ample for
+    annual microlens parallax whose amplitude is pi_E ~ 0.1.
+    """
+    n = np.asarray(t, dtype=float) + 2450000.0 - 2451545.0
+    lam0 = np.radians(280.460 + 0.9856474 * n)
+    g = np.radians(357.528 + 0.9856003 * n)
+    lam = lam0 + np.radians(1.915) * np.sin(g) + np.radians(0.020) * np.sin(2 * g)
+    r = 1.00014 - 0.01671 * np.cos(g) - 0.00014 * np.cos(2 * g)
+    eps = np.radians(23.439 - 0.0000004 * n)
+    return np.stack([r * np.cos(lam), r * np.cos(eps) * np.sin(lam), r * np.sin(eps) * np.sin(lam)])
+
+
+def sky_offsets(t, ra_deg: float, dec_deg: float, t0par: float):
+    """Projected Sun offset (north, east) minus its value and velocity at t0par (Gould 2004).
+
+    With pi_E = (pi_N, pi_E) the lens-source separation in Einstein units is
+    tau = (t - t0)/tE + pi_E . d,  beta = u0 + pi_E x d  (d = (dn, de)).
+    """
+    a, d = math.radians(ra_deg), math.radians(dec_deg)
+    east = np.array([-math.sin(a), math.cos(a), 0.0])
+    north = np.array([-math.sin(d) * math.cos(a), -math.sin(d) * math.sin(a), math.cos(d)])
+
+    def proj(tt):
+        s = _sun_vector(tt)
+        return north @ s, east @ s
+
+    sn, se = proj(t)
+    h = 1.0
+    n0, e0 = proj(np.array([t0par]))
+    n1, e1 = proj(np.array([t0par + h]))
+    nm, em = proj(np.array([t0par - h]))
+    vn, ve = (n1 - nm) / (2 * h), (e1 - em) / (2 * h)
+    dt = np.asarray(t, dtype=float) - t0par
+    return np.stack([sn - n0[0] - vn[0] * dt, se - e0[0] - ve[0] * dt])
+
 
 def mag_to_flux(mag, err, zp: float = 18.0):
     """Magnitudes to linear flux relative to magnitude ``zp`` (flux 1 at zp)."""
@@ -168,8 +227,49 @@ def clean_event(ev: Event) -> Event:
 # Magnification models
 # --------------------------------------------------------------------------------------
 
-def traj(t, t0, te, u0):
-    return np.sqrt(u0 * u0 + ((np.asarray(t, dtype=float) - t0) / te) ** 2)
+def traj(t, t0, te, u0, pin=0.0, pie=0.0, par=None):
+    """u(t) for rectilinear motion, plus annual parallax when ``par`` = (dn, de) is given."""
+    tau = (np.asarray(t, dtype=float) - t0) / te
+    beta = u0
+    if par is not None and (pin or pie):
+        dn, de = par
+        tau = tau + pin * dn + pie * de
+        beta = u0 + (-pin * de + pie * dn)
+    return np.sqrt(beta * beta + tau * tau)
+
+
+def traj_fit(ev, fit) -> np.ndarray:
+    """u at every epoch of ``ev`` for the geometry of ``fit`` (parallax included)."""
+    return traj(ev.t, fit.t0, fit.te, fit.u0, fit.pin, fit.pie,
+                ev.parallax_offsets() if (fit.pin or fit.pie) else None)
+
+
+def u_min_fit(ev, fit) -> float:
+    """Closest approach over the observed epochs (|u0| without parallax)."""
+    if not (fit.pin or fit.pie):
+        return abs(fit.u0)
+    u = traj_fit(ev, fit)
+    return float(u.min()) if u.size else abs(fit.u0)
+
+
+def _dense_track(ev, fit, n: int = 20001):
+    """(t, u) on a dense grid over the event window, for the fit's geometry."""
+    if ev.t.size == 0:
+        return np.zeros(0), np.zeros(0)
+    tt = np.linspace(ev.t.min(), ev.t.max(), n)
+    par = None
+    if fit.pin or fit.pie:
+        m = ev.meta
+        par = sky_offsets(tt, float(m["ra"]), float(m["dec"]), float(m["t0par"]))
+    return tt, traj(tt, fit.t0, fit.te, fit.u0, fit.pin, fit.pie, par)
+
+
+def t_min_u(ev, fit) -> float:
+    """Time of closest approach: t0 without parallax, the dense-track minimum with it."""
+    if not (fit.pin or fit.pie):
+        return fit.t0
+    tt, uu = _dense_track(ev, fit)
+    return float(tt[int(np.argmin(uu))]) if tt.size else fit.t0
 
 
 def mag_fspl(u, rho, n_samples=64):
@@ -265,51 +365,80 @@ class Fit:
     model: np.ndarray
     n_par: int
     converged: bool = True
+    pin: float = 0.0
+    pie: float = 0.0
+    parallax: bool = False
 
     def params(self) -> dict:
         d = {"kind": self.kind, "t0": self.t0, "tE": self.te, "u0": self.u0, "rho_star": self.rho,
              "chi2": self.chi2, "n_par": self.n_par}
+        if self.parallax:
+            d["piE_N"], d["piE_E"] = self.pin, self.pie
         if self.rho_l is not None:
             d["rho_l"] = self.rho_l
         return d
 
 
-def evaluate(ev: Event, kind, t0, te, u0, rho, rho_l=None, n_samples=64, soft=0.0, e=None) -> Fit:
-    u = traj(ev.t, t0, te, u0)
+def evaluate(ev: Event, kind, t0, te, u0, rho, rho_l=None, n_samples=64, soft=0.0, e=None,
+             pin=0.0, pie=0.0, parallax=False) -> Fit:
+    par = ev.parallax_offsets() if (pin or pie) else None
+    u = traj(ev.t, t0, te, u0, pin, pie, par)
     a = mag_model(u, kind, rho, rho_l, n_samples, soft)
     chi2, fs, fb, model = _chi2_of(a, ev, e)
-    npar = 4 + (1 if rho_l is not None else 0) + 2 * ev.n_ds
+    npar = 4 + (1 if rho_l is not None else 0) + (2 if parallax else 0) + 2 * ev.n_ds
     return Fit(kind, float(t0), float(te), float(u0), float(rho), None if rho_l is None else
-               float(rho_l), chi2, fs, fb, model, npar)
+               float(rho_l), chi2, fs, fb, model, npar, True, float(pin), float(pie), bool(parallax))
 
 
-def _unpack(x, kind):
+def _unpack(x, kind, parallax):
     t0, lte, u0, lrho = x[:4]
-    rho_l = float(x[4]) if kind != "fspl" else None
-    return float(t0), float(10 ** lte), float(abs(u0)), float(10 ** lrho), rho_l
+    k = 4
+    rho_l = None
+    if kind != "fspl":
+        rho_l = float(x[k])
+        k += 1
+    pin = pie = 0.0
+    if parallax:
+        pin, pie = float(x[k]), float(x[k + 1])
+    else:
+        u0 = abs(u0)                 # without parallax the sign of u0 is meaningless
+    return float(t0), float(10 ** lte), float(u0), float(10 ** lrho), rho_l, pin, pie
 
 
-def fit_model(ev: Event, kind: str, starts: list, conf: dict, rho_l_bounds=None) -> Fit:
-    """least_squares from each start ``(t0, tE, u0, rho[, rho_l])``; best exact chi^2 wins.
+TE_MIN = 0.05                        # days: free-floating-planet events reach ~0.1 d
 
-    tE and rho are fitted in log10; the flux parameters are profiled.  For the
-    occultation kinds a logistic edge of width ~ max(rho_*, 1e-3) regularises
-    the hard edge inside the optimiser; the returned chi^2 is always the exact
-    (hard-edge) value, followed by a 1-D exact scan of rho_l.
+
+def fit_model(ev: Event, kind: str, starts: list, conf: dict, rho_l_bounds=None,
+              parallax: bool = False, pi_start=(0.0, 0.0)) -> Fit:
+    """least_squares from each start ``(t0, tE, u0, rho[, rho_l][, piN, piE])``; best exact chi^2 wins.
+
+    tE and rho are fitted in log10; the flux parameters are profiled.  With
+    ``parallax`` the two annual-parallax components are free (u0 is then
+    signed); starts without them use ``pi_start``.  For the occultation kinds
+    a logistic edge of width ~ max(rho_*, 2e-3) regularises the hard edge
+    inside the optimiser; the returned chi^2 is always the exact (hard-edge)
+    value, followed by a 1-D exact scan of rho_l.
     """
     ns = int(conf.get("n_samples", 64))
     w = 1.0 / (ev.e * ev.e)
-    lo = [ev.t.min() - 50.0, math.log10(0.3), 0.0, math.log10(conf["rho_star_min"])]
+    par = ev.parallax_offsets() if parallax else None
+    if parallax and par is None:
+        parallax = False
+    lo = [ev.t.min() - 50.0, math.log10(TE_MIN), -3.0 if parallax else 0.0,
+          math.log10(conf["rho_star_min"])]
     hi = [ev.t.max() + 50.0, math.log10(1500.0), 3.0, math.log10(conf["rho_star_max"])]
     if kind != "fspl":
         rl_lo, rl_hi = rho_l_bounds or (0.05, 5.0)
         lo.append(rl_lo)
         hi.append(rl_hi)
+    if parallax:
+        lo += [-3.0, -3.0]
+        hi += [3.0, 3.0]
     lo, hi = np.array(lo), np.array(hi)
 
     def resid(x):
-        t0, te, u0, rho, rho_l = _unpack(x, kind)
-        u = traj(ev.t, t0, te, u0)
+        t0, te, u0, rho, rho_l, pin, pie = _unpack(x, kind, parallax)
+        u = traj(ev.t, t0, te, u0, pin, pie, par)
         if kind == "fspl":
             a = mag_fspl(u, rho, ns)
         else:
@@ -318,22 +447,26 @@ def fit_model(ev: Event, kind: str, starts: list, conf: dict, rho_l_bounds=None)
         return (ev.f - fs[ev.ds] * a - fb[ev.ds]) / ev.e
 
     best = None
+    n_base = 4 + (1 if kind != "fspl" else 0)
     for s in starts:
         t0, te, u0, rho = s[:4]
-        x0 = [t0, math.log10(max(te, 0.31)), abs(u0), math.log10(max(rho, conf["rho_star_min"]))]
+        x0 = [t0, math.log10(max(te, TE_MIN * 1.01)), u0 if parallax else abs(u0),
+              math.log10(max(rho, conf["rho_star_min"]))]
         if kind != "fspl":
             x0.append(s[4])
+        if parallax:
+            x0 += list(s[n_base:n_base + 2]) if len(s) >= n_base + 2 else list(pi_start)
         x0 = np.clip(np.array(x0, dtype=float), lo + 1e-9, hi - 1e-9)
+        xs = [max(te, 0.1) * 0.05, 0.05, 0.02, 0.2] + ([0.02] if kind != "fspl" else []) \
+            + ([0.05, 0.05] if parallax else [])
         try:
             sol = least_squares(resid, x0, bounds=(lo, hi), max_nfev=int(conf["max_nfev"]),
-                                x_scale=np.array([max(te, 1.0) * 0.05, 0.05, 0.02, 0.2]
-                                                 + ([0.02] if kind != "fspl" else [])),
-                                ftol=1e-8, xtol=1e-8)
+                                x_scale=np.array(xs), ftol=1e-8, xtol=1e-8)
             x, ok = sol.x, bool(sol.success)
         except Exception:  # noqa: BLE001
             x, ok = x0, False
-        t0, te, u0, rho, rho_l = _unpack(x, kind)
-        fit = evaluate(ev, kind, t0, te, u0, rho, rho_l, ns)
+        t0, te, u0, rho, rho_l, pin, pie = _unpack(x, kind, parallax)
+        fit = evaluate(ev, kind, t0, te, u0, rho, rho_l, ns, pin=pin, pie=pie, parallax=parallax)
         fit.converged = ok
         if best is None or fit.chi2 < best.chi2:
             best = fit
@@ -346,11 +479,18 @@ def _exact_rho_l_scan(ev: Event, fit: Fit, ns: int, frac: float = 0.04, n: int =
     """With a hard edge chi^2 is piecewise constant in rho_l: scan it exactly."""
     out = fit
     for r in fit.rho_l * np.linspace(1.0 - frac, 1.0 + frac, n):
-        f2 = evaluate(ev, fit.kind, fit.t0, fit.te, fit.u0, fit.rho, r, ns)
+        f2 = evaluate(ev, fit.kind, fit.t0, fit.te, fit.u0, fit.rho, r, ns,
+                      pin=fit.pin, pie=fit.pie, parallax=fit.parallax)
         if f2.chi2 < out.chi2:
             out = f2
     out.converged = fit.converged
     return out
+
+
+def refit_start(fit: Fit, rho_l=None) -> tuple:
+    """A start tuple for :func:`fit_model` carrying every parameter of ``fit``."""
+    s = (fit.t0, fit.te, fit.u0, fit.rho) + ((rho_l,) if rho_l is not None else ())
+    return s + ((fit.pin, fit.pie) if fit.parallax else ())
 
 
 # --------------------------------------------------------------------------------------
@@ -386,7 +526,7 @@ def initial_guesses(ev: Event, hint: dict | None = None) -> list:
     fwhm = float(above.max() - above.min()) if above.size > 1 else 10.0
     for u0 in (0.05, 0.3, 0.8):
         # FWHM of a Paczynski curve ~ tE * 2 sqrt(...) ~ order u0-dependent; use a crude map
-        te = max(fwhm / max(2.0 * math.sqrt(max(3.0 * u0 * u0, 0.05)), 0.3), 1.0)
+        te = max(fwhm / max(2.0 * math.sqrt(max(3.0 * u0 * u0, 0.05)), 0.3), TE_MIN * 2)
         starts.append((t0, te, u0, rho0))
     return starts
 
@@ -445,17 +585,24 @@ def renorm_errors(ev: Event, model, conf) -> tuple[np.ndarray, list]:
 def nuisance_jacobian(ev: Event, fit: Fit, e) -> np.ndarray:
     """Whitened Jacobian of the FSPL model in its nuisance parameters.
 
-    Columns: d model / d(t0, tE, u0) (numerical, point source) and, per
-    dataset, the source-flux (A) and blend-flux (1) columns.  Each row is
-    divided by sigma_i.
+    Columns: d model / d(t0, tE, u0[, piN, piE]) (numerical, point source)
+    and, per dataset, the source-flux (A) and blend-flux (1) columns.  Each
+    row is divided by sigma_i.
     """
     t, ds = ev.t, ev.ds
-    base = paczynski_magnification(traj(t, fit.t0, fit.te, fit.u0))
+    par = ev.parallax_offsets() if fit.parallax else None
+    p0 = [fit.t0, fit.te, fit.u0, fit.pin, fit.pie]
+    base = paczynski_magnification(traj(t, *p0, par))
     cols = []
-    for dp, j in ((max(1e-4 * fit.te, 1e-4), 0), (max(1e-4 * fit.te, 1e-4), 1), (1e-4, 2)):
-        p = [fit.t0, fit.te, fit.u0]
+    steps = [(max(1e-4 * fit.te, 1e-5), 0), (max(1e-4 * fit.te, 1e-5), 1), (1e-4, 2)]
+    if fit.parallax and par is not None:
+        steps += [(1e-3, 3), (1e-3, 4)]
+    for dp, j in steps:
+        p = list(p0)
         p[j] += dp
-        a2 = paczynski_magnification(traj(t, p[0], p[1], abs(p[2])))
+        if not fit.parallax:
+            p[2] = abs(p[2])
+        a2 = paczynski_magnification(traj(t, *p, par))
         cols.append(fit.fs[ds] * (a2 - base) / dp)
     for k in range(ev.n_ds):
         m = (ds == k).astype(float)
@@ -479,7 +626,7 @@ def _linear_scan(ev: Event, fit: Fit, d, e, above: bool, sign: float) -> dict:
     deep step is absorbed by the FSPL fit (tE shrinks) and the scan points at
     the wrong u_c; with it the scan sees what the refit will see.
     """
-    u = traj(ev.t, fit.t0, fit.te, fit.u0)
+    u = traj_fit(ev, fit)
     r = (ev.f - fit.model) / e
     dw = d / e
     jac = nuisance_jacobian(ev, fit, e)
@@ -490,7 +637,7 @@ def _linear_scan(ev: Event, fit: Fit, d, e, above: bool, sign: float) -> dict:
     base = -2.0 * sign * r * dw - dw * dw
     jd = jac * dw[:, None]
     out = {}
-    for name, m in (("all", np.ones(u.size, bool)), ("rise", ev.t < fit.t0), ("fall", ev.t >= fit.t0)):
+    for name, m in (("all", np.ones(u.size, bool)), ("rise", ev.t < t_min_u(ev, fit)), ("fall", ev.t >= t_min_u(ev, fit))):
         if not m.any():
             out[name] = (np.zeros(0), np.zeros(0))
             continue
@@ -517,7 +664,7 @@ def scan_wing(ev: Event, fit: Fit, e=None, sign: float = 1.0) -> dict:
     ADDS it instead (the anti-occultation null, which no physics produces).
     """
     e = ev.e if e is None else e
-    u = traj(ev.t, fit.t0, fit.te, fit.u0)
+    u = traj_fit(ev, fit)
     _, am = magnifications(u)
     d = fit.fs[ev.ds] * am
     return _linear_scan(ev, fit, d, e, above=True, sign=sign)
@@ -531,7 +678,7 @@ def scan_hole(ev: Event, fit: Fit, e=None, sign: float = 1.0) -> dict:
     fit's own flux units (fs' = fs_true/2).
     """
     e = ev.e if e is None else e
-    u = traj(ev.t, fit.t0, fit.te, fit.u0)
+    u = traj_fit(ev, fit)
     a = mag_fspl(u, fit.rho)
     d = fit.fs[ev.ds] * (a + 1.0)
     return _linear_scan(ev, fit, d, e, above=False, sign=sign)
@@ -577,24 +724,25 @@ def side_tests(ev: Event, fit: Fit, r0, dterm, e, ns: int = 64, span: float = 0.
     asymmetric (parallax / xallarap) residual fails one of the three.
     """
     out: dict = {}
-    for side, m in (("rise", ev.t < fit.t0), ("fall", ev.t >= fit.t0)):
+    for side, m in (("rise", ev.t < t_min_u(ev, fit)), ("fall", ev.t >= t_min_u(ev, fit))):
         out[side] = alpha_fit(r0, dterm, e, m)
         if out[side]["alpha"] is None:
             out[side]["snr"] = 0.0
     ar, af = out["rise"], out["fall"]
     if ar["alpha"] is not None and af["alpha"] is not None:
-        out["alpha_z"] = float(abs(ar["alpha"] - af["alpha"]) / math.hypot(ar["sigma"], af["sigma"]))
+        out["alpha_z"] = float(abs(ar["alpha"] - af["alpha"])
+                               / math.sqrt(ar["sigma"] ** 2 + af["sigma"] ** 2 + 2 * ALPHA_SYS ** 2))
     else:
         out["alpha_z"] = None
     uc = u_crit(fit.rho_l)
     wing = fit.rho_l < 1.0
     grid = uc * np.linspace(1.0 - span, 1.0 + span, n_grid)
-    grid = grid[grid > (fit.u0 if wing else 0.0) + 1e-6]
+    grid = grid[grid > (u_min_fit(ev, fit) if wing else 0.0) + 1e-6]
     w = 1.0 / (e * e)
-    u = traj(ev.t, fit.t0, fit.te, fit.u0)
+    u = traj_fit(ev, fit)
     base = fit.fs[ev.ds]
     intervals = {}
-    for side, m in (("rise", ev.t < fit.t0), ("fall", ev.t >= fit.t0)):
+    for side, m in (("rise", ev.t < t_min_u(ev, fit)), ("fall", ev.t >= t_min_u(ev, fit))):
         if not m.any() or grid.size == 0:
             intervals[side] = None
             continue
@@ -622,7 +770,7 @@ def side_tests(ev: Event, fit: Fit, r0, dterm, e, ns: int = 64, span: float = 0.
 
 def occultation_term(ev: Event, fit: Fit, ns: int = 64) -> np.ndarray:
     """D_i = fs_k (A_unocculted - A_model) at the occultation solution (>= 0 for a shadow)."""
-    u = traj(ev.t, fit.t0, fit.te, fit.u0)
+    u = traj_fit(ev, fit)
     a0 = mag_fspl(u, fit.rho, ns)
     a1 = mag_model(u, fit.kind, fit.rho, fit.rho_l, ns)
     return fit.fs[ev.ds] * (a0 - a1)
@@ -653,6 +801,9 @@ def group_alphas(ev: Event, r0, dterm, e, key: str) -> dict:
     return out
 
 
+ALPHA_SYS = 0.05     # systematic floor on a depth ratio, added in quadrature (calibrated, stated)
+
+
 def groups_consistent(alphas: dict, nsig: float) -> dict:
     """Chi^2 of the group alphas about their weighted mean; max pairwise z."""
     vals = [(v["alpha"], v["sigma"]) for v in alphas.values() if v["alpha"] is not None]
@@ -661,7 +812,7 @@ def groups_consistent(alphas: dict, nsig: float) -> dict:
     a = np.array([v[0] for v in vals])
     s = np.array([v[1] for v in vals])
     wm = float(np.sum(a / s**2) / np.sum(1 / s**2))
-    z = np.abs(a - wm) / s
+    z = np.abs(a - wm) / np.sqrt(s * s + ALPHA_SYS ** 2)
     return {"n": len(vals), "weighted_mean": wm, "max_z": float(z.max()),
             "consistent": bool(z.max() <= nsig)}
 
@@ -683,19 +834,25 @@ def jackknife(ev: Event, r0, r1, e) -> dict:
             "worst_dataset": ev.datasets[int(by_ds.argmax())]["name"] if by_ds.size else None}
 
 
-def step_times(fit: Fit) -> list:
+def step_times(fit: Fit, ev: Event | None = None) -> list:
+    """Times where u(t) crosses u_c: t0 +- tE sqrt(u_c^2 - u0^2), or numerically with parallax."""
     uc = u_crit(fit.rho_l)
-    if uc <= fit.u0:
-        return []
-    dt = fit.te * math.sqrt(uc * uc - fit.u0 * fit.u0)
-    return [fit.t0 - dt, fit.t0 + dt]
+    if not (fit.pin or fit.pie) or ev is None:
+        if uc <= abs(fit.u0):
+            return []
+        dt = fit.te * math.sqrt(uc * uc - fit.u0 * fit.u0)
+        return [fit.t0 - dt, fit.t0 + dt]
+    tt, uu = _dense_track(ev, fit)
+    s = np.sign(uu - uc)
+    idx = np.where(s[:-1] * s[1:] < 0)[0]
+    return [float(tt[i] + (uc - uu[i]) * (tt[i + 1] - tt[i]) / (uu[i + 1] - uu[i])) for i in idx]
 
 
 def step_bracketing(ev: Event, fit: Fit, conf) -> list:
     """For each step: nearest epoch before and after, and whether both are close."""
     lim = max(conf["bracket_days"], conf["bracket_frac_te"] * fit.te)
     out = []
-    for ts in step_times(fit):
+    for ts in step_times(fit, ev):
         before = ev.t[ev.t < ts]
         after = ev.t[ev.t >= ts]
         gb = float(ts - before.max()) if before.size else float("inf")
@@ -783,8 +940,25 @@ def fit_fspl_clean(ev: Event, conf: dict, hint: dict | None = None):
     ev = ev.subset(keep)
     fit = fit_model(ev, "fspl", [(fit.t0, fit.te, fit.u0, fit.rho)] + starts[:1], conf)
     e, scales = renorm_errors(ev, fit.model, conf)
-    ev2 = Event(ev.name, ev.t, ev.f, e, ev.ds, ev.datasets, ev.meta)
+    ev2 = ev.replace(e=e)
     fit = fit_model(ev2, "fspl", [(fit.t0, fit.te, fit.u0, fit.rho)], conf)
+    # annual parallax: a long event's wings are asymmetric in a rectilinear fit,
+    # and that asymmetry would both hide a real (symmetric) occultation and
+    # feed the one-sided gates.  Fitted when tE is long enough to matter and
+    # kept only when it earns its two parameters.
+    info["parallax"] = None
+    if fit.te >= conf.get("parallax_min_te", 10.0) and ev2.meta.get("ra") is not None:
+        ev2.meta["t0par"] = round(fit.t0, 2)
+        p_starts = [(fit.t0, fit.te, sgn * abs(fit.u0), fit.rho, pn, pe)
+                    for sgn in (1.0, -1.0)
+                    for pn, pe in ((0.0, 0.0), (0.2, 0.0), (-0.2, 0.0), (0.0, 0.2), (0.0, -0.2))]
+        fp = fit_model(ev2, "fspl", p_starts, conf, parallax=True)
+        gain = fit.chi2 - fp.chi2 if fp is not None else 0.0
+        info["parallax"] = {"dchi2": float(gain), "piE_N": fp.pin if fp else None,
+                            "piE_E": fp.pie if fp else None,
+                            "adopted": bool(gain > conf.get("parallax_dchi2", 20.0))}
+        if info["parallax"]["adopted"]:
+            fit = fp
     info["err_scales"] = {ev.datasets[k]["name"]: round(s, 3) for k, s in enumerate(scales)}
     info["n_points"] = int(ev.t.size)
     # detection of the lensing amplitude itself: flat vs FSPL
@@ -797,9 +971,10 @@ def fit_fspl_clean(ev: Event, conf: dict, hint: dict | None = None):
 def _refine(ev, fit0, regime, uth, conf, kind="occult", shape_starts=()):
     rho_l0 = rho_l_from_uc(uth) if regime == "wing" else rho_l_from_uh(uth)
     bounds = (0.05, 0.9999) if regime == "wing" else (1.0001, 20.0)
-    starts = [(fit0.t0, fit0.te, fit0.u0, fit0.rho, rho_l0)]
-    starts += [(s[0], s[1], s[2], fit0.rho, rho_l0) for s in shape_starts]
-    return fit_model(ev, kind, starts, conf, rho_l_bounds=bounds)
+    pi = (fit0.pin, fit0.pie) if fit0.parallax else ()
+    starts = [refit_start(fit0, rho_l0)]
+    starts += [(s[0], s[1], s[2], fit0.rho, rho_l0) + pi for s in shape_starts]
+    return fit_model(ev, kind, starts, conf, rho_l_bounds=bounds, parallax=fit0.parallax)
 
 
 def profile_rho_l(ev: Event, fit: Fit, conf: dict, frac: float = 0.25, n: int = 26) -> Fit:
@@ -818,16 +993,16 @@ def profile_rho_l(ev: Event, fit: Fit, conf: dict, frac: float = 0.25, n: int = 
             r = fit.rho_l * (1.0 + direction * frac * k / (n // 2))
             if r <= 1.0001:
                 break
-            f2 = fit_model(ev, fit.kind, [(cur.t0, cur.te, cur.u0, cur.rho, r)], conf,
-                           rho_l_bounds=(r * (1 - 1e-6), r * (1 + 1e-6)))
+            f2 = fit_model(ev, fit.kind, [refit_start(cur, r)], conf,
+                           rho_l_bounds=(r * (1 - 1e-6), r * (1 + 1e-6)), parallax=fit.parallax)
             if f2 is None:
                 break
             cur = f2
             if f2.chi2 < best.chi2:
                 best = f2
     if best is not fit:          # polish the winner with rho_l free again
-        f3 = fit_model(ev, fit.kind, [(best.t0, best.te, best.u0, best.rho, best.rho_l)], conf,
-                       rho_l_bounds=(1.0001, 20.0))
+        f3 = fit_model(ev, fit.kind, [refit_start(best, best.rho_l)], conf,
+                       rho_l_bounds=(1.0001, 20.0), parallax=fit.parallax)
         if f3 is not None and f3.chi2 < best.chi2:
             best = f3
     return best
@@ -907,20 +1082,22 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
     sh = scan_hole(ev2, f0)
     sw_anti = scan_wing(ev2, f0, sign=-1.0)
     sh_anti = scan_hole(ev2, f0, sign=-1.0)
-    u_max = float(traj(ev2.t, f0.t0, f0.te, f0.u0).max())
+    u_max = float(traj_fit(ev2, f0).max())
+    umin0 = u_min_fit(ev2, f0)
     rec["u_max_observed"] = u_max
+    rec["u_min_observed"] = umin0
     top = int(conf["refine_top"])
-    cand = [("wing", u, v) for u, v in _scan_maxima(*sw["all"], f0.u0, top)]
-    cand += [("hole", u, v) for u, v in _scan_maxima(*sh["all"], f0.u0, top)]
-    anti = [("wing", u, v) for u, v in _scan_maxima(*sw_anti["all"], f0.u0, top)]
-    anti += [("hole", u, v) for u, v in _scan_maxima(*sh_anti["all"], f0.u0, top)]
+    cand = [("wing", u, v) for u, v in _scan_maxima(*sw["all"], umin0, top)]
+    cand += [("hole", u, v) for u, v in _scan_maxima(*sh["all"], umin0, top)]
+    anti = [("wing", u, v) for u, v in _scan_maxima(*sw_anti["all"], umin0, top)]
+    anti += [("hole", u, v) for u, v in _scan_maxima(*sh_anti["all"], umin0, top)]
     rec["scan_best_dchi2"] = max([c[2] for c in cand], default=0.0)
     rec["scan_best_anti_dchi2"] = max([c[2] for c in anti], default=0.0)
     rec["scan_best"] = [list(c) for c in cand]
     # fixed seeds, so a scan misled by a very deep step cannot hide the answer
     for rl in conf.get("seed_rho_l", ()):
         uth = u_crit(rl)
-        if f0.u0 < uth < u_max:
+        if umin0 < uth < u_max:
             cand.append(("wing" if rl < 1 else "hole", uth, -1.0))
             anti.append(("wing" if rl < 1 else "hole", uth, -1.0))
 
@@ -934,7 +1111,8 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
         rec["hollow_centre"] = hc
         if hc is not None:
             sep = max(hc["sep_days"], 0.5)
-            hole_starts = [(tc, sep * fac, u0) for u0 in (0.05, 0.2, 0.5) for fac in (0.3, 1.0, 3.0)]
+            hole_starts = [(tc, sep * fac, u0) for u0 in (0.05, 0.2, 0.5)
+                           for fac in (0.3, 1.0, 3.0)]
             for rl in conf.get("hole_seed_rho_l", (1.1, 1.3, 1.8, 2.5)):
                 cand.append(("hole", u_crit(rl), -2.0))
     rec["hole_starts_used"] = bool(hole_starts)
@@ -994,7 +1172,7 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
     if regime == "wing":
         rec["steps"] = step_bracketing(ev2, fo, conf)
     else:
-        inside = traj(ev2.t, fo.t0, fo.te, fo.u0) < rec["u_c"]
+        inside = traj_fit(ev2, fo) < rec["u_c"]
         rec["n_in_hole"] = int(inside.sum())
         # true-flux model: baseline fs + fb, hole level fb -> below baseline iff fs > 0
         rec["hole_below_baseline"] = bool(inside.any()
@@ -1049,7 +1227,7 @@ def gate_rejections(d: dict, conf: dict) -> list:
         rej.append("ONE_DATASET_DOMINATES")
     if d.get("regime") == "wing":
         br = d.get("steps") or []
-        if not br or not all(b["bracketed"] for b in br):
+        if len(br) < 2 or not all(b["bracketed"] for b in br):
             rej.append("STEP_IN_DATA_GAP")
     elif d.get("regime") == "hole":
         if (d.get("n_in_hole") or 0) < 3:
@@ -1060,7 +1238,7 @@ def gate_rejections(d: dict, conf: dict) -> list:
         rej.append("BRIGHTENING_LEFT_CAUSTIC_LIKE")
     if (d.get("binned_redchi2_after") or 0.0) > conf["resid_redchi2_max"]:
         rej.append("RESIDUAL_STRUCTURE")
-    if (d.get("dchi2_anti") or 0.0) >= 0.5 * (d.get("dchi2") or 0.0):
+    if (d.get("dchi2_anti") or 0.0) >= (d.get("dchi2") or 0.0):
         rej.append("ANTI_TEMPLATE_COMPARABLE")
     return rej
 
@@ -1071,7 +1249,8 @@ def gate_rejections(d: dict, conf: dict) -> list:
 
 def synth_event(t0=8000.0, te=25.0, u0=0.2, rho=2e-3, rho_l=None, sites=("KMTA", "KMTC", "KMTS"),
                 bands=("I",), fs=1.0, fb=0.5, sigma=0.01, span=120.0, cadence_d=0.25,
-                seed=0, kind="occult", extra=None, band_depth=None, site_depth=None) -> Event:
+                seed=0, kind="occult", extra=None, band_depth=None, site_depth=None,
+                pi=(0.0, 0.0), ra=268.0, dec=-29.5) -> Event:
     """A multi-site synthetic event; ``rho_l=None`` gives the plain FSPL curve.
 
     ``extra(t) -> dA`` adds any magnification perturbation (a binary bump, a
@@ -1087,7 +1266,8 @@ def synth_event(t0=8000.0, te=25.0, u0=0.2, rho=2e-3, rho_l=None, sites=("KMTA",
             step = cadence_d if band == "I" else cadence_d * 8
             t = np.arange(t0 - span, t0 + span, 1.0)[:, None] + (j / 3.0) + np.arange(0, 0.33, step)[None, :]
             t = t.ravel()
-            u = traj(t, t0, te, u0)
+            par = sky_offsets(t, ra, dec, t0) if (pi[0] or pi[1]) else None
+            u = traj(t, t0, te, u0, pi[0], pi[1], par)
             a = mag_model(u, kind, rho, rho_l) if rho_l is not None else mag_fspl(u, rho)
             scale = (band_depth or {}).get(band, 1.0) * (site_depth or {}).get(site, 1.0)
             if rho_l is not None and scale != 1.0:
@@ -1099,7 +1279,7 @@ def synth_event(t0=8000.0, te=25.0, u0=0.2, rho=2e-3, rho_l=None, sites=("KMTA",
             err = np.full(t.size, sigma * (fs + fb))
             fl = fl + rng.normal(0.0, 1.0, t.size) * err
             series.append(({"name": f"{site}_{band}", "site": site, "band": band}, t, fl, err))
-    return build_event("synthetic", series)
+    return build_event("synthetic", series, meta={"ra": ra, "dec": dec})
 
 
 def expected_dchi2(ev: Event, fit: Fit, rho_l: float, e=None) -> float:
@@ -1110,7 +1290,7 @@ def expected_dchi2(ev: Event, fit: Fit, rho_l: float, e=None) -> float:
     (point source; shape re-fitting only lowers it, which injection measures).
     """
     e = ev.e if e is None else e
-    u = traj(ev.t, fit.t0, fit.te, fit.u0)
+    u = traj_fit(ev, fit)
     a0 = paczynski_magnification(u)
     a1 = occulted_magnification_point(u, rho_l)
     d = fit.fs[ev.ds] * (a0 - a1)

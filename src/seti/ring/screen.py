@@ -286,6 +286,12 @@ def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, d
         "shape_counts": shape_counts,
         "n_surviving_gates": int((flagged_mask & (work["verdict"] == "surviving")).sum()),
         "n_ring_candidates": int(work["ring_candidate"].sum()),
+        # A gate that could not be evaluated must be visible as such.
+        "n_registration_tested": int(pd.Series(work.get("registration_tested", False))
+                                     .fillna(False).astype(bool).sum()),
+        "ring_band_gate_reasons": {k: int(v) for k, v in work.loc[
+            flagged_mask & (work["shape_class"] == "ring_band"), "gate_reason"]
+            .value_counts().items() if k},
         "gate_reasons": {k: int(v) for k, v in
                          work.loc[flagged_mask, "gate_reason"].value_counts().items() if k},
         "sensitivity": {
@@ -740,8 +746,32 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
     thr = max(float(b["chi2_red_min"]),
               float(b["chi2_red_pop_factor"]) * pop_floor if pop_applied else 0.0)
     out["w2_chi2_threshold"] = thr
-    out["duty_cycle_flag"] = have & (out["w2_chi2_red"] >= thr) & \
-        (out["w2_amp_mag"] >= float(b["amp_min_mag"]))
+    raw_flag = have & (out["w2_chi2_red"] >= thr) & (out["w2_amp_mag"] >= float(b["amp_min_mag"]))
+    # Vet 1 -- is the series the target at all?  CH4 absorption in W1 makes a
+    # >= T6 dwarf intrinsically very red (W1-W2 ~ 2-3.5 mag); a measured mean
+    # colour far bluer than that is a background source or a blend in the cone,
+    # not the brown dwarf (run 35860904385's one flag, the T8 WISE
+    # J1813+2835, had W1-W2 = 0.93).  Untestable without W1 epochs.
+    tmap = targets.assign(source_id=targets["source_id"].astype(str)).set_index("source_id")
+    col_min = float(b.get("w1_w2_min_late_t", 1.5))
+    out["w1_w2_mean"] = out["w1_mean_mag"] - out["w2_mean_mag"]
+    late = pd.to_numeric(out["spt_num"], errors="coerce") >= float(b["spt_min_numeric"])
+    out["colour_identity_ok"] = ~(late & (out["w1_w2_mean"] < col_min)).fillna(False)
+    # Vet 2 -- was the cone following the target?  Without a proper motion the
+    # cone sat at one epoch's position for a decade while a nearby brown dwarf
+    # moved arcseconds; the series then mixes the target with whatever else
+    # falls in the cone.
+    pmra = pd.to_numeric(out["source_id"].map(tmap["pmra"]) if "pmra" in tmap.columns
+                         else pd.Series(np.nan, index=out.index), errors="coerce")
+    pmde = pd.to_numeric(out["source_id"].map(tmap["pmdec"]) if "pmdec" in tmap.columns
+                         else pd.Series(np.nan, index=out.index), errors="coerce")
+    out["pm_known"] = (pmra.notna() & pmde.notna()).to_numpy(bool)
+    reason = pd.Series("", index=out.index, dtype=object)
+    reason[raw_flag & ~out["colour_identity_ok"]] = "colour_not_the_target"
+    reason[raw_flag & (reason == "") & ~out["pm_known"]] = "proper_motion_not_propagated"
+    out["duty_cycle_veto"] = reason
+    out["duty_cycle_candidate"] = raw_flag
+    out["duty_cycle_flag"] = raw_flag & (reason == "")
     out["status"] = np.where(out["w2_n_epochs"] == 0, "NO_EPOCHS",
                              np.where(~have, "TOO_FEW_EPOCHS", "TESTED"))
     summary = {
@@ -755,6 +785,12 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
         "population_floor_min_n": pop_n_min,
         "w2_chi2_threshold": thr,
         "n_duty_cycle_flags": int(out["duty_cycle_flag"].sum()),
+        "n_with_pm": int(out["pm_known"].sum()),
+        "duty_cycle_vetoed": _records(out.loc[out["duty_cycle_candidate"]
+                                              & ~out["duty_cycle_flag"],
+                                              ["source_id", "spt", "w2_n_epochs", "w2_chi2_red",
+                                               "w2_amp_mag", "w1_w2_mean", "pm_known",
+                                               "duty_cycle_veto"]]),
         "flagged": out.loc[out["duty_cycle_flag"], ["source_id", "spt", "w2_n_epochs",
                                                      "w2_chi2_red", "w2_amp_mag",
                                                      "w2_duty_cycle_high",

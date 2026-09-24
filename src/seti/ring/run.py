@@ -163,16 +163,16 @@ def stage_acquire(cfg: dict, out: Path, leg: str, *, shard: int = 0, n_shards: i
         _write(d / "acquire.json", meta)
     elif leg == "bd":
         tp = d / "targets.csv"
-        if tp.exists() and shard > 0:
-            targets = pd.read_csv(tp)
-            meta = _read_json(d / "acquire_targets.json") or {}
-        else:
-            targets, meta = (fetchers["bd_targets"](cfg) if "bd_targets" in fetchers
-                             else acq.fetch_bd_targets(cfg))
-            if len(targets):
-                targets.to_csv(tp, index=False)
-            meta["n_targets"] = int(len(targets))
-            _write(d / "acquire_targets.json", meta)
+        # The target list comes from ``fetchers["bd_targets"]``: on the sharded
+        # path that is scripts/ring_bd_handoff.py, which hands every shard the
+        # ONE list this run's bd-targets job fetched.  A committed targets.csv
+        # in the checkout (an earlier run's list) is never read.
+        targets, meta = (fetchers["bd_targets"](cfg) if "bd_targets" in fetchers
+                         else acq.fetch_bd_targets(cfg))
+        if len(targets):
+            targets.to_csv(tp, index=False)
+        meta["n_targets"] = int(len(targets))
+        _write(d / "acquire_targets.json", meta)
         roll = {}
         # A marker written BEFORE the NEOWISE loop: if the job's wall clock
         # kills the process (run 35752692549: `timeout 5400` fired mid-loop and
@@ -355,6 +355,8 @@ def stage_assess(cfg: dict, out: Path, *, followup: bool = True,
             ring_after = fu[fu["ring_candidate"].astype(bool)
                             & (fu["followup_verdict"] == "surviving")]
             legs["wd"]["n_ring_candidates_after_followup"] = int(len(ring_after))
+            legs["wd"]["followup_neighbour_timeouts"] = int(fu.attrs.get("n_neighbour_timeouts", 0))
+            legs["wd"]["n_followup"] = int(len(fu))
             legs["wd"]["n_surviving_after_followup"] = int(
                 (fu["followup_verdict"] == "surviving").sum())
             legs["wd"]["followup_reasons"] = {k: int(v) for k, v in

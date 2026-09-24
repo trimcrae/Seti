@@ -104,7 +104,9 @@ def unit_event(s, unit: dict) -> tuple[D.Event, dict]:
     from .acquire import fetch_unit_series
 
     got = fetch_unit_series(s, unit)
-    ev = D.build_event(unit["unit"], got["series"], meta={"unit": unit["unit"]})
+    ref = unit.get("kmt") or unit.get("ogle") or {}
+    ev = D.build_event(unit["unit"], got["series"],
+                       meta={"unit": unit["unit"], "ra": ref.get("ra"), "dec": ref.get("dec")})
     return ev, got["status"]
 
 
@@ -154,12 +156,23 @@ def find_unit(units: list, name: str) -> dict | None:
 
 
 def controls_verdict(records: list, gate: dict, n_listed: int) -> dict:
-    """The gate: no control is an occultation; injections into FSPL baselines recovered."""
-    reached = [r for r in records if r.get("reached")]
+    """The gate: no named control is an occultation; strong injections are recovered.
+
+    False positives count only among the NAMED controls (literature-classified
+    finite-source and binary-lens events).  The recovery test pools the
+    injections into the finite-source controls and into the ordinary-event
+    baselines that have >= 2 sites (a single-site event cannot pass the
+    two-site rule by construction, so it would test the rule, not the
+    pipeline) and whose Fisher-expected Delta chi^2 exceeds 500.
+    """
+    named = [r for r in records if r["class"] in ("finite_source_single_lens", "binary_lens")]
+    reached = [r for r in named if r.get("reached")]
     frac = len(reached) / n_listed if n_listed else 0.0
     false_pos = [r["name"] for r in reached if r.get("tier") == D.TIER_CANDIDATE]
-    strong = [t for r in reached if r["class"] == "finite_source_single_lens"
-              for t in r.get("injections", []) if t["expected_dchi2"] > 500]
+    hosts = [r for r in records if r.get("reached")
+             and r["class"] in ("finite_source_single_lens", "baseline")
+             and len([x for x in (r.get("sites") or []) if x != "?"]) >= 2]
+    strong = [t for r in hosts for t in r.get("injections", []) if t["expected_dchi2"] > 500]
     rec_frac = (sum(t["recovered"] for t in strong) / len(strong)) if strong else None
     if not reached:
         verdict = "NO_DATA_REACHED"
@@ -173,10 +186,38 @@ def controls_verdict(records: list, gate: dict, n_listed: int) -> dict:
         verdict = "CONTROLS_PASS_DEGRADED_COVERAGE"
     else:
         verdict = "CONTROLS_PASS"
+    by_rho: dict = {}
+    for t in strong:
+        k = str(t.get('rho_l_inj'))
+        by_rho.setdefault(k, [0, 0])
+        by_rho[k][0] += int(t["recovered"])
+        by_rho[k][1] += 1
     return {"verdict": verdict, "n_listed": n_listed, "n_reached": len(reached),
             "reached_frac": frac, "false_positives": false_pos,
+            "strong_recovery_by_rho_l": {k: {"k": v[0], "n": v[1]} for k, v in by_rho.items()},
+            "n_baseline_hosts": sum(1 for r in hosts if r["class"] == "baseline"),
             "n_strong_injections": len(strong), "strong_recovery_frac": rec_frac,
             "passed": verdict.startswith("CONTROLS_PASS")}
+
+
+def baseline_hosts(units: list, n: int) -> list:
+    """A fixed, reproducible sample of ordinary well-covered events to host injections.
+
+    Joint KMTNet + OGLE units whose catalogue solution has 0 < u0 < 0.5 and
+    5 < tE < 120 d, ordered by a hash of the name (no selection on the light
+    curve itself), first ``n``.
+    """
+    pool = []
+    for u in units:
+        k = u.get("kmt")
+        if not (k and u.get("ogle")):
+            continue
+        u0, te = k.get("u0"), k.get("tE")
+        if u0 is None or te is None or not (0 < u0 < 0.5 and 5 < te < 120):
+            continue
+        pool.append((zlib.crc32(u["unit"].encode()), u))
+    pool.sort(key=lambda x: x[0])
+    return [u for _, u in pool[:n]]
 
 
 def stage_controls(out: Path, cfg: dict) -> dict:
@@ -190,6 +231,9 @@ def stage_controls(out: Path, cfg: dict) -> dict:
     records = []
     listed = [(cls, item) for cls in ("finite_source_single_lens", "binary_lens")
               for item in ctl.get(cls, [])]
+    n_named = len(listed)
+    listed += [("baseline", {"name": u["unit"], "ref": "ordinary joint KMT+OGLE event (injection host)"})
+               for u in baseline_hosts(units, int(gate.get("n_baselines", 30)))]
     for cls, item in listed:
         name = item["name"]
         rec = {"name": name, "class": cls, "ref": item.get("ref"), "reached": False}
@@ -217,7 +261,7 @@ def stage_controls(out: Path, cfg: dict) -> dict:
         records.append(rec)
         print(f"[controls] {name}: {rec['tier']} dchi2={rec.get('dchi2')} "
               f"inj={[(t['rho_l_inj'], t['recovered']) for t in rec['injections']]}", flush=True)
-    v = controls_verdict(records, gate, len(listed))
+    v = controls_verdict(records, gate, n_named)
     res = {**_stamp(), **v, "records": records}
     write_json(out / "controls.json", res)
     return res

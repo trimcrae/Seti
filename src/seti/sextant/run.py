@@ -1614,6 +1614,12 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
                 log(f"{tag}: budget exhausted after {ci}/{len(chunks)} chunks")
                 break
             t0 = time.time()
+            if budget_s is not None and hasattr(gaia, "timeout"):
+                # The clock is only consulted BETWEEN chunks, so one archive
+                # query must not be allowed to outlive it: cap the job wait at
+                # what is left (each of up to four attempts gets a quarter).
+                left = budget_s - (now() - t_start)
+                gaia.timeout = float(max(60.0, min(1800.0, left / 4.0)))
             groups, info = fetch_chunk(gaia, chunk, conf["release"], paths,
                                        f"{tag}_chunk{ci:04d}", log=log)
             if info.get("failed"):

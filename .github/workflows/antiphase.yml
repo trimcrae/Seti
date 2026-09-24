@@ -43,6 +43,10 @@ on:
         description: "Run the shards even if the controls gate is FAIL (the summary still says so)"
         required: false
         default: "false"
+      resume_run_id:
+        description: "Resume each shard from this prior antiphase run's shard artifact (ZTF stars already done are skipped)"
+        required: false
+        default: ""
       reduce_only_run_id:
         description: "Skip controls/shards; reduce this prior run's antiphase artifacts"
         required: false
@@ -187,8 +191,21 @@ jobs:
           run-id: ${{ github.event.inputs.ignition_run_id }}
           github-token: ${{ github.token }}
           path: results/antiphase/ignition/
+      - name: Resume this shard from a prior run's own shard artifact
+        # Only this shard's own files (antiphase-shard-<i>), downloaded after the
+        # purge: the ztfstatus/stars/optbins CSVs are append-only checkpoints.
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: antiphase-shard-${{ matrix.shard }}
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/antiphase/
       - name: What reached this shard
-        run: ls -la results/antiphase/ignition/ | head -40
+        run: |
+          ls -la results/antiphase/ignition/ | head -40
+          ls -la results/antiphase/ | head -40
       - name: Shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} — drift correction, ZTF, ladder, null, injections
         run: |
           python -m seti.antiphase.run --stage shard \

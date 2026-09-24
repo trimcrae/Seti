@@ -154,6 +154,32 @@ def test_sky_offsets_vanish_at_t0par_with_zero_slope():
     assert math.hypot(dn2[0], de2[0]) > 0.5             # half a year later: ~AU scale
 
 
+def test_binning_keeps_datasets_apart_and_weights_right():
+    ev = D.build_event("b", [({"name": "A", "site": "KMTA", "band": "I"}, [0.0, 0.01, 0.5],
+                              [1.0, 3.0, 5.0], [1.0, 1.0, 1.0]),
+                             ({"name": "C", "site": "KMTC", "band": "I"}, [0.005], [7.0], [0.5])])
+    b = D.bin_event(ev, 0.1)
+    assert b.t.size == 3
+    a0 = (b.ds == 0) & (b.t < 0.1)
+    assert b.f[a0][0] == pytest.approx(2.0) and b.e[a0][0] == pytest.approx(1 / math.sqrt(2))
+    assert b.f[b.ds == 1][0] == pytest.approx(7.0)
+
+
+def test_dense_event_is_binned_and_still_recovered():
+    rec = D.assess_event(_ev(rho_l=0.6, seed=41, cadence_d=0.03), FAST, {"tE": 25.0})
+    assert rec["binned_days"] > 0 and rec["n_points_fit"] < rec["n_points_raw"]
+    assert rec["tier"] == D.TIER_CANDIDATE, rec["rejections"]
+
+
+def test_binary_trough_is_not_a_hole_trigger():
+    """Two caustic peaks with an elevated trough (A > 1) must not start the hole grid."""
+    def two_peaks(t):
+        return 3.0 * (np.exp(-0.5 * ((t - 7995) / 0.5) ** 2) + np.exp(-0.5 * ((t - 8005) / 0.5) ** 2))
+
+    ev = _ev(rho_l=None, u0=0.6, seed=42, extra=two_peaks)
+    assert D.hollow_centre(ev, D.excess_centroid(ev)) is None
+
+
 def test_empty_event_degrades_honestly():
     ev = D.build_event("empty", [])
     rec = D.assess_event(ev)

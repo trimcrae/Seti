@@ -158,6 +158,9 @@ jobs:
     if: ${{ always() && github.event.inputs.reduce_only_run_id == '' && contains(fromJSON('["all","controls"]'), github.event.inputs.stage) && needs.catalog.result != 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 175
+    env:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
     steps:
       - uses: actions/checkout@v4
         with:

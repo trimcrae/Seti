@@ -221,4 +221,46 @@ null FAP), `candidates.csv` (the vetted survivors), `shard_s*of12.json`.
 
 ## 7. Run log
 
-(Filled from committed results only.)
+(Filled from committed results only. Times UTC, with US Eastern in brackets.)
+
+### 7.1 Pilot run 36006324981 (2026-09-24 13:32–15:10 UTC [09:32–11:10 EDT])
+
+`stage=all shards=12 max_stars=300 budget_s=2400 ignore_gate=true`, parent
+from IGNITION run 35923951760.
+
+* **The pipeline runs end to end on real data.** 182,490 parent stars in the
+  12 IGNITION shard artifacts; 139,530 in the ZTF footprint; 138,223 with ≥ 6
+  NEOWISE epochs after 2018.2 in both bands. The stratified drift correction
+  put 92–99 % of epochs in a fine (magnitude × |β|) cell.
+* **ZTF throughput is the limit.** The IRSA light-curve API's positional
+  query took **~56 s per star per worker** (1,452 OK + 490 NO_ROWS + 130
+  saturated + 7 failed in 40 min on 4 workers × 12 shards). The batched
+  alternative (one `TAP_UPLOAD` join against the ZTF objects table, then
+  multi-ID light curves; run 36018334549) did not return its first join inside
+  its 30-minute budget — pyvo's `run_sync` has no timeout of its own — so the
+  full survey spends its ZTF budget down a W2 prescore list and reports the
+  prescore it reached (§4.1, `coverage.complete_above_w2_prescore`).
+* **Funnel of the 1,452 evaluated**: `NO_FADE` 826, `NO_OPTICAL` 207 (one of
+  g/r missing), `INSUFFICIENT_MATCHED` 198, `FADE_IR_FLAT` 98, `FADE_IR_FADES`
+  65, `IR_RISE_NO_FADE` 58, **`COUPLED` 0**. Sums to 1,452;
+  self-consistency checks all true.
+* **Null**: 43,110 pair trials, 0.3 coupled per round of 1,437 stars
+  (2 × 10⁻⁴ per star), shift null 1 in 5,748. Real sample: 0 of 1,452.
+* **Injections (1,170 real series per cell)**: coupled-recovery 0.20/0.44/0.43
+  at 3 % depth (300/600/1000 K), 0.68/0.85/0.86 at 5 %, 0.78/0.89/0.89 at 10 %,
+  0.81/0.89/0.89 at 20 %. Full-ladder recovery (coupled **and** measured grey
+  **and** balanced) is 0.01–0.05 at 3 %, 0.18–0.23 at 5 %, 0.68–0.79 at 10 %,
+  0.74–0.83 at 20 %: **achromaticity is only measurable for fades ≳ 10 %** —
+  below that k = Δg/Δr cannot be told from 1.41 at 3σ, and such events are
+  `COUPLED_INCOMPLETE`, never candidates.
+* **Controls**: gate `UNTESTED`. Gaia-GIC-1 — no ZTF (dec −34°), and no NEOWISE
+  epoch survives IGNITION's frame cuts (a faint star at b ≈ −4°); ASASSN-21qj —
+  21 NEOWISE epochs, no ZTF, ASAS-SN V and g reached but V ended in 2018 as g
+  began, so requiring both at once matched nothing (fixed: each band is now
+  tried alone); ASASSN-24fw — 12 matched g/r/W1/W2 epochs, no fade in the
+  NEOWISE window (its dimming began 2024-09, after NEOWISE), as expected;
+  ZTF J2327+0019 — Sesame does not resolve the name; RW Aur, EE Cep, SV Sge —
+  no ZTF rows (bright/saturated); KH 15D — no NEOWISE epoch survives the
+  cuts (NGC 2264); V718 Per, ES Aql — 1–3 matched epochs. None of the natural
+  controls reached the ladder; the VSX natural-class sample stage was added
+  to measure the ladder on hundreds of known natural variables instead.

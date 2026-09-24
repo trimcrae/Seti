@@ -1140,11 +1140,13 @@ def hollow_centre(ev: Event, tc: float | None, min_depth: float = 0.3) -> dict |
     trough = float(np.min(f[mid])) - base
     if trough > (1.0 - min_depth) * horn:
         return None
-    # the physics: inside the hole the source is hidden entirely, so the flux
-    # sits BELOW the unmagnified baseline --- a binary's trough between two
-    # caustic peaks never does (A >= 1 everywhere, and ~3 between caustics)
+    # the trough must be real: deeper than the horns by 5x the point-to-point
+    # noise.  (Requiring it to sit below the baseline as well --- the physics
+    # of a hole --- was tried in run 36041709531 and silenced the trigger on
+    # 35 of 35 real-baseline hole injections; that requirement is a GATE,
+    # measured on the fitted model, not a trigger.)
     noise = 1.4826 * float(np.median(np.abs(np.diff(ev.f[m])))) / math.sqrt(2.0)
-    if trough > -3.0 * max(noise, 1e-12):
+    if horn - trough < 5.0 * max(noise, 1e-12):
         return None
     return {"sep_days": float(t[ir] - t[il]), "horn": float(horn), "trough": trough}
 

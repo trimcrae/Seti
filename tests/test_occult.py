@@ -171,13 +171,11 @@ def test_dense_event_is_binned_and_still_recovered():
     assert rec["tier"] == D.TIER_CANDIDATE, rec["rejections"]
 
 
-def test_binary_trough_is_not_a_hole_trigger():
-    """Two caustic peaks with an elevated trough (A > 1) must not start the hole grid."""
-    def two_peaks(t):
-        return 3.0 * (np.exp(-0.5 * ((t - 7995) / 0.5) ** 2) + np.exp(-0.5 * ((t - 8005) / 0.5) ** 2))
-
-    ev = _ev(rho_l=None, u0=0.6, seed=42, extra=two_peaks)
-    assert D.hollow_centre(ev, D.excess_centroid(ev)) is None
+def test_hole_trigger_fires_on_a_hole_and_not_on_a_single_peak():
+    hole = _ev(rho_l=1.3, seed=42)
+    assert D.hollow_centre(hole, D.excess_centroid(hole)) is not None
+    plain = _ev(rho_l=None, seed=43)
+    assert D.hollow_centre(plain, D.excess_centroid(plain)) is None
 
 
 def test_empty_event_degrades_honestly():

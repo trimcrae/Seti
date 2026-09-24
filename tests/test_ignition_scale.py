@@ -656,3 +656,35 @@ def test_sweep_resume_that_adds_a_tile_writes_the_parent(tmp_path):
     parent = pd.read_parquet(tmp_path / "parent_s0of4.parquet")
     assert len(parent) == 12 and parent["source_id"].is_unique
     assert parent["tile"].nunique() == 3
+
+
+def test_sweep_prefetches_parent_queries_but_processes_tiles_in_order(tmp_path):
+    """Run 35859572295: ~22 tiles per shard because query and acquire were serial."""
+    import threading
+    import time as _t
+
+    conf = _sweep_conf()
+    conf["sweep"]["sample_prefetch"] = 2
+    inner = _TileGaia(n=5)
+    state = {"now": 0, "max": 0}
+    lock = threading.Lock()
+
+    def slow(adql):
+        with lock:
+            state["now"] += 1
+            state["max"] = max(state["max"], state["now"])
+        _t.sleep(0.2)
+        try:
+            return inner(adql)
+        finally:
+            with lock:
+                state["now"] -= 1
+
+    rep = stage_sweep(conf, tmp_path, shard=0, n_shards=4, route="cone", query_fn=slow,
+                      cone_fn=_cone_factory("constant"), asu_fetch_fn=_asu_dead,
+                      irsa_fetch_fn=_irsa_dead, max_tiles=4)
+    assert rep["tiles_done"] == 4
+    assert state["max"] >= 2                          # queries overlapped
+    orders = [t["order"] for t in rep["tiles"]]
+    assert orders == sorted(orders)                   # processed in shard order
+    assert all(t["sample_s"] >= 0.2 for t in rep["tiles"])

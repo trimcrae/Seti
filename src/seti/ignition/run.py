@@ -49,6 +49,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import threading
 import time as _time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -104,6 +105,11 @@ DEFAULT_SCREEN: dict = {
     "ensemble_correct": True,
     "ensemble_bin_yr": 0.25,
     "ensemble_min_stars": 8,
+    # "stratified" (per W1/W2 magnitude bin x |beta| band, falling back to the
+    # magnitude bin, then to the global median) or "global" (the pre-2026-09-23
+    # correction, which over-corrects bright stars: docs/ignition.md 7.4).
+    "ensemble_mode": "stratified",
+    "stratum_min_stars": 40,
 }
 
 #: The tiles-mode shard clock and the per-tile sample time-box.
@@ -112,6 +118,7 @@ DEFAULT_SWEEP: dict = {
     "sample_timeout_s": 300.0,      # one tile's parent query, per attempt
     "sample_unit_budget_s": 600.0,  # one tile's parent query, across the WHOLE ladder
     "max_tiles": 0,                 # 0 = every tile of the shard
+    "sample_prefetch": 1,           # parent queries run this many tiles ahead (ESA load)
 }
 
 #: The probe's wall-clock discipline.  Run 34787803862 spent 1,490 s on four
@@ -715,20 +722,51 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         rec.update(extra or {})
         _write(out / f"sweep_{tag}.json", rec)
 
-    for _, t in mine.iterrows():
+    # Parent queries run AHEAD of the tile being acquired.  Run 35859572295
+    # measured 150-280 s per ESA parent query and 100-190 s per acquire, done
+    # one after the other: ~22 tiles per shard in 150 min where the previous
+    # night did ~60.  The next `sample_prefetch` tiles' queries now run on
+    # daemon threads while the current tile is acquired; tiles are still
+    # PROCESSED (acquired, checkpointed) strictly in order, so the checkpoint
+    # and resume semantics are unchanged.  A prefetched query whose tile is
+    # never reached before the deadline is simply dropped.
+    todo = [t for _, t in mine.iterrows() if str(t["tile"]) not in done_tiles]
+    ahead = max(0, int(sw.get("sample_prefetch", 1) or 0))
+    pending: dict[int, tuple] = {}
+
+    def _start(i: int) -> None:
+        box: dict = {}
+        fld_i = tile_field(todo[i])
+
+        def _go():
+            t_s = _time.monotonic()
+            try:
+                box["res"] = fetch_parent(sc, mode="fields", fields=[fld_i], n_shards=1,
+                                          cap_per_shard=top, query_fn=query_fn, shape=shape,
+                                          vizier=vizier, vizier_fetch_fn=asu_fetch_fn,
+                                          irsa=irsa, irsa_fetch_fn=irsa_fetch_fn,
+                                          unit_budget_s=unit_budget)
+            except BaseException as exc:               # noqa: BLE001
+                box["error"] = exc
+            box["dt"] = _time.monotonic() - t_s
+
+        th = threading.Thread(target=_go, daemon=True)
+        th.start()
+        pending[i] = (th, box)
+
+    for i, t in enumerate(todo):
         tile_id = str(t["tile"])
-        if tile_id in done_tiles:
-            continue
         if _time.monotonic() > deadline:
             stopped = True
             break
-        fld = tile_field(t)
-        ts = _time.monotonic()
-        stars, srep = fetch_parent(sc, mode="fields", fields=[fld], n_shards=1,
-                                   cap_per_shard=top, query_fn=query_fn, shape=shape,
-                                   vizier=vizier, vizier_fetch_fn=asu_fetch_fn,
-                                   irsa=irsa, irsa_fetch_fn=irsa_fetch_fn,
-                                   unit_budget_s=unit_budget)
+        for j in range(i, min(len(todo), i + 1 + ahead)):
+            if j not in pending and (j == i or _time.monotonic() < deadline):
+                _start(j)
+        th, box = pending.pop(i)
+        th.join()
+        if "error" in box:
+            raise box["error"]
+        stars, srep = box["res"]
         n_cone = int(srep.get("n_rows_pulled") or 0)
         if len(stars):
             stars = stars[owns(t, stars["ra"].to_numpy(float),
@@ -738,7 +776,7 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
                "status": srep.get("status"), "parent_route": srep.get("route_used"),
                "shape": srep.get("query_shape_used"), "n_cone_rows": n_cone,
                "n_parent": int(len(stars)), "capped": bool(n_cone >= top),
-               "sample_s": round(_time.monotonic() - ts, 1),
+               "sample_s": round(float(box.get("dt", 0.0)), 1),
                "errors": [e for e in (srep.get("route_errors") or [])[:3]]}
         if srep.get("status") == "QUERY_FAILED":
             tiles_rec.append(rec)
@@ -818,17 +856,36 @@ def screen_epochs(epochs: pd.DataFrame, conf: dict, *, quality: pd.DataFrame | N
     rows: list[dict] = []
     series_for_injection: list[dict] = []
     ens_offsets: dict = {}
+    strat_rep: dict = {}
     if len(epochs):
         epochs = epochs.copy()
         epochs["source_id"] = epochs["source_id"].astype(str)
         # The ensemble zero-point correction (seti.ignition.ensemble): what the
         # rise test sees is the star relative to the shard's constant stars.
         if scr.get("ensemble_correct", True):
-            from .ensemble import apply_ensemble, ensemble_offsets
+            from .ensemble import apply_ensemble, ensemble_offsets, stratified_offsets
 
+            # The global per-bin offsets are always measured (they are the
+            # recorded drift); what is APPLIED is the stratified correction
+            # unless the config asks for the old global one.
             ens_offsets = ensemble_offsets(epochs, bin_yr=float(scr["ensemble_bin_yr"]),
                                            min_stars=int(scr["ensemble_min_stars"]))
-            epochs = apply_ensemble(epochs, ens_offsets, bin_yr=float(scr["ensemble_bin_yr"]))
+            if str(scr.get("ensemble_mode", "stratified")) == "stratified":
+                beta = None
+                if parent is not None and len(parent) and {"ra", "dec"} <= set(parent.columns):
+                    from .acquire import ecliptic_latitude_deg
+
+                    pp = parent.drop_duplicates("source_id")
+                    beta = pd.Series(np.abs(ecliptic_latitude_deg(
+                        pd.to_numeric(pp["ra"], errors="coerce"),
+                        pd.to_numeric(pp["dec"], errors="coerce"))),
+                        index=pp["source_id"].astype(str).to_numpy())
+                epochs, strat_rep = stratified_offsets(
+                    epochs, beta, bin_yr=float(scr["ensemble_bin_yr"]),
+                    min_stars=int(scr.get("stratum_min_stars", 40)))
+            else:
+                epochs = apply_ensemble(epochs, ens_offsets,
+                                        bin_yr=float(scr["ensemble_bin_yr"]))
         else:
             epochs["mag_raw"] = pd.to_numeric(epochs["mag"], errors="coerce")
             epochs["ensemble_applied"] = False
@@ -888,6 +945,9 @@ def screen_epochs(epochs: pd.DataFrame, conf: dict, *, quality: pd.DataFrame | N
            "n_rise_candidates": int(df["is_candidate"].sum()) if len(df) else 0,
            "screen_counts": {str(k): int(v) for k, v in counts.items()},
            "ensemble": {"applied": bool(scr.get("ensemble_correct", True)),
+                        "mode": (str(scr.get("ensemble_mode", "stratified"))
+                                 if scr.get("ensemble_correct", True) else "none"),
+                        "stratified": strat_rep,
                         "bin_yr": float(scr["ensemble_bin_yr"]),
                         "min_stars": int(scr["ensemble_min_stars"]),
                         "drift": summarise_offsets(ens_offsets),
@@ -1035,7 +1095,8 @@ def _write_summary(out: Path, summary: dict) -> None:
 
 
 def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
-                 optical_dir: Path | str | None = None, offline: bool = True) -> dict:
+                 optical_dir: Path | str | None = None, offline: bool = True,
+                 online_vet: bool = False, vet_fetchers: dict | None = None) -> dict:
     vc = conf["vet"]
     sample = {}
     if (out / "sample.json").exists():
@@ -1222,13 +1283,54 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         vd = v.as_dict()
         vd["source_id"] = str(row["source_id"])
         vets.append(vd)
+    # --- the archive rungs (approaching neighbour, optical trend, Gaia scatter)
+    # on the stars the pure ladder left standing.  Unreachable is a
+    # degradation and an untested check, never a pass.
+    online_rec: dict = {}
+    if online_vet and vets:
+        from .vet import KILL_ORDER
+        from .vet_online import online_vet as _online_vet
+
+        alive = [v for v in vets if str(v["verdict"]).startswith("clean")]
+        if alive:
+            ids = {v["source_id"] for v in alive}
+            sub = cands[cands["source_id"].astype(str).isin(ids)]
+            online_rec, unreach = _online_vet(sub, df, vc, fetchers=vet_fetchers)
+            for k, n in unreach.items():
+                if n:
+                    degraded.append(f"vet_unreachable:{k}:{n}/{len(sub)}")
+            for v in alive:
+                o = online_rec.get(v["source_id"]) or {}
+                flags = [x for x in str(v.get("flags") or "").split(";") if x] + o.get("flags", [])
+                untested = [x for x in str(v.get("untested_checks") or "").split(";") if x]
+                untested = [x for x in untested if x != "optical_flatness"] + o.get("untested", [])
+                ov = (o.get("optical") or {}).get("status")
+                v["optical"] = ov or v.get("optical")
+                v["neighbour"] = (o.get("neighbour") or {}).get("status")
+                v["neighbour_pred_dmag"] = (o.get("neighbour") or {}).get("pred_dmag")
+                v["gaia_scatter"] = (o.get("gaia_scatter") or {}).get("status")
+                v["flags"] = ";".join(dict.fromkeys(flags))
+                v["untested_checks"] = ";".join(dict.fromkeys(untested))
+                verdict = None
+                for k in KILL_ORDER:
+                    if k in flags:
+                        verdict = f"rejected_{k}"
+                        break
+                if verdict is None:
+                    if "optical_flatness" in untested:
+                        verdict = "clean_optical_untested"
+                    elif untested:
+                        verdict = "clean_checks_untested"
+                    else:
+                        verdict = "clean"
+                v["verdict"] = verdict
     vdf = pd.DataFrame(vets)
     if len(vdf):
         vetted = cands.merge(vdf, on="source_id", how="left", suffixes=("", "_vet"))
         vetted = vetted.rename(columns={"verdict": "vet_verdict"})
     else:
         vetted = cands.assign(vet_verdict=pd.Series(dtype=str))
-    survivors = vetted[vetted["vet_verdict"].isin(["clean", "clean_optical_untested"])] \
+    survivors = vetted[vetted["vet_verdict"].astype(str).str.startswith("clean")] \
         if len(vetted) else vetted
     gold = vetted[vetted["vet_verdict"] == "clean"] if len(vetted) else vetted
     vetted.to_csv(out / "stars_vetted.csv", index=False)
@@ -1241,7 +1343,9 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
                         "w2_n_epochs", "w2_baseline_yr", "w2_slope_mag_yr", "w2_slope_sigma",
                         "w2_tau_rise", "w2_tau_p", "w2_rise_mag", "w2_rise_sigma",
                         "w2_mono_frac", "w2_delta_bic", "w2_scan_amp_mag",
-                        "star_rise_w2_minus_w1_mag", "vet_verdict", "flags", "optical",
+                        "star_rise_w2_minus_w1_mag", "rise_colour", "rise_colour_ratio",
+                        "rise_colour_err", "rise_colour_z", "neighbour", "neighbour_pred_dmag",
+                        "gaia_scatter", "vet_verdict", "flags", "optical",
                         "optical_slope_sigma", "untested_checks", "shard_file")
             if c in survivors.columns]
     survivors[slim].to_csv(out / "candidates.csv", index=False)
@@ -1251,6 +1355,8 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         for k, v in (s.get("screen_counts") or {}).items():
             screen_counts[k] = screen_counts.get(k, 0) + int(v)
     verdict = VERDICT_CANDIDATES if len(survivors) else VERDICT_NONE
+    if online_rec:
+        (out / "vet_online.json").write_text(json.dumps(online_rec, indent=1, default=str))
     if degraded:
         verdict = f"{DEGRADED} ({'; '.join(degraded)}); {verdict}"
     summary = {
@@ -1265,6 +1371,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         "sensitivity": _aggregate_sensitivity(screens),
         "coverage": coverage, "ensemble": ensemble,
         "shards": shards, "degraded": degraded, "offline": bool(offline),
+        "online_vet": bool(online_vet),
         "optical_dir": str(optical_dir) if optical_dir else None,
         "config": {"rise": conf["rise"], "vet": {k: v for k, v in vc.items()
                                                   if k != "star_forming_boxes"}},
@@ -1291,7 +1398,8 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
                  asu_fetch_fn=None, vizier: bool = True, irsa_fetch_fn=None,
                  irsa: bool = True, n_shards_expected: int | None = None,
                  time_budget_s: float | None = None, max_tiles: int | None = None,
-                 tile_deg: float | None = None) -> dict:
+                 tile_deg: float | None = None, online_vet: bool = False,
+                 vet_fetchers: dict | None = None) -> dict:
     """Run one stage, a comma list, or all of them.  Returns the last report."""
     conf = conf if conf is not None else load_ignition_config(config_path)
     if tile_deg:
@@ -1324,7 +1432,8 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
             rep = stage_screen(conf, out, shard=shard, n_shards=n_shards, seed=seed)
         elif s == "assess":
             n_exp = n_shards_expected or (n_shards if stage == "all" else None)
-            rep = stage_assess(conf, out, n_shards_expected=n_exp, optical_dir=optical_dir)
+            rep = stage_assess(conf, out, n_shards_expected=n_exp, optical_dir=optical_dir,
+                               online_vet=online_vet, vet_fetchers=vet_fetchers)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from "
                              f"{STAGES + EXTRA_STAGES + ('all',)}")
@@ -1364,6 +1473,9 @@ def main(argv=None):
                    help="do not fall back to the VizieR ASU route when neither the ESA "
                         "archive nor the IRSA route answers")
     p.add_argument("--seed", type=int, default=20260913)
+    p.add_argument("--online-vet", action="store_true",
+                   help="assess: run the archive rungs of the ladder (Gaia neighbours, "
+                        "ZTF/ASAS-SN optical trend, Gaia scatter) on the survivors")
     a = p.parse_args(argv)
     shard, n = parse_shard(a.shard)
     n_shards = a.shards or n
@@ -1373,7 +1485,7 @@ def main(argv=None):
                        config_path=a.config or None, vizier=not a.no_vizier,
                        irsa=not a.no_irsa, n_shards_expected=(a.shards or None),
                        time_budget_s=(a.budget_s or None), max_tiles=(a.max_tiles or None),
-                       tile_deg=(a.tile_deg or None))
+                       tile_deg=(a.tile_deg or None), online_vet=a.online_vet)
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[ignition] verdict: {v}")

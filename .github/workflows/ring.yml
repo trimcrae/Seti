@@ -272,9 +272,42 @@ jobs:
             !results/ring/${{ matrix.leg }}/chunks
           if-no-files-found: warn
 
-  bd:
+  # One brown-dwarf target list per run, fetched ONCE and handed to every
+  # NEOWISE shard (scripts/ring_bd_handoff.py).  Before, shard 0 fetched it
+  # fresh while shards > 0 read the checked-out targets.csv of an EARLIER run,
+  # so one run's shards could partition two different lists.
+  bd-targets:
     needs: [plan]
-    if: ${{ needs.plan.outputs.has_bd == 'true' && github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' }}
+    if: ${{ needs.plan.outputs.has_bd == 'true' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Purge the checked-out target list
+        run: rm -f results/ring/bd/targets.csv results/ring/bd/acquire_targets.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch the bd target list once
+        run: python -u scripts/ring_bd_handoff.py targets
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ring-bd-targets
+          path: |
+            results/ring/bd/targets.csv
+            results/ring/bd/acquire_targets.json
+          if-no-files-found: warn
+
+  bd:
+    needs: [plan, bd-targets]
+    if: ${{ always() && needs.plan.outputs.has_bd == 'true' && github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' }}
     runs-on: ubuntu-latest
     timeout-minutes: 340
     strategy:
@@ -286,10 +319,10 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
       # Shard hygiene (docs/channel-brief.md §0.7): drop earlier runs' per-shard
-      # NEOWISE records.  targets.csv / acquire_targets.json stay: shards > 0
-      # read them (run.py::stage_acquire) and only shard 0 uploads them.
+      # NEOWISE records AND the checked-out target list; the list comes from
+      # this run's bd-targets job.
       - name: Purge checkout-inherited shard outputs
-        run: rm -f results/ring/bd/acquire_shard*.json results/ring/bd/acquire_bd_shard*.json results/ring/bd/epochs_bd_shard*.csv results/ring/bd/neowise_stars_bd_shard*.csv
+        run: rm -f results/ring/bd/acquire_shard*.json results/ring/bd/acquire_bd_shard*.json results/ring/bd/epochs_bd_shard*.csv results/ring/bd/neowise_stars_bd_shard*.csv results/ring/bd/targets.csv results/ring/bd/acquire_targets.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -297,10 +330,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # A missing list is NOT refetched here: the shard then records
+      # NO_DATA_REACHED rather than acquiring a list of its own.
+      - name: Take this run's target list
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ring-bd-targets
+          path: ${{ runner.temp }}/bd_targets/
       - name: Acquire NEOWISE epochs (shard ${{ matrix.shard }} of ${{ github.event.inputs.bd_shards || '3' }})
         if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire' }}
         run: |
-          python -u -m seti.ring.run --stage acquire --leg bd \
+          python -u scripts/ring_bd_handoff.py acquire \
+            --targets "$RUNNER_TEMP/bd_targets" \
             --shard ${{ matrix.shard }}/${{ github.event.inputs.bd_shards || '3' }}
       - uses: actions/upload-artifact@v4
         if: always()
@@ -310,18 +353,16 @@ jobs:
           # plus run.py's acquire_shard<i>.json).  The whole of bd/ carried the
           # checked-out targets.csv / screen.json / bd_screened.csv into every
           # shard's artifact, and `assess` merges them with merge-multiple.
-          # The target list travels once, from shard 0, which built it.
+          # The target list travels once, as the ring-bd-targets artifact.
           path: |
             results/ring/bd/epochs_bd_shard${{ matrix.shard }}.csv
             results/ring/bd/neowise_stars_bd_shard${{ matrix.shard }}.csv
             results/ring/bd/acquire_bd_shard${{ matrix.shard }}.json
             results/ring/bd/acquire_shard${{ matrix.shard }}.json
-            ${{ matrix.shard == 0 && 'results/ring/bd/targets.csv' || '' }}
-            ${{ matrix.shard == 0 && 'results/ring/bd/acquire_targets.json' || '' }}
           if-no-files-found: warn
 
   assess:
-    needs: [plan, probe, leg, bd]
+    needs: [plan, probe, leg, bd-targets, bd]
     # `always()` must not mean "also when the sharded path was never chosen":
     # in solo mode every job it needs is skipped, and an assess job running on
     # an empty results/ring would race the solo job's commit with a verdict
@@ -360,6 +401,12 @@ jobs:
         with:
           pattern: ring-bd-shard-*
           merge-multiple: true
+          path: results/ring/bd/
+      - uses: actions/download-artifact@v4
+        if: ${{ needs.plan.outputs.has_bd == 'true' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire') }}
+        continue-on-error: true
+        with:
+          name: ring-bd-targets
           path: results/ring/bd/
       - uses: actions/download-artifact@v4
         continue-on-error: true

@@ -58,19 +58,44 @@ permissions:
   contents: write
 
 jobs:
+  # ---------------------------------------------------------------- plan
+  # The matrix is derived from n_shards.  It used to be a literal [0, 1]
+  # while the acquire command fell back to n_shards=4, so an empty input ran
+  # shards 0 and 1 of 4 and silently never fetched half the interleaved sky.
+  plan:
+    if: ${{ github.event.inputs.skip_acquire != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.mk.outputs.shards }}
+      n: ${{ steps.mk.outputs.n }}
+    steps:
+      - id: mk
+        env:
+          N: ${{ github.event.inputs.n_shards || '2' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          n = max(1, int(os.environ["N"] or 2))
+          print("n=" + str(n))
+          print("shards=" + json.dumps(list(range(n))))
+          PY
+
   # ---------------------------------------------------------------- acquire
   acquire:
+    needs: plan
     if: ${{ github.event.inputs.skip_acquire != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 330
     strategy:
       fail-fast: false
-      # Two shards, not four: the Gaia TAP async endpoint returns transient
-      # 500s under concurrent load, and four shards were rate-limiting us into
-      # our own retry budget. Two halves the wall clock without the self-DoS.
+      # At most two at once: the Gaia TAP async endpoint returns transient
+      # 500s under concurrent load, and four concurrent shards were
+      # rate-limiting us into our own retry budget.  More shards than two
+      # simply queue behind this cap.
       max-parallel: 2
       matrix:
-        shard: [0, 1]
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -96,7 +121,7 @@ jobs:
             --g-max "${{ github.event.inputs.g_max || '17.0' }}" \
             --stride "${{ github.event.inputs.stride || '20' }}" \
             --shard ${{ matrix.shard }} \
-            --n-shards "${{ github.event.inputs.n_shards || '4' }}"
+            --n-shards "${{ needs.plan.outputs.n }}"
           cat results/tidemark/parent/acquire_status_shard*.json || true
       # Only this shard's own pair (cli.py: tag _shard<NN>; unsuffixed when
       # n_shards <= 1).

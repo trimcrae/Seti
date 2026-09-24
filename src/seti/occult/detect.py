@@ -802,6 +802,37 @@ def _refine(ev, fit0, regime, uth, conf, kind="occult", shape_starts=()):
     return fit_model(ev, kind, starts, conf, rho_l_bounds=bounds)
 
 
+def profile_rho_l(ev: Event, fit: Fit, conf: dict, frac: float = 0.25, n: int = 26) -> Fit:
+    """Profile chi^2 over rho_l with every shape parameter re-fitted at each value.
+
+    In the central-hole regime rho_l trades against tE and u0 (the horns fix
+    the product, not each), and a single optimiser run lands on whichever
+    point of that valley it reaches first --- platform-dependent to ~10 %.
+    Walking the valley from the fitted point outward, warm-starting each
+    step, finds the actual minimum.
+    """
+    best = fit
+    for direction in (1.0, -1.0):
+        cur = fit
+        for k in range(1, n // 2 + 1):
+            r = fit.rho_l * (1.0 + direction * frac * k / (n // 2))
+            if r <= 1.0001:
+                break
+            f2 = fit_model(ev, fit.kind, [(cur.t0, cur.te, cur.u0, cur.rho, r)], conf,
+                           rho_l_bounds=(r * (1 - 1e-6), r * (1 + 1e-6)))
+            if f2 is None:
+                break
+            cur = f2
+            if f2.chi2 < best.chi2:
+                best = f2
+    if best is not fit:          # polish the winner with rho_l free again
+        f3 = fit_model(ev, fit.kind, [(best.t0, best.te, best.u0, best.rho, best.rho_l)], conf,
+                       rho_l_bounds=(1.0001, 20.0))
+        if f3 is not None and f3.chi2 < best.chi2:
+            best = f3
+    return best
+
+
 def excess_centroid(ev: Event) -> float | None:
     """Time centroid of the above-baseline flux in the densest dataset.
 
@@ -925,6 +956,9 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
 
     b_occ = best_refined(cand, "occult")
     b_anti = best_refined(anti, "anti")
+    if b_occ is not None and b_occ[2] == "hole" and b_occ[1] > conf["dchi2_floor"]:
+        b_occ = (profile_rho_l(ev2, b_occ[0], conf), None, "hole")
+        b_occ = (b_occ[0], f0.chi2 - b_occ[0].chi2, "hole")
     rec["dchi2_anti"] = float(b_anti[1]) if b_anti else 0.0
     if b_occ is None or b_occ[1] <= 0:
         rec["dchi2"] = 0.0

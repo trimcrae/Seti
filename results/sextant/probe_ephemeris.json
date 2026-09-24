@@ -1,5 +1,8 @@
 {
  "budget_minutes": 22.0,
+ "error": "RuntimeError: object list unavailable: NO_DATA_REACHED [\"object catalogue query failed: TAP query failed after 4 attempts: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))\"]",
+ "finished_utc": "2026-09-24T21:18:17Z",
+ "horizons_calls": 27,
  "perturbers": {
   "labels": [
    "sun",
@@ -93,5 +96,6 @@
  },
  "stage": "probe",
  "started_utc": "2026-09-24T17:13:21Z",
- "verdict": "NOT_RUN"
+ "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/Seti/Seti/src/seti/sextant/run.py\", line 1049, in stage_probe\n    objs = load_gaia_objects(paths, gaia, conf[\"release\"], log=log)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Seti/Seti/src/seti/sextant/run.py\", line 929, in load_gaia_objects\n    raise RuntimeError(f\"object list unavailable: {res.verdict} {res.notes}\")\nRuntimeError: object list unavailable: NO_DATA_REACHED [\"object catalogue query failed: TAP query failed after 4 attempts: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))\"]\n",
+ "verdict": "PROBE_FAILED"
 }

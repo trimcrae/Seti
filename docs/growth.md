@@ -1386,3 +1386,22 @@ with their fates:
 The vet job of that run found `n_candidates = 0` and vetted nothing, which is
 consistent with the table above. The rows here are not candidates and none is
 written up.
+
+**Resume run 35859780689 (2026-09-23).** Shards 1, 6, 7 and 14 finished
+(282/311/276/287 rows; 158 + 79 + 93 + 67 + 22 rows redone because their TIC
+had never been checked); every shard file now holds all its targets (4,725
+rows, 0 NOT_REACHED, 0 pending TIC recheck). **Its committed `summary.json`
+(12:48:41Z) does not describe those files**: it says 4,358 rows and 368
+NOT_REACHED. Cause: each measure artifact was globbed `shard_*.csv` and so
+carried stale copies of the other shards; assess's `merge-multiple` let an
+early shard's stale copy overwrite a late shard's result. Fixed (each shard
+uploads only its own files; `tests/test_growth_direct_workflow.py`); assess
+re-dispatched. Re-aggregated offline from the committed shard files: light
+curves 4,239; TESS depth in both families 3,764 / 3,788; measurable 351; both
+305; **candidates 0**; classes shallower_tess 8 (the same eight SAP-dilution
+cases), deeper_tess 2 (Kepler-1513 b, vetoed as above; **Kepler-145 c**:
+SAP 1,781 ± 196 vs Kepler 397 ppm, z_pop +3.0, PDCSAP 847 ± 239, z_pop +0.1,
+3 transits — a SAP-only excess that PDCSAP does not share, below the gate, in
+a system with known TTVs), transit_not_recovered 46. K07865.01 drops from
+`crowding_correction` to `consistent` only because the larger population
+rescaled its PDCSAP z_pop from 5.3 to 4.9; the trace is unchanged.

@@ -26,7 +26,7 @@ import pandas as pd
 
 from ..knell.acquire import AcquisitionLog, fetch_gcvs_region, fetch_vsx_region
 from .api import numeric, pick_column, querycat, queryexps
-from .lightcurve import any_time_to_year
+from .lightcurve import any_time_to_year, str_values
 from .step import MENZEL_GAP_END, MENZEL_GAP_START
 from .vet import is_lpv_type, is_periodic_type
 
@@ -135,7 +135,8 @@ def exposure_table(df: pd.DataFrame) -> pd.DataFrame:
     scol = pick_column(df, ("series", "plate_series"))
     if ecol is None or scol is None:
         return pd.DataFrame(columns=[*EXPOSURE_KEY_COLS, "exptime_min"])
-    out = pd.DataFrame({"series": df[scol].astype(str).str.strip().str.lower()})
+    out = pd.DataFrame({"series": pd.Series(str_values(df[scol]), index=df.index)
+                        .str.strip().str.lower()})
     for key, cands in (("platenum", ("platenum", "plate_number")),
                        ("mosnum", ("mosnum", "mosaic_number")),
                        ("expnum", ("expnum", "exposure_number"))):

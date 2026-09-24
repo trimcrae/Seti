@@ -604,3 +604,29 @@ no-data codes — a run that reached nothing must never print as a science null.
   the archive that no request was ever made to support.
 * **A null here changes the question, it is not a result.** Per `CLAUDE.md`,
   this channel does not produce an occurrence-limit paper.
+
+## 12. Run 35862579322 — the sweep that died on its first star
+
+Target selection worked: 100,996 VSX rows → **2,400 pulsators** (RR Lyrae 710,
+Cepheids 700, Miras 500, δ Scuti/HADS 234, SRa 150, RV Tau 106; 1,797 RR Lyrae
+and 709 Miras were eligible before the caps) plus 480 bright field stars, 14
+shards. Every shard's acquire then raised in ~3 s on its **first** light curve:
+
+```
+lightcurve.py: plate = "_".join(...)  TypeError: sequence item 3: expected str instance, float found
+```
+
+DR7 serves some rows with an empty mosaic/exposure number, and under pandas 3
+`Series.astype(str)` keeps NaN as NaN (pandas 2 wrote `"nan"`) — the §6.2
+class of hazard, in a spelling the pandas-3 sweep did not catch. The exception
+escaped before `acquire_summary.json` was written, so assess saw no acquire
+reports and reported `NO_SHARDS_PRESENT`, which pointed at the workflow
+instead of the exception. Three fixes (`tests/test_century_sweep_crash.py`,
+now in the sweep's offline gate):
+
+1. `lightcurve.str_values` replaces `Series.astype(str)` wherever identifiers
+   are built (missing → `""`, `123.0` → `"123"`);
+2. a light curve that fails to parse is a per-star `lightcurve_parse_failed`
+   (`n_parse_failed` in the shard report), never a dead shard;
+3. shard directories without any acquire report now read `ACQUIRE_CRASHED`,
+   distinct from `NO_SHARDS_PRESENT`.

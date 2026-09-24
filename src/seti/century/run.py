@@ -689,7 +689,7 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
                extra={"status": pr.status, "body_head": pr.body_head[:200]})
 
     t0 = _time.monotonic()
-    n_fetched = n_failed = n_empty = n_skipped = 0
+    n_fetched = n_failed = n_empty = n_skipped = n_parse_failed = 0
     consecutive = 0
     truncated = False
     since_ckpt = 0
@@ -738,7 +738,21 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
             _time.sleep(pause)
             continue
         consecutive = 0
-        lc = from_api_frame(lr.frame, a, b, default_err=float(conf["lightcurve"]["default_err"]))
+        try:
+            lc = from_api_frame(lr.frame, a, b,
+                                default_err=float(conf["lightcurve"]["default_err"]))
+        except Exception as exc:                          # noqa: BLE001
+            # One malformed light curve must cost that star, never the shard:
+            # run 35862579322 lost all 14 shards on their first star to an
+            # exception here, wrote no acquire_summary.json, and assess then
+            # (correctly) reported NO_SHARDS_PRESENT.  A parse failure is a
+            # NON-measurement with the exception verbatim.
+            rec.update({"status": "lightcurve_parse_failed", "error": repr(exc)[:300],
+                        "n_rows": lr.n_rows, "columns": lr.columns[:30]})
+            n_parse_failed += 1
+            _append(status_path, rec)
+            _time.sleep(pause)
+            continue
         if lc is None or lc.n_det == 0:
             rec.update({"status": "empty_lightcurve", "n_rows": lr.n_rows,
                         "columns": lr.columns[:30]})
@@ -795,7 +809,8 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
                                       "elapsed_s": round(_time.monotonic() - t0, 1)})
     rep = {"stage": "acquire", "shard": list(shard), "n_targets": int(len(mine)),
            "n_fetched": n_fetched, "n_failed": n_failed, "n_empty": n_empty,
-           "n_resumed": len(prev), "truncated": truncated, "flag_source": flag_src,
+           "n_parse_failed": n_parse_failed, "n_resumed": len(prev), "truncated": truncated,
+           "flag_source": flag_src,
            "service_probe_ok": bool(pr.ok), "exptime": meta_exptime,
            "verdict": ("NO_DATA_REACHED" if (n_fetched + len(prev)) == 0 and not pr.ok
                        else "NO_LIGHTCURVES" if (n_fetched + len(prev)) == 0
@@ -1317,7 +1332,15 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
     # archive that no request was ever made to support.  Observed 2026-09-22:
     # run 35748748365 was cancelled between its targets and sweep jobs, and
     # its `assess` job --- guarded by `if: always()` --- was still scheduled.
-    if not acq_reps:
+    shard_dirs_present = bool(glob.glob(str(out_root / "shards" / "*" / "screen_summary.json"))
+                              or glob.glob(str(out_root / "shards" / "*" / "acquire.jsonl")))
+    if not acq_reps and shard_dirs_present:
+        # Shards ran and uploaded, but no acquire stage finished: it CRASHED.
+        # Run 35862579322 read as NO_SHARDS_PRESENT for exactly this reason,
+        # which pointed at the workflow rather than at the exception.
+        verdict = "ACQUIRE_CRASHED"
+        degraded.append("acquire_stage_raised_in_every_shard")
+    elif not acq_reps:
         verdict = "NO_SHARDS_PRESENT"
     elif n_attempted == 0 and n_targets == 0:
         verdict = "NO_TARGETS"
@@ -1333,7 +1356,8 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
         verdict = "CANDIDATES_ALL_TRACED"
     else:
         verdict = "SURVIVORS_FOR_FOLLOWUP"
-    if degraded and verdict not in ("NO_DATA_REACHED", "NO_TARGETS", "NO_SHARDS_PRESENT"):
+    if degraded and verdict not in ("NO_DATA_REACHED", "NO_TARGETS", "NO_SHARDS_PRESENT",
+                                    "ACQUIRE_CRASHED"):
         verdict_full = f"{verdict} — DEGRADED ({', '.join(degraded)})"
     else:
         verdict_full = verdict

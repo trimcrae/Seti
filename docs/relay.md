@@ -496,7 +496,7 @@ expectation is what geometry predicts. Dispatched on `claude/handoff-relay`
 with `stage=probe,targets,geometry,recut,assess,targetlist`; the numbers land
 in `targetlist.json`.
 
-### 9.3 What the runner measured (runs 35992222801 → 35993…, re-reduced on run 35745111146's intermediates)
+### 9.3 What the runner measured (runs 35992222801 → 35993290807, re-reduced on run 35745111146's intermediates)
 
 Run 35860719426 died at its 300-min clock: BL's open-data API returned 503 (the
 targets stage fell back to 30,102 VizieR names and spent ~3 h in SIMBAD) and

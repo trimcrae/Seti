@@ -253,6 +253,28 @@ class CenturyLC:
         )
 
 
+def str_values(col) -> np.ndarray:
+    """A column as an object array of Python strings, ``""`` where missing.
+
+    Not ``Series.astype(str)``: under pandas 3 that returns the new ``str``
+    dtype, which KEEPS missing values as NaN (pandas 2 wrote ``"nan"``).  Run
+    35862579322 lost all 14 sweep shards to exactly that --- one DR7 light
+    curve with an empty ``mosnum`` made ``"_".join`` meet a float and raise on
+    the first star of every shard.  Integer-valued floats (``123.0``, what a
+    CSV column with one gap reads back as) are written without the ``.0``.
+    """
+    out = []
+    for v in (col.tolist() if hasattr(col, "tolist") else list(col)):
+        if v is None or (isinstance(v, float) and not np.isfinite(v)) or v is pd.NA \
+                or v is pd.NaT:
+            out.append("")
+        elif isinstance(v, (float, np.floating)) and float(v).is_integer():
+            out.append(str(int(v)))
+        else:
+            out.append(str(v))
+    return np.array(out, dtype=object)
+
+
 def from_api_frame(df: pd.DataFrame, aflags: FlagDefs | None = None,
                    bflags: FlagDefs | None = None, *, exptime_unit: str = "auto",
                    default_err: float = 0.15) -> CenturyLC | None:
@@ -281,7 +303,7 @@ def from_api_frame(df: pd.DataFrame, aflags: FlagDefs | None = None,
     if unit == "seconds":
         exptime = exptime / 60.0
     scol = pick_column(df, SERIES_COLS)
-    series = (df[scol].astype(str).to_numpy() if scol is not None
+    series = (str_values(df[scol]) if scol is not None
               else np.full(len(df), "unknown", dtype=object))
     pn = pick_column(df, PLATENUM_COLS)
     mn = pick_column(df, MOSNUM_COLS)
@@ -289,7 +311,7 @@ def from_api_frame(df: pd.DataFrame, aflags: FlagDefs | None = None,
     parts = [series.astype(str)]
     for c in (pn, mn, en):
         if c is not None:
-            parts.append(df[c].astype(str).to_numpy())
+            parts.append(str_values(df[c]))
     plate = np.array(["_".join(p) for p in zip(*parts, strict=False)], dtype=object)
 
     af = numeric(df, pick_column(df, AFLAG_COLS), default=0.0)
@@ -514,7 +536,7 @@ def attach_exptime(lc: CenturyLC, table: pd.DataFrame) -> dict:
     if table is None or not len(table) or "exptime_min" not in table.columns:
         return prov
     tab = table.copy()
-    tab["series"] = tab["series"].astype(str).str.strip().str.lower()
+    tab["series"] = pd.Series(str_values(tab["series"]), index=tab.index).str.strip().str.lower()
     # The table makes a round trip through plate_exptime.csv, and a CSV column
     # with one empty cell reads back as float64 while `plate_ids` produces
     # Int64.  Merging those two dtypes matches nothing and would look like a

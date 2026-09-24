@@ -412,7 +412,13 @@ def test_shard_and_reduce_end_to_end(tmp_path, monkeypatch):
     assert st3["n_processed"] == 1 and st3["n_done_before"] == 2
     assert json.loads(stale.read_text())["ckpt_version"] == persist.CKPT_VERSION
 
+    # An interleaved checkpoint (run 35758868818: two artifact unpacks racing on
+    # one file) must be counted, not crash the reduce and lose the whole run.
+    (ck / "zzzz-9.json").write_text('{"spec_id": "zzzz-9", "lines": [{"wavel{"spec_id"')
     summ = persist.reduce_results(root, do_simbad=False, do_nist=False)
+    assert summ["n_checkpoints_unreadable"] == 1
+    assert summ["checkpoints_unreadable"] == ["zzzz-9.json"]
+    assert summ["generated_utc"].endswith("Z")       # a summary says when it was made
     tab = pd.read_csv(root / "results" / "spectra_persist" / "persistence.csv")
     by = tab.set_index("spec_id")
     assert by.loc[ids[0], "persistence_class"] == "persistent"
@@ -613,7 +619,7 @@ def test_desi_measure_at_reuses_the_frames_and_feeds_the_null():
     lam = 4500.0
     at = persist.desi_measure_at(_desi_collected(lam, [1.0] * 4), "emission")
     coadd, ex = at(lam)
-    assert coadd is None                       # the cframe route has no coadd
+    assert coadd is None                       # no coadd arrays given, nothing to measure
     assert len(ex) == 4 and all(e["testable"] for e in ex), ex
     assert all(e["sig"] > 4.0 for e in ex), [e["sig"] for e in ex]
     cls = persist.classify_persistence(None, ex)
@@ -901,6 +907,7 @@ def test_controls_writes_after_every_line_and_stops_on_its_clock(tmp_path, monke
                    "simbad_otype": "LM*", "simbad_sptype": "M1V"} for k in range(4)]
                  ).to_csv(out / "persistence.csv", index=False)
     monkeypatch.setattr(persist, "_make_client", lambda *a, **k: _FakeSparcl(6800.0))
+    monkeypatch.setattr(persist, "_fetch_sdss_coadd", lambda *a, **k: None)   # no network
     rep = persist.controls(tmp_path, n=3, max_seconds=0.0)
     assert rep["stopped_early"] and rep["n"] == 1 and rep["n_lines_selected"] == 4
     on_disk = json.loads((out / "control.json").read_text())
@@ -1134,3 +1141,227 @@ def test_json_safe_keeps_a_pixel_window_but_drops_a_whole_spectrum():
                               "spectrum": {"wave": big, "flux": big.tolist()}})
     assert out["window"] == {"wave": [1.0, 2.0], "flux": [3.0, 4.0]}
     assert out["spectrum"] == {}
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-23: the checkpoint merge, the LSF unit, and the rebuilt controls
+# ---------------------------------------------------------------------------
+
+def test_merge_checkpoints_picks_the_fresh_whole_file_never_the_race(tmp_path):
+    """Run 35758868818: each shard uploaded the whole ckpt directory, the
+    reduce unpacked both archives concurrently into one place, and where both
+    held a file the writes raced -- 14 files interleaved (not JSON), 35 left
+    as the stale copy.  The merge must choose per file, deterministically."""
+    dest = tmp_path / "ckpt"
+    inc = tmp_path / "incoming"
+    for d in (dest, inc / "persist-ckpt-0", inc / "persist-ckpt-1"):
+        d.mkdir(parents=True)
+    v = persist.CKPT_VERSION
+    fresh = {"spec_id": "a", "ckpt_version": v, "code_sha": "abc123", "lines": [1]}
+    stale = {"spec_id": "a", "ckpt_version": v - 3, "lines": [0]}
+    # dest holds a corrupt copy, shard 1 the stale one, shard 0 the fresh one.
+    (dest / "a.json").write_text('{"spec_id": "a", "li{"spec_id"')
+    (inc / "persist-ckpt-1" / "a.json").write_text(json.dumps(stale))
+    (inc / "persist-ckpt-0" / "a.json").write_text(json.dumps(fresh))
+    # b: only a stale copy anywhere -> kept (the run will re-measure it).
+    (dest / "b.json").write_text(json.dumps({"spec_id": "b", "ckpt_version": v - 1}))
+    # c: corrupt everywhere -> left as is, reported.
+    (dest / "c.json").write_text("{broken")
+    (inc / "persist-ckpt-1" / "c.json").write_text("{also broken")
+    st = persist.merge_checkpoints(dest, inc, prefer_sha="abc123")
+    assert json.loads((dest / "a.json").read_text()) == fresh
+    assert json.loads((dest / "b.json").read_text())["ckpt_version"] == v - 1
+    assert st["unreadable_kept"] == ["c.json"] and st["n_unreadable_dropped"] == 1
+    # Order-independent: the same inputs the other way round give the same file.
+    (dest / "a.json").write_text(json.dumps(stale))
+    persist.merge_checkpoints(dest, inc, prefer_sha="abc123")
+    assert json.loads((dest / "a.json").read_text()) == fresh
+
+
+def test_sdss_lsf_column_is_in_pixels_not_angstroms():
+    """SDSS wdisp (SPARCL wave_sigma) is in log-lambda pixels.  Read as
+    angstroms it gave R = 3400-5100 -- impossible for the SDSS spectrographs --
+    and made every candidate look 2-4x broader than the LSF."""
+    lam = 8578.3
+    loglam = np.arange(np.log10(8400), np.log10(8700), 1e-4)
+    w = 10.0 ** loglam
+    ws = np.full(w.size, 0.73)                     # the value run 35751666444 saw
+    as_A = persist.lsf_fwhm_measured(w, ws, lam)
+    sdss = persist.lsf_fwhm_measured(w, ws, lam, release="SDSS-DR17")
+    assert abs(as_A - 1.719) < 0.01
+    assert abs(sdss - 2.3548 * 0.73 * lam * np.log(10) * 1e-4) < 1e-6
+    assert 2000 < lam / sdss < 2700 and lam / as_A > 4000
+    # Any other release keeps the angstrom reading.
+    assert persist.lsf_fwhm_measured(w, ws, lam, release="DESI-DR1") == as_A
+
+
+def test_lsf_from_sky_recovers_the_instrumental_width():
+    """Airglow lines are unresolved, so fitting them in the same spectrum gives
+    the LSF with no unit convention to get wrong."""
+    loglam = np.arange(np.log10(6500), np.log10(7100), 1e-4)
+    w = 10.0 ** loglam
+    fwhm = 3.3
+    rng = np.random.default_rng(5)
+    sky = 5.0 + rng.normal(0, 0.05, w.size)
+    for lc, a in ((6650.0, 40), (6700.0, 60), (6760.0, 30), (6830.0, 50), (6900.0, 45)):
+        sky += _gauss(w, lc, a, fwhm / 2.3548)
+    got = persist.lsf_from_sky(w, sky, 6800.0)
+    assert got["lsf_sky_n"] >= 4, got
+    assert abs(got["lsf_sky_fwhm_A"] - fwhm) < 0.15, got
+    assert persist.lsf_from_sky(w, None, 6800.0)["lsf_sky_n"] == 0
+
+
+def _epochs(lam_ha, z, amps, n_ep=9, noise=0.4, seed=21, companions=True):
+    """Epoch spectra of a star with a faint background galaxy's lines."""
+    from seti.spectra.galaxy_reject import GALAXY_LINES
+    rng = np.random.default_rng(seed)
+    loglam = np.arange(np.log10(3800), np.log10(9200), 1e-4)
+    w = 10.0 ** loglam
+    out = []
+    for _k in range(n_ep):
+        f = 20.0 + rng.normal(0, noise, w.size)
+        sig = persist.lsf_fwhm_A(lam_ha, "SDSS-DR17") / 2.3548
+        f += _gauss(w, lam_ha, 6.0, sig)
+        if companions:
+            for name, a in amps.items():
+                f += _gauss(w, GALAXY_LINES[name] * (1 + z), a, sig)
+        out.append({"wave": w, "flux": f, "ivar": np.full(w.size, 1 / noise ** 2)})
+    return out
+
+
+def test_nebular_family_stacks_epochs_and_calibrates_against_its_null():
+    """One SDSS epoch of an M dwarf is too shallow to see [N II] at 0.3 x Halpha;
+    nine epochs are three times deeper.  And a spectrum with no galaxy must not
+    produce one."""
+    z = 0.037268
+    lam = 6564.61 * (1 + z)
+    amps = {"[NII]6584": 0.9, "[SII]6716": 0.8, "[OIII]5007": 0.8, "Hb4862": 0.8}
+    single = persist.nebular_family_calibrated(_epochs(lam, z, amps, n_ep=1), lam, "SDSS-DR17")
+    many = persist.nebular_family_calibrated(_epochs(lam, z, amps, n_ep=9), lam, "SDSS-DR17")
+    ha_1 = next(a for a in single["anchors"] if a["anchor"] == "Ha6563")
+    ha_9 = next(a for a in many["anchors"] if a["anchor"] == "Ha6563")
+    assert ha_9["n_companions_ge3_cal"] >= 3, ha_9
+    assert ha_9["n_companions_ge3_cal"] > ha_1["n_companions_ge3_cal"]
+    assert many["best"]["anchor"] == "Ha6563" and abs(many["best"]["z"] - z) < 1e-4
+    none = persist.nebular_family_calibrated(_epochs(lam, z, amps, n_ep=9, companions=False),
+                                             lam, "SDSS-DR17")
+    assert none["best"]["n_companions_ge3_cal"] <= 1, none["best"]
+
+
+def test_fibre_neighbours_see_crosstalk_and_a_column():
+    """A bright line in the adjacent fibre at the same wavelength makes a
+    cross-talk copy; a detector column puts the feature in many fibres."""
+    lam = 6809.26
+    loglam = np.arange(np.log10(6500), np.log10(7100), 1e-4)
+    w = 10.0 ** loglam
+    sig = lam / 2000 / 2.3548
+
+    def mk(amp, seed):
+        rng = np.random.default_rng(seed)
+        return {"wave": w, "flux": 10 + rng.normal(0, 0.05, w.size) + _gauss(w, lam, amp, sig),
+                "ivar": np.full(w.size, 400.0), "wdisp": np.full(w.size, 0.9)}
+
+    def fetch_xt(plate, mjd, fiber, run2d):
+        return mk({465: 0.5, 466: 60.0}.get(fiber, 0.0), fiber)
+    got = persist.sdss_fibre_neighbours(412, 51942, 465, "26", lam, "emission", 3.3,
+                                        n_random=10, fetch=fetch_xt)
+    assert got["crosstalk_plausible"], got["neighbours"]
+    assert got["same_plate"]["frac_ge5"] == 0.0
+    assert abs(got["lsf_file_wdisp_fwhm_A"] - 2.3548 * 0.9 * persist.sdss_pixel_A(lam)) < 1e-6
+    assert all(321 <= n["fiber"] <= 640 for n in got["neighbours"])   # same spectrograph
+
+    def fetch_col(plate, mjd, fiber, run2d):
+        return mk(1.0, fiber)
+    col = persist.sdss_fibre_neighbours(412, 51942, 465, "26", lam, "emission", 3.3,
+                                        n_random=10, fetch=fetch_col)
+    assert col["same_plate"]["frac_ge5"] > 0.8 and not col["crosstalk_plausible"]
+
+
+class _TypedSparcl(_FakeSparcl):
+    """A star pool whose subclass is only available through retrieve."""
+
+    def find(self, outfields=None, constraints=None, limit=None):
+        assert "subclass" not in (constraints or {})       # SPARCL: UnknownField
+        return [{"sparcl_id": f"c{k:03d}", "redshift": 0.0} for k in range(60)]
+
+    def retrieve(self, uuid_list=None, include=None, dataset_list=None):
+        if include and "flux" not in include and "wavelength" not in include:
+            return [{"sparcl_id": u, "subclass": "M1" if int(u[1:]) % 3 == 0 else "K5"}
+                    for u in uuid_list]
+        rng = np.random.default_rng(17)
+        out = []
+        for u in uuid_list:
+            f = 10.0 + rng.normal(0, 0.05, self._wave.size)
+            if int(u[1:]) % 3 == 0:        # the M1 stars all have the feature
+                f = f + _gauss(self._wave, self.lam, 1.0, self.lam / 2000.0 / 2.3548)
+            out.append({"sparcl_id": u, "wavelength": self._wave, "flux": f,
+                        "ivar": np.full(self._wave.size, 1 / 0.05 ** 2)})
+        return out
+
+
+def test_same_type_sample_is_drawn_from_retrieved_subclasses():
+    """The first control run's same-type sample was a byte copy of the any-star
+    sample: find() refused `subclass`, the code fell back to any star with the
+    same seed.  A feature of the spectral type must show in the same-type
+    sample and not in the any-star one."""
+    lam = 6809.26
+    cl = _TypedSparcl(lam)
+    st = persist.same_type_sample(cl, "SDSS-DR17", lam, "emission", 0.0, "M1", n=15)
+    assert st["constraint"].startswith("subclass=M1"), st
+    assert st["n_matching"] == 20
+    assert st["obs_frame"]["frac_ge5"] > 0.9, st
+
+
+def test_desi_null_now_calibrates_the_coadd_too():
+    lam = 4500.0
+    wave = np.arange(3600.0, 5800.0, 0.8)
+    rng = np.random.default_rng(4)
+    co = {"wave": wave, "flux": 10 + rng.normal(0, 0.02, wave.size),
+          "ivar": np.full(wave.size, 2500.0)}
+    at = persist.desi_measure_at(_desi_collected(lam, [1.0] * 4), "emission", coadd=co)
+    c, ex = at(lam)
+    assert c is not None and c["testable"] and len(ex) == 4
+    null = persist.offset_null(at, lam, n=16, lo_A=12.0, hi_A=120.0)
+    assert null["n_coadd_measurements"] >= 12
+
+
+def test_recheck_line_runs_offline_and_writes_its_report(tmp_path, monkeypatch):
+    """The one-line recheck degrades honestly when nothing is reachable and
+    reports the pipeline class/z and line family when a lite file is."""
+    lam = 6856.46
+    loglam = np.arange(np.log10(3800), np.log10(9200), 1e-4)
+    w = 10.0 ** loglam
+    z = lam / 6564.61 - 1
+    sig = lam / 2000 / 2.3548
+    f = 10 + _gauss(w, lam, 3.0, sig) + _gauss(w, 6585.27 * (1 + z), 1.5, sig) \
+        + np.random.default_rng(1).normal(0, 0.05, w.size)
+    co = {"wave": w, "flux": f, "ivar": np.full(w.size, 400.0)}
+    monkeypatch.setattr(persist, "_sdss_lite_specobj", lambda *a, **k: {
+        "coadd": co, "specobj": {"class": "GALAXY", "z": z}})
+    monkeypatch.setattr(persist, "fetch_bytes", lambda *a, **k: None)
+    monkeypatch.setattr(persist, "_fetch_sdss_coadd", lambda *a, **k: None)
+    rep = persist.recheck_line(tmp_path, 2750, 54242, [547], lam, n_plate=5, n_other=5)
+    r = rep["fibres"][0]
+    assert "Ha6563" in r["lines_at_lam0_for_pipeline_z"]
+    assert r["coadd"]["sig"] > 5
+    assert rep["platelist_error"].startswith("unreachable")
+    assert (tmp_path / "results/spectra_persist/recheck_2750_54242_6856.json").exists()
+
+
+def test_parse_lamost_fits_both_layouts():
+    """LAMOST DR1-7 put flux/invvar/wavelength rows in the primary image; DR8+
+    use a binary table.  Both must come back as vacuum wave, flux, ivar."""
+    w = np.linspace(3700, 9000, 3909)
+    img = np.vstack([np.full(w.size, 5.0), np.full(w.size, 4.0), w,
+                     np.zeros(w.size), np.zeros(w.size)]).astype(np.float32)
+    buf = io.BytesIO()
+    fits.PrimaryHDU(img).writeto(buf)
+    a = persist._parse_lamost_fits(buf.getvalue())
+    assert a is not None and abs(a["wave"][0] - 3700) < 1e-3 and a["flux"][0] == 5.0
+    cols = [fits.Column(name=n, format=f"{w.size}E", array=[v]) for n, v in
+            (("FLUX", np.full(w.size, 7.0)), ("IVAR", np.ones(w.size)), ("WAVELENGTH", w))]
+    buf2 = io.BytesIO()
+    fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU.from_columns(cols)]).writeto(buf2)
+    b = persist._parse_lamost_fits(buf2.getvalue())
+    assert b is not None and b["flux"][10] == 7.0 and abs(b["wave"][-1] - 9000) < 1e-2
+    assert persist._parse_lamost_fits(b"not a fits file") is None

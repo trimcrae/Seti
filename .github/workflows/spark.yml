@@ -55,6 +55,10 @@ on:
         description: "Probe Euclid + Gaia only, no SPHEREx product download (true/false)"
         required: false
         default: "false"
+      skip_vet:
+        description: "Assess only; do not run the survivor neighbour vet (true/false)"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -252,11 +256,15 @@ jobs:
           pattern: spark-spherex-*
           merge-multiple: true
           path: results/spark/spherex/
-      - name: Assess (merge shards, cross-shard recurrence, trials)
+      - name: Assess, then vet the survivors against Euclid's own neighbours
         run: |
-          python -m seti.cli spark --stage assess --out-dir results/spark
+          STAGE="vet"
+          if [ "${{ github.event.inputs.skip_vet }}" = "true" ]; then STAGE="assess"; fi
+          python -m seti.cli spark --stage "$STAGE" --out-dir results/spark
           echo "=== summary ==="
           cat results/spark/summary.json || true
+          echo "=== vet ==="
+          cat results/spark/euclid/vet.json 2>/dev/null | head -100 || true
       - name: Commit results (ledgers only; bulk CSVs stay artifacts)
         if: always()
         run: |

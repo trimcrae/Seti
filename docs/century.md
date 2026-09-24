@@ -394,7 +394,68 @@ change, not another sweep of the same list: separate the pulsator population
 from the eclipsers, require a real catalogued amplitude rather than a NaN, and
 choose fields on plate *depth* (`limMagApass` p90) as well as plate count.
 
+### 6.4 The retargeting: pulsators, all sky (built 2026-09-23)
+
+§6.3's next action, done. `src/seti/century/pulsators.py` (pure, tested in
+`tests/test_century_pulsators.py`) and `targets.select_pulsators` build the
+cessation population from **AAVSO VSX over the whole sky** (TAPVizieR ADQL
+prefilter; `SELECT *` retry; astroquery VSX, then GCVS, as fallbacks — each
+route logged, and an unreached catalogue reported as `catalogue_source: none`,
+never as an empty sky):
+
+* **By type, not by field.** Cepheids (DCEP/CEP/ACEP/CW/BL Her/W Vir),
+  RV Tauri, RR Lyrae (all modes), HADS/SX Phe, Miras and SRa. Eclipsing,
+  ellipsoidal, rotational, irregular, SRB/SRC/L and every **uncertain** type
+  (`RRAB:`) are refused. The vet gains `geometric_period`, which kills a
+  cessation in an eclipser should one ever arrive through another route.
+* **A real amplitude.** `vsx_amplitude` is NaN unless the amplitude is a
+  number in one passband (`f_min="("`, or `min − max` with matching bands and
+  no fainter-than limit). A NaN is now a rejection (`amplitude_not_established`),
+  not a pass; `amp ≥ 0.3` mag.
+* **Bright enough for the plates, in B.** The estimated mean B (`max +
+  amp/2`, V moved by the class's typical B−V; R/I/NIR bands refused) must lie
+  in 8–14. This is a selection proxy only; DASCH measures every plate.
+* **Periods the plates can resolve, per class** (`config/century.yaml`
+  `pulsators.classes`): HADS ≥ 0.07 d (60-min smear keeps |sinc| ≥ 0.5),
+  Miras/SRa ≤ 450 d (≥ ~1.6 cycles in a 2-yr block).
+* **Scale.** Per-class caps (brightest first) and `max_total: 2400`,
+  round-robin across classes so the numerous Miras cannot crowd out the rest.
+  VSX duplicates within 5″ are measured once; a pulsator that is also a
+  field star is measured once, as a pulsator.
+
+What does **not** change for pulsators: every §3 rule. What is different:
+
+* **Exposure times** come from a `queryexps` **at the star's own position**
+  (one extra request per pulsator), since an all-sky star shares no field
+  plate list; the per-star plate count and depth are kept in
+  `lightcurves_meta.json` (`plates_at_position`).
+* **The fade and rising-scatter questions stay on the bright field sample.**
+  Pulsators are excluded from the field ensemble (they share no field, and a
+  large-amplitude variable must not describe the plates), and their raw fade /
+  scatter statistics are kept in the screen table but never scored
+  (`fade_scatter_scope = not_scored_pulsator`): without an ensemble a pulsator
+  "fade" is the Hippke/Lund failure mode.
+* **Miras / SRa** are in on purpose. `long_period_giant` still kills their
+  fade and scatter; a *cessation* in one carries the note
+  `lpv_cessation_trace_to_period_evolution` instead — thermal pulses (R Hya,
+  T UMi, W Dra) and Mira→SR transitions are the first things to trace.
+* **Sharding from the real count.** `n_shards=auto` = ⌈n_targets / 220⌉,
+  capped at 16, computed after selection; `max-parallel` 6.
+
+**The budget arithmetic**, which the targets job and a test both enforce:
+acquire `time_budget_s` 10,800 s + screen `screen_budget_s` 7,200 s = 300 min
+inside the sweep job's 350-minute timeout, leaving 50 min for install, the
+offline gate, the one star each clock always lets through (a cessation star
+cost 140 s in the sandbox; a still-periodic one 10–15 s) and the upload. At
+~40 s per pulsator to acquire (three requests; `queryexps` alone measured
+15–23 s) 220 stars take ~150 min, and screening them ~75 min. These per-star
+costs are estimates until the first sweep reports them; a truncated shard is
+reported (`some_shards_truncated`), never silently absorbed.
+
 ## 7. Targets
+
+*Superseded for the cessation arm by §6.4: population 1 below is now off by
+default (`max_variables_per_field: 0`) and replaced by the all-sky pulsators.*
 
 Two populations per field, in this order:
 
@@ -437,9 +498,9 @@ results/century/          probe/, targets.csv, shards/, summary.json
 
 ```
 # the sweep: targets ──▶ sweep (N shards) ──▶ assess
-gh workflow run century.yml --ref <branch> -f stages=full -f n_shards=4 \
-   -f max_variables=60 -f max_bright=60 \
-   -f time_budget_s=7200 -f screen_budget_s=9000
+gh workflow run century.yml --ref <branch> -f stages=full -f n_shards=auto \
+   -f max_variables=0 -f max_bright=80 \
+   -f time_budget_s=10800 -f screen_budget_s=7200     # max_pulsators defaults to 2400
 
 # reconnaissance, only when the schema is in doubt — NOT part of `full`
 gh workflow run century.yml --ref <branch> -f stages=probe
@@ -543,3 +604,29 @@ no-data codes — a run that reached nothing must never print as a science null.
   the archive that no request was ever made to support.
 * **A null here changes the question, it is not a result.** Per `CLAUDE.md`,
   this channel does not produce an occurrence-limit paper.
+
+## 12. Run 35862579322 — the sweep that died on its first star
+
+Target selection worked: 100,996 VSX rows → **2,400 pulsators** (RR Lyrae 710,
+Cepheids 700, Miras 500, δ Scuti/HADS 234, SRa 150, RV Tau 106; 1,797 RR Lyrae
+and 709 Miras were eligible before the caps) plus 480 bright field stars, 14
+shards. Every shard's acquire then raised in ~3 s on its **first** light curve:
+
+```
+lightcurve.py: plate = "_".join(...)  TypeError: sequence item 3: expected str instance, float found
+```
+
+DR7 serves some rows with an empty mosaic/exposure number, and under pandas 3
+`Series.astype(str)` keeps NaN as NaN (pandas 2 wrote `"nan"`) — the §6.2
+class of hazard, in a spelling the pandas-3 sweep did not catch. The exception
+escaped before `acquire_summary.json` was written, so assess saw no acquire
+reports and reported `NO_SHARDS_PRESENT`, which pointed at the workflow
+instead of the exception. Three fixes (`tests/test_century_sweep_crash.py`,
+now in the sweep's offline gate):
+
+1. `lightcurve.str_values` replaces `Series.astype(str)` wherever identifiers
+   are built (missing → `""`, `123.0` → `"123"`);
+2. a light curve that fails to parse is a per-star `lightcurve_parse_failed`
+   (`n_parse_failed` in the shard report), never a dead shard;
+3. shard directories without any acquire report now read `ACQUIRE_CRASHED`,
+   distinct from `NO_SHARDS_PRESENT`.

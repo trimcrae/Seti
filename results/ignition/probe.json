@@ -1,57 +1,47 @@
 {
   "stage": "probe",
-  "generated_utc": "2026-09-22T15:42:35Z",
+  "generated_utc": "2026-09-23T21:42:31Z",
   "budget": {
     "per_shape_s": 480.0,
     "total_s": 2400.0
   },
-  "allwise_columns_seen": [
-    "allwise_oid",
-    "cc_flags",
-    "dec",
-    "dec_error",
-    "designation",
-    "ext_flag",
-    "ph_qual",
-    "ra",
-    "ra_error",
-    "radec_co_error",
-    "tmass_key",
-    "var_flag",
-    "w1gmag",
-    "w1gmag_error",
-    "w1mjd_mean",
-    "w1mpro",
-    "w1mpro_error",
-    "w2gmag",
-    "w2gmag_error",
-    "w2mjd_mean",
-    "w2mpro",
-    "w2mpro_error",
-    "w3gmag",
-    "w3gmag_error",
-    "w3mjd_mean",
-    "w3mpro",
-    "w3mpro_error",
-    "w4gmag",
-    "w4gmag_error",
-    "w4mjd_mean",
-    "w4mpro",
-    "w4mpro_error"
-  ],
   "allwise_columns_resolved": {
-    "designation": "designation",
-    "ext_flag": "ext_flag",
-    "ph_qual": "ph_qual",
-    "cc_flags": "cc_flags",
-    "var_flag": "var_flag"
+    "timeout_s": 120.0,
+    "elapsed_s": 120.0,
+    "attempts": [
+      {
+        "transport": "astroquery_async",
+        "queue": "async",
+        "ok": false,
+        "error": "QueryTimeout('no answer within 120 s')",
+        "seconds": 120.0
+      }
+    ],
+    "status": "TIMED_OUT",
+    "error": "QueryTimeout('no answer within 120 s')"
   },
   "gaia_shapes": [
     {
       "shape": "inner_cone",
       "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
       "timeout_s": 480.0,
-      "elapsed_s": 20.3,
+      "status": "TIMED_OUT",
+      "error": "QueryTimeout('no answer within 480 s')",
+      "elapsed_s": 480.0
+    },
+    {
+      "shape": "inner_cone_postfilter",
+      "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id",
+      "timeout_s": 480.0,
+      "status": "TIMED_OUT",
+      "error": "QueryTimeout('no answer within 480 s')",
+      "elapsed_s": 480.0
+    },
+    {
+      "shape": "flat",
+      "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM gaiadr3.gaia_source AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE 1 = CONTAINS(POINT('ICRS', g.ra, g.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n  AND g.phot_g_mean_mag < 14.5\n  AND g.parallax > 3.0\n  AND g.parallax_over_error > 10.0\n  AND ABS(g.b) > 15.0\n  AND g.ruwe < 1.4\n  AND g.phot_variable_flag != 'VARIABLE'\n  AND g.bp_rp > 0.6 AND g.bp_rp < 2.5\n  AND g.phot_g_mean_mag + 5 * LOG10(g.parallax) - 10 > 2.0 + 3.3 * (g.bp_rp - 0.6)\n  AND w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
+      "timeout_s": 480.0,
+      "elapsed_s": 460.0,
       "transport": "astroquery_async",
       "queue": "async",
       "attempts": [
@@ -60,7 +50,7 @@
           "queue": "async",
           "ok": true,
           "n_rows": 5,
-          "seconds": 20.3
+          "seconds": 460.0
         }
       ],
       "status": "OK",
@@ -96,15 +86,17 @@
       ]
     }
   ],
-  "gaia_shape_working": "inner_cone",
+  "gaia_shape_working": "flat",
   "gaia_shapes_tried": [
-    "inner_cone"
+    "inner_cone",
+    "inner_cone_postfilter",
+    "flat"
   ],
   "gaia_join": {
-    "shape": "inner_cone",
-    "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
+    "shape": "flat",
+    "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM gaiadr3.gaia_source AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE 1 = CONTAINS(POINT('ICRS', g.ra, g.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n  AND g.phot_g_mean_mag < 14.5\n  AND g.parallax > 3.0\n  AND g.parallax_over_error > 10.0\n  AND ABS(g.b) > 15.0\n  AND g.ruwe < 1.4\n  AND g.phot_variable_flag != 'VARIABLE'\n  AND g.bp_rp > 0.6 AND g.bp_rp < 2.5\n  AND g.phot_g_mean_mag + 5 * LOG10(g.parallax) - 10 > 2.0 + 3.3 * (g.bp_rp - 0.6)\n  AND w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
     "timeout_s": 480.0,
-    "elapsed_s": 20.3,
+    "elapsed_s": 460.0,
     "transport": "astroquery_async",
     "queue": "async",
     "attempts": [
@@ -113,7 +105,7 @@
         "queue": "async",
         "ok": true,
         "n_rows": 5,
-        "seconds": 20.3
+        "seconds": 460.0
       }
     ],
     "status": "OK",
@@ -190,7 +182,7 @@
         "query": "SELECT table_name FROM TAP_SCHEMA.tables WHERE table_name LIKE '%allwise%' OR table_name LIKE '%ALLWISE%'",
         "transport": "pyvo_async",
         "queue": "async",
-        "seconds": 16.9,
+        "seconds": 27.3,
         "status": "OK",
         "n_rows": 16
       },
@@ -218,7 +210,7 @@
         "query": "SELECT column_name FROM TAP_SCHEMA.columns WHERE table_name = 'allwise_p3as_psd'",
         "transport": "pyvo_async",
         "queue": "async",
-        "seconds": 8.4,
+        "seconds": 12.3,
         "status": "OK",
         "n_rows": 298
       },
@@ -399,7 +391,7 @@
           "query": "SELECT table_name FROM TAP_SCHEMA.tables WHERE table_name LIKE '%allwise%' OR table_name LIKE '%ALLWISE%'",
           "transport": "pyvo_async",
           "queue": "async",
-          "seconds": 16.9,
+          "seconds": 27.3,
           "status": "OK",
           "n_rows": 16
         },
@@ -427,7 +419,7 @@
           "query": "SELECT column_name FROM TAP_SCHEMA.columns WHERE table_name = 'allwise_p3as_psd'",
           "transport": "pyvo_async",
           "queue": "async",
-          "seconds": 8.4,
+          "seconds": 12.3,
           "status": "OK",
           "n_rows": 298
         },
@@ -577,7 +569,7 @@
         "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index\nFROM gaiadr3.gaia_source AS g\nWHERE 1 = CONTAINS(POINT('ICRS', g.ra, g.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n  AND g.phot_g_mean_mag < 14.5\n  AND g.parallax > 3.0\n  AND g.parallax_over_error > 10.0\n  AND ABS(g.b) > 15.0\n  AND g.ruwe < 1.4\n  AND g.phot_variable_flag != 'VARIABLE'\n  AND g.bp_rp > 0.6 AND g.bp_rp < 2.5\n  AND g.phot_g_mean_mag + 5 * LOG10(g.parallax) - 10 > 2.0 + 3.3 * (g.bp_rp - 0.6)",
         "transport": "astroquery_async",
         "queue": "async",
-        "seconds": 2.4,
+        "seconds": 419.3,
         "status": "OK",
         "n_rows": 5,
         "shape": "gaia_only",
@@ -609,7 +601,7 @@
           "query": "SELECT COUNT(*) AS n\nFROM allwise_p3as_psd\nWHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 266, 65, 1.01667))",
           "transport": "pyvo_async",
           "queue": "async",
-          "seconds": 29.0,
+          "seconds": 3.5,
           "status": "OK",
           "n_rows": 1
         },
@@ -619,7 +611,7 @@
           "query": "SELECT TOP 400000 designation, ra, dec, w1mpro, w1sigmpro, w2mpro, w2sigmpro, w3mpro, w3sigmpro, cc_flags, ph_qual, ext_flg\nFROM allwise_p3as_psd\nWHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 266, 65, 1.01667))",
           "transport": "pyvo_async",
           "queue": "async",
-          "seconds": 20.1,
+          "seconds": 25.5,
           "status": "OK",
           "n_rows": 65745
         },
@@ -644,10 +636,10 @@
         "cuts_not_applied": [],
         "cut_w1w2_photospheric": 0,
         "cut_ext_flag": 0,
-        "cut_cc_flags": 1,
-        "n_out": 4
+        "cut_cc_flags": 0,
+        "n_out": 5
       },
-      "n_rows": 4,
+      "n_rows": 5,
       "capped": true,
       "truncated": false,
       "cuts_not_applied": [],
@@ -660,7 +652,7 @@
       "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index\nFROM gaiadr3.gaia_source AS g\nWHERE 1 = CONTAINS(POINT('ICRS', g.ra, g.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n  AND g.phot_g_mean_mag < 14.5\n  AND g.parallax > 3.0\n  AND g.parallax_over_error > 10.0\n  AND ABS(g.b) > 15.0\n  AND g.ruwe < 1.4\n  AND g.phot_variable_flag != 'VARIABLE'\n  AND g.bp_rp > 0.6 AND g.bp_rp < 2.5\n  AND g.phot_g_mean_mag + 5 * LOG10(g.parallax) - 10 > 2.0 + 3.3 * (g.bp_rp - 0.6)",
       "transport": "astroquery_async",
       "queue": "async",
-      "seconds": 2.4,
+      "seconds": 419.3,
       "status": "OK",
       "n_rows": 5,
       "shape": "gaia_only",
@@ -682,7 +674,7 @@
       "ph_qual": "ph_qual",
       "ext_flag": "ext_flg"
     },
-    "n_rows": 4,
+    "n_rows": 5,
     "status": "OK",
     "gaia_only_status": "OK",
     "usable": true
@@ -942,7 +934,7 @@
     "truncated": false,
     "query": "SELECT ra, dec, mjd, w1mpro, w1sigmpro, w2mpro, w2sigmpro, qual_frame, saa_sep, moon_masked, cc_flags, ph_qual, nb, na FROM neowiser_p1bs_psd WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 267.8618434, 64.6417536, 0.000708122))",
     "error": "",
-    "elapsed_s": 79.12716879200002,
+    "elapsed_s": 87.5750114729999,
     "n_rows_raw": null,
     "n_rows_cleaned_out": null,
     "source_id": "1440754308521967872"
@@ -956,7 +948,7 @@
     "truncated": false,
     "query": "SELECT TOP 3000000 p.sid, n.ra, n.dec, n.mjd, n.w1mpro, n.w1sigmpro, n.w2mpro, n.w2sigmpro, n.qual_frame, n.saa_sep, n.moon_masked, n.cc_flags, n.ph_qual, n.nb, n.na FROM neowiser_p1bs_psd AS n, TAP_UPLOAD.pos AS p WHERE 1 = CONTAINS(POINT('ICRS', n.ra, n.dec), CIRCLE('ICRS', p.ra, p.dec, 0.000708122))",
     "error": "",
-    "elapsed_s": 23.834964856,
+    "elapsed_s": 27.37801682700001,
     "n_rows_raw": 7919,
     "n_rows_cleaned_out": null
   },
@@ -969,5 +961,5 @@
     "vizier_asu"
   ],
   "verdict": "ALL_ROUTES_REACHABLE",
-  "elapsed_s": 236.5
+  "elapsed_s": 2161.3
 }

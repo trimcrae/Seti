@@ -1,0 +1,372 @@
+{
+  "stage": "euclid",
+  "shard": 0,
+  "n_shards": 8,
+  "generated_at": "2026-09-22T16:31:28Z",
+  "units": [
+    {
+      "field": "EDF-N",
+      "k": 0,
+      "dec_lo": 63.31,
+      "dec_hi": 63.81,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 2021,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 2021
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 1838,
+      "n_stars_with_spectra": 72,
+      "seconds": 74.9
+    },
+    {
+      "field": "EDF-N",
+      "k": 8,
+      "dec_lo": 67.31,
+      "dec_hi": 67.81,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 170659,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 170659
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 130887,
+      "n_stars_with_spectra": 4963,
+      "seconds": 4527.2
+    },
+    {
+      "field": "EDF-S",
+      "k": 5,
+      "dec_lo": -48.82,
+      "dec_hi": -48.32,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 244504,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 244504
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 169490,
+      "n_stars_with_spectra": 3904,
+      "seconds": 7342.1
+    },
+    {
+      "field": "EDF-F",
+      "k": 1,
+      "dec_lo": -29.59,
+      "dec_hi": -29.09,
+      "lines_status": "OK",
+      "footprint_clause": "range",
+      "n_raw_rows": 115145,
+      "wavelength": {
+        "wavelength_scale": 0.0001,
+        "wavelength_unit": "angstrom(inferred)",
+        "n_rows": 115145
+      },
+      "spectra_status": "OK",
+      "n_objects_with_spectra": 74854,
+      "n_stars_with_spectra": 1417,
+      "seconds": 8251.6
+    },
+    {
+      "field": "LDN1641",
+      "k": 1,
+      "dec_lo": -8.4,
+      "dec_hi": -7.9,
+      "lines_status": "QUERY_RETURNED_ZERO_ROWS",
+      "footprint_clause": "range",
+      "n_raw_rows": 0,
+      "wavelength": {},
+      "spectra_status": "QUERY_RETURNED_ZERO_ROWS",
+      "n_objects_with_spectra": 0,
+      "n_stars_with_spectra": 0,
+      "seconds": 8288.1
+    }
+  ],
+  "gaia": {
+    "EDF-N": {
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 188584
+    },
+    "EDF-S": {
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 116306
+    },
+    "EDF-F": {
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 43861
+    },
+    "LDN1641": {
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 15921
+    }
+  },
+  "queries": [
+    {
+      "label": "gaia_EDF-N",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 188584,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 188584,
+          "seconds": 35.2
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 269.730000, 66.010000, 2.750000)) AND phot_g_mean_mag < 21.500"
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-N",
+        "dec_lo": 63.31,
+        "dec_hi": 63.81,
+        "ra_lo": 269.61771,
+        "ra_hi": 269.84229
+      },
+      "status": "OK",
+      "n_rows": 2021,
+      "depth": 0,
+      "seconds": 24.3,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-N",
+        "dec_lo": 63.31,
+        "dec_hi": 63.81,
+        "ra_lo": 269.61771,
+        "ra_hi": 269.84229
+      },
+      "status": "OK",
+      "n_rows": 1838,
+      "depth": 0,
+      "seconds": 8.3,
+      "truncated": false
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-N",
+        "dec_lo": 67.31,
+        "dec_hi": 67.81,
+        "ra_lo": 264.32687,
+        "ra_hi": 275.13313
+      },
+      "status": "OK",
+      "n_rows": 170659,
+      "depth": 0,
+      "seconds": 3266.9,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-N",
+        "dec_lo": 67.31,
+        "dec_hi": 67.81,
+        "ra_lo": 264.32687,
+        "ra_hi": 275.13313
+      },
+      "status": "OK",
+      "n_rows": 130887,
+      "depth": 0,
+      "seconds": 1181.7,
+      "truncated": false
+    },
+    {
+      "label": "gaia_EDF-S",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 116306,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 116306,
+          "seconds": 31.1
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 61.240000, -48.420000, 2.950000)) AND phot_g_mean_mag < 21.500"
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-S",
+        "dec_lo": -48.82,
+        "dec_hi": -48.32,
+        "ra_lo": 56.85738,
+        "ra_hi": 65.62262
+      },
+      "status": "OK",
+      "n_rows": 244504,
+      "depth": 0,
+      "seconds": 148.1,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-S",
+        "dec_lo": -48.82,
+        "dec_hi": -48.32,
+        "ra_lo": 56.85738,
+        "ra_hi": 65.62262
+      },
+      "status": "OK",
+      "n_rows": 169490,
+      "depth": 0,
+      "seconds": 2628.9,
+      "truncated": false
+    },
+    {
+      "label": "gaia_EDF-F",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 43861,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 43861,
+          "seconds": 11.5
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 52.930000, -28.090000, 2.050000)) AND phot_g_mean_mag < 21.500"
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "EDF-F",
+        "dec_lo": -29.59,
+        "dec_hi": -29.09,
+        "ra_lo": 51.35511,
+        "ra_hi": 54.50489
+      },
+      "status": "OK",
+      "n_rows": 115145,
+      "depth": 0,
+      "seconds": 845.0,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "EDF-F",
+        "dec_lo": -29.59,
+        "dec_hi": -29.09,
+        "ra_lo": 51.35511,
+        "ra_hi": 54.50489
+      },
+      "status": "OK",
+      "n_rows": 74854,
+      "depth": 0,
+      "seconds": 50.1,
+      "truncated": false
+    },
+    {
+      "label": "gaia_LDN1641",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 15921,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 15921,
+          "seconds": 9.3
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 85.500000, -8.000000, 0.950000)) AND phot_g_mean_mag < 21.500"
+    },
+    {
+      "label": "lines",
+      "unit": {
+        "field": "LDN1641",
+        "dec_lo": -8.4,
+        "dec_hi": -7.9,
+        "ra_lo": 84.63504,
+        "ra_hi": 86.36496
+      },
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "n_rows": 0,
+      "depth": 0,
+      "seconds": 17.7,
+      "truncated": false
+    },
+    {
+      "label": "spectra",
+      "unit": {
+        "field": "LDN1641",
+        "dec_lo": -8.4,
+        "dec_hi": -7.9,
+        "ra_lo": 84.63504,
+        "ra_hi": 86.36496
+      },
+      "status": "QUERY_RETURNED_ZERO_ROWS",
+      "n_rows": 0,
+      "depth": 0,
+      "seconds": 9.4,
+      "truncated": false
+    }
+  ],
+  "degraded": [],
+  "roles_line": {
+    "object_id": "object_id",
+    "rank": "spe_rank",
+    "line_id": "spe_line_id",
+    "line_name": "spe_line_name",
+    "line_flag": "spe_line_flag",
+    "n_dith": "spe_line_n_dith",
+    "wl": "spe_line_central_wl_gf",
+    "wl_err": "spe_line_central_wl_err_gf",
+    "flux": "spe_line_flux_gf",
+    "flux_err": "spe_line_flux_err_gf",
+    "ew": "spe_line_ew_gf",
+    "fwhm": "spe_line_fwhm_gf",
+    "fwhm_err": "spe_line_fwhm_err_gf",
+    "snr": "spe_line_snr_gf",
+    "snr_di": "spe_line_snr_di",
+    "cont": "spe_line_cont_gf",
+    "qual": "spe_line_qual_gf",
+    "aon": "spe_line_aon"
+  },
+  "roles_mer": {
+    "object_id": "object_id",
+    "ra": "ra",
+    "dec": "dec",
+    "point_like_prob": "point_like_prob",
+    "point_like_flag": "point_like_flag",
+    "spurious_flag": "spurious_flag",
+    "det_quality_flag": "det_quality_flag",
+    "mumax_minus_mag": "mumax_minus_mag",
+    "flux_h": "flux_h_2fwhm_aper",
+    "flux_vis": "flux_vis_psf",
+    "segmentation_area": "segmentation_area"
+  },
+  "spectra_table": "euclid_q1_spectro_zcatalog_spe_classification",
+  "n_units": 5,
+  "footprint_clause": "range",
+  "elapsed_s": 8288.1,
+  "status": "OK",
+  "screen": {
+    "n_features_on_stars": 7300,
+    "n_stars_with_features": 4734,
+    "n_survivors": 0
+  }
+}

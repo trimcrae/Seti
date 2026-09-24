@@ -272,6 +272,10 @@ jobs:
           name: ember-audit
           path: ./
         continue-on-error: true
+      # Shard hygiene (docs/channel-brief.md §0.7): start from an empty cache
+      # so nothing this shard did not write can ride along in its upload.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/ember/cache
       - name: Acquire catalogue slice
         run: |
           python -m seti.cli ember --stage acquire \
@@ -280,11 +284,22 @@ jobs:
             --n-shards ${{ github.event.inputs.n_shards || '6' }}
           echo "=== acquired ==="
           ls -la results/ember/cache/ || true
+      # Upload only what `analyse` reads and only this shard's copy of it:
+      # working_<sss>.parquet + acquire_status_<sss>.json (run.py).  The
+      # full-sky AKARI/IRAS slice checkpoints every shard writes under the SAME
+      # names stay behind — six copies of one file in a merge-multiple
+      # download is the defect.
+      - name: Shard tag
+        id: tag
+        if: always()
+        run: printf 's=%03d\n' "${{ matrix.shard }}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ember-cache-${{ matrix.shard }}
-          path: results/ember/cache/
+          path: |
+            results/ember/cache/working_${{ steps.tag.outputs.s }}.parquet
+            results/ember/cache/acquire_status_${{ steps.tag.outputs.s }}.json
           if-no-files-found: warn
 
   # ------------------------------------------------------------------

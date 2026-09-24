@@ -748,6 +748,57 @@ this the overclaim would live on in the file a machine reads
 
 `stage=vetstar` runs it on one star, one runner, in ~2 minutes.
 
+### 4.7e One record per star, and a summary rebuilt from the records (2026-09-23)
+
+Five `vetstar` runs dispatched together (35802589042, 35802594315,
+35802596474, 35802601869, 35802603859) each wrote `vetstar.json`, each
+demoted its own star in its own checkout of `candidates.json`, and
+`commit_results.sh` kept the last: one report of five at HEAD, one demotion of
+five, and a verdict reading `VETSTAR_DEMOTED_2; VETSTAR_DEMOTED_1` (a count
+derived from the records beside the invocation's own count). The fix is
+structural, not a patch:
+
+* the vet writes **`vetstar_<mission>_<id>.json`** (+ `vetstar_fold_<mission>_<id>.csv`),
+  so two vets never share a path; the five lost reports were recovered from
+  the commits their runs landed and carry a `recovered_from` key;
+* `reconcile.reconcile_all` recomputes every shortlisted star's tier from
+  `stars_vetted.csv` (assess) + `redetect.json` + **every** per-star vet file,
+  every time -- state, never increments -- and `check_consistency` lists any
+  way `summary.json` disagrees with them (`--stage reconcile` runs both);
+* the workflow's vet job commits only its record, then
+  `scripts/metronome_reconcile_landed.sh` rebuilds the summary from the branch
+  head and loops until the committed summary accounts for every vet file;
+* `rebuild_summary` drops a caller's `*_DEMOTED_n` token -- those are derived.
+
+The five reports also exposed defects in the vet itself, now fixed: TESS stars
+were vetted against the Kepler default catalogue (`n_catalogue_epochs = 0`);
+VizieR's TIC returned zero rows so no TESS star had a position (no Gaia, no
+cone, no neighbour census; MAST's TIC is now the fallback); an EMPTY
+control-period null (P = 4.19 d and 6.52 d on short spans) was read as "not
+significant", so 24-29%-deep narrow dips passed as
+`NO_MUNDANE_EXPLANATION_FOUND` -- it is now `control_null` unreached and the
+band widens; `EVENTS_ON_THE_CREST` fired on events with Rayleigh p = 0.91; and
+sectors delivered as two products were counted twice.
+
+### 4.7f The aperture-scale cone (assess)
+
+The `periodic_variable` veto's 3" cone answers *is this star a variable?*
+kepler:5879574's clock belonged to KIC 5879583, an RR Lyrae **13.3"** away --
+*a variable putting flux into this star's aperture*, which is a different
+radius. Assess now runs a second VSX / Gaia DR3 `vclassre` / ZTF (Chen+2020)
+cone at `aperture_contamination.radius_arcsec` (Kepler 20", TESS 120"; rows
+inside the 3" identity radius are left to the identity veto). A neighbour at
+the clock period or a low harmonic (tolerance `vet.aperture_tol` = 1%) is the
+hard veto **`aperture_contaminating_variable`** -- a contamination statement,
+not an identity one -- reported with `p_chance_any`, the probability that any
+of the star's distinct periodic neighbours would match by chance (periods
+log-uniform over 0.05-1000 d). A variable neighbour at an unrelated period is
+the report flag `aperture_variable_neighbour`; an unreached cone is
+`aperture_catalogue_unreached` and caps the tier at `interest`.
+`tests/test_metronome_aperture.py` requires the KIC 5879574 / KIC 5879583 case
+to be flagged. After every assess the downstream records are re-applied, so a
+re-assess never resurrects a star the light curve or the vet already explained.
+
 ---
 
 ## 5. Contamination ledger — every rejection is a named counter
@@ -1057,7 +1108,8 @@ Outputs: `probe.json`, `acquire.json`, `acquisition_log.json`, `screen_<cat>[_s<
 per-catalogue acquisition log), `candidates.json` (interest + candidate, and the watch list),
 `redetect.json` + `stars_redetect.csv` (the light-curve re-detection of the shortlist,
 including the catalogue-epoch stack), the `redetect` block reconciliation writes back
-into `summary.json` / `candidates.json`, `vetstar.json` + `vetstar_fold.csv` (and the
+into `summary.json` / `candidates.json`, `vetstar_<mission>_<id>.json` +
+`vetstar_fold_<mission>_<id>.csv`, one pair per vetted star (and the
 `vetstar` block + demotion the vet writes back into `summary.json` / `candidates.json`)
 (the single-star vet: every catalogue's verbatim answer, the four folded profiles bin by
 bin, the control-period nulls, the event phases and the per-quarter roll table).

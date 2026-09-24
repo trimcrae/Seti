@@ -89,6 +89,21 @@ variability_catalogues:
     period_patterns: ["^per$", "^period$"]
     type_patterns: ["^type$", "^class$"]
 cone_radius_arcsec: 3.0
+# The SECOND cone, at the scale of the photometric aperture.  The 3" cone
+# above is set by positional uncertainty -- right for "is this star a
+# variable?", wrong for "is a variable putting flux in this star's aperture?"
+# A Kepler pixel is 3.98" and the optimal mask several of them (contaminating
+# radius 10-20"); a TESS pixel is 21" (1-2 arcmin).  MEASURED 2026-09-22:
+# kepler:5879574's clock was KIC 5879583, an RR Lyrae 13.3" away, outside
+# every cone assess ran.  A hit here is a CONTAMINATION flag
+# (aperture_contaminating_variable), not an identity flag.
+aperture_contamination:
+  enabled: true
+  radius_arcsec:
+    kepler: 20.0
+    tess: 120.0
+    default: 20.0
+  identity_radius_arcsec: 3.0
 
 windows:
   # Data-driven windows from the density of EVERY event in a catalogue.

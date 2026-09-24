@@ -68,9 +68,14 @@ def injection_trials(phot: pd.DataFrame, cfg: G.GreyConfig, *, every: int = 50,
             pre = G.recovered(base_ev, meta)
             hit = G.recovered(ev, meta)
             noise = float(np.nanmax([summ.get("mad_g", np.nan), 1e-4]))
+            s_col = summ.get("s_col")
             trials.append({
                 "source_id": int(sid), "kind": kind, "depth": depth, "ratio": ratio,
                 "g_noise": noise, "snr": depth / noise, "med_flux_g": summ.get("med_flux_g"),
+                "s_col": s_col,
+                # can this star's colour noise tell grey from 1.7 at this depth?
+                "colour_testable": bool(s_col is not None and np.isfinite(s_col)
+                                        and s_col / depth <= 0.5 * 0.20),
                 "pre_existing_event": pre is not None,
                 "recovered": hit is not None,
                 "grey_class": hit.get("grey_class") if hit else None,
@@ -89,8 +94,14 @@ def photometric_gate(trials: list[dict], *, reader_mismatched_rows: int = 0,
         rep.update(gate="FAIL", reason="no injection trials")
         return rep
     t = t[~t["pre_existing_event"]]
-    g = t[(t["kind"] == "grey") & (t["snr"] >= snr_floor)]
-    d = t[(t["kind"] == "dust") & (t["snr"] >= snr_floor) & t["recovered"]]
+    if "colour_testable" not in t:
+        t = t.assign(colour_testable=True)
+    ct = t["colour_testable"].fillna(False).astype(bool)
+    rep["frac_colour_testable"] = float(ct[t["snr"] >= snr_floor].mean()) if (t["snr"] >= snr_floor).any() else None
+    # the gate is judged where the grey test can succeed: S/N above the floor
+    # AND the star's own colour noise at most half the ratio tolerance
+    g = t[(t["kind"] == "grey") & (t["snr"] >= snr_floor) & ct]
+    d = t[(t["kind"] == "dust") & (t["snr"] >= snr_floor) & ct & t["recovered"]]
     rec = float((g["tier"] == "A").mean()) if len(g) else np.nan
     rec_any = float(g["recovered"].mean()) if len(g) else np.nan
     dust_grey = float((d["grey_class"] == "GREY").mean()) if len(d) else np.nan

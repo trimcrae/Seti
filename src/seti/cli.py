@@ -1131,6 +1131,12 @@ def _cmd_ring(args, cfg):
 
     run(args.stage, args.leg, out=args.out, shard=args.shard, dec_band=args.dec_band,
         followup=not args.no_followup)
+# --- PARALLAX4 ---
+def _cmd_parallax4(args, cfg):
+    from .parallax4.run import run_from_args as _p4_run
+
+    return _p4_run(args, cfg)
+# --- /PARALLAX4 ---
 # --- CRADLE ---
 def _cmd_cradle(args, cfg):
     from .cradle.run import run_from_args as _cradle_run
@@ -2506,6 +2512,15 @@ def main(argv=None):
     p.set_defaults(func=_cmd_spark)
     # --- SPARK ---
 
+    # --- PARALLAX4 ---
+    from .parallax4.run import add_arguments as _p4_args
+    p = sub.add_parser("parallax4",
+                       help="PARALLAX4: Gaia DR4 intake -- grey per-transit dips/brightenings with "
+                            "no photocentre shift; DR3 photometric half now, DR4 on release; "
+                            "same flags as seti.parallax4.run")
+    _p4_args(p)
+    p.set_defaults(func=_cmd_parallax4)
+    # --- /PARALLAX4 ---
     # --- CRADLE ---
     from .cradle.run import add_arguments as _cradle_args
     p = sub.add_parser("cradle",

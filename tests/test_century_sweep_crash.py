@@ -120,3 +120,19 @@ def test_shards_that_crashed_in_acquire_are_not_reported_as_absent(tmp_path):
     (sd / "screen_summary.json").write_text(json.dumps({"stage": "screen", "n_lightcurves": 0}))
     s = stage_assess(_conf(), tmp_path, confirm=False, gaia=False)
     assert s["verdict_code"] == "ACQUIRE_CRASHED", s["verdict_code"]
+
+
+def test_century_commits_go_through_the_verified_retrying_script():
+    """Run 35992721863 finished its whole sweep and lost the commit to two
+    GitHub 500s on push, with one inline retry.  Every results commit now goes
+    through scripts/commit_results.sh (retries, remote-ref verification)."""
+    import yaml
+
+    wf_path = Path(__file__).resolve().parents[1] / ".github/workflows/century.yml"
+    wf = yaml.safe_load(wf_path.read_text())
+    for job in ("assess", "assess-only"):
+        steps = [s for s in wf["jobs"][job]["steps"] if s.get("name") == "Commit results"]
+        assert steps, job
+        run = steps[0]["run"]
+        assert "scripts/commit_results.sh" in run and "git push" not in run, job
+        assert int(steps[0]["env"]["RESULTS_PUSH_ATTEMPTS"]) >= 5

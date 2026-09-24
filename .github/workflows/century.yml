@@ -505,35 +505,21 @@ jobs:
                     "fade / rising-scatter candidate at demonstrated sensitivity. "
                     "A COUNT, NOT AN OCCURRENCE LIMIT — see docs/century.md.")
           PY
+      # scripts/commit_results.sh: no rebase, retried pushes, and the pushed
+      # commit verified against the remote ref.  Run 35992721863 computed its
+      # whole sweep and then lost the commit to two GitHub "Internal Server
+      # Error" push rejections inside five seconds, with one retry.
       - name: Commit results
         if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+          RESULTS_PUSH_ATTEMPTS: "12"
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f -- results/century/summary.json || echo "no summary.json"
-          git add -f -- results/century/candidates.csv || echo "no candidates.csv"
-          git add -f -- results/century/survivors.csv || echo "no survivors.csv"
-          git add -f -- results/century/century_screen.csv.gz || echo "no screen table"
-          git add -f -- results/century/targets_summary.json || echo "no targets_summary"
-          for f in results/century/shards/*/acquire_summary.json; do
-            [ -e "$f" ] && { git add -f -- "$f" || echo "skip $f"; }
+          FILES="results/century/summary.json results/century/candidates.csv results/century/survivors.csv results/century/century_screen.csv.gz results/century/targets_summary.json"
+          for f in results/century/shards/*/acquire_summary.json results/century/shards/*/screen_summary.json; do
+            [ -e "$f" ] && FILES="$FILES $f"
           done
-          for f in results/century/shards/*/screen_summary.json; do
-            [ -e "$f" ] && { git add -f -- "$f" || echo "skip $f"; }
-          done
-          echo "=== staged ==="
-          git diff --cached --name-only
-          if git diff --cached --quiet; then
-            echo "No result changes to commit."
-          else
-            git commit -m "century: S50 sweep — cessation / fade / rising scatter on DASCH DR7"
-            git checkout -- . 2>/dev/null || true
-            git pull --rebase --autostash origin ${{ github.ref_name }} || true
-            git push origin HEAD:${{ github.ref_name }} || \
-              { git checkout -- . 2>/dev/null || true; \
-                git pull --rebase --autostash origin ${{ github.ref_name }}; \
-                git push origin HEAD:${{ github.ref_name }}; }
-          fi
+          scripts/commit_results.sh "century: S50 sweep — cessation / fade / rising scatter on DASCH DR7" $FILES
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -587,22 +573,21 @@ jobs:
           fi
           python -m seti.century.run --stage assess $GAIA
           cat results/century/summary.json || true
+      # scripts/commit_results.sh: no rebase, retried pushes, and the pushed
+      # commit verified against the remote ref.  Run 35992721863 computed its
+      # whole sweep and then lost the commit to two GitHub "Internal Server
+      # Error" push rejections inside five seconds, with one retry.
       - name: Commit results
         if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+          RESULTS_PUSH_ATTEMPTS: "12"
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f -- results/century/summary.json || echo "no summary.json"
-          git add -f -- results/century/candidates.csv || echo "no candidates.csv"
-          git add -f -- results/century/survivors.csv || echo "no survivors.csv"
-          git diff --cached --name-only
-          if git diff --cached --quiet; then
-            echo "No result changes to commit."
-          else
-            git commit -m "century: re-assess of a prior sweep's shard artifacts"
-            git pull --rebase --autostash origin ${{ github.ref_name }} || true
-            git push origin HEAD:${{ github.ref_name }}
-          fi
+          FILES="results/century/summary.json results/century/candidates.csv results/century/survivors.csv results/century/century_screen.csv.gz results/century/targets_summary.json"
+          for f in results/century/shards/*/acquire_summary.json results/century/shards/*/screen_summary.json; do
+            [ -e "$f" ] && FILES="$FILES $f"
+          done
+          scripts/commit_results.sh "century: re-assess of a prior sweep's shard artifacts" $FILES
       - uses: actions/upload-artifact@v4
         if: always()
         with:

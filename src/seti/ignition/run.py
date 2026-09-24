@@ -70,6 +70,7 @@ from .sample import (
     JOINED_SHAPES,
     QUERY_FAILED,
     QUERY_TIMED_OUT,
+    ROUTE_ARI,
     ROUTE_ESA,
     ROUTE_IRSA,
     ROUTE_VIZIER,
@@ -116,7 +117,9 @@ DEFAULT_SCREEN: dict = {
 DEFAULT_SWEEP: dict = {
     "time_budget_s": 9000.0,        # the shard stops starting new tiles after this
     "sample_timeout_s": 300.0,      # one tile's parent query, per attempt
-    "sample_unit_budget_s": 600.0,  # one tile's parent query, across the WHOLE ladder
+    "sample_unit_budget_s": 900.0,  # one tile's parent query, across the WHOLE ladder
+    "esa_trip_after": 2,            # consecutive ESA-failed tiles before ESA is skipped
+    "esa_retry_every": 10,          # while skipped, re-try ESA on every n-th tile
     "max_tiles": 0,                 # 0 = every tile of the shard
     "sample_prefetch": 1,           # parent queries run this many tiles ahead (ESA load)
 }
@@ -482,6 +485,27 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
                                        ROUTE_IRSA if irsa_ok else
                                        ROUTE_VIZIER if vizier_ok else "none")
     rep["parent_routes_tried"] = [ROUTE_ESA, ROUTE_IRSA, ROUTE_VIZIER]
+    # The ARI (GAVO Heidelberg) Gaia DR3 mirror: the same gaia_only SQL, TOP 5,
+    # in a 1-degree cone.  Recorded, never a gate: the sweep asks it per tile.
+    if query_fn is None and conf["sample"].get("ari_enabled", True):
+        from .sample import ari_query_fn_with_record
+
+        c_s = {**DEFAULT_SAMPLE, **conf["sample"]}
+        q_ari = build_query(c_s, field={"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}, cap=5,
+                            shape="gaia_only")
+        t_a = _time.monotonic()
+        try:
+            adf, arec = ari_query_fn_with_record(timeout_s=120.0)(q_ari)
+            rep[ROUTE_ARI] = {"status": "OK" if len(adf) else "QUERY_RETURNED_ZERO_ROWS",
+                              "n_rows": int(len(adf)), "columns": list(adf.columns)[:40],
+                              "transport": arec.get("transport"),
+                              "seconds": round(_time.monotonic() - t_a, 1)}
+        except Exception as exc:                       # noqa: BLE001
+            rep[ROUTE_ARI] = {"status": "QUERY_FAILED", "error": repr(exc)[:500],
+                              "seconds": round(_time.monotonic() - t_a, 1)}
+        rep["parent_routes_tried"].append(ROUTE_ARI)
+        print(f"[ignition] probe: {ROUTE_ARI} {rep[ROUTE_ARI].get('status')} "
+              f"rows={rep[ROUTE_ARI].get('n_rows')}", flush=True)
     rep["verdict"] = ("ALL_ROUTES_REACHABLE" if (gaia_ok and cone_ok and up_ok) else
                       "GAIA_AND_NEOWISE_REACHABLE" if (gaia_ok and cone_ok) else
                       "GAIA_ONLY" if gaia_ok else
@@ -659,7 +683,8 @@ def _sweep_checkpoint(out: Path, tag: str) -> dict:
 def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
                 route: str | None = None, query_fn=None, cone_fn=None, upload_fn=None,
                 asu_fetch_fn=None, irsa_fetch_fn=None, vizier: bool = True, irsa: bool = True,
-                time_budget_s: float | None = None, max_tiles: int | None = None) -> dict:
+                time_budget_s: float | None = None, max_tiles: int | None = None,
+                ari: bool = True, ari_query_fn=None) -> dict:
     """One shard of the all-sky sweep: its tiles, sampled and acquired in turn.
 
     Every tile is a checkpoint (``sweep_s{i}of{n}.json``): its parent query,
@@ -733,9 +758,22 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     todo = [t for _, t in mine.iterrows() if str(t["tile"]) not in done_tiles]
     ahead = max(0, int(sw.get("sample_prefetch", 1) or 0))
     pending: dict[int, tuple] = {}
+    # ESA circuit breaker (runs 35884646233 / 35923951760: ESA timed out on
+    # every tile for 11 h, and each tile spent its whole budget there).  After
+    # `esa_trip_after` consecutive tiles on which ESA failed, ESA (and the IRSA
+    # route, whose Gaia half is ESA) is skipped and tiles go to the ARI mirror
+    # x IRSA, then VizieR; every `esa_retry_every`-th tile re-tries ESA.
+    esa_trip = max(1, int(sw.get("esa_trip_after", 2) or 2))
+    esa_retry = max(1, int(sw.get("esa_retry_every", 10) or 10))
+    breaker = {"fails": 0, "off_since": None, "n_skipped": 0, "trips": 0}
+
+    def _esa_on(i: int) -> bool:
+        if breaker["off_since"] is None:
+            return True
+        return (i - breaker["off_since"]) % esa_retry == 0
 
     def _start(i: int) -> None:
-        box: dict = {}
+        box: dict = {"esa": _esa_on(i)}
         fld_i = tile_field(todo[i])
 
         def _go():
@@ -745,7 +783,8 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
                                           cap_per_shard=top, query_fn=query_fn, shape=shape,
                                           vizier=vizier, vizier_fetch_fn=asu_fetch_fn,
                                           irsa=irsa, irsa_fetch_fn=irsa_fetch_fn,
-                                          unit_budget_s=unit_budget)
+                                          unit_budget_s=unit_budget, esa=box["esa"],
+                                          ari=ari, ari_query_fn=ari_query_fn)
             except BaseException as exc:               # noqa: BLE001
                 box["error"] = exc
             box["dt"] = _time.monotonic() - t_s
@@ -767,6 +806,23 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         if "error" in box:
             raise box["error"]
         stars, srep = box["res"]
+        # --- the breaker's bookkeeping
+        esa_answered = int(((srep.get("routes") or {}).get(ROUTE_ESA) or {}).get("units", 0)) > 0
+        if not box["esa"]:
+            breaker["n_skipped"] += 1
+        elif esa_answered:
+            if breaker["off_since"] is not None:
+                print(f"[ignition] sweep {tag}: ESA answered again at tile {tile_id}; "
+                      "breaker closed", flush=True)
+            breaker["fails"], breaker["off_since"] = 0, None
+        else:
+            breaker["fails"] += 1
+            if breaker["off_since"] is None and breaker["fails"] >= esa_trip:
+                breaker["off_since"] = i + 1
+                breaker["trips"] += 1
+                print(f"[ignition] sweep {tag}: ESA failed on {breaker['fails']} consecutive "
+                      f"tiles; skipping it (retry every {esa_retry} tiles)", flush=True)
+                # queries already prefetched with ESA on are left to finish
         n_cone = int(srep.get("n_rows_pulled") or 0)
         if len(stars):
             stars = stars[owns(t, stars["ra"].to_numpy(float),
@@ -815,6 +871,9 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
         if stopped:
             break
     rep = {"stopped_on_budget": bool(stopped), "tiles_new_this_run": int(n_new),
+           "esa_breaker": {"trips": int(breaker["trips"]),
+                           "tiles_esa_skipped": int(breaker["n_skipped"]),
+                           "open_at_end": breaker["off_since"] is not None},
            "elapsed_s": round(_time.monotonic() - t0, 1),
            "n_parent_total": int(len(parent)), "n_done_total": int(len(store.done))}
     _save(rep)
@@ -1399,7 +1458,8 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
                  irsa: bool = True, n_shards_expected: int | None = None,
                  time_budget_s: float | None = None, max_tiles: int | None = None,
                  tile_deg: float | None = None, online_vet: bool = False,
-                 vet_fetchers: dict | None = None) -> dict:
+                 vet_fetchers: dict | None = None, ari: bool = True,
+                 ari_query_fn=None) -> dict:
     """Run one stage, a comma list, or all of them.  Returns the last report."""
     conf = conf if conf is not None else load_ignition_config(config_path)
     if tile_deg:
@@ -1415,7 +1475,7 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
                               query_fn=query_fn, cone_fn=cone_fn, upload_fn=upload_fn,
                               asu_fetch_fn=asu_fetch_fn, irsa_fetch_fn=irsa_fetch_fn,
                               vizier=vizier, irsa=irsa, time_budget_s=time_budget_s,
-                              max_tiles=max_tiles)
+                              max_tiles=max_tiles, ari=ari, ari_query_fn=ari_query_fn)
         elif s == "probe":
             rep = stage_probe(conf, out, query_fn=query_fn, cone_fn=cone_fn,
                               upload_fn=upload_fn, asu_fetch_fn=asu_fetch_fn,

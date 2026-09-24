@@ -173,7 +173,7 @@ jobs:
         run: |
           python -m pytest tests/test_ignition.py -q -p no:cacheprovider -k "injected or impact or no_data or one_band"
           python -m pytest tests/test_ignition_scale.py -q -p no:cacheprovider -k "ladder or drift or tile_grid or sweep_stage or adds_a_tile"
-          python -m pytest tests/test_ignition_vetladder.py -q -p no:cacheprovider
+          python -m pytest tests/test_ignition_vetladder.py tests/test_ignition_ari.py -q -p no:cacheprovider
       - name: Reuse a prior run's parent sample (skip probe + sample)
         if: ${{ github.event.inputs.sample_from_run_id != '' }}
         uses: actions/download-artifact@v4

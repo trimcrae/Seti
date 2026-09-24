@@ -110,6 +110,14 @@ QUERY_TIMED_OUT = "TIMED_OUT"
 ROUTE_ESA = "esa_gaia"
 ROUTE_IRSA = "irsa_tap"
 ROUTE_VIZIER = "vizier_asu"
+#: GAVO / ARI Heidelberg's full Gaia DR3 mirror for the Gaia half, IRSA's
+#: AllWISE for the other half (the IRSA route's matcher, a different Gaia
+#: service).  Added 2026-09-24: in runs 35884646233 and 35923951760 every ESA
+#: parent query timed out, and because the IRSA route's Gaia half is ALSO at
+#: ESA, the only independent fallback (VizieR) was never reached inside the
+#: 600-s tile budget.  1,387 tile attempts failed; zero tiles were added.
+ROUTE_ARI = "ari_gaia"
+ARI_TAP = "https://gaia.ari.uni-heidelberg.de/tap"
 
 #: Candidate query shapes, tried in this order.  See the module docstring.
 SHAPES: tuple[str, ...] = ("inner_cone", "inner_cone_postfilter", "flat", "gaia_only")
@@ -576,6 +584,58 @@ def query_fn_with_record(*, label: str = "gaia", allow_sync: bool = False,
     return _fn
 
 
+# --------------------------------------------------------------------------
+# The ARI (GAVO, Heidelberg) Gaia DR3 mirror
+# --------------------------------------------------------------------------
+def _t_ari_sync(adql: str) -> pd.DataFrame:
+    import pyvo  # noqa: PLC0415  runner-only
+
+    return _lower(pyvo.dal.TAPService(ARI_TAP).run_sync(adql, maxrec=500000)
+                  .to_table().to_pandas())
+
+
+def _t_ari_async(adql: str) -> pd.DataFrame:
+    import pyvo  # noqa: PLC0415  runner-only
+
+    return _lower(pyvo.dal.TAPService(ARI_TAP).run_async(adql, maxrec=500000)
+                  .to_table().to_pandas())
+
+
+#: Sync first at ARI: a small cone answers in seconds and DaCHS has no shared
+#: 150-job sync ceiling; async is the retry.
+ARI_TRANSPORTS: tuple[tuple[str, str, object], ...] = (
+    ("ari_pyvo_sync", "sync", _t_ari_sync),
+    ("ari_pyvo_async", "async", _t_ari_async),
+)
+
+
+def ari_adql(adql: str) -> str:
+    """ESA-dialect ``gaia_only`` ADQL -> the same selection at ARI.
+
+    The only rewrite: ``phot_variable_flag != 'VARIABLE'`` becomes a NULL-safe
+    ``<>``, because a mirror may store ESA's ``NOT_AVAILABLE`` as NULL, and a
+    NULL fails ``!=`` -- which would silently drop almost every star.
+    """
+    return re.sub(r"(\b\w+\.)?phot_variable_flag\s*!=\s*'VARIABLE'",
+                  lambda m: (f"({m.group(1) or ''}phot_variable_flag IS NULL OR "
+                             f"{m.group(1) or ''}phot_variable_flag <> 'VARIABLE')"), adql)
+
+
+def ari_query_fn_with_record(*, label: str = "ignition_ari", timeout_s: float | None = 300.0,
+                             deadline: float | None = None):
+    """An ``adql -> (df, record)`` callable against the ARI mirror; raises on failure."""
+    def _fn(adql: str):
+        df, rec = run_gaia_query(ari_adql(adql), label=label, timeout_s=timeout_s,
+                                 allow_sync=True, deadline=deadline,
+                                 transports=ARI_TRANSPORTS, retries_per_transport=1,
+                                 tag="ignition")
+        if rec["status"] in (QUERY_FAILED, QUERY_TIMED_OUT):
+            raise GaiaQueryFailed(rec)
+        rec["service"] = ARI_TAP
+        return df, rec
+    return _fn
+
+
 def unwrap_result(res) -> tuple[pd.DataFrame, dict]:
     """Accept either ``df`` or ``(df, record)`` from an injected ``query_fn``."""
     if isinstance(res, tuple) and len(res) == 2 and isinstance(res[1], dict):
@@ -696,7 +756,8 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
                  shape: str | None = None, vizier: bool = True,
                  vizier_fetch_fn=None, irsa: bool = True,
                  irsa_fetch_fn=None,
-                 unit_budget_s: float | None = None) -> tuple[pd.DataFrame, dict]:
+                 unit_budget_s: float | None = None, esa: bool = True,
+                 ari: bool = True, ari_query_fn=None) -> tuple[pd.DataFrame, dict]:
     """Pull the parent sample and report its denominator honestly.
 
     Returns ``(stars, report)``.  ``report["status"]`` is ``OK``,
@@ -738,6 +799,7 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     c = {**DEFAULT_SAMPLE, **(conf or {})}
     mode = mode or str(c.get("mode", "fields"))
     cap = int(cap_per_shard or c["cap_per_shard"])
+    esa_injected = query_fn is not None
     query_fn = query_fn or query_fn_with_record(label="ignition_sample", allow_sync=False,
                                                 timeout_s=float(c.get("query_timeout_s")
                                                                  or 1200.0))
@@ -752,7 +814,18 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     capped_units: list[str] = []
     cuts_skipped: set[str] = set()
     use_vizier = bool(vizier)
-    use_irsa = bool(irsa)
+    # The IRSA route's Gaia half is ESA's archive: with ESA switched off (the
+    # sweep's circuit breaker) it cannot answer either, so it is not asked.
+    use_irsa = bool(irsa) and bool(esa)
+    use_ari = bool(ari) and bool(irsa) and bool(c.get("ari_enabled", True))
+    if use_ari and ari_query_fn is None:
+        if esa_injected:
+            # an injected ESA transport (a test, or a caller that chose its
+            # archive) never silently gains a live network route beside it
+            use_ari = False
+        else:
+            ari_query_fn = ari_query_fn_with_record(
+                timeout_s=float(c.get("ari_timeout_s") or c.get("query_timeout_s") or 300.0))
     # IRSA's own answer about its AllWISE table and column names, carried from
     # the first unit that asked so the run does not re-ask TAP_SCHEMA per cone.
     irsa_verified: dict | None = None
@@ -781,7 +854,7 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         t_unit = _time.monotonic()
         n_unit = None
         stride = 1
-        if c.get("count_parent", True):
+        if c.get("count_parent", True) and esa:
             for sh in _shape_order(c, shape, working):
                 n_unit = _count(build_query(c, count_only=True, shape=sh, **u), query_fn,
                                 ledger, f"count_{label}", shape=sh)
@@ -798,7 +871,7 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
             stride = max(int(np.ceil(n_unit / share)), 1)
         answered = False
         irec: dict | None = None
-        for sh in _shape_order(c, shape, working):
+        for sh in (_shape_order(c, shape, working) if esa else []):
             if _spent(t_unit):
                 skipped.append({"label": label, "route": ROUTE_ESA, "shape": sh,
                                 "status": "SKIPPED_ON_UNIT_BUDGET"})
@@ -830,6 +903,43 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
             n_by_route[ROUTE_ESA] = n_by_route.get(ROUTE_ESA, 0) + int(len(df))
             units_by_route[ROUTE_ESA] = units_by_route.get(ROUTE_ESA, 0) + 1
             break
+        if not answered and use_ari:
+            # --- the ARI mirror: an independent Gaia DR3 service for the Gaia
+            # half (the same gaia_only SQL, NULL-safe), IRSA for AllWISE.
+            if _spent(t_unit):
+                skipped.append({"label": label, "route": ROUTE_ARI,
+                                "status": "SKIPPED_ON_UNIT_BUDGET"})
+                adf, arec = pd.DataFrame(), None
+            else:
+                adf, arec = _irsa_unit(c, u, label=label,
+                                       cap=(total_cap if mode == "fields" else None),
+                                       query_fn=ari_query_fn, fetch_fn=irsa_fetch_fn, use=True,
+                                       verified=irsa_verified)
+            if arec is not None:
+                arec = {**arec, "route": ROUTE_ARI, "gaia_service": ARI_TAP}
+                ledger.append({"label": label, **arec})
+                if (arec.get("verify") or {}).get("verified"):
+                    irsa_verified = arec["verify"]
+            if arec is not None and arec.get("status") in ("OK", QUERY_ZERO):
+                answered = True
+                per_unit.append({"unit": label, "n_parent": n_unit, "n_rows": int(len(adf)),
+                                 "stride": 1, "fraction": 1.0, "route": ROUTE_ARI,
+                                 "status": arec["status"], "capped": bool(arec.get("capped")),
+                                 "truncated": bool(arec.get("truncated")),
+                                 "shape": SHAPE_GAIA_ONLY})
+                if len(adf):
+                    adf = adf.copy()
+                    adf["sample_unit"] = label
+                    adf["subsample_stride"] = 1
+                    adf["query_shape"] = SHAPE_GAIA_ONLY
+                    adf["parent_route"] = ROUTE_ARI
+                    frames.append(adf)
+                n_by_route[ROUTE_ARI] = n_by_route.get(ROUTE_ARI, 0) + int(len(adf))
+                units_by_route[ROUTE_ARI] = units_by_route.get(ROUTE_ARI, 0) + 1
+                if arec.get("capped"):
+                    capped_units.append(label)
+                cuts_skipped.update(arec.get("cuts_not_applied") or [])
+
         if not answered:
             # --- the SECOND route.  Only here: the ESA archive is authoritative,
             # has the in-archive cross-match, and must be given every joined
@@ -950,6 +1060,8 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         "parent_count": parent_count,
         "subsample_fraction": (n_pulled / parent_count if parent_count else None),
         "route_endpoints": {ROUTE_ESA: GAIA_TAP, ROUTE_IRSA: _irsa_endpoints(c),
+                            ROUTE_ARI: {"gaia": ARI_TAP,
+                                        "allwise": _irsa_endpoints(c).get("allwise")},
                             ROUTE_VIZIER: _vizier_endpoints(c)},
         "route_errors": [{"label": e.get("label"), "route": e.get("route", ROUTE_ESA),
                           "shape": e.get("shape"), "status": e.get("status"),

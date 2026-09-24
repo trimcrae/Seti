@@ -1,50 +1,89 @@
 {
  "channel": "parallax4",
- "generated_utc": "2026-09-24T18:10:03Z",
- "run_id": "36007202395",
- "git_sha": "c033f695776797f3a200ddac6a4bb91151e64251",
+ "generated_utc": "2026-09-24T21:36:01Z",
+ "run_id": "36028172559",
+ "git_sha": "d9426f62a91bd5106631baab761f6b06250b81b6",
  "funnel": {
-  "cdn_files_listed": null,
-  "files_done": null,
-  "files_planned": null,
-  "sources_read": null,
-  "sources_searched": null,
-  "transits_searched": null,
-  "qualifying_episodes": null,
-  "tier_AB_episodes": null,
-  "tier_A": null,
-  "tier_A_after_epoch_veto": null,
-  "tier_A_sources_after_epoch_veto": null,
-  "vetted_sources": null,
-  "vet_classes": null
- },
- "controls": {
-  "photometric": null,
-  "astrometric": null,
-  "P_photometric": {
-   "recovery_tier_A": null,
-   "dust_called_grey": null,
-   "n_grey_above_floor": null,
-   "n_dust_recovered": null,
-   "failures": null
-  },
-  "A2_prerelease": {
-   "gate": null,
-   "n_parallax_ok": null,
-   "n_sources": null,
-   "join_ok": null
-  },
-  "A3_varstrometry": {
-   "gate": null,
-   "classes": null
+  "cdn_files_listed": 3386,
+  "files_done": 3386,
+  "files_planned": 3386,
+  "sources_read": 11754237,
+  "sources_searched": 11292680,
+  "transits_searched": 540529234,
+  "qualifying_episodes": 5585379,
+  "tier_AB_episodes": 110188,
+  "tier_A": 40380,
+  "tier_A_after_epoch_veto": 9126,
+  "tier_A_sources_after_epoch_veto": 8348,
+  "vetted_sources": 8348,
+  "vet_classes": {
+   "KILLED": 7122,
+   "SURVIVES_CATALOG_ONLY": 835,
+   "SURVIVES": 216,
+   "SURVIVES_FLAGGED": 175
   }
  },
- "dr4": "DR4_AVAILABLE",
+ "controls": {
+  "photometric": "PASS",
+  "astrometric": "FAIL",
+  "P_photometric": {
+   "recovery_tier_A": 0.8620689655172413,
+   "dust_called_grey": 0.0,
+   "n_grey_above_floor": 29,
+   "n_dust_recovered": 28,
+   "failures": []
+  },
+  "A2_prerelease": {
+   "gate": "PASS",
+   "n_parallax_ok": 12,
+   "n_sources": 12,
+   "join_ok": true
+  },
+  "A3_varstrometry": {
+   "gate": "FAIL",
+   "classes": {
+    "blend": {
+     "n_ecl": 2135,
+     "n_quiet": 1663,
+     "median_z_ecl": 0.7185071706771851,
+     "median_z_quiet": 1.0,
+     "excess_ratio": 0.7185071706771851,
+     "p_mwu_ecl_gt_quiet": 1.0,
+     "spearman_amp_vs_z": 0.10462770647441365,
+     "p_spearman": 1.2667213182802427e-06
+    },
+    "iso": {
+     "n_ecl": 30573,
+     "n_quiet": 38924,
+     "median_z_ecl": 1.0044233798980713,
+     "median_z_quiet": 1.0,
+     "excess_ratio": 1.0044233798980713,
+     "p_mwu_ecl_gt_quiet": 0.0,
+     "spearman_amp_vs_z": 0.03064562522727655,
+     "p_spearman": 8.346690548665002e-08
+    }
+   }
+  }
+ },
+ "dr4": "DR4_NOT_RELEASED",
  "watchlist_unique": 101609,
  "self_consistency": {
   "ok": true,
-  "checks": []
+  "checks": [
+   {
+    "check": "searched<=read",
+    "ok": true
+   },
+   {
+    "check": "tierA<=tierAB",
+    "ok": true
+   },
+   {
+    "check": "tierAB<=qualifying",
+    "ok": true
+   }
+  ]
  },
- "verdict": "NO_CONTROLS_RUN",
+ "verdict": "GREY_EVENTS_SURVIVING_DR3_VET: 391 sources await the DR4 photocentre test",
  "note": "A tier-A survivor is a grey, colour-constrained, multi-transit, non-periodic episode on a source Gaia does not classify as an eclipsing binary, not flagged duplicated, with no neighbour whose flux reproduces the episode.  It is NOT a detection until DR4's per-transit photocentre shows the variation is on the target (ON_TARGET) -- the test this channel exists to run."
 }

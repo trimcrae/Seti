@@ -61,6 +61,10 @@ on:
         description: "Skip probe/acquire/screen/ages; assess from this prior run's artifacts"
         required: false
         default: ""
+      blocks:
+        description: "stage=leadvet only: comma list of blocks to re-run and merge (empty = all)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -589,7 +593,7 @@ jobs:
       - name: Offline gate (lead vet)
         run: python -m pytest tests/test_cradle_leadvet.py tests/test_cradle_deepvet.py -q -p no:cacheprovider
       - name: Lead vet
-        run: python -m seti.cradle.leadvet --out-dir results/cradle
+        run: python -m seti.cradle.leadvet --out-dir results/cradle --blocks "${{ github.event.inputs.blocks }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

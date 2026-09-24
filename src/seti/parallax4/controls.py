@@ -303,6 +303,21 @@ def varstrometry_control(ecl: pd.DataFrame, quiet: pd.DataFrame, *, blend_min: f
                     "spearman_amp_vs_z": float(sp.statistic), "p_spearman": float(sp.pvalue)}
     rep["classes"] = out
     b, i = out.get("blend", {}), out.get("iso", {})
+    # A3b (diagnostic, not the gate; added after run 36028172559 failed the
+    # pre-specified between-population contrast): within the eclipsing
+    # binaries alone, is the jitter-vs-amplitude dependence stronger among
+    # blended stars than among isolated ones?  Fisher z on the two Spearman
+    # coefficients.  It compares EBs with EBs, so it is immune to the
+    # blended-quiet sample being a different population of resolved pairs.
+    if "spearman_amp_vs_z" in b and "spearman_amp_vs_z" in i:
+        from scipy.stats import norm
+
+        zb, zi = np.arctanh(b["spearman_amp_vs_z"]), np.arctanh(i["spearman_amp_vs_z"])
+        se = np.sqrt(1.0 / max(b["n_ecl"] - 3, 1) + 1.0 / max(i["n_ecl"] - 3, 1))
+        zz = float((zb - zi) / se)
+        rep["A3b_dose_response_contrast"] = {"z": zz, "p_one_sided": float(norm.sf(zz)),
+                                             "rho_blend": b["spearman_amp_vs_z"],
+                                             "rho_iso": i["spearman_amp_vs_z"]}
     ok = (b.get("p_mwu_ecl_gt_quiet", 1) < p_max and b.get("spearman_amp_vs_z", 0) > 0
           and b.get("p_spearman", 1) < p_max
           and b.get("excess_ratio", 0) > i.get("excess_ratio", np.inf))

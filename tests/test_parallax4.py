@@ -649,3 +649,78 @@ def test_cdn_storage_listing_paginates():
     assert rep["route"] == "storage_listing" and rep["n_files"] == 2
     assert rep["md5"] == {"EpochPhotometry_000000-003111.csv.gz": "0123456789abcdef0123456789abcdef"}
     assert rep["total_bytes"] == 300
+
+
+def test_local_coincidence_veto():
+    """Other sources in the same ~0.9-deg pixel dipping within 0.1 d of an
+    event is a scan-local instrument signature."""
+    base = 5_000_000_000_000_000_000
+    ev = pd.DataFrame({"source_id": [base + 1, base + (1 << 50)], "t_peak": [2000.0, 2000.0]})
+    rng = np.random.default_rng(0)
+    allev = pd.DataFrame({"source_id": base + np.arange(2, 202) * 1000,
+                          "t_peak": rng.uniform(1700, 2700, 200)})
+    burst = pd.DataFrame({"source_id": base + np.arange(300, 340) * 1000,
+                          "t_peak": 2000.0 + 0.001 * np.arange(40)})
+    # 300 sources observed at 40 common visit epochs (the scan law), one of them t=2000
+    visits = np.r_[np.linspace(1700, 2690, 39), 2000.0]
+    pix = R.pixel_epoch_counts(np.repeat(base + np.arange(300) * 1000, len(visits)),
+                               np.tile(visits, 300))
+    pix = pd.concat([pix, R.pixel_epoch_counts(np.array([base + (1 << 50)]), np.array([2000.0]))])
+    loc = R.local_coincidence(ev, pd.concat([allev, burst, ev], ignore_index=True), pix)
+    assert loc["n"][0] >= 40 and loc["p"][0] < 1e-3      # same pixel as the burst
+    assert loc["n"][1] == 0 and loc["p"][1] == 1.0        # another pixel entirely
+    # the scan-law pile-up is NOT a burst: 200 variables, every episode on a visit epoch
+    alle2 = pd.DataFrame({"source_id": base + np.arange(2, 202) * 1000,
+                          "t_peak": rng.choice(visits, 200)})
+    ev2 = pd.DataFrame({"source_id": [base + 1], "t_peak": [2000.0]})
+    loc2 = R.local_coincidence(ev2, pd.concat([alle2, ev2], ignore_index=True), pix)
+    assert loc2["p"][0] > 1e-3, loc2
+
+
+def test_deepvet_fates():
+    from seti.parallax4 import deepvet as DV
+
+    assert DV.classify_fate({"vsx_type": "EA"})[0].startswith("KNOWN_ECLIPSING_BINARY")
+    assert DV.classify_fate({"simbad_otype": "YSO"})[0].startswith("YOUNG_STELLAR_OBJECT")
+    assert DV.classify_fate({"vsx_type": "UXOR"})[0].startswith("YOUNG_STELLAR_OBJECT")
+    assert DV.classify_fate({"vsx_type": "RRAB"})[0].startswith("KNOWN_VARIABLE")
+    fate, fl = DV.classify_fate({"simbad_otype": "*", "phot_g_mean_mag": 10.2, "n_gaia_30as": 40,
+                                 "min_n_obs_g": 3.0})
+    assert fate == "UNEXPLAINED" and len(fl) == 3
+    assert DV.classify_fate({"reproduced": False})[0] == "NOT_REPRODUCED"
+
+
+def test_deepvet_stage_offline(tmp_path, conf):
+    lc = SIM.simulate_grey_lightcurve("grey_multi", seed=2, source_id=77)
+    ev, _ = G.detect_source(E.photometry_from_long(lc), G.GreyConfig.from_dict(conf["grey"]))
+    pd.DataFrame([{**ev[0], "tier": "A", "vet_class": "SURVIVES", "flags": "", "ra": 10.0, "dec": -5.0, "score": 9.0,
+                   "phot_g_mean_mag": 15.0}]).to_csv(tmp_path / "vetted.csv", index=False)
+
+    def http(url, params=None, **k):
+        raise RuntimeError("no datalink offline")
+
+    rep = R.stage_deepvet(conf, tmp_path, http=http, tap=_dead_tap,
+                          simbad=lambda ra, dec: {"simbad_otype": "YSO"},
+                          vsx=lambda ra, dec: {"vsx_status": "NO_MATCH"},
+                          ztf_fetch=lambda ra, dec: pd.DataFrame())
+    assert rep["fates"] == {"YOUNG_STELLAR_OBJECT": 1}
+
+
+def test_ztf_eclipse_test_phases_gaia_dips():
+    """A detached EB in ZTF whose eclipses line up with the Gaia dip times is
+    the mechanism; a quiet ZTF light curve is not."""
+    from seti.parallax4 import deepvet as DV
+
+    rng = np.random.default_rng(1)
+    mjd = np.sort(rng.uniform(58200, 60000, 600))
+    t = mjd - DV.GAIA_T0_MJD
+    loss = SIM.eclipse_profile(t, 2.345, 1700.3, 0.3, 0.05, 0.25)
+    z = pd.DataFrame({"mjd": mjd, "mag": 15 - 2.5 * np.log10(1 - loss) + rng.normal(0, 0.01, 600),
+                      "magerr": 0.01, "filtercode": "zr"})
+    dips = [1700.3 + 2.345 * k for k in (10, 40, 77, 120, 200)]
+    r = DV.ztf_eclipse_test(z, dips)
+    assert r["ztf_class"] == "ZTF_ECLIPSING_PHASED" and abs(r["ztf_period_d"] - 2.345) < 0.01
+    assert DV.classify_fate(r)[0].startswith("ECLIPSING_BINARY(ZTF")
+    q = z.assign(mag=15 + rng.normal(0, 0.01, 600))
+    assert DV.ztf_eclipse_test(q, dips)["ztf_class"] == "ZTF_QUIET"
+    assert DV.ztf_eclipse_test(z.head(10), dips)["ztf_class"] == "ZTF_NO_DATA"

@@ -180,6 +180,60 @@ debris) are the first explanation to exclude.
     python -m seti.parallax4.run --stage probe|controls|sweep|reduce|vet|watchlist|dr4|summary
     # runner: workflow_dispatch parallax4.yml (stage=all; stage=dr4 on release day)
 
-## 7. Results
+## 7. What the runner measured (2026-09-24)
 
-See `results/parallax4/summary.json` and the PARALLAX4 section of `STATUS.md`.
+* **DR4 status**: `DR4_NOT_RELEASED` (Gaia TAP answers with 11 schemas, no
+  `gaiadr4`). The CDN `Gaia/gdr4/` path answers HTTP 200 already; run
+  36007202395 took that as release and was wrong — availability now needs a
+  `gaiadr4` TAP schema or epoch products in the CDN storage listing.
+* **CDN**: the directory page is a JavaScript browser; the listing comes from
+  `gaia.eu-1.cdn77-storage.com` (S3-style XML). DR3 epoch photometry is
+  3,386 files, 72.8 GB compressed (3,240 with MD5 ETags); the first file holds
+  5,345 sources / 121,811 transits and parses in 3.7 s with every array
+  aligned. Header = the 48 columns listed in `probe.json`; every reader role
+  resolved.
+* **Draft DR4 data model** (PDF, 2.2 M characters of text): the tables
+  `epoch_photometry`, `epoch_photometry_ccd`, `epoch_astrometry`, epoch RV /
+  XP / RVS; epoch photometry spells `g_obs_time`, `g_flux`, `g_flux_error`,
+  `bp_obs_time`, `bp_flux`, …, `af_flux`, `sm_flux` — the reader already
+  resolves them; every epoch-astrometry role resolves.
+* **TAP behaviour**: on the anonymous queue every async job stalled ~240 s
+  while the same query sync answered in ~8 s; the client is sync-first.
+
+Controls (`controls.json`):
+
+* First attempt (run 36019508284) **failed** the photometric gate: tier-A
+  recovery 0.75 < 0.80 for grey injections at S/N ≥ 10 into real light
+  curves. Diagnosis from the 13 misses: 7 called chromatic — the grey test
+  used measurement errors only and ignored the star's intrinsic colour
+  variability; 5 `G_ONLY` — injected on transits with BP/RP flagged, or
+  colour too noisy. Fix: the grey test now runs on δBP−δRP and
+  δG−(δBP+δRP)/2 against the star's own empirical scatter of those
+  combinations; injections require usable BP/RP; the gate is judged on
+  injections whose colour noise can distinguish grey from dust (s_col /
+  depth ≤ 0.1), and the testable fraction is reported. This redefinition was
+  made after seeing the failure and is stated as such.
+* Second attempt (run 36028172559): **PASS** — tier-A recovery 0.86 (29
+  colour-testable injections at S/N ≥ 10; 54% of S/N ≥ 10 injections are
+  colour-testable), dust called grey 0.00 (28), reader misalignment 0.
+  P3: of 91 Gaia eclipsing binaries with a GREY dip in the pilot, 65 period-
+  testable, 69% caught by the period test, 11 reach tier A (removed later by
+  Gaia's own EB table).
+* A1 simulated DR4 scenes 21/21. A2 the real prerelease: 12/12 parallaxes;
+  Gaia-4 joint fit on 41 transits: D = 16 ± 6 mas per unit ΔF/F (p = 0.016),
+  95% bound 32 mas → `AMBIGUOUS` (0.5% flux rms gives little leverage).
+* A3 DR3 varstrometry **FAILED its pre-specified criteria**: blended
+  eclipsing binaries have *lower* RUWE than blended quiet stars at matched G
+  (ratio 0.72, 2,135 vs 1,663 stars). The between-population contrast is
+  confounded — quiet stars with `ipd_frac_multi_peak` ≥ 8 are largely
+  partially resolved physical pairs with their own static-blend jitter — but
+  the gate stays FAIL. The within-EB prediction holds: RUWE rises with
+  photometric amplitude among blended EBs (Spearman 0.105, p = 1e-6) more
+  than among isolated EBs (0.031), Fisher z = 3.3, p = 4.5e-4 (A3b,
+  diagnostic). Consequence: `gate_astrometric = FAIL`, so no DR4 photocentre
+  verdict is issued on the strength of the DR3 controls; release-day
+  verdicts are gated instead by A4 (`dr4_controls.csv`: 870 DR3 VIMs, 300
+  clean single EBs), which is the direct per-transit test.
+
+Sweep results: `results/parallax4/reduce.json`, `vet.json`, `summary.json`,
+and the PARALLAX4 section of `STATUS.md`.

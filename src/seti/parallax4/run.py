@@ -48,6 +48,7 @@ from . import watchlist as W
 
 OUT = Path("results") / "parallax4"
 STAGES = ("probe", "controls", "sweep", "reduce", "vet", "watchlist", "dr4", "summary")
+EXTRA_STAGES = ("deepvet",)
 EVENT_COLS = ["source_id", "kind", "tier", "t_peak", "t_start", "t_end", "transit_id_peak",
               "n_transits_episode", "delta_g_peak", "z_g_peak", "delta_g", "sigma_g", "delta_bp",
               "sigma_bp", "delta_rp", "sigma_rp", "z_bp_episode", "z_rp_episode", "grey_class",
@@ -432,6 +433,7 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1, max
     ev_path = out / f"events_{tag}.csv"
     ab_path = out / f"eventsAB_{tag}.csv"
     inj_path = out / f"injections_{tag}.csv"
+    pix_path = out / f"pixel_epochs_{tag}.csv"
     ctrl = _read(out / "controls.json")
     if not force and ctrl.get("gate_photometric") != "PASS":
         rep = {"stage": "sweep", "shard": shard, "n_shards": n_shards, **_provenance(),
@@ -488,6 +490,9 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1, max
             continue
         okt = np.isfinite(ph["t"].to_numpy(float)) & ~ph["bad_g"].to_numpy() & np.isfinite(ph["f_g"].to_numpy(float))
         h_tr += np.histogram(ph["t"].to_numpy(float)[okt], bins=edges)[0]
+        # the local veto's denominator: usable transits per (sky pixel, 0.1 d)
+        pe = pixel_epoch_counts(ph["source_id"].to_numpy(np.int64)[okt], ph["t"].to_numpy(float)[okt])
+        pe.to_csv(pix_path, mode="a", header=not pix_path.exists(), index=False)
         ev, cnt = G.detect_frame(ph, gcfg)
         for k in ("n_sources", "n_searched", "n_too_few", "n_transits_ok_g"):
             counts[k] = counts.get(k, 0) + int(cnt[k])
@@ -556,6 +561,94 @@ def epoch_clusters(h_tr: np.ndarray, h_ev: np.ndarray, *, factor: float = 10.0, 
     return (h_ev >= min_events) & (h_ev > factor * mu) & (p < p_max)
 
 
+def hp6_of(source_id) -> np.ndarray:
+    """HEALPix level-6 (nested) pixel from Gaia source_id (level-12 index in
+    the bits above 2^35; level 6 is 12 bits coarser): ~0.92 deg pixels."""
+    return (np.asarray(source_id, dtype=np.int64) >> 47).astype(np.int64)
+
+
+def _all_event_times(out: Path, n_shards: int | None) -> pd.DataFrame:
+    files = sorted(glob.glob(str(out / "events_s*of*.csv")))
+    if n_shards:
+        files = [f for f in files if f.endswith(f"of{int(n_shards)}.csv")]
+    frames = []
+    for f in files:
+        try:
+            frames.append(pd.read_csv(f, usecols=["source_id", "t_peak"]))
+        except Exception:  # noqa: BLE001
+            continue
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["source_id", "t_peak"])
+
+
+PIX_DT = 0.1   # d, the pixel-epoch bin
+
+
+def pixel_epoch_counts(source_id: np.ndarray, t: np.ndarray) -> pd.DataFrame:
+    """Usable transits per (HEALPix-6 pixel, 0.1-d bin)."""
+    if not len(t):
+        return pd.DataFrame(columns=["hp", "tb", "n"])
+    df = pd.DataFrame({"hp": hp6_of(source_id), "tb": np.floor(np.asarray(t) / PIX_DT).astype(np.int64)})
+    return df.groupby(["hp", "tb"]).size().rename("n").reset_index()
+
+
+def _pixel_epochs(out: Path, n_shards: int | None) -> pd.DataFrame | None:
+    files = sorted(glob.glob(str(out / "pixel_epochs_s*of*.csv")))
+    if n_shards:
+        files = [f for f in files if f.endswith(f"of{int(n_shards)}.csv")]
+    if not files:
+        return None
+    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    return df.groupby(["hp", "tb"])["n"].sum().reset_index()
+
+
+def local_coincidence(ev: pd.DataFrame, allev: pd.DataFrame, pix: pd.DataFrame, *,
+                      dt: float = 0.1) -> dict:
+    """For each row of ``ev``: how many OTHER sources in the same level-6
+    pixel have a qualifying episode within +-dt, against the number expected
+    from the pixel's own episodes-per-usable-transit rate times the usable
+    transits the pixel actually had in that window.
+
+    The denominator matters.  Gaia visits a pixel ~40 times in 34 months and
+    every source in it is observed at the same visits, so episodes of
+    unrelated variables pile onto those epochs by construction.  Run
+    36028172559 used a uniform-in-time null (rate x 2dt / baseline) and
+    vetoed 77,258 of 110,188 tier-A/B episodes -- a wrong null, not an
+    instrument.  This version counts transits per (pixel, 0.1-d bin) in the
+    sweep and normalises by them."""
+    from scipy.stats import poisson
+
+    a = allev.copy()
+    a["hp"] = hp6_of(a["source_id"])
+    a = a.sort_values(["hp", "t_peak"])
+    groups = {k: (g["t_peak"].to_numpy(float), g["source_id"].to_numpy(np.int64))
+              for k, g in a.groupby("hp", sort=False)}
+    ptot = pix.groupby("hp")["n"].sum()
+    pix_idx = {k: (g["tb"].to_numpy(np.int64), g["n"].to_numpy(float))
+               for k, g in pix.sort_values(["hp", "tb"]).groupby("hp", sort=False)}
+    n_out = np.zeros(len(ev), int)
+    mu_out = np.zeros(len(ev))
+    p_out = np.ones(len(ev))
+    for i, (sid, t) in enumerate(zip(ev["source_id"].to_numpy(np.int64), ev["t_peak"].to_numpy(float),
+                                     strict=False)):
+        hp = int(hp6_of([sid])[0])
+        g = groups.get(hp)
+        pe = pix_idx.get(hp)
+        if g is None or pe is None or hp not in ptot.index:
+            continue
+        tt, ss = g
+        lo, hi = np.searchsorted(tt, t - dt), np.searchsorted(tt, t + dt, side="right")
+        others = ss[lo:hi]
+        k = int(len(np.unique(others[others != sid])))
+        rate = float((ss != sid).sum()) / max(float(ptot.loc[hp]), 1.0)
+        tb, nn = pe
+        b0, b1 = int(np.floor((t - dt) / PIX_DT)), int(np.floor((t + dt) / PIX_DT))
+        n_tr = float(nn[(tb >= b0) & (tb <= b1)].sum())
+        mu = rate * n_tr
+        n_out[i], mu_out[i] = k, mu
+        p_out[i] = float(poisson.sf(k - 1, max(mu, 1e-12))) if k > 0 else 1.0
+    return {"n": n_out, "mu": mu_out, "p": p_out}
+
+
 def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None) -> dict:
     rc = conf.get("reduce") or {}
     rep: dict = {"stage": "reduce", **_provenance()}
@@ -598,13 +691,31 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None)
     if len(ab):
         bi = np.clip(np.searchsorted(edges, ab["t_peak"].to_numpy(float), side="right") - 1, 0, nb - 1)
         ab["epoch_cluster"] = flagged[bi]
+        # the LOCAL form of the same veto: other sources' qualifying episodes
+        # in the same ~0.9-deg sky pixel within +-0.1 d (one scan passes a
+        # pixel in seconds; an instrument event there hits its neighbours)
+        allev = _all_event_times(out, n_shards_expected)
+        pix = _pixel_epochs(out, n_shards_expected)
+        rep["n_all_events_for_local_veto"] = int(len(allev))
+        rep["local_veto"] = "RUN" if (len(allev) and pix is not None) else "NOT_RUN(no pixel-epoch counts)"
+        if len(allev) and pix is not None:
+            loc = local_coincidence(ab, allev, pix, dt=float(rc.get("local_dt_d", 0.1)))
+            ab["n_local_coincident"] = loc["n"]
+            ab["mu_local_coincident"] = loc["mu"]
+            ab["p_local_coincident"] = loc["p"]
+            ab["epoch_cluster"] = ab["epoch_cluster"] | (loc["p"] < float(rc.get("local_p_max", 1e-3)))
+            rep["n_local_coincidence_vetoed"] = int((loc["p"] < float(rc.get("local_p_max", 1e-3))).sum())
         rng = ab["rms_out_of_episode_g"].astype(float).clip(lower=1e-3)
         ab["score"] = (ab["delta_g"].abs() / rng) * np.sqrt(ab["n_transits_episode"].astype(float))
     else:
         ab["epoch_cluster"] = []
         ab["score"] = []
     ab = ab.sort_values(["tier", "score"], ascending=[True, False])
-    ab.to_csv(out / "events_AB.csv", index=False)
+    # The committed table holds tier A only (every tier-A episode, epoch-
+    # flagged ones included, 6 significant figures): tier B at catalogue scale
+    # is tens of MB.  Every tier-A/B row stays in the per-shard artifacts
+    # (eventsAB_s<i>of<n>.csv), and the counts are in reduce.json.
+    ab[ab["tier"] == "A"].to_csv(out / "events_AB.csv", index=False, float_format="%.6g")
     a = ab[(ab["tier"] == "A") & ~ab["epoch_cluster"].astype(bool)] if len(ab) else ab
     b = ab[(ab["tier"] == "B") & ~ab["epoch_cluster"].astype(bool)] if len(ab) else ab
     planned = sum(int(r.get("n_files_planned", 0)) for r in recs)
@@ -713,6 +824,12 @@ def vet_rules(ev: pd.DataFrame, gs: pd.DataFrame, vari: pd.DataFrame, cones: dic
 
 
 def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
+    """Two levels.  Catalogue level for EVERY tier-A source (IN-list TAP, cheap):
+    Gaia EB table / ECL class, DR3 VIM, duplicated_source, RUWE / IPD flags.
+    Neighbour level (a 10" cone each, ~8 s per query) for the ``max_vet``
+    highest-scoring catalogue survivors: the misassigned-transit flux match
+    and crowding.  A catalogue survivor that was not cone-checked is
+    ``SURVIVES_CATALOG_ONLY`` and says so."""
     vc = conf.get("vet") or {}
     rep: dict = {"stage": "vet", **_provenance()}
     p = out / "events_AB.csv"
@@ -723,7 +840,7 @@ def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
     ab = pd.read_csv(p)
     a = ab[(ab["tier"] == "A") & ~ab["epoch_cluster"].astype(bool)].copy() if len(ab) else ab
     a = a.sort_values("score", ascending=False)
-    ids = list(dict.fromkeys(a["source_id"].astype(np.int64).tolist()))[: int(vc.get("max_vet", 400))]
+    ids = list(dict.fromkeys(a["source_id"].astype(np.int64).tolist()))[: int(vc.get("max_catalog", 60000))]
     a = a[a["source_id"].isin(ids)]
     rep["n_sources_vetted"] = len(ids)
     if not ids:
@@ -747,40 +864,142 @@ def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
     except Exception as exc:  # noqa: BLE001
         vim = set()
         degraded.append(f"vim:{exc!r}"[:200])
+    level1 = vet_rules(a, gs, vari, {}, vc, vim=vim)
+    alive = level1[level1["vet_class"] != "KILLED"].sort_values("score", ascending=False)
+    cone_ids = list(dict.fromkeys(alive["source_id"].astype(np.int64).tolist()))[: int(vc.get("max_vet", 400))]
     cones: dict[int, pd.DataFrame] = {}
     n_cone_fail = 0
-    for _, r in gs.iterrows():
-        if not np.isfinite(r.get("ra", np.nan)):
+    gsi = gs.set_index("source_id") if "source_id" in gs else pd.DataFrame()
+    for sid in cone_ids:
+        if sid not in gsi.index or not np.isfinite(gsi.loc[sid].get("ra", np.nan)):
             continue
+        r = gsi.loc[sid]
         try:
-            cones[int(r["source_id"])] = acq.gaia_cone(float(r["ra"]), float(r["dec"]),
-                                                       float(vc.get("cone_arcsec", 10.0)), tap=tap)
+            cones[int(sid)] = acq.gaia_cone(float(r["ra"]), float(r["dec"]),
+                                            float(vc.get("cone_arcsec", 10.0)), tap=tap)
         except Exception:  # noqa: BLE001
             n_cone_fail += 1
     if n_cone_fail:
-        degraded.append(f"cones_failed:{n_cone_fail}/{len(gs)}")
+        degraded.append(f"cones_failed:{n_cone_fail}/{len(cone_ids)}")
     v = vet_rules(a, gs, vari, cones, vc, vim=vim)
-    v.to_csv(out / "vetted.csv", index=False)
-    per_src = v.groupby("source_id")["vet_class"].agg(
-        lambda s: "SURVIVES" if (s == "SURVIVES").any() else
-        ("SURVIVES_FLAGGED" if (s == "SURVIVES_FLAGGED").any() else "KILLED"))
+    checked = v["source_id"].isin(list(cones))
+    v["cone_checked"] = checked
+    v.loc[~checked & (v["vet_class"] != "KILLED"), "vet_class"] = "SURVIVES_CATALOG_ONLY"
+    v.to_csv(out / "vetted.csv", index=False, float_format="%.6g")
+
+    def best(s):
+        for c in ("SURVIVES", "SURVIVES_FLAGGED", "SURVIVES_CATALOG_ONLY"):
+            if (s == c).any():
+                return c
+        return "KILLED"
+
+    per_src = v.groupby("source_id")["vet_class"].agg(best)
     kr: dict[str, int] = {}
-    for x in v["kill_reasons"].fillna(""):
+    for x in v.drop_duplicates("source_id")["kill_reasons"].fillna(""):
         for n in str(x).split(";"):
             if n:
                 kr[n] = kr.get(n, 0) + 1
     rep.update(classes={str(k): int(c) for k, c in per_src.value_counts().items()},
-               kill_reasons=kr, degraded=degraded,
-               survivors=v[v["vet_class"] != "KILLED"].sort_values("score", ascending=False)
-               .head(50)[[c for c in ("source_id", "vet_class", "flags", "kind", "t_peak", "delta_g", "delta_bp",
+               kill_reasons_by_source=kr, degraded=degraded, n_cone_checked=int(len(cones)),
+               survivors=v[v["vet_class"].isin(["SURVIVES", "SURVIVES_FLAGGED"])]
+               .sort_values("score", ascending=False)
+               .head(60)[[c for c in ("source_id", "vet_class", "flags", "kind", "t_peak", "delta_g", "delta_bp",
                                       "delta_rp", "ratio_bp_rp", "ratio_err", "n_transits_episode",
-                                      "score", "phot_g_mean_mag", "bp_rp", "ruwe", "best_class_name")
+                                      "score", "phot_g_mean_mag", "bp_rp", "ruwe", "best_class_name",
+                                      "rms_out_of_episode_g", "n_dip_episodes", "period_class")
                           if c in v.columns]].to_dict("records"))
-    n_surv = int((per_src != "KILLED").sum())
+    n_surv = int(per_src.isin(["SURVIVES", "SURVIVES_FLAGGED"]).sum())
     rep["verdict"] = (f"DEGRADED ({'; '.join(degraded)}); " if degraded else "") + \
-        f"{n_surv} of {len(ids)} vetted sources survive Gaia-internal vetting"
+        (f"{int((per_src != 'KILLED').sum())} of {len(ids)} tier-A sources survive the catalogue vet; "
+         f"{n_surv} of {len(cones)} cone-checked survive the neighbour vet")
     _write(out / "vet.json", rep)
     print(f"[parallax4] vet: {rep['verdict']}")
+    return rep
+
+
+def stage_deepvet(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap,
+                  simbad=None, vsx=None, ztf_fetch=None, max_n: int = 60) -> dict:
+    """Trace each Gaia-vet survivor to a mechanism (``deepvet.classify_fate``)."""
+    from . import deepvet as DV
+
+    simbad = simbad or DV.simbad_type
+    vsx = vsx or DV.vsx_type
+    gcfg = G.GreyConfig.from_dict(conf.get("grey"))
+    rep: dict = {"stage": "deepvet", **_provenance()}
+    vt = out / "vetted.csv"
+    if not vt.exists() or os.path.getsize(vt) < 2:
+        rep.update(verdict="NO_SURVIVORS_TO_DEEPVET")
+        _write(out / "deepvet.json", rep)
+        return rep
+    v = pd.read_csv(vt)
+    v = v[v["vet_class"].isin(["SURVIVES", "SURVIVES_FLAGGED"])].sort_values("score", ascending=False)
+    top = v.drop_duplicates("source_id").head(int(max_n))
+    ids = top["source_id"].astype(np.int64).tolist()
+    rep["n_targets"] = len(ids)
+    try:
+        lcs = acq.datalink_products(ids, http=http)
+    except Exception as exc:  # noqa: BLE001
+        lcs = {}
+        rep["datalink_error"] = repr(exc)[:300]
+    rows, lightcurves = [], {}
+    for _, r in top.iterrows():
+        sid = int(r["source_id"])
+        ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
+        rec = {k: r.get(k) for k in ("source_id", "vet_class", "flags", "kind", "t_peak", "delta_g",
+                                     "delta_bp", "delta_rp", "ratio_bp_rp", "ratio_err",
+                                     "n_transits_episode", "score", "phot_g_mean_mag", "bp_rp",
+                                     "ruwe", "min_n_obs_g", "rms_out_of_episode_g", "ra", "dec")
+               if k in r}
+        try:
+            from astropy import units as u
+            from astropy.coordinates import SkyCoord
+
+            gal = SkyCoord(ra * u.deg, dec * u.deg).galactic
+            rec.update(l_deg=float(gal.l.deg), b_deg=float(gal.b.deg))
+        except Exception:  # noqa: BLE001
+            pass
+        if sid in lcs:
+            try:
+                lc = E.photometry_from_long(lcs[sid], source_id=sid)
+                ev, _ = G.detect_source(lc, gcfg)
+                hit = [e for e in ev if abs(e["t_peak"] - float(r["t_peak"])) < 0.5]
+                rec["reproduced"] = bool(hit) and G.tier(hit[0]) == "A"
+                w = lc[(lc["t"] > float(r["t_peak"]) - 3) & (lc["t"] < float(r["t_peak"]) + 3)]
+                lightcurves[str(sid)] = w[["t", "f_g", "e_g", "f_bp", "e_bp", "f_rp", "e_rp", "n_obs_g",
+                                           "bad_g", "bad_bp", "bad_rp"]].round(6).to_dict("records")
+            except Exception as exc:  # noqa: BLE001
+                rec["refetch_error"] = repr(exc)[:200]
+        else:
+            rec["reproduced"] = None
+        if np.isfinite(ra):
+            rec.update(simbad(ra, dec))
+            rec.update(vsx(ra, dec))
+            try:
+                cone = acq.gaia_cone(ra, dec, 30.0, tap=tap)
+                rec["n_gaia_30as"] = int(len(cone)) - 1
+            except Exception:  # noqa: BLE001
+                rec["n_gaia_30as"] = None
+        if np.isfinite(ra) and dec > -31:
+            try:
+                ztf = ztf_fetch(ra, dec) if ztf_fetch else DV.fetch_ztf(ra, dec)
+                dips = [float(x) for x in v.loc[(v["source_id"] == sid) & (v["kind"] == "DIP"), "t_peak"]]
+                rec.update(DV.ztf_eclipse_test(ztf, dips or [float(r["t_peak"])]))
+            except Exception as exc:  # noqa: BLE001
+                rec["ztf_class"] = f"ZTF_ERROR:{exc!r}"[:120]
+        else:
+            rec["ztf_class"] = "ZTF_SOUTH_OF_COVERAGE"
+        fate, fl = DV.classify_fate(rec)
+        rec["fate"], rec["fate_flags"] = fate, ";".join(fl)
+        rows.append(rec)
+    df = pd.DataFrame(rows)
+    df.to_csv(out / "deepvet.csv", index=False, float_format="%.6g")
+    _write(out / "deepvet_lightcurves.json", lightcurves)
+    fates = df["fate"].map(lambda x: str(x).split("(")[0]).value_counts() if len(df) else pd.Series(dtype=int)
+    rep.update(fates={str(k): int(c) for k, c in fates.items()},
+               unexplained=df[df["fate"] == "UNEXPLAINED"].to_dict("records") if len(df) else [])
+    rep["verdict"] = f"{int((df['fate'] == 'UNEXPLAINED').sum()) if len(df) else 0} of {len(df)} deep-vetted UNEXPLAINED"
+    _write(out / "deepvet.json", rep)
+    print(f"[parallax4] deepvet: {rep['verdict']}; fates={rep['fates']}")
     return rep
 
 
@@ -931,7 +1150,8 @@ def stage_summary(conf: dict, out: Path) -> dict:
     elif not red or red.get("verdict") in ("NO_SHARD_OUTPUTS", "REFUSED_CONTROLS_NOT_PASSED"):
         verdict = "NO_DATA_REACHED"
     else:
-        n_surv = sum(v for k, v in (vet.get("classes") or {}).items() if k != "KILLED")
+        n_surv = sum(v for k, v in (vet.get("classes") or {}).items()
+                     if k in ("SURVIVES", "SURVIVES_FLAGGED"))
         verdict = (f"GREY_EVENTS_SURVIVING_DR3_VET: {n_surv} sources await the DR4 photocentre test"
                    if n_surv else "NO_TIER_A_SURVIVOR")
         if red.get("degraded"):
@@ -974,6 +1194,8 @@ def run(stage: str = "all", *, out_dir=None, shard: int = 0, n_shards: int = 1, 
             rep = stage_dr4(conf, out)
         elif s == "summary":
             rep = stage_summary(conf, out)
+        elif s == "deepvet":
+            rep = stage_deepvet(conf, out)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + ('all',)}")
     return rep

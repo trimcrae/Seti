@@ -264,3 +264,37 @@ from IGNITION run 35923951760.
   cuts (NGC 2264); V718 Per, ES Aql — 1–3 matched epochs. None of the natural
   controls reached the ladder; the VSX natural-class sample stage was added
   to measure the ladder on hundreds of known natural variables instead.
+
+### 7.2 The positive control that reached the ladder: ASASSN-21qj
+
+Run 36030068228 (controls 16:52 UTC [12:52 EDT]) — with each optical band now
+tried alone — put ASASSN-21qj through the ladder for the first time: ASAS-SN
+g, 12 epochs matched to its 21 NEOWISE epochs, **5 faded epochs 2020.9–2022.9,
+depth 0.17 mag**. The simultaneous test said `FADE_IR_FADES` (W2 −103σ against
+the reference), and the gate read **FAIL** (`MISSED`), which stopped the
+survey shards — the gate doing its job. The reason is physical, not a
+detector fault: 21qj's NEOWISE brightening of 2019–2020 sits in the
+optically-unfaded epochs that define the reference, so the IR *at* the faded
+epochs is below it. The lag scan already had it — best lag **−4 epochs (IR
+leading by ~2 yr)**, r = 0.60 against −0.12 at lag 0 — which is Kenworthy et
+al.'s afterglow-then-transit (they give ~900 d).
+
+**What was changed, stated as an a-posteriori change:** a non-simultaneous
+event is now labelled `LAGGED_COUPLING` when the best shift is ≥ 2 epochs,
+correlates at ≥ 0.5 and ≥ 0.2 above lag 0, and W2 at the lag-shifted faded
+epochs is ≥ 3σ above the star's all-epoch median; it is always `NATURAL`
+(class `LAGGED`), because the claim here is the *simultaneous* answer. The
+rule was written after seeing this control, so 21qj's recovery is a
+consistency check on it, not an independent validation. Offline tests pin the
+rule on a synthetic afterglow that has faded by the transit, and on the case
+where the afterglow is still partly present (`COUPLED` → `LAGGED`).
+
+Run 36032055387's controls (17:34 UTC [13:34 EDT]): **ASASSN-21qj
+`RECOVERED_NATURAL`** (`LAGGED_COUPLING`, W2 +193σ at the shifted epochs);
+RW Aur (ASAS-SN g, 6 faded epochs, depth 0.47 mag) `FADE_IR_FADES` with the IR
+*lagging* (best lag +5, r = 0.80) but no W2 rise at the shifted epochs —
+not coupled; EE Cep one faded epoch, `IR_BANDS_DISAGREE`; the rest
+untestable as in §7.1. **Gate `PASS`** on one recovered coupled-event
+control, no natural object passed as a candidate. Gaia-GIC-1 remains
+untestable: no ZTF, and IRSA returns no NEOWISE single-exposure rows at 2.5″
+or 4″.

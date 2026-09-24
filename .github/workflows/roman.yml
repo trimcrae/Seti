@@ -276,6 +276,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): checkpoints are per-object and untracked today; the purge keeps
+      # it that way if a commit step ever lands one.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/roman/checkpoints
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

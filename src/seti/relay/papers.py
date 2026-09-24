@@ -56,6 +56,7 @@ STATUS_TITLE_MISMATCH = "TITLE_MISMATCH"
 STATUS_UNRESOLVED = "UNRESOLVED"
 STATUS_NO_SOURCE = "NO_SOURCE"
 STATUS_NO_TABLES = "NO_TABLES"
+STATUS_DUPLICATE = "DUPLICATE_EPRINT"   # a second seed resolved to an e-print already read
 
 MAX_EPRINT_BYTES = 60_000_000
 TEXT_SUFFIXES = (".tex", ".txt", ".mrt", ".dat", ".tab", ".table")
@@ -294,8 +295,11 @@ def mrt_table(text: str, source: str) -> ParsedTable | None:
 ROLE_RULES: list[tuple[str, list[str], list[str]]] = [
     # role, must-contain (any), must-not-contain
     ("drift", ["drift", "dfdt", "df/dt", "fdot", "f dot", "chirp"], ["rate limit", "eirp"]),
+    # a "Frequency rank" is an ordinal, not a frequency: run 35745111146 read
+    # arXiv:2505.03927's rank column as MHz and made three hits at 980-998 "MHz"
     ("freq_mhz", ["frequency", "freq", "nu obs", "f obs", "centre freq", "center freq"],
-     ["resolution", "range", "coverage", "band edge", "sampling"]),
+     ["resolution", "range", "coverage", "band edge", "sampling", "rank", "index", "order",
+      "number", "#"]),
     ("snr", ["snr", "s/n", "signal-to-noise", "signal to noise"], []),
     ("mjd", ["mjd", "utc date", "obs date", "date-obs", "epoch", "observation date"], []),
     ("target", ["target", "source name", "source", "star", "object", "name", "hip", "tic",
@@ -306,6 +310,7 @@ ROLE_RULES: list[tuple[str, list[str], list[str]]] = [
     ("verdict", ["classification", "rfi", "status", "flag", "note", "comment", "disposition"], []),
     ("drift_unit", [], []),
 ]
+_INJECTION_CAPTION = re.compile(r"inject|artificial signal|synthetic signal|simulated signal", re.I)
 _UNIT = re.compile(r"[\(\[]\s*([^)\]]{1,24})\s*[\)\]]")
 
 
@@ -388,6 +393,12 @@ def table_hits(t: ParsedTable, meta: dict, *, max_rows: int = 20000) -> tuple[pd
     rep["roles"] = dict(roles)
     if "freq_mhz" not in roles or "drift" not in roles:
         rep["kind"] = "other" if "target" not in roles else "targets"
+        return pd.DataFrame(), rep
+    # an injection-recovery table carries a frequency and a drift rate too, but
+    # its rows are signals the authors PUT IN (arXiv:2011.05265, run 35745111146)
+    if _INJECTION_CAPTION.search(t.caption or ""):
+        rep["kind"] = "injection"
+        rep["reason"] = "caption describes injected/artificial signals, not detections"
         return pd.DataFrame(), rep
     ncol = len(t.header)
     rows = [r for r in t.rows if len(r) == ncol][:max_rows]
@@ -648,6 +659,7 @@ def harvest_papers(conf_arxiv: dict, *, get_text_fn=None, get_fn=None,
     max_rows = int(conf_arxiv.get("max_rows_per_table", 20000))
     harvest = PaperHarvest()
     frames: list[pd.DataFrame] = []
+    harvested: dict[str, str] = {}
     for key, spec in (conf_arxiv.get("papers") or {}).items():
         if deadline is not None and time.monotonic() >= deadline:
             harvest.papers.append({"seed": key, "status": "NOT_PROBED",
@@ -657,6 +669,13 @@ def harvest_papers(conf_arxiv: dict, *, get_text_fn=None, get_fn=None,
         harvest.papers.append(prep)
         if prep.get("status") != STATUS_OK or not prep.get("arxiv_id"):
             continue
+        # two seeds can resolve to one e-print (pinchuk2019 and tusay2024_trappist
+        # both landed on arXiv:1901.04057 in run 35745111146, doubling 41 rows)
+        if prep["arxiv_id"] in harvested:
+            prep["status"] = STATUS_DUPLICATE
+            prep["duplicate_of"] = harvested[prep["arxiv_id"]]
+            continue
+        harvested[prep["arxiv_id"]] = key
         files, srep = eprint_sources(prep["arxiv_id"], get_fn=get_fn, log=log, timeout=timeout)
         prep["source"] = srep
         if not files:
@@ -728,7 +747,11 @@ def harvest_papers(conf_arxiv: dict, *, get_text_fn=None, get_fn=None,
             if not n_hits:
                 prep["status"] = STATUS_NO_TABLES if parsed else STATUS_ZERO
 
-    harvest.hits = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    hits = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    if len(hits):
+        key = ["table", "freq_mhz", "drift_hz_s"] + (["target"] if "target" in hits else [])
+        hits = hits.drop_duplicates(subset=key).reset_index(drop=True)
+    harvest.hits = hits
     return harvest
 
 

@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import re
 import time as _time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -65,6 +66,10 @@ DEFAULTS: dict = {
     "position_tables": {"kepler": ["V/133/kic"], "tess": ["IV/39/tic82", "IV/38/tic"]},
     "variability_catalogues": {},
     "cone_radius_arcsec": 3.0,
+    "aperture_contamination": {"enabled": True,
+                               "radius_arcsec": {"kepler": 20.0, "tess": 120.0,
+                                                 "default": 20.0},
+                               "identity_radius_arcsec": 3.0},
     "windows": {"bin_days": 0.1, "min_gap_days": 0.5, "min_expected_in_gap": 20.0,
                 "min_events_for_data_driven": 2000,
                 "pad_days": 0.5, "drop_expected": 5.0,
@@ -590,18 +595,46 @@ def _fill_positions_from_rotation(pos: pd.DataFrame, ids, rot: pd.DataFrame) -> 
     return out.drop_duplicates("star_id", keep="first").reset_index(drop=True)
 
 
+#: stars_*.csv files written DOWNSTREAM of assess (assess's own tiered table and
+#: the light-curve re-detection).  They share the screen's ``stars_`` prefix
+#: but are not screen output, and must never be read back as screen records.
+DOWNSTREAM_STAR_TABLES = frozenset({"stars_vetted.csv", "stars_redetect.csv"})
+_SCREEN_STARS_RE = re.compile(r"^stars_(?P<cat>.+?)(?:_s\d+of\d+)?\.csv$")
+
+
+def screen_star_files(conf: dict, out: Path) -> list[Path]:
+    """The screen's per-catalogue star tables in ``out``, and nothing else.
+
+    A screen table is ``stars_<catalogue>[_s<i>of<n>].csv`` (stage_screen).
+    When the config names its catalogues, a file counts only if <catalogue>
+    is one of them; either way the downstream tables in
+    :data:`DOWNSTREAM_STAR_TABLES` are excluded.  ``stars_*.csv`` used to be
+    read whole minus ``stars_vetted.csv``, so a checked-out
+    ``stars_redetect.csv`` was pooled into assess as if it were screen output.
+    """
+    known = set((conf or {}).get("catalogues") or {})
+    keep = []
+    for fp in sorted(Path(out).glob("stars_*.csv")):
+        if fp.name in DOWNSTREAM_STAR_TABLES:
+            continue
+        m = _SCREEN_STARS_RE.match(fp.name)
+        if not m or (known and m.group("cat") not in known):
+            continue
+        keep.append(fp)
+    return keep
+
+
 def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None, cone_fn=None,
                  records: list[dict] | None = None, log=None,
-                 acquire_report: dict | None = None) -> dict:
+                 acquire_report: dict | None = None, mast_fn=None,
+                 aperture_cone_fn=None) -> dict:
     from .acquire import AcquisitionLog
 
     log = log or AcquisitionLog()
     vconf = conf.get("vet") or {}
     if records is None:
         frames = []
-        for fp in sorted(glob.glob(str(out / "stars_*.csv"))):
-            if Path(fp).name == "stars_vetted.csv":
-                continue
+        for fp in screen_star_files(conf, out):
             try:
                 d = pd.read_csv(fp, dtype={"star_id": str, "star_key": str})
             except Exception:                             # noqa: BLE001
@@ -668,13 +701,26 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     vari: dict = {}
     reached_by_star: dict = {}
     vari_sources = set(conf.get("variability_catalogues") or {})
+    ap_conf = dict(conf.get("aperture_contamination") or {})
+    ap_on = bool(ap_conf.get("enabled", True)) and not offline and bool(vari_sources)
+    aperture: dict = {}
+    ap_reached: dict = {}
+    positioned: set = set()
     if shortlist and not offline:
-        from .acquire import fetch_positions_by_id, fetch_variable_context, tap_query
+        from .acquire import (
+            fetch_aperture_neighbours,
+            fetch_positions,
+            fetch_variable_context,
+            tap_query,
+        )
         query_fn = query_fn or tap_query
         for mission in sorted({str(r["mission"]) for r in shortlist}):
             ids = sorted({str(r["star_id"]) for r in shortlist if str(r["mission"]) == mission})
-            pos = fetch_positions_by_id(ids, mission, query_fn=query_fn, log=log,
-                                        tables=conf.get("position_tables"))
+            # VizieR KIC/TIC first, MAST's TIC for the TESS ids it misses
+            # (MEASURED: VizieR's TIC returned zero rows for all 123 TESS
+            # shortlist stars of the 2026-09-21 run and for five vetstar runs)
+            pos = fetch_positions(ids, mission, query_fn=query_fn, mast_fn=mast_fn, log=log,
+                                  tables=conf.get("position_tables"))
             # The star tables of the flare catalogues themselves carry
             # positions (Tu+2022's table1 has 71,732 rows with _RA/_DE), and
             # they are already on disk from the acquire stage.  Using them for
@@ -694,6 +740,18 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                 vari.setdefault(f"{mission}:{sid}", []).extend(lst)
             for sid, srcs in rch.items():
                 reached_by_star.setdefault(f"{mission}:{sid}", set()).update(srcs)
+            positioned.update(f"{mission}:{s}" for s in pos["star_id"].astype(str))
+            if ap_on:
+                a, arch = fetch_aperture_neighbours(
+                    pos, conf.get("variability_catalogues") or {},
+                    radius_arcsec_by_mission=ap_conf.get("radius_arcsec") or {},
+                    mission=mission,
+                    identity_radius_arcsec=float(ap_conf.get("identity_radius_arcsec", 3.0)),
+                    cone_fn=aperture_cone_fn or cone_fn, log=log)
+                for sid, lst in a.items():
+                    aperture.setdefault(f"{mission}:{sid}", []).extend(lst)
+                for sid, srcs in arch.items():
+                    ap_reached.setdefault(f"{mission}:{sid}", set()).update(srcs)
     short_keys = {r.get("star_key") for r in shortlist}
     # Per-source fraction of the shortlist whose cone answered, for the summary.
     reached = {k: (float(np.mean([k in reached_by_star.get(s, set()) for s in short_keys]))
@@ -705,6 +763,10 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                          "catalogued_periods": vari.get(key, []),
                          "variability_catalogues_reached": bool(vari_sources) and
                          vari_sources <= reached_by_star.get(key, set())}
+        if ap_on and key in short_keys:
+            contexts[key]["aperture_neighbours"] = aperture.get(key, [])
+            contexts[key]["aperture_catalogues_reached"] = \
+                vari_sources <= ap_reached.get(key, set())
     vetted = assign_tiers(records, contexts, vconf)
     counters = rejection_counters(vetted)
     calib = calibrate_jitter(vetted, vconf)
@@ -729,6 +791,12 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     for m, rdf in rot_by_mission.items():
         if not len(rdf):
             degraded.append(f"rotation_{m}:none")
+    ap_summary = aperture_summary(vetted, contexts, short_keys, positioned, ap_reached,
+                                  vari_sources, ap_conf, enabled=ap_on)
+    if ap_on and short_keys:
+        f_ap = ap_summary.get("frac_shortlist_reached_all_sources", 0.0)
+        if not (np.isfinite(f_ap) and f_ap >= 1.0):
+            degraded.append(f"aperture_cone:reached_{f_ap:.2f}_of_shortlist")
 
     verdict = VERDICT_PENDING if cands else VERDICT_NONE
     if degraded:
@@ -794,6 +862,7 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
         "degraded": degraded,
         "offline": bool(offline),
         "variability_catalogues_reached": reached,
+        "aperture_contamination": ap_summary,
         "cross_star_epochs": {s.get("catalogue"): (s.get("cross_star") or {}).get("bad_bins", [])[:50]
                               for s in screens},
         "acquisition_per_catalogue": coverage["catalogues"],
@@ -821,9 +890,67 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                        for r in cands],
         "watch": [{k: r.get(k) for k in slim} for r in watch[:200]],
     })
-    print(f"[metronome] assess: {verdict} — {summary['n_candidates']} candidate, "
-          f"{summary['n_interest']} interest, {summary['n_watch']} watch of {n_scanned} scanned")
+    # The light-curve and single-star verdicts live in their own files and
+    # are re-applied here, so a re-assess never silently resurrects a star a
+    # later stage already explained (and the counts come back from records).
+    from .reconcile import reconcile_all
+
+    rec_res = reconcile_all(out, stage="assess")
+    try:
+        summary = json.loads((out / "summary.json").read_text())
+    except (OSError, ValueError):
+        pass
+    print(f"[metronome] assess: {summary.get('verdict')} — {summary.get('n_candidates')} "
+          f"candidate, {summary.get('n_interest')} interest, {summary.get('n_watch')} watch "
+          f"of {n_scanned} scanned; reconciled: {rec_res.get('demoted_lightcurve')} "
+          f"{rec_res.get('demoted_vetstar')}")
     return summary
+
+
+def aperture_summary(vetted, contexts, short_keys, positioned, ap_reached, vari_sources,
+                     ap_conf, *, enabled: bool) -> dict:
+    """What the aperture-scale cone did, star by star, for ``summary.json``."""
+    radius = dict((ap_conf or {}).get("radius_arcsec") or {})
+    out: dict = {"enabled": bool(enabled), "radius_arcsec": radius,
+                 "identity_radius_arcsec": float((ap_conf or {}).get(
+                     "identity_radius_arcsec", 3.0)),
+                 "sources": sorted(vari_sources),
+                 "n_shortlist": len(short_keys),
+                 "n_shortlist_with_position": len(set(short_keys) & set(positioned)),
+                 "note": ("a hit is a CONTAMINATION flag: a catalogued variable neighbour "
+                          "inside the photometric aperture at the clock period or a low "
+                          "harmonic (tol vet.aperture_tol); p_chance_any is the probability "
+                          "that any of the star's periodic neighbours would match by chance")}
+    if not enabled:
+        return out
+    n_all = sum(1 for k in short_keys if vari_sources <= ap_reached.get(k, set()))
+    out["n_shortlist_reached_all_sources"] = n_all
+    out["frac_shortlist_reached_all_sources"] = (n_all / len(short_keys)) if short_keys \
+        else float("nan")
+    flagged, neighbours = [], []
+    for r in vetted:
+        k = r.get("star_key")
+        if k not in short_keys:
+            continue
+        det = r.get("veto_detail") or {}
+        fl = str(r.get("flags") or "").split(";")
+        if "aperture_contaminating_variable" in fl:
+            d = det.get("aperture_contaminating_variable") or {}
+            flagged.append({"star_key": k, "tier": r.get("tier"),
+                            "first_veto": r.get("first_veto"), "period": r.get("period"),
+                            "matches": d.get("matches"), "p_chance_any": d.get("p_chance_any"),
+                            "n_distinct_with_period": d.get("n_distinct_with_period")})
+        elif "aperture_variable_neighbour" in fl:
+            d = det.get("aperture_variable_neighbour") or {}
+            neighbours.append({"star_key": k, "tier": r.get("tier"),
+                               "n_neighbours": d.get("n_neighbours"),
+                               "n_with_period": d.get("n_with_period"),
+                               "p_chance_any": d.get("p_chance_any")})
+    out["n_flagged_contaminating"] = len(flagged)
+    out["flagged_contaminating"] = flagged
+    out["n_with_variable_neighbour_no_period_match"] = len(neighbours)
+    out["variable_neighbour_no_period_match"] = neighbours
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -834,6 +961,12 @@ STAGES = ("probe", "acquire", "screen", "assess")
 STAGE_REDETECT = "redetect"
 #: Runs only when asked: the single-star vet (docs/metronome.md, "the vet").
 STAGE_VETSTAR = "vetstar"
+#: Rebuild candidates.json / summary.json from every per-star record on disk
+#: (stars_vetted.csv, redetect.json, vetstar_*.json).  No network.
+STAGE_RECONCILE = "reconcile"
+#: The identity + aperture-scale variability cones over the COMMITTED
+#: shortlist, without re-tiering the population (see aperture.py).
+STAGE_APERTURE = "aperture"
 
 
 def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int = 0,
@@ -841,7 +974,7 @@ def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int =
                   offline: bool = False, seed: int = 20260906, out_root=None,
                   query_fn=None, cone_fn=None, lc_fn=None, kepler_lc_fn=None,
                   budget_s: float | None = None, star_key: str | None = None,
-                  period: float | None = None) -> dict:
+                  period: float | None = None, catalogue: str | None = None) -> dict:
     """Run one stage or all of them.  Returns the last stage's report."""
     from .redetect import stage_redetect
     from .vetstar import stage_vetstar
@@ -865,13 +998,25 @@ def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int =
         elif s == STAGE_REDETECT:
             rep = stage_redetect(conf, out, lc_fn=lc_fn, kepler_lc_fn=kepler_lc_fn,
                                  max_stars=max_stars, seed=seed, budget_s=budget_s)
+        elif s == STAGE_APERTURE:
+            from .aperture import stage_aperture
+
+            rep = stage_aperture(conf, out, query_fn=query_fn, cone_fn=cone_fn)
+        elif s == STAGE_RECONCILE:
+            from .reconcile import check_consistency, reconcile_all
+
+            rep = reconcile_all(out, stage="reconcile")
+            probs = check_consistency(out)
+            rep["consistency_problems"] = probs
+            print(f"[metronome/reconcile] {rep.get('verdict')}; problems: {probs or 'none'}")
         elif s == STAGE_VETSTAR:
             rep = stage_vetstar(conf, out, star_key=star_key, period=period,
+                                catalogue=catalogue,
                                 lc_fn=lc_fn, kepler_lc_fn=kepler_lc_fn, query_fn=query_fn,
                                 cone_fn=cone_fn, budget_s=budget_s)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from "
-                             f"{STAGES + (STAGE_REDETECT, STAGE_VETSTAR)}")
+                             f"{STAGES + (STAGE_REDETECT, STAGE_VETSTAR, STAGE_RECONCILE, STAGE_APERTURE)}")
     return rep
 
 
@@ -896,6 +1041,9 @@ def main(argv=None):
     p.add_argument("--star-key", default="", help="vetstar: the star to vet, e.g. kepler:5879574")
     p.add_argument("--period", type=float, default=-1.0,
                    help="vetstar: the clock period in days (-1 = config)")
+    p.add_argument("--catalogue", default="",
+                   help="vetstar: the star's flare catalogue key (default: read from "
+                        "the shortlist that named it)")
     a = p.parse_args(argv)
     cats = [c for c in a.catalogues.split(",") if c.strip()] or None
     from ..config import load_config
@@ -905,7 +1053,8 @@ def main(argv=None):
                         offline=a.offline, seed=a.seed, out_root=a.out_root or None,
                         budget_s=None if a.budget_s < 0 else a.budget_s,
                         star_key=a.star_key or None,
-                        period=None if a.period < 0 else a.period)
+                        period=None if a.period < 0 else a.period,
+                        catalogue=a.catalogue or None)
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[metronome] verdict: {v}")

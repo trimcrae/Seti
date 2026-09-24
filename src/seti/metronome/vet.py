@@ -27,7 +27,15 @@ dullest one:
                             Gaia DR3 vari / ZTF) and P sits at its period or a
                             low harmonic: a pulsator's cycles chopped into
                             "flares" by the flare finder
-``population_period``       unrelated stars of the same mission pile up at
+``aperture_contaminating_variable``
+                            a catalogued variable NEIGHBOUR inside the
+                            photometric aperture (Kepler 20", TESS 120";
+                            outside the 3" identity cone) has P at its period
+                            or a low harmonic: its cycle leaks into this
+                            star's light curve.  A contamination statement,
+                            not an identity one (kepler:5879574 / the RR Lyrae
+                            KIC 5879583 at 13.3", 2026-09-22)
+``population_period``      unrelated stars of the same mission pile up at
                             this period.  A clock is a property of ONE star;
                             a period that many independent stars share is a
                             property of the mission's sampling.  Measured
@@ -84,6 +92,14 @@ DEFAULT_VET: dict = {
     "cadence_tol": 0.02,
     "variable_harmonics": [1.0, 0.5, 1.0 / 3.0, 2.0, 3.0],
     "variable_tol": 0.03,
+    # The APERTURE-scale contamination cone (see ``aperture_contamination``):
+    # a variable NEIGHBOUR whose period, or a low harmonic of it, is the clock
+    # period is putting its own cycle into this star's photometry.  Tighter
+    # than ``variable_tol`` because a 1-2 arcmin TESS cone holds several
+    # unrelated variables and each one is a chance of a coincidence; the
+    # chance probability is reported with every hit.
+    "aperture_tol": 0.01,
+    "aperture_period_range_days": [0.05, 1000.0],
     "fdr_alpha": 0.05,
     "fdr_alpha_watch": 0.25,
     "shuffle_alpha": 0.05,
@@ -162,8 +178,10 @@ DEFAULT_VET: dict = {
 
 HARD_VETO_ORDER = ("pool_null_explains", "population_period", "few_cycles",
                    "cadence_alias", "rotation_alias",
-                   "periodic_variable", "bursty_random", "jitter_too_large")
+                   "periodic_variable", "aperture_contaminating_variable",
+                   "bursty_random", "jitter_too_large")
 REPORT_FLAGS = ("energy_incoherent", "rotation_unknown", "variability_catalogue_unreached",
+                "aperture_catalogue_unreached", "aperture_variable_neighbour",
                 "p_extrapolated", "null_truncated_by_budget", "quantisation_limited",
                 "pool_null_unreached", "quality_uninformative")
 
@@ -214,6 +232,57 @@ def periodic_variable(period: float, catalogued, harmonics=None, tol: float = 0.
             if _close(period, p * float(h), tol):
                 return True, f"{src}:{vtype}:P={p:.6g}x{h:.3g}"
     return False, None
+
+
+def aperture_contamination(period: float, neighbours, harmonics=None, tol: float = 0.01,
+                           period_range=None) -> tuple[bool, dict]:
+    """Is a variable NEIGHBOUR catalogued at the clock period (or a low harmonic)?
+
+    ``neighbours`` are dicts ``{source, name, period, vtype, sep_arcsec}`` from
+    the aperture-scale cone, the target itself already excluded.  Returns
+    ``(hit, detail)``; ``detail`` always carries the census (how many variable
+    neighbours, how many with a period) and the probability that ANY of them
+    would land within ``tol`` of the clock or a harmonic by chance, for
+    periods spread log-uniformly over ``period_range`` -- so a hit in a
+    crowded TESS aperture is read against the coincidence rate it implies.
+    """
+    harmonics = DEFAULT_VET["variable_harmonics"] if harmonics is None else harmonics
+    lo, hi = (period_range or DEFAULT_VET["aperture_period_range_days"])
+    nb = [n for n in (neighbours or []) if isinstance(n, dict)]
+    with_p = [n for n in nb if np.isfinite(_fnum(n.get("period")))
+              and _fnum(n.get("period")) > 0]
+    # distinct neighbours: the same star in VSX, Gaia and ZTF is one star, so
+    # count distinct separations (to 0.5") rather than rows
+    seps = sorted({round(2.0 * _fnum(n.get("sep_arcsec"))) for n in with_p
+                   if np.isfinite(_fnum(n.get("sep_arcsec")))})
+    n_unmeasured = sum(1 for n in with_p if not np.isfinite(_fnum(n.get("sep_arcsec"))))
+    n_distinct = len(seps) + n_unmeasured
+    w = min(1.0, len(harmonics) * 2.0 * float(tol) / math.log(float(hi) / float(lo)))
+    detail: dict = {"n_neighbours": len(nb), "n_with_period": len(with_p),
+                    "n_distinct_with_period": n_distinct, "tol": float(tol),
+                    "p_chance_any": float(1.0 - (1.0 - w) ** n_distinct) if n_distinct else 0.0,
+                    "matches": []}
+    if not np.isfinite(period) or not with_p:
+        return False, detail
+    for n in with_p:
+        p = _fnum(n.get("period"))
+        for h in harmonics:
+            if _close(period, p * float(h), tol):
+                detail["matches"].append({
+                    "source": n.get("source"), "name": n.get("name"),
+                    "vtype": n.get("vtype"), "period": p, "harmonic": float(h),
+                    "sep_arcsec": _fnum(n.get("sep_arcsec")),
+                    "frac_diff": abs(period / (p * float(h)) - 1.0)})
+                break
+    detail["matches"].sort(key=lambda m: m["frac_diff"])
+    return bool(detail["matches"]), detail
+
+
+def _fnum(x) -> float:
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return float("nan")
 
 
 def population_period_stats(records, conf: dict | None = None) -> None:
@@ -283,11 +352,20 @@ def _f(rec: dict, key: str) -> float:
         return float("nan")
 
 
+def _int(rec: dict, key: str) -> int:
+    """An integer count, 0 when absent.  A record read back from CSV carries
+    NaN for a column its shard never wrote (MEASURED 2026-09-23: the
+    2026-09-21 shards predate the pool null, and ``int(nan or 0)`` crashed
+    the re-assess, because NaN is truthy)."""
+    v = _f(rec, key)
+    return int(v) if np.isfinite(v) else 0
+
+
 def core_pass(rec: dict, conf: dict, *, strict: bool) -> tuple[bool, list[str]]:
     """The core route: enough events AT the clock phase, and those events a
     clock.  Robust to a natural flare background the rms route is not."""
     c = dict(DEFAULT_VET, **(conf or {}))
-    f_in, jc, nc = _f(rec, "f_in_window"), _f(rec, "jitter_core"), int(rec.get("n_core", 0) or 0)
+    f_in, jc, nc = _f(rec, "f_in_window"), _f(rec, "jitter_core"), _int(rec, "n_core")
     f_min = float(c["f_core_min"] if strict else c["f_core_watch"])
     j_max = float(c["jitter_max"] if strict else c["jitter_watch"])
     why = []
@@ -324,8 +402,8 @@ def quality_pass(rec: dict, conf: dict, *, strict: bool) -> tuple[bool, list[str
         why.extend(rms_why)
         why.extend("core:" + w for w in core_why)
     if strict:
-        gf, ng = _f(rec, "gap_integer_frac"), int(rec.get("n_gaps_used", 0) or 0)
-        gfc, ngc = _f(rec, "gap_integer_frac_core"), int(rec.get("n_gaps_core", 0) or 0)
+        gf, ng = _f(rec, "gap_integer_frac"), _int(rec, "n_gaps_used")
+        gfc, ngc = _f(rec, "gap_integer_frac_core"), _int(rec, "n_gaps_core")
         best_n = max(ng, ngc)
         if best_n >= int(c["gap_min_count"]):
             ok_all = ng >= int(c["gap_min_count"]) and np.isfinite(gf) \
@@ -369,7 +447,7 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     # catalogue's own sampling reproduces the coherence), and unlike the
     # window null it needs no model of the cadence to say so.
     p_pool = _f(rec, "p_pool")
-    n_pool = int(rec.get("pn_n_trials", 0) or 0)
+    n_pool = _int(rec, "pn_n_trials")
     if n_pool > 0:
         if np.isfinite(p_pool) and p_pool >= float(c["pool_alpha"]):
             flags.append("pool_null_explains")
@@ -427,11 +505,26 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     if not reached:
         flags.append("variability_catalogue_unreached")
 
+    # The aperture-scale cone.  Its hit is a CONTAMINATION statement -- a
+    # neighbour's cycle is in this star's aperture -- not an identity one.
+    if "aperture_catalogues_reached" in ctx:
+        hit, d = aperture_contamination(period, ctx.get("aperture_neighbours") or [],
+                                        c["variable_harmonics"], float(c["aperture_tol"]),
+                                        c.get("aperture_period_range_days"))
+        if hit:
+            flags.append("aperture_contaminating_variable")
+            detail["aperture_contaminating_variable"] = d
+        elif ctx.get("aperture_neighbours"):
+            flags.append("aperture_variable_neighbour")
+            detail["aperture_variable_neighbour"] = d
+        if not bool(ctx.get("aperture_catalogues_reached")):
+            flags.append("aperture_catalogue_unreached")
+
     p_sh = _f(rec, "p_shuffle")
     gf = _f(rec, "gap_integer_frac")
-    ng = int(rec.get("n_gaps_used", 0) or 0)
+    ng = _int(rec, "n_gaps_used")
     gfc = _f(rec, "gap_integer_frac_core")
-    ngc = int(rec.get("n_gaps_core", 0) or 0)
+    ngc = _int(rec, "n_gaps_core")
     # clock-like gaps among ALL events or among the CORE events both clear the
     # star of "bursty"; a background flare between two ticks is not burstiness
     gaps_clocklike = (ng >= int(c["gap_min_count"]) and np.isfinite(gf)
@@ -456,7 +549,7 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
         flags.append("p_extrapolated")
     if bool(rec.get("wn_truncated_by_budget", False)):
         flags.append("null_truncated_by_budget")
-    if int(rec.get("n_events", 0) or 0) < int(c["n_quality_informative"]):
+    if _int(rec, "n_events") < int(c["n_quality_informative"]):
         flags.append("quality_uninformative")
 
     hard = [f for f in HARD_VETO_ORDER if f in flags]
@@ -470,6 +563,7 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     if bool(rec.get("fdr_significant", False)) and ok_strict:
         complete = ("rotation_unknown" not in flags
                     and "variability_catalogue_unreached" not in flags
+                    and "aperture_catalogue_unreached" not in flags
                     and "pool_null_unreached" not in flags)
         out["tier"] = "candidate" if complete else "interest"
     else:
@@ -623,5 +717,6 @@ def calibrate_jitter(vetted: list[dict], conf: dict | None = None) -> dict:
 
 __all__ = ["DEFAULT_VET", "HARD_VETO_ORDER", "REPORT_FLAGS", "assign_tiers",
            "cadence_alias", "calibrate_jitter", "core_pass", "periodic_variable",
+           "aperture_contamination",
            "population_period_stats", "quality_pass", "rejection_counters",
            "rotation_alias", "vet_star"]

@@ -1,0 +1,324 @@
+name: antiphase
+
+# ANTIPHASE — an achromatic optical fade answered by a mid-infrared rise
+# (docs/antiphase.md).
+#
+#   plan ──▶ controls (positive controls FIRST: the gate) ──▶
+#   shard ×N (IGNITION shard artifact → drift correction → ZTF g/r → ladder →
+#             null + injections) ──▶ reduce (null FAP, blend vet, summary) ──▶ commit
+#
+# The parent and its NEOWISE decade are NOT re-acquired: each shard downloads
+# IGNITION's own shard artifact (`ignition-shard-<i>` of `ignition_run_id`),
+# which holds parent_s<i>of<n>.parquet and epochs_s<i>of<n>.csv.  The shard
+# count must therefore equal IGNITION's.
+#
+# Shard hygiene (docs/channel-brief.md §0.7): every shard job purges the
+# checkout's antiphase shard files before it runs and uploads only its own
+# files by name; the reduce purges before downloading.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: '"all" (controls, shards, reduce), "controls" only, or "reduce" (with reduce_only_run_id)'
+        required: false
+        default: "all"
+      ignition_run_id:
+        description: "IGNITION run whose ignition-shard-<i> artifacts are the parent + NEOWISE epochs"
+        required: false
+        default: "35923951760"
+      shards:
+        description: "Number of shards (must equal the IGNITION run's)"
+        required: false
+        default: "12"
+      max_stars:
+        description: "Cap on stars per shard (0 = all; a pilot sets this)"
+        required: false
+        default: "0"
+      budget_s:
+        description: "Per-shard ZTF wall clock in seconds"
+        required: false
+        default: "16200"
+      ignore_gate:
+        description: "Run the shards even if the controls gate is FAIL (the summary still says so)"
+        required: false
+        default: "false"
+      resume_run_id:
+        description: "Resume each shard from this prior antiphase run's shard artifact (ZTF stars already done are skipped)"
+        required: false
+        default: ""
+      reduce_only_run_id:
+        description: "Skip controls/shards; reduce this prior run's antiphase artifacts"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.mk.outputs.matrix }}
+      n_shards: ${{ steps.mk.outputs.n_shards }}
+    steps:
+      - id: mk
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          n = int("${{ github.event.inputs.shards || '12' }}" or 12)
+          print("matrix=" + json.dumps({"include": [{"shard": i} for i in range(n)]}))
+          print(f"n_shards={n}")
+          PY
+
+  controls:
+    needs: plan
+    if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'reduce' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      gate: ${{ steps.gate.outputs.gate }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: ASAS-SN Sky Patrol client (optional optical for southern controls)
+        continue-on-error: true
+        run: pip install "git+https://github.com/asas-sn/skypatrol.git"
+      - name: Offline gate — injected grey fade + IR rise recovered, dust and blends rejected
+        run: python -m pytest tests/test_antiphase.py -q -p no:cacheprovider
+      - name: Positive controls (Sesame, NEOWISE cone, ZTF / Gaia alerts / ASAS-SN, full ladder)
+        run: |
+          python -m seti.antiphase.run --stage controls
+          python - <<'PY'
+          import json
+          d = json.load(open("results/antiphase/controls.json"))
+          print("GATE:", d["gate"])
+          for c in d["controls"]:
+              r = c.get("result") or {}
+              print(f"  {c['name']:18s} {c.get('outcome'):34s} pos={c.get('position_source')} "
+                    f"neowise={(c.get('neowise') or {}).get('status')} "
+                    f"optical={ {k: v.get('status') for k, v in (c.get('optical_sources') or {}).items()} } "
+                    f"label={r.get('coupling_label')} verdict={r.get('verdict')} "
+                    f"matched={r.get('n_matched')} faded={r.get('n_faded')} chroma={r.get('chroma')} "
+                    f"k={r.get('k_colour')} energy={r.get('energy_verdict')} ratio={r.get('ratio_best')} "
+                    f"lag={r.get('best_lag')} class={r.get('natural_class')}")
+          PY
+      - id: gate
+        run: |
+          G=$(python -c "import json;print(json.load(open('results/antiphase/controls.json'))['gate'])")
+          echo "gate=$G" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: antiphase-controls
+          path: results/antiphase/controls.json
+          if-no-files-found: warn
+      - name: Commit the controls record
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh "antiphase: positive controls (run ${{ github.run_id }})" \
+            results/antiphase/controls.json
+
+  natural:
+    # The ladder measured on known natural variables (VSX R CrB, UX Ori, YSO,
+    # Mira, Algol): what each comes out as, and whether any leaks through.
+    needs: plan
+    if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'reduce' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Natural-class sample (VSX -> NEOWISE upload -> ZTF batched -> ladder)
+        run: python -m seti.antiphase.run --stage natural
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: antiphase-natural
+          path: results/antiphase/natural.json
+          if-no-files-found: warn
+
+  shard:
+    needs: [plan, controls]
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage == 'all' && needs.plan.result == 'success' && (needs.controls.outputs.gate != 'FAIL' || github.event.inputs.ignore_gate == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Purge checkout-inherited shard outputs
+        run: |
+          rm -f results/antiphase/stars_s*of*.csv results/antiphase/optbins_s*of*.csv \
+                results/antiphase/ztfstatus_s*of*.csv results/antiphase/null_s*of*.json \
+                results/antiphase/shard_s*of*.json results/antiphase/irfaded_s*of*.csv
+          rm -rf results/antiphase/ignition
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: IGNITION shard ${{ matrix.shard }} (parent + NEOWISE epochs)
+        uses: actions/download-artifact@v4
+        with:
+          name: ignition-shard-${{ matrix.shard }}
+          run-id: ${{ github.event.inputs.ignition_run_id }}
+          github-token: ${{ github.token }}
+          path: results/antiphase/ignition/
+      - name: Resume this shard from a prior run's own shard artifact
+        # Only this shard's own files (antiphase-shard-<i>), downloaded after the
+        # purge: the ztfstatus/stars/optbins CSVs are append-only checkpoints.
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: antiphase-shard-${{ matrix.shard }}
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/antiphase/
+      - name: What reached this shard
+        run: |
+          ls -la results/antiphase/ignition/ | head -40
+          ls -la results/antiphase/ | head -40
+      - name: Shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} — drift correction, ZTF, ladder, null, injections
+        run: |
+          python -m seti.antiphase.run --stage shard \
+            --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n_shards }} \
+            --budget-s ${{ github.event.inputs.budget_s || '16200' }} \
+            --max-stars ${{ github.event.inputs.max_stars || '0' }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: antiphase-shard-${{ matrix.shard }}
+          path: |
+            results/antiphase/stars_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
+            results/antiphase/optbins_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
+            results/antiphase/ztfstatus_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
+            results/antiphase/null_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.json
+            results/antiphase/shard_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.json
+            results/antiphase/irfaded_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
+          if-no-files-found: warn
+
+  reduce:
+    needs: [plan, controls, natural, shard]
+    if: ${{ always() && needs.plan.result == 'success' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'reduce' || github.event.inputs.reduce_only_run_id != '') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Purge checkout-inherited shard outputs
+        run: |
+          rm -f results/antiphase/stars_s*of*.csv results/antiphase/optbins_s*of*.csv \
+                results/antiphase/ztfstatus_s*of*.csv results/antiphase/null_s*of*.json \
+                results/antiphase/shard_s*of*.json results/antiphase/irfaded_s*of*.csv
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: This run's shards
+        if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: antiphase-shard-*
+          merge-multiple: true
+          path: results/antiphase/
+      - name: This run's controls
+        if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: antiphase-controls
+          path: results/antiphase/
+      - name: This run's natural-class sample
+        if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: antiphase-natural
+          path: results/antiphase/
+      - name: A prior run's natural-class sample (reduce only)
+        if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: antiphase-natural
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/antiphase/
+      - name: A prior run's shards (reduce only)
+        if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: antiphase-shard-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/antiphase/
+      - name: A prior run's controls (reduce only)
+        if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: antiphase-controls
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/antiphase/
+      - name: What reached this job
+        run: |
+          ls -la results/antiphase/ | head -80
+          N=$(ls results/antiphase/shard_s*of${{ needs.plan.outputs.n_shards }}.json 2>/dev/null | wc -l)
+          echo "shard records found: $N of ${{ needs.plan.outputs.n_shards }}"
+          if [ "$N" = "0" ]; then echo "::error::no shard output reached the reduce"; exit 1; fi
+      - name: Reduce (null FAP, blend vet, candidates, summary)
+        run: |
+          python -m seti.antiphase.run --stage reduce --shards ${{ needs.plan.outputs.n_shards }} \
+            --run-id "${{ github.event.inputs.reduce_only_run_id || github.run_id }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: antiphase-final
+          path: results/antiphase/
+          if-no-files-found: warn
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          FILES="results/antiphase/summary.json results/antiphase/candidates.csv"
+          for f in results/antiphase/coupled.csv results/antiphase/controls.json \
+                   results/antiphase/natural.json \
+                   results/antiphase/shard_s*of${{ needs.plan.outputs.n_shards }}.json; do
+            [ -f "$f" ] && FILES="$FILES $f"
+          done
+          scripts/commit_results.sh "antiphase: survey reduce (run ${{ github.run_id }})" $FILES

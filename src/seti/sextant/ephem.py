@@ -113,6 +113,25 @@ GM_SUN_AU3_D2 = PERTURBERS[0][2] * GM_KM3S2_TO_AU3D2
 
 #: The Gaia SSO window (FPR: 2014-07-25 .. 2020-01-20) with a margin, as JD.
 WINDOW_JD = (2456850.0, 2458900.0)
+#: How far past the Gaia window the perturber grid may be extended to reach the
+#: SBDB osculation epoch (JPL's standard epoch moves forward every ~200 days).
+MAX_EPOCH_EXTENSION_DAYS = 4000.0
+
+
+def perturber_window(epochs) -> tuple[float, float]:
+    """The JD span the perturber grid must cover: the Gaia window AND the epoch.
+
+    The integrator route STARTS at each object's SBDB osculation epoch and
+    integrates to the Gaia epochs, so the perturbers are needed over the whole
+    stretch in between, not just over the observations.  The current JPL epoch
+    (2461200.5 on 2026-09-22) is six years past the Gaia window.
+    """
+    lo, hi = WINDOW_JD
+    e = np.asarray([_f(x) for x in epochs], dtype=float)
+    e = e[np.isfinite(e) & (e > hi)]
+    if e.size:
+        hi = min(float(e.max()), WINDOW_JD[1] + MAX_EPOCH_EXTENSION_DAYS)
+    return float(lo), float(hi)
 
 HORIZONS_API = "https://ssd.jpl.nasa.gov/api/horizons.api"
 SBDB_QUERY_API = "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
@@ -373,13 +392,38 @@ class PerturberSet:
     def n_bodies(self) -> int:
         return len(self.labels)
 
+    def _require_inside(self, t) -> None:
+        """Refuse to EXTRAPOLATE the perturbers.  One grid step of slack.
+
+        :func:`hermite_cubic` clips the interval index, so a time past the end
+        of the grid silently evaluates the last cubic far outside its step.
+        That is what broke the integrator route on run 35746692260: SBDB's
+        osculation epoch (JD 2461200.5, 2026) lay six years past the grid's end
+        (2458930), the Sun's barycentric state there came out ~0.02 au and
+        ~3.5e-5 au/d wrong and Jupiter at ~27 au, and the probe measured the
+        integrator against Horizons at a MEDIAN of 1.4e7 mas --- degrees.  It
+        then chose the Horizons route, on which every positive control is
+        refused as circular, so the run could score no control at all.
+        """
+        tt = np.atleast_1d(np.asarray(t, dtype=float))
+        tt = tt[np.isfinite(tt)]
+        if tt.size == 0 or self.t_grid.size < 2:
+            return
+        h = float(self.t_grid[1] - self.t_grid[0])
+        if tt.min() < self.t_grid[0] - h or tt.max() > self.t_grid[-1] + h:
+            raise EphemerisError(
+                f"perturber grid [{self.t_grid[0]:.1f}, {self.t_grid[-1]:.1f}] does not "
+                f"cover JD [{tt.min():.1f}, {tt.max():.1f}]; refusing to extrapolate")
+
     def states(self, t) -> tuple[np.ndarray, np.ndarray]:
         """``(pos (B, K, 3), vel (B, K, 3))`` at ``t (K,)`` (or ``(B, 3)`` for scalar)."""
+        self._require_inside(t)
         return hermite_cubic(self.t_grid, self.pos, self.vel, t)
 
     def sun_state(self, jd) -> np.ndarray:
         """The Sun's barycentric state ``(N, 6)`` --- the ``sun_state`` callable."""
         jd = np.atleast_1d(np.asarray(jd, dtype=float))
+        self._require_inside(jd)
         p, v = hermite_cubic(self.t_grid, self.pos[self.sun_index],
                              self.vel[self.sun_index], jd)
         return np.column_stack([p, v])

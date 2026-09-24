@@ -26,7 +26,7 @@ import pandas as pd
 
 from ..knell.acquire import AcquisitionLog, fetch_gcvs_region, fetch_vsx_region
 from .api import numeric, pick_column, querycat, queryexps
-from .lightcurve import any_time_to_year
+from .lightcurve import any_time_to_year, str_values
 from .step import MENZEL_GAP_END, MENZEL_GAP_START
 from .vet import is_lpv_type, is_periodic_type
 
@@ -135,7 +135,8 @@ def exposure_table(df: pd.DataFrame) -> pd.DataFrame:
     scol = pick_column(df, ("series", "plate_series"))
     if ecol is None or scol is None:
         return pd.DataFrame(columns=[*EXPOSURE_KEY_COLS, "exptime_min"])
-    out = pd.DataFrame({"series": df[scol].astype(str).str.strip().str.lower()})
+    out = pd.DataFrame({"series": pd.Series(str_values(df[scol]), index=df.index)
+                        .str.strip().str.lower()})
     for key, cands in (("platenum", ("platenum", "plate_number")),
                        ("mosnum", ("mosnum", "mosaic_number")),
                        ("expnum", ("expnum", "exposure_number"))):
@@ -251,6 +252,107 @@ def select_variables(ra: float, dec: float, radius_deg: float, *, log: Acquisiti
                f"amp>={amp_min} periodic types", rows=int(len(out)),
                extra={"n_raw": int(len(df)), "source": src})
     return out.sort_values("mag_cat").head(int(max_targets)).reset_index(drop=True)
+
+
+_VIZIER_TAP = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+PULSATOR_FIELD = "allsky_pulsators"
+
+
+def fetch_pulsator_catalogue(*, max_mag_max: float, period_min: float, period_max: float,
+                             log: AcquisitionLog, tap_url: str = _VIZIER_TAP,
+                             timeout_s: float = 900.0) -> tuple[pd.DataFrame, str]:
+    """All-sky VSX rows that COULD be bright pulsators (runner-only).
+
+    Route order, each attempt logged: TAPVizieR with the named-column ADQL;
+    TAPVizieR with ``SELECT *`` and the same filter (in case a column name
+    differs); astroquery VizieR constraints on ``B/vsx/vsx``; the same on
+    GCVS.  Returns ``(normalised frame, source)``; an empty frame with source
+    ``"none"`` when every route failed, which the caller reports as a
+    degradation --- never as an empty sky.
+    """
+    from .pulsators import normalise_catalogue, vsx_adql
+
+    q_named = vsx_adql(max_mag_max=max_mag_max, period_min=period_min, period_max=period_max)
+    q_star = q_named.replace(q_named[:q_named.index(" FROM ")], "SELECT *", 1)
+    try:
+        import pyvo
+        tap = pyvo.dal.TAPService(tap_url)
+        for tag, q in (("vsx_tap_named", q_named), ("vsx_tap_star", q_star)):
+            try:
+                res = tap.run_async(q, maxrec=3_000_000, timeout=timeout_s).to_table().to_pandas()
+            except Exception as exc:                      # noqa: BLE001
+                log.record(tag, q[:600], error=repr(exc)[:400])
+                continue
+            log.record(tag, q[:600], rows=int(len(res)),
+                       extra={"columns": [str(c) for c in res.columns][:30]})
+            if len(res):
+                return normalise_catalogue(res, "vsx"), "vsx_tap"
+    except Exception as exc:                              # noqa: BLE001
+        log.record("vsx_tap_import", "pyvo", error=repr(exc)[:300])
+    for tag, table, src, cons in (
+            ("vsx_vizier_constraints", "B/vsx/vsx", "vsx",
+             {"max": f"<={max_mag_max}", "Period": f"{period_min}..{period_max}"}),
+            ("gcvs_vizier_constraints", "B/gcvs/gcvs_cat", "gcvs",
+             {"magMax": f"<={max_mag_max}", "Period": f"{period_min}..{period_max}"})):
+        try:
+            from astroquery.vizier import Vizier
+            v = Vizier(columns=["**"], row_limit=-1, timeout=timeout_s)
+            res = v.query_constraints(catalog=table, **cons)
+            df = res[0].to_pandas() if res is not None and len(res) else pd.DataFrame()
+        except Exception as exc:                          # noqa: BLE001
+            log.record(tag, f"{table} {cons}", error=repr(exc)[:400])
+            continue
+        log.record(tag, f"{table} {cons}", rows=int(len(df)),
+                   extra={"columns": [str(c) for c in df.columns][:30]})
+        if len(df):
+            return normalise_catalogue(df, src), src + "_vizier"
+    return normalise_catalogue(pd.DataFrame(), "none"), "none"
+
+
+def select_pulsators(conf: dict, *, log: AcquisitionLog, max_total: int | None = None,
+                     catalogue_fn=None) -> tuple[pd.DataFrame, dict]:
+    """The cessation population: bright catalogued pulsators, all sky.
+
+    ``catalogue_fn`` (tests) replaces the archive call and must return
+    ``(normalised frame, source)``.
+    """
+    from .pulsators import DEFAULT_CLASS_LIMITS, filter_pulsators
+
+    pc = conf.get("pulsators", {}) or {}
+    limits = {k: dict(v) for k, v in DEFAULT_CLASS_LIMITS.items()}
+    for k, v in (pc.get("classes") or {}).items():
+        limits.setdefault(k, {}).update(v or {})
+    pmin = min(float(v["period_min"]) for v in limits.values())
+    pmax = max(float(v["period_max"]) for v in limits.values())
+    b_max = float(pc.get("b_mean_max", 14.0))
+    fn = catalogue_fn or (lambda: fetch_pulsator_catalogue(
+        max_mag_max=b_max, period_min=pmin, period_max=pmax, log=log,
+        timeout_s=float(pc.get("catalogue_timeout_s", 900.0))))
+    cat, source = fn()
+    mt = pc.get("max_total") if max_total is None else max_total
+    sel, funnel = filter_pulsators(cat, b_mean_max=b_max,
+                                   b_mean_min=float(pc.get("b_mean_min", 8.0)),
+                                   amp_min=float(pc.get("amp_min", 0.3)), class_limits=limits,
+                                   max_total=(int(mt) if mt is not None and int(mt) >= 0
+                                              else None))
+    funnel["catalogue_source"] = source
+    log.record("select_pulsators", f"all-sky pulsators B_mean<={b_max} source={source}",
+               rows=int(len(sel)), extra={k: v for k, v in funnel.items()
+                                          if not isinstance(v, dict)})
+    if not len(sel):
+        return pd.DataFrame(), funnel
+    out = pd.DataFrame({
+        "name": sel["name"].to_numpy(), "ra": sel["ra"].to_numpy(float),
+        "dec": sel["dec"].to_numpy(float), "kind": "pulsator",
+        "vtype": sel["vtype"].to_numpy(), "period_cat": sel["period_cat"].to_numpy(float),
+        # mag_cat is the estimated MEAN B magnitude: it is the refcat match's
+        # magnitude hint (APASS B) and the vet's saturation check.
+        "mag_cat": sel["mag_cat"].to_numpy(float), "amp_cat": sel["amp_cat"].to_numpy(float),
+        "source": sel["source"].to_numpy(), "field": PULSATOR_FIELD,
+        "pulsator_class": sel["pulsator_class"].to_numpy(),
+        "mag_max_cat": sel["mag_max"].to_numpy(float), "band_cat": sel["band"].to_numpy(),
+    })
+    return out, funnel
 
 
 def _tile_centres(ra: float, dec: float, radius_deg: float, tile_arcmin: float) -> list:
@@ -381,6 +483,7 @@ def match_refcat(ra: float, dec: float, *, radius_arcsec: float = 15.0, refcat: 
     return row, r
 
 
-__all__ = ["EXPOSURE_KEY_COLS", "dasch_dates_to_year", "exposure_table",
-           "exposure_years", "field_tag", "match_refcat", "normalise_refcat",
-           "plate_density", "select_bright", "select_variables"]
+__all__ = ["EXPOSURE_KEY_COLS", "PULSATOR_FIELD", "dasch_dates_to_year", "exposure_table",
+           "exposure_years", "fetch_pulsator_catalogue", "field_tag", "match_refcat",
+           "normalise_refcat", "plate_density", "select_bright", "select_pulsators",
+           "select_variables"]

@@ -58,23 +58,52 @@ permissions:
   contents: write
 
 jobs:
+  # ---------------------------------------------------------------- plan
+  # The matrix is derived from n_shards.  It used to be a literal [0, 1]
+  # while the acquire command fell back to n_shards=4, so an empty input ran
+  # shards 0 and 1 of 4 and silently never fetched half the interleaved sky.
+  plan:
+    if: ${{ github.event.inputs.skip_acquire != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.mk.outputs.shards }}
+      n: ${{ steps.mk.outputs.n }}
+    steps:
+      - id: mk
+        env:
+          N: ${{ github.event.inputs.n_shards || '2' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          n = max(1, int(os.environ["N"] or 2))
+          print("n=" + str(n))
+          print("shards=" + json.dumps(list(range(n))))
+          PY
+
   # ---------------------------------------------------------------- acquire
   acquire:
+    needs: plan
     if: ${{ github.event.inputs.skip_acquire != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 330
     strategy:
       fail-fast: false
-      # Two shards, not four: the Gaia TAP async endpoint returns transient
-      # 500s under concurrent load, and four shards were rate-limiting us into
-      # our own retry budget. Two halves the wall clock without the self-DoS.
+      # At most two at once: the Gaia TAP async endpoint returns transient
+      # 500s under concurrent load, and four concurrent shards were
+      # rate-limiting us into our own retry budget.  More shards than two
+      # simply queue behind this cap.
       max-parallel: 2
       matrix:
-        shard: [0, 1]
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries earlier
+      # runs' parent/acquire_status_shardNN.json for every shard.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/tidemark/parent
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -92,13 +121,23 @@ jobs:
             --g-max "${{ github.event.inputs.g_max || '17.0' }}" \
             --stride "${{ github.event.inputs.stride || '20' }}" \
             --shard ${{ matrix.shard }} \
-            --n-shards "${{ github.event.inputs.n_shards || '4' }}"
+            --n-shards "${{ needs.plan.outputs.n }}"
           cat results/tidemark/parent/acquire_status_shard*.json || true
+      # Only this shard's own pair (cli.py: tag _shard<NN>; unsuffixed when
+      # n_shards <= 1).
+      - name: Shard tag
+        id: tag
+        if: always()
+        run: printf 's=%02d\n' "${{ matrix.shard }}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tidemark-parent-${{ matrix.shard }}
-          path: results/tidemark/parent/
+          path: |
+            results/tidemark/parent/parent_sample_shard${{ steps.tag.outputs.s }}.parquet
+            results/tidemark/parent/acquire_status_shard${{ steps.tag.outputs.s }}.json
+            ${{ matrix.shard == 0 && 'results/tidemark/parent/parent_sample.parquet' || '' }}
+            ${{ matrix.shard == 0 && 'results/tidemark/parent/acquire_status.json' || '' }}
           if-no-files-found: warn
 
   # ----------------------------------------------------------------- analyse
@@ -122,6 +161,10 @@ jobs:
           pip install -e ".[dev]"
       - name: Offline gate --- the statistics must still pass their own tests
         run: python -m pytest tests/test_tidemark.py -q
+      # Only this run's shards may reach the reduce (docs/channel-brief.md §0.7).
+      - name: Purge checkout-inherited shard outputs
+        if: ${{ github.event.inputs.skip_acquire != 'true' }}
+        run: rm -rf results/tidemark/parent
       - uses: actions/download-artifact@v4
         if: ${{ github.event.inputs.skip_acquire != 'true' }}
         continue-on-error: true

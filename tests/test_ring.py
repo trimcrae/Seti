@@ -404,8 +404,10 @@ def test_pulsar_screen_measures_colour_chance_and_provenance(cfg):
     # safe even though random sources of SOME colour are common in this field.
     assert good["p_chance_ring"] < cfg["pulsar"]["chance_p_max"]
     assert good["p_chance_any"] > cfg["pulsar"]["chance_p_max"]
-    assert s["n_ring_band_expected_by_chance"] == pytest.approx(0.0)
-    assert s["n_counterparts_expected_by_chance"] > 0.5
+    cen = s["chance_census"]["allwise"]
+    assert cen["ring_colour_expected_by_chance"] == pytest.approx(0.0)
+    assert cen["expected_by_chance"] == pytest.approx(12 / 16, abs=0.06)
+    assert cen["observed"] == 3 and cen["ring_colour_observed"] == 1
     assert good["t_colour_k"] == pytest.approx(500.0, rel=0.05)
     assert good["shape_class"] == "ring_band" and good["verdict"] == "surviving"
     assert bool(good["ring_candidate"])
@@ -499,7 +501,7 @@ def _bd_epochs(rng, sid, n, switch: bool):
 def test_bd_duty_cycle_flags_a_switching_w2_series_only(cfg):
     rng = np.random.default_rng(4)
     targets = pd.DataFrame({"source_id": [f"Y{i}" for i in range(12)], "spt": "Y0",
-                            "spt_num": 30.0})
+                            "spt_num": 30.0, "pmra": 500.0, "pmdec": -300.0})
     eps = [_bd_epochs(rng, f"Y{i}", 16, switch=(i == 0)) for i in range(10)]
     eps.append(_bd_epochs(rng, "Y10", 3, switch=True))         # too few epochs
     epochs = pd.concat(eps, ignore_index=True)                   # Y11: no epochs
@@ -582,6 +584,7 @@ def _fetchers(empty: bool = False):
     ffp = pd.DataFrame({"name": ["a"], "spt": ["L4"], "group": ["TWA"], "age": [10.0],
                         "lbol": [-3.5], "mass": [8.0]})
     return {"wd": lambda d, c: (wd, {"route": "injected"}),
+            "wd_controls": lambda df, c, d: {"status": "INJECTED_NONE"},
             "pulsar": lambda c: (psr, {"route": "injected"}),
             "pulsar_matches": lambda p, c: (matches, {"allwise": {"status": "OK"}}),
             "bd_targets": lambda c: (targets, {"route": "injected"}),
@@ -633,3 +636,440 @@ def test_a_missing_leg_is_named_not_hidden(cfg, tmp_path):
     assert s["verdict"].startswith("DEGRADED (")
     assert "wd" in s["degraded_legs"] and "bd" in s["degraded_legs"]
     assert "RING_CANDIDATES_PENDING_VET" in s["verdict"]
+
+
+# ==========================================================================
+# Regressions from run 35752692549 (the first solo run)
+# ==========================================================================
+
+import re as _re  # noqa: E402
+
+# The real J/MNRAS/508/3877/maincat listing does not contain "chi2H"/"chi2He";
+# TAPVizieR refuses a SELECT naming ANY unknown column, which is how the whole
+# white-dwarf leg reached nothing.
+_GF21_COLUMNS = ["WDJname", "DR3Name", "GaiaEDR3", "RA_ICRS", "DE_ICRS", "Plx", "e_Plx",
+                 "pmRA", "pmDE", "Gmag", "BPmag", "RPmag", "Pwd", "TeffH", "e_TeffH",
+                 "loggH", "e_loggH", "MassH", "e_MassH", "TeffHe", "loggHe", "MassHe", "RUWE"]
+
+
+def _strict_vizier(listing, rows_per_band=2):
+    """A fake TAPVizieR: refuses unknown columns, answers dec-band SELECTs."""
+    calls = []
+
+    def q(adql):
+        calls.append(adql)
+        sel = _re.search(r"SELECT\s+(?:TOP \d+\s+)?(.*?)\s+FROM", adql).group(1)
+        cols = [c.strip().strip('"') for c in sel.split(",")]
+        where = adql.split("WHERE", 1)[1]
+        bad = [c for c in cols + _re.findall(r'"([^"]+)"', where) if c not in listing]
+        if bad:
+            raise RuntimeError(f"Incorrect ADQL query: unresolved identifiers {bad}")
+        lo = float(_re.search(r'"DE_ICRS" >= (-?\d+(\.\d+)?)', where).group(1))
+        n = rows_per_band
+        data = {c: np.arange(n, dtype=float) + 1.0 for c in cols}
+        data["GaiaEDR3"] = [int((lo + 90) * 1000 + k) for k in range(n)]
+        data["DE_ICRS"] = [lo + 1.0] * n
+        data["Plx"] = [10.0] * n
+        data["e_Plx"] = [0.5] * n
+        return pd.DataFrame(data)
+    return q, calls
+
+
+def test_wd_vizier_parent_resolves_its_columns_at_run_time(cfg):
+    q, calls = _strict_vizier(set(_GF21_COLUMNS))
+    df = racq.fetch_wd_vizier_parent(cfg, query_fn=q, columns_fn=lambda t: _GF21_COLUMNS)
+    assert "chi2H" not in " ".join(calls)             # never asks for what is not there
+    assert {"source_id", "ra", "dec", "pwd", "teff_h", "teff_he"} <= set(df.columns)
+    assert "chisq_h" not in df.columns
+    assert (df["parallax_over_error"] == 20.0).all()
+    bands = df.attrs["bands"]
+    assert len(bands) == 6 and sum(b["n"] for b in bands) == len(df) == 12
+    # harmonise_wd must cope with the absent chi-square columns (H chosen).
+    h = racq.harmonise_wd(df)
+    assert (h["atmosphere"] == "H").all() and h["teff"].notna().all()
+
+
+def test_wd_vizier_parent_names_a_missing_required_column(cfg):
+    listing = [c for c in _GF21_COLUMNS if c != "Pwd"]
+    q, _ = _strict_vizier(set(listing))
+    with pytest.raises(RuntimeError, match="pwd"):
+        racq.fetch_wd_vizier_parent(cfg, query_fn=q, columns_fn=lambda t: listing)
+
+
+def test_wd_leg_reaches_data_through_route_b_when_the_archive_table_is_absent(cfg, tmp_path):
+    q_viz, _ = _strict_vizier(set(_GF21_COLUMNS))
+
+    def probe(table, want, tag=""):
+        if "allwise" in table:
+            return {"designation": "designation", "W1mag": "w1mpro", "W2mag": "w2mpro"}
+        return {}
+
+    def gaia(q, tag="", upload=None, upload_name=None):
+        ids = upload.to_pandas()["source_id"]
+        return pd.DataFrame({"source_id": ids, "w1mag": 15.0, "w2mag": 14.9,
+                             "wise_angdist": 0.2, "phot_g_mean_mag": 99.0, "bp_rp": 9.0})
+
+    df, meta = racq.fetch_wd_leg(tmp_path, cfg, query=gaia, probe=probe, vizier_fn=q_viz,
+                                 columns_fn=lambda t: _GF21_COLUMNS)
+    assert meta["route"] == "vizier_parent+gaia_upload_join"
+    assert len(df) == 12 and "w1mag" in df.columns
+    # Shared columns keep the parent's values and are never suffixed _x/_y.
+    assert not [c for c in df.columns if c.endswith(("_x", "_y"))]
+    assert (df["phot_g_mean_mag"] < 99.0).all()
+    assert [r["status"] for r in meta["routes_tried"]] == ["FAILED", "OK", "OK"]
+
+
+_PSRCAT_ECL = """
+PSRJ     J1453+1902
+ELONG    213.074651230                 3
+ELAT     30.580214560                  2
+P0       0.005792
+P1       1.2E-20
+DIST_DM  1.15
+@-----------------------------------------------------------------
+PSRJ     J9999+0000
+ELONG    100.12
+ELAT     5.3
+P0       1.0
+@-----------------------------------------------------------------
+"""
+
+
+def test_ecliptic_positions_keep_their_own_precision():
+    """Run 35752692549 gave every ecliptic-position pulsar a 49-arcsec error."""
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_ECL), "tarball")
+    o = psr.set_index("jname")
+    assert o.loc["J1453+1902", "pos_err_arcsec"] < 0.05       # a timing position
+    assert o.loc["J9999+0000", "pos_err_arcsec"] > 300.0      # 0.1 deg in latitude
+
+
+def test_psrqpy_version_property_does_not_discard_the_query(monkeypatch):
+    import sys
+    import types
+
+    class _Tbl:
+        def to_pandas(self):
+            return pd.DataFrame({"JNAME": ["J0001+0002"], "RAJD": [0.29], "DECJD": [0.03]})
+
+    class QueryATNF:
+        def __init__(self, params=None):
+            self.table = _Tbl()
+
+        @property
+        def get_version(self):
+            return "2.6.1"
+
+    monkeypatch.setitem(sys.modules, "psrqpy", types.SimpleNamespace(QueryATNF=QueryATNF))
+    df = racq.fetch_pulsars_psrqpy()
+    assert df.attrs["catalogue_version"] == "2.6.1" and "PSRJ" in df.columns
+
+
+_PSRCAT_VET = """
+PSRJ     J0100+0100
+RAJ      01:00:00.0000                 1
+DECJ     +01:00:00.000                 1
+P0       0.5
+P1       1.0E-15
+DIST_DM  1.0
+@-----------------------------------------------------------------
+PSRJ     J0200+02
+RAJ      02:00
+DECJ     +02:00
+P0       1.0
+P1       1.0E-15
+DIST_DM  2.0
+@-----------------------------------------------------------------
+PSRJ     J0300+0300
+RAJ      03:00:00.0000                 1
+DECJ     +03:00:00.000                 1
+P0       0.7
+P1       1.0E-15
+DIST_DM  1.0
+@-----------------------------------------------------------------
+PSRJ     J0400+0400
+RAJ      04:00:00.0000                 1
+DECJ     +04:00:00.000                 1
+P0       0.7
+P1       1.0E-15
+DIST_DM  1.0
+@-----------------------------------------------------------------
+"""
+
+
+def test_pulsar_vet_kills_each_run_35752692549_failure_mode(cfg):
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_VET), "tarball")
+    ring = float(ph.blackbody_colour(600.0))
+    aw = pd.DataFrame([
+        # J0300: AllWISE W1/W2 are UPPER LIMITS (UUBU) with a ring-like difference.
+        {"source_id": "J0300+0300|t", "match_dist_arcsec": 0.5, "W1mag": 18.5,
+         "W2mag": 18.5 - ring, "W3mag": 11.4, "W4mag": 8.6, "ph_qual": "UUBU",
+         "cc_flags": "0000"},
+    ])
+    cw = pd.DataFrame([
+        # J0100: a clean, well-measured 600 K CatWISE counterpart -> survives.
+        {"source_id": "J0100+0100|t", "match_dist_arcsec": 0.4, "W1mag_cat": 15.0,
+         "e_W1mag_cat": 0.03, "W2mag_cat": 15.0 - ring, "e_W2mag_cat": 0.03},
+        # J0200: position known to an arcminute; a ring-coloured source at 3" means nothing.
+        {"source_id": "J0200+02|t", "match_dist_arcsec": 3.0, "W1mag_cat": 15.0,
+         "e_W1mag_cat": 0.03, "W2mag_cat": 15.0 - ring, "e_W2mag_cat": 0.03},
+        # J0300: CatWISE sees the same source with a stellar colour.
+        {"source_id": "J0300+0300|t", "match_dist_arcsec": 0.6, "W1mag_cat": 18.1,
+         "e_W1mag_cat": 0.2, "W2mag_cat": 17.8, "e_W2mag_cat": 0.3},
+        # J0400: a ring colour, but 0.25 mag errors per band: 2 sigma reaches stars.
+        {"source_id": "J0400+0400|t", "match_dist_arcsec": 0.5, "W1mag_cat": 18.8,
+         "e_W1mag_cat": 0.25, "W2mag_cat": 18.8 - ring, "e_W2mag_cat": 0.25},
+    ])
+    out, s = rscr.screen_pulsars(psr, {"allwise": aw, "catwise": cw}, cfg)
+    o = out.set_index("jname")
+    assert o.loc["J0100+0100", "verdict"] == "surviving"
+    assert o.loc["J0100+0100", "colour_source"] == "catwise"
+    assert not bool(o.loc["J0200+02", "localised"])
+    assert o.loc["J0200+02", "veto_reason"] == "position_not_localised"
+    # Upper limits are not a colour: CatWISE's stellar colour is used instead.
+    assert o.loc["J0300+0300", "colour_source"] == "catwise"
+    assert o.loc["J0300+0300", "shape_class"] != "ring_band"
+    assert o.loc["J0400+0400", "veto_reason"] == "colour_not_secure"
+    assert s["n_ring_candidates"] == 1
+    assert len(s["ring_band_fates"]) == s["shape_counts"]["ring_band"] == 3
+    assert rass.consistency_checks({"legs": {"pulsar": {**s, "survivors": [{}]}}})["ok"]
+
+
+def test_ring_chance_rate_comes_from_the_catalogue_that_gave_the_colour(cfg):
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_VET), "tarball")
+    ring = float(ph.blackbody_colour(600.0))
+    rows = [{"source_id": "J0100+0100|t", "match_dist_arcsec": 0.4, "W1mag_cat": 15.0,
+             "e_W1mag_cat": 0.03, "W2mag_cat": 15.0 - ring, "e_W2mag_cat": 0.03}]
+    # Ring-coloured CatWISE sources at 6 of J0100's 16 controls; AllWISE has none.
+    rows += [{"source_id": f"J0100+0100|c{k}", "match_dist_arcsec": 0.5, "W1mag_cat": 16.0,
+              "e_W1mag_cat": 0.05, "W2mag_cat": 16.0 - ring, "e_W2mag_cat": 0.05}
+             for k in range(6)]
+    out, s = rscr.screen_pulsars(psr, {"allwise": pd.DataFrame(),
+                                       "catwise": pd.DataFrame(rows)}, cfg)
+    g = out.set_index("jname").loc["J0100+0100"]
+    assert g["catwise_n_control_ring_hits"] == 6
+    assert g["p_chance_ring"] > 0.1 and g["veto_reason"] == "chance_coincidence"
+
+
+def test_a_per_host_pass_must_survive_the_look_elsewhere_correction(cfg):
+    """p = 0.006 passes the per-host screen but not across ~N localised hosts."""
+    psr = racq.normalise_pulsars(racq.parse_psrcat_db(_PSRCAT_VET), "tarball")
+    # Replicate J0100 into many localised hosts so N_trials is large.
+    many = pd.concat([psr[psr["jname"] == "J0100+0100"]] * 400, ignore_index=True)
+    many["jname"] = [f"J{k:04d}+0100" for k in range(400)]
+    rows = [{"source_id": "J0000+0100|t", "match_dist_arcsec": 0.4, "W1mag": 15.0,
+             "e_W1mag": 0.03, "W2mag": 14.52, "e_W2mag": 0.03, "ph_qual": "AAUU"}]
+    # One any-colour control hit per 50 hosts -> p_any ~ 0.01 per host.
+    rows += [{"source_id": f"J{k:04d}+0100|c0", "match_dist_arcsec": 0.5, "W1mag": 16.0,
+              "e_W1mag": 0.05, "W2mag": 15.9, "e_W2mag": 0.05, "ph_qual": "AAUU"}
+             for k in range(1, 400, 25)]
+    out, s = rscr.screen_pulsars(many, {"allwise": pd.DataFrame(rows),
+                                        "catwise": pd.DataFrame()}, cfg)
+    g = out.set_index("jname").loc["J0000+0100"]
+    assert g["p_chance"] < cfg["pulsar"]["chance_p_max"]
+    assert g["p_chance_trials"] > 0.3 > cfg["pulsar"]["trials_p_max"]
+    assert g["veto_reason"] == "not_significant_after_trials"
+
+
+def test_bd_roles_prefer_the_infrared_type_and_catwise_position():
+    cols = ["recno", "T", "Name", "SpTO", "SpTIR", "SpAd", "plx", "pmRA", "pmDE", "RACdeg",
+            "DECdeg", "pmRAC2", "pmDEC2", "W1mag", "W2mag", "_RA", "_DE"]
+    r = racq.resolve_roles(cols, racq.BD_ROLES)
+    assert r["spt"] == "SpTIR" and r["spt_opt"] == "SpTO"
+    assert r["ra"] == "RACdeg" and r["dec"] == "DECdeg" and r["pmra"] == "pmRA"
+
+
+def _fake_vizier_catalogue(tables: dict):
+    """query_fn serving TAP_SCHEMA.tables / .columns and SELECTs for ``tables``."""
+    def q(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": list(tables), "description": ""})
+        if "TAP_SCHEMA.columns" in adql:
+            t = _re.search(r"table_name = '([^']+)'", adql).group(1)
+            return pd.DataFrame({"column_name": list(tables[t].columns)})
+        m = _re.search(r'SELECT\s+(?:TOP \d+\s+)?(.*?)\s+FROM\s+"([^"]+)"', adql)
+        cols = [c.strip().strip('"') for c in m.group(1).split(",")]
+        return tables[m.group(2)][cols].copy()
+    return q
+
+
+def test_ffp_leg_resolves_2mass_names_and_joins_membership(cfg):
+    t14 = pd.DataFrame({"recno": [1, 2, 3], "2MASS": ["J0001", "J0002", "J0003"],
+                        "OSpT": ["L4", "L7", "M9"], "IRSpT": ["L4", "L7", "M9"],
+                        "Lbol": [-2.6, -4.2, -3.0], "Teff": [1700, 1200, 2300],
+                        "Mass": [8.0, 8.0, 40.0]})
+    # As on the runner (run 35860901093): "Mm" is the membership CLASS, and
+    # the group lives elsewhere -- here in the BANYAN II group column.
+    lsg = pd.DataFrame({"recno": [1, 2, 3], "2MASS": ["J0001", "J0002", "J0003"],
+                        "Mm": ["HLM", "HLM", "NM"], "GBII": ["TWA", "βPMG", "FIELD"],
+                        "_RA": [1.0, 2.0, 3.0], "_DE": [0.0, 0.0, 0.0]})
+    q = _fake_vizier_catalogue({"J/ApJS/225/10/table14": t14,
+                                "J/ApJS/225/10/lsgdwarf": lsg})
+    df, meta = racq.fetch_ffp_targets(cfg, query_fn=q)
+    assert meta["status"] == "OK" and meta["table"] == "J/ApJS/225/10/table14"
+    assert meta["membership_table"] == "J/ApJS/225/10/lsgdwarf"
+    assert meta["membership_column"] == "GBII" and meta["member_class_column"] == "Mm"
+    assert meta["n_with_group"] == 3 and "member_class" in df.columns
+    out, s = rscr.screen_ffp(df, cfg)       # no age column: must not crash
+    o = out.set_index("name")
+    assert o.loc["J0002", "age_gyr"] == pytest.approx(0.024)    # bPMG -> beta Pic
+    assert o.loc["J0001", "age_source"] == "group_fallback"
+    assert o.loc["J0003", "age_source"] == "none"
+    assert s["n_testable"] == 2 and s["age_source_counts"]["group_fallback"] == 2
+
+
+def test_summary_is_strict_json_with_provenance_and_names_a_killed_bd_leg(cfg, tmp_path,
+                                                                          monkeypatch):
+    monkeypatch.setenv("GITHUB_RUN_ID", "123")
+    out = tmp_path / "ring"
+    f = _fetchers()
+    for leg in rrun.LEGS:
+        rrun.stage_acquire(cfg, out, leg, fetchers=f)
+        rrun.stage_screen(cfg, out, leg, rng=np.random.default_rng(1))
+    # The NEOWISE loop was killed by the job clock: its record says IN_PROGRESS.
+    rec = json.loads((out / "bd" / "acquire_shard0.json").read_text())
+    rec["status"] = "IN_PROGRESS"
+    (out / "bd" / "acquire_shard0.json").write_text(json.dumps(rec))
+    s = rrun.stage_assess(cfg, out, followup=False)
+
+    def _no_nan(x):
+        raise ValueError(f"non-strict JSON constant {x}")
+    js = json.loads((out / "summary.json").read_text(), parse_constant=_no_nan)
+    assert js["run_id"] == "123" and js["generated_at"]
+    assert js["leg_provenance"]["pulsar"]["run_id"] == "123"
+    assert "bd partial: acquisition KILLED_IN_PROGRESS" in s["verdict"]
+    assert "bd" in s["degraded_legs"]
+    assert js["consistency"]["ok"], js["consistency"]
+    for leg in rrun.LEGS:
+        sj = json.loads((out / leg / "screen.json").read_text(), parse_constant=_no_nan)
+        assert sj["provenance"]["run_id"] == "123"
+
+
+def test_numeric_spectral_type_codes_are_read():
+    """Kirkpatrick+2021 on VizieR tabulates types as codes (T0 = 20)."""
+    assert racq.spt_to_numeric(28.0) == 28.0
+    assert racq.spt_to_numeric("26.5") == 26.5
+    assert np.isnan(racq.spt_to_numeric(99.0))
+    assert racq.spt_to_numeric("T8") == 28.0
+
+
+def test_bd_flag_is_vetoed_when_the_series_is_not_the_target(cfg):
+    rng = np.random.default_rng(5)
+    ids = [f"T{i}" for i in range(10)]
+    targets = pd.DataFrame({"source_id": ids, "spt": "T8", "spt_num": 28.0,
+                            "pmra": [np.nan] + [300.0] * 9, "pmdec": [np.nan] + [0.0] * 9})
+    eps = [_bd_epochs(rng, i, 16, switch=(i in ("T0", "T1"))) for i in ids]
+    ep = pd.concat(eps, ignore_index=True)
+    # T1: a blue (W1-W2 ~ 0.9) switching series -- a background star, not a T8.
+    m = (ep["source_id"] == "T1") & (ep["band"] == "W1")
+    ep.loc[m, "mag"] = ep.loc[m, "mag"] - 1.6
+    out, s = rscr.screen_bd(ep, targets, cfg)
+    o = out.set_index("source_id")
+    assert o.loc["T1", "duty_cycle_veto"] == "colour_not_the_target"
+    assert o.loc["T0", "duty_cycle_veto"] == "proper_motion_not_propagated"
+    assert s["n_duty_cycle_flags"] == 0 and len(s["duty_cycle_vetoed"]) == 2
+
+
+def test_route_c_keeps_the_gaia_position_beside_the_wise_one(cfg, tmp_path):
+    q_viz, _ = _strict_vizier(set(_GF21_COLUMNS))
+
+    def gaia_down(q, tag="", upload=None, upload_name=None):
+        raise RuntimeError("SSLEOFError")
+
+    def xm(up, table, r):          # X-Match echoes the uploaded ra/dec
+        return pd.DataFrame({"source_id": up["source_id"], "ra": up["ra"], "dec": up["dec"],
+                             "RAJ2000": up["ra"] + 1e-5, "DEJ2000": up["dec"],
+                             "W1mag": 15.0, "W2mag": 14.9, "angDist": 0.3})
+
+    df, meta = racq.fetch_wd_leg(tmp_path, cfg, query=gaia_down,
+                                 probe=lambda t, w, tag="": ({"designation": "d"}
+                                                             if "allwise" in t else {}),
+                                 vizier_fn=q_viz, columns_fn=lambda t: _GF21_COLUMNS,
+                                 xmatch_fn=xm)
+    assert meta["route"] == "vizier_parent+cds_xmatch_propagated"
+    assert {"ra", "dec", "ra_wise", "dec_wise"} <= set(df.columns)
+    assert not [c for c in df.columns if c.endswith(("_x", "_y"))]
+
+
+def test_wd_followup_is_bounded_and_a_hung_cone_is_untested_not_passed(cfg):
+    import time as _t
+    c2 = {**cfg, "wd": {**cfg["wd"], "followup_per_call_s": 0.2, "followup_budget_s": 1.0}}
+    short = pd.DataFrame({"source_id": [1, 2], "ra": [10.0, 20.0], "dec": [0.0, 0.0],
+                          "pmra": [0.0, 0.0], "pmdec": [0.0, 0.0], "W1mag": 15.0,
+                          "W2mag": 14.0})
+
+    def hang(ra, dec):
+        _t.sleep(5.0)
+        return pd.DataFrame()
+
+    t0 = _t.monotonic()
+    fu = rass.wd_followup(short, c2, fetch_neighbours=hang,
+                          xmatch_fn=lambda p, t, r: pd.DataFrame())
+    assert _t.monotonic() - t0 < 3.0
+    assert (fu["blend_verdict"] == "untested").all()
+    assert (fu["followup_verdict"] == "rejected").all()
+    assert fu.attrs["n_neighbour_timeouts"] == 2
+
+
+def test_pm_less_bd_targets_adopt_catwise_astrometry(cfg):
+    targets = pd.DataFrame({"source_id": ["Y0", "Y1"], "name": ["Y0", "Y1"],
+                            "ra": [10.0, 20.0], "dec": [0.0, 0.0], "spt_num": 30.0})
+
+    def xm(up, table, r):          # CatWISE on VizieR: PM in arcsec/yr
+        return pd.DataFrame({"source_id": ["Y0"], "RA_ICRS": [10.001], "DE_ICRS": [0.0005],
+                             "pmRA": [1.2], "pmDE": [-0.4], "angDist": [2.0]})
+
+    out, info = racq.adopt_catwise_astrometry(targets, cfg, xmatch_fn=xm)
+    o = out.set_index("source_id")
+    assert info["n_adopted"] == 1
+    assert o.loc["Y0", "pmra"] == pytest.approx(1200.0) and o.loc["Y0", "ra"] == 10.001
+    assert np.isnan(o.loc["Y1", "pmra"]) and o.loc["Y1", "astrometry_source"] == "none"
+
+
+def test_wd_chance_census_counts_only_blends_that_could_mimic_the_excess(cfg):
+    df = make_wd_sample(40)
+    _inject(df, 0, 500.0, 0.03)
+    ring = float(ph.blackbody_colour(500.0))
+    ctrl = []
+    # Host 1000 (the injected ring) sits in a field where 4 of 8 controls hold a
+    # bright ring-coloured source; host 1001 has only FAINT ring-coloured ones.
+    for k in range(4):
+        ctrl.append({"source_id": f"1000|c{k}", "match_dist_arcsec": 1.0, "W1mag": 12.0,
+                     "e_W1mag": 0.03, "W2mag": 12.0 - ring, "e_W2mag": 0.03, "ph_qual": "AAUU"})
+        ctrl.append({"source_id": f"1001|c{k}", "match_dist_arcsec": 1.0, "W1mag": 20.5,
+                     "e_W1mag": 0.3, "W2mag": 20.5 - ring, "e_W2mag": 0.3, "ph_qual": "AAUU"})
+    work = racq.harmonise_wd(df.drop(columns=["_mags", "_omega", "_teff"]))
+    out, s = rscr.screen_wd(work, cfg, rng=np.random.default_rng(1),
+                            controls=pd.DataFrame(ctrl))
+    o = out.set_index("source_id")
+    cen = s["chance_census"]
+    assert cen["status"] == "OK" and cen["control_positions_per_host"] == 8
+    assert o.loc[1000, "ctrl_hits_ring"] == 4 and o.loc[1001, "ctrl_hits_ring"] == 0
+    assert cen["ring_colour_blends_expected"] == pytest.approx(0.5)
+    # The injected ring is in a field where a ring-coloured blend is likely.
+    assert o.loc[1000, "ring_veto"] == "chance_ring_coloured_blend"
+    assert not bool(o.loc[1000, "ring_candidate"])
+    assert "mechanism" in out.columns and s["mechanism_counts"]
+
+
+def test_wd_ring_must_be_distinguished_from_a_dust_disk_by_its_upper_bound(cfg):
+    df = make_wd_sample(40)
+    _inject(df, 0, 500.0, 0.03)
+    work = racq.harmonise_wd(df.drop(columns=["_mags", "_omega", "_teff"]))
+    out, s = rscr.screen_wd(work, cfg, rng=np.random.default_rng(1))
+    o = out.set_index("source_id")
+    assert bool(o.loc[1000, "ring_candidate"])            # upper bound < 800 K
+    assert bool(o.loc[1000, "ring_distinct_from_disk"])
+    # Same row with its upper bound pushed into the disk locus -> ambiguous.
+    c2 = {**cfg, "debris_locus": {**cfg["debris_locus"],
+                                  "t_min_k": float(o.loc[1000, "t_ring_hi_k"]) - 1.0}}
+    out2, _ = rscr.screen_wd(work, c2, rng=np.random.default_rng(1))
+    assert out2.set_index("source_id").loc[1000, "ring_veto"] == "ring_or_disk_ambiguous"
+
+
+def test_wd_control_positions_ring_each_host(cfg):
+    df = pd.DataFrame({"source_id": [7], "ra": [100.0], "dec": [30.0], "pmra": [0.0],
+                       "pmdec": [0.0]})
+    pos = racq.wd_control_positions(df, cfg)
+    assert len(pos) == 8 and pos["source_id"].iloc[0] == "7|c0"
+    sep = np.hypot((pos["ra"] - 100.0) * np.cos(np.radians(30.0)), pos["dec"] - 30.0) * 3600
+    assert np.allclose(sep, 45.0, rtol=1e-3)

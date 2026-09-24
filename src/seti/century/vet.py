@@ -32,6 +32,8 @@ import re
 
 import numpy as np
 
+from .pulsators import LPV_CLASSES, pulsator_class
+
 LPV_TYPE_RE = re.compile(r"(?i)^(M|SR|SRA|SRB|SRC|SRD|SRS|L|LB|LC|LPV|OSARG|MIRA)(\b|[:/|+])")
 PERIODIC_TYPE_RE = re.compile(
     r"(?i)^(RR|RRAB|RRC|RRD|DCEP|CEP|CW|CWA|CWB|RV|RVA|RVB|DSCT|HADS|SXPHE|EA|EB|EW|E\b|"
@@ -40,7 +42,16 @@ PERIODIC_TYPE_RE = re.compile(
 MUNDANE_KEYS = ("high_pm", "long_period_giant", "too_bright", "vanished_not_ceased",
                 "blend_transition", "series_disjoint", "same_series_fails",
                 "mean_flux_changed", "single_plate_evidence", "not_periodic_class",
-                "catalogue_period_suspect")
+                "catalogue_period_suspect", "geometric_period")
+
+# An eclipse or ellipsoidal period is an ORBIT.  It cannot stop without the
+# system being destroyed, so a "cessation" in one is a statement about the
+# photometry (docs/century.md §6.3).
+GEOMETRIC_TYPE_RE = re.compile(r"(?i)^(EA|EB|EW|E|ELL|EC|ED|ESD|EP|EL)(\b|[:/|+(])")
+
+
+def is_geometric_type(vtype: str) -> bool:
+    return bool(vtype) and GEOMETRIC_TYPE_RE.match(str(vtype).strip()) is not None
 
 
 def is_lpv_type(vtype: str) -> bool:
@@ -85,14 +96,27 @@ def vet_row(row: dict, conf: dict | None = None) -> dict:
         kills.append("high_pm")
     vtype = str(row.get("vtype", "") or "")
     bprp = g("bp_rp")
+    pcls = str(row.get("pulsator_class", "") or "") or pulsator_class(vtype)
     if is_lpv_type(vtype) or (np.isfinite(bprp) and bprp > red and g("period_cat") > 50):
-        kills.append("long_period_giant")
+        if cand_cess and not (cand_fade or cand_rust) and pcls in LPV_CLASSES:
+            # A catalogued Mira / SRa is in the cessation population on
+            # purpose.  Its slow irregular mean and amplitude changes are what
+            # this kill exists for, and they poison the FADE and SCATTER
+            # questions --- but a regular LPV whose period STOPPED is exactly
+            # the cessation question.  The known astrophysical mimics (thermal
+            # pulses: R Hya, T UMi, W Dra; Mira -> SR transitions) are named
+            # here as the first thing to trace, not silently absorbed.
+            notes.append("lpv_cessation_trace_to_period_evolution")
+        else:
+            kills.append("long_period_giant")
     mag = g("mag_cat", g("median_mag"))
     if np.isfinite(mag) and mag < bright:
         kills.append("too_bright")
 
     if cand_cess:
-        if vtype and not is_periodic_type(vtype):
+        if is_geometric_type(vtype) and not pcls:
+            kills.append("geometric_period")
+        if vtype and not is_periodic_type(vtype) and not pcls:
             notes.append("not_periodic_class")
         if str(row.get("cess_status", "")) == "vanished_not_ceased" or \
                 "vanished_not_ceased" in str(row.get("cess_flags", "")):
@@ -134,5 +158,5 @@ def vet_row(row: dict, conf: dict | None = None) -> dict:
             "candidate_rust": cand_rust}
 
 
-__all__ = ["LPV_TYPE_RE", "MUNDANE_KEYS", "PERIODIC_TYPE_RE", "is_lpv_type",
-           "is_periodic_type", "vet_row"]
+__all__ = ["GEOMETRIC_TYPE_RE", "LPV_TYPE_RE", "MUNDANE_KEYS", "PERIODIC_TYPE_RE",
+           "is_geometric_type", "is_lpv_type", "is_periodic_type", "vet_row"]

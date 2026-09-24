@@ -1112,6 +1112,18 @@ def _cmd_ignition(args, cfg):
     return _ignition_main(list(args.rest))
 
 
+def _cmd_occult(args, cfg):
+    from .occult.run import main as _occult_main
+
+    return _occult_main(list(args.rest))
+
+
+def _cmd_antiphase(args, cfg):
+    from .antiphase.run import main as _antiphase_main
+
+    return _antiphase_main(list(args.rest))
+
+
 # --- FORGE ---
 def _cmd_forge(args, cfg):
     from .forge.run import main as _forge_main
@@ -1131,6 +1143,12 @@ def _cmd_ring(args, cfg):
 
     run(args.stage, args.leg, out=args.out, shard=args.shard, dec_band=args.dec_band,
         followup=not args.no_followup)
+# --- PARALLAX4 ---
+def _cmd_parallax4(args, cfg):
+    from .parallax4.run import run_from_args as _p4_run
+
+    return _p4_run(args, cfg)
+# --- /PARALLAX4 ---
 # --- CRADLE ---
 def _cmd_cradle(args, cfg):
     from .cradle.run import run_from_args as _cradle_run
@@ -1150,6 +1168,13 @@ def _cmd_slag(args, cfg):
     from .slag.run import main as _slag_main
 
     return _slag_main(list(args.rest))
+
+
+# --- CONFLUENCE ---
+def _cmd_confluence(args, cfg):
+    from .confluence.run import main as _confluence_main
+
+    return _confluence_main(list(args.rest))
 
 
 # --- RELAY ---
@@ -2396,6 +2421,16 @@ def main(argv=None):
                             "flags are passed through to seti.ignition.run")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_ignition)
+    p = sub.add_parser("occult",
+                       help="OCCULT (S40): an opaque microlens occulting its own images in "
+                            "OGLE/KMTNet/MOA photometry; flags pass through to seti.occult.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_occult)
+    p = sub.add_parser("antiphase",
+                       help="ANTIPHASE: a grey optical fade answered by a mid-IR rise; "
+                            "flags are passed through to seti.antiphase.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_antiphase)
     p = sub.add_parser("uline",
                        help="ULINE (S54): industrial fluorine molecules in public U-line lists; "
                             "flags are passed through to seti.uline.run")
@@ -2485,6 +2520,14 @@ def main(argv=None):
     p.set_defaults(func=_cmd_slag)
     # --- SLAG ---
 
+    # --- CONFLUENCE ---
+    p = sub.add_parser("confluence",
+                       help="CONFLUENCE: do the tails of channels measured with independent "
+                            "instruments share stars beyond a covariate-matched null? "
+                            "Flags pass through to seti.confluence.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_confluence)
+
     # --- RELAY ---
     p = sub.add_parser("relay",
                        help="RELAY (S60): intercepting node-to-node beams by geometry — "
@@ -2506,6 +2549,15 @@ def main(argv=None):
     p.set_defaults(func=_cmd_spark)
     # --- SPARK ---
 
+    # --- PARALLAX4 ---
+    from .parallax4.run import add_arguments as _p4_args
+    p = sub.add_parser("parallax4",
+                       help="PARALLAX4: Gaia DR4 intake -- grey per-transit dips/brightenings with "
+                            "no photocentre shift; DR3 photometric half now, DR4 on release; "
+                            "same flags as seti.parallax4.run")
+    _p4_args(p)
+    p.set_defaults(func=_cmd_parallax4)
+    # --- /PARALLAX4 ---
     # --- CRADLE ---
     from .cradle.run import add_arguments as _cradle_args
     p = sub.add_parser("cradle",

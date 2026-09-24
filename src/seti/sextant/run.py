@@ -46,10 +46,12 @@ known injected ``A2``.
 
 from __future__ import annotations
 
+import csv
 import gzip
 import io
 import json
 import math
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -71,6 +73,10 @@ from .screen import BinaryCatalogue
 DEFAULT_CONFIG: dict = {
     "release": "gaiafpr",
     "objects_per_chunk": 250,
+    # An archive outage must stop the shard rather than spend its whole clock
+    # recording "no observations" for objects Gaia never answered about.
+    "max_consecutive_failed_chunks": 4,
+    "failed_chunk_retry_sleep_s": 60.0,
     "max_objects": 0,                    # 0 = every object in the release
     "ephemeris_route": "auto",           # auto | integrator | horizons
     "horizons_min_interval_s": 1.0,
@@ -345,6 +351,12 @@ def integrator_bundles(objects: dict[int, dict], sbdb: dict[int, dict],
             vals = [a, e, row["i"], row["node"], row["argperi"], row["ma"], row["epoch_jd"]]
             if not all(math.isfinite(_f(v)) for v in vals) or e >= 0.999 or a <= 0:
                 skipped[n] = "elements_unusable"
+                continue
+            if not pert.covers(float(row["epoch_jd"]), float(row["epoch_jd"])):
+                # Never start from an epoch the perturbers do not reach: the
+                # state there would be built on an extrapolated Sun.
+                skipped[n] = (f"osculation_epoch_{float(row['epoch_jd']):.1f}"
+                              "_outside_perturber_grid")
                 continue
             st_h = E.elements_to_heliocentric_state(
                 a, e, row["i"], row["node"], row["argperi"], row["ma"])[0]
@@ -827,17 +839,27 @@ def chunked(seq: list, size: int) -> list[list]:
 # ---------------------------------------------------------------------------
 # Runner-side catalogue helpers
 # ---------------------------------------------------------------------------
-def load_perturbers(paths: Paths, client: E.HorizonsClient | None, log=print
-                    ) -> E.PerturberSet:
+def load_perturbers(paths: Paths, client: E.HorizonsClient | None, log=print,
+                    jd_hi: float | None = None) -> E.PerturberSet:
+    """The perturber grid, spanning the Gaia window AND out to ``jd_hi``.
+
+    ``jd_hi`` is the latest SBDB osculation epoch (:func:`E.perturber_window`):
+    the integrator starts there, so a grid that stops at the Gaia window's end
+    is extrapolated for the whole stretch in between.  A cached grid that does
+    not reach ``jd_hi`` is re-fetched, not reused.
+    """
+    lo = E.WINDOW_JD[0]
+    hi = max(E.WINDOW_JD[1], float(jd_hi) if jd_hi is not None else E.WINDOW_JD[1])
     p = paths.work / "perturbers.npz"
     if p.exists():
         ps = E.PerturberSet.load(p)
-        if ps.covers(E.WINDOW_JD[0], E.WINDOW_JD[1]) and ps.n_bodies == len(E.PERTURBERS):
+        if ps.covers(lo, hi) and ps.n_bodies == len(E.PERTURBERS):
             return ps
     if client is None:
         raise E.EphemerisError("no perturber cache and no Horizons client")
-    log("fetching perturber grids from Horizons")
-    ps = E.PerturberSet.from_horizons(client, on_body=lambda b, n: log(f"  {b}: {n} nodes"))
+    log(f"fetching perturber grids from Horizons over JD {lo:.1f}..{hi:.1f}")
+    ps = E.PerturberSet.from_horizons(client, jd_lo=lo, jd_hi=hi,
+                                      on_body=lambda b, n: log(f"  {b}: {n} nodes"))
     ps.save(p)
     return ps
 
@@ -923,6 +945,9 @@ def fetch_chunk(gaia, numbers: list[int], release: str, paths: Paths, tag: str,
         else:
             rows = []
             info["error"] = "; ".join(res.notes)[:300]
+            # The QUERY failed: nothing is known about these objects, which is
+            # not the same statement as "Gaia has no rows for them".
+            info["failed"] = True
         if rows:
             p.parent.mkdir(parents=True, exist_ok=True)
             rows_to_frame(rows).to_parquet(p, index=False)
@@ -960,18 +985,21 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
     gaia = gaia or GaiaSSO()
     client = client or E.HorizonsClient(min_interval=float(conf["horizons_min_interval_s"]))
     try:
-        pert = load_perturbers(paths, client, log=log)
+        # SBDB FIRST: the perturber grid has to reach its osculation epoch.
+        cat = load_sbdb(paths, log=log)
+        sbdb = cat["rows"]
+        rec["sbdb"] = cat["meta"]
+        rec["sbdb"]["n_rows"] = len(sbdb)
+        win = E.perturber_window(r.get("epoch_jd") for r in sbdb.values())
+        pert = load_perturbers(paths, client, log=log, jd_hi=win[1])
         rec["perturbers"] = {"n_bodies": pert.n_bodies, "labels": pert.labels,
                              "t_grid": [float(pert.t_grid[0]), float(pert.t_grid[-1])],
+                             "required_window": list(win),
                              "retrieved_utc": pert.retrieved_utc}
         checkpoint()
         objs = load_gaia_objects(paths, gaia, conf["release"], log=log)
         numbers = [o["number_mp"] for o in objs]
         denom = {o["number_mp"]: o.get("denomination") for o in objs}
-        cat = load_sbdb(paths, log=log)
-        sbdb = cat["rows"]
-        rec["sbdb"] = cat["meta"]
-        rec["sbdb"]["n_rows"] = len(sbdb)
         rec["n_gaia_objects"] = len(numbers)
         checkpoint()
         # Warm the two VizieR catalogues HERE, once, rather than letting four
@@ -1161,40 +1189,149 @@ CSV_COLUMNS = (
 
 
 def _csv_value(v) -> str:
+    """One cell's TEXT.  Quoting is the csv module's job, not this function's.
+
+    This used to quote a scalar string containing a comma and leave list cells
+    bare, on the assumption that a list of reason tokens never holds a comma.
+    It does: ``screen_record`` copies a failed object's ``reason`` --- usually
+    ``f"{type(exc).__name__}: {exc}"`` --- into ``reasons``, and exception text
+    is full of commas (array shapes, tuples).  Run 35746692260 wrote 4250 rows
+    that way; the first failure on line 3 had 84 fields against an 83-column
+    header, ``pd.read_csv`` refused the whole file, and ``assess`` reported
+    four hours of fitting as NO_DATA_REACHED.  Every cell now goes through
+    :func:`csv.writer`, which quotes commas, quotes and newlines wherever they
+    occur.
+    """
     if v is None:
         return ""
-    if isinstance(v, bool):
+    if isinstance(v, (bool, np.bool_)):
         return "1" if v else "0"
     if isinstance(v, (list, tuple)):
         return "|".join(str(x) for x in v)
     if isinstance(v, float):
-        return "" if not math.isfinite(v) else repr(v)
-    s = str(v)
-    return '"' + s.replace('"', '""') + '"' if ("," in s or '"' in s) else s
+        return "" if not math.isfinite(v) else repr(float(v))
+    return str(v)
 
 
 def write_shard_csv(path: Path, records: list[dict]) -> None:
     buf = io.StringIO()
-    buf.write(",".join(CSV_COLUMNS) + "\n")
+    w = csv.writer(buf, quoting=csv.QUOTE_MINIMAL, lineterminator="\n")
+    w.writerow(CSV_COLUMNS)
     for r in records:
-        buf.write(",".join(_csv_value(r.get(c)) for c in CSV_COLUMNS) + "\n")
+        w.writerow([_csv_value(r.get(c)) for c in CSV_COLUMNS])
     path.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(path, "wt") as fh:
+    # Write-then-rename: a job killed mid-write must leave the previous
+    # checkpoint readable, not a truncated gzip stream.
+    tmp = path.with_name(path.name + ".tmp")
+    with gzip.open(tmp, "wt", newline="") as fh:
         fh.write(buf.getvalue())
+    tmp.replace(path)
 
 
-def read_shard_csvs(paths: Paths):
+_NUMPY_REPR = re.compile(r"^np\.(?:float|int|uint)\d*\((.*)\)$")
+
+
+def repair_legacy_shard_text(text: str) -> tuple[str, dict]:
+    """Re-serialise a shard CSV written by the pre-fix writer, losslessly.
+
+    The old writer's only defect was an unquoted list cell, and the only list
+    cell that can carry free text is ``reasons`` (``vetoes`` tokens are built
+    from fixed prefixes plus a model name).  A row with too many fields
+    therefore has every column before ``reasons`` intact, and ``vetoes`` and
+    ``reason`` as its last two fields (``reason`` WAS quoted by the old writer);
+    the overflow belongs to ``reasons`` and is joined back with the commas it
+    lost.  A row broken across lines by an unquoted newline is short, and is
+    re-joined with the following line(s) until it has its fields.
+
+    The same writer passed a ``numpy.float64`` to ``repr``, which under numpy 2
+    is ``np.float64(1.5e-14)`` rather than ``1.5e-14``: such a cell is unwrapped
+    to the number it spells, since leaving it would turn the whole numeric
+    column into text.
+
+    A row that still cannot be put back to the header's width is DROPPED and
+    counted --- never guessed at --- and the count is reported.
+    """
+    rows = list(csv.reader(io.StringIO(text)))
+    stats = {"n_rows_in": max(len(rows) - 1, 0), "n_repaired_overflow": 0,
+             "n_rejoined_newline": 0, "n_numpy_repr_cells": 0, "n_dropped": 0}
+    if not rows:
+        return text, stats
+    header = rows[0]
+    ncol = len(header)
+    try:
+        i_reasons = header.index("reasons")
+    except ValueError:
+        i_reasons = None
+    out = io.StringIO()
+    w = csv.writer(out, quoting=csv.QUOTE_MINIMAL, lineterminator="\n")
+    w.writerow(header)
+    k = 1
+    while k < len(rows):
+        row = rows[k]
+        k += 1
+        if not row:
+            continue
+        while len(row) < ncol and k < len(rows) and i_reasons is not None:
+            nxt = rows[k]
+            k += 1
+            row = row[:-1] + [row[-1] + "\n" + (nxt[0] if nxt else "")] + nxt[1:]
+            stats["n_rejoined_newline"] += 1
+        if len(row) > ncol and i_reasons is not None and i_reasons == ncol - 3:
+            row = (row[:i_reasons] + [",".join(row[i_reasons:len(row) - 2])]
+                   + row[len(row) - 2:])
+            stats["n_repaired_overflow"] += 1
+        if len(row) != ncol:
+            stats["n_dropped"] += 1
+            continue
+        for j, cell in enumerate(row):
+            m = _NUMPY_REPR.match(cell)
+            if m:
+                row[j] = m.group(1)
+                stats["n_numpy_repr_cells"] += 1
+        w.writerow(row)
+    stats["n_rows_out"] = stats["n_rows_in"] - stats["n_dropped"]
+    return out.getvalue(), stats
+
+
+def read_shard_csv(f: Path):
+    """One shard file as a DataFrame, repairing a pre-fix file if it must.
+
+    Returns ``(frame, repair_stats_or_None)``.  A strict parse is tried first;
+    only a file the strict parser refuses goes through the repair, so a
+    well-formed file is read exactly as before.
+    """
+    import pandas as pd
+
+    with gzip.open(f, "rt", newline="") if str(f).endswith(".gz") else open(
+            f, newline="") as fh:
+        text = fh.read()
+    if "np.float" not in text and "np.int" not in text:
+        try:
+            return pd.read_csv(io.StringIO(text), low_memory=False), None
+        except (pd.errors.ParserError, ValueError):
+            pass
+    fixed, stats = repair_legacy_shard_text(text)
+    return pd.read_csv(io.StringIO(fixed), low_memory=False), stats
+
+
+def read_shard_csvs(paths: Paths, log=print, repairs: dict | None = None):
     import pandas as pd
 
     files = sorted((paths.results / "fits").glob("shard_*.csv.gz"))
     frames = []
     for f in files:
         try:
-            df = pd.read_csv(f, low_memory=False)
+            df, stats = read_shard_csv(f)
+            if stats is not None:
+                log(f"assess: {f.name} was malformed (pre-fix writer); repaired: {stats}")
+                if repairs is not None:
+                    repairs[f.name] = stats
             df["shard_file"] = f.name
             frames.append(df)
         except Exception as exc:                              # noqa: BLE001
-            print(f"assess: could not read {f}: {exc}")
+            log(f"assess: could not read {f}: {exc}")
+            if repairs is not None:
+                repairs[f.name] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
     if not frames:
         return pd.DataFrame(), files
     df = pd.concat(frames, ignore_index=True)
@@ -1264,7 +1401,11 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
     if p.exists():
         try:
             rec = json.loads(p.read_text())
-            return {int(k): v for k, v in (rec.get("rows") or {}).items()}
+            # An EMPTY parse is not a catalogue: runs 35746692260 and later
+            # cached 0 rows and re-used them forever.  Such a record is a miss.
+            if rec.get("verdict") != "EMPTY_PARSE" and not (
+                    rec.get("retrieved_utc") and not rec.get("rows")):
+                return {int(k): v for k, v in (rec.get("rows") or {}).items()}
         except Exception:                                      # noqa: BLE001
             pass
     try:
@@ -1272,10 +1413,16 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
 
         tabs = Vizier(row_limit=-1).get_catalogs(C.GREENBERG2020_VIZIER)
         rows: dict[int, dict] = {}
+        seen_tables = [{"n_rows": len(t), "columns": list(t.colnames)} for t in tabs]
         for t in tabs:
             names = {c.lower(): c for c in t.colnames}
-            num_c = next((names[k] for k in ("number", "num", "no", "mp", "aster")
+            num_c = next((names[k] for k in ("number", "num", "no", "mp", "aster",
+                                              "ast", "n", "mpc", "nmp")
                           if k in names), None)
+            if num_c is None:
+                # A designation column like "(101955) Bennu" still carries the number.
+                num_c = next((names[k] for k in ("name", "object", "desig", "asteroid",
+                                                  "designation") if k in names), None)
             # da/dt is tabulated as `dadt` or `da/dt`; its sigma as `e_dadt`.
             dadt_c = next((c for c in t.colnames
                            if c.lower().replace("/", "").replace("_", "") == "dadt"), None)
@@ -1288,7 +1435,10 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
                 try:
                     n = int(r[num_c])
                 except (TypeError, ValueError):
-                    continue
+                    m = re.match(r"\s*\(?(\d+)\)?", str(r[num_c]))
+                    if not m:
+                        continue
+                    n = int(m.group(1))
                 d = {"dadt_1e4_au_per_myr": _f(r[dadt_c]),
                      "dadt_sigma_1e4_au_per_myr": _f(r[err_c]) if err_c else float("nan")}
                 for extra, key in (("a", "a_au"), ("e", "e"), ("H", "h")):
@@ -1298,7 +1448,11 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
                     rows[n] = d
         rec = {"rows": {str(k): v for k, v in rows.items()}, "retrieved_utc": _utc(),
                "n_rows": len(rows), "vizier": C.GREENBERG2020_VIZIER,
-               "reference": "Greenberg, Margot, Verma, Taylor & Hodge 2020, AJ 159, 92"}
+               "reference": "Greenberg, Margot, Verma, Taylor & Hodge 2020, AJ 159, 92",
+               "verdict": "OK" if rows else "EMPTY_PARSE",
+               # What VizieR actually served, so an empty parse can be diagnosed
+               # from the committed record instead of guessed at.
+               "tables_seen": seen_tables}
         E.save_json(p, rec)
         log(f"Yarkovsky control catalogue: {len(rows)} da/dt values from VizieR "
             f"{C.GREENBERG2020_VIZIER}")
@@ -1311,7 +1465,8 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
 def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
                 log=print, gaia=None, client=None, route: str | None = None,
                 max_objects: int | None = None, commit_hook=None,
-                budget_minutes: float | None = None, now=time.time) -> dict:
+                budget_minutes: float | None = None, now=time.time,
+                sleep_fn=time.sleep) -> dict:
     from .acquire import GaiaSSO
 
     tag = f"shard_{int(shard)}_of_{int(n_shards)}"
@@ -1365,12 +1520,15 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
         rec["route"] = want
         conv = load_conventions(paths, conf)
         rec["conventions"] = conv.as_dict()
-        pert = load_perturbers(paths, client, log=log)
+        cat = load_sbdb(paths, numbers_needed=None, log=log)
+        sbdb = cat["rows"]
+        win = E.perturber_window(r.get("epoch_jd") for r in sbdb.values())
+        pert = load_perturbers(paths, client, log=log, jd_hi=win[1])
+        if pert is not None:
+            rec["perturber_grid"] = [float(pert.t_grid[0]), float(pert.t_grid[-1])]
         objs = load_gaia_objects(paths, gaia, conf["release"], log=log)
         numbers = [o["number_mp"] for o in objs]
         denom = {o["number_mp"]: o.get("denomination") for o in objs}
-        cat = load_sbdb(paths, numbers_needed=None, log=log)
-        sbdb = cat["rows"]
         cap = int(max_objects if max_objects is not None else conf["max_objects"])
         chosen = choose_objects(numbers, sbdb, cap, int(conf["seed"]))
         mine = order_objects(shard_slice(chosen, shard, n_shards), sbdb,
@@ -1384,6 +1542,7 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
         rec["binary_catalogue"] = (binaries.retrieved_utc if binaries else None)
         checkpoint()
         chunks = chunked(mine, int(conf["objects_per_chunk"]))
+        n_failed_run = 0
         for ci, chunk in enumerate(chunks):
             if budget_s is not None and now() - t_start > budget_s:
                 rec["budget_stop"] = {"after_chunks": ci, "of_chunks": len(chunks),
@@ -1397,13 +1556,38 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
             t0 = time.time()
             groups, info = fetch_chunk(gaia, chunk, conf["release"], paths,
                                        f"{tag}_chunk{ci:04d}", log=log)
+            if info.get("failed"):
+                # One retry after a pause: TAP outages are often minutes long.
+                sleep_fn(float(conf["failed_chunk_retry_sleep_s"]))
+                groups, info = fetch_chunk(gaia, chunk, conf["release"], paths,
+                                           f"{tag}_chunk{ci:04d}", log=log)
+                info["retried"] = True
             info["chunk"] = ci
+            failed = bool(info.get("failed"))
+            n_failed_run = n_failed_run + 1 if failed else 0
             missing = [n for n in chunk if n not in groups]
             for n in missing:
                 records.append({"number_mp": n, "denomination": denom.get(n),
-                                "route": want, "verdict": "NO_OBSERVATIONS_RETURNED",
+                                "route": want,
+                                "verdict": ("GAIA_QUERY_FAILED" if failed
+                                            else "NO_OBSERVATIONS_RETURNED"),
                                 "tier": "untestable",
-                                "reasons": ["no_rows_from_gaia"], "vetoes": []})
+                                "reason": (info.get("error") if failed else None),
+                                "reasons": ([f"gaia_query_failed: {info.get('error')}"]
+                                            if failed else ["no_rows_from_gaia"]),
+                                "vetoes": []})
+            if failed and n_failed_run >= int(conf["max_consecutive_failed_chunks"]):
+                rec["chunks"].append(info)
+                rec["archive_stop"] = {
+                    "after_chunks": ci + 1, "of_chunks": len(chunks),
+                    "consecutive_failed_chunks": n_failed_run,
+                    "last_error": info.get("error"),
+                    "note": ("the Gaia TAP service failed on every recent chunk; the "
+                             "shard stopped rather than record an outage as absence")}
+                log(f"{tag}: Gaia TAP failed on {n_failed_run} consecutive chunks; "
+                    f"stopping ({info.get('error')})")
+                checkpoint()
+                break
             bundles: dict[int, EphemBundle] = {}
             skipped: dict[int, str] = {}
             if want == "integrator":
@@ -1436,11 +1620,27 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
                           "verdict": "REFUSED_PROVENANCE", "reason": str(exc)[:160]}
                     series = None
                 annotate_orbit(r1, row, conf)
-                if r1.get("is_control") and want == "integrator":
+                # A control ALWAYS gets the pinned gravity-only route, whatever
+                # the bulk route.  On the Horizons route the bulk fit of every
+                # control is refused as circular (Horizons integrates JPL's own
+                # A2), so gating this on the integrator route --- as it was ---
+                # meant a Horizons-route run could score no control at all: run
+                # 35746692260 put all 78 controls in RESIDUALS_FAILED.  Where the
+                # bulk fit was refused and the pinned fit succeeds, the pinned
+                # fit IS the control's record, and the refusal is kept beside it.
+                if (sbdb.get(n) or {}).get("nongrav_fitted"):
                     try:
                         pb = pinned_bundle(n, cols, client, pert, conv, sbdb)
-                        r2, _ = fit_object(n, cols, pb, row, pert, conv, conf,
-                                           denomination=denom.get(n))
+                        r2, s2 = fit_object(n, cols, pb, row, pert, conv, conf,
+                                            denomination=denom.get(n))
+                        if r1.get("verdict") != "FITTED" and r2.get("verdict") == "FITTED":
+                            bulk = {"bulk_route": r1.get("route"),
+                                    "bulk_verdict": r1.get("verdict"),
+                                    "bulk_reason": r1.get("reason")}
+                            r1 = dict(r2)
+                            r1.update(bulk)
+                            annotate_orbit(r1, row, conf)
+                            series = s2
                         r1["pinned_a2"] = _f(r2.get("a2"))
                         r1["pinned_a2_err"] = _f(r2.get("a2_err"))
                         r1["pinned_a2_snr"] = _f(r2.get("a2_snr"))
@@ -1470,6 +1670,8 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
         rec["timing_offset"] = R.fit_common_time_offset(series_for_timing)
         if not records:
             rec["verdict"] = "NO_OBJECTS"
+        elif rec.get("archive_stop"):
+            rec["verdict"] = "ARCHIVE_UNREACHABLE_PARTIAL"
         elif rec.get("budget_stop"):
             rec["verdict"] = "OK_PARTIAL_BUDGET"
         else:
@@ -1727,7 +1929,14 @@ def assess_frame(df, conf: dict, details: dict | None = None,
                                       f"objects and >= {conf['min_anomalies_for_population']} "
                                       f"objects above the hard ceiling with no veto")}
     # The verdict.
-    if len(fitted) == 0:
+    n_gaia_failed = int((df["verdict"] == "GAIA_QUERY_FAILED").sum())
+    out["n_gaia_query_failed"] = n_gaia_failed
+    if len(fitted) == 0 and n_gaia_failed > 0:
+        # Every record the archive answered produced no fit, and some it never
+        # answered at all: that is an outage, and it keeps the NO_DATA_REACHED
+        # stem so it cannot be committed over a measured summary.
+        out["verdict"] = "NO_DATA_REACHED__GAIA_TAP_FAILED"
+    elif len(fitted) == 0:
         out["verdict"] = "NO_OBJECT_FITTED"
     elif out["population"].get("verdict") == "REPLICATION_STRUCTURE_DETECTED":
         out["verdict"] = "REPLICATION_STRUCTURE_DETECTED__VET_BEFORE_BELIEVING"
@@ -1751,7 +1960,8 @@ def assess_frame(df, conf: dict, details: dict | None = None,
 
 
 def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
-    df, files = read_shard_csvs(paths)
+    repairs: dict = {}
+    df, files = read_shard_csvs(paths, log=log, repairs=repairs)
     details: dict = {}
     shard_meta = []
     for f in sorted((paths.results / "fits").glob("shard_*.json")):
@@ -1770,8 +1980,19 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
         except Exception as exc:                              # noqa: BLE001
             shard_meta.append({"file": f.name, "error": str(exc)[:120]})
     out = assess_frame(df, conf, details, yarkovsky=load_yarkovsky_catalogue(paths, log=log))
+    n_rec_json = sum(int(m.get("n_records") or 0) for m in shard_meta)
+    if out.get("n_objects", 0) == 0 and n_rec_json > 0:
+        # The shards SAY they fitted objects and the table came back empty:
+        # that is this pipeline failing, not the sky returning nothing, and the
+        # verdict must not read as an empty measurement.  (It keeps the
+        # NO_DATA_REACHED stem so commit_results.sh still refuses to lay it
+        # over a summary that carries a real measurement.)
+        out["verdict"] = "NO_DATA_REACHED__SHARD_OUTPUT_UNREADABLE"
+        out["note"] = (f"shard JSON reports {n_rec_json} records but no shard CSV row "
+                       "could be read; see shard_csv_repairs")
     out["shards"] = shard_meta
     out["shard_files"] = [f.name for f in files]
+    out["shard_csv_repairs"] = repairs
     out["assessed_utc"] = _utc()
     timing = [m["timing_offset"] for m in shard_meta if m.get("timing_offset")]
     dts = [t.get("dt_seconds") for t in timing if _fin(t.get("dt_seconds"))]
@@ -1792,6 +2013,13 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
         "timing_offset_seconds_by_shard": dts,
         "coverage": {"n_shard_files": len(files),
                      "n_objects": out.get("n_objects", 0),
+                     # A shard file the strict parser refused and the legacy
+                     # repair had to rebuild (or could not read at all).  A
+                     # file with records that yields n_objects == 0 is a
+                     # pipeline defect, and this field is where it shows.
+                     "shard_csv_repairs": repairs,
+                     "n_records_in_shard_json": sum(int(m.get("n_records") or 0)
+                                                    for m in shard_meta),
                      # How much of the assigned sample was actually reached.  A
                      # shard that stopped on its clock leaves objects UNMEASURED,
                      # and an unmeasured object is not a null --- the funnel

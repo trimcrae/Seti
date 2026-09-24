@@ -25,6 +25,7 @@ from ..config import load_config
 from . import acquire as acq
 from . import assess as ass
 from . import screen as scr
+from .screen import _records as rscr_records
 
 LEGS = ("wd", "pulsar", "bd", "ffp")
 MAX_CSV_ROWS = 20_000
@@ -46,8 +47,25 @@ def _log(msg: str) -> None:
     print(f"[ring {time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
+def provenance() -> dict:
+    """Which run wrote a file, and when.
+
+    Every committed JSON carries this, because the files of one leg can outlive
+    the run that wrote them: a later dispatch over other legs re-composes
+    ``summary.json`` from whatever is in the checkout, and without a stamp a
+    summary can quote numbers from a run it does not describe.
+    """
+    import os
+
+    return {"generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "run_id": os.environ.get("GITHUB_RUN_ID") or None,
+            "git_sha": os.environ.get("GITHUB_SHA") or None}
+
+
 def _write(path: Path, obj) -> None:
-    acq.write_json(path, obj)
+    if isinstance(obj, dict) and "provenance" not in obj:
+        obj = {**obj, "provenance": provenance()}
+    acq.write_json(path, ass.json_safe(obj))
 
 
 def _read_json(path: Path) -> dict | None:
@@ -124,6 +142,9 @@ def stage_acquire(cfg: dict, out: Path, leg: str, *, shard: int = 0, n_shards: i
             df = acq.harmonise_wd(df)
             tag = "" if dec_band is None else f"_band{int(dec_band)}"
             df.to_parquet(d / f"sample{tag}.parquet", index=False)
+            # The chance-coincidence control (offset positions, same X-Match).
+            meta["controls"] = (fetchers["wd_controls"](df, cfg, d) if "wd_controls" in fetchers
+                                else acq.fetch_wd_controls(df, cfg, d))
         meta.update({"n": int(len(df)), "status": "OK" if len(df) else "NO_DATA_REACHED",
                      "dec_band": dec_band, "elapsed_s": round(time.monotonic() - t0, 1)})
         _write(d / ("acquire.json" if dec_band is None else f"acquire_band{int(dec_band)}.json"),
@@ -145,23 +166,33 @@ def stage_acquire(cfg: dict, out: Path, leg: str, *, shard: int = 0, n_shards: i
         _write(d / "acquire.json", meta)
     elif leg == "bd":
         tp = d / "targets.csv"
-        if tp.exists() and shard > 0:
-            targets = pd.read_csv(tp)
-            meta = _read_json(d / "acquire_targets.json") or {}
-        else:
-            targets, meta = (fetchers["bd_targets"](cfg) if "bd_targets" in fetchers
-                             else acq.fetch_bd_targets(cfg))
-            if len(targets):
-                targets.to_csv(tp, index=False)
-            meta["n_targets"] = int(len(targets))
-            _write(d / "acquire_targets.json", meta)
+        # The target list comes from ``fetchers["bd_targets"]``: on the sharded
+        # path that is scripts/ring_bd_handoff.py, which hands every shard the
+        # ONE list this run's bd-targets job fetched.  A committed targets.csv
+        # in the checkout (an earlier run's list) is never read.
+        targets, meta = (fetchers["bd_targets"](cfg) if "bd_targets" in fetchers
+                         else acq.fetch_bd_targets(cfg))
+        if len(targets):
+            targets.to_csv(tp, index=False)
+        meta["n_targets"] = int(len(targets))
+        _write(d / "acquire_targets.json", meta)
         roll = {}
+        # A marker written BEFORE the NEOWISE loop: if the job's wall clock
+        # kills the process (run 35752692549: `timeout 5400` fired mid-loop and
+        # no acquire record was ever written, so the summary said NOT_RUN for
+        # a leg whose screen then reported OK), assess finds IN_PROGRESS and
+        # names the leg as incomplete instead of silently trusting it.
+        _write(d / f"acquire_shard{shard}.json",
+               {**meta, "status": "IN_PROGRESS", "shard": shard, "n_shards": n_shards})
         if len(targets):
             roll = (fetchers["bd_neowise"](targets, d, cfg, shard, n_shards)
                     if "bd_neowise" in fetchers
                     else acq.fetch_bd_neowise(targets, d, cfg, shard=shard, n_shards=n_shards))
+        status = "OK" if len(targets) else "NO_DATA_REACHED"
+        if roll.get("stopped_on_budget"):
+            status = "PARTIAL_TIME_BUDGET"
         meta = {**meta, "neowise": roll, "shard": shard, "n_shards": n_shards,
-                "status": "OK" if len(targets) else "NO_DATA_REACHED",
+                "status": status,
                 "elapsed_s": round(time.monotonic() - t0, 1)}
         _write(d / f"acquire_shard{shard}.json", meta)
     elif leg == "ffp":
@@ -208,7 +239,9 @@ def stage_screen(cfg: dict, out: Path, leg: str, *, rng=None) -> dict:
     t0 = time.monotonic()
     if leg == "wd":
         df = _wd_sample(d)
-        screened, s = scr.screen_wd(df, cfg, rng=rng)
+        cp = d / "controls_allwise.parquet"
+        controls = pd.read_parquet(cp) if cp.exists() else None
+        screened, s = scr.screen_wd(df, cfg, rng=rng, controls=controls)
         if len(screened):
             screened.to_parquet(d / "screened.parquet", index=False)
             cols = [c for c in ass._WD_HEADLINE if c in screened.columns]
@@ -269,10 +302,36 @@ def stage_assess(cfg: dict, out: Path, *, followup: bool = True,
             shards = sorted(d.glob("acquire_shard*.json"))
             a = {"shards": [_read_json(p) for p in shards]} if shards else None
             if a and a["shards"]:
-                a["route"] = a["shards"][0].get("route")
-                a["status"] = "OK" if any(x.get("status") == "OK" for x in a["shards"]) \
-                    else "NO_DATA_REACHED"
+                st = [(x or {}).get("status") for x in a["shards"]]
+                a["route"] = (a["shards"][0] or {}).get("route")
+                a["shard_status"] = st
+                if all(x == "OK" for x in st):
+                    a["status"] = "OK"
+                elif any(x == "IN_PROGRESS" for x in st):
+                    a["status"] = "KILLED_IN_PROGRESS"
+                elif any(x in ("OK", "PARTIAL_TIME_BUDGET") for x in st):
+                    a["status"] = "PARTIAL"
+                else:
+                    a["status"] = "NO_DATA_REACHED"
         acq_meta[leg] = a or {"status": "NOT_RUN"}
+
+    # A leg whose screen ran but whose acquisition did not finish is not a
+    # complete leg, and its coverage is part of its result: the NEOWISE leg of
+    # run 35752692549 screened 11 of 232 targets and was reported as plain OK.
+    bd = legs.get("bd") or {}
+    if bd.get("status") == "OK":
+        n_t = int(bd.get("n_targets") or 0)
+        n_e = int(bd.get("n_with_epochs") or 0)
+        frac = (n_e / n_t) if n_t else 0.0
+        bd["epoch_coverage"] = round(frac, 3)
+        a_st = acq_meta["bd"].get("status")
+        why = []
+        if a_st != "OK":
+            why.append(f"acquisition {a_st}")
+        if frac < float(cfg["bd"].get("min_epoch_coverage", 0.5)):
+            why.append(f"{n_e}/{n_t} targets with epochs")
+        if why:
+            bd["coverage_degraded"] = "; ".join(why)
 
     # White-dwarf shortlist follow-up: ring-band candidates plus every survivor
     # of the catalogue gates, capped.
@@ -301,6 +360,8 @@ def stage_assess(cfg: dict, out: Path, *, followup: bool = True,
             ring_after = fu[fu["ring_candidate"].astype(bool)
                             & (fu["followup_verdict"] == "surviving")]
             legs["wd"]["n_ring_candidates_after_followup"] = int(len(ring_after))
+            legs["wd"]["followup_neighbour_timeouts"] = int(fu.attrs.get("n_neighbour_timeouts", 0))
+            legs["wd"]["n_followup"] = int(len(fu))
             legs["wd"]["n_surviving_after_followup"] = int(
                 (fu["followup_verdict"] == "surviving").sum())
             legs["wd"]["followup_reasons"] = {k: int(v) for k, v in
@@ -320,15 +381,26 @@ def stage_assess(cfg: dict, out: Path, *, followup: bool = True,
     if pp.exists():
         psr_screened = pd.read_csv(pp)
         surv = psr_screened[psr_screened["verdict"] == "surviving"]
-        legs["pulsar"]["survivors"] = surv[[c for c in (
-            "jname", "bname", "allwise_dist_arcsec", "allwise_p_chance", "W1mag", "W2mag",
-            "w1_w2", "t_colour_k", "shape_class", "edot_w", "dist_kpc", "f_min_500K_W2")
-            if c in surv.columns]].head(50).to_dict("records")
+        legs["pulsar"]["survivors"] = rscr_records(surv[[c for c in (
+            "jname", "bname", "localised", "pos_err_arcsec", "allwise_dist_arcsec",
+            "catwise_dist_arcsec", "colour_source", "W1mag", "W2mag", "W1mag_cat",
+            "W2mag_cat", "w1_w2", "w1_w2_err", "t_colour_k", "shape_class", "p_chance",
+            "edot_w", "dist_kpc", "f_min_500K_W2") if c in surv.columns]].head(50))
     verdict, degraded = ass.compose_verdict(legs)
+    prov = provenance()
+    leg_prov = {k: (v.get("provenance") or {"generated_at": None, "run_id": None,
+                                            "note": "file predates provenance stamps"})
+                for k, v in legs.items() if v.get("status") != "NOT_RUN"}
     summary = {
         "verdict": verdict,
         "degraded_legs": degraded,
-        "assessed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "generated_at": prov["generated_at"],
+        "assessed_at": prov["generated_at"],
+        "run_id": prov["run_id"],
+        "git_sha": prov["git_sha"],
+        # Which run produced each leg's numbers: a summary composed after a
+        # partial dispatch mixes legs from different runs, and says so here.
+        "leg_provenance": leg_prov,
         "legs": legs,
         "acquisition": {k: {kk: vv for kk, vv in (v or {}).items()
                             if kk not in ("bands", "shards", "scoreboard")}
@@ -337,6 +409,7 @@ def stage_assess(cfg: dict, out: Path, *, followup: bool = True,
         "ring_band_k": [cfg["ring"]["t_min_k"], cfg["ring"]["t_max_k"]],
         "elapsed_s": round(time.monotonic() - t0, 1),
     }
+    summary["consistency"] = ass.consistency_checks(summary)
     ass.write_summary(out, summary)
     _log(f"assess: {verdict}")
     return summary

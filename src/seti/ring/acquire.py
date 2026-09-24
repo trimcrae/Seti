@@ -171,27 +171,101 @@ def fetch_wd_gaia(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_col
 # White dwarfs: VizieR parent + archive upload join (route B) / X-Match (route C)
 # --------------------------------------------------------------------------
 
-def fetch_wd_vizier_parent(cfg: dict, *, query_fn=None, max_rows: int | None = None
-                           ) -> pd.DataFrame:
-    """Gentile Fusillo+2021 parent from VizieR, Pwd-filtered, through the shared ladder."""
-    from ..metronome.acquire import tap_query
+# Logical column -> candidate VizieR spellings, in priority order.  Run
+# 35752692549 lost the whole white-dwarf leg to two of these: the hard-coded
+# SELECT named "chi2H" / "chi2He", which J/MNRAS/508/3877/maincat does not
+# have, and TAPVizieR refuses a query with ANY unknown column.  The columns are
+# therefore resolved against the table's own TAP_SCHEMA listing at run time;
+# an optional column that is absent is simply not selected (the H/He choice
+# then falls back to "H unless only He is fitted"), and only a missing REQUIRED
+# column fails the route -- with the listing it saw in the error.
+WD_VIZIER_COLUMNS = {
+    "source_id": ["GaiaEDR3", "Source", "source_id", "GaiaDR3"],
+    "ra": ["RA_ICRS", "RAJ2000", "RAdeg"],
+    "dec": ["DE_ICRS", "DEJ2000", "DEdeg"],
+    "parallax": ["Plx", "plx"],
+    "parallax_error": ["e_Plx", "e_plx"],
+    "pmra": ["pmRA"],
+    "pmdec": ["pmDE"],
+    "pwd": ["Pwd", "PWD", "pwd"],
+    "teff_h": ["TeffH", "Teff-H", "TeffH2"],
+    "logg_h": ["loggH", "logg-H"],
+    "mass_h": ["MassH", "Mass-H"],
+    "chisq_h": ["chi2H", "chisqH", "Chi2H", "chiH", "chi2-H"],
+    "teff_he": ["TeffHe", "Teff-He"],
+    "logg_he": ["loggHe", "logg-He"],
+    "mass_he": ["MassHe", "Mass-He"],
+    "chisq_he": ["chi2He", "chisqHe", "Chi2He", "chiHe", "chi2-He"],
+    "phot_g_mean_mag": ["Gmag", "GmagCorr"],
+    "phot_bp_mean_mag": ["BPmag"],
+    "phot_rp_mean_mag": ["RPmag"],
+    "ruwe": ["RUWE", "ruwe"],
+}
+WD_VIZIER_REQUIRED = ("source_id", "ra", "dec", "parallax", "parallax_error", "pwd", "teff_h")
+
+
+def resolve_wd_vizier_columns(columns) -> dict:
+    """Map each logical WD column to the spelling this VizieR table actually has."""
+    have = [str(c).strip().strip('"') for c in columns]
+    exact = set(have)
+    low = {c.lower(): c for c in have}
+    out = {}
+    for logical, cands in WD_VIZIER_COLUMNS.items():
+        for c in cands:
+            if c in exact:
+                out[logical] = c
+                break
+            if c.lower() in low:
+                out[logical] = low[c.lower()]
+                break
+    return out
+
+
+def fetch_wd_vizier_parent(cfg: dict, *, query_fn=None, columns_fn=None,
+                           max_rows: int | None = None) -> pd.DataFrame:
+    """Gentile Fusillo+2021 parent from VizieR, Pwd-filtered, in declination bands.
+
+    Columns come from the table's own listing (``columns_fn``), never from an
+    assumed spelling; the pull is split into declination bands so no single
+    TAP response has to carry the ~360 k-row parent, and each band's row count
+    is kept so a server-side row cap would be visible rather than silent.
+    """
+    from ..metronome.acquire import table_columns, tap_query
 
     query_fn = query_fn or tap_query
     w = cfg["wd"]
-    top = f"TOP {int(max_rows)} " if max_rows else ""
-    adql = (f'SELECT {top}"GaiaEDR3", "RA_ICRS", "DE_ICRS", "Plx", "e_Plx", "pmRA", "pmDE", '
-            f'"Pwd", "TeffH", "loggH", "MassH", "chi2H", "TeffHe", "loggHe", "MassHe", '
-            f'"chi2He", "Gmag", "BPmag", "RPmag", "RUWE" '
-            f'FROM "{w["vizier_parent"]}" WHERE "Pwd" >= {float(w["pwd_min"])}')
-    raw = query_fn(adql)
-    raw = raw.rename(columns={c: str(c) for c in raw.columns})
-    ren = {"GaiaEDR3": "source_id", "RA_ICRS": "ra", "DE_ICRS": "dec", "Plx": "parallax",
-           "e_Plx": "parallax_error", "pmRA": "pmra", "pmDE": "pmdec", "Pwd": "pwd",
-           "TeffH": "teff_h", "loggH": "logg_h", "MassH": "mass_h", "chi2H": "chisq_h",
-           "TeffHe": "teff_he", "loggHe": "logg_he", "MassHe": "mass_he",
-           "chi2He": "chisq_he", "Gmag": "phot_g_mean_mag", "BPmag": "phot_bp_mean_mag",
-           "RPmag": "phot_rp_mean_mag", "RUWE": "ruwe"}
-    out = raw.rename(columns={k: v for k, v in ren.items() if k in raw.columns})
+    table = w["vizier_parent"]
+    if columns_fn is None:
+        def columns_fn(t):
+            return table_columns(t, query_fn=query_fn)
+    cols = resolve_wd_vizier_columns(columns_fn(table))
+    missing = [k for k in WD_VIZIER_REQUIRED if k not in cols]
+    if missing:
+        raise RuntimeError(f"{table}: required columns {missing} not in the table listing "
+                           f"(resolved: {sorted(cols)})")
+    sel = ", ".join(f'"{c}"' for c in cols.values())
+    width = int(w.get("vizier_dec_band_deg", 30))
+    edges = list(range(-90, 91, width))
+    if edges[-1] != 90:
+        edges.append(90)
+    frames, bands = [], []
+    dec_c = cols["dec"]
+    for lo, hi in zip(edges[:-1], edges[1:], strict=False):
+        top = f"TOP {int(max_rows)} " if max_rows else ""
+        upper = f'"{dec_c}" <= {hi}' if hi == 90 else f'"{dec_c}" < {hi}'
+        adql = (f'SELECT {top}{sel} FROM "{table}" WHERE "{cols["pwd"]}" >= '
+                f'{float(w["pwd_min"])} AND "{dec_c}" >= {lo} AND {upper}')
+        raw = query_fn(adql)
+        raw = raw.rename(columns={c: str(c).strip('"') for c in raw.columns})
+        bands.append({"dec": [lo, hi], "n": int(len(raw)),
+                      "route": str(getattr(raw, "attrs", {}).get("route", "vizier"))})
+        print(f"[ring/wd] VizieR parent dec [{lo:+d},{hi:+d}): {len(raw)} rows", flush=True)
+        frames.append(raw)
+    raw = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    inv = {v: k for k, v in cols.items()}
+    out = raw.rename(columns={c: inv[c] for c in raw.columns if c in inv})
+    if len(out):
+        out = out.drop_duplicates("source_id").reset_index(drop=True)
     if {"parallax", "parallax_error"} <= set(out.columns):
         with np.errstate(divide="ignore", invalid="ignore"):
             out["parallax_over_error"] = pd.to_numeric(out["parallax"], errors="coerce") / \
@@ -199,7 +273,9 @@ def fetch_wd_vizier_parent(cfg: dict, *, query_fn=None, max_rows: int | None = N
     if {"phot_bp_mean_mag", "phot_rp_mean_mag"} <= set(out.columns):
         out["bp_rp"] = pd.to_numeric(out["phot_bp_mean_mag"], errors="coerce") - \
             pd.to_numeric(out["phot_rp_mean_mag"], errors="coerce")
-    out.attrs["route"] = str(getattr(raw, "attrs", {}).get("route", "vizier"))
+    out.attrs["route"] = bands[0]["route"] if bands else "vizier"
+    out.attrs["bands"] = bands
+    out.attrs["columns"] = cols
     return out
 
 
@@ -213,22 +289,48 @@ def gaia_upload_join_allwise(ids: pd.DataFrame, *, query=gaia_query, probe=probe
         raise RuntimeError("AllWISE mirror unusable")
     wsel = ", ".join(f"w.{a} AS {logical.lower()}"
                      for logical, a in wise_cols.items() if logical != "designation")
-    frames = []
-    for start in range(0, len(ids), chunk):
-        sub = ids.iloc[start:start + chunk][["source_id"]].astype({"source_id": "int64"})
-        tbl = Table.from_pandas(sub)
-        q = f"""
+    # 2MASS through the archive's own best-neighbour table, as in route A: the
+    # J/H/Ks anchor carries half the photosphere systematic of the Gaia one.
+    try:
+        tmass_cols = probe("gaiadr1.tmass_original_valid", _TMASS_WANT, tag="ring/wd")
+        tmass_id = probe("gaiadr3.tmass_psc_xsc_best_neighbour", {"id": _TMASS_XMATCH_ID},
+                         tag="ring/wd").get("id")
+    except Exception:                                   # noqa: BLE001
+        tmass_cols, tmass_id = {}, None
+    tsel, tjoin = "", ""
+    if tmass_cols and tmass_id:
+        tsel = ", " + ", ".join(f"t.{a} AS {logical.lower()}"
+                                for logical, a in tmass_cols.items()
+                                if logical != "tmass_designation")
+        tjoin = f"""
+  LEFT OUTER JOIN gaiadr3.tmass_psc_xsc_best_neighbour AS xt ON xt.source_id = g.source_id
+  LEFT OUTER JOIN gaiadr1.tmass_original_valid AS t ON t.designation = xt.{tmass_id}"""
+
+    def _q(ts, tj):
+        return f"""
 SELECT u.source_id, g.l, g.b, g.ra, g.dec, g.pmra, g.pmdec, g.pmra_error, g.pmdec_error,
        g.phot_g_mean_mag, g.bp_rp, g.ruwe, g.astrometric_excess_noise,
        xw.angular_distance AS wise_angdist, xw.number_of_neighbours, xw.number_of_mates,
-       {wsel}
+       {wsel}{ts}
 FROM tap_upload.ids AS u
   JOIN gaiadr3.gaia_source AS g ON g.source_id = u.source_id
   JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id
   JOIN gaiadr1.allwise_original_valid AS w
-       ON w.{wise_cols['designation']} = xw.original_ext_source_id
+       ON w.{wise_cols['designation']} = xw.original_ext_source_id{tj}
 """
-        df = query(q, tag="ring/wd-upload", upload=tbl, upload_name="ids")
+    frames = []
+    for start in range(0, len(ids), chunk):
+        sub = ids.iloc[start:start + chunk][["source_id"]].astype({"source_id": "int64"})
+        tbl = Table.from_pandas(sub)
+        try:
+            df = query(_q(tsel, tjoin), tag="ring/wd-upload", upload=tbl, upload_name="ids")
+        except Exception as exc:                        # noqa: BLE001
+            if not tsel:
+                raise
+            print(f"[ring/wd] upload join with 2MASS failed ({exc!r}); retrying without",
+                  flush=True)
+            tsel, tjoin = "", ""
+            df = query(_q("", ""), tag="ring/wd-upload", upload=tbl, upload_name="ids")
         frames.append(df)
         print(f"[ring/wd] upload join {start + len(sub)}/{len(ids)}: {len(df)} matched",
               flush=True)
@@ -294,7 +396,7 @@ def normalise_xmatch(raw: pd.DataFrame, rename: dict) -> pd.DataFrame:
 
 
 def fetch_wd_leg(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_columns,
-                 vizier_fn=None, xmatch_fn=None, dec_band: int | None = None
+                 vizier_fn=None, columns_fn=None, xmatch_fn=None, dec_band: int | None = None
                  ) -> tuple[pd.DataFrame, dict]:
     """The white-dwarf sample with AllWISE photometry, by the first route that works."""
     out_dir = Path(out_dir)
@@ -316,10 +418,12 @@ def fetch_wd_leg(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_colu
         return pd.DataFrame(), meta
 
     try:
-        parent = fetch_wd_vizier_parent(cfg, query_fn=vizier_fn)
+        parent = fetch_wd_vizier_parent(cfg, query_fn=vizier_fn, columns_fn=columns_fn)
         meta["routes_tried"].append({"route": "vizier_parent", "status": "OK",
                                      "n": int(len(parent)),
-                                     "served_by": parent.attrs.get("route")})
+                                     "served_by": parent.attrs.get("route"),
+                                     "columns": parent.attrs.get("columns"),
+                                     "bands": parent.attrs.get("bands")})
     except Exception as exc:                            # noqa: BLE001
         meta["routes_tried"].append({"route": "vizier_parent", "status": "FAILED",
                                      "error": repr(exc)[:300]})
@@ -333,8 +437,15 @@ def fetch_wd_leg(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_colu
         joined = gaia_upload_join_allwise(parent[["source_id"]].dropna(), query=query,
                                           probe=probe)
         if len(joined):
-            df = parent.merge(joined.drop(columns=[c for c in ("ra", "dec", "pmra", "pmdec")
-                                                   if c in joined.columns]),
+            # Keep the parent's copy of every shared column (Gaia photometry,
+            # astrometry): a plain merge would suffix both to _x/_y and the
+            # harmoniser would then find no G magnitude at all.
+            joined = joined.assign(source_id=pd.to_numeric(joined["source_id"],
+                                                           errors="coerce").astype("Int64"))
+            parent = parent.assign(source_id=pd.to_numeric(parent["source_id"],
+                                                           errors="coerce").astype("Int64"))
+            df = parent.merge(joined.drop(columns=[c for c in joined.columns
+                                                   if c in parent.columns and c != "source_id"]),
                               on="source_id", how="inner")
             meta["routes_tried"].append({"route": "gaia_upload_join", "status": "OK",
                                          "n": int(len(df))})
@@ -354,11 +465,27 @@ def fetch_wd_leg(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_colu
         wise = normalise_xmatch(raw, ALLWISE_XMATCH_RENAME)
         if len(wise):
             wise["source_id"] = wise["source_id"].astype(str)
+            if "ra_wise" not in wise.columns or "dec_wise" not in wise.columns:
+                for a, b in (("RA_ICRS", "DE_ICRS"), ("RAdeg", "DEdeg"),
+                             ("_RAJ2000", "_DEJ2000"), ("ra_2", "dec_2")):
+                    if a in wise.columns and b in wise.columns:
+                        wise = wise.rename(columns={a: "ra_wise", b: "dec_wise"})
+                        break
             p = parent.copy()
             p["source_id"] = p["source_id"].astype(str)
+            # The X-Match echoes the UPLOADED (epoch-propagated) ra/dec.  Merged
+            # as-is they collide with the parent's Gaia ra/dec and both become
+            # ra_x/ra_y: run 35860904385 then had no "ra" at all, so the
+            # registration offset was NaN for every row and all 25,932 white
+            # dwarfs failed the astrometric gate untested (123 of the 179
+            # ring-band shapes were rejected that way).  Keep the parent's.
+            wise = wise.drop(columns=[c for c in wise.columns
+                                      if c in p.columns and c != "source_id"])
             df = p.merge(wise, on="source_id", how="inner")
             meta["routes_tried"].append({"route": "cds_xmatch_propagated", "status": "OK",
-                                         "n": int(len(df))})
+                                         "n": int(len(df)),
+                                         "has_wise_position": bool(
+                                             {"ra_wise", "dec_wise"} <= set(df.columns))})
             meta["route"] = "vizier_parent+cds_xmatch_propagated"
             df.to_parquet(out_dir / "wd_routeC.parquet", index=False)
             return df, meta
@@ -368,6 +495,72 @@ def fetch_wd_leg(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_colu
                                      "error": repr(exc)[:300]})
     meta["route"] = "none"
     return pd.DataFrame(), meta
+
+
+def _numcol(df: pd.DataFrame, col: str) -> pd.Series:
+    """Float Series for ``col``; all-NaN when absent (route B has no chi-squares)."""
+    if col in df.columns:
+        return pd.to_numeric(df[col], errors="coerce").astype(float)
+    return pd.Series(np.nan, index=df.index, dtype=float)
+
+
+def wd_control_positions(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    """Offset positions around every white dwarf at the AllWISE epoch.
+
+    The white-dwarf analogue of the pulsar controls: ``n`` positions on a ring
+    of ``offset`` arcsec around each host's AllWISE-epoch position, uploaded
+    to the same X-Match at the same radius.  The AllWISE sources found there
+    -- and their colours and brightnesses -- are what chance puts inside a
+    white dwarf's aperture on the same sky.  ``source_id`` is ``<id>|c<k>``.
+    """
+    w = cfg["wd"]
+    ep = cfg["epochs"]
+    offsets = [float(x) for x in w.get("control_offsets_arcsec", [45.0])]
+    n_ang = int(w.get("control_angles", 8))
+    pmra = pd.to_numeric(df.get("pmra", 0.0), errors="coerce")
+    pmde = pd.to_numeric(df.get("pmdec", 0.0), errors="coerce")
+    pmra = (pmra if isinstance(pmra, pd.Series) else pd.Series(0.0, index=df.index)).fillna(0.0)
+    pmde = (pmde if isinstance(pmde, pd.Series) else pd.Series(0.0, index=df.index)).fillna(0.0)
+    ra, dec = propagate_pm(pd.to_numeric(df["ra"], errors="coerce").to_numpy(float),
+                           pd.to_numeric(df["dec"], errors="coerce").to_numpy(float),
+                           pmra.to_numpy(float), pmde.to_numpy(float),
+                           float(ep["gaia"]), float(ep["allwise"]))
+    sid = df["source_id"].astype(str).to_numpy()
+    rows, k = [], 0
+    for off in offsets:
+        for ang in np.arange(0.0, 360.0, 360.0 / n_ang):
+            dra = off * np.cos(np.radians(ang)) / 3600.0 / np.cos(np.radians(dec))
+            dde = off * np.sin(np.radians(ang)) / 3600.0
+            rows.append(pd.DataFrame({"source_id": [f"{s}|c{k}" for s in sid],
+                                      "ra": ra + dra, "dec": dec + dde}))
+            k += 1
+    return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+
+
+def fetch_wd_controls(df: pd.DataFrame, cfg: dict, out_dir: Path, *, xmatch_fn=None) -> dict:
+    """X-Match the white-dwarf control positions against AllWISE; checkpointed."""
+    from ..acquire.science import _xmatch
+
+    xmatch_fn = xmatch_fn or _xmatch
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pos = wd_control_positions(df, cfg)
+    r = float(cfg["wd"].get("control_radius_arcsec", 3.0))
+    t0 = time.monotonic()
+    try:
+        raw = xmatch_fn(pos, "vizier:II/328/allwise", r)
+    except Exception as exc:                            # noqa: BLE001
+        return {"status": "FAILED", "error": repr(exc)[:300], "n_positions": int(len(pos))}
+    m = raw.rename(columns={k: v for k, v in ALLWISE_XMATCH_RENAME.items()
+                            if raw is not None and k in raw.columns}) \
+        if raw is not None and len(raw) else pd.DataFrame()
+    keep = [c for c in ("source_id", "match_dist_arcsec", "W1mag", "e_W1mag", "W2mag",
+                        "e_W2mag", "ph_qual", "cc_flags") if c in m.columns]
+    if len(m):
+        m[keep].to_parquet(out_dir / "controls_allwise.parquet", index=False)
+    return {"status": "OK" if len(m) else "ZERO_ROWS", "n_positions": int(len(pos)),
+            "n_rows": int(len(m)), "radius_arcsec": r,
+            "elapsed_s": round(time.monotonic() - t0, 1)}
 
 
 def harmonise_wd(df: pd.DataFrame) -> pd.DataFrame:
@@ -385,18 +578,18 @@ def harmonise_wd(df: pd.DataFrame) -> pd.DataFrame:
     for b in ("G", "BP", "RP"):
         if f"{b}mag" in out.columns and f"e_{b}mag" not in out.columns:
             out[f"e_{b}mag"] = 0.02
-    th = pd.to_numeric(out.get("teff_h"), errors="coerce")
-    the = pd.to_numeric(out.get("teff_he"), errors="coerce")
-    ch = pd.to_numeric(out.get("chisq_h"), errors="coerce")
-    che = pd.to_numeric(out.get("chisq_he"), errors="coerce")
+    th = _numcol(out, "teff_h")
+    the = _numcol(out, "teff_he")
+    ch = _numcol(out, "chisq_h")
+    che = _numcol(out, "chisq_he")
     use_he = (the.notna() & (th.isna() | (che.notna() & ch.notna() & (che < 0.5 * ch))))
     out["atmosphere"] = np.where(use_he, "He", "H")
     out["teff"] = np.where(use_he, the, th)
-    out["logg"] = np.where(use_he, pd.to_numeric(out.get("logg_he"), errors="coerce"),
-                           pd.to_numeric(out.get("logg_h"), errors="coerce"))
-    out["mass"] = np.where(use_he, pd.to_numeric(out.get("mass_he"), errors="coerce"),
-                           pd.to_numeric(out.get("mass_h"), errors="coerce"))
-    plx = pd.to_numeric(out.get("parallax"), errors="coerce")
+    out["logg"] = np.where(use_he, _numcol(out, "logg_he"),
+                           _numcol(out, "logg_h"))
+    out["mass"] = np.where(use_he, _numcol(out, "mass_he"),
+                           _numcol(out, "mass_h"))
+    plx = _numcol(out, "parallax")
     with np.errstate(divide="ignore", invalid="ignore"):
         out["dist_pc"] = np.where(plx > 0, 1000.0 / plx, np.nan)
     return out
@@ -455,6 +648,20 @@ def parse_psrcat_db(text: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _decimal_unit_deg(s: pd.Series) -> np.ndarray:
+    """Value of one unit in the last quoted decimal place of a degree string."""
+    out = []
+    for v in s.astype(str):
+        v = v.strip()
+        if not v or v.lower() in ("nan", "none", "<na>"):
+            out.append(np.nan)
+            continue
+        mant = re.split(r"[eEdD]", v)[0]
+        nd = len(mant.split(".")[1]) if "." in mant else 0
+        out.append(10.0 ** (-nd))
+    return np.asarray(out, float)
+
+
 def _num(s: pd.Series) -> pd.Series:
     return pd.to_numeric(s.astype(str).str.replace("D", "E", regex=False), errors="coerce")
 
@@ -478,6 +685,7 @@ def normalise_pulsars(raw: pd.DataFrame, route: str) -> pd.DataFrame:
     dec = np.full(len(raw), np.nan)
     ra_unit = np.full(len(raw), np.nan)
     dec_unit = np.full(len(raw), np.nan)
+    ecl_err = np.full(len(raw), np.nan)
     if "RAJD" in cols and "DECJD" in cols:               # psrqpy: already degrees
         ra = _num(col("RAJD")).to_numpy(float)
         dec = _num(col("DECJD")).to_numpy(float)
@@ -508,8 +716,23 @@ def normalise_pulsars(raw: pd.DataFrame, route: str) -> pd.DataFrame:
                     ic = c.transform_to(ICRS())
                     ra[ok] = ic.ra.deg
                     dec[ok] = ic.dec.deg
-                    ra_unit[ok] = 3600.0 * 0.01
-                    dec_unit[ok] = 3600.0 * 0.01
+                    # The error is the catalogue's own: ELONG/ELAT are quoted in
+                    # degrees to as many decimals as the timing solution
+                    # supports, with an optional error in units of the last
+                    # digit.  Run 35752692549 assumed 0.01 deg (36 arcsec) for
+                    # every ecliptic position, which gave 244 timed pulsars --
+                    # the MSP J1453+1902 among them -- a 49 arcsec error, an
+                    # 8 arcsec match radius and a spurious "counterpart".
+                    el_u = _decimal_unit_deg(col("ELONG")) * 3600.0
+                    eb_u = _decimal_unit_deg(col("ELAT")) * 3600.0
+                    el_e = _num(col("ELONG_ERR")).to_numpy(float) if "ELONG_ERR" in cols \
+                        else np.full(len(raw), np.nan)
+                    eb_e = _num(col("ELAT_ERR")).to_numpy(float) if "ELAT_ERR" in cols \
+                        else np.full(len(raw), np.nan)
+                    el_as = np.where(np.isfinite(el_e), el_e * el_u, el_u) \
+                        * np.cos(np.radians(np.nan_to_num(eb)))
+                    eb_as = np.where(np.isfinite(eb_e), eb_e * eb_u, eb_u)
+                    ecl_err[ok] = np.hypot(el_as, eb_as)[ok]
             except Exception as exc:                    # noqa: BLE001
                 print(f"[ring/psr] ecliptic conversion skipped: {exc!r}", flush=True)
     out["ra"], out["dec"] = ra, dec
@@ -528,7 +751,9 @@ def normalise_pulsars(raw: pd.DataFrame, route: str) -> pd.DataFrame:
         ra_as = np.where(np.isfinite(ra_err), ra_err * ra_unit, ra_unit) \
             * np.cos(np.radians(np.nan_to_num(dec)))
         dec_as = np.where(np.isfinite(dec_err), dec_err * dec_unit, dec_unit)
-    out["pos_err_arcsec"] = np.hypot(np.nan_to_num(ra_as, nan=1.0), np.nan_to_num(dec_as, nan=1.0))
+    out["pos_err_arcsec"] = np.where(
+        np.isfinite(ecl_err), ecl_err,
+        np.hypot(np.nan_to_num(ra_as, nan=1.0), np.nan_to_num(dec_as, nan=1.0)))
 
     out["pmra"] = _num(col("PMRA")).to_numpy(float)
     out["pmdec"] = _num(col("PMDEC")).to_numpy(float)
@@ -567,7 +792,11 @@ def fetch_pulsars_psrqpy() -> pd.DataFrame:
                           "DIST_DM", "ASSOC", "BINARY", "BINCOMP", "TYPE", "PX"])
     df = q.table.to_pandas()
     df = df.rename(columns={"JNAME": "PSRJ", "BNAME": "PSRB"})
-    df.attrs["catalogue_version"] = str(getattr(q, "get_version", lambda: "")())
+    # psrqpy exposes the version as a property on current releases and as a
+    # method on old ones; calling the property string raised "'str' object is
+    # not callable" in run 35752692549 and threw away a successful query.
+    v = getattr(q, "get_version", "")
+    df.attrs["catalogue_version"] = str(v() if callable(v) else v)
     return df
 
 
@@ -738,20 +967,36 @@ def fetch_pulsar_counterparts(psr: pd.DataFrame, cfg: dict, *, xmatch_fn=None
 BD_ROLES = {
     "name": [r"^name$", r"^object$", r"^id$", r"^desig", r"^cwise", r"^wise", r"^src$",
              r"^objname$", r"^simbadname$", r"^shortname$"],
-    "ra": [r"^raj2000$", r"^_ra$", r"^ra_icrs$", r"^radeg$", r"^ra$", r"^_raj2000$"],
-    "dec": [r"^dej2000$", r"^_de$", r"^de_icrs$", r"^dedeg$", r"^dec$", r"^de$", r"^_dej2000$"],
-    "pmra": [r"^pmra"],
-    "pmdec": [r"^pmde"],
+    # CatWISE positions (epoch 2015.4) first: the NEOWISE cone propagates from
+    # the Gaia epoch, and a VizieR ``_RA``/``_DE`` at J2000 is 16 years of
+    # proper motion (tens of arcsec for a Y dwarf) away from it.
+    "ra": [r"^racdeg$", r"^raj2000$", r"^_ra$", r"^ra_icrs$", r"^radeg$", r"^ra$",
+           r"^_raj2000$"],
+    "dec": [r"^decdeg$", r"^dej2000$", r"^_de$", r"^de_icrs$", r"^dedeg$", r"^dec$", r"^de$",
+            r"^_dej2000$"],
+    "pmra": [r"^pmra$", r"^pmra"],
+    "pmdec": [r"^pmde$", r"^pmdec$", r"^pmde"],
     "plx": [r"^plx$", r"^parallax$", r"^pi$", r"^plxw$", r"^plxg$"],
-    "spt": [r"^spt$", r"^sptype", r"^spectype", r"^sp$", r"^type$", r"^spt.*adopt", r"^spt"],
+    # The near-infrared type first: late-T and Y dwarfs essentially never have
+    # an OPTICAL type, and run 35752692549 resolved "SpTO" on the 20 pc census,
+    # found 0 of 682 objects at >= T6, and fell back to a table without proper
+    # motions (28 of 232 targets then returned NEOWISE epochs).
+    "spt": [r"^sptir$", r"^spt$", r"^sptype", r"^spectype", r"^sp$", r"^type$",
+            r"^spt.*adopt", r"^spt"],
+    "spt_opt": [r"^spto$", r"^optspt"],
     "w1": [r"^w1mag$", r"^w1$", r"^w1mpro", r"^w1mag"],
     "w2": [r"^w2mag$", r"^w2$", r"^w2mpro", r"^w2mag"],
     "epoch": [r"^epoch", r"^ep$", r"^mjd"],
 }
 FFP_ROLES = {
-    "name": [r"^name$", r"^object$", r"^id$", r"^desig", r"^objname$", r"^source$"],
+    # Faherty+2016 names every object by its 2MASS designation, in a column
+    # called "2MASS": none of the old patterns matched it, so no table carried
+    # the required (name, lbol) pair and the leg reached nothing (run 35752692549).
+    "name": [r"^name$", r"^object$", r"^id$", r"^desig", r"^objname$", r"^source$",
+             r"^2mass$"],
     "spt": [r"^spt$", r"^sptype", r"^spectype", r"^sp$", r"^optspt", r"^nirspt", r"^spt"],
-    "group": [r"^group$", r"^grp$", r"^assoc", r"^ymg", r"^member", r"^mg$"],
+    "group": [r"^group$", r"^grp$", r"^assoc", r"^ymg", r"^member", r"^mg$", r"^mm$",
+              r"^gbii$", r"^gl$"],
     "age": [r"^age"],
     "lbol": [r"^logl", r"^lbol", r"^log\(?l", r"^loglbol"],
     "mass": [r"^mass$", r"^m$", r"^mass"],
@@ -759,6 +1004,13 @@ FFP_ROLES = {
     "ra": [r"^raj2000$", r"^_ra$", r"^ra_icrs$", r"^radeg$", r"^ra$"],
     "dec": [r"^dej2000$", r"^_de$", r"^de_icrs$", r"^dedeg$", r"^dec$", r"^de$"],
 }
+
+
+# Columns that may name a young group in a membership table (BANYAN I/II,
+# LACEwING, convergent point, adopted), matched against lower-case names.
+FFP_GROUP_CANDIDATES = (r"^(group|grp|assoc\w*|ymg|mg|mm|mcat|gbii|gbi|gl|gc|member\w*|"
+                        r"adopted\w*|final\w*)$")
+MEMBER_CLASSES = {"HLM", "AM", "BM", "NM", "LM", "HM", "CM", "YES", "NO", "?"}
 
 
 def resolve_roles(columns, patterns: dict) -> dict:
@@ -835,16 +1087,81 @@ _SPT_CLASS = {"M": 0.0, "L": 10.0, "T": 20.0, "Y": 30.0}
 
 
 def spt_to_numeric(s) -> float:
-    """``'T7.5'`` -> 27.5; ``'Y0'`` -> 30; ``'>=Y1'`` -> 31; NaN when unreadable."""
+    """``'T7.5'`` -> 27.5; ``'Y0'`` -> 30; ``'>=Y1'`` -> 31; NaN when unreadable.
+
+    A bare number in [0, 40) is taken as the numeric type code on the same
+    scale (M0 = 0, L0 = 10, T0 = 20, Y0 = 30), which is how Kirkpatrick+2021
+    tabulates SpTO/SpTIR on VizieR: run 35860904385 read SpTIR correctly and
+    still found 0 of 682 late objects, because every value was a code, and
+    fell back to the proper-motion-less Y-dwarf table again.
+    """
     if s is None:
         return np.nan
-    m = re.search(r"([MLTY])\s*(\d+(\.\d+)?)", str(s).upper())
+    if isinstance(s, (int, float, np.integer, np.floating)):
+        v = float(s)
+        return v if np.isfinite(v) and 0.0 <= v < 40.0 else np.nan
+    txt = str(s).strip()
+    if re.fullmatch(r"[-+]?\d+(\.\d+)?", txt):
+        v = float(txt)
+        return v if 0.0 <= v < 40.0 else np.nan
+    m = re.search(r"([MLTY])\s*(\d+(\.\d+)?)", txt.upper())
     if not m:
         return np.nan
     return _SPT_CLASS[m.group(1)] + float(m.group(2))
 
 
-def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.DataFrame, dict]:
+def adopt_catwise_astrometry(targets: pd.DataFrame, cfg: dict, *, xmatch_fn=None
+                             ) -> tuple[pd.DataFrame, dict]:
+    """Give proper-motion-less targets CatWISE2020 positions and motions.
+
+    The NEOWISE cone follows a target from the Gaia epoch with its proper
+    motion; a catalogue without motions (the Kirkpatrick+2019 Y-dwarf table,
+    which both full runs fell back to) leaves the cone parked for a decade
+    while a Y dwarf moves 5-30 arcsec -- 47 of 232 targets then returned a
+    usable series.  CatWISE2020 measured these objects' motions (it is how
+    most were found); its positions are at epoch 2015.4, 0.6 yr from the cone
+    origin.  The nearest CatWISE source within ``catwise_adopt_radius_arcsec``
+    of the catalogue position is adopted; rows it does not reach keep their
+    own position and a NaN motion (and their flags are then vetoed as
+    ``proper_motion_not_propagated``).
+    """
+    b = cfg["bd"]
+    info = {"n_input": int(len(targets)), "n_adopted": 0}
+    need = pd.to_numeric(targets.get("pmra", pd.Series(np.nan, index=targets.index)),
+                         errors="coerce").isna()
+    if not need.any():
+        return targets, info
+    from ..acquire.science import _xmatch
+
+    xmatch_fn = xmatch_fn or _xmatch
+    up = targets.loc[need, ["source_id", "ra", "dec"]].copy()
+    up["source_id"] = up["source_id"].astype(str)
+    try:
+        raw = xmatch_fn(up, "vizier:II/365/catwise",
+                        float(b.get("catwise_adopt_radius_arcsec", 6.0)))
+    except Exception as exc:                            # noqa: BLE001
+        info["error"] = repr(exc)[:300]
+        return targets, info
+    cat = normalise_xmatch(raw, CATWISE_XMATCH_RENAME)
+    if not len(cat) or not {"ra_catwise", "dec_catwise", "pmra_catwise"} <= set(cat.columns):
+        info["error"] = f"no usable CatWISE rows ({list(cat.columns)[:20]})"
+        return targets, info
+    cat = cat.set_index(cat["source_id"].astype(str))
+    out = targets.copy()
+    sid = out["source_id"].astype(str)
+    hit = need & sid.isin(cat.index)
+    for dst, src in (("ra", "ra_catwise"), ("dec", "dec_catwise"), ("pmra", "pmra_catwise"),
+                     ("pmdec", "pmdec_catwise")):
+        if dst not in out.columns:
+            out[dst] = np.nan
+        out.loc[hit, dst] = pd.to_numeric(sid[hit].map(cat[src]), errors="coerce").to_numpy()
+    out["astrometry_source"] = np.where(hit, "catwise2020", np.where(need, "none", "catalogue"))
+    info["n_adopted"] = int(hit.sum())
+    return out, info
+
+
+def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None, xmatch_fn=None
+                     ) -> tuple[pd.DataFrame, dict]:
     """Y and late-T dwarfs with positions and proper motions, from VizieR."""
     b = cfg["bd"]
     meta: dict = {"catalogues": []}
@@ -863,12 +1180,24 @@ def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.Dat
             entry["error"] = repr(exc)[:300]
             continue
         entry["n_rows"] = int(len(df))
-        df["spt_num"] = [spt_to_numeric(x) for x in df.get("spt", pd.Series([], dtype=object))]
+        ir = [spt_to_numeric(x) for x in df.get("spt", pd.Series(np.nan, index=df.index))]
+        opt = [spt_to_numeric(x) for x in df.get("spt_opt", pd.Series(np.nan, index=df.index))]
+        df["spt_num"] = [a if np.isfinite(a) else b for a, b in zip(ir, opt, strict=False)]
+        # Audit trail for the type parsing: raw values and the numeric histogram.
+        entry["spt_raw_sample"] = [str(x) for x in df.get(
+            "spt", pd.Series([], dtype=object)).dropna().unique()[:12]]
+        entry["spt_num_counts"] = {k: int(v) for k, v in pd.cut(
+            pd.Series(df["spt_num"], dtype=float), [-1, 10, 20, 26, 30, 40],
+            labels=["M", "L", "T0-T5.5", "T6-T9.5", "Y"]).value_counts().items()}
+        entry["n_with_pm"] = int(pd.to_numeric(
+            df.get("pmra", pd.Series(np.nan, index=df.index)), errors="coerce").notna().sum())
         late = df[df["spt_num"] >= float(b["spt_min_numeric"])].copy()
         entry["n_late"] = int(len(late))
         if len(late):
             late["source_id"] = late["name"].astype(str).str.strip()
             late = late.drop_duplicates("source_id").head(int(b["max_targets"]))
+            late, meta["catwise_astrometry"] = adopt_catwise_astrometry(
+                late.reset_index(drop=True), cfg, xmatch_fn=xmatch_fn)
             meta["route"] = cat
             return late.reset_index(drop=True), meta
     meta["route"] = "none"
@@ -895,6 +1224,62 @@ def fetch_ffp_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.Da
         return pd.DataFrame(), meta
     meta["n_rows"] = int(len(df))
     meta["route"] = "vizier"
+    # The luminosity table carries no group (hence no age) in Faherty+2016:
+    # membership lives in a sibling table keyed by the same designation.
+    # WHICH column holds the group is decided by content, not by name: run
+    # 35860901093 took "Mm" by pattern and found it holds the membership
+    # CLASS (HLM/AM/BM/NM), not a group, so all 69 objects had no age.  Every
+    # group-like column is fetched and the one whose values resolve to a known
+    # group age most often is used; a column of membership classes is kept as
+    # ``member_class``.
+    if "group" not in df.columns and "name" in df.columns:
+        sib = [e for e in disc.get("scoreboard", [])
+               if e.get("table") and e["table"] != disc.get("table")
+               and "name" in (e.get("roles") or {})]
+        meta["membership_table"] = None
+        for e in sib:
+            cand = [c for c in (e.get("columns") or [])
+                    if re.search(FFP_GROUP_CANDIDATES, str(c).lower())
+                    and c != e["roles"]["name"]]
+            if not cand:
+                continue
+            roles = {"name": e["roles"]["name"], **{f"g::{c}": c for c in cand}}
+            try:
+                mem = fetch_vizier_roles({"table": e["table"], "roles": roles},
+                                         query_fn=query_fn)
+            except Exception as exc:                    # noqa: BLE001
+                meta.setdefault("membership_errors", []).append(
+                    {"table": e["table"], "error": repr(exc)[:200]})
+                continue
+            if not len(mem):
+                continue
+            from .screen import _group_age_gyr
+
+            scores, klass = {}, None
+            for c in cand:
+                vals = mem[f"g::{c}"].astype(str).str.strip()
+                scores[c] = int(np.isfinite([_group_age_gyr(v, cfg) for v in vals]).sum())
+                up = vals.str.upper()
+                if klass is None and up.isin(MEMBER_CLASSES).mean() > 0.5:
+                    klass = c
+            best = max(scores, key=scores.get) if scores else None
+            meta["group_column_scores"] = scores
+            if not best or scores[best] == 0:
+                meta.setdefault("membership_errors", []).append(
+                    {"table": e["table"], "error": f"no column resolves to a group age: {scores}"})
+                continue
+            mem["name"] = mem["name"].astype(str).str.strip()
+            keep = mem[["name"]].assign(group=mem[f"g::{best}"].astype(str).str.strip())
+            if klass:
+                keep["member_class"] = mem[f"g::{klass}"].astype(str).str.strip()
+            keep = keep.drop_duplicates("name")
+            df = df.assign(name=df["name"].astype(str).str.strip()).merge(keep, on="name",
+                                                                          how="left")
+            meta["membership_table"] = e["table"]
+            meta["membership_column"] = best
+            meta["member_class_column"] = klass
+            meta["n_with_group"] = int(df["group"].notna().sum())
+            break
     return df, meta
 
 
@@ -913,6 +1298,7 @@ def fetch_bd_neowise(targets: pd.DataFrame, out_dir: Path, cfg: dict, *, shard: 
             stars[c] = 0.0
     store = EpochStore.open(Path(out_dir), tag=f"bd_shard{shard}")
     conf = {"cone_radius_arcsec": float(b["cone_radius_arcsec"]),
+            "cone_workers": int(b.get("cone_workers", 1)),
             "epoch_gap_days": float(b["epoch_gap_days"]),
             "min_exp_per_epoch": int(b["min_exp_per_epoch"]),
             "checkpoint_every": int(b["checkpoint_every"]),

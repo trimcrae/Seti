@@ -3,12 +3,116 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-22.
+next. Last updated: 2026-09-23.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### Handoff sweep: every in-flight run collected and vetted, nothing left standing, 2026-09-24
+
+Fifteen channel branches were carrying committed run results that never reached
+`main`; all are merged (SPARK's paths taken verbatim — its branch history
+conflicts across other channels). Each open lead was then vetted to a mechanism:
+
+| channel | outcome |
+|---|---|
+| RELAY | 22 pair-line drift matches = 11 hits, 3 of them a "Frequency rank" column parsed as MHz, 8 Enriquez+2017 GPS-L3/Inmarsat RFI; 14 vs 14.6 expected by chance after cleaning. The target list's 13 links at the 100 m beam (0.55 expected) were all close binaries with bad parallaxes; with bound/<4″ pairs excluded, every beam is below chance. `PAIRLINE_MATCHES_AT_CHANCE`. |
+| RING | all six pulsar "candidates" were defects (ecliptic-position parser giving 49″ errors; AllWISE upper limits used as colours; unlocalised positions). wd/ffp legs had never run (hard-coded VizieR columns; unmatched name column); fixed. 0 survivors on legs reached. |
+| IGNITION | 650/2,047 tiles (≈34% of the |b|>15° sky); 9 + 5 rises, none dust-coloured (W2/W1 rise 0.60–1.18 vs 1.5–2.0 for 1000–1500 K dust); PM blends, fast rotators, optical rises. Sweep continuing. |
+| SPECTRA-PERSIST | 167/167 lines measured per exposure; the last open line (2750-54242-0547, 6856 Å) is Hα of a z≈0.045 galaxy in the fibre — re-seen 8 yr later by LAMOST at 12.9σ. |
+| METRONOME | no star survives; the five TESS interest clocks are eclipse/transit periods (TOI-1338, WASP-41, three EBs) with Tu+2022 "flares" on eclipse egress; aperture-scale variable cone now in assess. |
+| GROWTH-direct | 4,725/4,725 KOIs reached after a stale-shard-upload fix; 0 depth-change candidates. |
+| SEXTANT | four stacked pipeline defects (unquoted CSV cells, commit-back blind to new files, integrator extrapolating 6 yr past its ephemeris grid, controls refused on the Horizons route) and then pyvo's hard-coded 10 s status timeout — no science number yet. |
+| CENTURY | retargeted from 24 mostly-eclipsing variables to 2,400 VSX pulsators (RR, Cep, Mira, δ Sct, SRa, RV Tau); first sweep crashed on a pandas-3 NA in plate labels; fixed and re-running. |
+| **CRADLE** | 12 candidates: 6 killed (galaxy blends by W3/W4 centroid offset, a WDS binary, W4 confusion, a young star), 5 caveated (3 already published warm-debris stars), **1 unexplained: Gaia DR3 6225457312033584384** — 262 K dust, L_IR/L* = 1.5%, 10^4.86 above the collisional steady-state maximum, W3 45σ / W4 15σ, no Gaia or Legacy Surveys source within 10.6″, no SIMBAD entry, old by isochrone and kinematics, normal DESI spectrum. **Followed up and not a candidate**: no companion (RUWE 0.98, no co-moving source among 17 within 60″), point-like W3 profile, smooth low cirrus, no counterpart in 140 debris/IR-excess VizieR catalogues; W1 flat over 22 NEOWISE visits and W2's fade shared by the field (instrumental); T = 262 K (AllWISE) vs 235 K (deblended) straddles the 250 K cell edge; age probably >1 Gyr but not pinned (Li 44±27 mÅ after Fe deblend, inactive, heated thin-disc orbit, no rotation). With 1.28 M FGK dwarfs searched and old extreme debris disks at ~2 per million, one is **not statistically surprising**. The deciding measurements (a mid-IR spectrum for silicate features; a new mid-IR epoch) are not in the public archive. Secondaries: 3168144078565656832 carries an unidentified 0.45 d TESS signal and a broadened W3 image; 5295632592220066688 is a 12 Gyr thick-disc star but W4 is 6σ in 2/47 frames and E(B−V) exceeds the cirrus cut. |
+
+Two infrastructure defects were found in more than one channel and fixed repo-wide:
+`commit_results.sh` ignored new files inside a tracked directory; and 19 of 23 sharded
+workflows uploaded checkout-inherited or other shards' files that the reducer then merged
+with no rule for which copy wins (docs/channel-brief.md §0.7, `test_a_shard_uploads_only_what_it_wrote`).
+
+New channels under construction, each requiring two independent observables to agree:
+OCCULT (opaque-lens steps in archival OGLE/KMTNet microlensing, S40), ANTIPHASE (grey
+optical fade + energy-balanced mid-IR rise), CONFLUENCE (cross-channel tail overlap vs a
+covariate-matched null), PARALLAX4 (Gaia DR4 photometry-vs-photocentre test, prebuilt).
+
+### METRONOME: the last five interest stars are eclipses, and the "flares" sit on the egress, 2026-09-23
+
+**No METRONOME star survives.** `summary.json` (rebuilt from the records at
+17:20 UTC / 1:20 PM ET, `check_consistency` clean): 0 candidate, 0 interest,
+53 watch. All 15 former candidate/interest stars are demoted; the first veto
+of each is now aperture/identity cone 7, light curve 5, single-star vet 3
+(reconcile applies the sky-around-the-star record first, so stars also killed
+by the light curve or the vet are counted once, under the cone).
+
+**The five parallel vets of 2026-09-23 00:33 UTC (8:33 PM ET, 22 Sep) lost
+four of five results.** Runs 35802589042, 35802594315, 35802596474,
+35802601869, 35802603859 each wrote `vetstar.json` and demoted their own star
+in their own `candidates.json`; last-writer-wins kept tess:32449963 only, and
+the summary read `VETSTAR_DEMOTED_2; VETSTAR_DEMOTED_1` (the records' count
+beside the invocation's own). All five reports were recovered from the
+commits the runs landed. They were also wrong in the same ways: every TESS
+star was vetted against the Kepler catalogue (0 catalogued epochs), VizieR's
+TIC returned zero rows so there was no position (no Gaia, no cone), and an
+EMPTY control null passed tess:350479496's 24%-deep eclipse as
+`NO_MUNDANE_EXPLANATION_FOUND`. Fixed (docs/metronome.md 4.7e) and all five
+re-vetted with positions, Gaia and their own Tu+2022 epochs:
+
+| star | P (d) | what it is | Tu+2022 epochs in phase |
+|---|---|---|---|
+| tess:350479496 | 4.19413 | 24.3%-deep narrow eclipse (2% of bins below half depth), equal minima at 2P (0.00002 sigma); not in VSX/Gaia vari | 44 epochs, r=0.990, p=7e-18, phase 0.563 vs eclipse 0.545 |
+| tess:260128333 | 2.92171 | **TOI-1338** (VSX EP), Gaia DR3 SB1 (P_orb 14.63 d), `non_single_star`=2, RV amp 54 km/s; 5P = 14.6086 d, the binary's eclipse period (literature, not measured here) | 53 epochs, r=0.9993, p=6e-22, phase 0.587 vs dip 0.545 |
+| tess:398943781 | 3.05247 | **WASP-41**, transiting hot Jupiter (VSX EP, P=3.052401 d); 2.2%-deep transit in the fold | 13 epochs, r=0.9995, p=1e-6, phase 0.314 vs transit 0.285 |
+| tess:63834969 | 2.05547 | 10.6%-deep narrow eclipse, Gaia RV amplitude 122 km/s | 17 epochs, r=0.9987, p=1e-7, phase 0.700 vs eclipse 0.675 |
+| tess:32449963 | 6.52039 | VSX EA+ROT eclipsing binary (P=6.520489 d), 30%-deep eclipse, Gaia RV amplitude 108 km/s | 12 epochs, r=0.99999, p=2e-6, phase 0.517 vs eclipse 0.505 |
+
+**In all five the catalogued "flares" fall 0.012-0.042 cycles AFTER the fold
+minimum (bins are 0.01 wide) -- on the egress side of the eclipse/transit,
+never before it.** The likely mechanism: a flare finder whose running
+baseline has been dragged down by the eclipse sees the recovering flux as a
+brightening above that baseline, once per orbit. That is a reading, not a
+measurement of Tu+2022's pipeline; what is measured is that each clock is an
+eclipse or transit period with the events phase-locked just after minimum.
+
+**The aperture-scale cone (the fix STATUS prescribed on 2026-09-22)** now runs
+in assess and, over the committed shortlist, as `stage=aperture`
+(docs/metronome.md 4.7f). Kepler, all 102 fdr_watch stars positioned and all
+three catalogues reached: one contamination hit at candidate/interest tier --
+**kepler:5879574, by KIC 5879583 (VSX RR, 13.29") and ZTFJ193127.18+410759.8
+(13.33"), P = 0.4232946 d, fractional difference 4.8e-5, p_chance 0.010** --
+the case the fix was specified by, now caught by the pipeline itself. One
+more among `none`-tier stars: kepler:3448787 (P 0.543147 d) by
+PS1-3PI J193101.00+383530.7, an RRAB 13.8" away at 0.543161 d. The same run
+flagged five `none`-tier Kepler stars on the 3" identity cone (VSX
+ROT/BY/GDOR/VAR at the clock period).
+
+**TESS, run 35891967698: the identity cone had never been reached, and it
+kills the TESS shortlist on its own.** All 123 TESS fdr_watch stars were
+positioned (MAST TIC), identity cone reached 0.991 and aperture cone 0.996 of
+the 225-star shortlist (unreached: kepler:7676676, tess:259543079,
+tess:298690606). **22 of 123 TESS stars are catalogued in VSX at their clock
+period** -- 6 of the 14 TESS `interest` stars: tess:178284730 (EP+BY,
+2.23598 d), tess:398943781 (EP, WASP-41, 3.0524 d), tess:458478250 (EP,
+2.25535 d), tess:233722938 (EA, 10.7578 d), tess:307488184 (ED, 10.0672 d),
+tess:32449963 (EA+ROT, 6.52049 d); plus tess:371706494 (watch; EA at 3P) and
+15 `none`-tier stars (mostly EP/EA). The clocks in Tu+2022's timing are
+transit and eclipse periods. **No TESS star has a variable neighbour at its
+clock period** inside 120" (63 of 225 shortlist stars have some catalogued
+variable neighbour, none at a matching period except the two Kepler RR
+Lyrae cases above). The contamination cone's only hits in the whole shortlist
+are kepler:5879574 and kepler:3448787, both RR Lyrae at ~13.5".
+
+Runs (all on `claude/handoff-metronome`, 2026-09-23): re-vets 35862299546,
+35862305553, 35862308010, 35862311016, 35869682862; aperture 35863149850
+(Kepler only -- a guard skipped MAST for TESS), 35869870343 (killed at its
+180-minute limit, no output), 35891967698 (bounded, parallel, checkpointed).
+Run 35862296965 (assess-only on the 2026-09-21 shards) crashed on NaN pool-null
+columns and committed the downloaded 2026-09-21 summary for one commit
+(076e9599) before the reconcile step restored it; assess-only now commits only
+on success, and the aperture check runs as its own stage rather than
+re-tiering shards that predate the pool null.
 
 ### METRONOME: the last clock is settled -- it is the RR Lyrae next door, 2026-09-22
 

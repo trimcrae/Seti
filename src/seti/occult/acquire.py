@@ -103,16 +103,27 @@ def parse_kmt_listpage(text: str, season: int) -> list:
     rows = []
     for line in text.splitlines():
         p = line.split()
-        if len(p) < 14 or not re.match(r"^KMT-\d{4}-BLG-\d{4}$", p[0]):
+        if len(p) < 10 or not re.match(r"^KMT-\d{4}-BLG-\d{4}$", p[0]):
+            continue
+        # The class columns are not always both present, so the coordinates are
+        # located by their shape and every later column is read relative to them.
+        ira = next((i for i in range(2, len(p) - 1)
+                    if re.match(r"^\d{1,2}:\d{2}:\d{2}(\.\d*)?$", p[i])
+                    and re.match(r"^[+-]?\d{1,2}:\d{2}:\d{2}(\.\d*)?$", p[i + 1])), None)
+        if ira is None:
             continue
         num = p[0].split("-")[-1]
-        related = [x for x in p[14:] if re.match(r"^[A-Z]{2}\d{5,6}$", x)]
+        q = p[ira + 2:]
+        related = [x for x in q if re.match(r"^[A-Z]{2}\d{5,6}$", x)]
         rows.append({
             "survey": "KMT", "season": int(season), "name": p[0], "id": num,
-            "field": p[1].split(".")[0], "class_a": p[2], "class_b": p[3],
-            "ra": _sexa(p[4], True), "dec": _sexa(p[5], False),
-            "t0": _f(p[6]), "tE": _f(p[7]), "u0": _f(p[8]),
-            "Isource": _f(p[9]), "Ibase": _f(p[10]), "A_I": _f(p[13]),
+            "field": p[1].split(".")[0], "class_a": p[2] if ira > 2 else None,
+            "class_b": p[3] if ira > 3 else None,
+            "ra": _sexa(p[ira], True), "dec": _sexa(p[ira + 1], False),
+            "t0": _f(q[0]) if len(q) > 0 else None, "tE": _f(q[1]) if len(q) > 1 else None,
+            "u0": _f(q[2]) if len(q) > 2 else None,
+            "Isource": _f(q[3]) if len(q) > 3 else None, "Ibase": _f(q[4]) if len(q) > 4 else None,
+            "A_I": _f(q[7]) if len(q) > 7 else None,
             "related": related,
         })
     return rows
@@ -282,7 +293,8 @@ def build_units(rows: list, match_arcsec: float = 2.0, match_days: float = 20.0)
     (``match_arcsec``) with |t0 difference| < ``match_days``.
     """
     ogle = {r["name"]: r for r in rows if r["survey"] == "OGLE"}
-    ogle_list = [r for r in rows if r["survey"] == "OGLE" and r["ra"] is not None]
+    ogle_list = [r for r in rows if r["survey"] == "OGLE" and r["ra"] is not None
+                 and r["dec"] is not None]
     used = set()
     units = []
     if ogle_list:
@@ -298,7 +310,7 @@ def build_units(rows: list, match_arcsec: float = 2.0, match_days: float = 20.0)
             if nm in ogle:
                 partner = nm
                 break
-        if partner is None and ogle_list and r["ra"] is not None:
+        if partner is None and ogle_list and r["ra"] is not None and r["dec"] is not None:
             d = np.hypot((ora - r["ra"]) * math.cos(math.radians(r["dec"])), odec - r["dec"]) * 3600
             dt = np.abs(ot0 - (r["t0"] or np.nan))
             ok = (d < match_arcsec) & (dt < match_days)

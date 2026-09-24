@@ -246,6 +246,14 @@ def test_parse_kmt_listpage_and_units():
     assert A.ogle_phot_url(by["OGLE-2019-BLG-0001"]["ogle"]).endswith("/2019/blg-0001/phot.dat")
 
 
+def test_kmt_listpage_with_a_missing_class_column_is_read_by_coordinate_shape():
+    line = ("KMT-2016-BLG-2586 SAO42M0805.086923 3 17:54:41.62 -28:34:00.05 7544.69315  109.77  "
+            "0.089  22.81  20.00  25.00 3   1.99\n")
+    r = A.parse_kmt_listpage(line, 2016)[0]
+    assert r["dec"] == pytest.approx(-(28 + 34 / 60 + 0.05 / 3600))
+    assert r["t0"] == pytest.approx(7544.69315) and r["tE"] == pytest.approx(109.77)
+
+
 def test_parse_phot_and_pysis_and_tar():
     p = A.parse_phot_dat(PHOT)
     assert p["t"][0] == pytest.approx(7416.87761) and p["mag"][1] == pytest.approx(17.262)

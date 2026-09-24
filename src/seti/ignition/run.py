@@ -766,6 +766,14 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     esa_trip = max(1, int(sw.get("esa_trip_after", 2) or 2))
     esa_retry = max(1, int(sw.get("esa_retry_every", 10) or 10))
     breaker = {"fails": 0, "off_since": None, "n_skipped": 0, "trips": 0}
+    if pr and not pr.get("gaia_shape_working") and (pr.get(ROUTE_ARI) or {}).get("status") == "OK":
+        # This dispatch's own probe found no working ESA shape and a live ARI
+        # mirror: start with the breaker open instead of spending the first
+        # tiles' whole budgets re-learning it (run 36031329377: three ESA shapes
+        # x 480 s timed out in the probe).
+        breaker.update(off_since=0, trips=1)
+        print(f"[ignition] sweep {tag}: probe found ESA dark and ARI up; "
+              f"starting with ESA skipped (retry every {esa_retry} tiles)", flush=True)
 
     def _esa_on(i: int) -> bool:
         if breaker["off_since"] is None:

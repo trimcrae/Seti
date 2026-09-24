@@ -987,3 +987,23 @@ def test_route_c_keeps_the_gaia_position_beside_the_wise_one(cfg, tmp_path):
     assert meta["route"] == "vizier_parent+cds_xmatch_propagated"
     assert {"ra", "dec", "ra_wise", "dec_wise"} <= set(df.columns)
     assert not [c for c in df.columns if c.endswith(("_x", "_y"))]
+
+
+def test_wd_followup_is_bounded_and_a_hung_cone_is_untested_not_passed(cfg):
+    import time as _t
+    c2 = {**cfg, "wd": {**cfg["wd"], "followup_per_call_s": 0.2, "followup_budget_s": 1.0}}
+    short = pd.DataFrame({"source_id": [1, 2], "ra": [10.0, 20.0], "dec": [0.0, 0.0],
+                          "pmra": [0.0, 0.0], "pmdec": [0.0, 0.0], "W1mag": 15.0,
+                          "W2mag": 14.0})
+
+    def hang(ra, dec):
+        _t.sleep(5.0)
+        return pd.DataFrame()
+
+    t0 = _t.monotonic()
+    fu = rass.wd_followup(short, c2, fetch_neighbours=hang,
+                          xmatch_fn=lambda p, t, r: pd.DataFrame())
+    assert _t.monotonic() - t0 < 3.0
+    assert (fu["blend_verdict"] == "untested").all()
+    assert (fu["followup_verdict"] == "rejected").all()
+    assert fu.attrs["n_neighbour_timeouts"] == 2

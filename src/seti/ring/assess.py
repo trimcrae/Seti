@@ -122,18 +122,47 @@ def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
         print(f"[ring/wd] CatWISE co-movement failed: {exc!r}", flush=True)
 
     rows = []
-    for _, r in out.iterrows():
+    # Bounded: each Gaia cone gets ``per_call_s`` and the whole loop ``budget_s``.
+    # Run 35992172700's assess job sat for hours in this loop -- an async Gaia
+    # job that never returns blocks forever -- which would have cost the whole
+    # run its summary.  A cone that times out, or is never reached, is recorded
+    # as untested (``blend_untested``), never as passed.
+    import concurrent.futures as _cf
+    import time as _time
+
+    fcfg = cfg.get("wd", {})
+    per_call = float(fcfg.get("followup_per_call_s", 60.0))
+    budget = float(fcfg.get("followup_budget_s", 2400.0))
+    t_end = _time.monotonic() + budget
+    pool = _cf.ThreadPoolExecutor(max_workers=int(fcfg.get("followup_workers", 4)))
+    futs = {}
+    if fetch_neighbours is not None:
+        for i, r in out.iterrows():
+            futs[i] = pool.submit(fetch_neighbours, float(r["ra"]), float(r["dec"]))
+    n_timeout = 0
+    for i, r in out.iterrows():
         cand = r.to_dict()
         nb = None
+        tested = fetch_neighbours is not None
         if fetch_neighbours is not None:
+            left = t_end - _time.monotonic()
             try:
-                nb = fetch_neighbours(float(cand["ra"]), float(cand["dec"]))
+                if left <= 0:
+                    raise TimeoutError("follow-up budget spent")
+                nb = futs[i].result(timeout=min(per_call, left))
                 if nb is not None and len(nb) and "source_id" in nb.columns:
                     nb = nb[nb["source_id"].astype(str) != str(cand["source_id"])]
             except Exception as exc:                    # noqa: BLE001
+                tested = False
+                n_timeout += isinstance(exc, (TimeoutError, _cf.TimeoutError))
                 print(f"[ring/wd] neighbour fetch failed for {cand.get('source_id')}: "
                       f"{exc!r}", flush=True)
-        rows.append(ovet.beam_blend_verdict(cand, nb, c))
+        rec = ovet.beam_blend_verdict(cand, nb, c)
+        if fetch_neighbours is not None and not tested:
+            rec["blend_verdict"] = "untested"
+        rows.append(rec)
+    pool.shutdown(wait=False, cancel_futures=True)
+    out.attrs["n_neighbour_timeouts"] = n_timeout
     for k in rows[0]:
         out[k] = [r[k] for r in rows]
     if fetch_neighbours is None:
@@ -143,7 +172,10 @@ def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
     out["simbad_otype"] = ""
     if fetch_simbad is not None:
         try:
-            sb = fetch_simbad(out[["source_id", "ra", "dec"]])
+            _p = _cf.ThreadPoolExecutor(max_workers=1)
+            sb = _p.submit(fetch_simbad, out[["source_id", "ra", "dec"]]).result(
+                timeout=float(fcfg.get("followup_simbad_budget_s", 900.0)))
+            _p.shutdown(wait=False, cancel_futures=True)
             if sb is not None and len(sb):
                 sb = sb.copy()
                 sb["source_id"] = sb["source_id"].astype(str)
@@ -162,7 +194,9 @@ def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
         (reason == "")
     reason[f] = "background_source_no_comovement"
     f = ~out["blend_verdict"].isin(["clean", "isolated"]) & (reason == "")
-    reason[f] = "beam_blend" if fetch_neighbours is not None else "blend_untested"
+    untested = out["blend_verdict"] == "untested"
+    reason[f & untested] = "blend_untested"
+    reason[f & ~untested] = "beam_blend"
     otype = rscr.text_column(out, "simbad_otype").str.lower()
     f = otype.str.contains("agn|qso|galaxy|seyfert|cv|nova|\\*\\*|sb|eb",
                            regex=True).fillna(False).astype(bool) & (reason == "")

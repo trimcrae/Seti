@@ -354,6 +354,8 @@ def stage_assess(cfg: dict, out: Path, *, followup: bool = True,
             ring_after = fu[fu["ring_candidate"].astype(bool)
                             & (fu["followup_verdict"] == "surviving")]
             legs["wd"]["n_ring_candidates_after_followup"] = int(len(ring_after))
+            legs["wd"]["followup_neighbour_timeouts"] = int(fu.attrs.get("n_neighbour_timeouts", 0))
+            legs["wd"]["n_followup"] = int(len(fu))
             legs["wd"]["n_surviving_after_followup"] = int(
                 (fu["followup_verdict"] == "surviving").sum())
             legs["wd"]["followup_reasons"] = {k: int(v) for k, v in

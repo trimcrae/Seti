@@ -463,10 +463,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Refresh the committed vet shards
+      - name: Refresh the committed aggregate
         run: |
           git fetch --quiet origin "${{ github.ref_name }}" || true
           git checkout --quiet "origin/${{ github.ref_name }}" -- results/growth/direct 2>/dev/null || true
+      # Only THIS run's vet shards: the branch carries every earlier vet's
+      # vet/shard_*/ (a six-shard vet leaves shard_04, shard_05 behind a
+      # four-shard one), and vet-gather used to pool whatever it found.  The
+      # committed shard dirs are dropped, this run's artifacts laid in, and
+      # --vet-shards admits only shard_00..shard_<n-1> of an n-shard vet
+      # (docs/channel-brief.md §0.7).  A shard whose artifact is missing
+      # reads as not vetted, never as a stale pass.
+      - name: Purge checkout-inherited vet shards
+        run: rm -rf results/growth/direct/vet/shard_*
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
@@ -475,7 +484,8 @@ jobs:
           path: results/growth/direct/vet/
       - name: Gather the vet shards
         run: |
-          python -m seti.growth.direct --stage vet-gather
+          python -m seti.growth.direct --stage vet-gather \
+            --vet-shards ${{ github.event.inputs.vet_shards || '4' }}
           echo "=== vet ==="
           python - <<'PY'
           import json

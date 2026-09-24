@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import re
 import time as _time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -594,6 +595,35 @@ def _fill_positions_from_rotation(pos: pd.DataFrame, ids, rot: pd.DataFrame) -> 
     return out.drop_duplicates("star_id", keep="first").reset_index(drop=True)
 
 
+#: stars_*.csv files written DOWNSTREAM of assess (assess's own tiered table and
+#: the light-curve re-detection).  They share the screen's ``stars_`` prefix
+#: but are not screen output, and must never be read back as screen records.
+DOWNSTREAM_STAR_TABLES = frozenset({"stars_vetted.csv", "stars_redetect.csv"})
+_SCREEN_STARS_RE = re.compile(r"^stars_(?P<cat>.+?)(?:_s\d+of\d+)?\.csv$")
+
+
+def screen_star_files(conf: dict, out: Path) -> list[Path]:
+    """The screen's per-catalogue star tables in ``out``, and nothing else.
+
+    A screen table is ``stars_<catalogue>[_s<i>of<n>].csv`` (stage_screen).
+    When the config names its catalogues, a file counts only if <catalogue>
+    is one of them; either way the downstream tables in
+    :data:`DOWNSTREAM_STAR_TABLES` are excluded.  ``stars_*.csv`` used to be
+    read whole minus ``stars_vetted.csv``, so a checked-out
+    ``stars_redetect.csv`` was pooled into assess as if it were screen output.
+    """
+    known = set((conf or {}).get("catalogues") or {})
+    keep = []
+    for fp in sorted(Path(out).glob("stars_*.csv")):
+        if fp.name in DOWNSTREAM_STAR_TABLES:
+            continue
+        m = _SCREEN_STARS_RE.match(fp.name)
+        if not m or (known and m.group("cat") not in known):
+            continue
+        keep.append(fp)
+    return keep
+
+
 def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None, cone_fn=None,
                  records: list[dict] | None = None, log=None,
                  acquire_report: dict | None = None, mast_fn=None,
@@ -604,9 +634,7 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     vconf = conf.get("vet") or {}
     if records is None:
         frames = []
-        for fp in sorted(glob.glob(str(out / "stars_*.csv"))):
-            if Path(fp).name == "stars_vetted.csv":
-                continue
+        for fp in screen_star_files(conf, out):
             try:
                 d = pd.read_csv(fp, dtype={"star_id": str, "star_key": str})
             except Exception:                             # noqa: BLE001

@@ -119,6 +119,12 @@ against the result file before quoting it elsewhere.
 | **ROMAN/statite** (`roman.statite`) | S43, the statite: a CGI reflected-light point source whose astrometry is fixed rather than Keplerian; grey, specular | CGI Level 2–4 products | `roman screen --channel statite` | `roman.yml` | `roman.md` §2.4 | **Pending CGI data**; neighbours Jaiswal 2023 (surface glints) and Vides+2019 (WFIRST coronagraph laser SETI) |
 | **ROMAN/paces** (`roman.bridge`) | Every existing light-curve / spectrum channel (dips, glint, secular fade, RUST, KNELL, METRONOME, narrow lines) on Roman products with GBTDS-season parameters and the F146/F087 achromaticity test | as above | `roman screen --channel paces` | `roman.yml` | `roman.md` §3, §4A | `results/roman/paces/summary.json` (run 7, RMDC26): every pace ran on 133 GBTDS-like curves (METRONOME on 30); glint flagged 69 microlensing peaks, so the glint flag now also requires the event duration below `max_event_duration_d`. Run 4 on 2,688 simulated supernovae: 1,205 tagged transient-like, secular/RUST/KNELL `insufficient` at HLTDS sampling. Not a sky result |
 
+## Gaia DR4 (pre-release intake; built 2026-09-24; DR4 scheduled 2026-12-02)
+
+| Channel | Question | Data | CLI | Workflow | Doc | Results → current verdict |
+|---|---|---|---|---|---|---|
+| **PARALLAX4** (`parallax4`) | Grey (G/BP/RP-achromatic) per-transit dips/brightenings with NO simultaneous photocentre shift — the anomaly proven ON the target, killing blends at mas scale; and, for every channel's shortlist, does the photocentre move with the brightness (blend) or not | Gaia DR3 epoch photometry (CDN bulk, ~11.75 M light curves) now; DR4 per-transit astrometry + photometry on release (inert probe answers `DR4_NOT_RELEASED`); reader validated on the real June-2026 DR4 epoch-astrometry prerelease | `parallax4 --stage {probe,controls,sweep,reduce,vet,watchlist,dr4,summary}` | `parallax4.yml` (`stage=dr4` on release day) | `parallax4.md` | `results/parallax4/summary.json`; release-day targets `results/parallax4/dr4_watchlist.csv` and controls `dr4_controls.csv` |
+
 ## Infrastructure (not channels)
 
 | Module | Role | CLI / entry | Workflow | Doc | Outputs |

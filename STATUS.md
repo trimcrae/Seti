@@ -10,6 +10,70 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### PARALLAX4: Gaia DR4 intake built; DR3 grey-dip half run on all 11.75 M light curves, 2026-09-24
+
+**New channel** (`src/seti/parallax4/`, `docs/parallax4.md`,
+`.github/workflows/parallax4.yml`). Question: grey (G/BP/RP-achromatic)
+per-transit dips/brightenings with **no simultaneous photocentre shift** —
+the anomaly proven ON the target at mas scale, killing the blend/neighbour
+failure mode ~10³–10⁵× more finely than a TESS pixel — and, for every other
+channel's shortlist, does the photocentre move with the brightness. Gaia DR4
+(ESA: **2 December 2026**, all epoch astrometry/photometry/RVs for ~2.8 B
+sources) supplies the per-transit astrometry; until then the DR4 stage answers
+`DR4_NOT_RELEASED` (verified on the runner).
+
+What exists and is verified on real data:
+
+* **Reader** with run-time column discovery, validated on the real ESA DR4
+  epoch-astrometry prerelease (12 sources, `Gaia DR4_RC3`, sha256-pinned
+  fixture): all 12 published parallaxes recovered by a 5-parameter fit
+  (HD 114762 25.63 vs 25.6 mas); **DR3 photometric transit_ids are DR4
+  transit_ids** (63/65 for Gaia-4, times agree to 1.3 s); the draft DR4 data
+  model (PDF, parsed on the runner) spells `epoch_photometry` columns
+  `g_obs_time`, `g_flux`, … which the roles already resolve.
+* **Photocentre test** (per-transit AL residual vs ψ = φ/(1+φ), exact for any
+  depth; scan-angle harmonics, neighbour window-membership, detector-frame
+  and per-sector systematics): 21/21 simulated scenes correct; blended-EB
+  photocentre shift recovered to < 1%. First real joint photometry ×
+  per-transit astrometry fit (Gaia-4, 41 transits): D = 16 ± 6 mas per unit
+  ΔF/F, `AMBIGUOUS` (0.5% flux rms, little leverage).
+* **Release-day lists**: `results/parallax4/dr4_watchlist.csv` — 101,609
+  Gaia ids from every channel (50 named in STATUS/docs, 10.8 k from ≤ 2 MB
+  candidate files, 90.8 k from screen-level lists); `dr4_controls.csv` —
+  870 Gaia DR3 VIMs (expected BLEND) and 300 bright isolated clean EBs
+  (expected not BLEND), which gate every DR4 verdict.
+
+**Controls.** Photometric gate: first attempt FAILED (run 36019508284:
+tier-A recovery 0.75 < 0.80 — grey test ignored the star's own colour
+variability); fixed and re-defined on colour-testable injections (stated as a
+post-failure change); PASS in run 36028172559 (0.86 pilot; **0.875 over
+3,580 colour-testable injections at full scale**, dust called grey 0.03%,
+colour-testable fraction 49%). Astrometric: A3 DR3 varstrometry **FAILED its
+pre-specified contrast** (blended EBs have *lower* RUWE than blended quiet
+stars, ratio 0.72; the within-EB amplitude dependence is stronger for blended
+than isolated EBs, Fisher z = 3.3, as a diagnostic) → `gate_astrometric =
+FAIL`; release-day verdicts are gated by the VIM/EB list instead.
+
+**Full DR3 sweep (run 36028172559, 24 shards, all 3,386 CDN files, 72.8 GB):**
+11,754,237 sources read, 11,292,680 searched, 540,529,234 usable transits,
+5,585,379 qualifying episodes, 40,380 tier-A (grey, colour-constrained,
+multi-transit, non-periodic). The global epoch-cluster veto flagged 19
+0.25-d bins. **The local (same-pixel) coincidence veto in this run used a
+wrong null** (uniform in time; Gaia observes a pixel's sources at the same
+~40 visits, so coincidences are expected) and removed 77,258 of 110,188
+tier-A/B episodes; corrected (per-pixel-epoch transit counts) and re-run
+dispatched (run 36063279950). From the over-vetoed set: 9,126 tier-A
+episodes on 8,348 sources → catalogue vet killed 7,122 (Gaia EB table
+7,058, duplicated_source 165, DR3 VIM 4; neighbour flux match 10 of the
+400 cone-checked) → **391 cone-checked survivors** (216 clean, 175 flagged)
+plus 835 catalogue-only survivors. The top survivors are 20–40%-deep grey
+dips on photometrically quiet G = 13–16 stars with 1–3 dip episodes —
+the signature of detached eclipsing binaries Gaia did not classify; the
+deep vet (refetch, SIMBAD, VSX, ZTF box-search with Gaia-dip phasing) is
+tracing each. **No candidate is claimed**: a survivor becomes interesting
+only if it is not an eclipsing binary AND DR4's photocentre returns
+`ON_TARGET`.
+
 ### Handoff sweep: every in-flight run collected and vetted, nothing left standing, 2026-09-24
 
 Fifteen channel branches were carrying committed run results that never reached

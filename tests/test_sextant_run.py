@@ -836,6 +836,94 @@ def test_a_control_refused_on_the_horizons_route_is_scored_through_the_pinned_ro
     assert out["controls"]["verdict"] == "CONTROLS_RECOVERED"
 
 
+def test_a_gaia_outage_is_recorded_as_an_outage_and_stops_the_shard(tmp_path, monkeypatch):
+    """Run 35865402620: every chunk's TAP query timed out, 4500 objects were
+    written as NO_OBSERVATIONS_RETURNED and assess said NO_OBJECT_FITTED."""
+    numbers = list(range(1, 101))
+    _stub_shard_io(monkeypatch, numbers, controls={7})
+    calls = []
+
+    def failing_fetch(gaia, chunk, release, paths, tag, log=print):
+        calls.append(tag)
+        return {}, {"tag": tag, "verdict": "NO_DATA_REACHED", "failed": True,
+                    "error": "observation query failed: TAP query failed after 4 attempts: "
+                             "Read timed out. (read timeout=10)"}
+
+    monkeypatch.setattr(RUN, "fetch_chunk", failing_fetch)
+    conf = RUN.load_config({"sextant": {"objects_per_chunk": 10}})
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    E.save_json(paths.results / "controls_greenberg2020.json", {"rows": {}})
+    slept = []
+    rec = RUN.stage_shard(conf, paths, 0, 1, gaia=_FakeGaia(), client=_FakeGaia(),
+                          budget_minutes=600.0, log=lambda *a: None,
+                          sleep_fn=slept.append)
+    assert rec["verdict"] == "ARCHIVE_UNREACHABLE_PARTIAL"
+    assert rec["archive_stop"]["after_chunks"] == conf["max_consecutive_failed_chunks"]
+    assert len(calls) == 2 * conf["max_consecutive_failed_chunks"]     # one retry each
+    assert len(slept) == conf["max_consecutive_failed_chunks"]
+    assert rec["funnel"]["verdicts"] == {"GAIA_QUERY_FAILED": 40}
+    out = RUN.stage_assess(conf, paths, log=lambda *a: None)
+    assert out["verdict"] == "NO_DATA_REACHED__GAIA_TAP_FAILED"
+    assert out["n_gaia_query_failed"] == 40
+
+
+def test_a_retried_chunk_that_answers_is_fitted(tmp_path, monkeypatch):
+    numbers = list(range(1, 21))
+    _stub_shard_io(monkeypatch, numbers, controls=set())
+    state = {"n": 0}
+
+    def flaky_fetch(gaia, chunk, release, paths, tag, log=print):
+        state["n"] += 1
+        if state["n"] == 1:
+            return {}, {"tag": tag, "failed": True, "error": "Read timed out"}
+        return {n: {"number_mp": np.array([n])} for n in chunk}, {"tag": tag}
+
+    monkeypatch.setattr(RUN, "fetch_chunk", flaky_fetch)
+    conf = RUN.load_config({"sextant": {"objects_per_chunk": 10}})
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    rec = RUN.stage_shard(conf, paths, 0, 1, gaia=_FakeGaia(), client=_FakeGaia(),
+                          budget_minutes=600.0, log=lambda *a: None, sleep_fn=lambda s: None)
+    assert rec["verdict"] == "OK"
+    assert rec["funnel"]["verdicts"] == {"FITTED": 20}
+
+
+def test_an_empty_greenberg_cache_is_a_miss_and_designation_columns_parse(
+        tmp_path, monkeypatch):
+    """The committed controls_greenberg2020.json held 0 rows and was re-used
+    forever.  An empty parse is re-fetched, and a table keyed by a designation
+    column ("(101955) Bennu") still yields its numbers."""
+    import sys
+
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    E.save_json(paths.results / "controls_greenberg2020.json",
+                {"n_rows": 0, "rows": {}, "retrieved_utc": "2026-09-23T12:53:15Z",
+                 "vizier": "J/AJ/159/92"})
+
+    class _Tab(list):
+        colnames = ["Name", "da/dt", "e_da/dt"]
+
+    tab = _Tab([{"Name": "(101955) Bennu", "da/dt": -19.0, "e_da/dt": 0.1},
+                {"Name": "99942 Apophis", "da/dt": -20.0, "e_da/dt": 2.0}])
+
+    class _Vizier:
+        def __init__(self, **k):
+            pass
+
+        def get_catalogs(self, ident):
+            return [tab]
+
+    fake = types.ModuleType("astroquery.vizier")
+    fake.Vizier = _Vizier
+    monkeypatch.setitem(sys.modules, "astroquery.vizier", fake)
+    rows = RUN.load_yarkovsky_catalogue(paths, log=lambda *a: None)
+    assert set(rows) == {101955, 99942}
+    assert rows[101955]["dadt_1e4_au_per_myr"] == -19.0
+    import json
+
+    rec = json.loads((paths.results / "controls_greenberg2020.json").read_text())
+    assert rec["verdict"] == "OK" and rec["tables_seen"][0]["columns"] == tab.colnames
+
+
 # ---------------------------------------------------------------------------
 # 5. The assessment
 # ---------------------------------------------------------------------------

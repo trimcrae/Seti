@@ -163,9 +163,10 @@ def stage_acquire(cfg: dict, out: Path, leg: str, *, shard: int = 0, n_shards: i
         _write(d / "acquire.json", meta)
     elif leg == "bd":
         tp = d / "targets.csv"
-        # Every shard fetches the (small) target list itself: a targets.csv in
-        # the checkout is the COMMITTED list of an earlier run, and reusing it
-        # would put shards of one run on different target lists.
+        # The target list comes from ``fetchers["bd_targets"]``: on the sharded
+        # path that is scripts/ring_bd_handoff.py, which hands every shard the
+        # ONE list this run's bd-targets job fetched.  A committed targets.csv
+        # in the checkout (an earlier run's list) is never read.
         targets, meta = (fetchers["bd_targets"](cfg) if "bd_targets" in fetchers
                          else acq.fetch_bd_targets(cfg))
         if len(targets):

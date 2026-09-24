@@ -753,6 +753,26 @@ class ChunkResult:
 # ---------------------------------------------------------------------------
 # The client
 # ---------------------------------------------------------------------------
+def _raise_pyvo_poll_timeout(seconds: float) -> None:
+    """Lift pyvo's hard-coded 10-second read timeout on async-job status polls.
+
+    pyvo 1.9 polls a UWS job with ``DEFAULT_JOB_POLL_TIMEOUT = 10`` and passes
+    it as an explicit ``timeout=`` keyword, so the session-level default the
+    broker injects (``setdefault``) never applies.  When the ESA server is slow
+    to answer a status GET, the whole query fails.  That is what emptied run
+    35865402620: all 18 chunks failed with ``Read timed out. (read timeout=10)``
+    and 4500 objects were recorded as unobserved.  The module constant is read
+    at call time, so raising it here takes effect for every later poll.
+    """
+    try:
+        from pyvo.dal import tap as _pyvo_tap
+    except Exception:                                          # noqa: BLE001
+        return
+    cur = float(getattr(_pyvo_tap, "DEFAULT_JOB_POLL_TIMEOUT", 0) or 0)
+    if cur < float(seconds):
+        _pyvo_tap.DEFAULT_JOB_POLL_TIMEOUT = float(seconds)
+
+
 class GaiaSSO:
     """Gaia SSO astrometry over the public ESA TAP service.  No credentials.
 
@@ -769,9 +789,11 @@ class GaiaSSO:
     """
 
     def __init__(self, url: str = GAIA_TAP, timeout: float = 1800.0,
-                 maxrec: int = 2_000_000):
+                 maxrec: int = 2_000_000, poll_timeout: float = 180.0):
         self.url = url
         self.maxrec = int(maxrec)
+        self.timeout = float(timeout)
+        self.poll_timeout = float(poll_timeout)
         self.tap = AlerceTAP(url=url, timeout=timeout, maxrec=maxrec)
         self.last_truncated = False
 
@@ -810,10 +832,11 @@ class GaiaSSO:
         svc = self.tap._service()
         want = int(maxrec or self.maxrec)
         last = None
+        _raise_pyvo_poll_timeout(self.poll_timeout)
         for attempt in range(retries):
             self.tap.calls += 1
             try:
-                res = svc.run_async(adql, maxrec=want)
+                res = svc.run_async(adql, maxrec=want, timeout=self.timeout)
             except Exception as exc:                          # noqa: BLE001
                 last = str(exc)
                 if _fatal_adql(last):

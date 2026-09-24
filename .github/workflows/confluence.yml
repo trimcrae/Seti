@@ -1,0 +1,180 @@
+name: confluence
+
+# CONFLUENCE (docs/confluence.md): do the same Gaia sources sit in the top-q
+# tails of >= 2 channels measured with INDEPENDENT instruments, more often than
+# a covariate-matched null predicts?
+#
+# One job (the account queue is deep; a multi-job run must win a slot per job):
+#   1. offline gate -- the injected confluence is recovered, the shared
+#      covariate confounder is nulled, the null is calibrated;
+#   2. harvest -- download other channels' run ARTIFACTS (their whole scored
+#      parents; the channels commit only survivors) and extract per-star
+#      scores; acquire the ACCEL parent (Gaia nss_acceleration_astro);
+#   3. joint -- one star index, each channel's tails over its whole parent,
+#      keep stars in >= 2 parents of an independent pair;
+#   4. acquire -- Gaia covariates + density for the joint stars, SIMBAD / VSX /
+#      Gaia-vari tags for tail members and a random baseline sample;
+#   5. assess -- the test, the positive controls, the residual, the trace.
+# Full per-channel score tables travel as the `confluence-scores` artifact;
+# only the joint tables and the verdict are committed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'all | harvest (download+extract+joint only) | acquire+assess | assess'
+        required: false
+        default: "all"
+      sources:
+        description: 'space-separated channel:run_id:artifact_glob triples to harvest'
+        required: false
+        default: >-
+          cenotaph:30212775555:cenotaph-analysis
+          ignition:35740159635:ignition-shard-*
+          ignition:35923951760:ignition-shard-*
+          cradle:35741356662:cradle-screen
+          ring_wd:35860904385:ring-solo
+          tailings:30214999391:tailings-outputs
+          ossuary:35741248499:ossuary-final
+      scores_from_run_id:
+        description: 'reuse a prior confluence run''s confluence-scores artifact instead of harvesting'
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  confluence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pandas, numpy; print('pandas', pandas.__version__, 'numpy', numpy.__version__)"
+      - name: Offline gate
+        run: python -m pytest tests/test_confluence.py -q -p no:cacheprovider
+
+      - name: Purge checkout-inherited score tables
+        run: rm -rf results/confluence/scores
+
+      - name: Download channel artifacts
+        if: ${{ github.event.inputs.scores_from_run_id == '' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'harvest') }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/harvest"
+          echo '[]' > "$RUNNER_TEMP/downloads.json"
+          for triple in ${{ github.event.inputs.sources }}; do
+            ch="${triple%%:*}"; rest="${triple#*:}"; run="${rest%%:*}"; pat="${rest#*:}"
+            dest="$RUNNER_TEMP/harvest/$ch/$run"
+            mkdir -p "$dest"
+            t0=$(date +%s)
+            if gh run download "$run" -R "${{ github.repository }}" -p "$pat" -D "$dest"; then st=ok; else st=failed; fi
+            n=$(find "$dest" -type f | wc -l); sz=$(du -sb "$dest" | cut -f1)
+            echo "$ch $run $pat -> $st files=$n bytes=$sz ($(( $(date +%s) - t0 )) s)"
+            python - "$RUNNER_TEMP/downloads.json" "$ch" "$run" "$pat" "$st" "$n" "$sz" <<'PY'
+          import json, sys
+          p, ch, run, pat, st, n, sz = sys.argv[1:]
+          d = json.load(open(p)); d.append({"channel": ch, "run_id": run, "artifact": pat,
+                                            "status": st, "files": int(n), "bytes": int(sz)})
+          json.dump(d, open(p, "w"), indent=1)
+          PY
+          done
+          mkdir -p results/confluence
+          cp "$RUNNER_TEMP/downloads.json" results/confluence/downloads.json
+
+      - name: Harvest (extract per-star scores from the artifacts)
+        if: ${{ github.event.inputs.scores_from_run_id == '' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'harvest') }}
+        run: timeout 5400 python -u -m seti.confluence.run --stage harvest --no-accel --harvest-dir "$RUNNER_TEMP/harvest"
+
+      - name: Upload score tables (after extraction, before any archive call)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: confluence-scores-extracted
+          path: results/confluence/scores/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Acquire the ACCEL parent (Gaia nss_acceleration_astro), bounded
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'harvest' }}
+        continue-on-error: true
+        run: |
+          if [ ! -f results/confluence/scores/accel_nss.parquet ]; then
+            timeout 2400 python -u -m seti.confluence.run --stage accel || echo "::warning::ACCEL parent not acquired"
+          fi
+
+      - name: Reuse a prior run's score tables
+        if: ${{ github.event.inputs.scores_from_run_id != '' }}
+        run: |
+          mkdir -p results/confluence/scores
+          gh run download "${{ github.event.inputs.scores_from_run_id }}" -R "${{ github.repository }}" \
+            -n confluence-scores -D results/confluence/scores
+          ls -la results/confluence/scores
+
+      - name: Upload score tables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: confluence-scores
+          path: results/confluence/scores/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Resolve mission ids (ARC KIC/TIC -> positions) if not yet done
+        if: ${{ github.event.inputs.stage != 'assess' }}
+        run: |
+          if [ ! -f results/confluence/arc_positions.csv ]; then
+            python -u -m seti.confluence.run --stage resolve
+          fi
+
+      - name: Inventory and joint table
+        if: ${{ github.event.inputs.stage != 'assess' }}
+        run: |
+          python -u -m seti.confluence.run --stage inventory
+          python -u -m seti.confluence.run --stage joint
+          ls -la results/confluence
+
+      - name: Commit the harvest (intermediate)
+        if: ${{ success() && github.event.inputs.stage != 'assess' }}
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh "confluence: harvest + joint table" \
+            $(ls results/confluence/*.json results/confluence/*.csv results/confluence/joint_long.parquet 2>/dev/null)
+
+      - name: Acquire covariates and known-class tags (bounded)
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire+assess' }}
+        continue-on-error: true
+        run: timeout 12000 python -u -m seti.confluence.run --stage acquire
+
+      - name: Assess
+        if: ${{ always() && github.event.inputs.stage != 'harvest' }}
+        run: |
+          python -u -m seti.confluence.run --stage assess
+          python - <<'PY'
+          import json
+          s = json.load(open("results/confluence/summary.json"))
+          print(json.dumps({k: v for k, v in s.items() if k not in ("significant_groups",)},
+                           indent=1)[:6000])
+          for g in s.get("significant_groups", [])[:40]:
+              print(g)
+          PY
+
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh "confluence: results (run ${{ github.run_id }})" \
+            $(ls results/confluence/*.json results/confluence/*.csv results/confluence/*.parquet 2>/dev/null)

@@ -10,6 +10,34 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### Handoff sweep: every in-flight run collected and vetted, one object left standing, 2026-09-24
+
+Fifteen channel branches were carrying committed run results that never reached
+`main`; all are merged (SPARK's paths taken verbatim — its branch history
+conflicts across other channels). Each open lead was then vetted to a mechanism:
+
+| channel | outcome |
+|---|---|
+| RELAY | 22 pair-line drift matches = 11 hits, 3 of them a "Frequency rank" column parsed as MHz, 8 Enriquez+2017 GPS-L3/Inmarsat RFI; 14 vs 14.6 expected by chance after cleaning. The target list's 13 links at the 100 m beam (0.55 expected) were all close binaries with bad parallaxes; with bound/<4″ pairs excluded, every beam is below chance. `PAIRLINE_MATCHES_AT_CHANCE`. |
+| RING | all six pulsar "candidates" were defects (ecliptic-position parser giving 49″ errors; AllWISE upper limits used as colours; unlocalised positions). wd/ffp legs had never run (hard-coded VizieR columns; unmatched name column); fixed. 0 survivors on legs reached. |
+| IGNITION | 650/2,047 tiles (≈34% of the |b|>15° sky); 9 + 5 rises, none dust-coloured (W2/W1 rise 0.60–1.18 vs 1.5–2.0 for 1000–1500 K dust); PM blends, fast rotators, optical rises. Sweep continuing. |
+| SPECTRA-PERSIST | 167/167 lines measured per exposure; the last open line (2750-54242-0547, 6856 Å) is Hα of a z≈0.045 galaxy in the fibre — re-seen 8 yr later by LAMOST at 12.9σ. |
+| METRONOME | no star survives; the five TESS interest clocks are eclipse/transit periods (TOI-1338, WASP-41, three EBs) with Tu+2022 "flares" on eclipse egress; aperture-scale variable cone now in assess. |
+| GROWTH-direct | 4,725/4,725 KOIs reached after a stale-shard-upload fix; 0 depth-change candidates. |
+| SEXTANT | four stacked pipeline defects (unquoted CSV cells, commit-back blind to new files, integrator extrapolating 6 yr past its ephemeris grid, controls refused on the Horizons route) and then pyvo's hard-coded 10 s status timeout — no science number yet. |
+| CENTURY | retargeted from 24 mostly-eclipsing variables to 2,400 VSX pulsators (RR, Cep, Mira, δ Sct, SRa, RV Tau); first sweep crashed on a pandas-3 NA in plate labels; fixed and re-running. |
+| **CRADLE** | 12 candidates: 6 killed (galaxy blends by W3/W4 centroid offset, a WDS binary, W4 confusion, a young star), 5 caveated (3 already published warm-debris stars), **1 unexplained: Gaia DR3 6225457312033584384** — 262 K dust, L_IR/L* = 1.5%, 10^4.86 above the collisional steady-state maximum, W3 45σ / W4 15σ, no Gaia or Legacy Surveys source within 10.6″, no SIMBAD entry, old by isochrone and kinematics, normal DESI spectrum. **A natural late giant impact is the default reading**; follow-up (NEOWISE variability, full IR SED, clean Li/activity age, companions, cirrus, literature, occurrence) is running. |
+
+Two infrastructure defects were found in more than one channel and fixed repo-wide:
+`commit_results.sh` ignored new files inside a tracked directory; and 19 of 23 sharded
+workflows uploaded checkout-inherited or other shards' files that the reducer then merged
+with no rule for which copy wins (docs/channel-brief.md §0.7, `test_a_shard_uploads_only_what_it_wrote`).
+
+New channels under construction, each requiring two independent observables to agree:
+OCCULT (opaque-lens steps in archival OGLE/KMTNet microlensing, S40), ANTIPHASE (grey
+optical fade + energy-balanced mid-IR rise), CONFLUENCE (cross-channel tail overlap vs a
+covariate-matched null), PARALLAX4 (Gaia DR4 photometry-vs-photocentre test, prebuilt).
+
 ### METRONOME: the last five interest stars are eclipses, and the "flares" sit on the egress, 2026-09-23
 
 **No METRONOME star survives.** `summary.json` (rebuilt from the records at

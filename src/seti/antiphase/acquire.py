@@ -388,6 +388,69 @@ def fetch_ztf_batched(stars: pd.DataFrame, *, table: str, workers: int = 4,
             "route": "batched", "table": table}
 
 
+def vsx_query(vtype: str, dec_min: float = -30.0, max_lo: float = 12.5, max_hi: float = 17.0,
+              limit: int = 2000, timeout_s: float = 120.0) -> dict:
+    """VSX (VizieR ``B/vsx/vsx``) variables of one type in the ZTF footprint.
+
+    The type constraint is sent as given and re-applied locally (a type field
+    such as ``RCB:`` or ``M+EA`` is kept if its first component is ``vtype``,
+    uncertainty colon stripped), so a VizieR string-match quirk cannot widen it.
+    """
+    import requests
+
+    params = {"-source": "B/vsx/vsx", "-out.max": str(int(limit)),
+              "-out": "OID Name RAJ2000 DEJ2000 Type max n_max min Period",
+              "Type": f"{vtype}*", "DEJ2000": f">{float(dec_min)}",
+              "max": f"{float(max_lo)}..{float(max_hi)}"}
+    last = None
+    for base in VIZIER_ASU:
+        try:
+            r = requests.get(base, params=params, timeout=timeout_s)
+            r.raise_for_status()
+            df = parse_asu_tsv(r.text)
+            if not len(df):
+                return {"status": "NO_ROWS", "endpoint": base, "rows": []}
+            rows = []
+            for _, x in df.iterrows():
+                t = str(x.get("Type", "")).strip()
+                first = t.replace(":", "").split("+")[0].split("|")[0].strip()
+                if first != vtype:
+                    continue
+                try:
+                    ra, dec = float(x["RAJ2000"]), float(x["DEJ2000"])
+                except (TypeError, ValueError):
+                    continue
+                rows.append({"name": str(x.get("Name", "")).strip(), "ra": ra, "dec": dec,
+                             "vsx_type": t, "max": str(x.get("max", "")).strip(),
+                             "period": str(x.get("Period", "")).strip()})
+            return {"status": "OK", "rows": rows, "endpoint": base, "n_raw": int(len(df))}
+        except Exception as exc:                        # noqa: BLE001
+            last = repr(exc)[:300]
+    return {"status": "FAILED", "error": last}
+
+
+def neowise_epochs_many(objs: pd.DataFrame, radius_arcsec: float = 2.5,
+                        chunk: int = 150) -> tuple[dict, dict]:
+    """NEOWISE epochs for many objects via IGNITION's upload ladder and local grouping."""
+    from ..ignition.acquire import fetch_neowise_upload, group_by_star, reduce_star
+
+    eps: dict = {}
+    led = {"chunks": [], "n_ok": 0}
+    for c0 in range(0, len(objs), int(chunk)):
+        sub = objs.iloc[c0:c0 + int(chunk)]
+        qr = fetch_neowise_upload(sub, radius_arcsec=radius_arcsec)
+        led["chunks"].append({"chunk": c0, "status": qr.status, "n_rows": qr.n_rows,
+                              "error": (qr.error or "")[:200]})
+        if qr.data is None or not len(qr.data):
+            continue
+        for sid, raw in group_by_star(qr.data, sub, tol_arcsec=radius_arcsec).items():
+            ep, _rec = reduce_star(sid, raw)
+            if len(ep):
+                eps[sid] = ep
+                led["n_ok"] += 1
+    return eps, led
+
+
 def neowise_epochs_cone(ra: float, dec: float, pmra: float = 0.0, pmdec: float = 0.0,
                         radius_arcsec: float = 2.5) -> tuple[pd.DataFrame, dict]:
     """IGNITION's NEOWISE cone -> (epoch table, status record) for one object."""

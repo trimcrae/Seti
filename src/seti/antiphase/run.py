@@ -49,7 +49,7 @@ from .null import injection_efficiency, run_null, score_fap
 from .pipeline import evaluate_for_injection, evaluate_pack, ir_arrays, make_pack
 
 OUT = Path("results") / "antiphase"
-STAGES = ("controls", "shard", "reduce")
+STAGES = ("controls", "natural", "shard", "reduce")
 
 
 def _now() -> str:
@@ -303,6 +303,90 @@ def run_controls(conf: dict, fetchers: dict | None = None) -> dict:
               f"energy={rec.get('energy_verdict')} lag={rec.get('best_lag')}", flush=True)
     out["outcomes"] = outcomes
     out["gate"] = controls_gate(outcomes, kinds)
+    return out
+
+
+# ===========================================================================
+# natural-class sample (VSX): the ladder measured on known natural variables
+# ===========================================================================
+DEFAULT_NATURAL = {"types": {"RCB": 60, "UXOR": 60, "YSO": 60, "M": 60, "EA": 60},
+                   "max_lo": 12.5, "max_hi": 17.0, "seed": 20260924}
+
+
+def summarise_natural(recs: list[dict]) -> dict:
+    """Per VSX type: coupling labels, verdicts and natural classes (pure)."""
+    out: dict = {}
+    for r in recs:
+        t = r.get("vsx_class")
+        o = out.setdefault(t, {"n": 0, "labels": {}, "verdicts": {}, "natural_classes": {},
+                               "candidates": []})
+        o["n"] += 1
+        for key, fld in (("labels", "coupling_label"), ("verdicts", "verdict"),
+                         ("natural_classes", "natural_class")):
+            v = r.get(fld)
+            if v:
+                o[key][str(v)] = o[key].get(str(v), 0) + 1
+        if r.get("verdict") == "ANTIPHASE_CANDIDATE":
+            o["candidates"].append(r.get("name"))
+    leaks = [n for v in out.values() for n in v["candidates"]]
+    return {"by_type": out, "n_leaks": len(leaks), "leaks": leaks}
+
+
+def run_natural(conf: dict, fetchers: dict | None = None) -> dict:
+    nc = {**DEFAULT_NATURAL, **(conf.get("natural") or {})}
+    f = {"vsx": acq.vsx_query, "neowise_many": acq.neowise_epochs_many,
+         "ztf_table": acq.find_ztf_objects_table, "ztf_batched": acq.fetch_ztf_batched,
+         "gaia_cone": acq.gaia_neighbours_vizier, "allwise": acq.allwise_vizier,
+         **(fetchers or {})}
+    rng = np.random.default_rng(int(nc["seed"]))
+    rows, qlog = [], {}
+    for vt, n in nc["types"].items():
+        q = f["vsx"](vt, max_lo=float(nc["max_lo"]), max_hi=float(nc["max_hi"]))
+        qlog[vt] = {k: v for k, v in q.items() if k != "rows"}
+        got = q.get("rows") or []
+        qlog[vt]["n_rows"] = len(got)
+        if len(got) > int(n):
+            got = [got[k] for k in sorted(rng.choice(len(got), int(n), replace=False))]
+        for r in got:
+            rows.append({**r, "vsx_class": vt, "source_id": f"vsx{len(rows)}",
+                         "pmra": 0.0, "pmdec": 0.0})
+    out = {"generated_utc": _now(), "git_sha": _git_sha(), "vsx": qlog, "n_objects": len(rows)}
+    if not rows:
+        out["status"] = "NO_DATA_REACHED"
+        return out
+    objs = pd.DataFrame(rows)
+    eps, nled = f["neowise_many"](objs)
+    out["neowise"] = {"n_with_epochs": len(eps), "chunks": nled.get("chunks")}
+    have = objs[objs["source_id"].isin(set(eps))]
+    bands_by: dict = {}
+    tb = f["ztf_table"]()
+    out["ztf_objects_table"] = tb
+    if tb.get("status") == "OK" and len(have):
+        zlog = f["ztf_batched"](have, table=tb["table"], budget_s=3600.0,
+                                on_result=lambda s, r: bands_by.__setitem__(s, r))
+        out["ztf"] = {k: v for k, v in zlog.items() if k != "ledger"}
+    recs = []
+    for r in have.to_dict("records"):
+        z = bands_by.get(r["source_id"]) or {}
+        bands = {b: v for b, v in (z.get("bands") or {}).items() if b in ("g", "r")}
+        meta = {"ra": r["ra"], "dec": r["dec"]}
+        try:
+            meta.update(_control_meta(r["ra"], r["dec"], f))
+        except Exception as exc:                        # noqa: BLE001
+            meta["meta_error"] = repr(exc)[:200]
+        pack = make_pack(eps[r["source_id"]], bands, meta, conf.get("coupling"))
+        rec = evaluate_pack(pack, conf)
+        recs.append({"name": r["name"], "vsx_class": r["vsx_class"], "vsx_type": r["vsx_type"],
+                     "ra": r["ra"], "dec": r["dec"], "ztf_status": z.get("status"),
+                     **{k: rec.get(k) for k in ("coupling_label", "verdict", "natural_class",
+                                                "reasons", "n_matched", "n_faded", "depth_mag",
+                                                "chroma", "k_colour", "k_colour_err",
+                                                "w2_sigma", "w2_contrast", "energy_verdict",
+                                                "ratio_best", "t_bb_k", "best_lag",
+                                                "natural_flags", "period_d", "untested")}})
+    out["objects"] = recs
+    out["summary"] = summarise_natural(recs)
+    out["status"] = "OK"
     return out
 
 
@@ -680,6 +764,11 @@ def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
     cpath = out / "controls.json"
     ctrl = json.loads(cpath.read_text()) if cpath.exists() else {}
     gate = ctrl.get("gate", "NOT_RUN")
+    npath = out / "natural.json"
+    nat = json.loads(npath.read_text()) if npath.exists() else {}
+    nat_summary = {"status": nat.get("status", "NOT_RUN"), "n_objects": nat.get("n_objects"),
+                   "n_with_neowise": (nat.get("neowise") or {}).get("n_with_epochs"),
+                   **(nat.get("summary") or {})}
     # --- funnel ---------------------------------------------------------------
     zc = zs["status"].value_counts().to_dict() if len(zs) else {}
     fun = {"n_parent": sum(int((s.get("funnel") or {}).get("n_parent", 0)) for s in shards),
@@ -717,6 +806,8 @@ def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
         verdict = "ANTIPHASE_CANDIDATES" if n_cand else "NO_ANTIPHASE_CANDIDATE"
     if degr:
         verdict = f"DEGRADED ({'; '.join(degr)}); {verdict}"
+    if int(nat_summary.get("n_leaks") or 0):
+        verdict = f"NATURAL_SAMPLE_LEAKS:{nat_summary['n_leaks']}; {verdict}"
     if gate == "FAIL":
         verdict = f"CONTROLS_FAILED; {verdict}"
     elif gate in ("UNTESTED", "NOT_RUN"):
@@ -731,6 +822,7 @@ def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
             "run_id": run_id or os.environ.get("GITHUB_RUN_ID", ""), "git_sha": _git_sha(),
             "ignition_run_id": sv.get("ignition_run_id"),
             "controls_gate": gate, "controls_outcomes": ctrl.get("outcomes"),
+            "natural_sample": nat_summary,
             "funnel": fun,
             "coverage": {"shards_expected": n, "shards_found": len(found & expected),
                          "parent": "IGNITION tiles parent (Gaia DR3 G<14.5 dwarfs, plx>3 mas, "
@@ -776,6 +868,13 @@ def main(argv=None) -> int:
         res = run_controls(conf)
         _write_json(out / "controls.json", res)
         print(f"[antiphase] controls gate: {res['gate']}  outcomes: {res['outcomes']}")
+        return 0
+    if a.stage == "natural":
+        res = run_natural(conf)
+        _write_json(out / "natural.json", res)
+        print(f"[antiphase] natural sample: {res.get('status')} n={res.get('n_objects')} "
+              f"neowise={(res.get('neowise') or {}).get('n_with_epochs')}")
+        print(json.dumps(_jsonable(res.get("summary") or {}), indent=1)[:6000])
         return 0
     if a.stage == "shard":
         i, n = (int(x) for x in a.shard.split("/"))

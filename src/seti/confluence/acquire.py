@@ -65,9 +65,15 @@ def gaia_query(adql: str, upload: pd.DataFrame | None = None, name: str = "t",
 def tap_query(url: str, adql: str, upload: pd.DataFrame | None = None, name: str = "t",
               retries: int = 3, ledger: list | None = None, label: str = "") -> pd.DataFrame:
     import pyvo
+    import requests
     from astropy.table import Table
 
-    svc = pyvo.dal.TAPService(url)
+    class _S(requests.Session):   # pyvo's run_sync takes no timeout; bound every call
+        def request(self, *a, **kw):
+            kw.setdefault("timeout", 300)
+            return super().request(*a, **kw)
+
+    svc = pyvo.dal.TAPService(url, session=_S())
     last = None
     for a in range(retries):
         t0 = time.time()

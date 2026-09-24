@@ -215,7 +215,6 @@ def stage_harvest(harvest_dir: Path, scores_dir: Path, out: Path = OUT,
     rep = harvest(harvest_dir, scores_dir)
     if with_accel:
         rep["channels"]["accel_nss"] = stage_accel(scores_dir, out)
-    rep["channels"]["arc_positions"] = stage_resolve(out)
     rep.update(_prov())
     # the manifest can be long; keep it, it is how the next dispatch learns layouts
     _write(out / "harvest.json", rep)

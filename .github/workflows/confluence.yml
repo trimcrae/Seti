@@ -121,6 +121,9 @@ jobs:
           gh run download "${{ github.event.inputs.scores_from_run_id }}" -R "${{ github.repository }}" \
             -n confluence-scores -D results/confluence/scores
           ls -la results/confluence/scores
+          if [ -f results/confluence/scores/_harvest_partial.json ]; then
+            cp results/confluence/scores/_harvest_partial.json results/confluence/harvest.json
+          fi
 
       - name: Upload score tables
         if: always()
@@ -135,7 +138,7 @@ jobs:
         if: ${{ github.event.inputs.stage != 'assess' }}
         run: |
           if [ ! -f results/confluence/arc_positions.csv ]; then
-            python -u -m seti.confluence.run --stage resolve
+            timeout 1500 python -u -m seti.confluence.run --stage resolve || echo "::warning::ARC ids not resolved"
           fi
 
       - name: Inventory and joint table

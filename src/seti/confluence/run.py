@@ -424,6 +424,15 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
                 "overlap_members": len(mem), "overlap_members_tagged": len(mem_att),
                 "overlap_known_rate": mem_rate,
                 "enrichment": (mem_rate / base_rate) if base_rate and base_rate > 0 else None}
+        # "leading": the most extreme overlap members (sum over the member's
+        # channels of -log10 percentile) -- are they the known classes?
+        lead = J[J["star"].isin(mem_att)].assign(
+            lp=lambda d: -np.log10(d["pct"].clip(lower=1e-9)))
+        lead = lead.groupby("star")["lp"].sum().sort_values(ascending=False).head(20)
+        ctrl["leading20_known_rate"] = float(np.mean([s in known for s in lead.index])) \
+            if len(lead) else None
+        ctrl["leading20"] = [{"star": s, "sum_neglog_pct": round(float(v), 2),
+                              "known": s in known} for s, v in lead.items()]
         ctrl["status"] = ("PASS" if (mem_att and base_rate == base_rate
                                      and mem_rate > base_rate) else
                           ("UNTESTED" if not mem_att else "FAIL"))

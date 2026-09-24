@@ -268,6 +268,8 @@ def run_controls(conf: dict, fetchers: dict | None = None) -> dict:
                     rec = f["gaia_alert"](ctrl["gaia_alert"])
                 elif s == "asassn":
                     rec = f["asassn"](ra, dec)
+                    if rec.get("status") == "FAILED":       # Sky Patrol is bursty: one retry
+                        rec = f["asassn"](ra, dec)
                 else:
                     continue
             except Exception as exc:                    # noqa: BLE001

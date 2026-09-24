@@ -453,7 +453,15 @@ def neowise_epochs_many(objs: pd.DataFrame, radius_arcsec: float = 2.5,
 
 def neowise_epochs_cone(ra: float, dec: float, pmra: float = 0.0, pmdec: float = 0.0,
                         radius_arcsec: float = 2.5) -> tuple[pd.DataFrame, dict]:
-    """IGNITION's NEOWISE cone -> (epoch table, status record) for one object."""
+    """IGNITION's NEOWISE cone -> (epoch table, status record) for one object.
+
+    IGNITION's frame cuts first (cc_flags 0000, ph_qual A/B).  A control that
+    loses every epoch to them (a faint star in a crowded plane field, e.g.
+    Gaia20ehk at b ~ -4 deg) is reduced again with ph_qual C allowed and
+    cc_flags ignored, and the record says ``relaxed_cleaning`` --- a control
+    is a test of the detector, not of the survey's cleaning, but the
+    relaxation is never silent.
+    """
     from ..ignition.acquire import fetch_neowise_cone, reduce_star
 
     qr = fetch_neowise_cone(ra, dec, pmra, pmdec, radius_arcsec=radius_arcsec)
@@ -461,6 +469,13 @@ def neowise_epochs_cone(ra: float, dec: float, pmra: float = 0.0, pmdec: float =
     if qr.data is None or not len(qr.data):
         return pd.DataFrame(), rec
     ep, star = reduce_star("control", qr.data)
+    if not len(ep):
+        raw = qr.data.copy()
+        raw.columns = [str(c).lower() for c in raw.columns]
+        ccs = sorted({str(x).strip() for x in raw.get("cc_flags", pd.Series(dtype=str))})
+        ep, star = reduce_star("control", raw, {"ph_qual_ok": ["A", "B", "C"],
+                                                "cc_flags_ok": ccs or ["0000"]})
+        rec["relaxed_cleaning"] = True
     rec.update({k: star[k] for k in ("n_epochs_w1", "n_epochs_w2", "w1_median", "w2_median",
                                      "frac_nb_gt1", "frac_na_gt0") if k in star})
     return ep, rec

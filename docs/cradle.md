@@ -312,6 +312,14 @@ at 02:25Z. Shards 0 and 1 also have identical age-class counts (89/30/12),
 but their neighbour, SIMBAD and NEOWISE counts differ, so they processed
 different stars.
 
+**The checkout-inherited checkpoint bug (fixed on main in d4b74539) did not
+touch this run.** The run's checkout, 16956052, contained no
+`results/cradle/` files at all, so no shard could resume from an inherited
+`acquire_s*of8.json`. The shards' `n_rows_this_run` values (5010 + 4871 + 4975
++ 4990 + 5013 + 4952 + 4930 + 5022) sum to exactly the 39,763 parent rows. Each
+shard's `done` list holds 96 `hp3_*` units, and shard 0's 97th entry is the
+`controls` unit.
+
 **Verdict: `DEGRADED (vetoes_untested_in_cell:simbad_type=24); CRADLE_CANDIDATES` — 12 candidates.**
 
 The SIMBAD veto was "untested" for 165 stars because

@@ -504,6 +504,65 @@ def _numcol(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.Series(np.nan, index=df.index, dtype=float)
 
 
+def wd_control_positions(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    """Offset positions around every white dwarf at the AllWISE epoch.
+
+    The white-dwarf analogue of the pulsar controls: ``n`` positions on a ring
+    of ``offset`` arcsec around each host's AllWISE-epoch position, uploaded
+    to the same X-Match at the same radius.  The AllWISE sources found there
+    -- and their colours and brightnesses -- are what chance puts inside a
+    white dwarf's aperture on the same sky.  ``source_id`` is ``<id>|c<k>``.
+    """
+    w = cfg["wd"]
+    ep = cfg["epochs"]
+    offsets = [float(x) for x in w.get("control_offsets_arcsec", [45.0])]
+    n_ang = int(w.get("control_angles", 8))
+    pmra = pd.to_numeric(df.get("pmra", 0.0), errors="coerce")
+    pmde = pd.to_numeric(df.get("pmdec", 0.0), errors="coerce")
+    pmra = (pmra if isinstance(pmra, pd.Series) else pd.Series(0.0, index=df.index)).fillna(0.0)
+    pmde = (pmde if isinstance(pmde, pd.Series) else pd.Series(0.0, index=df.index)).fillna(0.0)
+    ra, dec = propagate_pm(pd.to_numeric(df["ra"], errors="coerce").to_numpy(float),
+                           pd.to_numeric(df["dec"], errors="coerce").to_numpy(float),
+                           pmra.to_numpy(float), pmde.to_numpy(float),
+                           float(ep["gaia"]), float(ep["allwise"]))
+    sid = df["source_id"].astype(str).to_numpy()
+    rows, k = [], 0
+    for off in offsets:
+        for ang in np.arange(0.0, 360.0, 360.0 / n_ang):
+            dra = off * np.cos(np.radians(ang)) / 3600.0 / np.cos(np.radians(dec))
+            dde = off * np.sin(np.radians(ang)) / 3600.0
+            rows.append(pd.DataFrame({"source_id": [f"{s}|c{k}" for s in sid],
+                                      "ra": ra + dra, "dec": dec + dde}))
+            k += 1
+    return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+
+
+def fetch_wd_controls(df: pd.DataFrame, cfg: dict, out_dir: Path, *, xmatch_fn=None) -> dict:
+    """X-Match the white-dwarf control positions against AllWISE; checkpointed."""
+    from ..acquire.science import _xmatch
+
+    xmatch_fn = xmatch_fn or _xmatch
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pos = wd_control_positions(df, cfg)
+    r = float(cfg["wd"].get("control_radius_arcsec", 3.0))
+    t0 = time.monotonic()
+    try:
+        raw = xmatch_fn(pos, "vizier:II/328/allwise", r)
+    except Exception as exc:                            # noqa: BLE001
+        return {"status": "FAILED", "error": repr(exc)[:300], "n_positions": int(len(pos))}
+    m = raw.rename(columns={k: v for k, v in ALLWISE_XMATCH_RENAME.items()
+                            if raw is not None and k in raw.columns}) \
+        if raw is not None and len(raw) else pd.DataFrame()
+    keep = [c for c in ("source_id", "match_dist_arcsec", "W1mag", "e_W1mag", "W2mag",
+                        "e_W2mag", "ph_qual", "cc_flags") if c in m.columns]
+    if len(m):
+        m[keep].to_parquet(out_dir / "controls_allwise.parquet", index=False)
+    return {"status": "OK" if len(m) else "ZERO_ROWS", "n_positions": int(len(pos)),
+            "n_rows": int(len(m)), "radius_arcsec": r,
+            "elapsed_s": round(time.monotonic() - t0, 1)}
+
+
 def harmonise_wd(df: pd.DataFrame) -> pd.DataFrame:
     """Pipeline schema: WISE/2MASS/Gaia magnitude columns, a single ``teff``."""
     out = df.rename(columns={

@@ -584,6 +584,7 @@ def _fetchers(empty: bool = False):
     ffp = pd.DataFrame({"name": ["a"], "spt": ["L4"], "group": ["TWA"], "age": [10.0],
                         "lbol": [-3.5], "mass": [8.0]})
     return {"wd": lambda d, c: (wd, {"route": "injected"}),
+            "wd_controls": lambda df, c, d: {"status": "INJECTED_NONE"},
             "pulsar": lambda c: (psr, {"route": "injected"}),
             "pulsar_matches": lambda p, c: (matches, {"allwise": {"status": "OK"}}),
             "bd_targets": lambda c: (targets, {"route": "injected"}),
@@ -1022,3 +1023,53 @@ def test_pm_less_bd_targets_adopt_catwise_astrometry(cfg):
     assert info["n_adopted"] == 1
     assert o.loc["Y0", "pmra"] == pytest.approx(1200.0) and o.loc["Y0", "ra"] == 10.001
     assert np.isnan(o.loc["Y1", "pmra"]) and o.loc["Y1", "astrometry_source"] == "none"
+
+
+def test_wd_chance_census_counts_only_blends_that_could_mimic_the_excess(cfg):
+    df = make_wd_sample(40)
+    _inject(df, 0, 500.0, 0.03)
+    ring = float(ph.blackbody_colour(500.0))
+    ctrl = []
+    # Host 1000 (the injected ring) sits in a field where 4 of 8 controls hold a
+    # bright ring-coloured source; host 1001 has only FAINT ring-coloured ones.
+    for k in range(4):
+        ctrl.append({"source_id": f"1000|c{k}", "match_dist_arcsec": 1.0, "W1mag": 12.0,
+                     "e_W1mag": 0.03, "W2mag": 12.0 - ring, "e_W2mag": 0.03, "ph_qual": "AAUU"})
+        ctrl.append({"source_id": f"1001|c{k}", "match_dist_arcsec": 1.0, "W1mag": 20.5,
+                     "e_W1mag": 0.3, "W2mag": 20.5 - ring, "e_W2mag": 0.3, "ph_qual": "AAUU"})
+    work = racq.harmonise_wd(df.drop(columns=["_mags", "_omega", "_teff"]))
+    out, s = rscr.screen_wd(work, cfg, rng=np.random.default_rng(1),
+                            controls=pd.DataFrame(ctrl))
+    o = out.set_index("source_id")
+    cen = s["chance_census"]
+    assert cen["status"] == "OK" and cen["control_positions_per_host"] == 8
+    assert o.loc[1000, "ctrl_hits_ring"] == 4 and o.loc[1001, "ctrl_hits_ring"] == 0
+    assert cen["ring_colour_blends_expected"] == pytest.approx(0.5)
+    # The injected ring is in a field where a ring-coloured blend is likely.
+    assert o.loc[1000, "ring_veto"] == "chance_ring_coloured_blend"
+    assert not bool(o.loc[1000, "ring_candidate"])
+    assert "mechanism" in out.columns and s["mechanism_counts"]
+
+
+def test_wd_ring_must_be_distinguished_from_a_dust_disk_by_its_upper_bound(cfg):
+    df = make_wd_sample(40)
+    _inject(df, 0, 500.0, 0.03)
+    work = racq.harmonise_wd(df.drop(columns=["_mags", "_omega", "_teff"]))
+    out, s = rscr.screen_wd(work, cfg, rng=np.random.default_rng(1))
+    o = out.set_index("source_id")
+    assert bool(o.loc[1000, "ring_candidate"])            # upper bound < 800 K
+    assert bool(o.loc[1000, "ring_distinct_from_disk"])
+    # Same row with its upper bound pushed into the disk locus -> ambiguous.
+    c2 = {**cfg, "debris_locus": {**cfg["debris_locus"],
+                                  "t_min_k": float(o.loc[1000, "t_ring_hi_k"]) - 1.0}}
+    out2, _ = rscr.screen_wd(work, c2, rng=np.random.default_rng(1))
+    assert out2.set_index("source_id").loc[1000, "ring_veto"] == "ring_or_disk_ambiguous"
+
+
+def test_wd_control_positions_ring_each_host(cfg):
+    df = pd.DataFrame({"source_id": [7], "ra": [100.0], "dec": [30.0], "pmra": [0.0],
+                       "pmdec": [0.0]})
+    pos = racq.wd_control_positions(df, cfg)
+    assert len(pos) == 8 and pos["source_id"].iloc[0] == "7|c0"
+    sep = np.hypot((pos["ra"] - 100.0) * np.cos(np.radians(30.0)), pos["dec"] - 30.0) * 3600
+    assert np.allclose(sep, 45.0, rtol=1e-3)

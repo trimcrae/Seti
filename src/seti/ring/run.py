@@ -142,6 +142,9 @@ def stage_acquire(cfg: dict, out: Path, leg: str, *, shard: int = 0, n_shards: i
             df = acq.harmonise_wd(df)
             tag = "" if dec_band is None else f"_band{int(dec_band)}"
             df.to_parquet(d / f"sample{tag}.parquet", index=False)
+            # The chance-coincidence control (offset positions, same X-Match).
+            meta["controls"] = (fetchers["wd_controls"](df, cfg, d) if "wd_controls" in fetchers
+                                else acq.fetch_wd_controls(df, cfg, d))
         meta.update({"n": int(len(df)), "status": "OK" if len(df) else "NO_DATA_REACHED",
                      "dec_band": dec_band, "elapsed_s": round(time.monotonic() - t0, 1)})
         _write(d / ("acquire.json" if dec_band is None else f"acquire_band{int(dec_band)}.json"),
@@ -236,7 +239,9 @@ def stage_screen(cfg: dict, out: Path, leg: str, *, rng=None) -> dict:
     t0 = time.monotonic()
     if leg == "wd":
         df = _wd_sample(d)
-        screened, s = scr.screen_wd(df, cfg, rng=rng)
+        cp = d / "controls_allwise.parquet"
+        controls = pd.read_parquet(cp) if cp.exists() else None
+        screened, s = scr.screen_wd(df, cfg, rng=rng, controls=controls)
         if len(screened):
             screened.to_parquet(d / "screened.parquet", index=False)
             cols = [c for c in ass._WD_HEADLINE if c in screened.columns]

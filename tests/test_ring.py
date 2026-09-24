@@ -1007,3 +1007,18 @@ def test_wd_followup_is_bounded_and_a_hung_cone_is_untested_not_passed(cfg):
     assert (fu["blend_verdict"] == "untested").all()
     assert (fu["followup_verdict"] == "rejected").all()
     assert fu.attrs["n_neighbour_timeouts"] == 2
+
+
+def test_pm_less_bd_targets_adopt_catwise_astrometry(cfg):
+    targets = pd.DataFrame({"source_id": ["Y0", "Y1"], "name": ["Y0", "Y1"],
+                            "ra": [10.0, 20.0], "dec": [0.0, 0.0], "spt_num": 30.0})
+
+    def xm(up, table, r):          # CatWISE on VizieR: PM in arcsec/yr
+        return pd.DataFrame({"source_id": ["Y0"], "RA_ICRS": [10.001], "DE_ICRS": [0.0005],
+                             "pmRA": [1.2], "pmDE": [-0.4], "angDist": [2.0]})
+
+    out, info = racq.adopt_catwise_astrometry(targets, cfg, xmatch_fn=xm)
+    o = out.set_index("source_id")
+    assert info["n_adopted"] == 1
+    assert o.loc["Y0", "pmra"] == pytest.approx(1200.0) and o.loc["Y0", "ra"] == 10.001
+    assert np.isnan(o.loc["Y1", "pmra"]) and o.loc["Y1", "astrometry_source"] == "none"

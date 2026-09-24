@@ -380,6 +380,18 @@ def test_expected_map_is_zero_where_blend_degenerate():
     assert m["0.3"] > 0.0             # u_c(0.3) = 3.03 > u0
 
 
+def test_expected_dchi2_projects_out_what_a_refit_absorbs():
+    """u0 just inside u_c: the occulted curve is nearly a blended Paczynski curve."""
+    ev = _ev(rho_l=None, seed=51, u0=0.30)
+    ev2, e, f0, _ = D.fit_fspl_clean(ev, D.conf_with(FAST))
+    rl = 0.85                                   # u_c = 0.326, barely above u0
+    u = D.traj_fit(ev2, f0)
+    raw = float(np.sum((f0.fs[ev2.ds] * (paczynski_magnification(u)
+                                         - occulted_magnification_point(u, rl)) / e) ** 2))
+    proj = D.expected_dchi2(ev2, f0, rl, e)
+    assert 0.0 <= proj < 0.5 * raw
+
+
 def test_recovered_requires_candidate_and_matching_rho():
     ok = {"tier": D.TIER_CANDIDATE, "occult": {"rho_l": 0.61}}
     assert INJ.recovered(ok, 0.6)

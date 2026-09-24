@@ -316,6 +316,34 @@ row), so proper-motion-less targets now adopt CatWISE2020 positions and
 motions, and the raw type values are recorded to settle the census parsing.
 Run 36016037098 carries all of it plus main's single-target-list handoff.
 
+**Run 36016037098 (sharded, all four legs, 2026-09-24 14:53–17:09 UTC;
+summary consistency 11/11 clean, every leg stamped with this run).**
+
+* *White dwarfs*: 25,932 hosts (route C; route B's Gaia upload died on a
+  dropped connection again), registration now evaluated for all 25,932.
+  4,694 excess-flagged; **27 survive the catalogue gates, none ring-band**
+  (the 179 ring-band shapes fail on registration 82, background-source prior
+  41, ledger 37, WISE quality 19). The 27 are the known natural twins: 24 sit
+  in the dust-disk locus (fitted 830–1,760 K, e.g. the known dusty white
+  dwarfs GD 56 and GD 133) or are accreting systems — 5 are catalogued CVs
+  (BW Scl, PHL 1364, EF Eri, GW Lib, PM J12507+1549) — and 2 are
+  `warm_ambiguous` with τ ≈ 0.85–1.0, too luminous for dust (companions).
+  The follow-up tested none of them (CatWISE co-movement crashed on an absent
+  column; all 27 Gaia-archive cones timed out) — both fixed in 92347ade, and
+  neither can create a ring candidate where the gates found none.
+* *Brown dwarfs*: the 20 pc census table (J/ApJS/253/7/tablea1) genuinely
+  holds M/L/early-T objects (201 M, 342 L, 8 T0–T5.5, 0 ≥ T6 — its SpTIR is a
+  numeric code), so the Kirkpatrick+2019 list is the right parent; 200/232
+  now take CatWISE2020 astrometry. 224/232 cones returned rows, 95 yield
+  epochs, 60 tested — every tested object has W2 < 14.8, i.e. the limit is
+  NEOWISE's single-exposure depth, not the pipeline. Four W2 duty-cycle flags
+  (+1 vetoed, WISE J1639−6847, W1−W2 = −0.04). Against the type–colour
+  relation WISEPA J0744+5628 (T8, W1−W2 1.56 vs ≈2.6) and WISEPA J1541−2250
+  (Y1, 1.81 vs ≈4.0) are not clean target photometry; WISEPC J1217+1626AB is
+  a known resolved T9+Y0 binary (a 0.76″ pair blended in the WISE PSF); WISE
+  J2102−4429 (T9, χ²_red 13.3, 0.38 mag) passes the colour test. Scan-parity
+  and detection-limit vets (92347ade) decide the last two in the next run.
+
 A note on the brown-dwarf leg's scope: it tests *W2 variability* (a duty
 cycle), not a static W1/W2 excess. The static test would be wrong here as
 built — CH₄ absorption in W1 makes late-T/Y dwarfs intrinsically very red in

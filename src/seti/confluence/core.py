@@ -253,7 +253,11 @@ def injection_trials(L: pd.DataFrame, cov: pd.DataFrame, pair: tuple[str, str],
         rec, frac, leak = [], [], 0
         for _ in range(n_trials):
             plant = list(rng.choice(clean, size=k, replace=False))
-            mod = inject_subthreshold({a: La["score"], b: Lb["score"]}, plant, q, alert_q, rng)
+            # Null world first: B's scores shuffled over the joint stars, so any
+            # real overlap is destroyed and recovery measures the plant alone.
+            sb = Lb["score"].copy()
+            sb.loc[J] = rng.permutation(sb.loc[J].to_numpy())
+            mod = inject_subthreshold({a: La["score"], b: sb}, plant, q, alert_q, rng)
             ta, tb = top_q_tail(mod[a], q), top_q_tail(mod[b], q)
             # sanity: planted stars are NOT in either channel's alert tail
             for ch in (a, b):

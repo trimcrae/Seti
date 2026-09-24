@@ -85,6 +85,20 @@ def _truthy(s: pd.Series) -> np.ndarray:
     return s.astype(str).str.strip().str.lower().isin(["true", "1", "1.0", "yes"]).to_numpy()
 
 
+COV_COLS = ("source_id", "ra", "dec", "l", "b", "ecl_lat", "phot_g_mean_mag", "bp_rp", "ruwe",
+            "parallax", "ipd_frac_multi_peak", "phot_variable_flag", "non_single_star",
+            "visibility_periods_used", "astrometric_matched_transits")
+
+
+def side_covariates(d: pd.DataFrame) -> pd.DataFrame | None:
+    """The Gaia columns a channel's own table already carries (null covariates
+    that need no further archive call)."""
+    cols = [c for c in COV_COLS if c in d.columns]
+    if "source_id" not in cols or len(cols) < 3:
+        return None
+    return d[cols].drop_duplicates("source_id")
+
+
 # ---------------------------------------------------------------------------
 # extractors: each returns (standard frame or None, report dict)
 # ---------------------------------------------------------------------------
@@ -137,6 +151,7 @@ def extract_ignition(root: Path) -> tuple[pd.DataFrame | None, dict]:
         if c in d:
             flag |= _truthy(d[c])
     d["_f"] = flag
+    rep["_cov"] = side_covariates(d)
     rep.update(status="OK", n_rows_raw=int(len(d)), n_unique=int(d["source_id"].nunique()),
                n_flag=int(flag.sum()))
     return standardise(d, sid="source_id", score="_s", flag="_f"), rep
@@ -167,6 +182,7 @@ def extract_cradle(root: Path) -> tuple[pd.DataFrame | None, dict]:
     d["_f"] = _truthy(d["shortlisted"]) if "shortlisted" in d else False
     if "is_control" in d:   # injected/known controls are not sky stars
         d = d[~_truthy(d["is_control"])]
+    rep["_cov"] = side_covariates(d)
     rep.update(status="OK", n_rows=int(len(d)), n_flag=int(np.sum(d["_f"])))
     return standardise(d, sid="source_id", score="_s", flag="_f"), rep
 
@@ -204,6 +220,7 @@ def extract_ring(root: Path) -> tuple[pd.DataFrame | None, dict]:
     d["_s"] = pd.concat([_num(d["chi_W1"]), _num(d["chi_W2"])], axis=1).min(axis=1)
     d["_f"] = _truthy(d["ring_candidate"]) if "ring_candidate" in d else False
     rep["status"] = "OK"
+    rep["_cov"] = side_covariates(d)
     return standardise(d, sid="source_id", score="_s", flag="_f"), rep
 
 
@@ -300,6 +317,11 @@ def harvest(harvest_dir: Path, scores_dir: Path) -> dict:
             except Exception as e:  # noqa: BLE001 -- one channel must not sink the rest
                 frame, rep = None, {"status": "EXTRACTOR_ERROR",
                                     "error": f"{type(e).__name__}: {str(e)[:500]}"}
+            cov = rep.pop("_cov", None)
+            if cov is not None and len(cov):
+                cov.to_parquet(scores_dir / f"_cov_{ch}.parquet", index=False)
+                rec["n_side_covariates"] = int(len(cov))
+                rec["side_covariate_columns"] = list(cov.columns)
             rec.update(rep)
             if frame is not None and len(frame):
                 frame.to_parquet(scores_dir / f"{ch}.parquet", index=False)

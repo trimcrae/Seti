@@ -113,24 +113,41 @@ def with_deadline(fn, deadline_s: float, label: str = "call"):
 
 
 def gaia_tap(query: str, *, retries: int = 4, tag: str = "parallax4",
-             deadline_s: float = 900.0) -> pd.DataFrame:
-    """Gaia ADQL: async with exponential backoff, sync on the last try."""
+             deadline_s: float = 900.0, sync_deadline_s: float = 180.0,
+             sync_row_cap: int = 2000) -> pd.DataFrame:
+    """Gaia ADQL.  SYNC first, then async with backoff.
+
+    Measured on the runner 2026-09-24 (run 36008898476): every async job on
+    the anonymous queue stalled ~240 s before its result came back, while the
+    same query sync answered in ~8 s.  So small queries go sync; a sync answer
+    of exactly ``sync_row_cap`` rows on a query without TOP is treated as a
+    possible truncation and re-run async."""
     from astroquery.gaia import Gaia
 
     Gaia.ROW_LIMIT = -1
     last = None
     t0 = time.monotonic()
+    has_top = " top " in f" {query.lower()} "
     for attempt in range(retries):
+        sync = attempt % 2 == 0
         try:
-            sync = attempt == retries - 1
-            job = with_deadline(lambda sync=sync: (Gaia.launch_job(query) if sync else Gaia.launch_job_async(query))
-                                .get_results(), deadline_s, f"TAP {query[:60]}")
-            df = job.to_pandas()
-            print(f"[{tag}] TAP ok {len(df)} rows in {time.monotonic() - t0:.0f}s: {query[:80]}", flush=True)
+            tab = with_deadline(lambda sync=sync: (Gaia.launch_job(query) if sync
+                                                   else Gaia.launch_job_async(query)).get_results(),
+                                sync_deadline_s if sync else deadline_s, f"TAP {query[:60]}")
+            df = tab.to_pandas()
+            if sync and not has_top and len(df) == sync_row_cap:
+                print(f"[{tag}] TAP sync returned exactly {sync_row_cap} rows; re-running async",
+                      flush=True)
+                tab = with_deadline(lambda: Gaia.launch_job_async(query).get_results(), deadline_s,
+                                    f"TAP {query[:60]}")
+                df = tab.to_pandas()
+            print(f"[{tag}] TAP ok ({'sync' if sync else 'async'}) {len(df)} rows in "
+                  f"{time.monotonic() - t0:.0f}s: {query[:80]}", flush=True)
             return df.rename(columns={c: c.lower() for c in df.columns})
         except Exception as exc:  # noqa: BLE001
             last = exc
-            print(f"[{tag}] TAP attempt {attempt + 1}/{retries} failed: {exc!r}"[:400], flush=True)
+            print(f"[{tag}] TAP attempt {attempt + 1}/{retries} ({'sync' if sync else 'async'}) "
+                  f"failed: {exc!r}"[:400], flush=True)
             time.sleep(2 ** attempt)
     raise RuntimeError(f"Gaia TAP failed after {retries} attempts: {last!r}")
 

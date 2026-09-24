@@ -148,7 +148,7 @@ def stage_probe(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap) -
     if tap is acq.gaia_tap:
         import functools
 
-        tap = functools.partial(acq.gaia_tap, retries=2, deadline_s=240.0)
+        tap = functools.partial(acq.gaia_tap, retries=2, deadline_s=300.0, sync_deadline_s=120.0)
     print("[parallax4] probe: DR4 status", flush=True)
     try:
         rep["dr4"] = acq.probe_dr4(tap=tap, http=http)

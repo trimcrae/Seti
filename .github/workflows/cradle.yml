@@ -563,3 +563,47 @@ jobs:
             results/cradle/deepvet.json \
             results/cradle/deepvet_targets.csv \
             results/cradle/deepvet_partial.json
+
+  # stage=leadvet: everything reachable about the deep-vet survivors
+  # (NEOWISE light curve, IR SED, DESI Li/CaHK, TESS/ZTF rotation, orbit,
+  # Gaia companions, cirrus, PSF widths, keyword literature).  Reads the
+  # committed shortlist/summary/deepvet; no artifacts.
+  leadvet:
+    if: ${{ github.event.inputs.stage == 'leadvet' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 270
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install --no-deps "sparclclient>=1.2" || true
+          pip install pyjwt spectres "specutils>=1.13,<3" || true
+          python -c "import sparcl.client; print('sparclclient OK')" || echo "sparclclient unavailable"
+      - name: Offline gate (lead vet)
+        run: python -m pytest tests/test_cradle_leadvet.py tests/test_cradle_deepvet.py -q -p no:cacheprovider
+      - name: Lead vet
+        run: python -m seti.cradle.leadvet --out-dir results/cradle
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cradle-leadvet
+          path: |
+            results/cradle/leadvet.json
+            results/cradle/leadvet_partial.json
+          if-no-files-found: warn
+      - name: Commit the lead vet
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "cradle: lead vet of the deep-vet survivors" \
+            results/cradle/leadvet.json \
+            results/cradle/leadvet_partial.json

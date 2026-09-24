@@ -1,41 +1,78 @@
 {
-  "verdict": "DEGRADED (wd, ffp not reached; bd partial: acquisition NOT_RUN; 28/232 targets with epochs); NO_RING_SURVIVOR",
+  "verdict": "DEGRADED (ffp not reached; bd partial: acquisition PARTIAL; 47/232 targets with epochs); NO_RING_SURVIVOR; SECONDARY_FLAGS_PENDING_VET",
   "degraded_legs": [
-    "wd",
     "ffp",
     "bd"
   ],
-  "generated_at": "2026-09-23T12:35:04Z",
-  "assessed_at": "2026-09-23T12:35:04Z",
-  "run_id": "35860901093",
+  "generated_at": "2026-09-23T14:32:09Z",
+  "assessed_at": "2026-09-23T14:32:09Z",
+  "run_id": "35860904385",
   "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8",
   "leg_provenance": {
     "wd": {
-      "generated_at": null,
-      "run_id": null,
-      "note": "file predates provenance stamps"
+      "generated_at": "2026-09-23T13:12:53Z",
+      "run_id": "35860904385",
+      "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
     },
     "pulsar": {
-      "generated_at": "2026-09-23T12:34:37Z",
-      "run_id": "35860901093",
+      "generated_at": "2026-09-23T12:37:30Z",
+      "run_id": "35860904385",
       "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
     },
     "bd": {
-      "generated_at": null,
-      "run_id": null,
-      "note": "file predates provenance stamps"
+      "generated_at": "2026-09-23T14:32:09Z",
+      "run_id": "35860904385",
+      "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
     },
     "ffp": {
-      "generated_at": "2026-09-23T12:35:04Z",
-      "run_id": "35860901093",
+      "generated_at": "2026-09-23T12:37:51Z",
+      "run_id": "35860904385",
       "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
     }
   },
   "legs": {
     "wd": {
-      "status": "NO_DATA_REACHED",
-      "n_input": 0,
-      "elapsed_s": 0.2
+      "status": "OK",
+      "n_input": 25932,
+      "sed_anchor_counts": {
+        "gaia": 18491,
+        "nir": 6137,
+        "none": 1304
+      },
+      "n_w1_detected": 25903,
+      "n_w2_detected": 17773,
+      "n_excess_flagged": 4694,
+      "excess_route_counts": {
+        "achromatic": 3825,
+        "colour": 869
+      },
+      "shape_counts": {
+        "companion": 3222,
+        "debris_disk": 705,
+        "warm_ambiguous": 587,
+        "ring_band": 179,
+        "unfit": 1
+      },
+      "n_surviving_gates": 0,
+      "n_ring_candidates": 0,
+      "gate_reasons": {
+        "unresolved_companion": 1907,
+        "astrometric_registration": 1055,
+        "ledger": 926,
+        "wise_quality": 806
+      },
+      "sensitivity": {
+        "n_hosts_with_500K_ring_detectable_at_f_lt_1": 24626,
+        "median_f_min_500K": 0.0855302469981484,
+        "n_hosts_with_500K_ring_detectable_at_f_lt_0p01": 3955
+      },
+      "elapsed_s": 5.8,
+      "provenance": {
+        "generated_at": "2026-09-23T13:12:53Z",
+        "run_id": "35860904385",
+        "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
+      },
+      "n_shortlist": 0
     },
     "pulsar": {
       "status": "OK",
@@ -360,8 +397,8 @@
       },
       "elapsed_s": 0.6,
       "provenance": {
-        "generated_at": "2026-09-23T12:34:37Z",
-        "run_id": "35860901093",
+        "generated_at": "2026-09-23T12:37:30Z",
+        "run_id": "35860904385",
         "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
       },
       "survivors": [
@@ -391,18 +428,33 @@
     "bd": {
       "status": "OK",
       "n_targets": 232,
-      "n_with_epochs": 28,
-      "n_tested": 11,
-      "population_w2_chi2_median": 3.50242083657619,
+      "n_with_epochs": 47,
+      "n_tested": 19,
+      "population_w2_chi2_median": 4.411020177613055,
       "population_floor_applied": true,
       "population_floor_min_n": 8,
-      "w2_chi2_threshold": 10.50726250972857,
-      "n_duty_cycle_flags": 0,
-      "flagged": [],
-      "n_epoch_rows": 460,
-      "elapsed_s": 0.1,
-      "epoch_coverage": 0.121,
-      "coverage_degraded": "acquisition NOT_RUN; 28/232 targets with epochs"
+      "w2_chi2_threshold": 13.233060532839165,
+      "n_duty_cycle_flags": 1,
+      "flagged": [
+        {
+          "source_id": "WISE J181329.40+283533.3",
+          "spt": "T8",
+          "w2_n_epochs": 9,
+          "w2_chi2_red": 17.42985229478351,
+          "w2_amp_mag": 0.6969995498657227,
+          "w2_duty_cycle_high": 0.5555555555555556,
+          "w1_chi2_red": 1.3248761009287544
+        }
+      ],
+      "n_epoch_rows": 756,
+      "elapsed_s": 0.2,
+      "provenance": {
+        "generated_at": "2026-09-23T14:32:09Z",
+        "run_id": "35860904385",
+        "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
+      },
+      "epoch_coverage": 0.203,
+      "coverage_degraded": "acquisition PARTIAL; 47/232 targets with epochs"
     },
     "ffp": {
       "status": "NO_TESTABLE_OBJECTS",
@@ -425,8 +477,8 @@
       "flagged": [],
       "elapsed_s": 0.0,
       "provenance": {
-        "generated_at": "2026-09-23T12:35:04Z",
-        "run_id": "35860901093",
+        "generated_at": "2026-09-23T12:37:51Z",
+        "run_id": "35860904385",
         "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
       }
     }
@@ -441,15 +493,103 @@
         },
         {
           "route": "vizier_parent",
+          "status": "OK",
+          "n": 359074,
+          "served_by": "tap",
+          "columns": {
+            "source_id": "GaiaEDR3",
+            "ra": "RA_ICRS",
+            "dec": "DE_ICRS",
+            "parallax": "Plx",
+            "parallax_error": "e_Plx",
+            "pmra": "pmRA",
+            "pmdec": "pmDE",
+            "pwd": "Pwd",
+            "teff_h": "TeffH",
+            "logg_h": "loggH",
+            "mass_h": "MassH",
+            "chisq_h": "chisqH",
+            "teff_he": "TeffHe",
+            "logg_he": "loggHe",
+            "mass_he": "MassHe",
+            "chisq_he": "chisqHe",
+            "phot_g_mean_mag": "Gmag",
+            "phot_bp_mean_mag": "BPmag",
+            "phot_rp_mean_mag": "RPmag",
+            "ruwe": "RUWE"
+          },
+          "bands": [
+            {
+              "dec": [
+                -90,
+                -60
+              ],
+              "n": 30768,
+              "route": "tap"
+            },
+            {
+              "dec": [
+                -60,
+                -30
+              ],
+              "n": 78090,
+              "route": "tap"
+            },
+            {
+              "dec": [
+                -30,
+                0
+              ],
+              "n": 78559,
+              "route": "tap"
+            },
+            {
+              "dec": [
+                0,
+                30
+              ],
+              "n": 79198,
+              "route": "tap"
+            },
+            {
+              "dec": [
+                30,
+                60
+              ],
+              "n": 68246,
+              "route": "tap"
+            },
+            {
+              "dec": [
+                60,
+                90
+              ],
+              "n": 24213,
+              "route": "tap"
+            }
+          ]
+        },
+        {
+          "route": "gaia_upload_join",
           "status": "FAILED",
-          "error": "VizierRouteError('TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError(\\'TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALQueryError: Incorrect ADQL query: 3 unresolved identifiers: chi2H [l.1 c.108 - l.1 c.115], chi"
+          "error": "RuntimeError(\"Gaia query failed after 4 attempts: SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:2437)')\")"
+        },
+        {
+          "route": "cds_xmatch_propagated",
+          "status": "OK",
+          "n": 25932
         }
       ],
-      "route": "none",
-      "n": 0,
-      "status": "NO_DATA_REACHED",
+      "route": "vizier_parent+cds_xmatch_propagated",
+      "n": 25932,
+      "status": "OK",
       "dec_band": null,
-      "elapsed_s": 82.6
+      "elapsed_s": 2094.5,
+      "provenance": {
+        "generated_at": "2026-09-23T13:12:46Z",
+        "run_id": "35860904385",
+        "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
+      }
     },
     "pulsar": {
       "routes_tried": [
@@ -457,7 +597,7 @@
           "route": "tarball",
           "status": "OK",
           "n": 4318,
-          "elapsed_s": 4.4,
+          "elapsed_s": 5.1,
           "catalogue_version": ""
         }
       ],
@@ -469,26 +609,30 @@
           "n_rows": 26427,
           "n_positions": 73406,
           "radius_arcsec": 8.0,
-          "elapsed_s": 12.0
+          "elapsed_s": 11.0
         },
         "catwise": {
           "status": "OK",
           "n_rows": 77916,
           "n_positions": 73406,
           "radius_arcsec": 8.0,
-          "elapsed_s": 29.2
+          "elapsed_s": 23.4
         }
       },
       "status": "OK",
-      "elapsed_s": 45.8,
+      "elapsed_s": 39.8,
       "provenance": {
-        "generated_at": "2026-09-23T12:34:36Z",
-        "run_id": "35860901093",
+        "generated_at": "2026-09-23T12:37:29Z",
+        "run_id": "35860904385",
         "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
       }
     },
     "bd": {
-      "status": "NOT_RUN"
+      "route": "J/ApJS/240/19",
+      "shard_status": [
+        "PARTIAL_TIME_BUDGET"
+      ],
+      "status": "PARTIAL"
     },
     "ffp": {
       "catalogue": "J/ApJS/225/10",
@@ -506,10 +650,10 @@
       "membership_column": "Mm",
       "n_with_group": 69,
       "n": 69,
-      "elapsed_s": 25.1,
+      "elapsed_s": 19.8,
       "provenance": {
-        "generated_at": "2026-09-23T12:35:03Z",
-        "run_id": "35860901093",
+        "generated_at": "2026-09-23T12:37:51Z",
+        "run_id": "35860904385",
         "git_sha": "64e7b5f75716cb9a8edca8b5d406b57b87c754e8"
       }
     }
@@ -588,7 +732,7 @@
     250.0,
     800.0
   ],
-  "elapsed_s": 0.0,
+  "elapsed_s": 0.1,
   "consistency": {
     "n_checks": 11,
     "failures": [],

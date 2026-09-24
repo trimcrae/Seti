@@ -1164,6 +1164,13 @@ def _cmd_slag(args, cfg):
     return _slag_main(list(args.rest))
 
 
+# --- CONFLUENCE ---
+def _cmd_confluence(args, cfg):
+    from .confluence.run import main as _confluence_main
+
+    return _confluence_main(list(args.rest))
+
+
 # --- RELAY ---
 def _cmd_relay(args, cfg):
     from .relay.run import main as _relay_main
@@ -2506,6 +2513,14 @@ def main(argv=None):
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_slag)
     # --- SLAG ---
+
+    # --- CONFLUENCE ---
+    p = sub.add_parser("confluence",
+                       help="CONFLUENCE: do the tails of channels measured with independent "
+                            "instruments share stars beyond a covariate-matched null? "
+                            "Flags pass through to seti.confluence.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_confluence)
 
     # --- RELAY ---
     p = sub.add_parser("relay",

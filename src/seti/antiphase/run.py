@@ -117,7 +117,7 @@ def control_outcome(ctrl: dict, rec: dict | None, conf: dict) -> str:
     if v == "ANTIPHASE_CANDIDATE":
         return "FAIL_NATURAL_PASSED_AS_CANDIDATE"
     lab = str(rec.get("coupling_label"))
-    coupled = lab == "COUPLED"
+    coupled = lab in ("COUPLED", "LAGGED_COUPLING")
     kind = str(ctrl.get("kind", ""))
     if coupled:
         if v == "NATURAL":
@@ -363,10 +363,17 @@ def run_natural(conf: dict, fetchers: dict | None = None) -> dict:
     bands_by: dict = {}
     tb = f["ztf_table"]()
     out["ztf_objects_table"] = tb
-    if tb.get("status") == "OK" and len(have):
+    zlog = {}
+    if tb.get("status") == "OK" and len(have) and nc.get("ztf_route", "per_star") == "batched":
         zlog = f["ztf_batched"](have, table=tb["table"], budget_s=3600.0,
                                 on_result=lambda s, r: bands_by.__setitem__(s, r))
-        out["ztf"] = {k: v for k, v in zlog.items() if k != "ledger"}
+    if len(have) and (not zlog or zlog.get("route_failed")):
+        rest = have[~have["source_id"].isin(set(bands_by))]
+        zlog = {**f.get("ztf_many", acq.fetch_ztf_many)(
+            rest, workers=6, budget_s=float(nc.get("ztf_budget_s", 5400.0)),
+            on_result=lambda s, r: bands_by.__setitem__(s, r)), "route": "per_star",
+            "batched_attempt": {k: v for k, v in zlog.items() if k != "ledger"} or None}
+    out["ztf"] = {k: v for k, v in zlog.items() if k != "ledger"}
     recs = []
     for r in have.to_dict("records"):
         z = bands_by.get(r["source_id"]) or {}
@@ -525,7 +532,8 @@ def run_shard(conf: dict, idir: Path, out: Path, i: int, n: int, *, ztf_fetch=No
                 rec = evaluate_pack(pack, conf)
                 rec = {"source_id": sid, **{k: meta.get(k) for k in
                                             ("ra", "dec", "phot_g_mean_mag", "bp_rp", "parallax",
-                                             "v_tan_kms", "w1mpro", "w2mpro")}, **rec}
+                                             "v_tan_kms", "w1mpro", "w2mpro", "w3mpro",
+                                             "teff_gspphot")}, **rec}
                 buf_s.append(rec)
                 for b, (m, e) in pack["opt"].items():
                     for t, mm, ee in zip(pack["t"], m, e, strict=False):
@@ -661,6 +669,64 @@ def vet_candidate(row: dict, ir_ep: pd.DataFrame, conf: dict, fetchers: dict) ->
     return out
 
 
+def reevaluate_faded(st: pd.DataFrame, out: Path, n: int, conf: dict):
+    """Re-run the ladder on every faded star from its stored binned series."""
+    from .null import align_to
+
+    ob, irf0 = [], []
+    for i in range(n):
+        p = out / f"optbins_{_tag(i, n)}.csv"
+        if p.exists():
+            ob.append(pd.read_csv(p, dtype={"source_id": str}))
+        p = out / f"irfaded_{_tag(i, n)}.csv"
+        if p.exists():
+            irf0.append(pd.read_csv(p, dtype={"source_id": str}))
+    if not ob or not irf0:
+        return st, 0, 0
+    ob = pd.concat(ob, ignore_index=True).drop_duplicates(["source_id", "band", "t_yr"])
+    irf0 = pd.concat(irf0, ignore_index=True).drop_duplicates(["source_id", "band", "t_yr"])
+    ob_by = dict(tuple(ob.groupby("source_id")))
+    ir_by = dict(tuple(irf0.groupby("source_id")))
+    fad = st[pd.to_numeric(st["n_faded"], errors="coerce") > 0]
+    new_rows, n_re, n_rel = {}, 0, 0
+    for row in fad.to_dict("records"):
+        sid = row["source_id"]
+        if sid not in ob_by or sid not in ir_by:
+            continue
+        t, ir = ir_arrays(ir_by[sid])
+        opt = {}
+        for b, gb in ob_by[sid].groupby("band"):
+            opt.update(align_to(t, gb["t_yr"].to_numpy(float),
+                                {b: (gb["mag"].to_numpy(float), gb["err"].to_numpy(float))},
+                                tol_yr=0.01))
+        meta = {k: row.get(k) for k in ("ra", "dec", "phot_g_mean_mag", "bp_rp", "parallax",
+                                        "w1mpro", "w2mpro", "w3mpro", "teff_gspphot") if k in row}
+        per = None
+        if pd.notna(row.get("period_d")):
+            per = {"status": "OK", "period_d": row.get("period_d"), "fap": row.get("period_fap"),
+                   "amp_mag": row.get("period_amp_mag"),
+                   "n_cycles_active": int(row.get("period_cycles_active") or 0),
+                   "n_cycles_covered": int(row.get("period_cycles_covered") or 1)}
+        rec = evaluate_pack({"t": t, "opt": opt, "ir": ir, "meta": meta}, conf,
+                            periodogram=False, period=per)
+        n_re += 1
+        if rec["coupling_label"] != row.get("coupling_label") or \
+                rec["verdict"] != row.get("verdict"):
+            n_rel += 1
+        new_rows[sid] = rec
+    if new_rows:
+        st = st.set_index("source_id")
+        for sid, rec in new_rows.items():
+            for k, v in rec.items():
+                if k not in st.columns:
+                    st[k] = pd.Series(dtype=object)
+                if st[k].dtype != object and isinstance(v, str):
+                    st[k] = st[k].astype(object)
+                st.at[sid, k] = v
+        st = st.reset_index()
+    return st, n_re, n_rel
+
+
 def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
                run_id: str = "") -> dict:
     f = {**_default_vet_fetchers(), **(fetchers or {})}
@@ -704,6 +770,15 @@ def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
         null_stars += int(d.get("n_stars", 0))
     null_trials = null_stars * max(pair_rounds, 1)
     pc = [sum(x[k] for x in pair_counts if len(x) > k) for k in range(pair_rounds)]
+    # --- re-evaluate every faded star with THIS code --------------------------
+    # The shard evaluated each star as its light curve landed, with the code of
+    # its own commit.  The reduce holds every faded star's binned optical and
+    # corrected IR (optbins + irfaded), so it re-runs the ladder on them: a
+    # ladder fix reaches old shards without refetching.  The periodogram needs
+    # raw points; the shard's result is carried in.
+    n_reeval, n_relabelled = 0, 0
+    if len(st):
+        st, n_reeval, n_relabelled = reevaluate_faded(st, out, n, conf)
     # --- counts ---------------------------------------------------------------
     n_eval = int(len(st))
     labels = st["coupling_label"].value_counts().to_dict() if n_eval else {}
@@ -840,6 +915,7 @@ def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
             "controls_gate": gate, "controls_outcomes": ctrl.get("outcomes"),
             "natural_sample": nat_summary,
             "funnel": fun,
+            "reevaluated_in_reduce": {"n": n_reeval, "n_relabelled": n_relabelled},
             "coverage": {"shards_expected": n, "shards_found": len(found & expected),
                          "parent": "IGNITION tiles parent (Gaia DR3 G<14.5 dwarfs, plx>3 mas, "
                                    "|b|>15, AllWISE-photospheric), ZTF dec >= -31",

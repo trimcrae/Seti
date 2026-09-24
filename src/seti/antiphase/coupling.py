@@ -45,7 +45,10 @@ Tests (all on the matched epochs)
 Labels (first that applies): ``NO_OPTICAL``, ``NO_IR``, ``INSUFFICIENT_MATCHED``,
 ``NO_FADE``, ``FADE_IR_FADES`` (IR also fainter at F: an occulter that dims
 both, or a secular systematic), ``FADE_IR_FLAT``, ``W1_ONLY``,
-``IR_BANDS_DISAGREE``, ``NOT_PROPORTIONAL``, ``COUPLED``.  ``IR_RISE_NO_FADE`` replaces ``NO_FADE``
+``IR_BANDS_DISAGREE``, ``NOT_PROPORTIONAL``, ``COUPLED``; any non-simultaneous
+label becomes ``LAGGED_COUPLING`` when the lag scan finds the IR answering the
+fade a year or more early or late (best-shift correlation >= 0.5 and >= 0.2
+above lag 0, and a >= 3 sigma W2 brightening at the shifted faded epochs).  ``IR_RISE_NO_FADE`` replaces ``NO_FADE``
 when the IR rises by >= ``n_sigma_ir`` in both bands at some epoch anyway (an
 IGNITION-like star, reported, never a candidate here).
 """
@@ -72,6 +75,9 @@ DEFAULT_COUPLING: dict = {
     "n_sigma_contrast": 3.0,      # W2 rise at F against the star's own W2 scatter outside F
     "w1_contradict_sigma": 2.0,   # W1 fainter by this much while W2 rises: disagree
     "max_lag": 6,                 # epochs (~3 yr)
+    "lag_min_epochs": 2,          # a lagged coupling is shifted by >= 1 yr ...
+    "lag_corr_min": 0.5,          # ... correlates at >= 0.5 at its best shift ...
+    "lag_corr_margin": 0.2,       # ... and beats the unshifted correlation by 0.2
     "k_ism": 1.41,                # A_g / A_r for R_V = 3.1 dust in ZTF g, r
     "grey_n_sigma": 2.0,          # |k - 1| within this is grey ...
     "ism_n_sigma": 3.0,           # ... and k must be below k_ism by this much
@@ -171,6 +177,7 @@ class CouplingResult:
     score: float = float("nan")                      # min of the coupling sigmas that apply
     ir_two_band: bool = False                        # W1 rose significantly as well as W2
     ir_ref: dict = field(default_factory=dict)       # IR level at the unfaded epochs
+    lag_ir_sigma: float = float("nan")               # W2 rise at the lag-shifted faded epochs
     opt_ref: dict = field(default_factory=dict)      # optical level at the unfaded epochs
 
     def to_dict(self) -> dict:
@@ -401,6 +408,30 @@ def assess_coupling(epoch_t_yr, optical: dict, ir: dict, conf: dict | None = Non
     else:
         res.label = "COUPLED"
         res.is_coupled = True
+    if not res.is_coupled:
+        # A coupled event that is not simultaneous (ASASSN-21qj: the IR led the
+        # dimming by ~900 d).  The lag scan's best shift, clearly better than no
+        # shift, and a real W2 brightening at the faded epochs moved by that
+        # shift (against the star's all-epoch median).  Always natural here:
+        # the channel's claim is the simultaneous answer.
+        L = int(res.best_lag)
+        if abs(L) >= int(c["lag_min_epochs"]) and np.isfinite(res.corr_best) and \
+                res.corr_best >= float(c["lag_corr_min"]) and \
+                (not np.isfinite(res.corr_lag0) or
+                 res.corr_best - res.corr_lag0 >= float(c["lag_corr_margin"])):
+            w2m, w2e = irr["W2"]
+            okw = np.isfinite(w2m) & np.isfinite(w2e)
+            sh = idx[faded] + L
+            sh = sh[(sh >= 0) & (sh < t.size)]
+            sh = sh[okw[sh]] if sh.size else sh
+            if sh.size and okw.sum() >= 6:
+                med = float(np.median(w2m[okw]))
+                merr = 1.2533 * float(np.sqrt(np.mean(w2e[okw] ** 2) / okw.sum()))
+                mb, eb = _wmean(w2m[sh], w2e[sh])
+                zl = (med - mb) / float(np.hypot(eb, merr))
+                res.lag_ir_sigma = float(zl)
+                if zl >= float(c["n_sigma_ir"]):
+                    res.label = "LAGGED_COUPLING"
     return res
 
 

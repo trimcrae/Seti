@@ -1272,6 +1272,25 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
                "sample_status": (geom.get("sample") or {}).get("status"),
                "rv_completeness": geom.get("rv_completeness"),
                "elapsed_assess_s": round(time.monotonic() - started, 1)}
+    ab = assess_rep.get("beams") or {}
+    if any("n_expected_by_chance" in v for v in ab.values()):
+        keys = ("n_trials", "n_trials_valid", "n_drift_match", "n_candidates_after_rfi",
+                "n_expected_drift_match", "n_expected_by_chance", "p_value_candidates",
+                "mean_window_fraction_of_hits", "mean_window_fraction_of_uniform_drift_range")
+        summary["chance"] = {
+            "model": "leave-one-out drift null over valid hits (src/seti/relay/chance.py)",
+            "hygiene": assess_rep.get("hygiene"),
+            "n_rfi_known_band": assess_rep.get("n_rfi_known_band"),
+            "n_rfi_recurrent_wide": assess_rep.get("n_rfi_recurrent_wide"),
+            "per_beam": {k: {kk: v.get(kk) for kk in keys} for k, v in ab.items()},
+            "total_candidates": sum(int(v.get("n_candidates_after_rfi") or 0) for v in ab.values()),
+            "total_expected": round(sum(float(v.get("n_expected_by_chance") or 0) for v in ab.values()), 3)}
+    # a re-reduction says whose geometry/recut it stands on, and when those were made
+    rf = out / ".reused_from"
+    if rf.exists():
+        summary["reused_intermediates_from_run"] = rf.read_text().strip().split("=")[-1]
+        summary["geometry_generated_utc"] = geom.get("generated_utc")
+        summary["recut_generated_utc"] = recut.get("generated_utc")
     _write(out / "summary.json", summary)
     print(f"[relay] verdict: {verdict}")
     return summary

@@ -1,8 +1,8 @@
 {
  "stage": "controls",
- "generated_utc": "2026-09-24T15:25:02Z",
- "run_id": "36019508284",
- "git_sha": "a4fb318eb414319dcaf66a80956d0eba02f72e7c",
+ "generated_utc": "2026-09-24T16:49:40Z",
+ "run_id": "36028172559",
+ "git_sha": "d9426f62a91bd5106631baab761f6b06250b81b6",
  "A1_simulated_scenes": {
   "gate": "PASS",
   "n": 21,
@@ -228,10 +228,11 @@
  ],
  "P_photometric": {
   "n_trials": 600,
-  "n_grey_above_floor": 53,
-  "recovery_tier_A": 0.7547169811320755,
+  "frac_colour_testable": 0.5428571428571428,
+  "n_grey_above_floor": 29,
+  "recovery_tier_A": 0.8620689655172413,
   "recovery_any": 1.0,
-  "n_dust_recovered": 52,
+  "n_dust_recovered": 28,
   "dust_called_grey": 0.0,
   "completeness_vs_snr": [
    {
@@ -250,7 +251,7 @@
     "snr_lo": 5,
     "snr_hi": 10,
     "n": 56,
-    "frac_tier_A": 0.32142857142857145
+    "frac_tier_A": 0.25
    },
    {
     "snr_lo": 10,
@@ -262,7 +263,7 @@
     "snr_lo": 20,
     "snr_hi": 50,
     "n": 27,
-    "frac_tier_A": 0.8888888888888888
+    "frac_tier_A": 0.8518518518518519
    },
    {
     "snr_lo": 50,
@@ -272,16 +273,14 @@
    }
   ],
   "reader_mismatched_rows": 0,
-  "gate": "FAIL",
-  "failures": [
-   "P1 recovery 0.75 < 0.8"
-  ]
+  "gate": "PASS",
+  "failures": []
  },
  "P3_eclipsing_binaries": {
-  "n_ecl_with_grey_dip": 96,
-  "n_period_testable": 72,
-  "frac_testable_caught_periodic": 0.625,
-  "n_reaching_tier_A": 12,
+  "n_ecl_with_grey_dip": 91,
+  "n_period_testable": 65,
+  "frac_testable_caught_periodic": 0.6923076923076923,
+  "n_reaching_tier_A": 11,
   "note": "tier-A EBs are removed downstream by Gaia's own classification; this number says how much that veto is carrying"
  },
  "pilot_funnel": {
@@ -290,18 +289,17 @@
   "by_grey_class": {
    "G_ONLY": 1145,
    "NO_COLOUR": 276,
-   "CHROMATIC_BLUE": 224,
-   "GREY": 193,
-   "CHROMATIC_RED": 56,
-   "GREY_UNCONSTRAINED": 15
+   "GREY": 207,
+   "CHROMATIC_BLUE": 133,
+   "GREY_UNCONSTRAINED": 116,
+   "CHROMATIC_RED": 32
   },
   "by_tier": {
-   "C": 1851,
-   "B": 40,
+   "C": 1852,
+   "B": 39,
    "A": 18
   }
  },
- "A2_datalink_error": "RuntimeError(\"GET https://gea.esac.esa.int/data-server/data failed after 4 attempts: RuntimeError('HTTP 503')\")",
  "A2_gaia4_photometry_from": "fixture",
  "A2_prerelease": {
   "gate": "PASS",
@@ -470,8 +468,59 @@
   "join_ok": true
  },
  "A3_varstrometry": {
-  "gate": "DEGRADED",
-  "error": "RuntimeError(\"Gaia TAP failed after 4 attempts: DeadlineExceeded('TAP SELECT g.source_id, g.phot_g_mean_mag, g.bp_rp, g.phot_g_mea: no answer within 900s')\")"
+  "metric": "ruwe",
+  "n_ecl": 38425,
+  "n_quiet": 48000,
+  "blend_min_ipd_frac_multi_peak": 8.0,
+  "classes": {
+   "blend": {
+    "n_ecl": 2135,
+    "n_quiet": 1663,
+    "median_z_ecl": 0.7185071706771851,
+    "median_z_quiet": 1.0,
+    "excess_ratio": 0.7185071706771851,
+    "p_mwu_ecl_gt_quiet": 1.0,
+    "spearman_amp_vs_z": 0.10462770647441365,
+    "p_spearman": 1.2667213182802427e-06
+   },
+   "iso": {
+    "n_ecl": 30573,
+    "n_quiet": 38924,
+    "median_z_ecl": 1.0044233798980713,
+    "median_z_quiet": 1.0,
+    "excess_ratio": 1.0044233798980713,
+    "p_mwu_ecl_gt_quiet": 0.0,
+    "spearman_amp_vs_z": 0.03064562522727655,
+    "p_spearman": 8.346690548665002e-08
+   }
+  },
+  "gate": "FAIL",
+  "criteria": "blended EBs out-jitter blended quiet stars (MWU p<1e-3), the excess rises with photometric amplitude (Spearman>0, p<1e-3), and the excess among isolated stars is smaller than among blended ones"
+ },
+ "A3_varstrometry_excess_noise": {
+  "metric": "astrometric_excess_noise",
+  "n_ecl": 38425,
+  "n_quiet": 48000,
+  "blend_min_ipd_frac_multi_peak": 8.0,
+  "classes": {
+   "blend": {
+    "n_ecl": 2135,
+    "n_quiet": 1663,
+    "median_z_ecl": 0.6622115969657898,
+    "median_z_quiet": 1.0,
+    "excess_ratio": 0.6622115969657898,
+    "p_mwu_ecl_gt_quiet": 1.0,
+    "spearman_amp_vs_z": 0.08673423803889825,
+    "p_spearman": 5.9986390978559097e-05
+   },
+   "iso": {
+    "n_ecl": 0,
+    "n_quiet": 0,
+    "note": "too few"
+   }
+  },
+  "gate": "FAIL",
+  "criteria": "blended EBs out-jitter blended quiet stars (MWU p<1e-3), the excess rises with photometric amplitude (Spearman>0, p<1e-3), and the excess among isolated stars is smaller than among blended ones"
  },
  "A4_dr4_controls": {
   "n_vim": 870,
@@ -507,7 +556,7 @@
   "n_single_eb": 300,
   "status": "WRITTEN"
  },
- "gate_photometric": "FAIL",
- "gate_astrometric": "DEGRADED",
- "verdict": "CONTROLS photometric=FAIL astrometric=DEGRADED"
+ "gate_photometric": "PASS",
+ "gate_astrometric": "FAIL",
+ "verdict": "CONTROLS photometric=PASS astrometric=FAIL"
 }

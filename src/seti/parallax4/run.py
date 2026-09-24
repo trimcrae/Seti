@@ -604,7 +604,11 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None)
         ab["epoch_cluster"] = []
         ab["score"] = []
     ab = ab.sort_values(["tier", "score"], ascending=[True, False])
-    ab.to_csv(out / "events_AB.csv", index=False)
+    # The committed table holds tier A only (every tier-A episode, epoch-
+    # flagged ones included, 6 significant figures): tier B at catalogue scale
+    # is tens of MB.  Every tier-A/B row stays in the per-shard artifacts
+    # (eventsAB_s<i>of<n>.csv), and the counts are in reduce.json.
+    ab[ab["tier"] == "A"].to_csv(out / "events_AB.csv", index=False, float_format="%.6g")
     a = ab[(ab["tier"] == "A") & ~ab["epoch_cluster"].astype(bool)] if len(ab) else ab
     b = ab[(ab["tier"] == "B") & ~ab["epoch_cluster"].astype(bool)] if len(ab) else ab
     planned = sum(int(r.get("n_files_planned", 0)) for r in recs)
@@ -713,6 +717,12 @@ def vet_rules(ev: pd.DataFrame, gs: pd.DataFrame, vari: pd.DataFrame, cones: dic
 
 
 def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
+    """Two levels.  Catalogue level for EVERY tier-A source (IN-list TAP, cheap):
+    Gaia EB table / ECL class, DR3 VIM, duplicated_source, RUWE / IPD flags.
+    Neighbour level (a 10" cone each, ~8 s per query) for the ``max_vet``
+    highest-scoring catalogue survivors: the misassigned-transit flux match
+    and crowding.  A catalogue survivor that was not cone-checked is
+    ``SURVIVES_CATALOG_ONLY`` and says so."""
     vc = conf.get("vet") or {}
     rep: dict = {"stage": "vet", **_provenance()}
     p = out / "events_AB.csv"
@@ -723,7 +733,7 @@ def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
     ab = pd.read_csv(p)
     a = ab[(ab["tier"] == "A") & ~ab["epoch_cluster"].astype(bool)].copy() if len(ab) else ab
     a = a.sort_values("score", ascending=False)
-    ids = list(dict.fromkeys(a["source_id"].astype(np.int64).tolist()))[: int(vc.get("max_vet", 400))]
+    ids = list(dict.fromkeys(a["source_id"].astype(np.int64).tolist()))[: int(vc.get("max_catalog", 60000))]
     a = a[a["source_id"].isin(ids)]
     rep["n_sources_vetted"] = len(ids)
     if not ids:
@@ -747,38 +757,54 @@ def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
     except Exception as exc:  # noqa: BLE001
         vim = set()
         degraded.append(f"vim:{exc!r}"[:200])
+    level1 = vet_rules(a, gs, vari, {}, vc, vim=vim)
+    alive = level1[level1["vet_class"] != "KILLED"].sort_values("score", ascending=False)
+    cone_ids = list(dict.fromkeys(alive["source_id"].astype(np.int64).tolist()))[: int(vc.get("max_vet", 400))]
     cones: dict[int, pd.DataFrame] = {}
     n_cone_fail = 0
-    for _, r in gs.iterrows():
-        if not np.isfinite(r.get("ra", np.nan)):
+    gsi = gs.set_index("source_id") if "source_id" in gs else pd.DataFrame()
+    for sid in cone_ids:
+        if sid not in gsi.index or not np.isfinite(gsi.loc[sid].get("ra", np.nan)):
             continue
+        r = gsi.loc[sid]
         try:
-            cones[int(r["source_id"])] = acq.gaia_cone(float(r["ra"]), float(r["dec"]),
-                                                       float(vc.get("cone_arcsec", 10.0)), tap=tap)
+            cones[int(sid)] = acq.gaia_cone(float(r["ra"]), float(r["dec"]),
+                                            float(vc.get("cone_arcsec", 10.0)), tap=tap)
         except Exception:  # noqa: BLE001
             n_cone_fail += 1
     if n_cone_fail:
-        degraded.append(f"cones_failed:{n_cone_fail}/{len(gs)}")
+        degraded.append(f"cones_failed:{n_cone_fail}/{len(cone_ids)}")
     v = vet_rules(a, gs, vari, cones, vc, vim=vim)
-    v.to_csv(out / "vetted.csv", index=False)
-    per_src = v.groupby("source_id")["vet_class"].agg(
-        lambda s: "SURVIVES" if (s == "SURVIVES").any() else
-        ("SURVIVES_FLAGGED" if (s == "SURVIVES_FLAGGED").any() else "KILLED"))
+    checked = v["source_id"].isin(list(cones))
+    v["cone_checked"] = checked
+    v.loc[~checked & (v["vet_class"] != "KILLED"), "vet_class"] = "SURVIVES_CATALOG_ONLY"
+    v.to_csv(out / "vetted.csv", index=False, float_format="%.6g")
+
+    def best(s):
+        for c in ("SURVIVES", "SURVIVES_FLAGGED", "SURVIVES_CATALOG_ONLY"):
+            if (s == c).any():
+                return c
+        return "KILLED"
+
+    per_src = v.groupby("source_id")["vet_class"].agg(best)
     kr: dict[str, int] = {}
-    for x in v["kill_reasons"].fillna(""):
+    for x in v.drop_duplicates("source_id")["kill_reasons"].fillna(""):
         for n in str(x).split(";"):
             if n:
                 kr[n] = kr.get(n, 0) + 1
     rep.update(classes={str(k): int(c) for k, c in per_src.value_counts().items()},
-               kill_reasons=kr, degraded=degraded,
-               survivors=v[v["vet_class"] != "KILLED"].sort_values("score", ascending=False)
-               .head(50)[[c for c in ("source_id", "vet_class", "flags", "kind", "t_peak", "delta_g", "delta_bp",
+               kill_reasons_by_source=kr, degraded=degraded, n_cone_checked=int(len(cones)),
+               survivors=v[v["vet_class"].isin(["SURVIVES", "SURVIVES_FLAGGED"])]
+               .sort_values("score", ascending=False)
+               .head(60)[[c for c in ("source_id", "vet_class", "flags", "kind", "t_peak", "delta_g", "delta_bp",
                                       "delta_rp", "ratio_bp_rp", "ratio_err", "n_transits_episode",
-                                      "score", "phot_g_mean_mag", "bp_rp", "ruwe", "best_class_name")
+                                      "score", "phot_g_mean_mag", "bp_rp", "ruwe", "best_class_name",
+                                      "rms_out_of_episode_g", "n_dip_episodes", "period_class")
                           if c in v.columns]].to_dict("records"))
-    n_surv = int((per_src != "KILLED").sum())
+    n_surv = int(per_src.isin(["SURVIVES", "SURVIVES_FLAGGED"]).sum())
     rep["verdict"] = (f"DEGRADED ({'; '.join(degraded)}); " if degraded else "") + \
-        f"{n_surv} of {len(ids)} vetted sources survive Gaia-internal vetting"
+        (f"{int((per_src != 'KILLED').sum())} of {len(ids)} tier-A sources survive the catalogue vet; "
+         f"{n_surv} of {len(cones)} cone-checked survive the neighbour vet")
     _write(out / "vet.json", rep)
     print(f"[parallax4] vet: {rep['verdict']}")
     return rep
@@ -931,7 +957,8 @@ def stage_summary(conf: dict, out: Path) -> dict:
     elif not red or red.get("verdict") in ("NO_SHARD_OUTPUTS", "REFUSED_CONTROLS_NOT_PASSED"):
         verdict = "NO_DATA_REACHED"
     else:
-        n_surv = sum(v for k, v in (vet.get("classes") or {}).items() if k != "KILLED")
+        n_surv = sum(v for k, v in (vet.get("classes") or {}).items()
+                     if k in ("SURVIVES", "SURVIVES_FLAGGED"))
         verdict = (f"GREY_EVENTS_SURVIVING_DR3_VET: {n_surv} sources await the DR4 photocentre test"
                    if n_surv else "NO_TIER_A_SURVIVOR")
         if red.get("degraded"):

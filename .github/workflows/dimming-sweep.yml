@@ -74,6 +74,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { ref: "${{ github.ref_name }}" }
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries every
+      # earlier field's results/dimming/<tag>/; a shard uploads only its own.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/dimming
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
       - name: Install
@@ -85,11 +89,24 @@ jobs:
           python -m seti.cli dimming-run --ra ${{ matrix.field.ra }} --dec ${{ matrix.field.dec }} \
             --radius-deg ${{ github.event.inputs.radius_deg }} --mode region --box-deg 0.10 \
             --time-budget-s ${{ github.event.inputs.time_budget_s }}
+      # The field directory run.py names (f<ra><dec>, '.'->'p', '+'->'p',
+      # '-'->'m'), matched through a glob whose one '?' keeps the artifact root
+      # at results/dimming/ (a literal single directory is uploaded flattened).
+      - name: This field's own directory
+        id: nm
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          ra, dec = float("${{ matrix.field.ra }}"), float("${{ matrix.field.dec }}")
+          tag = f"f{ra:+06.1f}{dec:+05.1f}".replace(".", "p").replace("+", "p").replace("-", "m")
+          print("glob=?" + tag[1:])
+          PY
       - name: Upload shard results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.field.ra }}-${{ matrix.field.dec }}
-          path: results/dimming/
+          path: results/dimming/${{ steps.nm.outputs.glob }}/
           if-no-files-found: warn
   collect:
     needs: sweep
@@ -103,9 +120,11 @@ jobs:
       - name: Merge shard results into the tree
         run: |
           mkdir -p results/dimming
-          # Each shard dir contains a results/dimming/<field>/ subtree; copy the
-          # per-field directories in (namespaced, so no collisions).
-          find _shards -type d -path '*/results/dimming/f*' -prune -exec cp -r {} results/dimming/ \; || true
+          # Each artifact (_shards/<artifact>/) holds exactly one <field>/
+          # directory, rooted at results/dimming/; copy those in (namespaced,
+          # one writer per field, so no collisions).  The old `-path
+          # '*/results/dimming/f*'` never matched an artifact rooted there.
+          find _shards -mindepth 2 -maxdepth 2 -type d -name 'f*' -exec cp -r {} results/dimming/ \; || true
           rm -rf _shards
           ls results/dimming | head
       - name: Commit

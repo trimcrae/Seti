@@ -130,6 +130,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries both
+      # poles' pcp_/diurnal_/radar_ records from earlier runs.  A shard must
+      # upload only its own pole's files, or `assess` merges a stale copy of
+      # the other pole over the fresh one.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/crypt/pcp_*.json results/crypt/diurnal_*.json results/crypt/diurnal_flags_*.csv results/crypt/radar_*.json results/crypt/radar_flags_*.csv
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -227,16 +233,34 @@ jobs:
                                      ("line", "sample", "lon", "lat", "cpr", "cluster_px",
                                       "bg_cpr", "s1", "s1_bg", "class", "reasons")})
           PY
+      # This shard's own files only: its pole(s) by run.py::shard_poles, and
+      # the pole-independent pcp_index.json from shard 0 alone (both shards
+      # write it; two copies of one name in a merge is the defect).
+      - name: This shard's own output paths
+        id: own
+        if: always()
+        env:
+          POLES: ${{ github.event.inputs.poles }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          from seti.crypt.run import load_crypt_config, shard_poles
+          poles = [x.strip() for x in os.environ.get("POLES", "").split(",") if x.strip()] or None
+          mine = shard_poles(load_crypt_config(None), "${{ matrix.shard }}/2", poles)
+          paths = [f"results/crypt/{k}_{p}.{ext}" for p in mine
+                   for k, ext in (("pcp", "json"), ("diurnal", "json"), ("diurnal_sensitivity", "json"),
+                                  ("diurnal_flags", "csv"), ("radar", "json"), ("radar_flags", "csv"))]
+          if "${{ matrix.shard }}" == "0":
+              paths.append("results/crypt/pcp_index.json")
+          print("paths<<EOF_PATHS")
+          print("\n".join(paths))
+          print("EOF_PATHS")
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: crypt-shard-${{ matrix.shard }}
-          path: |
-            results/crypt/pcp_*.json
-            results/crypt/diurnal_*.json
-            results/crypt/diurnal_flags_*.csv
-            results/crypt/radar_*.json
-            results/crypt/radar_flags_*.csv
+          path: ${{ steps.own.outputs.paths }}
           if-no-files-found: warn
 
   assess:
@@ -255,6 +279,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # Only this run's shard files may reach assess; stage=assess alone
+      # re-reads the committed files, so it keeps them.
+      - name: Purge checkout-inherited shard outputs
+        if: ${{ github.event.inputs.stage != 'assess' }}
+        run: rm -f results/crypt/pcp_*.json results/crypt/diurnal_*.json results/crypt/diurnal_flags_*.csv results/crypt/radar_*.json results/crypt/radar_flags_*.csv
       - uses: actions/download-artifact@v4
         if: ${{ github.event.inputs.stage != 'assess' }}
         with:

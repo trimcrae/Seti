@@ -144,6 +144,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries every
+      # earlier shard's acquire_s*/columns_s*/acquisition_ledger_s* record.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/baffle/chunks results/baffle/acquisition_ledger*.json results/baffle/columns*.json results/baffle/acquire*.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -174,11 +178,17 @@ jobs:
         if: always()
         with:
           name: baffle-acquire-${{ matrix.shard }}
+          # Only this shard's own records (run.py names them _s<i>of<n>; the
+          # unsuffixed names are the n_shards=1 spelling).  chunks/ is purged
+          # above and holds only this shard's dec bands.
           path: |
             results/baffle/chunks/
-            results/baffle/acquisition_ledger*.json
-            results/baffle/columns*.json
-            results/baffle/acquire*.json
+            results/baffle/acquisition_ledger_s${{ matrix.shard }}of${{ github.event.inputs.n_shards || '6' }}.json
+            results/baffle/columns_s${{ matrix.shard }}of${{ github.event.inputs.n_shards || '6' }}.json
+            results/baffle/acquire_s${{ matrix.shard }}of${{ github.event.inputs.n_shards || '6' }}.json
+            results/baffle/acquisition_ledger.json
+            results/baffle/columns.json
+            results/baffle/acquire.json
           if-no-files-found: warn
 
   screen:
@@ -197,6 +207,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # screen pools every acquisition_ledger*.json it finds (run.py): a
+      # checked-out earlier run's ledgers must not join this run's.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/baffle/chunks results/baffle/acquisition_ledger*.json results/baffle/columns*.json results/baffle/acquire*.json
       - uses: actions/download-artifact@v4
         with:
           pattern: baffle-*
@@ -307,11 +321,37 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/baffle/chunks results/baffle/acquisition_ledger*.json results/baffle/columns*.json results/baffle/acquire*.json
+      # Named downloads of the artifacts the in-run reducer reads, never one
+      # merge-multiple over baffle-*: that also pulled the run's -final
+      # artifact, which holds second copies of the same files, with no rule
+      # for which copy won (docs/channel-brief.md §0.7).
+      # A re-screen reads the acquire shards and the probe; stage=assess reads
+      # the screen/vet outputs, which only baffle-final carries.
       - name: Fetch the prior run's chunk artifacts
         uses: actions/download-artifact@v4
+        if: ${{ github.event.inputs.stage != 'assess' }}
         with:
-          pattern: baffle-*
+          pattern: baffle-acquire-*
           merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/baffle/
+      - name: Fetch the prior run's probe
+        uses: actions/download-artifact@v4
+        if: ${{ github.event.inputs.stage != 'assess' }}
+        continue-on-error: true
+        with:
+          name: baffle-probe
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/baffle/
+      - name: Fetch the prior run's screen/vet outputs
+        uses: actions/download-artifact@v4
+        if: ${{ github.event.inputs.stage == 'assess' }}
+        with:
+          name: baffle-final
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}
           path: results/baffle/

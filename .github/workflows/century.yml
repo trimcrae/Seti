@@ -362,6 +362,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries earlier
+      # runs' results/century/shards/*/ summaries; a shard must upload only
+      # the directory it wrote, and never a stale copy of another shard's.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/century/shards
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -411,12 +416,19 @@ jobs:
       - name: Shard tag
         id: nm
         if: always()
-        run: echo "tag=$(echo '${{ matrix.shard }}' | tr '/' '_')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "tag=$(echo '${{ matrix.shard }}' | tr '/' '_')" >> "$GITHUB_OUTPUT"
+          echo "glob=$(echo '${{ matrix.shard }}' | sed 's#/#?of_#')" >> "$GITHUB_OUTPUT"
+      # Only this shard's own directory (run.py::_shard_dir -> shards/<i>_of_<n>),
+      # so the merge in `assess` never has two copies of one file.  The glob is
+      # `<i>?of_<n>`: it matches exactly that directory, and its wildcard keeps
+      # the artifact root at shards/ (a literal single directory would be
+      # uploaded flattened, and every shard's files would then collide).
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: century-shard-${{ steps.nm.outputs.tag }}
-          path: results/century/shards/
+          path: results/century/shards/${{ steps.nm.outputs.glob }}/
           if-no-files-found: warn
 
   # ------------------------------------------------------------------
@@ -441,6 +453,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # assess globs shards/*/ — a checked-out earlier run's shard dirs would
+      # be pooled with this run's (docs/channel-brief.md §0.7).
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/century/shards
       - uses: actions/download-artifact@v4
         with:
           name: century-targets
@@ -547,6 +563,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/century/shards
       - uses: actions/download-artifact@v4
         with:
           name: century-targets

@@ -195,6 +195,11 @@ jobs:
       - name: Fit --- one shard, on the clock
         if: ${{ github.event.inputs.probe_only != 'true' }}
         run: |
+          # Purge AGAIN: the probe's commit step resets the checkout to the
+          # branch head, which brings back whatever shard a previous run
+          # committed --- run 35992884663's probe was killed, its fit never
+          # ran, and assess then read that stale shard as this run's.
+          rm -rf results/sextant/fits
           EXTRA=""
           if [ -n "${{ github.event.inputs.route }}" ]; then
             EXTRA="--route ${{ github.event.inputs.route }}"

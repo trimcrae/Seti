@@ -176,6 +176,48 @@ def _clean_neowise(df: pd.DataFrame) -> pd.DataFrame:
     return d[keep]
 
 
+def mep_field_change(t: dict, ra0: float, dec0: float, mv: pd.DataFrame, tap=tap_query) -> dict:
+    """The same visit-to-visit W3/W4 change for bright field sources in the AllWISE
+    multi-epoch table: a shift common to the field (the 2010 warm-up) is instrumental."""
+    out = {"status": "UNTESTED"}
+    if len(mv) < 2:
+        return out
+    w3 = float(t.get("w3mpro"))
+    r = tap(IRSA_TAP, "SELECT source_id_mf, mjd, w3mpro_ep, w3sigmpro_ep, w4mpro_ep, w4sigmpro_ep, "
+            "qual_frame, qi_fact, saa_sep, moon_masked FROM allwise_p3as_mep WHERE "
+            f"{_cone('ra', 'dec', ra0, dec0, 15.0 / 60)} AND w3mpro_ep BETWEEN {w3 - 1.5:.2f} AND "
+            f"{w3 + 1.0:.2f}", f"allwise_mep_field:{t['source_id']}")
+    out["route"] = r.ledger()
+    if r.status != "OK":
+        return out
+    d = r.data.copy()
+    d.columns = [str(c).lower() for c in d.columns]
+    d = d.rename(columns={"w3mpro_ep": "w3mpro", "w3sigmpro_ep": "w3sigmpro",
+                          "w4mpro_ep": "w4mpro", "w4sigmpro_ep": "w4sigmpro"})
+    d = _clean_neowise(d)
+    split = float(np.mean(mv["mjd"].iloc[:2]))
+    deltas3, deltas4 = [], []
+    for _, g in d.groupby("source_id_mf"):
+        a, b = g[g["mjd"] < split], g[g["mjd"] >= split]
+        if len(a) < 3 or len(b) < 3:
+            continue
+        deltas3.append(float(np.nanmedian(b["w3mpro"]) - np.nanmedian(a["w3mpro"])))
+        v4a, v4b = np.nanmedian(a["w4mpro"]), np.nanmedian(b["w4mpro"])
+        if np.isfinite(v4a) and np.isfinite(v4b):
+            deltas4.append(float(v4b - v4a))
+    out["n_field"] = len(deltas3)
+    if len(deltas3) >= 3:
+        d3 = np.array(deltas3)
+        out["w3_field_median_delta"] = float(np.median(d3))
+        out["w3_field_mad_delta"] = float(1.4826 * np.median(np.abs(d3 - np.median(d3))))
+    if len(deltas4) >= 3:
+        d4 = np.array(deltas4)
+        out["w4_field_median_delta"] = float(np.median(d4))
+        out["w4_field_mad_delta"] = float(1.4826 * np.median(np.abs(d4 - np.median(d4))))
+    out["status"] = "TESTED"
+    return out
+
+
 def neowise_block(t: dict, tap=tap_query) -> dict:
     out = {"status": "UNTESTED"}
     ra, dec = propagate(t["ra"], t["dec"], t["pmra"], t["pmdec"], 2019.0 - GAIA_EPOCH)
@@ -215,11 +257,12 @@ def neowise_block(t: dict, tap=tap_query) -> dict:
                         "delta": _f(mv[b].iloc[-1] - mv[b].iloc[0]),
                         "sigma": _f(math.hypot(_f(mv[f"{b}_err"].iloc[0]), _f(mv[f"{b}_err"].iloc[-1])))}
                     for b in ("w3", "w4") if b in mv}
-    # comparison stars: every AllWISE-matched source of similar W1 within 4'
+                out["allwise_w3w4_change_field"] = mep_field_change(t, ra0, dec0, mv, tap)
+    # comparison stars: every AllWISE-matched source of similar W1 within 10'
     w1 = float(t.get("w1mpro"))
     r3 = tap(IRSA_TAP, f"SELECT {cols} FROM neowiser_p1bs_psd WHERE "
-             f"{_cone('ra', 'dec', ra, dec, 4.0 / 60)} AND w1mpro BETWEEN {w1 - 1.0:.2f} AND "
-             f"{w1 + 1.0:.2f} AND allwise_cntr > 0", f"neowise_field:{t['source_id']}")
+             f"{_cone('ra', 'dec', ra, dec, 10.0 / 60)} AND w1mpro BETWEEN {w1 - 0.75:.2f} AND "
+             f"{w1 + 0.75:.2f} AND allwise_cntr > 0", f"neowise_field:{t['source_id']}")
     out["field_route"] = r3.ledger()
     if r3.status == "OK":
         f = _clean_neowise(r3.data)
@@ -237,7 +280,9 @@ def neowise_block(t: dict, tap=tap_query) -> dict:
             if "w1" in s and "w2" in s:
                 comp.append({"cntr": int(cntr), "w1": s["w1"]["mean"],
                              "chi2_w1": s["w1"]["chi2_red"], "chi2_w2": s["w2"]["chi2_red"],
-                             "range_w1": s["w1"]["range"], "range_w2": s["w2"]["range"]})
+                             "range_w1": s["w1"]["range"], "range_w2": s["w2"]["range"],
+                             "slope_w1": s["w1"]["slope_mag_per_yr"],
+                             "slope_w2": s["w2"]["slope_mag_per_yr"]})
         out["n_comparison"] = len(comp)
         if comp and "w1" in out["stats"] and "w2" in out["stats"]:
             cdf = pd.DataFrame(comp)
@@ -250,6 +295,13 @@ def neowise_block(t: dict, tap=tap_query) -> dict:
                 "pct_target_chi2_w1": float((cdf["chi2_w1"] < st["w1"]["chi2_red"]).mean() * 100),
                 "pct_target_chi2_w2": float((cdf["chi2_w2"] < st["w2"]["chi2_red"]).mean() * 100),
                 "pct_target_range_w2": float((cdf["range_w2"] < st["w2"]["range"]).mean() * 100),
+                # a W2 fade common to the field is instrumental (NEOWISE drift)
+                "median_slope_w1": float(cdf["slope_w1"].median()),
+                "median_slope_w2": float(cdf["slope_w2"].median()),
+                "mad_slope_w2": float(1.4826 * (cdf["slope_w2"] - cdf["slope_w2"].median()).abs().median()),
+                "target_slope_w2_minus_field_in_mad":
+                    float((st["w2"]["slope_mag_per_yr"] - cdf["slope_w2"].median())
+                          / max(1.4826 * (cdf["slope_w2"] - cdf["slope_w2"].median()).abs().median(), 1e-4)),
             }
     out["status"] = "TESTED"
     return out
@@ -431,27 +483,51 @@ def gyro_age_myr(period_d: float, bv: float) -> float:
     return float((period_d / (a * (bv - c) ** b)) ** (1.0 / n))
 
 
-def li_measure(w, f, ivar, teff: float) -> dict:
-    """Li 6708 EW with the Fe I 6707.44 (air) blend removed (Soderblom+1993) and an error."""
+def li_measure(w, f, ivar, teff: float, model=None) -> dict:
+    """Li 6708 EW with the Fe I 6707.44 (air) blend removed (Soderblom+1993) and an error.
+
+    The continuum windows hold weak lines (Ca I 6719.5 vac among them), so the
+    linear continuum is fitted with iterative clipping of low pixels.  The
+    empirical noise is the scatter of flux/model where a model exists (the model
+    carries those lines), else the clipped continuum scatter.
+    """
     w, f, iv = (np.asarray(a, float) for a in (w, f, ivar))
-    cw = ((w >= 6697.0) & (w <= 6704.0)) | ((w >= 6716.0) & (w <= 6723.0))
+    cw = ((w >= 6695.0) & (w <= 6705.0)) | ((w >= 6714.0) & (w <= 6725.0))
     ok = cw & np.isfinite(f) & (iv > 0)
     if ok.sum() < 6:
         return {"status": "UNTESTED", "why": "no continuum pixels"}
-    a, b0 = np.polyfit(w[ok], f[ok], 1)
+    use = ok.copy()
+    for _ in range(5):
+        a, b0 = np.polyfit(w[use], f[use], 1)
+        r = f - (a * w + b0)
+        s = float(np.std(r[use])) or 1e-9
+        new = ok & (r > -1.5 * s)
+        if new.sum() < 6 or (new == use).all():
+            break
+        use = new
     sel = (w >= 6707.6) & (w <= 6711.8) & np.isfinite(f) & (iv > 0)
     cont = a * w[sel] + b0
     dl = np.gradient(w)[sel]
     ew = float(np.sum((1.0 - f[sel] / cont) * dl))
     sig = float(np.sqrt(np.sum((dl / cont) ** 2 / iv[sel])))
-    resid = f[ok] - (a * w[ok] + b0)
-    cont_snr = float(np.median(a * w[ok] + b0) / np.std(resid)) if np.std(resid) > 0 else float("nan")
-    # the empirical noise can exceed ivar: scale by the continuum scatter
+    if model is not None and np.isfinite(np.asarray(model, float)).any():
+        md = np.asarray(model, float)
+        nz = (w >= 6680) & (w <= 6740) & ~((w >= 6705) & (w <= 6714)) & np.isfinite(md) & (md > 0) \
+            & np.isfinite(f)
+        rel = f[nz] / md[nz]
+        cont_snr = float(1.0 / (1.4826 * np.median(np.abs(rel - np.median(rel))))) if nz.sum() > 10 \
+            else float("nan")
+        noise_src = "flux/model MAD"
+    else:
+        resid = f[use] - (a * w[use] + b0)
+        cont_snr = float(np.median(a * w[use] + b0) / np.std(resid)) if np.std(resid) > 0 else float("nan")
+        noise_src = "clipped continuum scatter"
     sig_emp = float(np.sqrt(sel.sum()) * np.median(dl) / cont_snr) if np.isfinite(cont_snr) else sig
     bv = teff_to_bv(teff)
     ew_fe = (20.0 * bv - 3.0) / 1000.0
     return {"status": "TESTED", "ew_blend_A": ew, "ew_err_ivar_A": sig, "ew_err_empirical_A": sig_emp,
-            "continuum_snr": cont_snr, "bv_adopted": bv, "ew_fe_correction_A": ew_fe,
+            "continuum_snr": cont_snr, "noise_source": noise_src, "bv_adopted": bv,
+            "ew_fe_correction_A": ew_fe,
             "ew_li_A": ew - ew_fe, "ew_li_err_A": max(sig, sig_emp)}
 
 
@@ -506,7 +582,7 @@ def desi_block(t: dict) -> dict:
         iv = np.asarray(g(r, "ivar"), float)
         md = g(r, "model")
         md = np.asarray(md, float) if md is not None else np.full_like(f, np.nan)
-        m = {"sparcl_id": str(g(r, "sparcl_id")), "li": li_measure(w, f, iv, teff)}
+        m = {"sparcl_id": str(g(r, "sparcl_id")), "li": li_measure(w, f, iv, teff, md)}
         # Ca II H&K (vac 3934.78, 3969.59), IRT 8500.35/8544.44/8664.52, H-alpha 6564.61
         m["cahk_core_over_model"] = {
             "K": core_ratio(w, f, md, 3934.78, 1.0, [(3891, 3911), (3991, 4011)]),
@@ -559,8 +635,13 @@ def tess_block(t: dict, tic: str | None) -> dict:
     for i in keep[:12]:
         uri = str(prods["dataURI"][i])
         try:
-            loc = Observations.download_file(uri, local_path=f"/tmp/{names[i]}")
-            h = fits.open(loc[1] if isinstance(loc, tuple) else f"/tmp/{names[i]}")
+            # download_file returns (status, message, url) and writes local_path;
+            # the first dispatch opened loc[1] (the message, None) for every sector
+            path = f"/tmp/{names[i]}"
+            st = Observations.download_file(uri, local_path=path)
+            if isinstance(st, tuple) and str(st[0]).upper() not in ("COMPLETE", "SKIPPED"):
+                raise RuntimeError(f"download {st}")
+            h = fits.open(path)
             dat = h[1].data
             cols = dat.columns.names
             fcol = next((c for c in ("PDCSAP_FLUX", "KSPSAP_FLUX", "SAP_FLUX") if c in cols), None)
@@ -611,7 +692,9 @@ def ztf_block(t: dict) -> dict:
     from astropy.timeseries import LombScargle  # noqa: PLC0415
     res = {}
     for band, g in df.groupby("filtercode"):
-        g = g[(g["catflags"] == 0)] if "catflags" in g else g
+        # catflags 0 removed every point of the lead (it saturates ZTF at r~12.6);
+        # keep everything except the hard-bad bit 32768 and flag saturation below
+        g = g[(g["catflags"] < 32768)] if "catflags" in g else g
         if len(g) < 30:
             continue
         tt, mm, ee = g["mjd"].to_numpy(float), g["mag"].to_numpy(float), g["magerr"].to_numpy(float)
@@ -757,11 +840,22 @@ def gaia_block(t: dict, tap=tap_query) -> dict:
          "a.classprob_dsc_combmod_star, a.teff_esphs, a.spectraltype_esphs "
          "FROM gaiadr3.gaia_source AS g LEFT JOIN gaiadr3.astrophysical_parameters AS a "
          f"ON a.source_id = g.source_id WHERE g.source_id = {sid}")
-    r = tap(GAIA_TAP, q, f"gaia_full:{sid}")
-    out["route"] = r.ledger()
-    if r.status == "OK":
-        row = r.data.iloc[0].to_dict()
-        out["row"] = {k: (v.item() if hasattr(v, "item") else v) for k, v in row.items()}
+    del q  # the joined spelling failed to parse on the ESA server (dispatch 36003679119)
+    row = {}
+    routes = []
+    for tab in ("gaia_source", "astrophysical_parameters"):
+        r = tap(GAIA_TAP, f"SELECT * FROM gaiadr3.{tab} WHERE source_id = {sid}", f"{tab}:{sid}")
+        routes.append(r.ledger())
+        if r.status == "OK":
+            for k, v in r.data.iloc[0].to_dict().items():
+                v = v.item() if hasattr(v, "item") else v
+                if isinstance(v, bytes):
+                    v = v.decode(errors="replace")
+                if isinstance(v, (int, float, str, bool, type(None))):
+                    row.setdefault(str(k), v)
+    out["routes"] = routes
+    if row:
+        out["row"] = row
         out["status"] = "TESTED"
     for tab in ("nss_two_body_orbit", "nss_acceleration_astro", "nss_non_linear_spectro",
                 "nss_vim_fl"):
@@ -1026,6 +1120,19 @@ def run_leadvet(out_dir: str | Path = "results/cradle", leads=LEADS) -> dict:
         run("dust", dust_block, t)
         run("psf", psf_block, t, timeout=1500.0)
         run("literature", literature_block, t, timeout=1500.0)
+    # a DESI comparison: the same core-over-model ratios on another G dwarf of the
+    # shortlist with a DESI spectrum (1276273278883611264, Teff 5860 K, FLAME
+    # 10.9 Gyr), so a template mismatch at Ca II K is not read as activity
+    comp = {}
+    for csid in ("1276273278883611264",):
+        crow = sl[sl["source_id"] == csid]
+        if len(crow):
+            ct = {k: (v.item() if hasattr(v, "item") else v) for k, v in crow.iloc[0].to_dict().items()}
+            try:
+                comp[csid] = call_with_timeout(desi_block, 600.0, ct)
+            except Exception as exc:                      # noqa: BLE001
+                comp[csid] = {"status": "UNTESTED", "error": repr(exc)[:200]}
+    rep["desi_comparison"] = comp
     lead = sl[sl["source_id"] == LEADS[0]].iloc[0].to_dict()
     rep["occurrence"] = occurrence_block(out_dir, lead)
     rep["elapsed_s"] = round(_time.monotonic() - t0, 1)

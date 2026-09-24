@@ -610,3 +610,42 @@ def test_dr4_controls_list_is_built_from_gaia_vims_and_clean_ebs(tmp_path):
     assert set(d.loc[d["role"] == "VIM_POSITIVE", "source_id"]) == {1, 2}
     assert "vim_d_ra" in d.columns
     assert R.build_dr4_controls(tmp_path / "x", tap=_dead_tap)["status"] == "UNREACHABLE"
+
+
+def test_dr4_probe_is_not_fooled_by_an_empty_cdn_directory():
+    """Run 36007202395 (2026-09-24): the CDN `gdr4/` directory answered 200
+    ten weeks before release and the probe called DR4 available.  A 200 with
+    no epoch products in the listing is not DR4."""
+    tap = lambda q, **k: pd.DataFrame({"schema_name": ["gaiadr3", "gaiafpr"]})  # noqa: E731
+    body = b'<a href="../">../</a><a href="README.txt">README.txt</a>'
+    rep = acq.probe_dr4(tap=tap, http=lambda url, **k: (200, body))
+    assert rep["verdict"] == "DR4_NOT_RELEASED"
+    body2 = (b"<ListBucketResult><IsTruncated>false</IsTruncated><CommonPrefixes><Prefix>"
+             b"Gaia/gdr4/Photometry/epoch_photometry/</Prefix></CommonPrefixes></ListBucketResult>")
+    assert acq.probe_dr4(tap=tap, http=lambda url, **k: (200, body2))["verdict"] == "DR4_AVAILABLE"
+
+
+def test_cdn_storage_listing_paginates():
+    """The CDN directory page is JavaScript; the listing is S3-style XML,
+    1000 keys a page (measured on the runner 2026-09-24)."""
+    pages = {
+        None: (b"<ListBucketResult><IsTruncated>true</IsTruncated>"
+               b"<NextContinuationToken>tok1</NextContinuationToken>"
+               b"<Contents><Key>Gaia/gdr3/Photometry/epoch_photometry/EpochPhotometry_000000-003111.csv.gz</Key>"
+               b"<Size>100</Size><ETag>&quot;0123456789abcdef0123456789abcdef&quot;</ETag></Contents>"
+               b"</ListBucketResult>"),
+        "tok1": (b"<ListBucketResult><IsTruncated>false</IsTruncated>"
+                 b"<Contents><Key>Gaia/gdr3/Photometry/epoch_photometry/EpochPhotometry_003112-005263.csv.gz</Key>"
+                 b"<Size>200</Size><ETag>&quot;abc-2&quot;</ETag></Contents>"
+                 b"<Contents><Key>Gaia/gdr3/Photometry/epoch_photometry/_MD5SUM.txt</Key><Size>5</Size></Contents>"
+                 b"</ListBucketResult>"),
+    }
+
+    def http(url, params=None, **k):
+        assert url == acq.CDN_STORAGE and params["prefix"] == "Gaia/gdr3/Photometry/epoch_photometry/"
+        return 200, pages[params.get("continuation-token")]
+
+    rep = acq.list_cdn_files(http=http)
+    assert rep["route"] == "storage_listing" and rep["n_files"] == 2
+    assert rep["md5"] == {"EpochPhotometry_000000-003111.csv.gz": "0123456789abcdef0123456789abcdef"}
+    assert rep["total_bytes"] == 300

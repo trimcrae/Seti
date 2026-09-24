@@ -31,8 +31,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-CDN_EPOCH_PHOT = "http://cdn.gea.esac.esa.int/Gaia/gdr3/Photometry/epoch_photometry/"
-CDN_GDR4 = "http://cdn.gea.esac.esa.int/Gaia/gdr4/"
+CDN_EPOCH_PHOT = "https://cdn.gea.esac.esa.int/Gaia/gdr3/Photometry/epoch_photometry/"
+CDN_GDR4 = "https://cdn.gea.esac.esa.int/Gaia/gdr4/"
+#: The CDN's directory pages are a JavaScript file browser (measured
+#: 2026-09-24, run 36015376952): the listing itself comes from this S3-style
+#: storage endpoint, and objects are served at https://cdn.gea.esac.esa.int/<key>.
+CDN_STORAGE = "https://gaia.eu-1.cdn77-storage.com/"
+CDN_ROOT = "https://cdn.gea.esac.esa.int/"
 DATALINK = "https://gea.esac.esa.int/data-server/data"
 PRERELEASE_DIR = ("https://anonftp.cosmos.esa.int/pub/GAIA_PUBLIC_DATA/Gaia_DR4/"
                   "dr4-prerelease/")
@@ -58,13 +63,15 @@ def http_get(url: str, *, timeout: float = 120.0, retries: int = 4, stream_to: P
     errors and 5xx; a 404 is returned, not raised (DR4 absence IS a 404)."""
     import requests
 
+    hdr = {"User-Agent": "seti-parallax4/1.0 (+https://github.com/trimcrae/Seti)"}
     last: Exception | None = None
     for attempt in range(retries):
         try:
             if method == "HEAD":
-                r = requests.head(url, timeout=timeout, allow_redirects=True)
+                r = requests.head(url, timeout=timeout, allow_redirects=True, headers=hdr)
                 return r.status_code, None
-            with requests.get(url, timeout=timeout, params=params, stream=stream_to is not None) as r:
+            with requests.get(url, timeout=timeout, params=params, stream=stream_to is not None,
+                              headers=hdr) as r:
                 if r.status_code >= 500:
                     raise RuntimeError(f"HTTP {r.status_code}")
                 if stream_to is not None and r.status_code == 200:
@@ -81,20 +88,71 @@ def http_get(url: str, *, timeout: float = 120.0, retries: int = 4, stream_to: P
     raise RuntimeError(f"GET {url} failed after {retries} attempts: {last!r}")
 
 
-def gaia_tap(query: str, *, retries: int = 4, tag: str = "parallax4") -> pd.DataFrame:
-    """Gaia ADQL: async with exponential backoff, sync on the last try."""
+class DeadlineExceeded(RuntimeError):
+    """A remote call did not return within its deadline."""
+
+
+def with_deadline(fn, deadline_s: float, label: str = "call"):
+    """Run ``fn`` in a daemon thread; raise DeadlineExceeded after
+    ``deadline_s``.  astroquery's TAP calls have no overall timeout, and one
+    hung socket must not eat a job's whole budget (the thread is abandoned,
+    and being a daemon it does not block interpreter exit)."""
+    import threading
+
+    box: dict = {}
+
+    def target():
+        try:
+            box["v"] = fn()
+        except BaseException as exc:  # noqa: BLE001
+            box["e"] = exc
+
+    th = threading.Thread(target=target, daemon=True)
+    th.start()
+    th.join(deadline_s)
+    if th.is_alive():
+        raise DeadlineExceeded(f"{label}: no answer within {deadline_s:.0f}s")
+    if "e" in box:
+        raise box["e"]
+    return box.get("v")
+
+
+def gaia_tap(query: str, *, retries: int = 4, tag: str = "parallax4",
+             deadline_s: float = 900.0, sync_deadline_s: float = 180.0,
+             sync_row_cap: int = 2000) -> pd.DataFrame:
+    """Gaia ADQL.  SYNC first, then async with backoff.
+
+    Measured on the runner 2026-09-24 (run 36008898476): every async job on
+    the anonymous queue stalled ~240 s before its result came back, while the
+    same query sync answered in ~8 s.  So small queries go sync; a sync answer
+    of exactly ``sync_row_cap`` rows on a query without TOP is treated as a
+    possible truncation and re-run async."""
     from astroquery.gaia import Gaia
 
     Gaia.ROW_LIMIT = -1
     last = None
+    t0 = time.monotonic()
+    has_top = " top " in f" {query.lower()} "
     for attempt in range(retries):
+        sync = attempt % 2 == 0
         try:
-            job = Gaia.launch_job(query) if attempt == retries - 1 else Gaia.launch_job_async(query)
-            df = job.get_results().to_pandas()
+            tab = with_deadline(lambda sync=sync: (Gaia.launch_job(query) if sync
+                                                   else Gaia.launch_job_async(query)).get_results(),
+                                sync_deadline_s if sync else deadline_s, f"TAP {query[:60]}")
+            df = tab.to_pandas()
+            if sync and not has_top and len(df) == sync_row_cap:
+                print(f"[{tag}] TAP sync returned exactly {sync_row_cap} rows; re-running async",
+                      flush=True)
+                tab = with_deadline(lambda: Gaia.launch_job_async(query).get_results(), deadline_s,
+                                    f"TAP {query[:60]}")
+                df = tab.to_pandas()
+            print(f"[{tag}] TAP ok ({'sync' if sync else 'async'}) {len(df)} rows in "
+                  f"{time.monotonic() - t0:.0f}s: {query[:80]}", flush=True)
             return df.rename(columns={c: c.lower() for c in df.columns})
         except Exception as exc:  # noqa: BLE001
             last = exc
-            print(f"[{tag}] TAP attempt {attempt + 1}/{retries} failed: {exc!r}"[:400], flush=True)
+            print(f"[{tag}] TAP attempt {attempt + 1}/{retries} ({'sync' if sync else 'async'}) "
+                  f"failed: {exc!r}"[:400], flush=True)
             time.sleep(2 ** attempt)
     raise RuntimeError(f"Gaia TAP failed after {retries} attempts: {last!r}")
 
@@ -122,20 +180,30 @@ def probe_dr4(*, tap=gaia_tap, http=http_get) -> dict:
             rep["checks"]["tap_schemas"]["dr4_tables"] = sorted(str(x) for x in t.get("table_name", []))
     except Exception as exc:  # noqa: BLE001
         rep["checks"]["tap_schemas"] = {"ok": False, "error": repr(exc)[:400]}
+    # The CDN `gdr4/` directory EXISTS before release (run 36007202395 got
+    # HTTP 200 on 2026-09-24, ten weeks early), so a 200 is not evidence of
+    # DR4.  What would be: epoch-product subdirectories in its listing.
     try:
-        st, _ = http(CDN_GDR4, timeout=60.0, retries=2, method="HEAD")
-        rep["checks"]["cdn_gdr4"] = {"ok": True, "status": int(st)}
+        sl = storage_list("Gaia/gdr4/", http=http, delimiter="/", max_pages=3)
+        entries = sorted(set(sl.get("prefixes", []) + [k["key"] for k in sl.get("keys", [])]))
+        epochish = [e for e in entries
+                    if re.search(r"(?i)epoch|astrometry/|photometry/", e) and "prerelease" not in e.lower()]
+        rep["checks"]["cdn_gdr4"] = {"ok": bool(sl.get("ok")), "status": int(sl.get("status") or 0),
+                                     "entries": entries[:80], "epoch_entries": epochish}
     except Exception as exc:  # noqa: BLE001
         rep["checks"]["cdn_gdr4"] = {"ok": False, "error": repr(exc)[:300]}
     tap_ok = rep["checks"]["tap_schemas"].get("ok")
-    dr4_tap = bool(rep["checks"]["tap_schemas"].get("dr4_schemas"))
+    dr4_tables = rep["checks"]["tap_schemas"].get("dr4_tables") or []
+    dr4_tap = bool(rep["checks"]["tap_schemas"].get("dr4_schemas")) and (
+        not dr4_tables or any("epoch" in t.lower() or "gaia_source" in t.lower() for t in dr4_tables))
     cdn = rep["checks"].get("cdn_gdr4", {})
-    dr4_cdn = cdn.get("ok") and cdn.get("status") == 200
+    dr4_cdn = bool(cdn.get("ok") and cdn.get("status") == 200 and cdn.get("epoch_entries"))
+    rep["signals"] = {"tap_dr4_schema": dr4_tap, "cdn_epoch_products": dr4_cdn}
     if dr4_tap or dr4_cdn:
         rep["verdict"] = "DR4_AVAILABLE"
     elif tap_ok and rep["checks"]["tap_schemas"].get("has_gaiadr3"):
         rep["verdict"] = "DR4_NOT_RELEASED"
-    elif cdn.get("ok") and cdn.get("status") in (403, 404):
+    elif cdn.get("ok") and cdn.get("status") in (200, 403, 404):
         rep["verdict"] = "DR4_NOT_RELEASED"
     else:
         rep["verdict"] = "ARCHIVE_UNREACHABLE"
@@ -146,32 +214,77 @@ def probe_dr4(*, tap=gaia_tap, http=http_get) -> dict:
 # ---------------------------------------------------------------------------
 # CDN bulk epoch photometry
 # ---------------------------------------------------------------------------
-_HREF = re.compile(r'href="(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)"')
+_HREF = re.compile(r'href="(?:[^"]*/)?(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)"')
+
+
+def storage_list(prefix: str, *, http=http_get, delimiter: str | None = None,
+                 max_pages: int = 50) -> dict:
+    """Keys (with sizes, ETags) and common prefixes under ``prefix`` from the
+    CDN's S3-style listing, following pagination (V2 continuation tokens, or
+    V1 markers when the store ignores list-type=2)."""
+    keys: list[dict] = []
+    prefixes: list[str] = []
+    token, marker = None, None
+    for _ in range(max_pages):
+        params = {"prefix": prefix, "list-type": "2"}
+        if delimiter:
+            params["delimiter"] = delimiter
+        if token:
+            params["continuation-token"] = token
+        if marker:
+            params["marker"] = marker
+        st, body = http(CDN_STORAGE, params=params, timeout=120.0)
+        if st != 200 or not body:
+            return {"ok": False, "status": st, "keys": keys, "prefixes": prefixes,
+                    "head": (body or b"")[:600].decode("utf-8", "replace")}
+        txt = body.decode("utf-8", "replace")
+        for c in re.findall(r"<Contents>(.*?)</Contents>", txt, flags=re.S):
+            k = re.search(r"<Key>(.*?)</Key>", c, flags=re.S)
+            sz = re.search(r"<Size>(\d+)</Size>", c)
+            et = re.search(r"<ETag>(.*?)</ETag>", c, flags=re.S)
+            if k:
+                keys.append({"key": k.group(1), "size": int(sz.group(1)) if sz else None,
+                             "etag": et.group(1).replace("&quot;", "").strip('"') if et else None})
+        prefixes += re.findall(r"<CommonPrefixes>\s*<Prefix>(.*?)</Prefix>", txt, flags=re.S)
+        if "<IsTruncated>true</IsTruncated>" not in txt:
+            break
+        nt = re.search(r"<NextContinuationToken>(.*?)</NextContinuationToken>", txt, flags=re.S)
+        nm = re.search(r"<NextMarker>(.*?)</NextMarker>", txt, flags=re.S)
+        if nt:
+            token, marker = nt.group(1), None
+        else:
+            token, marker = None, (nm.group(1) if nm else (keys[-1]["key"] if keys else None))
+            if marker is None:
+                break
+    return {"ok": True, "status": 200, "keys": keys, "prefixes": prefixes}
 
 
 def list_cdn_files(*, http=http_get, base: str = CDN_EPOCH_PHOT) -> dict:
+    """The CDN epoch-photometry files.  The storage listing first (the
+    directory page is JavaScript); an Apache-style href listing as fallback."""
+    prefix = base.replace(CDN_ROOT, "").replace("http://cdn.gea.esac.esa.int/", "")
+    rep: dict = {}
+    try:
+        sl = storage_list(prefix, http=http)
+        keys = [k for k in sl.get("keys", []) if k["key"].endswith(".csv.gz")]
+        if keys:
+            names = sorted(k["key"].rsplit("/", 1)[-1] for k in keys)
+            md5 = {k["key"].rsplit("/", 1)[-1]: k["etag"] for k in keys
+                   if k.get("etag") and re.fullmatch(r"[0-9a-f]{32}", k["etag"])}
+            sizes = {k["key"].rsplit("/", 1)[-1]: k["size"] for k in keys}
+            return {"ok": True, "status": 200, "route": "storage_listing", "files": names,
+                    "n_files": len(names), "md5": md5, "sizes": sizes,
+                    "total_bytes": int(sum(v or 0 for v in sizes.values()))}
+        rep["storage"] = {k: v for k, v in sl.items() if k != "keys"} | {"n_keys": len(sl.get("keys", []))}
+    except Exception as exc:  # noqa: BLE001
+        rep["storage_error"] = repr(exc)[:300]
     st, body = http(base, timeout=120.0)
-    if st != 200 or body is None:
-        return {"ok": False, "status": st, "files": []}
-    txt = body.decode("utf-8", "replace")
-    files = sorted(set(_HREF.findall(txt)))
-    md5 = {}
-    if "_MD5SUM.txt" in txt:
-        try:
-            st2, b2 = http(base + "_MD5SUM.txt", timeout=120.0)
-            if st2 == 200 and b2:
-                for line in b2.decode("utf-8", "replace").splitlines():
-                    parts = line.split()
-                    if len(parts) == 2:
-                        md5[parts[1].lstrip("*")] = parts[0]
-        except Exception:  # noqa: BLE001
-            pass
-    sizes = {}
-    for m in re.finditer(r'href="(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)".*?(\d+(?:\.\d+)?[KMG]?)\s*$',
-                         txt, flags=re.M):
-        sizes[m.group(1)] = m.group(2)
-    return {"ok": True, "status": st, "files": files, "n_files": len(files), "md5": md5,
-            "sizes": sizes}
+    txt = (body or b"").decode("utf-8", "replace")
+    files = sorted(set(_HREF.findall(txt))) if st == 200 else []
+    if not files:
+        return {"ok": False, "status": st, "files": [], "head": txt[:800], **rep}
+    return {"ok": True, "status": st, "route": "href_listing", "files": files, "n_files": len(files),
+            "md5": {}, "sizes": {}, **rep}
 
 
 def healpix_range(fname: str) -> tuple[int, int] | None:
@@ -376,6 +489,28 @@ def fetch_prerelease(dest_dir: Path, *, http=http_get) -> dict:
     return rep
 
 
+def pdf_text(data: bytes) -> str:
+    """Text of a PDF: pypdf if installed, else poppler's pdftotext, else ''."""
+    try:
+        from pypdf import PdfReader
+
+        rd = PdfReader(io.BytesIO(data))
+        return "\n".join((pg.extract_text() or "") for pg in rd.pages)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        import subprocess
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as fh:
+            fh.write(data)
+            fh.flush()
+            return subprocess.run(["pdftotext", "-layout", fh.name, "-"], capture_output=True,
+                                  text=True, timeout=300).stdout
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 _COLNAME = re.compile(r"\b([a-z][a-z0-9]*(?:_[a-z0-9]+)+)\b")
 
 
@@ -390,17 +525,33 @@ def parse_datamodel(zip_path: Path) -> dict:
         for info in z.infolist():
             out["members"].append({"name": info.filename, "bytes": info.file_size})
             low = info.filename.lower()
-            if not low.endswith((".html", ".htm", ".txt", ".csv", ".xml", ".json", ".tex", ".md")):
-                continue
-            try:
-                txt = z.read(info.filename).decode("utf-8", "replace")
-            except Exception:  # noqa: BLE001
+            if low.endswith(".pdf"):
+                txt = pdf_text(z.read(info.filename))
+                out["pdf_text_chars"] = len(txt)
+                if txt:
+                    out["pdf_text_path"] = str(Path(zip_path).with_suffix(".txt"))
+                    Path(out["pdf_text_path"]).write_text(txt)
+            elif low.endswith((".html", ".htm", ".txt", ".csv", ".xml", ".json", ".tex", ".md")):
+                try:
+                    txt = z.read(info.filename).decode("utf-8", "replace")
+                except Exception:  # noqa: BLE001
+                    continue
+            else:
                 continue
             txt_plain = re.sub(r"<[^>]+>", " ", txt)
+            ids_all = sorted(set(_COLNAME.findall(txt_plain)))
+            out["tables"].setdefault(info.filename, {"mentions": [], "identifiers": ids_all[:8000]})
+            # per epoch table: the identifiers in the text that follows each
+            # mention of its name (a data-model section lists its columns
+            # right after its heading); unioned over mentions
             for key in ("epoch_photometry", "epoch_astrometry", "epoch_radial_velocity",
-                        "epoch_rv", "sso_observation", "vari_", "gaia_source"):
-                if key in low or key in txt_plain[:20000]:
-                    ids = sorted(set(_COLNAME.findall(txt_plain)))
-                    out["tables"].setdefault(info.filename, {"mentions": [], "identifiers": ids[:4000]})
-                    out["tables"][info.filename]["mentions"].append(key)
+                        "epoch_rv", "epoch_xp", "epoch_rvs", "sso_observation", "gaia_source"):
+                pos = [m.start() for m in re.finditer(re.escape(key), txt_plain)]
+                if not pos and key not in low:
+                    continue
+                out["tables"][info.filename]["mentions"].append(key)
+                win: set[str] = set()
+                for p0 in pos[:40]:
+                    win |= set(_COLNAME.findall(txt_plain[p0:p0 + 6000]))
+                out.setdefault("table_windows", {})[key] = sorted(win)[:3000]
     return out

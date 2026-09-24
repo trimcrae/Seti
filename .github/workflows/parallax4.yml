@@ -50,6 +50,9 @@ permissions:
   contents: write
   actions: read
 
+env:
+  PYTHONUNBUFFERED: "1"
+
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -82,7 +85,7 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install -e ".[dev]" pypdf
       - name: Offline gate (reader on the real DR4 prerelease, detector, controls logic)
         run: python -m pytest tests/test_parallax4.py -q -p no:cacheprovider
       - name: Probe (DR4 status, CDN list + real header, prerelease + draft data model, SSO schema)

@@ -191,7 +191,7 @@ def probe_dr4(*, tap=gaia_tap, http=http_get) -> dict:
 # ---------------------------------------------------------------------------
 # CDN bulk epoch photometry
 # ---------------------------------------------------------------------------
-_HREF = re.compile(r'href="(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)"')
+_HREF = re.compile(r'href="(?:[^"]*/)?(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)"')
 
 
 def list_cdn_files(*, http=http_get, base: str = CDN_EPOCH_PHOT) -> dict:
@@ -203,7 +203,7 @@ def list_cdn_files(*, http=http_get, base: str = CDN_EPOCH_PHOT) -> dict:
     files = sorted(set(_HREF.findall(txt)))
     if not files:
         # a spelling we did not anticipate: take any csv.gz the listing names
-        files = sorted(set(re.findall(r'href="([^"?/][^"]*\.csv\.gz)"', txt)))
+        files = sorted(set(re.findall(r'href="(?:[^"]*/)?([^"/?]+\.csv\.gz)"', txt)))
     if not files:
         return {"ok": False, "status": st, "files": [], "head": txt[:1500], "n_bytes": len(txt)}
     md5 = {}

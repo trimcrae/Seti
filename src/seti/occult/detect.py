@@ -79,6 +79,8 @@ DEFAULT_CONF: dict = {
     "jackknife_dataset_frac": 0.2,   # dropping the best dataset keeps >= this share (and >= floor/2)
     "bump_frac": 0.15,           # caustic-bump bar also scales with sqrt(Delta chi^2)
     "resid_redchi2_ratio": 1.5,  # in-event binned red chi^2 vs the event's own out-of-event value
+    "resid_excess_frac": 0.05,   # ... and the structure must carry > 5 % of the occultation's chi^2
+    "hole_dip_sigma": 5.0,       # hole data below the unmagnified level at this significance
     "baseline_u": 3.0,           # errors are measured where u exceeds this
     "bracket_days": 5.0,         # data within this of a step on both sides ...
     "bracket_frac_te": 0.1,      # ... or within this fraction of tE, whichever is larger
@@ -943,7 +945,7 @@ def positive_bump(ev: Event, resid, e, t0: float, te: float, width_days: float |
             "min_sigma": float(sig[ok].min()) if ok.any() else 0.0}
 
 
-def binned_redchi2(ev: Event, resid, e, t0, te, outside: bool = False) -> float | None:
+def binned_redchi2(ev: Event, resid, e, t0, te, outside: bool = False, count: bool = False):
     """Reduced chi^2 of night x dataset binned residuals (catches red structure).
 
     Inside |t - t0| < 3 tE by default; ``outside=True`` measures the same
@@ -962,6 +964,8 @@ def binned_redchi2(ev: Event, resid, e, t0, te, outside: bool = False) -> float 
     sw = np.bincount(inv, w)
     swr = np.bincount(inv, w * resid[m])
     chi = (swr / sw) ** 2 * sw
+    if count:
+        return int(chi.size)
     return float(np.mean(chi))
 
 
@@ -1273,10 +1277,19 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
         inside = traj_fit(ev2, fo) < rec["u_c"]
         rec["n_in_hole"] = int(inside.sum())
         # true-flux model: baseline fs + fb, hole level fb -> below baseline iff fs > 0
-        rec["hole_below_baseline"] = bool(inside.any()
-                                          and np.all(fo.fs[np.unique(ev2.ds[inside])] > 0))
+        # measured, not inferred: inside the hole the data must sit below each
+        # dataset's own unmagnified level (fs + fb in the fit's flux units)
+        if inside.any():
+            base_lvl = (fo.fs + fo.fb)[ev2.ds[inside]]
+            w_in = 1.0 / e[inside] ** 2
+            dip = float(np.sum(w_in * (ev2.f[inside] - base_lvl)) / math.sqrt(np.sum(w_in)))
+        else:
+            dip = 0.0
+        rec["hole_dip_sigma"] = dip
+        rec["hole_below_baseline"] = bool(dip < -conf.get("hole_dip_sigma", 5.0))
     rec["positive_bump"] = positive_bump(ev2, r1, e, fo.t0, fo.te)
     rec["binned_redchi2_after"] = binned_redchi2(ev2, r1, e, fo.t0, fo.te)
+    rec["binned_n_bins"] = binned_redchi2(ev2, r1, e, fo.t0, fo.te, count=True)
     rec["binned_redchi2_reference"] = binned_redchi2(ev2, r1, e, fo.t0, fo.te, outside=True)
     rec["rejections"] = gate_rejections(rec, conf)
     rec["tier"] = TIER_REJECTED if rec["rejections"] else TIER_CANDIDATE
@@ -1340,7 +1353,10 @@ def gate_rejections(d: dict, conf: dict) -> list:
     ref = d.get("binned_redchi2_reference")
     red_bar = max(conf["resid_redchi2_max"], conf["resid_redchi2_ratio"] * ref) if ref else \
         conf["resid_redchi2_max"]
-    if (d.get("binned_redchi2_after") or 0.0) > red_bar:
+    after = d.get("binned_redchi2_after") or 0.0
+    nb = d.get("binned_n_bins") or 0
+    excess = (after - max(1.0, ref or 1.0)) * nb      # chi^2 of structure beyond the event's own noise
+    if after > red_bar and (not nb or excess > conf["resid_excess_frac"] * (d.get("dchi2") or 0.0)):
         rej.append("RESIDUAL_STRUCTURE")
     if (d.get("dchi2_anti") or 0.0) >= (d.get("dchi2") or 0.0):
         rej.append("ANTI_TEMPLATE_COMPARABLE")
@@ -1404,15 +1420,27 @@ def expected_map(ev: Event, fit: Fit, e=None, grid=RHO_L_GRID) -> dict:
 
 
 def expected_dchi2(ev: Event, fit: Fit, rho_l: float, e=None) -> float:
-    """Fisher-style expected Delta chi^2 of an opaque lens of radius rho_l on this event.
+    """Expected Delta chi^2 of an opaque lens of radius rho_l on this event, nuisance-projected.
 
-    The occultation term evaluated at the event's own FSPL solution and errors,
-    sum (D/sigma)^2: the chi^2 the template would buy if the event carried it
-    (point source; shape re-fitting only lowers it, which injection measures).
+    The occultation term D at the event's own FSPL solution, with the part
+    that re-fitting t0, tE, u0 (and parallax) and every dataset's fluxes
+    would absorb projected out: D'D - (J'D)'(J'J)^-1(J'D), in whitened
+    units.  Without the projection, geometries where the template is nearly
+    a blend change (u0 just below u_c) read as "strong" and are not
+    (controls run 36023420377).  Point source; injection measures the rest.
     """
     e = ev.e if e is None else e
     u = traj_fit(ev, fit)
     a0 = paczynski_magnification(u)
     a1 = occulted_magnification_point(u, rho_l)
-    d = fit.fs[ev.ds] * (a0 - a1)
-    return float(np.sum((d / e) ** 2))
+    d = fit.fs[ev.ds] * (a0 - a1) / e
+    tot = float(np.sum(d * d))
+    if tot <= 0:
+        return 0.0
+    try:
+        jac = nuisance_jacobian(ev, fit, e)
+        jd = jac.T @ d
+        proj = float(jd @ np.linalg.pinv(jac.T @ jac, rcond=1e-10) @ jd)
+    except (np.linalg.LinAlgError, ValueError):
+        proj = 0.0
+    return max(tot - proj, 0.0)

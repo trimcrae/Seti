@@ -108,8 +108,9 @@ class _FakeService:
         self.queries: list[tuple[str, int]] = []
         self._session = None
 
-    def run_async(self, adql, maxrec=None):
+    def run_async(self, adql, maxrec=None, timeout=None):
         self.queries.append((adql, maxrec))
+        self.timeouts = getattr(self, "timeouts", []) + [timeout]
         return _FakeResult(self.handler(adql, maxrec))
 
 
@@ -1050,3 +1051,20 @@ def test_the_probe_measures_the_rejection_fraction_both_ways():
     for col in ("astrometric_outcome_ccd", "astrometric_outcome_transit",
                 "is_rejected"):
         assert f"GROUP BY number_mp, {col}" in out[f"rejection_census_{col}"]["adql"]
+
+
+def test_async_queries_are_not_killed_by_pyvos_ten_second_poll_timeout(monkeypatch):
+    """Run 35865402620: every chunk died on ``Read timed out. (read timeout=10)``.
+
+    pyvo 1.9 passes ``timeout=DEFAULT_JOB_POLL_TIMEOUT`` (10 s) explicitly on its
+    job-status polls, overriding the session default.  The client must lift
+    that floor and give the overall job wait its own deadline.
+    """
+    pyvo_tap = pytest.importorskip("pyvo.dal.tap")
+    monkeypatch.setattr(pyvo_tap, "DEFAULT_JOB_POLL_TIMEOUT", 10)
+    c = _client(lambda adql, maxrec: [{"x": 1}])
+    c.timeout, c.poll_timeout = 1234.0, 180.0
+    rows, _ = c.fetch("SELECT 1")
+    assert rows == [{"x": 1}]
+    assert pyvo_tap.DEFAULT_JOB_POLL_TIMEOUT == 180.0
+    assert c._fake.timeouts == [1234.0]

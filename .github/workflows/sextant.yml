@@ -104,6 +104,11 @@ on:
 permissions:
   contents: write
 
+# Stream Python's output: run 35865402620's 269-minute probe printed nothing
+# until it exited (every line stamped 17:53:31), so where the time went is lost.
+env:
+  PYTHONUNBUFFERED: "1"
+
 jobs:
   # --- THE SOLO PATH --------------------------------------------------------
   # Why this exists.  The sharded pipeline below is six separate scheduling

@@ -73,6 +73,10 @@ from .screen import BinaryCatalogue
 DEFAULT_CONFIG: dict = {
     "release": "gaiafpr",
     "objects_per_chunk": 250,
+    # An archive outage must stop the shard rather than spend its whole clock
+    # recording "no observations" for objects Gaia never answered about.
+    "max_consecutive_failed_chunks": 4,
+    "failed_chunk_retry_sleep_s": 60.0,
     "max_objects": 0,                    # 0 = every object in the release
     "ephemeris_route": "auto",           # auto | integrator | horizons
     "horizons_min_interval_s": 1.0,
@@ -941,6 +945,9 @@ def fetch_chunk(gaia, numbers: list[int], release: str, paths: Paths, tag: str,
         else:
             rows = []
             info["error"] = "; ".join(res.notes)[:300]
+            # The QUERY failed: nothing is known about these objects, which is
+            # not the same statement as "Gaia has no rows for them".
+            info["failed"] = True
         if rows:
             p.parent.mkdir(parents=True, exist_ok=True)
             rows_to_frame(rows).to_parquet(p, index=False)
@@ -1394,7 +1401,11 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
     if p.exists():
         try:
             rec = json.loads(p.read_text())
-            return {int(k): v for k, v in (rec.get("rows") or {}).items()}
+            # An EMPTY parse is not a catalogue: runs 35746692260 and later
+            # cached 0 rows and re-used them forever.  Such a record is a miss.
+            if rec.get("verdict") != "EMPTY_PARSE" and not (
+                    rec.get("retrieved_utc") and not rec.get("rows")):
+                return {int(k): v for k, v in (rec.get("rows") or {}).items()}
         except Exception:                                      # noqa: BLE001
             pass
     try:
@@ -1402,10 +1413,16 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
 
         tabs = Vizier(row_limit=-1).get_catalogs(C.GREENBERG2020_VIZIER)
         rows: dict[int, dict] = {}
+        seen_tables = [{"n_rows": len(t), "columns": list(t.colnames)} for t in tabs]
         for t in tabs:
             names = {c.lower(): c for c in t.colnames}
-            num_c = next((names[k] for k in ("number", "num", "no", "mp", "aster")
+            num_c = next((names[k] for k in ("number", "num", "no", "mp", "aster",
+                                              "ast", "n", "mpc", "nmp")
                           if k in names), None)
+            if num_c is None:
+                # A designation column like "(101955) Bennu" still carries the number.
+                num_c = next((names[k] for k in ("name", "object", "desig", "asteroid",
+                                                  "designation") if k in names), None)
             # da/dt is tabulated as `dadt` or `da/dt`; its sigma as `e_dadt`.
             dadt_c = next((c for c in t.colnames
                            if c.lower().replace("/", "").replace("_", "") == "dadt"), None)
@@ -1418,7 +1435,10 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
                 try:
                     n = int(r[num_c])
                 except (TypeError, ValueError):
-                    continue
+                    m = re.match(r"\s*\(?(\d+)\)?", str(r[num_c]))
+                    if not m:
+                        continue
+                    n = int(m.group(1))
                 d = {"dadt_1e4_au_per_myr": _f(r[dadt_c]),
                      "dadt_sigma_1e4_au_per_myr": _f(r[err_c]) if err_c else float("nan")}
                 for extra, key in (("a", "a_au"), ("e", "e"), ("H", "h")):
@@ -1428,7 +1448,11 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
                     rows[n] = d
         rec = {"rows": {str(k): v for k, v in rows.items()}, "retrieved_utc": _utc(),
                "n_rows": len(rows), "vizier": C.GREENBERG2020_VIZIER,
-               "reference": "Greenberg, Margot, Verma, Taylor & Hodge 2020, AJ 159, 92"}
+               "reference": "Greenberg, Margot, Verma, Taylor & Hodge 2020, AJ 159, 92",
+               "verdict": "OK" if rows else "EMPTY_PARSE",
+               # What VizieR actually served, so an empty parse can be diagnosed
+               # from the committed record instead of guessed at.
+               "tables_seen": seen_tables}
         E.save_json(p, rec)
         log(f"Yarkovsky control catalogue: {len(rows)} da/dt values from VizieR "
             f"{C.GREENBERG2020_VIZIER}")
@@ -1441,7 +1465,8 @@ def load_yarkovsky_catalogue(paths: Paths, log=print) -> dict[int, dict]:
 def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
                 log=print, gaia=None, client=None, route: str | None = None,
                 max_objects: int | None = None, commit_hook=None,
-                budget_minutes: float | None = None, now=time.time) -> dict:
+                budget_minutes: float | None = None, now=time.time,
+                sleep_fn=time.sleep) -> dict:
     from .acquire import GaiaSSO
 
     tag = f"shard_{int(shard)}_of_{int(n_shards)}"
@@ -1517,6 +1542,7 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
         rec["binary_catalogue"] = (binaries.retrieved_utc if binaries else None)
         checkpoint()
         chunks = chunked(mine, int(conf["objects_per_chunk"]))
+        n_failed_run = 0
         for ci, chunk in enumerate(chunks):
             if budget_s is not None and now() - t_start > budget_s:
                 rec["budget_stop"] = {"after_chunks": ci, "of_chunks": len(chunks),
@@ -1530,13 +1556,38 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
             t0 = time.time()
             groups, info = fetch_chunk(gaia, chunk, conf["release"], paths,
                                        f"{tag}_chunk{ci:04d}", log=log)
+            if info.get("failed"):
+                # One retry after a pause: TAP outages are often minutes long.
+                sleep_fn(float(conf["failed_chunk_retry_sleep_s"]))
+                groups, info = fetch_chunk(gaia, chunk, conf["release"], paths,
+                                           f"{tag}_chunk{ci:04d}", log=log)
+                info["retried"] = True
             info["chunk"] = ci
+            failed = bool(info.get("failed"))
+            n_failed_run = n_failed_run + 1 if failed else 0
             missing = [n for n in chunk if n not in groups]
             for n in missing:
                 records.append({"number_mp": n, "denomination": denom.get(n),
-                                "route": want, "verdict": "NO_OBSERVATIONS_RETURNED",
+                                "route": want,
+                                "verdict": ("GAIA_QUERY_FAILED" if failed
+                                            else "NO_OBSERVATIONS_RETURNED"),
                                 "tier": "untestable",
-                                "reasons": ["no_rows_from_gaia"], "vetoes": []})
+                                "reason": (info.get("error") if failed else None),
+                                "reasons": ([f"gaia_query_failed: {info.get('error')}"]
+                                            if failed else ["no_rows_from_gaia"]),
+                                "vetoes": []})
+            if failed and n_failed_run >= int(conf["max_consecutive_failed_chunks"]):
+                rec["chunks"].append(info)
+                rec["archive_stop"] = {
+                    "after_chunks": ci + 1, "of_chunks": len(chunks),
+                    "consecutive_failed_chunks": n_failed_run,
+                    "last_error": info.get("error"),
+                    "note": ("the Gaia TAP service failed on every recent chunk; the "
+                             "shard stopped rather than record an outage as absence")}
+                log(f"{tag}: Gaia TAP failed on {n_failed_run} consecutive chunks; "
+                    f"stopping ({info.get('error')})")
+                checkpoint()
+                break
             bundles: dict[int, EphemBundle] = {}
             skipped: dict[int, str] = {}
             if want == "integrator":
@@ -1619,6 +1670,8 @@ def stage_shard(conf: dict, paths: Paths, shard: int, n_shards: int, *,
         rec["timing_offset"] = R.fit_common_time_offset(series_for_timing)
         if not records:
             rec["verdict"] = "NO_OBJECTS"
+        elif rec.get("archive_stop"):
+            rec["verdict"] = "ARCHIVE_UNREACHABLE_PARTIAL"
         elif rec.get("budget_stop"):
             rec["verdict"] = "OK_PARTIAL_BUDGET"
         else:
@@ -1876,7 +1929,14 @@ def assess_frame(df, conf: dict, details: dict | None = None,
                                       f"objects and >= {conf['min_anomalies_for_population']} "
                                       f"objects above the hard ceiling with no veto")}
     # The verdict.
-    if len(fitted) == 0:
+    n_gaia_failed = int((df["verdict"] == "GAIA_QUERY_FAILED").sum())
+    out["n_gaia_query_failed"] = n_gaia_failed
+    if len(fitted) == 0 and n_gaia_failed > 0:
+        # Every record the archive answered produced no fit, and some it never
+        # answered at all: that is an outage, and it keeps the NO_DATA_REACHED
+        # stem so it cannot be committed over a measured summary.
+        out["verdict"] = "NO_DATA_REACHED__GAIA_TAP_FAILED"
+    elif len(fitted) == 0:
         out["verdict"] = "NO_OBJECT_FITTED"
     elif out["population"].get("verdict") == "REPLICATION_STRUCTURE_DETECTED":
         out["verdict"] = "REPLICATION_STRUCTURE_DETECTED__VET_BEFORE_BELIEVING"

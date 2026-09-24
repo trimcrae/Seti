@@ -59,7 +59,7 @@ def _f(x) -> float:
 
 
 def evaluate_pack(pack: dict, conf: dict | None = None, *, periodogram: bool = True,
-                  blend: dict | None = None) -> dict:
+                  blend: dict | None = None, period: dict | None = None) -> dict:
     """The full ladder on one pack.  ``conf`` has ``coupling``/``energy``/``classify``."""
     conf = conf or {}
     cc = {**DEFAULT_COUPLING, **(conf.get("coupling") or {})}
@@ -73,8 +73,8 @@ def evaluate_pack(pack: dict, conf: dict | None = None, *, periodogram: bool = T
         en = energy_budget(_f(meta.get("phot_g_mean_mag")), teff, r.frac_lost, r.frac_lost_err,
                            r.ir_ref, r.ir_dmag, r.ir_dmag_err, conf.get("energy"))
         en["teff"], en["teff_source"] = teff, tsrc
-    per = None
-    if periodogram and r.n_faded:
+    per = period
+    if per is None and periodogram and r.n_faded:
         raw = pack.get("raw") or {}
         band = max(raw, key=lambda b: len(raw[b].get("mjd", []))) if raw else None
         if band:
@@ -92,7 +92,7 @@ def evaluate_pack(pack: dict, conf: dict | None = None, *, periodogram: bool = T
            "chroma": r.chroma, "k_colour": r.k_colour, "k_colour_err": r.k_colour_err,
            "d_gr_deepest": r.d_gr_deepest, "d_gr_deepest_err": r.d_gr_deepest_err,
            "best_lag": r.best_lag, "corr_lag0": r.corr_lag0, "corr_best": r.corr_best,
-           "score": r.score, "ir_two_band": r.ir_two_band,
+           "score": r.score, "ir_two_band": r.ir_two_band, "lag_ir_sigma": r.lag_ir_sigma,
            "ir_rise_max_sigma": r.ir_rise_max_sigma,
            "natural_flags": ";".join(nat["flags"]), "sf_box": nat["sf_box"],
            "abs_g": nat["abs_g"]}

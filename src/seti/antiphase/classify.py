@@ -253,7 +253,7 @@ def final_verdict(coupling: dict, energy: dict | None, natural: dict, blend: dic
     c = {**DEFAULT_CLASSIFY, **(conf or {})}
     lab = str(coupling.get("label"))
     untested = list(natural.get("untested", []))
-    if lab != "COUPLED":
+    if lab not in ("COUPLED", "LAGGED_COUPLING"):
         return {"verdict": lab, "natural_class": None, "untested": untested, "reasons": []}
     reasons: list[str] = []
     # luminosity/periodicity classes first: an R CrB star or a Mira also
@@ -276,8 +276,9 @@ def final_verdict(coupling: dict, energy: dict | None, natural: dict, blend: dic
     elif ev != "BALANCED":
         untested.append("energy_budget")
     lag, cb, c0 = coupling.get("best_lag", 0), coupling.get("corr_best"), coupling.get("corr_lag0")
-    if lag and np.isfinite(cb or np.nan) and np.isfinite(c0 or np.nan) and \
-            abs(int(lag)) > 1 and cb - c0 >= float(c["lag_corr_margin"]):
+    if lab == "LAGGED_COUPLING" or (
+            lag and np.isfinite(cb or np.nan) and np.isfinite(c0 or np.nan)
+            and abs(int(lag)) > 1 and cb - c0 >= float(c["lag_corr_margin"])):
         reasons.append("LAGGED")
     if blend is None or blend.get("status") != "OK":
         untested.append("neighbour_blend")

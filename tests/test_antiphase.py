@@ -341,9 +341,22 @@ def test_an_ir_rise_that_leads_the_fade_is_lagged():
     ep = ir_step(ep, 2022.0, 2023.4, {k: 0.12 * v for k, v in dir_.items()})
     rec = run_one(ep, opt)
     assert rec["best_lag"] < -1
-    assert rec["verdict"] != "ANTIPHASE_CANDIDATE"
-    if rec["coupling_label"] == "COUPLED":
-        assert "LAGGED" in rec["reasons"]
+    assert rec["coupling_label"] in ("COUPLED", "LAGGED_COUPLING")
+    assert rec["verdict"] == "NATURAL" and "LAGGED" in rec["reasons"]
+
+
+def test_an_afterglow_that_has_faded_by_the_transit_is_a_lagged_coupling():
+    """The ASASSN-21qj shape seen in run 36030068228: the IR is back at (or
+    below) its reference when the optical dims, so the simultaneous test says
+    FADE_IR_FADES / FLAT; the lag scan must still name it."""
+    rng = np.random.default_rng(25)
+    ep = ir_epochs(rng)
+    opt = fade(ztf_points(rng), 2021.9, 2023.4, 0.25)
+    ep = ir_step(ep, 2019.4, 2020.9, ir_excess_dmag(SUN, 0.2, 600.0))
+    rec = run_one(ep, opt)
+    assert rec["coupling_label"] == "LAGGED_COUPLING"
+    assert rec["lag_ir_sigma"] >= 3 and rec["best_lag"] <= -2
+    assert rec["verdict"] == "NATURAL" and "LAGGED" in rec["reasons"]
 
 
 def test_w1_only_and_disagreeing_bands_and_flat_ir():
@@ -570,6 +583,8 @@ def test_shard_and_reduce_end_to_end(tmp_path):
     assert s["self_consistency"]["labels_sum_to_evaluated"]
     assert s["self_consistency"]["shards_found_equals_expected"]
     assert s["funnel"]["n_evaluated"] == 60
+    # the reduce re-runs the ladder on every faded star from stored series, same answer
+    assert s["reevaluated_in_reduce"]["n"] >= 1 and s["reevaluated_in_reduce"]["n_relabelled"] == 0
     cands = pd.read_csv(out / "candidates.csv", dtype={"source_id": str})
     row = cands[cands["source_id"] == "999"].iloc[0]
     # a 60-star shard's null cannot resolve FAP x N < 0.1: the candidate is held

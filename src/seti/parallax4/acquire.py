@@ -31,8 +31,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-CDN_EPOCH_PHOT = "http://cdn.gea.esac.esa.int/Gaia/gdr3/Photometry/epoch_photometry/"
-CDN_GDR4 = "http://cdn.gea.esac.esa.int/Gaia/gdr4/"
+CDN_EPOCH_PHOT = "https://cdn.gea.esac.esa.int/Gaia/gdr3/Photometry/epoch_photometry/"
+CDN_GDR4 = "https://cdn.gea.esac.esa.int/Gaia/gdr4/"
+#: The CDN's directory pages are a JavaScript file browser (measured
+#: 2026-09-24, run 36015376952): the listing itself comes from this S3-style
+#: storage endpoint, and objects are served at https://cdn.gea.esac.esa.int/<key>.
+CDN_STORAGE = "https://gaia.eu-1.cdn77-storage.com/"
+CDN_ROOT = "https://cdn.gea.esac.esa.int/"
 DATALINK = "https://gea.esac.esa.int/data-server/data"
 PRERELEASE_DIR = ("https://anonftp.cosmos.esa.int/pub/GAIA_PUBLIC_DATA/Gaia_DR4/"
                   "dr4-prerelease/")
@@ -179,11 +184,12 @@ def probe_dr4(*, tap=gaia_tap, http=http_get) -> dict:
     # HTTP 200 on 2026-09-24, ten weeks early), so a 200 is not evidence of
     # DR4.  What would be: epoch-product subdirectories in its listing.
     try:
-        st, body = http(CDN_GDR4, timeout=60.0, retries=2)
-        entries = sorted(set(re.findall(r'href="([^"?/][^"]*)"', (body or b"").decode("utf-8", "replace"))))
-        epochish = [e for e in entries if re.search(r"(?i)epoch|astrometry|photometry", e)]
-        rep["checks"]["cdn_gdr4"] = {"ok": True, "status": int(st), "entries": entries[:60],
-                                     "epoch_entries": epochish}
+        sl = storage_list("Gaia/gdr4/", http=http, delimiter="/", max_pages=3)
+        entries = sorted(set(sl.get("prefixes", []) + [k["key"] for k in sl.get("keys", [])]))
+        epochish = [e for e in entries
+                    if re.search(r"(?i)epoch|astrometry/|photometry/", e) and "prerelease" not in e.lower()]
+        rep["checks"]["cdn_gdr4"] = {"ok": bool(sl.get("ok")), "status": int(sl.get("status") or 0),
+                                     "entries": entries[:80], "epoch_entries": epochish}
     except Exception as exc:  # noqa: BLE001
         rep["checks"]["cdn_gdr4"] = {"ok": False, "error": repr(exc)[:300]}
     tap_ok = rep["checks"]["tap_schemas"].get("ok")
@@ -211,35 +217,74 @@ def probe_dr4(*, tap=gaia_tap, http=http_get) -> dict:
 _HREF = re.compile(r'href="(?:[^"]*/)?(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)"')
 
 
+def storage_list(prefix: str, *, http=http_get, delimiter: str | None = None,
+                 max_pages: int = 50) -> dict:
+    """Keys (with sizes, ETags) and common prefixes under ``prefix`` from the
+    CDN's S3-style listing, following pagination (V2 continuation tokens, or
+    V1 markers when the store ignores list-type=2)."""
+    keys: list[dict] = []
+    prefixes: list[str] = []
+    token, marker = None, None
+    for _ in range(max_pages):
+        params = {"prefix": prefix, "list-type": "2"}
+        if delimiter:
+            params["delimiter"] = delimiter
+        if token:
+            params["continuation-token"] = token
+        if marker:
+            params["marker"] = marker
+        st, body = http(CDN_STORAGE, params=params, timeout=120.0)
+        if st != 200 or not body:
+            return {"ok": False, "status": st, "keys": keys, "prefixes": prefixes,
+                    "head": (body or b"")[:600].decode("utf-8", "replace")}
+        txt = body.decode("utf-8", "replace")
+        for c in re.findall(r"<Contents>(.*?)</Contents>", txt, flags=re.S):
+            k = re.search(r"<Key>(.*?)</Key>", c, flags=re.S)
+            sz = re.search(r"<Size>(\d+)</Size>", c)
+            et = re.search(r"<ETag>(.*?)</ETag>", c, flags=re.S)
+            if k:
+                keys.append({"key": k.group(1), "size": int(sz.group(1)) if sz else None,
+                             "etag": et.group(1).replace("&quot;", "").strip('"') if et else None})
+        prefixes += re.findall(r"<CommonPrefixes>\s*<Prefix>(.*?)</Prefix>", txt, flags=re.S)
+        if "<IsTruncated>true</IsTruncated>" not in txt:
+            break
+        nt = re.search(r"<NextContinuationToken>(.*?)</NextContinuationToken>", txt, flags=re.S)
+        nm = re.search(r"<NextMarker>(.*?)</NextMarker>", txt, flags=re.S)
+        if nt:
+            token, marker = nt.group(1), None
+        else:
+            token, marker = None, (nm.group(1) if nm else (keys[-1]["key"] if keys else None))
+            if marker is None:
+                break
+    return {"ok": True, "status": 200, "keys": keys, "prefixes": prefixes}
+
+
 def list_cdn_files(*, http=http_get, base: str = CDN_EPOCH_PHOT) -> dict:
+    """The CDN epoch-photometry files.  The storage listing first (the
+    directory page is JavaScript); an Apache-style href listing as fallback."""
+    prefix = base.replace(CDN_ROOT, "").replace("http://cdn.gea.esac.esa.int/", "")
+    rep: dict = {}
+    try:
+        sl = storage_list(prefix, http=http)
+        keys = [k for k in sl.get("keys", []) if k["key"].endswith(".csv.gz")]
+        if keys:
+            names = sorted(k["key"].rsplit("/", 1)[-1] for k in keys)
+            md5 = {k["key"].rsplit("/", 1)[-1]: k["etag"] for k in keys
+                   if k.get("etag") and re.fullmatch(r"[0-9a-f]{32}", k["etag"])}
+            sizes = {k["key"].rsplit("/", 1)[-1]: k["size"] for k in keys}
+            return {"ok": True, "status": 200, "route": "storage_listing", "files": names,
+                    "n_files": len(names), "md5": md5, "sizes": sizes,
+                    "total_bytes": int(sum(v or 0 for v in sizes.values()))}
+        rep["storage"] = {k: v for k, v in sl.items() if k != "keys"} | {"n_keys": len(sl.get("keys", []))}
+    except Exception as exc:  # noqa: BLE001
+        rep["storage_error"] = repr(exc)[:300]
     st, body = http(base, timeout=120.0)
-    if st != 200 or body is None:
-        return {"ok": False, "status": st, "files": [],
-                "head": (body or b"")[:600].decode("utf-8", "replace")}
-    txt = body.decode("utf-8", "replace")
-    files = sorted(set(_HREF.findall(txt)))
+    txt = (body or b"").decode("utf-8", "replace")
+    files = sorted(set(_HREF.findall(txt))) if st == 200 else []
     if not files:
-        # a spelling we did not anticipate: take any csv.gz the listing names
-        files = sorted(set(re.findall(r'href="(?:[^"]*/)?([^"/?]+\.csv\.gz)"', txt)))
-    if not files:
-        return {"ok": False, "status": st, "files": [], "head": txt[:1500], "n_bytes": len(txt)}
-    md5 = {}
-    if "_MD5SUM.txt" in txt:
-        try:
-            st2, b2 = http(base + "_MD5SUM.txt", timeout=120.0)
-            if st2 == 200 and b2:
-                for line in b2.decode("utf-8", "replace").splitlines():
-                    parts = line.split()
-                    if len(parts) == 2:
-                        md5[parts[1].lstrip("*")] = parts[0]
-        except Exception:  # noqa: BLE001
-            pass
-    sizes = {}
-    for m in re.finditer(r'href="(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)".*?(\d+(?:\.\d+)?[KMG]?)\s*$',
-                         txt, flags=re.M):
-        sizes[m.group(1)] = m.group(2)
-    return {"ok": True, "status": st, "files": files, "n_files": len(files), "md5": md5,
-            "sizes": sizes}
+        return {"ok": False, "status": st, "files": [], "head": txt[:800], **rep}
+    return {"ok": True, "status": st, "route": "href_listing", "files": files, "n_files": len(files),
+            "md5": {}, "sizes": {}, **rep}
 
 
 def healpix_range(fname: str) -> tuple[int, int] | None:

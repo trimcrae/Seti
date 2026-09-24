@@ -66,6 +66,29 @@ def _sexa(s: str, hours: bool) -> float | None:
         return None
 
 
+def hjd_prime(t):
+    """Any HJD convention to HJD - 2450000 (the photometry's convention).
+
+    KMTNet ``listpage.dat`` quotes t0 as HJD - 2450000 up to 2022 (``8540.21``)
+    and as HJD - 2400000 from 2023 (``60748.36``); OGLE quotes full HJD.
+    Run 36015751048 lost every 2023-2025 KMTNet control to this: the event
+    window was cut 50,000 d away from the data.
+    """
+    if t is None:
+        return None
+    t = float(t)
+    if t > 2400000.0:
+        return t - 2450000.0
+    if t > 40000.0:
+        return t - 50000.0
+    return t
+
+
+def _hjd_prime_arr(t):
+    t = np.asarray(t, dtype=float)
+    return np.where(t > 2400000.0, t - 2450000.0, np.where(t > 40000.0, t - 50000.0, t))
+
+
 def _f(x):
     try:
         v = float(x)
@@ -86,7 +109,7 @@ def parse_ogle_lenses(text: str, season: int) -> list:
             "survey": "OGLE", "season": int(season), "name": f"OGLE-{p[0]}",
             "id": p[0].split("-")[-1], "field": p[1],
             "ra": _sexa(p[3], True), "dec": _sexa(p[4], False),
-            "t0": t0 - 2450000.0 if t0 and t0 > 2450000 else t0,
+            "t0": hjd_prime(t0),
             "tE": _f(p[7]), "u0": _f(p[8]), "Amax": _f(p[9]), "fbl": _f(p[11]),
             "I0": _f(p[13]),
         })
@@ -120,7 +143,8 @@ def parse_kmt_listpage(text: str, season: int) -> list:
             "field": p[1].split(".")[0], "class_a": p[2] if ira > 2 else None,
             "class_b": p[3] if ira > 3 else None,
             "ra": _sexa(p[ira], True), "dec": _sexa(p[ira + 1], False),
-            "t0": _f(q[0]) if len(q) > 0 else None, "tE": _f(q[1]) if len(q) > 1 else None,
+            "t0": hjd_prime(_f(q[0])) if len(q) > 0 else None,
+            "tE": _f(q[1]) if len(q) > 1 else None,
             "u0": _f(q[2]) if len(q) > 2 else None,
             "Isource": _f(q[3]) if len(q) > 3 else None, "Ibase": _f(q[4]) if len(q) > 4 else None,
             "A_I": _f(q[7]) if len(q) > 7 else None,
@@ -152,8 +176,7 @@ def parse_phot_dat(text: str) -> dict:
         return {"t": np.zeros(0), "mag": np.zeros(0), "err": np.zeros(0),
                 "seeing": np.zeros(0), "sky": np.zeros(0)}
     a = np.array([[np.nan if x is None else x for x in r] for r in rows], dtype=float)
-    t = a[:, 0]
-    t = np.where(t > 2450000.0, t - 2450000.0, t)
+    t = _hjd_prime_arr(a[:, 0])
     return {"t": t, "mag": a[:, 1], "err": a[:, 2], "seeing": a[:, 3], "sky": a[:, 4]}
 
 
@@ -176,7 +199,7 @@ def parse_pysis(text: str) -> dict:
         return {k: np.zeros(0) for k in keys}
     a = np.array([[np.nan if x is None else x for x in r] for r in rows], dtype=float)
     out = {k: a[:, i] for i, k in enumerate(keys)}
-    out["t"] = np.where(out["t"] > 2450000.0, out["t"] - 2450000.0, out["t"])
+    out["t"] = _hjd_prime_arr(out["t"])
     return out
 
 
@@ -354,10 +377,16 @@ def fetch_unit_series(s, unit: dict, conf: dict | None = None) -> dict:
         status["kmt"] = {"http": code, "error": err, "bytes": len(blob) if blob else 0}
         if blob:
             try:
-                for d, tab in parse_pysis_tar(blob):
+                tabs = parse_pysis_tar(blob)
+                status["kmt"]["n_files"] = len(tabs)
+                status["kmt"]["n_points_raw"] = int(sum(tab["t"].size for _, tab in tabs))
+                kept = 0
+                for d, tab in tabs:
                     ok = quality_mask_kmt(tab) & window_mask(tab["t"], t0, te)
                     if ok.sum() >= 5:
                         series.append((d, tab["t"][ok], tab["flux"][ok], tab["err"][ok]))
+                        kept += int(ok.sum())
+                status["kmt"]["n_points_kept"] = kept
             except (tarfile.TarError, OSError, EOFError) as exc:
                 status["kmt"]["error"] = f"tar: {exc!r}"[:200]
     if unit.get("ogle"):
@@ -366,6 +395,8 @@ def fetch_unit_series(s, unit: dict, conf: dict | None = None) -> dict:
         if txt:
             tab = parse_phot_dat(txt)
             ok = quality_mask_ogle(tab) & window_mask(tab["t"], t0, te)
+            status["ogle"]["n_points_raw"] = int(tab["t"].size)
+            status["ogle"]["n_points_kept"] = int(ok.sum())
             if ok.sum() >= 5:
                 f, e = mag_to_flux(tab["mag"][ok], tab["err"][ok])
                 series.append(({"name": "OGLE_I", "site": "OGLE", "field": unit["ogle"]["field"],

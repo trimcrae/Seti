@@ -1,13 +1,13 @@
 {
- "checked_at_utc": "2026-09-24T09:58:52Z",
+ "checked_at_utc": "2026-09-24T12:11:31Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
-  "head_sha": "a256cecf4148e81f3f05b67545876a71c1846a14",
-  "run_id": 35970475639,
-  "run_started_at": "2026-09-24T07:35:51Z",
+  "head_sha": "26288e40e53b38f19616c809d437a677df2e7c3e",
+  "run_id": 35995232570,
+  "run_started_at": "2026-09-24T11:48:56Z",
   "run_status": "completed",
-  "run_url": "https://github.com/trimcrae/Seti/actions/runs/35970475639",
+  "run_url": "https://github.com/trimcrae/Seti/actions/runs/35995232570",
   "status": "GREEN",
   "workflow": "ci.yml"
  },
@@ -39,14 +39,17 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-09-24T09:17:00Z",
+   "expected_last_fire_utc": "2026-09-24T11:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.91,
+   "hours_since_last_run": 4.59,
    "last_scheduled_run_utc": "2026-09-24T07:35:51Z",
+   "missed_by": "silence",
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 4.59 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-09-24T11:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -58,14 +61,11 @@
    "expected_last_fire_utc": "2026-09-24T06:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 3.26,
-   "hours_since_last_run": 4.61,
-   "last_scheduled_run_utc": "2026-09-24T05:22:29Z",
-   "missed_by": "grace",
+   "hours_late": null,
+   "last_scheduled_run_utc": "2026-09-24T12:10:59Z",
    "name": "cronwatch",
-   "note": "cronwatch should have fired at 2026-09-24T06:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-09-24T05:22:29Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
-   "overdue": true,
-   "status": "MISSED",
+   "overdue": false,
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -221,14 +221,14 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-09-24T09:17:00Z",
+   "expected_last_fire_utc": "2026-09-24T11:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-09-24T09:57:36Z",
    "name": "watchdog",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "watchdog.yml"
   }
  ]

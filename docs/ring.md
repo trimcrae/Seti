@@ -278,6 +278,44 @@ or below the 13 M_J cooling ceiling plus its 0.5 dex margin (closest:
 catalogued above 13 M_J, i.e. ordinary brown dwarfs. Self-consistency block:
 11 checks, 0 failures.
 
+**Full run 35860904385 (all legs, solo, 2026-09-23 12:34–14:32 UTC)** —
+predates the ffp/look-elsewhere fixes, so its pulsar/ffp sections are
+superseded by run 35864331050. New legs:
+
+* *White dwarfs*: route A absent, route B's Gaia upload died on an SSL EOF,
+  route C (CDS X-Match at PM-propagated positions) served 25,932 of the
+  359,074-row Pwd ≥ 0.75 parent. 4,694 excess-flagged (3,825 achromatic, i.e.
+  companion-like; 869 by colour); shapes 3,222 companion / 705 debris-disk /
+  587 warm-ambiguous / 179 ring-band. **0 survived the gates** — but that zero
+  is partly methodological: the X-Match echo of the uploaded ra/dec collided
+  with the Gaia ra/dec, no `ra` column survived, and the registration test
+  was NaN for every host; 123 of the 179 ring-band shapes were rejected by
+  that unevaluated gate (37 ledger, 19 WISE quality). Fixed (commit
+  77ccfa70); the white-dwarf result must be read from the re-run.
+* *Brown dwarfs*: SpTIR on the 20 pc census turned out to be a numeric code
+  (T0 = 20), which the parser did not read, so the leg fell back again to
+  Kirkpatrick+2019 without proper motions: 190/232 cones in the 4,500 s
+  budget, 47 with epochs, 19 tested. One duty-cycle flag — the
+  `SECONDARY_FLAGS_PENDING_VET` — WISE J181329.40+283533.3 (T8; 9 epochs,
+  W2 χ²_red = 17.4 vs threshold 13.2, amplitude 0.70 mag, W1 χ²_red = 1.3).
+  Its mean W1−W2 is **0.93**, where a T8 is ≈3 mag red (CH₄ in W1), and the
+  cone had no proper motion to follow: the series is a background source or
+  a blend in a stale cone, not the brown dwarf. Vetted out
+  (`colour_not_the_target`, `proper_motion_not_propagated` now coded).
+  Numeric type codes are read, shards fetch their own targets, and the
+  NEOWISE cones run as a 6-shard matrix.
+
+**Run 35992172700 (sharded, 2026-09-24 11:17 UTC)**: all legs and the six
+NEOWISE shards finished (each shard in ~20 min, well under budget), but the
+assess job hung in the white-dwarf follow-up — an async Gaia neighbour cone
+with no timeout — and had written nothing after three hours. The follow-up is
+now bounded (60 s per cone, 2,400 s loop, 900 s SIMBAD; unreached rows are
+`blend_untested`, never passed). Its bd shards still used the
+proper-motion-less fallback list (the 20 pc census again yielded no ≥ T6
+row), so proper-motion-less targets now adopt CatWISE2020 positions and
+motions, and the raw type values are recorded to settle the census parsing.
+Run 36016037098 carries all of it plus main's single-target-list handoff.
+
 A note on the brown-dwarf leg's scope: it tests *W2 variability* (a duty
 cycle), not a static W1/W2 excess. The static test would be wrong here as
 built — CH₄ absorption in W1 makes late-T/Y dwarfs intrinsically very red in

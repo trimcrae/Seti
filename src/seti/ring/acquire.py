@@ -465,11 +465,27 @@ def fetch_wd_leg(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_colu
         wise = normalise_xmatch(raw, ALLWISE_XMATCH_RENAME)
         if len(wise):
             wise["source_id"] = wise["source_id"].astype(str)
+            if "ra_wise" not in wise.columns or "dec_wise" not in wise.columns:
+                for a, b in (("RA_ICRS", "DE_ICRS"), ("RAdeg", "DEdeg"),
+                             ("_RAJ2000", "_DEJ2000"), ("ra_2", "dec_2")):
+                    if a in wise.columns and b in wise.columns:
+                        wise = wise.rename(columns={a: "ra_wise", b: "dec_wise"})
+                        break
             p = parent.copy()
             p["source_id"] = p["source_id"].astype(str)
+            # The X-Match echoes the UPLOADED (epoch-propagated) ra/dec.  Merged
+            # as-is they collide with the parent's Gaia ra/dec and both become
+            # ra_x/ra_y: run 35860904385 then had no "ra" at all, so the
+            # registration offset was NaN for every row and all 25,932 white
+            # dwarfs failed the astrometric gate untested (123 of the 179
+            # ring-band shapes were rejected that way).  Keep the parent's.
+            wise = wise.drop(columns=[c for c in wise.columns
+                                      if c in p.columns and c != "source_id"])
             df = p.merge(wise, on="source_id", how="inner")
             meta["routes_tried"].append({"route": "cds_xmatch_propagated", "status": "OK",
-                                         "n": int(len(df))})
+                                         "n": int(len(df)),
+                                         "has_wise_position": bool(
+                                             {"ra_wise", "dec_wise"} <= set(df.columns))})
             meta["route"] = "vizier_parent+cds_xmatch_propagated"
             df.to_parquet(out_dir / "wd_routeC.parquet", index=False)
             return df, meta
@@ -1012,16 +1028,81 @@ _SPT_CLASS = {"M": 0.0, "L": 10.0, "T": 20.0, "Y": 30.0}
 
 
 def spt_to_numeric(s) -> float:
-    """``'T7.5'`` -> 27.5; ``'Y0'`` -> 30; ``'>=Y1'`` -> 31; NaN when unreadable."""
+    """``'T7.5'`` -> 27.5; ``'Y0'`` -> 30; ``'>=Y1'`` -> 31; NaN when unreadable.
+
+    A bare number in [0, 40) is taken as the numeric type code on the same
+    scale (M0 = 0, L0 = 10, T0 = 20, Y0 = 30), which is how Kirkpatrick+2021
+    tabulates SpTO/SpTIR on VizieR: run 35860904385 read SpTIR correctly and
+    still found 0 of 682 late objects, because every value was a code, and
+    fell back to the proper-motion-less Y-dwarf table again.
+    """
     if s is None:
         return np.nan
-    m = re.search(r"([MLTY])\s*(\d+(\.\d+)?)", str(s).upper())
+    if isinstance(s, (int, float, np.integer, np.floating)):
+        v = float(s)
+        return v if np.isfinite(v) and 0.0 <= v < 40.0 else np.nan
+    txt = str(s).strip()
+    if re.fullmatch(r"[-+]?\d+(\.\d+)?", txt):
+        v = float(txt)
+        return v if 0.0 <= v < 40.0 else np.nan
+    m = re.search(r"([MLTY])\s*(\d+(\.\d+)?)", txt.upper())
     if not m:
         return np.nan
     return _SPT_CLASS[m.group(1)] + float(m.group(2))
 
 
-def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.DataFrame, dict]:
+def adopt_catwise_astrometry(targets: pd.DataFrame, cfg: dict, *, xmatch_fn=None
+                             ) -> tuple[pd.DataFrame, dict]:
+    """Give proper-motion-less targets CatWISE2020 positions and motions.
+
+    The NEOWISE cone follows a target from the Gaia epoch with its proper
+    motion; a catalogue without motions (the Kirkpatrick+2019 Y-dwarf table,
+    which both full runs fell back to) leaves the cone parked for a decade
+    while a Y dwarf moves 5-30 arcsec -- 47 of 232 targets then returned a
+    usable series.  CatWISE2020 measured these objects' motions (it is how
+    most were found); its positions are at epoch 2015.4, 0.6 yr from the cone
+    origin.  The nearest CatWISE source within ``catwise_adopt_radius_arcsec``
+    of the catalogue position is adopted; rows it does not reach keep their
+    own position and a NaN motion (and their flags are then vetoed as
+    ``proper_motion_not_propagated``).
+    """
+    b = cfg["bd"]
+    info = {"n_input": int(len(targets)), "n_adopted": 0}
+    need = pd.to_numeric(targets.get("pmra", pd.Series(np.nan, index=targets.index)),
+                         errors="coerce").isna()
+    if not need.any():
+        return targets, info
+    from ..acquire.science import _xmatch
+
+    xmatch_fn = xmatch_fn or _xmatch
+    up = targets.loc[need, ["source_id", "ra", "dec"]].copy()
+    up["source_id"] = up["source_id"].astype(str)
+    try:
+        raw = xmatch_fn(up, "vizier:II/365/catwise",
+                        float(b.get("catwise_adopt_radius_arcsec", 6.0)))
+    except Exception as exc:                            # noqa: BLE001
+        info["error"] = repr(exc)[:300]
+        return targets, info
+    cat = normalise_xmatch(raw, CATWISE_XMATCH_RENAME)
+    if not len(cat) or not {"ra_catwise", "dec_catwise", "pmra_catwise"} <= set(cat.columns):
+        info["error"] = f"no usable CatWISE rows ({list(cat.columns)[:20]})"
+        return targets, info
+    cat = cat.set_index(cat["source_id"].astype(str))
+    out = targets.copy()
+    sid = out["source_id"].astype(str)
+    hit = need & sid.isin(cat.index)
+    for dst, src in (("ra", "ra_catwise"), ("dec", "dec_catwise"), ("pmra", "pmra_catwise"),
+                     ("pmdec", "pmdec_catwise")):
+        if dst not in out.columns:
+            out[dst] = np.nan
+        out.loc[hit, dst] = pd.to_numeric(sid[hit].map(cat[src]), errors="coerce").to_numpy()
+    out["astrometry_source"] = np.where(hit, "catwise2020", np.where(need, "none", "catalogue"))
+    info["n_adopted"] = int(hit.sum())
+    return out, info
+
+
+def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None, xmatch_fn=None
+                     ) -> tuple[pd.DataFrame, dict]:
     """Y and late-T dwarfs with positions and proper motions, from VizieR."""
     b = cfg["bd"]
     meta: dict = {"catalogues": []}
@@ -1043,6 +1124,12 @@ def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.Dat
         ir = [spt_to_numeric(x) for x in df.get("spt", pd.Series(np.nan, index=df.index))]
         opt = [spt_to_numeric(x) for x in df.get("spt_opt", pd.Series(np.nan, index=df.index))]
         df["spt_num"] = [a if np.isfinite(a) else b for a, b in zip(ir, opt, strict=False)]
+        # Audit trail for the type parsing: raw values and the numeric histogram.
+        entry["spt_raw_sample"] = [str(x) for x in df.get(
+            "spt", pd.Series([], dtype=object)).dropna().unique()[:12]]
+        entry["spt_num_counts"] = {k: int(v) for k, v in pd.cut(
+            pd.Series(df["spt_num"], dtype=float), [-1, 10, 20, 26, 30, 40],
+            labels=["M", "L", "T0-T5.5", "T6-T9.5", "Y"]).value_counts().items()}
         entry["n_with_pm"] = int(pd.to_numeric(
             df.get("pmra", pd.Series(np.nan, index=df.index)), errors="coerce").notna().sum())
         late = df[df["spt_num"] >= float(b["spt_min_numeric"])].copy()
@@ -1050,6 +1137,8 @@ def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.Dat
         if len(late):
             late["source_id"] = late["name"].astype(str).str.strip()
             late = late.drop_duplicates("source_id").head(int(b["max_targets"]))
+            late, meta["catwise_astrometry"] = adopt_catwise_astrometry(
+                late.reset_index(drop=True), cfg, xmatch_fn=xmatch_fn)
             meta["route"] = cat
             return late.reset_index(drop=True), meta
     meta["route"] = "none"

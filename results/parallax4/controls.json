@@ -1,8 +1,8 @@
 {
  "stage": "controls",
- "generated_utc": "2026-09-24T15:17:53Z",
- "run_id": "36015376952",
- "git_sha": "eeee75c2b2b6b80d86efba0a4d6030223749f98f",
+ "generated_utc": "2026-09-24T15:25:02Z",
+ "run_id": "36019508284",
+ "git_sha": "a4fb318eb414319dcaf66a80956d0eba02f72e7c",
  "A1_simulated_scenes": {
   "gate": "PASS",
   "n": 21,
@@ -200,21 +200,106 @@
    }
   ]
  },
- "pilot_files": [],
+ "pilot_files": [
+  {
+   "file": "EpochPhotometry_000000-003111.csv.gz",
+   "n_sources": 5345,
+   "n_too_few": 1054,
+   "n_searched": 4291,
+   "n_transits_ok_g": 101929,
+   "n_events": 397
+  },
+  {
+   "file": "EpochPhotometry_489187-489228.csv.gz",
+   "n_sources": 1906,
+   "n_too_few": 22,
+   "n_searched": 1884,
+   "n_transits_ok_g": 82253,
+   "n_events": 988
+  },
+  {
+   "file": "EpochPhotometry_786097-786431.csv.gz",
+   "n_sources": 2088,
+   "n_too_few": 18,
+   "n_searched": 2070,
+   "n_transits_ok_g": 105613,
+   "n_events": 524
+  }
+ ],
  "P_photometric": {
-  "n_trials": 0,
+  "n_trials": 600,
+  "n_grey_above_floor": 53,
+  "recovery_tier_A": 0.7547169811320755,
+  "recovery_any": 1.0,
+  "n_dust_recovered": 52,
+  "dust_called_grey": 0.0,
+  "completeness_vs_snr": [
+   {
+    "snr_lo": 0,
+    "snr_hi": 3,
+    "n": 153,
+    "frac_tier_A": 0.0
+   },
+   {
+    "snr_lo": 3,
+    "snr_hi": 5,
+    "n": 32,
+    "frac_tier_A": 0.0
+   },
+   {
+    "snr_lo": 5,
+    "snr_hi": 10,
+    "n": 56,
+    "frac_tier_A": 0.32142857142857145
+   },
+   {
+    "snr_lo": 10,
+    "snr_hi": 20,
+    "n": 23,
+    "frac_tier_A": 0.5652173913043478
+   },
+   {
+    "snr_lo": 20,
+    "snr_hi": 50,
+    "n": 27,
+    "frac_tier_A": 0.8888888888888888
+   },
+   {
+    "snr_lo": 50,
+    "snr_hi": 1000000000.0,
+    "n": 3,
+    "frac_tier_A": 1.0
+   }
+  ],
+  "reader_mismatched_rows": 0,
   "gate": "FAIL",
-  "reason": "CDN file list unreachable"
+  "failures": [
+   "P1 recovery 0.75 < 0.8"
+  ]
  },
  "P3_eclipsing_binaries": {
-  "n_ecl_with_grey_dip": 0,
-  "note": "no catalogued EB among pilot events"
+  "n_ecl_with_grey_dip": 96,
+  "n_period_testable": 72,
+  "frac_testable_caught_periodic": 0.625,
+  "n_reaching_tier_A": 12,
+  "note": "tier-A EBs are removed downstream by Gaia's own classification; this number says how much that veto is carrying"
  },
  "pilot_funnel": {
-  "n_sources_searched": 0,
-  "n_events": 0,
-  "by_grey_class": {},
-  "by_tier": {}
+  "n_sources_searched": 8245,
+  "n_events": 1909,
+  "by_grey_class": {
+   "G_ONLY": 1145,
+   "NO_COLOUR": 276,
+   "CHROMATIC_BLUE": 224,
+   "GREY": 193,
+   "CHROMATIC_RED": 56,
+   "GREY_UNCONSTRAINED": 15
+  },
+  "by_tier": {
+   "C": 1851,
+   "B": 40,
+   "A": 18
+  }
  },
  "A2_datalink_error": "RuntimeError(\"GET https://gea.esac.esa.int/data-server/data failed after 4 attempts: RuntimeError('HTTP 503')\")",
  "A2_gaia4_photometry_from": "fixture",

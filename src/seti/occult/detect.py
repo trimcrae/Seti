@@ -1071,6 +1071,7 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
         rec["tier"] = TIER_NO_DATA
         return rec
     rec["fspl"] = f0.params()
+    rec["expected"] = expected_map(ev2, f0, e)
     if info["peak_snr"] < conf["min_peak_snr"] or f0.te >= 1400:
         rec["tier"] = TIER_NOT_LENSING
         return rec
@@ -1280,6 +1281,23 @@ def synth_event(t0=8000.0, te=25.0, u0=0.2, rho=2e-3, rho_l=None, sites=("KMTA",
             fl = fl + rng.normal(0.0, 1.0, t.size) * err
             series.append(({"name": f"{site}_{band}", "site": site, "band": band}, t, fl, err))
     return build_event("synthetic", series, meta={"ra": ra, "dec": dec})
+
+
+# rho_L grid of the sensitivity map: the wing regime where a step is
+# measurable (u_c from ~3.3 down to ~0.1) and the central-hole regime.
+RHO_L_GRID = (0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.05, 1.3, 2.0)
+
+
+def expected_map(ev: Event, fit: Fit, e=None, grid=RHO_L_GRID) -> dict:
+    """Fisher-style expected Delta chi^2 for each rho_L on the grid (0 where u_min >= u_c)."""
+    out = {}
+    umin = u_min_fit(ev, fit)
+    for rl in grid:
+        if rl < 1.0 and umin >= u_crit(rl):
+            out[f"{rl:g}"] = 0.0          # blend-degenerate: minor image hidden all the time
+            continue
+        out[f"{rl:g}"] = round(expected_dchi2(ev, fit, rl, e), 2)
+    return out
 
 
 def expected_dchi2(ev: Event, fit: Fit, rho_l: float, e=None) -> float:

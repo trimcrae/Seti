@@ -300,7 +300,7 @@ SCREEN_KEEP = ("tier", "dchi2", "dchi2_anti", "dbic", "regime", "u_c", "rejectio
                "sites_consistency", "bands_consistency", "symmetry", "jackknife", "steps",
                "n_in_hole", "hole_below_baseline", "positive_bump", "binned_redchi2_after",
                "colour_tested", "scan_best_dchi2", "scan_best_anti_dchi2", "hollow_centre",
-               "u_max_observed", "error", "err_scales")
+               "u_max_observed", "u_min_observed", "parallax", "error", "err_scales")
 
 
 def screen_unit(s, unit: dict, conf: dict, cfg_screen: dict, idx: int, lc_dir: Path) -> tuple[dict, list]:
@@ -320,12 +320,7 @@ def screen_unit(s, unit: dict, conf: dict, cfg_screen: dict, idx: int, lc_dir: P
     rec.update({k: res.get(k) for k in SCREEN_KEEP if k in res})
     # analytic sensitivity at this event's own solution, and injection trials
     if res.get("fspl") and res.get("tier") not in (D.TIER_NO_DATA, D.TIER_NOT_LENSING, "ERROR"):
-        try:
-            ev2, e, f0, _ = D.fit_fspl_clean(ev, conf, unit_hint(unit))
-            if ev2 is not None:
-                rec["expected"] = INJ.expected_map(ev2, f0, e)
-        except Exception as exc:  # noqa: BLE001
-            rec["expected_error"] = repr(exc)[:200]
+        rec["expected"] = res.get("expected")
         every = int(cfg_screen.get("inject_every", 8))
         if every > 0 and idx % every == 0:
             rls = INJ.pick_rho_ls(zlib.crc32(unit["unit"].encode()),

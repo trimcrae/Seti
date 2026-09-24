@@ -133,7 +133,70 @@ def _achromatic_route(ex: pd.DataFrame, th: dict, w: dict) -> pd.Series:
     return ok.fillna(False).astype(bool)
 
 
-def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, dict]:
+def wd_chance_census(work: pd.DataFrame, controls: pd.DataFrame | None, cfg: dict
+                     ) -> tuple[pd.DataFrame, dict]:
+    """Observed white-dwarf excesses against the offset-position controls.
+
+    A control source matters only if, dropped into the host's aperture, it
+    could produce the flagged signal: detected in W1 and W2 (ph_qual A/B/C),
+    with a ring-band W1-W2 colour for the ring hypothesis, and bright enough
+    in W2 to rival the photosphere (W2 <= predicted photospheric W2 +
+    ``control_w2_margin_mag``).  Per host the local rate is hits / n_controls;
+    the census sums it.
+    """
+    w = cfg["wd"]
+    n_ctrl = int(w.get("control_angles", 8)) * len(w.get("control_offsets_arcsec", [45.0]))
+    out = pd.DataFrame(index=work.index)
+    out["ctrl_hits_any"] = 0
+    out["ctrl_hits_ring"] = 0
+    if controls is None or not len(controls) or "source_id" not in controls.columns:
+        return out, {"status": "NO_CONTROLS"}
+    t_lo, t_hi = float(cfg["ring"]["t_min_k"]), float(cfg["ring"]["t_max_k"])
+    c = controls.copy()
+    parts = c["source_id"].astype(str).str.rsplit("|", n=1, expand=True)
+    c["_host"], c["_pos"] = parts[0], parts[1]
+    c = c.sort_values("match_dist_arcsec").drop_duplicates(["_host", "_pos"]) \
+        if "match_dist_arcsec" in c.columns else c.drop_duplicates(["_host", "_pos"])
+    ok = _allwise_colour_ok(c)
+    col = (_numcol(c, "W1mag") - _numcol(c, "W2mag")).where(ok)
+    tt = ph.colour_to_temperature(col.to_numpy(float))
+    c["_ring"] = (tt >= t_lo) & (tt <= t_hi)
+    host = work["source_id"].astype(str)
+    pred_w2 = pd.Series(np.nan, index=work.index)
+    if "W2_pred_jy" in work.columns:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            pred_w2 = -2.5 * np.log10(_numcol(work, "W2_pred_jy")
+                                      / float(BANDS["W2"]["zp_jy"]))
+    lim = pd.Series((pred_w2 + float(w.get("control_w2_margin_mag", 1.0))).to_numpy(),
+                    index=host.to_numpy())
+    lim = lim[~lim.index.duplicated()]
+    c["_bright"] = (_numcol(c, "W2mag") <= c["_host"].map(lim)).fillna(False)
+    c["_q"] = ok & c["_bright"]
+    any_h = c[c["_q"]].groupby("_host").size()
+    ring_h = c[c["_q"] & c["_ring"]].groupby("_host").size()
+    out["ctrl_hits_any"] = host.map(any_h).fillna(0).astype(int).to_numpy()
+    out["ctrl_hits_ring"] = host.map(ring_h).fillna(0).astype(int).to_numpy()
+    tot = float(len(work)) * n_ctrl
+    p_ring_g = float(out["ctrl_hits_ring"].sum()) / tot if tot else 0.0
+    out["p_chance_ring_ctrl"] = (out["ctrl_hits_ring"] + n_ctrl * p_ring_g) / (2.0 * n_ctrl)
+    flagged = work["excess_flag"].fillna(False).astype(bool)
+    ring = flagged & (work["shape_class"] == "ring_band")
+    census = {
+        "status": "OK",
+        "control_positions_per_host": n_ctrl,
+        "n_hosts": int(len(work)),
+        "n_control_rows": int(len(c)),
+        "excess_capable_blends_expected": round(float((out["ctrl_hits_any"] / n_ctrl).sum()), 1),
+        "excess_flagged_observed": int(flagged.sum()),
+        "ring_colour_blends_expected": round(float((out["ctrl_hits_ring"] / n_ctrl).sum()), 2),
+        "ring_band_observed": int(ring.sum()),
+        "global_ring_rate_per_position": p_ring_g,
+    }
+    return out, census
+
+
+def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None, controls=None
+              ) -> tuple[pd.DataFrame, dict]:
     """Photosphere, excess, ring fit, shape class and the catalogue gates."""
     from ..sed.excess import compute_excess, select_excess
     from ..sed.predict import predict_photosphere
@@ -272,6 +335,52 @@ def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, d
             lwd_all, t, work["dist_pc"].to_numpy(float), "W2",
             float(cfg["survey_limits_jy"]["W2"]))
     f500 = work["f_min_500K_W2"].to_numpy(float)
+    cc, census = wd_chance_census(work, controls, cfg)
+    for col in cc.columns:
+        work[col] = cc[col]
+    # The natural twin of a ring is a WD dust disk (sublimation-limited,
+    # ~800-1800 K, the polluted-WD phenomenon).  A ring claim needs the fit's
+    # UPPER temperature bound below the disk locus, not just its best value,
+    # and (with controls) a chance probability for a ring-coloured blend
+    # below the pulsar leg's per-host threshold.
+    disk_t = float(cfg["debris_locus"]["t_min_k"])
+    t_hi_ci = pd.to_numeric(work["t_ring_hi_k"], errors="coerce")
+    work["ring_distinct_from_disk"] = (t_hi_ci < disk_t).fillna(False)
+    p_ctrl = pd.to_numeric(work["p_chance_ring_ctrl"], errors="coerce") \
+        if "p_chance_ring_ctrl" in work.columns else pd.Series(np.nan, index=work.index)
+    p_max = float(cfg["pulsar"]["chance_p_max"])
+    chance_bad = (p_ctrl > p_max).fillna(False) if census.get("status") == "OK" \
+        else pd.Series(False, index=work.index)
+    base = work["ring_candidate"].astype(bool)
+    work["ring_veto"] = np.where(
+        ~base, "", np.where(~work["ring_distinct_from_disk"], "ring_or_disk_ambiguous",
+                            np.where(chance_bad, "chance_ring_coloured_blend", "")))
+    work["ring_candidate"] = base & (work["ring_veto"] == "")
+    # A mechanism name for every flagged excess (the census, host by host).
+    sh = work["shape_class"].astype(str)
+    route = work["excess_route"].astype(str) if "excess_route" in work.columns \
+        else pd.Series("", index=work.index)
+    gate = work["gate_reason"].astype(str)
+    mech = np.select(
+        [~flagged_mask,
+         (sh == "companion") | (route == "achromatic") | (gate == "unresolved_companion"),
+         gate == "background_source",
+         gate.isin(["astrometric_registration", "wise_quality", "globular_cluster_sightline"]),
+         gate == "ledger",
+         sh == "debris_disk",
+         (sh == "ring_band") & ~work["ring_distinct_from_disk"],
+         sh == "ring_band"],
+        ["", "cool_companion_photosphere", "background_source_chance_superposition",
+         "blend_or_misregistered_wise_source", "photometry_ledger_rule",
+         "wd_dust_disk_locus", "ring_or_dust_disk_ambiguous", "ring_band"],
+        default="warm_ambiguous_or_unfit")
+    work["mechanism"] = mech
+    surv = flagged_mask & (work["verdict"] == "surviving")
+    if census.get("status") == "OK":
+        census["ring_band_surviving_gates"] = int((surv & (work["shape_class"] == "ring_band"))
+                                                  .sum())
+        census["ring_colour_blends_expected_among_surviving_hosts"] = round(float(
+            (work.loc[surv, "ctrl_hits_ring"] / census["control_positions_per_host"]).sum()), 2)
     shape_counts = {k: int(v) for k, v in work.loc[flagged_mask, "shape_class"]
                     .value_counts().items()}
     summary = {
@@ -286,6 +395,10 @@ def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, d
         "shape_counts": shape_counts,
         "n_surviving_gates": int((flagged_mask & (work["verdict"] == "surviving")).sum()),
         "n_ring_candidates": int(work["ring_candidate"].sum()),
+        "chance_census": census,
+        "mechanism_counts": {k: int(v) for k, v in work.loc[flagged_mask, "mechanism"]
+                             .value_counts().items()},
+        "ring_vetoes": {k: int(v) for k, v in work["ring_veto"].value_counts().items() if k},
         # A gate that could not be evaluated must be visible as such.
         "n_registration_tested": int(pd.Series(work.get("registration_tested", False))
                                      .fillna(False).astype(bool).sum()),

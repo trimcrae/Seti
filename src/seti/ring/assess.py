@@ -307,7 +307,10 @@ def report_md(summary: dict) -> str:
               f"({wd.get('followup_reasons')})",
               f"* sensitivity: {wd.get('sensitivity')}",
               f"* registration test evaluated for {wd.get('n_registration_tested', 'n/a')} "
-              f"hosts; ring-band gate reasons: {wd.get('ring_band_gate_reasons')}", ""]
+              f"hosts; ring-band gate reasons: {wd.get('ring_band_gate_reasons')}",
+              f"* chance census (offset-position controls): {wd.get('chance_census')}",
+              f"* mechanism per flagged excess: {wd.get('mechanism_counts')}; ring vetoes: "
+              f"{wd.get('ring_vetoes')}", ""]
     psr = legs.get("pulsar") or {}
     if psr:
         L += ["## Pulsars", "",

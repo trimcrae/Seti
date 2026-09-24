@@ -48,6 +48,7 @@ from . import watchlist as W
 
 OUT = Path("results") / "parallax4"
 STAGES = ("probe", "controls", "sweep", "reduce", "vet", "watchlist", "dr4", "summary")
+EXTRA_STAGES = ("deepvet",)
 EVENT_COLS = ["source_id", "kind", "tier", "t_peak", "t_start", "t_end", "transit_id_peak",
               "n_transits_episode", "delta_g_peak", "z_g_peak", "delta_g", "sigma_g", "delta_bp",
               "sigma_bp", "delta_rp", "sigma_rp", "z_bp_episode", "z_rp_episode", "grey_class",
@@ -870,6 +871,83 @@ def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
     return rep
 
 
+def stage_deepvet(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap,
+                  simbad=None, vsx=None, max_n: int = 60) -> dict:
+    """Trace each Gaia-vet survivor to a mechanism (``deepvet.classify_fate``)."""
+    from . import deepvet as DV
+
+    simbad = simbad or DV.simbad_type
+    vsx = vsx or DV.vsx_type
+    gcfg = G.GreyConfig.from_dict(conf.get("grey"))
+    rep: dict = {"stage": "deepvet", **_provenance()}
+    vt = out / "vetted.csv"
+    if not vt.exists() or os.path.getsize(vt) < 2:
+        rep.update(verdict="NO_SURVIVORS_TO_DEEPVET")
+        _write(out / "deepvet.json", rep)
+        return rep
+    v = pd.read_csv(vt)
+    v = v[v["vet_class"].isin(["SURVIVES", "SURVIVES_FLAGGED"])].sort_values("score", ascending=False)
+    top = v.drop_duplicates("source_id").head(int(max_n))
+    ids = top["source_id"].astype(np.int64).tolist()
+    rep["n_targets"] = len(ids)
+    try:
+        lcs = acq.datalink_products(ids, http=http)
+    except Exception as exc:  # noqa: BLE001
+        lcs = {}
+        rep["datalink_error"] = repr(exc)[:300]
+    rows, lightcurves = [], {}
+    for _, r in top.iterrows():
+        sid = int(r["source_id"])
+        ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
+        rec = {k: r.get(k) for k in ("source_id", "vet_class", "flags", "kind", "t_peak", "delta_g",
+                                     "delta_bp", "delta_rp", "ratio_bp_rp", "ratio_err",
+                                     "n_transits_episode", "score", "phot_g_mean_mag", "bp_rp",
+                                     "ruwe", "min_n_obs_g", "rms_out_of_episode_g", "ra", "dec")
+               if k in r}
+        try:
+            from astropy import units as u
+            from astropy.coordinates import SkyCoord
+
+            gal = SkyCoord(ra * u.deg, dec * u.deg).galactic
+            rec.update(l_deg=float(gal.l.deg), b_deg=float(gal.b.deg))
+        except Exception:  # noqa: BLE001
+            pass
+        if sid in lcs:
+            try:
+                lc = E.photometry_from_long(lcs[sid], source_id=sid)
+                ev, _ = G.detect_source(lc, gcfg)
+                hit = [e for e in ev if abs(e["t_peak"] - float(r["t_peak"])) < 0.5]
+                rec["reproduced"] = bool(hit) and G.tier(hit[0]) == "A"
+                w = lc[(lc["t"] > float(r["t_peak"]) - 3) & (lc["t"] < float(r["t_peak"]) + 3)]
+                lightcurves[str(sid)] = w[["t", "f_g", "e_g", "f_bp", "e_bp", "f_rp", "e_rp", "n_obs_g",
+                                           "bad_g", "bad_bp", "bad_rp"]].round(6).to_dict("records")
+            except Exception as exc:  # noqa: BLE001
+                rec["refetch_error"] = repr(exc)[:200]
+        else:
+            rec["reproduced"] = None
+        if np.isfinite(ra):
+            rec.update(simbad(ra, dec))
+            rec.update(vsx(ra, dec))
+            try:
+                cone = acq.gaia_cone(ra, dec, 30.0, tap=tap)
+                rec["n_gaia_30as"] = int(len(cone)) - 1
+            except Exception:  # noqa: BLE001
+                rec["n_gaia_30as"] = None
+        fate, fl = DV.classify_fate(rec)
+        rec["fate"], rec["fate_flags"] = fate, ";".join(fl)
+        rows.append(rec)
+    df = pd.DataFrame(rows)
+    df.to_csv(out / "deepvet.csv", index=False, float_format="%.6g")
+    _write(out / "deepvet_lightcurves.json", lightcurves)
+    fates = df["fate"].map(lambda x: str(x).split("(")[0]).value_counts() if len(df) else pd.Series(dtype=int)
+    rep.update(fates={str(k): int(c) for k, c in fates.items()},
+               unexplained=df[df["fate"] == "UNEXPLAINED"].to_dict("records") if len(df) else [])
+    rep["verdict"] = f"{int((df['fate'] == 'UNEXPLAINED').sum()) if len(df) else 0} of {len(df)} deep-vetted UNEXPLAINED"
+    _write(out / "deepvet.json", rep)
+    print(f"[parallax4] deepvet: {rep['verdict']}; fates={rep['fates']}")
+    return rep
+
+
 # ---------------------------------------------------------------------------
 # watchlist + dr4
 # ---------------------------------------------------------------------------
@@ -1061,6 +1139,8 @@ def run(stage: str = "all", *, out_dir=None, shard: int = 0, n_shards: int = 1, 
             rep = stage_dr4(conf, out)
         elif s == "summary":
             rep = stage_summary(conf, out)
+        elif s == "deepvet":
+            rep = stage_deepvet(conf, out)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + ('all',)}")
     return rep

@@ -664,3 +664,31 @@ def test_local_coincidence_veto():
     loc = R.local_coincidence(ev, pd.concat([allev, burst, ev], ignore_index=True))
     assert loc["n"][0] >= 6 and loc["p"][0] < 1e-6       # same pixel as the burst
     assert loc["n"][1] == 0 and loc["p"][1] == 1.0        # another pixel entirely
+
+
+def test_deepvet_fates():
+    from seti.parallax4 import deepvet as DV
+
+    assert DV.classify_fate({"vsx_type": "EA"})[0].startswith("KNOWN_ECLIPSING_BINARY")
+    assert DV.classify_fate({"simbad_otype": "YSO"})[0].startswith("YOUNG_STELLAR_OBJECT")
+    assert DV.classify_fate({"vsx_type": "UXOR"})[0].startswith("YOUNG_STELLAR_OBJECT")
+    assert DV.classify_fate({"vsx_type": "RRAB"})[0].startswith("KNOWN_VARIABLE")
+    fate, fl = DV.classify_fate({"simbad_otype": "*", "phot_g_mean_mag": 10.2, "n_gaia_30as": 40,
+                                 "min_n_obs_g": 3.0})
+    assert fate == "UNEXPLAINED" and len(fl) == 3
+    assert DV.classify_fate({"reproduced": False})[0] == "NOT_REPRODUCED"
+
+
+def test_deepvet_stage_offline(tmp_path, conf):
+    lc = SIM.simulate_grey_lightcurve("grey_multi", seed=2, source_id=77)
+    ev, _ = G.detect_source(E.photometry_from_long(lc), G.GreyConfig.from_dict(conf["grey"]))
+    pd.DataFrame([{**ev[0], "tier": "A", "vet_class": "SURVIVES", "flags": "", "ra": 10.0, "dec": -5.0, "score": 9.0,
+                   "phot_g_mean_mag": 15.0}]).to_csv(tmp_path / "vetted.csv", index=False)
+
+    def http(url, params=None, **k):
+        raise RuntimeError("no datalink offline")
+
+    rep = R.stage_deepvet(conf, tmp_path, http=http, tap=_dead_tap,
+                          simbad=lambda ra, dec: {"simbad_otype": "YSO"},
+                          vsx=lambda ra, dec: {"vsx_status": "NO_MATCH"})
+    assert rep["fates"] == {"YOUNG_STELLAR_OBJECT": 1}

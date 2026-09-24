@@ -39,9 +39,18 @@ on:
         description: "Debug cap on the Gaia sample (0 = the whole 100 pc sample)"
         required: false
         default: "0"
+      reuse_run_id:
+        description: >-
+          Re-reduce without re-acquiring: download this earlier relay run's
+          artifact and restore ONLY its parquet intermediates (Gaia sample,
+          pair tables) into results/relay/, then run e.g. stage=assess,targetlist.
+          The committed JSON/CSV on the branch must come from the same run.
+        required: false
+        default: ""
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: relay-${{ github.ref_name }}
@@ -63,6 +72,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           pip install pyarrow
+      - name: Restore a prior run's parquet intermediates
+        if: ${{ github.event.inputs.reuse_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: relay-run
+          run-id: ${{ github.event.inputs.reuse_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/relay-prior
+      - name: Copy only the parquet files
+        if: ${{ github.event.inputs.reuse_run_id != '' }}
+        run: |
+          set -e
+          ls -la "$RUNNER_TEMP/relay-prior" | head -50
+          n=0
+          for f in "$RUNNER_TEMP"/relay-prior/*.parquet; do
+            [ -e "$f" ] || continue
+            cp "$f" results/relay/; n=$((n+1)); echo "restored $(basename "$f")"
+          done
+          if [ "$n" = "0" ]; then echo "::error::no parquet in run ${{ github.event.inputs.reuse_run_id }}'s artifact"; exit 1; fi
+          echo "reused_run_id=${{ github.event.inputs.reuse_run_id }}" > results/relay/.reused_from
       - name: Offline gate — the injected pair and its drift prior must be recovered on this runner
         run: python -m pytest tests/test_relay.py -q -p no:cacheprovider
       - name: Run

@@ -1,12 +1,12 @@
 {
   "channel": "relay",
   "signature": "S60",
-  "generated_utc": "2026-09-22T16:58:24Z",
-  "verdict": "GEOMETRY_COMPUTED (264973 stars, 5/5 beams complete) | TARGETS_RESOLVED (6342/12086 via bl_opendata_api) | RECUT_COMPLETE (1540 targets with files, 24789 files, 4092 pointings) | PAIRLINE_DRIFT_MATCH (22 hit-beam matches; see n_expected_by_chance per beam)",
+  "generated_utc": "2026-09-24T11:34:26Z",
+  "verdict": "GEOMETRY_COMPUTED (264973 stars, 5/5 beams complete) | TARGETS_RESOLVED (6342/12086 via bl_opendata_api) | RECUT_COMPLETE (1540 targets with files, 24789 files, 4092 pointings) | PAIRLINE_MATCHES_AT_CHANCE (14 hit-beam drift matches vs 14.6 expected by chance; all RFI-flagged, 0 candidates)",
   "geometry_verdict": "GEOMETRY_COMPUTED (264973 stars, 5/5 beams complete)",
   "targets_verdict": "TARGETS_RESOLVED (6342/12086 via bl_opendata_api)",
   "recut_verdict": "RECUT_COMPLETE (1540 targets with files, 24789 files, 4092 pointings)",
-  "assess_verdict": "PAIRLINE_DRIFT_MATCH (22 hit-beam matches; see n_expected_by_chance per beam)",
+  "assess_verdict": "PAIRLINE_MATCHES_AT_CHANCE (14 hit-beam drift matches vs 14.6 expected by chance; all RFI-flagged, 0 candidates)",
   "funnel": {
     "n_stars_100pc": 264973,
     "n_stars_with_rv": 114147,
@@ -15,8 +15,8 @@
     "n_bl_targets_in_sample": 1958,
     "n_bl_files": 24789,
     "n_pointings": 4092,
-    "n_hits": 135,
-    "n_hits_on_sample_stars": 14
+    "n_hits": 88,
+    "n_hits_on_sample_stars": 10
   },
   "per_beam": {
     "optical_10m_1um": {
@@ -38,7 +38,12 @@
       "n_pointings_on_pair_line": 0,
       "n_hits_on_pair_line": 0,
       "n_candidates": 0,
-      "n_expected_by_chance": null
+      "n_expected_by_chance": 0.0,
+      "p_value_candidates": null,
+      "n_trials": 0,
+      "n_magic_line_match": 0,
+      "n_magic_line_tests": 0,
+      "n_magic_expected_by_chance": null
     },
     "radio_100m_1p4ghz": {
       "theta_label": "8.85 arcmin",
@@ -57,9 +62,14 @@
       "flux_ratio_p50_spillover": 0.5470783709268786,
       "n_bl_targets_as_transmitter": 574,
       "n_pointings_on_pair_line": 1323,
-      "n_hits_on_pair_line": 3,
-      "n_candidates": 1,
-      "n_expected_by_chance": 0.8181818181818181
+      "n_hits_on_pair_line": 2,
+      "n_candidates": 0,
+      "n_expected_by_chance": 0.0,
+      "p_value_candidates": 1.0,
+      "n_trials": 2,
+      "n_magic_line_match": 0,
+      "n_magic_line_tests": 0,
+      "n_magic_expected_by_chance": null
     },
     "radio_10m_8ghz": {
       "theta_label": "15.7 arcmin",
@@ -78,9 +88,14 @@
       "flux_ratio_p50_spillover": 0.5168609400251577,
       "n_bl_targets_as_transmitter": 1210,
       "n_pointings_on_pair_line": 2719,
-      "n_hits_on_pair_line": 5,
-      "n_candidates": 2,
-      "n_expected_by_chance": 0.5555555555555556
+      "n_hits_on_pair_line": 4,
+      "n_candidates": 0,
+      "n_expected_by_chance": 0.0,
+      "p_value_candidates": 1.0,
+      "n_trials": 4,
+      "n_magic_line_match": 0,
+      "n_magic_line_tests": 6,
+      "n_magic_expected_by_chance": 0.00039637142504165337
     },
     "radio_10m_1p4ghz": {
       "theta_label": "1.48 deg",
@@ -99,9 +114,14 @@
       "flux_ratio_p50_spillover": 0.5997057419035776,
       "n_bl_targets_as_transmitter": 1953,
       "n_pointings_on_pair_line": 4092,
-      "n_hits_on_pair_line": 12,
-      "n_candidates": 8,
-      "n_expected_by_chance": 12.0
+      "n_hits_on_pair_line": 9,
+      "n_candidates": 0,
+      "n_expected_by_chance": 0.0,
+      "p_value_candidates": 1.0,
+      "n_trials": 9,
+      "n_magic_line_match": 0,
+      "n_magic_line_tests": 24,
+      "n_magic_expected_by_chance": 0.0015854857001666135
     },
     "overfilled_5deg": {
       "theta_label": "5 deg",
@@ -120,9 +140,14 @@
       "flux_ratio_p50_spillover": 0.6236466031387828,
       "n_bl_targets_as_transmitter": 1953,
       "n_pointings_on_pair_line": 4092,
-      "n_hits_on_pair_line": 12,
-      "n_candidates": 11,
-      "n_expected_by_chance": 12.0
+      "n_hits_on_pair_line": 9,
+      "n_candidates": 0,
+      "n_expected_by_chance": 0.0,
+      "p_value_candidates": 1.0,
+      "n_trials": 9,
+      "n_magic_line_match": 0,
+      "n_magic_line_tests": 24,
+      "n_magic_expected_by_chance": 0.0015854857001666135
     }
   },
   "scaling": {
@@ -135,420 +160,113 @@
       "n_points": 4
     }
   },
-  "candidates": [
-    {
-      "beam": "radio_100m_1p4ghz",
-      "target": "HIP 13402",
-      "source_id": "5160075762132997120",
-      "freq_mhz": 989.0,
-      "drift_hz_s": 0.1,
-      "snr": 129.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": 0.0,
-      "halfwidth_tight_hz_s": 0.13882913396972765,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_8ghz",
-      "target": "HIP 45493",
-      "source_id": "1022858010710856576",
-      "freq_mhz": 1528.46054,
-      "drift_hz_s": -0.01,
-      "snr": 32.1,
-      "mjd": 57636.7828125,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.03468064570758938,
-      "halfwidth_tight_hz_s": 0.014376218237303427,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_8ghz",
-      "target": "HIP 13402",
-      "source_id": "5160075762132997120",
-      "freq_mhz": 989.0,
-      "drift_hz_s": 0.1,
-      "snr": 129.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": -2.3143802434746e-09,
-      "halfwidth_tight_hz_s": 0.1410238160271519,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 99427",
-      "source_id": "2290483248388179456",
-      "freq_mhz": 1380.9257,
-      "drift_hz_s": -0.086,
-      "snr": 50.2,
-      "mjd": 57752.96094907408,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.01771690483741617,
-      "halfwidth_tight_hz_s": 0.05959864853034918,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 66704",
-      "source_id": "1558718059209082880",
-      "freq_mhz": 1380.91201,
-      "drift_hz_s": -0.134,
-      "snr": 3376.9,
-      "mjd": 57650.631631944445,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.024889988598573116,
-      "halfwidth_tight_hz_s": 0.0598924797549343,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 74981",
-      "source_id": "1272123859439770368",
-      "freq_mhz": 1384.20759,
-      "drift_hz_s": -0.246,
-      "snr": 237.7,
-      "mjd": 57523.2593287037,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.12018058560639651,
-      "halfwidth_tight_hz_s": 0.05860371335715398,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 65352",
-      "source_id": "3712538708114516992",
-      "freq_mhz": 1522.18102,
-      "drift_hz_s": 0.01,
-      "snr": 113.6,
-      "mjd": 57459.39695601852,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.1404175191171042,
-      "halfwidth_tight_hz_s": 0.06473459421509511,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 45493",
-      "source_id": "1022858010710856576",
-      "freq_mhz": 1528.46054,
-      "drift_hz_s": -0.01,
-      "snr": 32.1,
-      "mjd": 57636.7828125,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.03468063054486312,
-      "halfwidth_tight_hz_s": 0.06236469684927397,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 62207",
-      "source_id": "1521686782461765888",
-      "freq_mhz": 980.0,
-      "drift_hz_s": -0.05,
-      "snr": 58.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": 3.1311147790154364e-10,
-      "halfwidth_tight_hz_s": 0.14820092436529586,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 13402",
-      "source_id": "5160075762132997120",
-      "freq_mhz": 989.0,
-      "drift_hz_s": 0.1,
-      "snr": 129.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": -2.3143802434746e-09,
-      "halfwidth_tight_hz_s": 0.17244302534792033,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "radio_10m_1p4ghz",
-      "target": "HIP 62207",
-      "source_id": "1521686782461765888",
-      "freq_mhz": 998.0,
-      "drift_hz_s": -0.126,
-      "snr": 34.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": 3.1886250504667384e-10,
-      "halfwidth_tight_hz_s": 0.15088576543849258,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 17147",
-      "source_id": "3250489115709122560",
-      "freq_mhz": 1379.27751,
-      "drift_hz_s": -0.266,
-      "snr": 25.4,
-      "mjd": 57523.80299768518,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.08298799870403453,
-      "halfwidth_tight_hz_s": 0.20092748694155863,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 20901",
-      "source_id": "3307650109600736256",
-      "freq_mhz": 1380.97122,
-      "drift_hz_s": -0.478,
-      "snr": 84.6,
-      "mjd": 57606.579375,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.10370198215669921,
-      "halfwidth_tight_hz_s": 0.20117199064423252,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 39826",
-      "source_id": "676689831406224128",
-      "freq_mhz": 1380.92937,
-      "drift_hz_s": -0.542,
-      "snr": 420.3,
-      "mjd": 57456.03089120371,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.12270204404800829,
-      "halfwidth_tight_hz_s": 0.20106736833108657,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 99427",
-      "source_id": "2290483248388179456",
-      "freq_mhz": 1380.9257,
-      "drift_hz_s": -0.086,
-      "snr": 50.2,
-      "mjd": 57752.96094907408,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.017716887489788807,
-      "halfwidth_tight_hz_s": 0.20090856649153305,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 66704",
-      "source_id": "1558718059209082880",
-      "freq_mhz": 1380.91201,
-      "drift_hz_s": -0.134,
-      "snr": 3376.9,
-      "mjd": 57650.631631944445,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.024889971573811898,
-      "halfwidth_tight_hz_s": 0.201149486423594,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 74981",
-      "source_id": "1272123859439770368",
-      "freq_mhz": 1384.20759,
-      "drift_hz_s": -0.246,
-      "snr": 237.7,
-      "mjd": 57523.2593287037,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.12018052967559575,
-      "halfwidth_tight_hz_s": 0.20157481572501346,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 65352",
-      "source_id": "3712538708114516992",
-      "freq_mhz": 1522.18102,
-      "drift_hz_s": 0.01,
-      "snr": 113.6,
-      "mjd": 57459.39695601852,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.1404174627580574,
-      "halfwidth_tight_hz_s": 0.22168404000777767,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 45493",
-      "source_id": "1022858010710856576",
-      "freq_mhz": 1528.46054,
-      "drift_hz_s": -0.01,
-      "snr": 32.1,
-      "mjd": 57636.7828125,
-      "table": "arXiv:1709.03491:Lband_BL_SETI.tex#table",
-      "drift_centre_hz_s": -0.03468057886771937,
-      "halfwidth_tight_hz_s": 0.2222999295545072,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        null,
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 62207",
-      "source_id": "1521686782461765888",
-      "freq_mhz": 980.0,
-      "drift_hz_s": -0.05,
-      "snr": 58.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": 7.686910202737491e-08,
-      "halfwidth_tight_hz_s": 0.24865131934920712,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 13402",
-      "source_id": "5160075762132997120",
-      "freq_mhz": 989.0,
-      "drift_hz_s": 0.1,
-      "snr": 129.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": 2.743917259104756e-09,
-      "halfwidth_tight_hz_s": 0.2735851112955059,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    },
-    {
-      "beam": "overfilled_5deg",
-      "target": "HIP 62207",
-      "source_id": "1521686782461765888",
-      "freq_mhz": 998.0,
-      "drift_hz_s": -0.126,
-      "snr": 34.0,
-      "mjd": NaN,
-      "table": "arXiv:2505.03927:ms.tex#table",
-      "drift_centre_hz_s": 7.828098349318382e-08,
-      "halfwidth_tight_hz_s": 0.25320735728717003,
-      "systematics_not_excluded": [
-        "RFI at non-zero drift (single-dish, no on/off cadence re-examined here)",
-        "drift window widened by unknown observation epoch",
-        "trials over every pair-line hit (see n_trials)"
-      ]
-    }
-  ],
+  "candidates": [],
   "sample_route": "esa_gaia_tap",
   "sample_status": "OK",
   "rv_completeness": 0.4307872877613946,
-  "elapsed_assess_s": 157.5,
-  "chance_offline": {
-    "file": "chance_run35745111146.json",
-    "generated_utc": "2026-09-23T12:22:00Z",
-    "source_run": "35745111146",
-    "verdict": "CHANCE_LEVEL (22 hit-beam matches vs 21.6 expected from the hits' own drift distribution; 0 survive hygiene + band RFI)",
-    "consistency_all": true,
-    "totals": {
-      "as_run": {
-        "observed_candidates": 22,
-        "expected_candidates": 21.649
+  "elapsed_assess_s": 181.8,
+  "chance": {
+    "model": "leave-one-out drift null over valid hits (src/seti/relay/chance.py)",
+    "hygiene": {
+      "n_not_a_frequency": 0,
+      "n_injection_rows": 0,
+      "n_duplicate_rows": 0,
+      "n_valid": 88
+    },
+    "n_rfi_known_band": 25,
+    "n_rfi_recurrent_wide": 29,
+    "per_beam": {
+      "optical_10m_1um": {
+        "n_trials": 0,
+        "n_trials_valid": 0,
+        "n_drift_match": 0,
+        "n_candidates_after_rfi": 0,
+        "n_expected_drift_match": 0.0,
+        "n_expected_by_chance": 0.0,
+        "p_value_candidates": null,
+        "mean_window_fraction_of_hits": null,
+        "mean_window_fraction_of_uniform_drift_range": null
       },
-      "after_hygiene": {
-        "observed_candidates": 14,
-        "expected_candidates": 14.564
+      "radio_100m_1p4ghz": {
+        "n_trials": 2,
+        "n_trials_valid": 2,
+        "n_drift_match": 0,
+        "n_candidates_after_rfi": 0,
+        "n_expected_drift_match": 0.253,
+        "n_expected_by_chance": 0.0,
+        "p_value_candidates": 1.0,
+        "mean_window_fraction_of_hits": 0.126,
+        "mean_window_fraction_of_uniform_drift_range": 0.0078
       },
-      "after_hygiene_and_band_rfi": {
-        "observed_candidates": 0,
-        "expected_candidates": 0.0
+      "radio_10m_8ghz": {
+        "n_trials": 4,
+        "n_trials_valid": 4,
+        "n_drift_match": 1,
+        "n_candidates_after_rfi": 0,
+        "n_expected_drift_match": 0.667,
+        "n_expected_by_chance": 0.0,
+        "p_value_candidates": 1.0,
+        "mean_window_fraction_of_hits": 0.167,
+        "mean_window_fraction_of_uniform_drift_range": 0.0098
+      },
+      "radio_10m_1p4ghz": {
+        "n_trials": 9,
+        "n_trials_valid": 9,
+        "n_drift_match": 5,
+        "n_candidates_after_rfi": 0,
+        "n_expected_drift_match": 5.161,
+        "n_expected_by_chance": 0.0,
+        "p_value_candidates": 1.0,
+        "mean_window_fraction_of_hits": 0.573,
+        "mean_window_fraction_of_uniform_drift_range": 0.0455
+      },
+      "overfilled_5deg": {
+        "n_trials": 9,
+        "n_trials_valid": 9,
+        "n_drift_match": 8,
+        "n_candidates_after_rfi": 0,
+        "n_expected_drift_match": 8.483,
+        "n_expected_by_chance": 0.0,
+        "p_value_candidates": 1.0,
+        "mean_window_fraction_of_hits": 0.943,
+        "mean_window_fraction_of_uniform_drift_range": 0.1572
       }
     },
-    "n_unique_hits_behind_matches": 11,
-    "per_beam_expected_candidates_as_run": {
-      "optical_10m_1um": 0.0,
-      "radio_100m_1p4ghz": 1.112,
-      "radio_10m_8ghz": 1.552,
-      "radio_10m_1p4ghz": 7.731,
-      "overfilled_5deg": 11.254
-    },
-    "geometry_null": {
-      "optical_10m_1um": 0.0,
-      "radio_100m_1p4ghz": 0.2932,
-      "radio_10m_8ghz": 0.618,
-      "radio_10m_1p4ghz": 0.9974,
-      "overfilled_5deg": 0.9974
+    "total_candidates": 0,
+    "total_expected": 0.0
+  },
+  "reused_intermediates_from_run": "35745111146",
+  "geometry_generated_utc": "2026-09-22T15:22:40Z",
+  "recut_generated_utc": "2026-09-22T15:24:40Z",
+  "targetlist": {
+    "generated_utc": "2026-09-24T11:34:26Z",
+    "verdict": "TARGETLIST_BUILT (1320953 nearest-neighbour links; at radio_100m_1p4ghz: 0 rankable links with P(Earth in beam) >= 0.5 vs 0.55 isotropic; 0 with the transmitter unobserved by BL)",
+    "file": "targetlist.json",
+    "beams": {
+      "radio_100m_1p4ghz": {
+        "n_expected_isotropic": 0.5477113002893017,
+        "sum_p_rankable": 0.0,
+        "n_links_p50_rankable": 0,
+        "n_links_p50_rankable_t_unobserved": 0
+      },
+      "radio_10m_8ghz": {
+        "n_expected_isotropic": 1.7256324024422252,
+        "sum_p_rankable": 0.0,
+        "n_links_p50_rankable": 0,
+        "n_links_p50_rankable_t_unobserved": 0
+      },
+      "radio_10m_1p4ghz": {
+        "n_expected_isotropic": 54.770380601717335,
+        "sum_p_rankable": 28.47,
+        "n_links_p50_rankable": 28,
+        "n_links_p50_rankable_t_unobserved": 27
+      },
+      "overfilled_5deg": {
+        "n_expected_isotropic": 628.6272783900979,
+        "sum_p_rankable": 379.9125,
+        "n_links_p50_rankable": 370,
+        "n_links_p50_rankable_t_unobserved": 369
+      }
     }
   }
 }

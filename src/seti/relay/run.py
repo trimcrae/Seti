@@ -1150,7 +1150,14 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
     if not any_on:
         rep["verdict"] = f"{V_NO_PAIRLINE_HIT} ({len(hits)} hits, {rep['n_hits_matched_to_sample']} on sample stars)"
     elif not cands:
-        rep["verdict"] = f"{V_PAIRLINE_OFF_PRIOR} ({any_on} pair-line hit tests, 0 inside the prior after RFI)"
+        n_dm = sum(int(v.get("n_drift_match") or 0) for v in rep["beams"].values())
+        n_dm_exp = sum(float(v.get("n_expected_drift_match") or 0.0) for v in rep["beams"].values())
+        if n_dm:
+            # hits DID fall inside the prior -- at the chance rate -- and every one is RFI
+            rep["verdict"] = (f"{V_PAIRLINE_CHANCE} ({n_dm} hit-beam drift matches vs {n_dm_exp:.1f} expected "
+                              f"by chance; all RFI-flagged, 0 candidates)")
+        else:
+            rep["verdict"] = f"{V_PAIRLINE_OFF_PRIOR} ({any_on} pair-line hit tests, 0 inside the prior)"
     else:
         n_exp = sum(float(v.get("n_expected_by_chance") or 0.0) for v in rep["beams"].values())
         n_uniq = len({(str(c["target"]), float(c["freq_mhz"]), float(c["drift_hz_s"])) for c in cands})
@@ -1272,6 +1279,25 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
                "sample_status": (geom.get("sample") or {}).get("status"),
                "rv_completeness": geom.get("rv_completeness"),
                "elapsed_assess_s": round(time.monotonic() - started, 1)}
+    ab = assess_rep.get("beams") or {}
+    if any("n_expected_by_chance" in v for v in ab.values()):
+        keys = ("n_trials", "n_trials_valid", "n_drift_match", "n_candidates_after_rfi",
+                "n_expected_drift_match", "n_expected_by_chance", "p_value_candidates",
+                "mean_window_fraction_of_hits", "mean_window_fraction_of_uniform_drift_range")
+        summary["chance"] = {
+            "model": "leave-one-out drift null over valid hits (src/seti/relay/chance.py)",
+            "hygiene": assess_rep.get("hygiene"),
+            "n_rfi_known_band": assess_rep.get("n_rfi_known_band"),
+            "n_rfi_recurrent_wide": assess_rep.get("n_rfi_recurrent_wide"),
+            "per_beam": {k: {kk: v.get(kk) for kk in keys} for k, v in ab.items()},
+            "total_candidates": sum(int(v.get("n_candidates_after_rfi") or 0) for v in ab.values()),
+            "total_expected": round(sum(float(v.get("n_expected_by_chance") or 0) for v in ab.values()), 3)}
+    # a re-reduction says whose geometry/recut it stands on, and when those were made
+    rf = out / ".reused_from"
+    if rf.exists():
+        summary["reused_intermediates_from_run"] = rf.read_text().strip().split("=")[-1]
+        summary["geometry_generated_utc"] = geom.get("generated_utc")
+        summary["recut_generated_utc"] = recut.get("generated_utc")
     _write(out / "summary.json", summary)
     print(f"[relay] verdict: {verdict}")
     return summary

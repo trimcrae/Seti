@@ -1,2829 +1,375 @@
 {
   "stages": [
     {
-      "stage": "bl:targets",
-      "status": "QUERY_FAILED",
-      "rows": 0,
-      "query": "{\"url\": \"http://seti.berkeley.edu/opendata/api/list-targets\", \"params\": {}}",
-      "error": "HTTPError('503 Server Error: Service Unavailable for url: http://seti.berkeley.edu/opendata/api/list-targets')"
-    },
-    {
-      "stage": "bl:telescopes",
-      "status": "QUERY_FAILED",
-      "rows": 0,
-      "query": "{\"url\": \"http://seti.berkeley.edu/opendata/api/list-telescopes\", \"params\": {}}",
-      "error": "HTTPError('503 Server Error: Service Unavailable for url: http://seti.berkeley.edu/opendata/api/list-telescopes')"
-    },
-    {
-      "stage": "bl:file_types",
-      "status": "QUERY_FAILED",
-      "rows": 0,
-      "query": "{\"url\": \"http://seti.berkeley.edu/opendata/api/list-file-types\", \"params\": {}}",
-      "error": "HTTPError('503 Server Error: Service Unavailable for url: http://seti.berkeley.edu/opendata/api/list-file-types')"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 2,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP 71683', 'HIP71683', 'GJ 1002', 'GJ1002')"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/ApJ/849/104"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/159/86"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/160/29"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "OK",
-      "rows": 2,
-      "query": "J/AJ/161/55"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/161/286"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/162/33"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/163/104"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/163/76"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/166/206"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "OK",
-      "rows": 9,
-      "query": "J/AJ/167/10"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/PASP/129/54501"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/other/NatAs/7.492"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/other/NatAs/5.1153"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/164/116"
-    },
-    {
-      "stage": "hit_tables_list",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "J/AJ/168/40"
-    },
-    {
-      "stage": "hit_tables_search",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "technosignature"
-    },
-    {
-      "stage": "hit_tables_search",
+      "stage": "arxiv_id_lookup",
       "status": "OK",
       "rows": 1,
-      "query": "Breakthrough Listen"
+      "query": "https://export.arxiv.org/api/query?id_list=1709.03491&max_results=1"
     },
     {
-      "stage": "hit_tables_search",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 4,
-      "query": "SETI"
+      "rows": 782444,
+      "query": "https://arxiv.org/e-print/1709.03491"
     },
     {
-      "stage": "hit_tables_search",
-      "status": "OK",
-      "rows": 26,
-      "query": "narrowband"
-    },
-    {
-      "stage": "hit_tables_search",
-      "status": "OK",
-      "rows": 17,
-      "query": "narrow-band"
-    },
-    {
-      "stage": "hit_tables_search",
+      "stage": "arxiv_id_lookup",
       "status": "OK",
       "rows": 1,
-      "query": "drift rate"
+      "query": "https://export.arxiv.org/api/query?id_list=1906.07750&max_results=1"
     },
     {
-      "stage": "bl:targets",
-      "status": "QUERY_FAILED",
-      "rows": 0,
-      "query": "{\"url\": \"http://seti.berkeley.edu/opendata/api/list-targets\", \"params\": {}}",
-      "error": "HTTPError('503 Server Error: Service Unavailable for url: http://seti.berkeley.edu/opendata/api/list-targets')"
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT TOP 200000 \"Name\", \"MJD\", \"Dist\" FROM \"J/AJ/161/55/table1\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 20000,
-      "query": "SELECT TOP 200000 \"Name\", \"Freq\", \"SNR\" FROM \"J/AJ/161/55/table3\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 470,
-      "query": "SELECT TOP 200000 \"Name\" FROM \"J/AJ/167/103/table1\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 2324,
-      "query": "SELECT TOP 200000 \"Name\" FROM \"J/AJ/167/103/table2\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 77,
-      "query": "SELECT TOP 200000 \"Name\" FROM \"J/AJ/167/103/table3\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 131,
-      "query": "SELECT TOP 200000 \"Name\" FROM \"J/AJ/167/103/table4\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 241,
-      "query": "SELECT TOP 200000 \"Name\", \"sigma\" FROM \"J/AJ/167/103/table6\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 97,
-      "query": "SELECT TOP 200000 \"_RA\", \"_DE\", \"Dist\", \"Type\" FROM \"J/AJ/167/10/table5\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 200000,
-      "query": "SELECT TOP 200000 \"Target\", \"RA_ICRS\", \"DE_ICRS\", \"GaiaDR2\", \"Plx\" FROM \"J/MNRAS/498/5720/catalog\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 141,
-      "query": "SELECT TOP 200000 \"HIP\" FROM \"J/A+A/331/949/table1\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 239,
-      "query": "SELECT TOP 200000 \"RAJ2000\", \"DEJ2000\" FROM \"J/ApJS/149/123/table2\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 247,
-      "query": "SELECT TOP 200000 \"ID\", \"Type\" FROM \"J/ApJS/149/123/table7\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 11938,
-      "query": "SELECT TOP 200000 \"ID\", \"RAJ2000\", \"DEJ2000\" FROM \"J/A+A/670/A4/dr2-nb\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 357,
-      "query": "SELECT TOP 200000 \"Name\" FROM \"J/AJ/126/3007/table3\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 89,
-      "query": "SELECT TOP 200000 \"RAJ2000\", \"DEJ2000\" FROM \"J/A+A/439/265/tablea2\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 1072,
-      "query": "SELECT TOP 200000 \"_RA\", \"_DE\", \"Dist\" FROM \"J/A+A/443/41/table\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 187,
-      "query": "SELECT TOP 200000 \"RAJ2000\", \"DEJ2000\", \"Note\" FROM \"J/A+A/498/13/table2\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 2547,
-      "query": "SELECT TOP 200000 \"Id\", \"RAJ2000\", \"DEJ2000\" FROM \"J/A+A/643/A149/cj0395\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 5556,
-      "query": "SELECT TOP 200000 \"Id\", \"RAJ2000\", \"DEJ2000\" FROM \"J/A+A/643/A149/cj0410\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 4994,
-      "query": "SELECT TOP 200000 \"Id\", \"RAJ2000\", \"DEJ2000\" FROM \"J/A+A/643/A149/cj0430\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 1467,
-      "query": "SELECT TOP 200000 \"Id\", \"RAJ2000\", \"DEJ2000\" FROM \"J/A+A/643/A149/cj0515\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 447,
-      "query": "SELECT TOP 200000 \"Name\", \"RAJ2000\", \"DEJ2000\", \"Dist\" FROM \"J/AJ/128/463/table54\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 75,
-      "query": "SELECT TOP 200000 \"_RA\", \"_DE\", \"Type\" FROM \"J/ApJ/657/738/table1\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 9776,
-      "query": "SELECT TOP 200000 \"ID\", \"RAJ2000\", \"DEJ2000\" FROM \"J/MNRAS/428/1128/tablea1\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 1251,
-      "query": "SELECT TOP 200000 \"ID\", \"RAJ2000\", \"DEJ2000\" FROM \"J/MNRAS/428/1128/tablea2\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 1141,
-      "query": "SELECT TOP 200000 \"ID\", \"RAJ2000\", \"DEJ2000\" FROM \"J/MNRAS/428/1128/tablea3\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 1758,
-      "query": "SELECT TOP 200000 \"ID\", \"RAJ2000\", \"DEJ2000\" FROM \"J/MNRAS/428/1128/tablea4\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 237,
-      "query": "SELECT TOP 200000 \"RAJ2000\", \"DEJ2000\", \"SNR\" FROM \"J/MNRAS/457/2366/table3\""
-    },
-    {
-      "stage": "hit_rows",
-      "status": "OK",
-      "rows": 42,
-      "query": "SELECT TOP 200000 \"ID\", \"RAJ2000\", \"DEJ2000\", \"Note\" FROM \"J/MNRAS/471/629/tablec1\""
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 46,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('TYC 1863-858-1', 'TYC1863-858-1', 'TYC 1868-281-1', 'TYC1868-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler127 c', 'KEPLER 127 c', 'Kepler-127 d', 'Kepler 127 d',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler161 c', 'KEPLER 161 c', 'Kepler-170 b', 'Kepler 170 b',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler229 b', 'KEPLER 229 b', 'Kepler-229 c', 'Kepler 229 c',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler287 b', 'KEPLER 287 b', 'Kepler-287 c', 'Kepler 287 c',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler363 c', 'KEPLER 363 c', 'Kepler-363 d', 'Kepler 363 d',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler26  e', 'KEPLER 26  e', 'Kepler-169 b', 'Kepler 169 b',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler238 b', 'KEPLER 238 b', 'Kepler-238 c', 'Kepler 238 c',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler341 d', 'KEPLER 341 d', 'Kepler-341 e', 'Kepler 341 e',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler136  b', 'KEPLER 136  b', 'Kepler-136  c', 'Kepler 136 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler191  d', 'KEPLER 191  d', 'Kepler-191  b', 'Kepler 191 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler81   b', 'KEPLER 81   b', 'Kepler-81   c', 'Kepler 81  "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler326  d', 'KEPLER 326  d', 'Kepler-328  b', 'Kepler 328 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler267  d', 'KEPLER 267  d', 'Kepler-770  c', 'Kepler 770 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler298  d', 'KEPLER 298  d', 'Kepler-301  b', 'Kepler 301 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler343  b', 'KEPLER 343  b', 'Kepler-343  c', 'Kepler 343 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler396  b', 'KEPLER 396  b', 'Kepler-396  c', 'Kepler 396 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler138  d', 'KEPLER 138  d', 'Kepler-144  b', 'Kepler 144 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler183  b', 'KEPLER 183  b', 'Kepler-183  c', 'Kepler 183 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler226  b', 'KEPLER 226  b', 'Kepler-226  c', 'Kepler 226 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler258  b', 'KEPLER 258  b', 'Kepler-258  c', 'Kepler 258 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 26   e', 'Kepler26   e', 'KEPLER 26   e', 'Kepler-169 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 238  b', 'Kepler238  b', 'KEPLER 238  b', 'Kepler-238 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 341  d', 'Kepler341  d', 'KEPLER 341  d', 'Kepler-341 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 286  c', 'Kepler286  c', 'KEPLER 286  c', 'Kepler-286 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 324  b', 'Kepler324  b', 'KEPLER 324  b', 'Kepler-324 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 444  c', 'Kepler444  c', 'KEPLER 444  c', 'Kepler-444 "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 215  e', 'Kepler215  e', 'KEPLER 215  e', 'Kepler-62  "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 120', 'Kepler120', 'KEPLER 120', 'Kepler-126', 'Kepler"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 30,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler 81', 'Kepler81', 'KEPLER 81', 'Kepler-83', 'Kepler 83'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 30,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler-33', 'Kepler 33', 'Kepler33', 'KEPLER 33', 'Kepler-221"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 30,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('Kepler-396 c', 'Kepler 396 c', 'Kepler396 c', 'KEPLER 396 c',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 31,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('KEPLER 83 b', 'Kepler-83 c', 'Kepler 83 c', 'Kepler83 c', 'KE"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 50,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('KEPLER 58 b', 'Kepler-58 c', 'Kepler 58 c', 'Kepler58 c', 'KE"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP21482', 'HIP 21482', 'HIP21988', 'HIP 21988', 'HIP19205', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP22498', 'HIP 22498', 'HIP17749', 'HIP 17749', 'HIP19422', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP40843', 'HIP 40843', 'HIP44072', 'HIP 44072', 'HIP45617', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP34950', 'HIP 34950', 'HIP36046', 'HIP 36046', 'HIP36393', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP34115', 'HIP 34115', 'HIP29067', 'HIP 29067', 'HIP29761', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP84223', 'HIP 84223', 'HIP83945', 'HIP 83945', 'HIP81919', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP65378', 'HIP 65378', 'HIP65477', 'HIP 65477', 'HIP65515', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP107788', 'HIP 107788', 'HIP108752', 'HIP 108752', 'HIP1095"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 59,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('GJ860B', 'GJ 860B', 'HIP115562', 'HIP 115562', 'HIP114622', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP108917', 'HIP 108917', 'HIP109474', 'HIP 109474', 'HIP1177"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP12493', 'HIP 12493', 'HIP12706', 'HIP 12706', 'HIP9487', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP113963', 'HIP 113963', 'HIP116838', 'HIP 116838', 'HIP1141"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 59,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP32984', 'HIP 32984', 'HIP31167', 'HIP 31167', 'HIP32617', "
-    },
-    {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP21683', 'HIP 21683', 'HIP20219', 'HIP 20219', 'HIP20261', "
+      "rows": 1753314,
+      "query": "https://arxiv.org/e-print/1906.07750"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP58576', 'HIP 58576', 'HIP59750', 'HIP 59750', 'HIP56802', "
+      "rows": 2,
+      "query": "https://export.arxiv.org/api/query?search_query=ti:%22Earth%20Transit%20Zone%22&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 41,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP46580', 'HIP 46580', 'HIP51317', 'HIP 51317', 'HIP51254', "
+      "rows": 3346160,
+      "query": "https://arxiv.org/e-print/2306.10202"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 7,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('52182', '52191', '52308', '52331', '52488', '52697', '53274',"
+      "rows": 1,
+      "query": "https://export.arxiv.org/api/query?search_query=ti:%2231%20Sun-like%20Stars%22&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 47,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('GPSR78.504+0.527', 'GPSR 78.504+0.527', 'WSRTGP2027+4050', 'W"
+      "rows": 3330466,
+      "query": "https://arxiv.org/e-print/2011.05265"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 37,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('WSRTGP 2031+4021', '19P22', 'WSRTGP2031+4058', 'WSRTGP 2031+4"
+      "rows": 1,
+      "query": "https://export.arxiv.org/api/query?search_query=ti:%22LHS%201140%22%20%20AND%20all:technosignatures&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 38,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('WR146', 'WR 146', 'WSRTGP2033+4112', 'WSRTGP 2033+4112', 'GPS"
+      "rows": 2423890,
+      "query": "https://arxiv.org/e-print/1901.04057"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 5,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('WSRTGP2032+4120', 'WSRTGP 2032+4120', '19P35', 'IRAS20327+412"
+      "rows": 2,
+      "query": "https://export.arxiv.org/api/query?search_query=all:%22Breakthrough%20Listen%22%20AND%20ti:%22TESS%20Targets%22&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7063', '7165', '7857', '1718', '7057', '1094', '1341', '1373'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7343', '7357', '2755', '4189', '7047', '2550', '7852', '987',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7754', '7780', '1133', '6426', '976', '1087', '1402', '5742',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8171', '8466', '8530', '7187', '7355', '8228', '8236', '8285'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7960', '1111', '1282', '7978', '4826', '7859', '4154', '1075'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('1701', '3521', '7781', '7778', '7883', '4049', '6917', '7868'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('969', '1463', '1591', '7081', '7982', '2522', '875', '1024', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8132', '8137', '8264', '8283', '8371', '8479', '862', '8179',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8462', '8533', '874', '906', '5875', '6443', '6460', '8040', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8469', '23', '101', '469', '2726', '7615', '8207', '8237', '8"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8227', '8229', '8265', '8308', '8386', '8444', '8473', '279',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8204', '8499', '6330', '6929', '8235', '8302', '8401', '32', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7085', '7273', '2116', '1466', '1742', '1254', '1112', '1396'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('6870', '42', '45', '76', '121', '8220', '8232', '357', '6666'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('74', '603', '877', '2264', '8019', '8583', '27', '896', '4196"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7647', '8168', '8393', '8471', '68', '6316', '7643', '8398', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('3203', '6482', '864', '1161', '7163', '7735', '8041', '1285',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 22,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('1110', '1196', '6923', '7087', '7283', '4657', '7225', '7843'"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('LP406-35', 'LP 646-49', 'LP646-49', 'LP 406-58', 'LP406-58', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 61,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('G85-42', 'LP 717-4', 'LP717-4', 'LP 717-3', 'LP717-3', 'LP 89"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 59,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('LP729-7', 'LP 429-12', 'LP429-12', 'LP 789-23', 'LP789-23', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 60,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('LP853-27', 'G 61-10', 'G61-10', 'LP 95-334', 'LP95-334', 'G 6"
-    },
-    {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 58,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('LP136-136', 'LP 443-16', 'LP443-16', 'LP 443-17', 'LP443-17',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "OK",
-      "rows": 34,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('LP758-16', 'LP 930-22', 'LP930-22', 'LP 698-29', 'LP698-29', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('6806', '9716', '11081', '1533', '8942', '2808', '5674', '2666"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('18204', '5059', '11424', '27114', '14828', '18438', '22705', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('14630', '19994', '33386', '29539', '37943', '36033', '28356',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('6396', '10321', '9672', '16873', '16316', '17584', '15645', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('19949', '19940', '18008', '12835', '12529', '3151', '9343', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('30821', '3178', '8922', '18640', '15438', '16454', '16245', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('12712', '9545', '16478', '11616', '4816', '5982', '10557', '1"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('34110', '28697', '30866', '34980', '22809', '4935', '9042', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('25974', '33907', '29291', '19147', '680', '13946', '3839', '1"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('3760', '15985', '7014', '3573', '15244', '7425', '14581', '16"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('16482', '15220', '17726', '19420', '14839', '20558', '9221', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('36899', '36848', '43840', '43648', '36828', '45449', '40770',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('5398', '14170', '15370', '30726', '48034', '31269', '16840', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('68892', '64410', '53801', '55791', '3581', '9705', '15028', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('43516', '44126', '53258', '34063', '44874', '26643', '31660',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('5041', '3345', '3576', '9229', '9086', '9850', '12080', '5642"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('6499', '16811', '21787', '17699', '17850', '23095', '16734', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('14876', '14727', '20452', '20368', '27873', '23736', '3590', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('3763', '13225', '22820', '3469', '12272', '25006', '29054', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('21520', '20840', '23203', '21814', '6552', '5654', '11335', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('3506', '4461', '4052', '3094', '14418', '14377', '25201', '19"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('3192', '8969', '12543', '9975', '24743', '16233', '23339', '2"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('20500', '18300', '29091', '13058', '27779', '22744', '26944',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('6738', '8113', '15149', '6553', '9193', '12735', '17288', '22"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('19698', '18143', '21464', '21906', '22448', '22209', '24714',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8893', '1212', '5807', '10356', '5436', '22276', '8793', '124"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7494', '13187', '12792', '11839', '12601', '13459', '10400', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('26154', '20359', '21078', '23598', '3453', '5073', '4819', '7"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('18103', '19606', '17959', '27374', '25412', '22762', '23168',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('16265', '16012', '14230', '19441', '5002', '15133', '11523', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('18155', '18952', '7528', '12059', '16557', '14006', '14046', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('19911', '6605', '20463', '24326', '24679', '24813', '29862', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('14967', '18773', '21004', '20458', '11844', '9403', '18173', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('16294', '2923', '9250', '19117', '24406', '24177', '30649', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('21245', '9026', '16370', '13347', '16124', '2980', '2886', '1"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('13874', '22451', '5703', '11077', '18029', '28538', '27918', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('17324', '18674', '3928', '575', '1900', '6960', '14438', '188"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('30441', '21828', '30918', '10204', '12553', '25898', '1776', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('40299', '37625', '45521', '41641', '5039', '4501', '13188', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('34639', '35041', '39700', '26153', '33739', '33594', '37828',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('14554', '19623', '20919', '19308', '18983', '20923', '23857',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('27243', '42844', '47785', '48609', '51123', '32892', '35763',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('41870', '45849', '38378', '36794', '37201', '43177', '42508',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('35399', '52710', '50999', '52653', '57877', '65833', '65418',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('29379', '30487', '69618', '69949', '77487', '11342', '22552',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('16059', '21874', '23809', '57792', '61489', '1578', '69180', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('22279', '34066', '35562', '42736', '45205', '48472', '48523',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('15912', '16098', '13137', '12228', '12134', '10809', '10349',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('12552', '3420', '3940', '9665', '727', '11618', '3348', '1504"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('2464', '5665', '11956', '18295', '13254', '17571', '18394', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('22288', '15929', '23858', '16227', '21061', '2798', '4084', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('3032', '6461', '9357', '12797', '2504', '5915', '10194', '101"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('8747', '13766', '22630', '39270', '32192', '39252', '38834', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('13326', '24857', '25570', '32132', '1505', '5745', '11590', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('42989', '7206', '10647', '13509', '4491', '7244', '15397', '2"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('27306', '22965', '8792', '13526', '15267', '15047', '21569', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('19870', '15750', '17609', '16148', '23306', '11222', '22716',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('27091', '18318', '27554', '27929', '28774', '23944', '23010',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('20210', '19938', '21571', '34059', '33752', '31199', '28636',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('2889', '17244', '8688', '6279', '17771', '4107', '11208', '13"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('6679', '14500', '14683', '296', '1514', '3872', '9048', '1692"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('26246', '26328', '29655', '28705', '787', '3944', '5323', '33"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('3026', '19928', '15996', '23187', '24270', '22769', '22695', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('19008', '18526', '12255', '32436', '34808', '10859', '1932', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('2128', '8474', '17018', '11600', '15008', '12000', '14675', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('1951', '9097', '9269', '16314', '17041', '3718', '18397', '11"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('17385', '14086', '12817', '32159', '13672', '3638', '9551', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('33916', '11777', '19640', '15489', '65917', '13080', '14533',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('42506', '40388', '4581', '10033', '10050', '7068', '14939', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('631', '5859', '8932', '10245', '12208', '13787', '15884', '16"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('60585', '63457', '5326', '54217', '4063', '51752', '5769', '4"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('44101', '43326', '25161', '32161', '41725', '32230', '33238',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('17247', '23787', '29611', '22261', '32078', '37984', '42925',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('38829', '50914', '50752', '59336', '51368', '59272', '61289',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('39837', '45489', '36851', '54475', '59341', '61297', '71546',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('39496', '36700', '40969', '41932', '40780', '37884', '45413',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('11191', '9939', '15245', '3753', '13721', '397', '2095', '574"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('11921', '11414', '9515', '15994', '15803', '10471', '14713', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('25867', '28976', '24534', '5140', '11739', '13842', '17032', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('31094', '5690', '10200', '9594', '11360', '15129', '13172', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('11824', '14461', '36587', '44541', '2059', '2083', '5909', '7"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('73812', '69131', '59046', '62633', '68527', '75631', '68880',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('42223', '45604', '20354', '28990', '27925', '39877', '47962',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('4018', '3486', '2512', '3007', '2100', '18159', '14471', '160"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('7585', '16047', '12966', '17767', '28876', '27120', '14385', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('16512', '16726', '1875', '20079', '18210', '12848', '5085', '"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('49271', '56558', '49459', '41209', '46524', '32208', '41208',"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('62120', '69466', '70861', '44355', '46753', '63531', '5243', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('13069', '8811', '16393', '6159', '11840', '3155', '4897', '10"
+      "rows": 1354231,
+      "query": "https://arxiv.org/e-print/2201.00918"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
       "rows": 3,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('30304', '46063', '71827', '72324', '77790', '76944', '85611',"
+      "query": "https://export.arxiv.org/api/query?search_query=all:%22Breakthrough%20Listen%22%20AND%20ti:%22Galactic%20Center%22&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 57,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('G 132-4', 'G132-4', 'LP 765-74', 'LP765-74', 'G 172-22', 'G17"
+      "rows": 2901644,
+      "query": "https://arxiv.org/e-print/2202.08274"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 52,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('G88-37', 'LP 17-66', 'LP17-66', 'G 88-49', 'G88-49', 'G 111-5"
+      "rows": 5,
+      "query": "https://export.arxiv.org/api/query?search_query=all:%22Breakthrough%20Listen%22%20AND%20ti:%22transit%22%20AND%20all:technosignature&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 61,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('LP881-239', 'LP 825-628', 'LP825-628', 'LP 881-272', 'LP881-2"
+      "rows": 1,
+      "query": "https://export.arxiv.org/api/query?search_query=all:%2211%2C680%20stars%22%20AND%20all:technosignatures&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 54,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('LP783-21', 'LP 163-51', 'LP163-51', 'LP 17-228', 'LP17-228', "
+      "rows": 283410,
+      "query": "https://arxiv.org/e-print/2308.02712"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 58,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('L 485-9', 'L485-9', 'L 485-8', 'L485-8', 'T 24', 'T24', 'G 15"
+      "rows": 1,
+      "query": "https://export.arxiv.org/api/query?search_query=ti:%22820%20nearby%20stars%22&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 58,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('G73-27', 'LP 469-118', 'LP469-118', 'G 174-4', 'G174-4', 'LP "
+      "rows": 22352179,
+      "query": "https://arxiv.org/e-print/2301.12670"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 49,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('G108-4', 'G 108-13', 'G108-13', 'LP 420-4', 'LP420-4', 'LP 36"
+      "rows": 3,
+      "query": "https://export.arxiv.org/api/query?search_query=all:%22blc1%22%20AND%20all:technosignature&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
       "status": "OK",
-      "rows": 16,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('L568-50', 'LP 340-455', 'LP340-455', 'LP 285-9', 'LP285-9', '"
+      "rows": 22841134,
+      "query": "https://arxiv.org/e-print/2111.06350"
     },
     {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-95894', 'UDS-NB921 DTC S12-95894', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-88331', 'UDS-NB921 DTC S12-88331', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-97319', 'UDS-NB921 DTC S12-97319', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-95797', 'UDS-NB921 DTC S12-95797', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-105619', 'UDS-NB921 DTC S12-105619', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-114505', 'UDS-NB921 DTC S12-114505', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-96338', 'UDS-NB921 DTC S12-96338', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-105892', 'UDS-NB921 DTC S12-105892', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-115422', 'UDS-NB921 DTC S12-115422', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-121258', 'UDS-NB921 DTC S12-121258', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-121426', 'UDS-NB921 DTC S12-121426', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-133002', 'UDS-NB921 DTC S12-133002', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-189742', 'UDS-NB921 DTC S12-189742', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-218365', 'UDS-NB921 DTC S12-218365', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-193002', 'UDS-NB921 DTC S12-193002', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-224588', 'UDS-NB921 DTC S12-224588', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-211466', 'UDS-NB921 DTC S12-211466', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-235058', 'UDS-NB921 DTC S12-235058', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-235577', 'UDS-NB921 DTC S12-235577', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-88068', 'UDS-NB921 DTC S12-88068', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-95345', 'UDS-NB921 DTC S12-95345', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-109207', 'UDS-NB921 DTC S12-109207', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-114475', 'UDS-NB921 DTC S12-114475', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-115202', 'UDS-NB921 DTC S12-115202', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-120975', 'UDS-NB921 DTC S12-120975', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-124240', 'UDS-NB921 DTC S12-124240', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-135549', 'UDS-NB921 DTC S12-135549', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-134921', 'UDS-NB921 DTC S12-134921', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-135972', 'UDS-NB921 DTC S12-135972', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-162117', 'UDS-NB921 DTC S12-162117', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-176865', 'UDS-NB921 DTC S12-176865', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-151092', 'UDS-NB921 DTC S12-151092', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-142699', 'UDS-NB921 DTC S12-142699', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-149370', 'UDS-NB921 DTC S12-149370', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-174863', 'UDS-NB921 DTC S12-174863', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-160534', 'UDS-NB921 DTC S12-160534', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-180798', 'UDS-NB921 DTC S12-180798', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-184359', 'UDS-NB921 DTC S12-184359', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-135052', 'UDS-NB921 DTC S12-135052', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-142328', 'UDS-NB921 DTC S12-142328', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-148767', 'UDS-NB921 DTC S12-148767', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-147590', 'UDS-NB921 DTC S12-147590', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-149665', 'UDS-NB921 DTC S12-149665', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-3589', 'UDS-NB921 DTC S12-3589', 'UDS-NB921"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-149814', 'UDS-NB921 DTC S12-149814', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-10737', 'UDS-NB921 DTC S12-10737', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-164777', 'UDS-NB921 DTC S12-164777', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-22245', 'UDS-NB921 DTC S12-22245', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-17670', 'UDS-NB921 DTC S12-17670', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-24104', 'UDS-NB921 DTC S12-24104', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-28225', 'UDS-NB921 DTC S12-28225', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-34349', 'UDS-NB921 DTC S12-34349', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-189895', 'UDS-NB921 DTC S12-189895', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-192274', 'UDS-NB921 DTC S12-192274', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-20024', 'UDS-NB921 DTC S12-20024', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-21130', 'UDS-NB921 DTC S12-21130', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-196373', 'UDS-NB921 DTC S12-196373', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-201438', 'UDS-NB921 DTC S12-201438', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-27220', 'UDS-NB921 DTC S12-27220', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-190624', 'UDS-NB921 DTC S12-190624', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-22327', 'UDS-NB921 DTC S12-22327', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-27065', 'UDS-NB921 DTC S12-27065', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-32985', 'UDS-NB921 DTC S12-32985', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-38193', 'UDS-NB921 DTC S12-38193', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-39956', 'UDS-NB921 DTC S12-39956', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-28120', 'UDS-NB921 DTC S12-28120', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-33793', 'UDS-NB921 DTC S12-33793', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-43851', 'UDS-NB921 DTC S12-43851', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-43477', 'UDS-NB921 DTC S12-43477', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-162296', 'UDS-NB921 DTC S12-162296', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-28722', 'UDS-NB921 DTC S12-28722', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-176420', 'UDS-NB921 DTC S12-176420', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-151336', 'UDS-NB921 DTC S12-151336', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-37640', 'UDS-NB921 DTC S12-37640', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-152804', 'UDS-NB921 DTC S12-152804', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-162081', 'UDS-NB921 DTC S12-162081', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-180050', 'UDS-NB921 DTC S12-180050', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-188436', 'UDS-NB921 DTC S12-188436', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-42507', 'UDS-NB921 DTC S12-42507', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-41282', 'UDS-NB921 DTC S12-41282', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-45289', 'UDS-NB921 DTC S12-45289', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-154840', 'UDS-NB921 DTC S12-154840', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-151112', 'UDS-NB921 DTC S12-151112', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-54389', 'UDS-NB921 DTC S12-54389', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-155014', 'UDS-NB921 DTC S12-155014', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-54342', 'UDS-NB921 DTC S12-54342', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-61984', 'UDS-NB921 DTC S12-61984', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-67894', 'UDS-NB921 DTC S12-67894', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-169802', 'UDS-NB921 DTC S12-169802', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-173730', 'UDS-NB921 DTC S12-173730', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-73754', 'UDS-NB921 DTC S12-73754', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-81860', 'UDS-NB921 DTC S12-81860', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-214848', 'UDS-NB921 DTC S12-214848', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-202913', 'UDS-NB921 DTC S12-202913', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-194482', 'UDS-NB921 DTC S12-194482', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-233316', 'UDS-NB921 DTC S12-233316', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-213722', 'UDS-NB921 DTC S12-213722', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-226991', 'UDS-NB921 DTC S12-226991', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-191491', 'UDS-NB921 DTC S12-191491', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-45562', 'UDS-NB921 DTC S12-45562', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-51086', 'UDS-NB921 DTC S12-51086', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-56808', 'UDS-NB921 DTC S12-56808', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-60909', 'UDS-NB921 DTC S12-60909', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-53007', 'UDS-NB921 DTC S12-53007', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-209237', 'UDS-NB921 DTC S12-209237', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-205041', 'UDS-NB921 DTC S12-205041', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-72418', 'UDS-NB921 DTC S12-72418', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-231335', 'UDS-NB921 DTC S12-231335', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-236588', 'UDS-NB921 DTC S12-236588', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-217784', 'UDS-NB921 DTC S12-217784', 'UDS-N"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-78227', 'UDS-NB921 DTC S12-78227', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-60533', 'UDS-NB921 DTC S12-60533', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-70988', 'UDS-NB921 DTC S12-70988', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-84857', 'UDS-NB921 DTC S12-84857', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-82368', 'UDS-NB921 DTC S12-82368', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NB921_DTC_S12-87689', 'UDS-NB921 DTC S12-87689', 'UDS-NB9"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-112595', 'COSMOS-NB921 DTC S12-112595', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-117071', 'COSMOS-NB921 DTC S12-117071', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-70259', 'COSMOS-NB921 DTC S12-70259', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-72872', 'COSMOS-NB921 DTC S12-72872', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-113576', 'COSMOS-NB921 DTC S12-113576', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-121658', 'COSMOS-NB921 DTC S12-121658', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-120633', 'COSMOS-NB921 DTC S12-120633', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-130891', 'COSMOS-NB921 DTC S12-130891', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-137862', 'COSMOS-NB921 DTC S12-137862', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-143220', 'COSMOS-NB921 DTC S12-143220', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-135261', 'COSMOS-NB921 DTC S12-135261', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-136181', 'COSMOS-NB921 DTC S12-136181', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-140458', 'COSMOS-NB921 DTC S12-140458', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-145768', 'COSMOS-NB921 DTC S12-145768', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-150505', 'COSMOS-NB921 DTC S12-150505', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-154496', 'COSMOS-NB921 DTC S12-154496', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-37055', 'COSMOS-NB921 DTC S12-37055', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-69656', 'COSMOS-NB921 DTC S12-69656', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-81130', 'COSMOS-NB921 DTC S12-81130', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-77798', 'COSMOS-NB921 DTC S12-77798', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-84215', 'COSMOS-NB921 DTC S12-84215', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-91282', 'COSMOS-NB921 DTC S12-91282', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-96437', 'COSMOS-NB921 DTC S12-96437', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-86751', 'COSMOS-NB921 DTC S12-86751', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-98000', 'COSMOS-NB921 DTC S12-98000', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-102695', 'COSMOS-NB921 DTC S12-102695', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-186', 'COSMOS-NB921 DTC S12-186', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-148116', 'COSMOS-NB921 DTC S12-148116', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-110392', 'COSMOS-NB921 DTC S12-110392', "
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-32923', 'COSMOS-NB921 DTC S12-32923', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-40333', 'COSMOS-NB921 DTC S12-40333', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-1741', 'COSMOS-NB921 DTC S12-1741', 'COS"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-5924', 'COSMOS-NB921 DTC S12-5924', 'COS"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-44055', 'COSMOS-NB921 DTC S12-44055', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-20172', 'COSMOS-NB921 DTC S12-20172', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-4100', 'COSMOS-NB921 DTC S12-4100', 'COS"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-10984', 'COSMOS-NB921 DTC S12-10984', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-9829', 'COSMOS-NB921 DTC S12-9829', 'COS"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-14661', 'COSMOS-NB921 DTC S12-14661', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-22376', 'COSMOS-NB921 DTC S12-22376', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-30599', 'COSMOS-NB921 DTC S12-30599', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-44788', 'COSMOS-NB921 DTC S12-44788', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-54229', 'COSMOS-NB921 DTC S12-54229', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-59305', 'COSMOS-NB921 DTC S12-59305', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-64747', 'COSMOS-NB921 DTC S12-64747', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-65456', 'COSMOS-NB921 DTC S12-65456', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NB921_DTC_S12-67688', 'COSMOS-NB921 DTC S12-67688', 'C"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-1280', 'UDS-NBJ DTC S12-1280', 'UDS-NBJ_DTC_S"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-14009', 'UDS-NBJ DTC S12-14009', 'UDS-NBJ_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-13603', 'UDS-NBJ DTC S12-13603', 'UDS-NBJ_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-14292', 'UDS-NBJ DTC S12-14292', 'UDS-NBJ_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-5148', 'UDS-NBJ DTC S12-5148', 'UDS-NBJ_DTC_S"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-17744', 'UDS-NBJ DTC S12-17744', 'UDS-NBJ_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-11845', 'UDS-NBJ DTC S12-11845', 'UDS-NBJ_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-5938', 'UDS-NBJ DTC S12-5938', 'UDS-NBJ_DTC_S"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBJ_DTC_S12-10064', 'UDS-NBJ DTC S12-10064', 'UDS-NBJ_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-17724', 'COSMOS-NBJ DTC S12-17724', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-25190', 'COSMOS-NBJ DTC S12-25190', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-21103', 'COSMOS-NBJ DTC S12-21103', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-26459', 'COSMOS-NBJ DTC S12-26459', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-5580', 'COSMOS-NBJ DTC S12-5580', 'COSMOS-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-12376', 'COSMOS-NBJ DTC S12-12376', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-3323', 'COSMOS-NBJ DTC S12-3323', 'COSMOS-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-26413', 'COSMOS-NBJ DTC S12-26413', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-7899', 'COSMOS-NBJ DTC S12-7899', 'COSMOS-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-706', 'COSMOS-NBJ DTC S12-706', 'COSMOS-NB"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-5778', 'COSMOS-NBJ DTC S12-5778', 'COSMOS-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBJ_DTC_S12-24783', 'COSMOS-NBJ DTC S12-24783', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBH_DTC_S12-1540', 'UDS-NBH DTC S12-1540', 'UDS-NBH_DTC_S"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBH_DTC_S12-21432', 'UDS-NBH DTC S12-21432', 'UDS-NBH_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBH_DTC_S12-22037', 'UDS-NBH DTC S12-22037', 'UDS-NBH_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBH_DTC_S12-14649', 'UDS-NBH DTC S12-14649', 'UDS-NBH_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBH_DTC_S12-19309', 'UDS-NBH DTC S12-19309', 'UDS-NBH_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBH_DTC_S12-3970', 'UDS-NBH DTC S12-3970', 'UDS-NBH_DTC_S"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBH_DTC_S12-8186', 'UDS-NBH DTC S12-8186', 'UDS-NBH_DTC_S"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-41914', 'COSMOS-NBH DTC S12-41914', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-28218', 'COSMOS-NBH DTC S12-28218', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-56301', 'COSMOS-NBH DTC S12-56301', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-60447', 'COSMOS-NBH DTC S12-60447', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-16331', 'COSMOS-NBH DTC S12-16331', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-7012', 'COSMOS-NBH DTC S12-7012', 'COSMOS-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-44087', 'COSMOS-NBH DTC S12-44087', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-20902', 'COSMOS-NBH DTC S12-20902', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-40954', 'COSMOS-NBH DTC S12-40954', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-7187', 'COSMOS-NBH DTC S12-7187', 'COSMOS-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-60180', 'COSMOS-NBH DTC S12-60180', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBH_DTC_S12-21952', 'COSMOS-NBH DTC S12-21952', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBK_DTC_S12-26463', 'UDS-NBK DTC S12-26463', 'UDS-NBK_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBK_DTC_S12-13450', 'UDS-NBK DTC S12-13450', 'UDS-NBK_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBK_DTC_S12-18548', 'UDS-NBK DTC S12-18548', 'UDS-NBK_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBK_DTC_S12-13336', 'UDS-NBK DTC S12-13336', 'UDS-NBK_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBK_DTC_S12-17113', 'UDS-NBK DTC S12-17113', 'UDS-NBK_DTC"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('UDS-NBK_DTC_S12-6266', 'UDS-NBK DTC S12-6266', 'UDS-NBK_DTC_S"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-7089', 'COSMOS-NBK DTC S12B-7089', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-7851', 'COSMOS-NBK DTC S12B-7851', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-7841', 'COSMOS-NBK DTC S12B-7841', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-7604', 'COSMOS-NBK DTC S12B-7604', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-8500', 'COSMOS-NBK DTC S12B-8500', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-7961', 'COSMOS-NBK DTC S12B-7961', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-2965', 'COSMOS-NBK DTC S12B-2965', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-2936', 'COSMOS-NBK DTC S12B-2936', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-4437', 'COSMOS-NBK DTC S12B-4437', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-7116', 'COSMOS-NBK DTC S12B-7116', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-2511', 'COSMOS-NBK DTC S12B-2511', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-3574', 'COSMOS-NBK DTC S12B-3574', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-3604', 'COSMOS-NBK DTC S12B-3604', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-190', 'COSMOS-NBK DTC S12B-190', 'COSMOS-"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-1609', 'COSMOS-NBK DTC S12B-1609', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-3899', 'COSMOS-NBK DTC S12B-3899', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-6307', 'COSMOS-NBK DTC S12B-6307', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-4295', 'COSMOS-NBK DTC S12B-4295', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-6132', 'COSMOS-NBK DTC S12B-6132', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
-      "status": "QUERY_RETURNED_ZERO_ROWS",
-      "rows": 0,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-6388', 'COSMOS-NBK DTC S12B-6388', 'COSMO"
-    },
-    {
-      "stage": "simbad_ident",
+      "stage": "arxiv_search",
       "status": "OK",
-      "rows": 26,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('COSMOS-NBK_DTC_S12B-6820', 'COSMOS-NBK DTC S12B-6820', 'COSMO"
+      "rows": 3,
+      "query": "https://export.arxiv.org/api/query?search_query=all:%22solar%20gravitational%20lens%22%20AND%20all:technosignature&start=0&max_results=12"
     },
     {
-      "stage": "simbad_ident",
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 7650196,
+      "query": "https://arxiv.org/e-print/2206.14807"
+    },
+    {
+      "stage": "arxiv_search",
+      "status": "OK",
+      "rows": 3,
+      "query": "https://export.arxiv.org/api/query?search_query=ti:%22TRAPPIST-1%22%20AND%20all:technosignature&start=0&max_results=12"
+    },
+    {
+      "stage": "arxiv_sweep",
+      "status": "OK",
+      "rows": 21,
+      "query": "https://export.arxiv.org/api/query?search_query=abs:%22drift%20rate%22%20AND%20abs:technosignature&start=0&max_results=40"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 3255943,
+      "query": "https://arxiv.org/e-print/2311.01427"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 3420193,
+      "query": "https://arxiv.org/e-print/2212.05137"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 14006349,
+      "query": "https://arxiv.org/e-print/2312.03943"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 1202400,
+      "query": "https://arxiv.org/e-print/2512.18142"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 31478358,
+      "query": "https://arxiv.org/e-print/2603.19023"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 7791453,
+      "query": "https://arxiv.org/e-print/2411.19827"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 51653,
+      "query": "https://arxiv.org/e-print/1910.03711"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 2523593,
+      "query": "https://arxiv.org/e-print/2506.13459"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 2576648,
+      "query": "https://arxiv.org/e-print/2608.18275"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 1868069,
+      "query": "https://arxiv.org/e-print/2602.09553"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 7992710,
+      "query": "https://arxiv.org/e-print/2509.09654"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 505412,
+      "query": "https://arxiv.org/e-print/2511.20231"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 487875,
+      "query": "https://arxiv.org/e-print/1802.01081"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 37429019,
+      "query": "https://arxiv.org/e-print/2108.00559"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 3083313,
+      "query": "https://arxiv.org/e-print/2511.21085"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 2692040,
+      "query": "https://arxiv.org/e-print/2509.06310"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 9627496,
+      "query": "https://arxiv.org/e-print/2506.14718"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 3185858,
+      "query": "https://arxiv.org/e-print/2002.06162"
+    },
+    {
+      "stage": "arxiv_sweep",
+      "status": "OK",
+      "rows": 13,
+      "query": "https://export.arxiv.org/api/query?search_query=abs:%22Breakthrough%20Listen%22%20AND%20abs:narrowband&start=0&max_results=40"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 1697502,
+      "query": "https://arxiv.org/e-print/1901.04636"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 100972,
+      "query": "https://arxiv.org/e-print/2101.05172"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 5446649,
+      "query": "https://arxiv.org/e-print/2205.02964"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 5857024,
+      "query": "https://arxiv.org/e-print/2101.11137"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 42836815,
+      "query": "https://arxiv.org/e-print/2412.05786"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 7093220,
+      "query": "https://arxiv.org/e-print/2104.14148"
+    },
+    {
+      "stage": "arxiv_sweep",
       "status": "OK",
       "rows": 16,
-      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('B-HiZELS_27', 'B-HiZELS 27', 'B-HiZELS_28', 'B-HiZELS 28', 'B"
+      "query": "https://export.arxiv.org/api/query?search_query=abs:technosignature%20AND%20abs:%22Green%20Bank%20Telescope%22&start=0&max_results=40"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 243093,
+      "query": "https://arxiv.org/e-print/2512.19763"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 446983,
+      "query": "https://arxiv.org/e-print/2307.08793"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 194684,
+      "query": "https://arxiv.org/e-print/2306.03118"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 1868808,
+      "query": "https://arxiv.org/e-print/2305.18527"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 2476866,
+      "query": "https://arxiv.org/e-print/2505.03927"
+    },
+    {
+      "stage": "arxiv_eprint",
+      "status": "OK",
+      "rows": 750416,
+      "query": "https://arxiv.org/e-print/2006.04362"
+    },
+    {
+      "stage": "simbad_ident",
+      "status": "OK",
+      "rows": 19,
+      "query": "SELECT i.id AS asked, b.main_id, b.ra, b.dec, b.plx_value, b.pmra, b.pmdec, b.rvz_radvel, g.id AS gaia FROM ident AS i JOIN basic AS b ON i.oidref = b.oid LEFT JOIN ident AS g ON g.oidref = b.oid AND g.id LIKE 'Gaia DR3 %' WHERE i.id IN ('HIP 4436', 'HIP4436', 'HIP 82860', 'HIP82860', 'Kepler-86', '"
     }
   ],
-  "n_stages": 463,
-  "n_ok": 110,
-  "n_query_failed": 4,
-  "n_query_returned_zero_rows": 349,
-  "any_query_failed": true,
-  "total_rows": 269956,
+  "n_stages": 58,
+  "n_ok": 58,
+  "n_query_failed": 0,
+  "n_query_returned_zero_rows": 0,
+  "any_query_failed": false,
+  "total_rows": 271210578,
   "routes": {
-    "routes": {
-      "tap": {
-        "n_ok": 110,
-        "n_failed": 0,
-        "endpoints": [
-          "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
-        ]
-      }
-    },
-    "n_attempts": 110,
-    "served_by": "tap",
+    "routes": {},
+    "n_attempts": 0,
+    "served_by": "none",
     "breaker": {
       "fail_limit": 2,
       "cooldown_s": 45.0,
-      "endpoints": {
-        "https://tapvizier.cds.unistra.fr/TAPVizieR/tap": {
-          "state": "closed",
-          "consecutive_failures": 0,
-          "ever_ok": true
-        }
-      },
+      "endpoints": {},
       "n_transitions": 0
     }
   },
   "breaker": {
     "fail_limit": 2,
     "cooldown_s": 45.0,
-    "endpoints": {
-      "https://tapvizier.cds.unistra.fr/TAPVizieR/tap": {
-        "state": "closed",
-        "consecutive_failures": 0,
-        "ever_ok": true
-      }
-    },
+    "endpoints": {},
     "transitions": [],
     "n_transitions": 0
   }

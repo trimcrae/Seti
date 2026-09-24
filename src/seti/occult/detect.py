@@ -819,8 +819,11 @@ def side_tests(ev: Event, fit: Fit, r0, dterm, e, ns: int = 64, span: float = 0.
     out["edge_interval_rise"] = intervals["rise"]
     out["edge_interval_fall"] = intervals["fall"]
     ir, jf = intervals["rise"], intervals["fall"]
+    # a 2 % tolerance on u_c: a 1-D scan with the shape held fixed cannot absorb
+    # the few-0.1 % shape errors that separate the two sides at high S/N
+    tol = 0.02 * uc
     out["edges_agree"] = bool(ir is not None and jf is not None
-                              and ir[0] <= jf[1] and jf[0] <= ir[1])
+                              and ir[0] - tol <= jf[1] and jf[0] - tol <= ir[1])
     return out
 
 
@@ -1191,12 +1194,12 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
     rec["scan_best_dchi2"] = max([c[2] for c in cand], default=0.0)
     rec["scan_best_anti_dchi2"] = max([c[2] for c in anti], default=0.0)
     rec["scan_best"] = [list(c) for c in cand]
-    # fixed seeds, so a scan misled by a very deep step cannot hide the answer
+    # fixed seeds, so a scan misled by a very deep step cannot hide the answer;
+    # not filtered by the null fit's geometry, which may itself be the wrong one
     for rl in conf.get("seed_rho_l", ()):
         uth = u_crit(rl)
-        if umin0 < uth < u_max:
-            cand.append(("wing" if rl < 1 else "hole", uth, -1.0))
-            anti.append(("wing" if rl < 1 else "hole", uth, -1.0))
+        cand.append(("wing" if rl < 1 else "hole", uth, -1.0))
+        anti.append(("wing" if rl < 1 else "hole", uth, -1.0))
 
     # ---- refinement ---------------------------------------------------------
     # A central hole wrecks the FSPL fit (it locks onto a horn), and the fit's
@@ -1214,6 +1217,21 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
         for rl in conf.get("hole_seed_rho_l", (1.1, 1.3, 1.8, 2.5)):
             cand.append(("hole", u_crit(rl), -2.0))
     rec["hole_starts_used"] = bool(hole_starts)
+    # An occultation can pull the NULL fit into a degenerate wide solution
+    # (u0 at its bound, a large source flux against a negative difference-flux
+    # blend); every refinement started there stays there (local battery,
+    # 2026-09-24).  So each refinement also starts from the survey's own
+    # alert solution, and from the best null fit with u0 held below 1, when
+    # those differ from the null fit.
+    alt_shapes = []
+    if hint and all(hint.get(k) is not None for k in ("t0", "tE", "u0")):
+        h = (float(hint["t0"]), float(hint["tE"]), abs(float(hint["u0"])))
+        if np.isfinite(h).all() and h[1] > 0 and (abs(h[2] - abs(f0.u0)) > 0.05
+                                                  or abs(math.log(h[1] / f0.te)) > 0.2):
+            alt_shapes.append(h)
+    if abs(f0.u0) > 1.0:
+        alt_shapes.append((f0.t0, f0.te * abs(f0.u0) / 0.5, 0.5))
+    rec["alt_shape_starts"] = len(alt_shapes)
 
     t_start = time.time()
     budget = float(conf.get("unit_budget_s", 600.0))
@@ -1226,7 +1244,7 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
                 break
             try:
                 ft = _refine(ev2, f0, regime, uth, conf, kind,
-                             hole_starts if (regime == "hole" and v == -2.0) else ())
+                             hole_starts if (regime == "hole" and v == -2.0) else alt_shapes)
             except Exception:  # noqa: BLE001
                 continue
             if ft is None:

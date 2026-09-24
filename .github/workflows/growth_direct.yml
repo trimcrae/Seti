@@ -195,14 +195,26 @@ jobs:
                   print(f"::warning::shard {d['shard']} exhausted its budget: "
                         f"{d.get('n_not_reached_budget')} target(s) NOT reached (re-dispatch with resume)")
           PY
+      # ONLY THIS SHARD'S FILES.  The glob used to be shard_*.csv, which also
+      # swept up every OTHER shard's file as checked out at job start; assess
+      # merges all artifacts with merge-multiple, so a shard that finished
+      # early re-delivered stale copies of the shards still running.  Run
+      # 35859780689's assess aggregated 4,358 rows and 368 "NOT_REACHED"
+      # while the committed shard files held all 4,725 --- a summary that did
+      # not describe its own run.
+      - name: Shard tag
+        id: tag
+        if: always()
+        run: echo "s=$(printf '%02d' ${{ matrix.shard }})" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: growth-direct-shard-${{ matrix.shard }}
           path: |
-            results/growth/direct/shards/shard_*.csv
-            results/growth/direct/shards/shard_*.json
-            results/growth/direct/shards/shard_*_folds/
+            results/growth/direct/shards/shard_${{ steps.tag.outputs.s }}.csv
+            results/growth/direct/shards/shard_${{ steps.tag.outputs.s }}.json
+            results/growth/direct/shards/shard_${{ steps.tag.outputs.s }}_members.csv
+            results/growth/direct/shards/shard_${{ steps.tag.outputs.s }}_folds/
           if-no-files-found: warn
       - name: Commit this shard's files
         if: always()

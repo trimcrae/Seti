@@ -380,6 +380,10 @@ jobs:
           python -c "import pandas, numpy, astropy; print('versions', pandas.__version__, numpy.__version__, astropy.__version__)"
           python -m pytest tests/test_century.py -q -p no:warnings \
             -k "gap or step or efficiency or censor or dr7 or exposure"
+          # The pandas-3 regression that killed every shard of run 35862579322
+          # on its first star, and the pulsator selection contract.
+          python -m pytest tests/test_century_sweep_crash.py tests/test_century_pulsators.py \
+            -q -p no:warnings
       - uses: actions/download-artifact@v4
         with:
           name: century-targets
@@ -470,9 +474,13 @@ jobs:
           if f.get("n_usable", 0) == 0 and v not in ("NO_DATA_REACHED", "NO_TARGETS",
                                                      "NO_LIGHTCURVES_RETURNED",
                                                      "NO_TESTABLE_LIGHT_CURVES",
-                                                     "NO_SHARDS_PRESENT"):
+                                                     "NO_SHARDS_PRESENT",
+                                                     "ACQUIRE_CRASHED"):
               print(f"::error::verdict {v!r} with 0 usable light curves is a disguised no-data run")
               sys.exit(1)
+          if v == "ACQUIRE_CRASHED":
+              print("::error::every shard's acquire stage raised before writing its summary — "
+                    "read the sweep logs. This is NOT a statement about DASCH.")
           if v == "NO_SHARDS_PRESENT":
               print("::warning::no shard directory reached assess — the sweep did not run or "
                     "its artifacts are gone. This is NOT a statement about DASCH.")

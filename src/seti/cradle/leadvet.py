@@ -184,7 +184,7 @@ def mep_field_change(t: dict, ra0: float, dec0: float, mv: pd.DataFrame, tap=tap
         return out
     w3 = float(t.get("w3mpro"))
     r = tap(IRSA_TAP, "SELECT source_id_mf, mjd, w3mpro_ep, w3sigmpro_ep, w4mpro_ep, w4sigmpro_ep, "
-            "qual_frame, qi_fact, saa_sep, moon_masked FROM allwise_p3as_mep WHERE "
+            "qi_fact, saa_sep, moon_masked FROM allwise_p3as_mep WHERE "
             f"{_cone('ra', 'dec', ra0, dec0, 15.0 / 60)} AND w3mpro_ep BETWEEN {w3 - 1.5:.2f} AND "
             f"{w3 + 1.0:.2f}", f"allwise_mep_field:{t['source_id']}")
     out["route"] = r.ledger()
@@ -632,7 +632,29 @@ def tess_block(t: dict, tic: str | None) -> dict:
     keep = [i for i, n in enumerate(names) if n.endswith("lc.fits") or n.endswith("_llc.fits")]
     out["n_lc_products"] = len(keep)
     sectors = []
-    for i in keep[:12]:
+    def col(dat, names_, *cands):
+        for c in cands:
+            if c in names_:
+                return np.ravel(np.asarray(dat[c], float))   # TGLC/eleanor store (1, N) rows
+        return None
+
+    def ls_peak(tt, ff):
+        freq, pw = LombScargle(tt, ff).autopower(minimum_frequency=1 / 13.0,
+                                                 maximum_frequency=1 / 0.2, samples_per_peak=10)
+        k = int(np.argmax(pw))
+        return float(1 / freq[k]), float(pw[k]), float(LombScargle(tt, ff).false_alarm_probability(pw[k]))
+
+    def per_orbit_linear(tt, ff):
+        """Remove a straight line per TESS orbit (segments split at gaps > 1 d)."""
+        out_f = ff.copy()
+        seg = np.concatenate([[0], np.cumsum(np.diff(tt) > 1.0)])
+        for s in np.unique(seg):
+            m = seg == s
+            if m.sum() > 20:
+                out_f[m] = ff[m] / np.polyval(np.polyfit(tt[m] - tt[m].mean(), ff[m], 1), tt[m] - tt[m].mean())
+        return out_f
+
+    for i in keep[:16]:
         uri = str(prods["dataURI"][i])
         try:
             # download_file returns (status, message, url) and writes local_path;
@@ -643,22 +665,34 @@ def tess_block(t: dict, tic: str | None) -> dict:
                 raise RuntimeError(f"download {st}")
             h = fits.open(path)
             dat = h[1].data
-            cols = dat.columns.names
-            fcol = next((c for c in ("PDCSAP_FLUX", "KSPSAP_FLUX", "SAP_FLUX") if c in cols), None)
-            tt = np.asarray(dat["TIME"], float)
-            ff = np.asarray(dat[fcol], float)
-            q = np.asarray(dat["QUALITY"], int) if "QUALITY" in cols else np.zeros_like(tt, int)
+            cols = [c.upper() for c in dat.columns.names]
+            dat_names = dat.columns.names
+            up = {c.upper(): c for c in dat_names}
+            fname = next((c for c in ("PDCSAP_FLUX", "KSPSAP_FLUX", "CAL_PSF_FLUX", "CAL_APER_FLUX",
+                                      "CORR_FLUX", "PCA_FLUX", "SAP_FLUX", "RAW_FLUX", "FLUX")
+                          if c in cols), None)
+            tname = next((c for c in ("TIME", "BTJD") if c in cols), None)
+            if fname is None or tname is None:
+                raise RuntimeError(f"no flux/time column in {cols[:12]}")
+            tt = col(dat, dat_names, up[tname])
+            ff = col(dat, dat_names, up[fname])
+            qn = next((c for c in ("QUALITY", "TESS_FLAGS", "TGLC_FLAGS") if c in cols), None)
+            q = np.ravel(np.asarray(dat[up[qn]], float)) if qn else np.zeros_like(tt)
             ok = np.isfinite(tt) & np.isfinite(ff) & (q == 0)
             tt, ff = tt[ok], ff[ok] / np.nanmedian(ff[ok])
             if len(tt) < 200:
+                sectors.append({"file": names[i], "flux_col": fname, "n": int(len(tt)), "note": "too few points"})
                 continue
-            freq, pw = LombScargle(tt, ff).autopower(minimum_frequency=1 / 13.0,
-                                                     maximum_frequency=1 / 0.2, samples_per_peak=10)
-            k = int(np.argmax(pw))
-            sectors.append({"file": names[i], "flux_col": fcol, "n": int(len(tt)),
-                            "period_d": float(1 / freq[k]), "power": float(pw[k]),
-                            "fap": float(LombScargle(tt, ff).false_alarm_probability(pw[k])),
-                            "p5_p95_ppt": float((np.percentile(ff, 95) - np.percentile(ff, 5)) * 1e3)})
+            p1, pw1, fap1 = ls_peak(tt, ff)
+            fd = per_orbit_linear(tt, ff)
+            p2, pw2, fap2 = ls_peak(tt, fd)
+            sec = re.search(r"s00(\d\d)", names[i])
+            sectors.append({"file": names[i], "sector": int(sec.group(1)) if sec else None,
+                            "flux_col": fname, "n": int(len(tt)),
+                            "period_d": p1, "power": pw1, "fap": fap1,
+                            "p5_p95_ppt": float((np.percentile(ff, 95) - np.percentile(ff, 5)) * 1e3),
+                            "detrended_period_d": p2, "detrended_power": pw2, "detrended_fap": fap2,
+                            "detrended_p5_p95_ppt": float((np.percentile(fd, 95) - np.percentile(fd, 5)) * 1e3)})
         except Exception as exc:                          # noqa: BLE001
             sectors.append({"file": names[i], "error": repr(exc)[:200]})
     out["sectors"] = sectors
@@ -1082,8 +1116,16 @@ def _runner(res: dict, rep: dict, out_dir: Path):
     return run
 
 
-def run_leadvet(out_dir: str | Path = "results/cradle", leads=LEADS) -> dict:
+BLOCKS = ("gaia", "vizier", "neowise", "sed", "desi", "tess", "ztf", "kinematics", "dust", "psf",
+          "literature")
+
+
+def run_leadvet(out_dir: str | Path = "results/cradle", leads=LEADS, blocks=None) -> dict:
+    """``blocks`` = a subset re-runs only those blocks and merges them into the
+    committed leadvet.json (every other block and its timestamp is kept)."""
     out_dir = Path(out_dir)
+    if blocks:
+        return rerun_blocks(out_dir, leads, tuple(blocks))
     sl = pd.read_csv(out_dir / "shortlist.csv", low_memory=False)
     sl["source_id"] = sl["source_id"].astype(str)
     deep = {}
@@ -1141,13 +1183,53 @@ def run_leadvet(out_dir: str | Path = "results/cradle", leads=LEADS) -> dict:
     return rep
 
 
+def rerun_blocks(out_dir: Path, leads, blocks: tuple) -> dict:
+    path = out_dir / "leadvet.json"
+    rep = json.loads(path.read_text()) if path.exists() else {"stage": "leadvet", "targets": {}}
+    sl = pd.read_csv(out_dir / "shortlist.csv", low_memory=False)
+    sl["source_id"] = sl["source_id"].astype(str)
+    deep = {}
+    dpath = out_dir / "deepvet.json"
+    if dpath.exists():
+        deep = {x["source_id"]: x for x in json.loads(dpath.read_text()).get("targets", [])}
+    log = rep.setdefault("block_updates", [])
+    fns = {"gaia": (gaia_block, 900.0), "neowise": (neowise_block, 1500.0), "desi": (desi_block, 900.0),
+           "ztf": (ztf_block, 900.0), "kinematics": (kinematics_block, 900.0), "dust": (dust_block, 900.0),
+           "psf": (psf_block, 3000.0), "literature": (literature_block, 1500.0),
+           "vizier": (vizier_rows, 1500.0)}
+    for sid in leads:
+        row = sl[sl["source_id"] == sid]
+        if not len(row):
+            continue
+        t = {k: (v.item() if hasattr(v, "item") else v) for k, v in row.iloc[0].to_dict().items()}
+        t["source_id"] = sid
+        res = rep["targets"].setdefault(sid, {})
+        run = _runner(res, rep, out_dir)
+        for b in blocks:
+            if b == "tess":
+                tr = _row(res.get("vizier", {}), "IV/39/tic82")
+                tic = str(tr.get("TIC") or "") or None if tr else None
+                run("tess", tess_block, t, tic, timeout=2400.0)
+            elif b == "sed":
+                run("sed", sed_block, t, res.get("vizier", {}), deep.get(sid, {}))
+            elif b in fns:
+                fn, tmo = fns[b]
+                run(b, fn, t, timeout=tmo)
+            res.get(b, {})["generated_utc"] = _now()
+        log.append({"utc": _now(), "source_id": sid, "blocks": list(blocks)})
+    path.write_text(json.dumps(rep, indent=1, default=_json_default))
+    return rep
+
+
 def main(argv=None) -> int:
     import argparse  # noqa: PLC0415
     p = argparse.ArgumentParser(prog="seti.cradle.leadvet")
     p.add_argument("--out-dir", default="results/cradle")
     p.add_argument("--leads", default=",".join(LEADS))
+    p.add_argument("--blocks", default="", help="comma list: re-run only these and merge")
     a = p.parse_args(argv)
-    run_leadvet(a.out_dir, tuple(a.leads.split(",")))
+    blocks = tuple(b for b in a.blocks.split(",") if b.strip())
+    run_leadvet(a.out_dir, tuple(a.leads.split(",")), blocks or None)
     return 0
 
 

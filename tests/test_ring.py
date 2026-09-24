@@ -501,7 +501,7 @@ def _bd_epochs(rng, sid, n, switch: bool):
 def test_bd_duty_cycle_flags_a_switching_w2_series_only(cfg):
     rng = np.random.default_rng(4)
     targets = pd.DataFrame({"source_id": [f"Y{i}" for i in range(12)], "spt": "Y0",
-                            "spt_num": 30.0})
+                            "spt_num": 30.0, "pmra": 500.0, "pmdec": -300.0})
     eps = [_bd_epochs(rng, f"Y{i}", 16, switch=(i == 0)) for i in range(10)]
     eps.append(_bd_epochs(rng, "Y10", 3, switch=True))         # too few epochs
     epochs = pd.concat(eps, ignore_index=True)                   # Y11: no epochs
@@ -941,3 +941,49 @@ def test_summary_is_strict_json_with_provenance_and_names_a_killed_bd_leg(cfg, t
     for leg in rrun.LEGS:
         sj = json.loads((out / leg / "screen.json").read_text(), parse_constant=_no_nan)
         assert sj["provenance"]["run_id"] == "123"
+
+
+def test_numeric_spectral_type_codes_are_read():
+    """Kirkpatrick+2021 on VizieR tabulates types as codes (T0 = 20)."""
+    assert racq.spt_to_numeric(28.0) == 28.0
+    assert racq.spt_to_numeric("26.5") == 26.5
+    assert np.isnan(racq.spt_to_numeric(99.0))
+    assert racq.spt_to_numeric("T8") == 28.0
+
+
+def test_bd_flag_is_vetoed_when_the_series_is_not_the_target(cfg):
+    rng = np.random.default_rng(5)
+    ids = [f"T{i}" for i in range(10)]
+    targets = pd.DataFrame({"source_id": ids, "spt": "T8", "spt_num": 28.0,
+                            "pmra": [np.nan] + [300.0] * 9, "pmdec": [np.nan] + [0.0] * 9})
+    eps = [_bd_epochs(rng, i, 16, switch=(i in ("T0", "T1"))) for i in ids]
+    ep = pd.concat(eps, ignore_index=True)
+    # T1: a blue (W1-W2 ~ 0.9) switching series -- a background star, not a T8.
+    m = (ep["source_id"] == "T1") & (ep["band"] == "W1")
+    ep.loc[m, "mag"] = ep.loc[m, "mag"] - 1.6
+    out, s = rscr.screen_bd(ep, targets, cfg)
+    o = out.set_index("source_id")
+    assert o.loc["T1", "duty_cycle_veto"] == "colour_not_the_target"
+    assert o.loc["T0", "duty_cycle_veto"] == "proper_motion_not_propagated"
+    assert s["n_duty_cycle_flags"] == 0 and len(s["duty_cycle_vetoed"]) == 2
+
+
+def test_route_c_keeps_the_gaia_position_beside_the_wise_one(cfg, tmp_path):
+    q_viz, _ = _strict_vizier(set(_GF21_COLUMNS))
+
+    def gaia_down(q, tag="", upload=None, upload_name=None):
+        raise RuntimeError("SSLEOFError")
+
+    def xm(up, table, r):          # X-Match echoes the uploaded ra/dec
+        return pd.DataFrame({"source_id": up["source_id"], "ra": up["ra"], "dec": up["dec"],
+                             "RAJ2000": up["ra"] + 1e-5, "DEJ2000": up["dec"],
+                             "W1mag": 15.0, "W2mag": 14.9, "angDist": 0.3})
+
+    df, meta = racq.fetch_wd_leg(tmp_path, cfg, query=gaia_down,
+                                 probe=lambda t, w, tag="": ({"designation": "d"}
+                                                             if "allwise" in t else {}),
+                                 vizier_fn=q_viz, columns_fn=lambda t: _GF21_COLUMNS,
+                                 xmatch_fn=xm)
+    assert meta["route"] == "vizier_parent+cds_xmatch_propagated"
+    assert {"ra", "dec", "ra_wise", "dec_wise"} <= set(df.columns)
+    assert not [c for c in df.columns if c.endswith(("_x", "_y"))]

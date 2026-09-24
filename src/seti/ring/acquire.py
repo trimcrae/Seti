@@ -465,11 +465,27 @@ def fetch_wd_leg(out_dir: Path, cfg: dict, *, query=gaia_query, probe=probe_colu
         wise = normalise_xmatch(raw, ALLWISE_XMATCH_RENAME)
         if len(wise):
             wise["source_id"] = wise["source_id"].astype(str)
+            if "ra_wise" not in wise.columns or "dec_wise" not in wise.columns:
+                for a, b in (("RA_ICRS", "DE_ICRS"), ("RAdeg", "DEdeg"),
+                             ("_RAJ2000", "_DEJ2000"), ("ra_2", "dec_2")):
+                    if a in wise.columns and b in wise.columns:
+                        wise = wise.rename(columns={a: "ra_wise", b: "dec_wise"})
+                        break
             p = parent.copy()
             p["source_id"] = p["source_id"].astype(str)
+            # The X-Match echoes the UPLOADED (epoch-propagated) ra/dec.  Merged
+            # as-is they collide with the parent's Gaia ra/dec and both become
+            # ra_x/ra_y: run 35860904385 then had no "ra" at all, so the
+            # registration offset was NaN for every row and all 25,932 white
+            # dwarfs failed the astrometric gate untested (123 of the 179
+            # ring-band shapes were rejected that way).  Keep the parent's.
+            wise = wise.drop(columns=[c for c in wise.columns
+                                      if c in p.columns and c != "source_id"])
             df = p.merge(wise, on="source_id", how="inner")
             meta["routes_tried"].append({"route": "cds_xmatch_propagated", "status": "OK",
-                                         "n": int(len(df))})
+                                         "n": int(len(df)),
+                                         "has_wise_position": bool(
+                                             {"ra_wise", "dec_wise"} <= set(df.columns))})
             meta["route"] = "vizier_parent+cds_xmatch_propagated"
             df.to_parquet(out_dir / "wd_routeC.parquet", index=False)
             return df, meta
@@ -1012,10 +1028,24 @@ _SPT_CLASS = {"M": 0.0, "L": 10.0, "T": 20.0, "Y": 30.0}
 
 
 def spt_to_numeric(s) -> float:
-    """``'T7.5'`` -> 27.5; ``'Y0'`` -> 30; ``'>=Y1'`` -> 31; NaN when unreadable."""
+    """``'T7.5'`` -> 27.5; ``'Y0'`` -> 30; ``'>=Y1'`` -> 31; NaN when unreadable.
+
+    A bare number in [0, 40) is taken as the numeric type code on the same
+    scale (M0 = 0, L0 = 10, T0 = 20, Y0 = 30), which is how Kirkpatrick+2021
+    tabulates SpTO/SpTIR on VizieR: run 35860904385 read SpTIR correctly and
+    still found 0 of 682 late objects, because every value was a code, and
+    fell back to the proper-motion-less Y-dwarf table again.
+    """
     if s is None:
         return np.nan
-    m = re.search(r"([MLTY])\s*(\d+(\.\d+)?)", str(s).upper())
+    if isinstance(s, (int, float, np.integer, np.floating)):
+        v = float(s)
+        return v if np.isfinite(v) and 0.0 <= v < 40.0 else np.nan
+    txt = str(s).strip()
+    if re.fullmatch(r"[-+]?\d+(\.\d+)?", txt):
+        v = float(txt)
+        return v if 0.0 <= v < 40.0 else np.nan
+    m = re.search(r"([MLTY])\s*(\d+(\.\d+)?)", txt.upper())
     if not m:
         return np.nan
     return _SPT_CLASS[m.group(1)] + float(m.group(2))
@@ -1043,6 +1073,12 @@ def fetch_bd_targets(cfg: dict, *, query_fn=None, fetch_fn=None) -> tuple[pd.Dat
         ir = [spt_to_numeric(x) for x in df.get("spt", pd.Series(np.nan, index=df.index))]
         opt = [spt_to_numeric(x) for x in df.get("spt_opt", pd.Series(np.nan, index=df.index))]
         df["spt_num"] = [a if np.isfinite(a) else b for a, b in zip(ir, opt, strict=False)]
+        # Audit trail for the type parsing: raw values and the numeric histogram.
+        entry["spt_raw_sample"] = [str(x) for x in df.get(
+            "spt", pd.Series([], dtype=object)).dropna().unique()[:12]]
+        entry["spt_num_counts"] = {k: int(v) for k, v in pd.cut(
+            pd.Series(df["spt_num"], dtype=float), [-1, 10, 20, 26, 30, 40],
+            labels=["M", "L", "T0-T5.5", "T6-T9.5", "Y"]).value_counts().items()}
         entry["n_with_pm"] = int(pd.to_numeric(
             df.get("pmra", pd.Series(np.nan, index=df.index)), errors="coerce").notna().sum())
         late = df[df["spt_num"] >= float(b["spt_min_numeric"])].copy()

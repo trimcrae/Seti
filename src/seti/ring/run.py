@@ -163,16 +163,15 @@ def stage_acquire(cfg: dict, out: Path, leg: str, *, shard: int = 0, n_shards: i
         _write(d / "acquire.json", meta)
     elif leg == "bd":
         tp = d / "targets.csv"
-        if tp.exists() and shard > 0:
-            targets = pd.read_csv(tp)
-            meta = _read_json(d / "acquire_targets.json") or {}
-        else:
-            targets, meta = (fetchers["bd_targets"](cfg) if "bd_targets" in fetchers
-                             else acq.fetch_bd_targets(cfg))
-            if len(targets):
-                targets.to_csv(tp, index=False)
-            meta["n_targets"] = int(len(targets))
-            _write(d / "acquire_targets.json", meta)
+        # Every shard fetches the (small) target list itself: a targets.csv in
+        # the checkout is the COMMITTED list of an earlier run, and reusing it
+        # would put shards of one run on different target lists.
+        targets, meta = (fetchers["bd_targets"](cfg) if "bd_targets" in fetchers
+                         else acq.fetch_bd_targets(cfg))
+        if len(targets):
+            targets.to_csv(tp, index=False)
+        meta["n_targets"] = int(len(targets))
+        _write(d / "acquire_targets.json", meta)
         roll = {}
         # A marker written BEFORE the NEOWISE loop: if the job's wall clock
         # kills the process (run 35752692549: `timeout 5400` fired mid-loop and

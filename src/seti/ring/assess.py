@@ -271,7 +271,9 @@ def report_md(summary: dict) -> str:
               f"* ring-band candidates before follow-up: {wd.get('n_ring_candidates', 0):,}",
               f"* after follow-up: **{wd.get('n_ring_candidates_after_followup', 'n/a')}** "
               f"({wd.get('followup_reasons')})",
-              f"* sensitivity: {wd.get('sensitivity')}", ""]
+              f"* sensitivity: {wd.get('sensitivity')}",
+              f"* registration test evaluated for {wd.get('n_registration_tested', 'n/a')} "
+              f"hosts; ring-band gate reasons: {wd.get('ring_band_gate_reasons')}", ""]
     psr = legs.get("pulsar") or {}
     if psr:
         L += ["## Pulsars", "",
@@ -332,6 +334,11 @@ def report_md(summary: dict) -> str:
             L.append(f"  * `{f.get('source_id')}` {f.get('spt')}: n={f.get('w2_n_epochs')}, "
                      f"chi2_red={f.get('w2_chi2_red'):.1f}, amp={f.get('w2_amp_mag'):.2f} mag, "
                      f"high-state fraction {f.get('w2_duty_cycle_high')}")
+        for f in bd.get("duty_cycle_vetoed", [])[:30]:
+            L.append(f"  * vetoed `{f.get('source_id')}` {f.get('spt')}: chi2_red="
+                     f"{f.get('w2_chi2_red')}, amp={f.get('w2_amp_mag')} mag, W1-W2="
+                     f"{f.get('w1_w2_mean')}, pm_known={f.get('pm_known')} -> "
+                     f"{f.get('duty_cycle_veto')}")
         L.append("")
     ffp = legs.get("ffp") or {}
     if ffp:

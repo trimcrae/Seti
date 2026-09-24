@@ -10,7 +10,7 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
-### Handoff sweep: every in-flight run collected and vetted, one object left standing, 2026-09-24
+### Handoff sweep: every in-flight run collected and vetted, nothing left standing, 2026-09-24
 
 Fifteen channel branches were carrying committed run results that never reached
 `main`; all are merged (SPARK's paths taken verbatim — its branch history
@@ -26,7 +26,7 @@ conflicts across other channels). Each open lead was then vetted to a mechanism:
 | GROWTH-direct | 4,725/4,725 KOIs reached after a stale-shard-upload fix; 0 depth-change candidates. |
 | SEXTANT | four stacked pipeline defects (unquoted CSV cells, commit-back blind to new files, integrator extrapolating 6 yr past its ephemeris grid, controls refused on the Horizons route) and then pyvo's hard-coded 10 s status timeout — no science number yet. |
 | CENTURY | retargeted from 24 mostly-eclipsing variables to 2,400 VSX pulsators (RR, Cep, Mira, δ Sct, SRa, RV Tau); first sweep crashed on a pandas-3 NA in plate labels; fixed and re-running. |
-| **CRADLE** | 12 candidates: 6 killed (galaxy blends by W3/W4 centroid offset, a WDS binary, W4 confusion, a young star), 5 caveated (3 already published warm-debris stars), **1 unexplained: Gaia DR3 6225457312033584384** — 262 K dust, L_IR/L* = 1.5%, 10^4.86 above the collisional steady-state maximum, W3 45σ / W4 15σ, no Gaia or Legacy Surveys source within 10.6″, no SIMBAD entry, old by isochrone and kinematics, normal DESI spectrum. **A natural late giant impact is the default reading**; follow-up (NEOWISE variability, full IR SED, clean Li/activity age, companions, cirrus, literature, occurrence) is running. |
+| **CRADLE** | 12 candidates: 6 killed (galaxy blends by W3/W4 centroid offset, a WDS binary, W4 confusion, a young star), 5 caveated (3 already published warm-debris stars), **1 unexplained: Gaia DR3 6225457312033584384** — 262 K dust, L_IR/L* = 1.5%, 10^4.86 above the collisional steady-state maximum, W3 45σ / W4 15σ, no Gaia or Legacy Surveys source within 10.6″, no SIMBAD entry, old by isochrone and kinematics, normal DESI spectrum. **Followed up and not a candidate**: no companion (RUWE 0.98, no co-moving source among 17 within 60″), point-like W3 profile, smooth low cirrus, no counterpart in 140 debris/IR-excess VizieR catalogues; W1 flat over 22 NEOWISE visits and W2's fade shared by the field (instrumental); T = 262 K (AllWISE) vs 235 K (deblended) straddles the 250 K cell edge; age probably >1 Gyr but not pinned (Li 44±27 mÅ after Fe deblend, inactive, heated thin-disc orbit, no rotation). With 1.28 M FGK dwarfs searched and old extreme debris disks at ~2 per million, one is **not statistically surprising**. The deciding measurements (a mid-IR spectrum for silicate features; a new mid-IR epoch) are not in the public archive. Secondaries: 3168144078565656832 carries an unidentified 0.45 d TESS signal and a broadened W3 image; 5295632592220066688 is a 12 Gyr thick-disc star but W4 is 6σ in 2/47 frames and E(B−V) exceeds the cirrus cut. |
 
 Two infrastructure defects were found in more than one channel and fixed repo-wide:
 `commit_results.sh` ignored new files inside a tracked directory; and 19 of 23 sharded

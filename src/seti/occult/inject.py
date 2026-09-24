@@ -29,7 +29,7 @@ U0_EDGES = (0.0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5)
 
 def inject(ev: D.Event, fit: D.Fit, rho_l: float, ns: int = 64) -> D.Event:
     """``ev`` with an opaque lens of radius ``rho_l`` added at ``fit``'s shape."""
-    u = D.traj(ev.t, fit.t0, fit.te, fit.u0)
+    u = D.traj_fit(ev, fit)
     a0 = D.mag_fspl(u, fit.rho, ns)
     a1 = D.mag_occult(u, rho_l, fit.rho, ns)
     f = ev.f + fit.fs[ev.ds] * (a1 - a0)
@@ -59,7 +59,7 @@ def expected_map(ev: D.Event, fit: D.Fit, e=None, grid=RHO_L_GRID) -> dict:
     out = {}
     for rl in grid:
         uc = D.u_crit(rl)
-        if rl < 1.0 and fit.u0 >= uc:
+        if rl < 1.0 and D.u_min_fit(ev, fit) >= uc:
             out[f"{rl:g}"] = 0.0          # blend-degenerate: minor image hidden all the time
             continue
         out[f"{rl:g}"] = round(D.expected_dchi2(ev, fit, rl, e), 2)
@@ -82,14 +82,15 @@ def injection_trials(ev_raw: D.Event, conf: dict, hint: dict | None, rho_ls, see
     out = []
     for rl in rho_ls:
         uc = D.u_crit(rl)
-        exp = 0.0 if (rl < 1.0 and f0.u0 >= uc) else D.expected_dchi2(ev2, f0, rl, raw_e)
+        exp = 0.0 if (rl < 1.0 and D.u_min_fit(ev2, f0) >= uc) else D.expected_dchi2(ev2, f0, rl, raw_e)
         inj = inject(ev2, f0, rl, int(conf["n_samples"]))
         try:
             rec = D.assess_event(inj, conf, hint={"t0": f0.t0, "tE": f0.te, "u0": f0.u0})
         except Exception as exc:  # noqa: BLE001
             rec = {"tier": "ERROR", "error": repr(exc)[:200]}
         out.append({
-            "event": ev_raw.name, "rho_l_inj": rl, "u0": f0.u0, "tE": f0.te,
+            "event": ev_raw.name, "rho_l_inj": rl, "u0": D.u_min_fit(ev2, f0), "tE": f0.te,
+            "parallax": bool(f0.parallax),
             "u_c": uc, "expected_dchi2": round(exp, 2),
             "tier": rec.get("tier"), "rho_l_fit": (rec.get("occult") or {}).get("rho_l"),
             "dchi2": rec.get("dchi2"), "rejections": rec.get("rejections", []),

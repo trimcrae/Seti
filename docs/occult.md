@@ -98,7 +98,9 @@ positional match) form **one unit** fitted jointly.
    it and all sites agree; bands agree (achromatic); dropping any night or
    any dataset keeps ≥ 50 % of Δχ²; each step bracketed by data; hole sampled
    and below baseline; no positive residual bump (caustics brighten, shadows
-   do not); no red residual; anti-template Δχ² < ½ of the occultation's.
+   do not); no red residual; the sign-flipped (anti) template must not fit as
+   well or better. Depth comparisons (side vs side, site vs site, V vs I) add a
+   5 % systematic floor in quadrature to the formal errors.
 5. **Threshold**: a gate-passer counts only above the largest anti-occultation
    Δχ² over all assessed events (a 1/N false-alarm level), never below 50.
 

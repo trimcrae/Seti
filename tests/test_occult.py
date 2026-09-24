@@ -131,6 +131,29 @@ def test_one_site_only_impostor_is_not_a_candidate():
         assert {"SITES_DISAGREE", "FEWER_THAN_TWO_SITES_SEE_IT"} & set(rec["rejections"])
 
 
+def test_parallax_event_is_a_clean_null_and_parallax_is_adopted():
+    """A long event with strong annual parallax: asymmetric wings, no occultation."""
+    rec = D.assess_event(_ev(rho_l=None, seed=31, te=80.0, u0=0.3, span=200.0, pi=(0.4, 0.2)), FAST)
+    assert rec["parallax"]["adopted"]
+    assert rec["tier"] != D.TIER_CANDIDATE
+
+
+def test_occultation_on_a_parallax_event_is_recovered():
+    rec = D.assess_event(_ev(rho_l=0.6, seed=32, te=80.0, u0=0.3, span=200.0, pi=(0.4, 0.2)), FAST)
+    assert rec["parallax"]["adopted"]
+    assert rec["tier"] == D.TIER_CANDIDATE, rec["rejections"]
+    assert rec["occult"]["rho_l"] == pytest.approx(0.6, rel=0.05)
+
+
+def test_sky_offsets_vanish_at_t0par_with_zero_slope():
+    t = np.array([7999.0, 8000.0, 8001.0])
+    dn, de = D.sky_offsets(t, 268.0, -29.5, 8000.0)
+    assert abs(dn[1]) < 1e-12 and abs(de[1]) < 1e-12
+    assert abs(dn[0]) < 1e-3 and abs(dn[2]) < 1e-3       # second order in dt
+    dn2, de2 = D.sky_offsets(np.array([8182.0]), 268.0, -29.5, 8000.0)
+    assert math.hypot(dn2[0], de2[0]) > 0.5             # half a year later: ~AU scale
+
+
 def test_empty_event_degrades_honestly():
     ev = D.build_event("empty", [])
     rec = D.assess_event(ev)
@@ -190,7 +213,7 @@ def test_the_passing_diagnostics_pass():
      "HOLE_NOT_BELOW_BASELINE"),
     (lambda d: d["positive_bump"].update(max_sigma=9.0), "BRIGHTENING_LEFT_CAUSTIC_LIKE"),
     (lambda d: d.update(binned_redchi2_after=4.0), "RESIDUAL_STRUCTURE"),
-    (lambda d: d.update(dchi2_anti=300.0), "ANTI_TEMPLATE_COMPARABLE"),
+    (lambda d: d.update(dchi2_anti=600.0), "ANTI_TEMPLATE_COMPARABLE"),
 ])
 def test_each_gate_rule_trips(mutate, rule):
     d = _passing()
@@ -369,8 +392,8 @@ def test_controls_verdict_logic():
     gate = {"min_recovery_strong": 0.7, "min_controls_reached_frac": 0.7}
     assert R.controls_verdict([], gate, 3)["verdict"] == "NO_DATA_REACHED"
     good = [{"name": "a", "class": "finite_source_single_lens", "reached": True,
-             "tier": D.TIER_NO_OCC,
-             "injections": [{"expected_dchi2": 900, "recovered": True}] * 3}]
+             "tier": D.TIER_NO_OCC, "sites": ["KMTA", "KMTC"],
+             "injections": [{"expected_dchi2": 900, "recovered": True, "rho_l_inj": 0.7}] * 3}]
     assert R.controls_verdict(good, gate, 1)["verdict"] == "CONTROLS_PASS"
     fp = [dict(good[0], tier=D.TIER_CANDIDATE)]
     assert R.controls_verdict(fp, gate, 1)["verdict"] == "CONTROLS_FAIL_FALSE_POSITIVE"

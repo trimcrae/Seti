@@ -286,8 +286,9 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
       # Shard hygiene (docs/channel-brief.md §0.7): drop earlier runs' per-shard
-      # NEOWISE records.  targets.csv / acquire_targets.json stay: shards > 0
-      # read them (run.py::stage_acquire) and only shard 0 uploads them.
+      # NEOWISE records.  Every shard re-fetches the (deterministic) target list
+      # itself (run.py::stage_acquire), so a committed targets.csv is never
+      # read; only shard 0 uploads the list it built.
       - name: Purge checkout-inherited shard outputs
         run: rm -f results/ring/bd/acquire_shard*.json results/ring/bd/acquire_bd_shard*.json results/ring/bd/epochs_bd_shard*.csv results/ring/bd/neowise_stars_bd_shard*.csv
       - uses: actions/setup-python@v5

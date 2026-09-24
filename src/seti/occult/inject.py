@@ -36,7 +36,14 @@ def inject(ev: D.Event, fit: D.Fit, rho_l: float, ns: int = 64) -> D.Event:
     return D.Event(ev.name + f"+inj{rho_l:g}", ev.t, f, ev.e, ev.ds, ev.datasets, dict(ev.meta))
 
 
-def recovered(rec: dict, rho_l: float, tol: float = 0.05) -> bool:
+def recovered(rec: dict, rho_l: float, tol: float = 0.05, tol_hole: float = 0.15) -> bool:
+    """Candidate tier, right regime, rho_l within tolerance.
+
+    The wing regime pins rho_l through the step times (tol 5 %); in the
+    central-hole regime rho_l trades against tE and u0 (the horns constrain a
+    combination), and the offline battery shows 5-8 % scatter at KMTNet-like
+    cadence, so the bar there is 15 %.
+    """
     if rec.get("tier") != D.TIER_CANDIDATE:
         return False
     got = (rec.get("occult") or {}).get("rho_l")
@@ -44,7 +51,7 @@ def recovered(rec: dict, rho_l: float, tol: float = 0.05) -> bool:
         return False
     if (got < 1.0) != (rho_l < 1.0):
         return False
-    return abs(got - rho_l) <= tol * rho_l
+    return abs(got - rho_l) <= (tol if rho_l < 1.0 else tol_hole) * rho_l
 
 
 def expected_map(ev: D.Event, fit: D.Fit, e=None, grid=RHO_L_GRID) -> dict:

@@ -122,10 +122,14 @@ def stage_catalog(out: Path) -> dict:
     n_ogle = sum(1 for r in cat["rows"] if r["survey"] == "OGLE")
     n_kmt = sum(1 for r in cat["rows"] if r["survey"] == "KMT")
     joint = sum(1 for u in units if u["kmt"] and u["ogle"])
+    no_coord = [r["name"] for r in cat["rows"] if r.get("ra") is None or r.get("dec") is None]
+    no_t0 = [r["name"] for r in cat["rows"] if r.get("t0") is None]
     verdict = "OK" if units else "NO_DATA_REACHED"
     meta = {**_stamp(), "verdict": verdict, "kmt_seasons": kmt_seasons,
             "season_status": cat["status"], "n_rows_ogle": n_ogle, "n_rows_kmt": n_kmt,
             "n_units": len(units), "n_units_joint": joint,
+            "n_rows_no_coords": len(no_coord), "rows_no_coords_examples": no_coord[:10],
+            "n_rows_no_t0": len(no_t0), "rows_no_t0_examples": no_t0[:10],
             "moa": "UNREACHED (probe: alert pages 404 / host unresolvable from a runner)"}
     out.mkdir(parents=True, exist_ok=True)
     with gzip.open(out / "catalog.json.gz", "wt") as fh:

@@ -1346,3 +1346,22 @@ def test_recheck_line_runs_offline_and_writes_its_report(tmp_path, monkeypatch):
     assert r["coadd"]["sig"] > 5
     assert rep["platelist_error"].startswith("unreachable")
     assert (tmp_path / "results/spectra_persist/recheck_2750_54242_6856.json").exists()
+
+
+def test_parse_lamost_fits_both_layouts():
+    """LAMOST DR1-7 put flux/invvar/wavelength rows in the primary image; DR8+
+    use a binary table.  Both must come back as vacuum wave, flux, ivar."""
+    w = np.linspace(3700, 9000, 3909)
+    img = np.vstack([np.full(w.size, 5.0), np.full(w.size, 4.0), w,
+                     np.zeros(w.size), np.zeros(w.size)]).astype(np.float32)
+    buf = io.BytesIO()
+    fits.PrimaryHDU(img).writeto(buf)
+    a = persist._parse_lamost_fits(buf.getvalue())
+    assert a is not None and abs(a["wave"][0] - 3700) < 1e-3 and a["flux"][0] == 5.0
+    cols = [fits.Column(name=n, format=f"{w.size}E", array=[v]) for n, v in
+            (("FLUX", np.full(w.size, 7.0)), ("IVAR", np.ones(w.size)), ("WAVELENGTH", w))]
+    buf2 = io.BytesIO()
+    fits.HDUList([fits.PrimaryHDU(), fits.BinTableHDU.from_columns(cols)]).writeto(buf2)
+    b = persist._parse_lamost_fits(buf2.getvalue())
+    assert b is not None and b["flux"][10] == 7.0 and abs(b["wave"][-1] - 9000) < 1e-2
+    assert persist._parse_lamost_fits(b"not a fits file") is None

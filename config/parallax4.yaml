@@ -1,0 +1,76 @@
+# PARALLAX4 --- Gaia DR4 intake: grey per-transit anomalies with no photocentre
+# shift, and the photocentre-vs-brightness blend test for every channel's
+# shortlist (docs/parallax4.md).  Every threshold here is read by the offline
+# suite (tests/test_parallax4.py).
+
+grey:                      # seti.parallax4.greydip.GreyConfig
+  n_min: 20
+  k_member: 3.0
+  k_peak: 5.0
+  min_frac_depth: 0.01
+  k_colour: 3.0
+  calib_floor: 0.003
+  grey_p_min: 0.01
+  ratio_tol: 0.25
+  ratio_err_max: 0.20
+  dust_ratio: 1.70
+  episode_gap_d: 1.0
+  partner_d: 0.10
+  normal_z: 2.0
+  min_episodes_periodic: 3
+  period_min_d: 0.2
+  period_max_d: 600.0
+  period_n: 250000
+  period_fap_max: 0.01
+  window_purity_min: 0.5
+
+photocentre:               # seti.parallax4.photocentre.PhotocentreConfig
+  n_min: 12
+  p_blend: 1.0e-4
+  p_null: 0.01
+  ul_on_target_mas: 20.0
+  sigma_d_max_mas: 200.0
+  p_scan: 1.0e-3
+  r2_scan: 0.3
+  z_detector: 4.0
+  p_sector: 1.0e-3
+  n_sectors: 6
+  min_per_sector: 4
+  p_phot_variable: 1.0e-3
+
+controls:
+  pilot_files: 3            # CDN files the controls job runs the full detector on
+  inject_every: 25          # one injection pair per this many searchable sources
+  max_trials: 600
+  min_recovery: 0.80        # P1, tier A, above snr_floor
+  max_dust_as_grey: 0.05    # P2
+  snr_floor: 10.0
+  # the three prerelease sources with published DR3 epoch photometry
+  joint_sources: [1457486023639239296, 2237987199365376, 10973744521070720]
+
+sweep:
+  time_budget_s: 19800      # 5.5 h of a 6-h job; the rest is upload
+  inject_every: 400         # completeness bookkeeping at scale
+  keep_tiers: [A, B]        # committed; every qualifying episode stays in the artifact
+  time_bin_d: 0.25
+  t_lo: 1600.0
+  t_hi: 2800.0
+
+reduce:
+  epoch_rate_factor: 10.0   # a time bin whose grey-episode rate per transit exceeds this x global
+  epoch_min_events: 5
+  epoch_p_max: 1.0e-6
+
+vet:
+  max_vet: 400
+  cone_arcsec: 10.0
+  crowd_arcsec: 2.0
+  crowd_dmag: 3.0
+  match_sigma: 3.0          # event flux vs a neighbour's flux (misassigned transit)
+  ruwe_flag: 1.4
+  ipd_multi_flag: 10.0
+
+dr4:
+  datalink_types: [EPOCH_ASTROMETRY, EPOCH_PHOTOMETRY]
+  release: "Gaia DR4"
+  max_targets: 200000

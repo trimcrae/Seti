@@ -1,0 +1,131 @@
+# ANTIPHASE — an achromatic optical fade answered by a mid-infrared rise.
+# docs/antiphase.md.  Every threshold the code uses is here.
+
+coupling:
+  half_window_days: 60.0     # optical points within +-60 d of a NEOWISE visit
+  min_points_per_bin: 5
+  bin_err_floor_mag: 0.003
+  bin_sys_mag: 0.007         # ZTF season-to-season calibration floor
+  clip_sigma: 5.0
+  min_matched: 6
+  min_optical_bands: 2       # survey: g AND r
+  n_sigma_fade: 4.0
+  min_depth_mag: 0.02
+  n_sigma_ir: 3.0
+  n_sigma_contrast: 3.0      # W2 rise at the faded epochs vs the star's own W2 scatter elsewhere
+  w1_contradict_sigma: 2.0
+  max_lag: 6
+  k_ism: 1.41
+  grey_n_sigma: 2.0
+  ism_n_sigma: 3.0
+
+energy:
+  factor: 3.0                # balanced if L_IR/L_opt range meets [1/3, 3]
+  t_max_grain_k: 1800.0
+  dchi2: 2.3
+
+classify:
+  yso_w1w2_min: 0.15
+  yso_w2w3_min: 0.5
+  giant_mg_max: 2.5
+  rcrb_depth_min_mag: 1.0
+  lpv_pmin_d: 60.0
+  lpv_amp_min_mag: 0.05
+  periodic_fap_max: 1.0e-6
+  eb_pmax_d: 60.0
+  lag_corr_margin: 0.2
+  blend_frac_kill: 0.5
+  gw1_intercept: 0.30
+  gw1_slope: 1.28
+  gw1_bright_margin_mag: 0.75
+  star_forming_boxes:        # the IGNITION boxes (config/ignition.yaml)
+    - {name: Taurus, ra: [60.0, 75.0], dec: [15.0, 32.0]}
+    - {name: Orion, ra: [78.0, 92.0], dec: [-12.0, 12.0]}
+    - {name: Perseus, ra: [50.0, 58.0], dec: [29.0, 34.0]}
+    - {name: Ophiuchus, ra: [243.0, 250.0], dec: [-27.0, -21.0]}
+    - {name: UpperSco, ra: [235.0, 250.0], dec: [-30.0, -15.0]}
+    - {name: Lupus, ra: [232.0, 246.0], dec: [-43.0, -33.0]}
+    - {name: Chamaeleon, ra: [160.0, 172.0], dec: [-80.0, -74.0]}
+    - {name: Serpens, ra: [275.0, 280.0], dec: [-3.0, 3.0]}
+    - {name: CoronaAustralis, ra: [283.0, 288.0], dec: [-39.0, -35.0]}
+    - {name: Cepheus, ra: [310.0, 340.0], dec: [60.0, 72.0]}
+
+survey:
+  ignition_run_id: "35923951760"   # the IGNITION tiles run whose shard artifacts are the parent
+  ignition_shards: 12
+  ztf_workers: 4                   # concurrent IRSA ZTF requests per shard
+  ztf_bright_limit: 12.5           # median ZTF mag brighter than this: saturation risk, excluded
+  ztf_radius_arcsec: 1.5
+  budget_s: 16200                  # per shard ZTF wall clock (4.5 h)
+  min_ir_epochs_ztf_era: 6         # NEOWISE epochs after 2018.2 in both bands
+  null_rounds: 30                  # ~1.3 ms per trial: 30 x ~8k stars ~ 6 min per shard
+  null_shifts: [-4, -2, 2, 4]
+  null_max_stars: 0                # 0 = every evaluated star of the shard
+  injection_max_stars: 150         # per shard
+  injection_depths: [0.03, 0.05, 0.1, 0.2]
+  injection_temps_k: [300.0, 600.0, 1000.0]
+  injection_dur_epochs: 2
+  expected_false_max: 0.1          # a candidate needs FAP x N_tested below this
+
+# Positive controls.  Coordinates are given with their source and are checked
+# at runtime against CDS Sesame; the control is run at the Sesame position if
+# the two disagree by more than 5".  `optical` lists the sources to try.
+controls:
+  - name: Gaia-GIC-1
+    alias: Gaia20ehk
+    kind: coupled_event
+    ra: 116.854750          # 07 47 25.14 (Gaia DR3 5593847908340254848)
+    dec: -34.159000         # -34 09 32.4
+    ref: "Tzanidakis & Davenport 2026, ApJL, arXiv:2603.10952"
+    note: "IR brightening while the optical dims from ~2021; young F star; dec -34 is south of ZTF"
+    gaia_alert: Gaia20ehk
+    optical: [ztf, gaia_alert, asassn]
+  - name: ASASSN-21qj
+    alias: "2MASS J08152329-3859234"
+    kind: coupled_event
+    ra: 123.847083          # 08 15 23.30
+    dec: -38.989806         # -38 59 23.3
+    ref: "Kenworthy et al. 2023, Nature 622, 251, arXiv:2310.08360"
+    note: "W1 +0.4 / W2 +0.8 mag brightening ~900 d BEFORE the 2021 optical dimming: coupled, not simultaneous; south of ZTF"
+    optical: [ztf, asassn]
+  - name: ASASSN-24fw
+    kind: grey_occultation
+    ra: 106.329042          # 07 05 18.97
+    dec: 6.205389           # +06 12 19.4 (Gaia DR3 3152916838954800512)
+    ref: "Fores-Toribio et al. 2025, OJAp 8, 114, arXiv:2507.03080"
+    note: "4.1 mag near-achromatic dimming 2024-09 .. 2025-05, after NEOWISE ended (2024-08)"
+    optical: [ztf, asassn]
+  - name: ZTF J2327+0019
+    kind: coupled_event
+    ref: "arXiv:2609.08923 (white-dwarf obscuration events)"
+    note: "WD obscured >1 yr with a simultaneous WISE W1/W2 flare; coordinates only from Sesame"
+    optical: [ztf]
+  - name: RW Aur
+    kind: natural_yso
+    ref: "Shenavrin et al. 2015; Bozhinova et al. 2016 (IR brightening during the dimming)"
+    note: "YSO whose disk-occultation dimmings are accompanied by an IR brightening; NEOWISE likely saturated"
+    optical: [ztf, asassn]
+  - name: KH 15D
+    kind: natural_eb_disk
+    ref: "Herbst et al. 2002; Winn et al. 2004"
+    note: "binary occulted by a precessing circumbinary disk (48-d period)"
+    optical: [ztf]
+  - name: V718 Per
+    kind: natural_eb_disk
+    ref: "Grinin et al. 2008"
+    note: "IC 348 young star periodically occulted by a circumbinary disk (4.7 yr)"
+    optical: [ztf]
+  - name: EE Cep
+    kind: natural_eb_disk
+    ref: "Galan et al. 2012; 2020 eclipse campaigns"
+    note: "5.6-yr eclipses by a dark disk; 2020 eclipse inside ZTF+NEOWISE"
+    optical: [ztf, asassn]
+  - name: ES Aql
+    kind: natural_rcrb
+    ref: "R CrB variable (VSX)"
+    note: "R CrB declines; whether one falls in 2018-2024 is for the data to say"
+    optical: [ztf]
+  - name: SV Sge
+    kind: natural_rcrb
+    ref: "R CrB variable (VSX)"
+    optical: [ztf]

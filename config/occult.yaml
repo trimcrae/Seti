@@ -1,0 +1,50 @@
+# OCCULT (S40 in ground surveys) --- thresholds and positive controls.
+# Detector defaults live in seti.occult.detect.DEFAULT_CONF; anything here overrides them.
+
+detect:
+  min_points: 60
+  min_peak_snr: 10.0
+  dchi2_floor: 50.0
+  side_dchi2_min: 16.0
+  edge_dchi2: 9.0
+  alpha_nsig: 3.0
+  group_nsig: 3.0
+  jackknife_frac: 0.5
+  max_night_share: 0.5
+  bump_sigma: 6.0
+  resid_redchi2_max: 2.0
+
+screen:
+  inject_every: 8          # injection trials on every Nth screened unit
+  inject_per_unit: 3       # rho_L values per trial unit (drawn from inject.RHO_L_GRID)
+  lc_save_min_dchi2: 50.0  # save photometry of CANDIDATE units for vetting
+
+# Positive controls: every one must come out NOT an occultation.  Literature
+# classification is what makes them controls; the runner fetches each by name.
+controls:
+  finite_source_single_lens:
+    - {name: OGLE-2016-BLG-1540, ref: "Mroz et al. 2018, AJ 155, 121 (FFP, FSPL, giant source)"}
+    - {name: OGLE-2012-BLG-1323, ref: "Mroz et al. 2019, A&A 622, A201 (FFP, FSPL)"}
+    - {name: OGLE-2017-BLG-0560, ref: "Mroz et al. 2019, A&A 622, A201 (FSPL)"}
+    - {name: OGLE-2019-BLG-0551, ref: "Mroz et al. 2020, AJ 159, 262 (FFP, FSPL)"}
+    - {name: OGLE-2015-BLG-1482, ref: "Chung et al. 2017, ApJ 838, 154 (isolated lens, FSPL)"}
+    - {name: OGLE-2017-BLG-0896, ref: "Shvartzvald et al. 2019, AJ 157, 106 (BD, FSPL)"}
+    - {name: OGLE-2016-BLG-1045, ref: "Shin et al. 2018, ApJ 863, 23 (isolated lens, FSPL)"}
+    - {name: KMT-2019-BLG-2073, ref: "Kim et al. 2021, AJ 162, 15 (FFP, FSPL)"}
+    - {name: KMT-2017-BLG-2820, ref: "Ryu et al. 2021, AJ 161, 126 (FFP, FSPL)"}
+    - {name: KMT-2022-BLG-2397, ref: "Gould et al. 2023, AJ 166, 100 (BD, FSPL)"}
+  binary_lens:
+    - {name: OGLE-2016-BLG-1195, ref: "Shvartzvald et al. 2017; Bond et al. 2017 (planet)"}
+    - {name: OGLE-2018-BLG-1011, ref: "Han et al. 2019, AJ 158, 114 (two planets)"}
+    - {name: OGLE-2019-BLG-0468, ref: "Han et al. 2022, A&A 658, A62 (two planets)"}
+    - {name: KMT-2019-BLG-0842, ref: "Jung et al. 2020, AJ 160, 148 (planet)"}
+    - {name: OGLE-2017-BLG-1522, ref: "Jung et al. 2018, AJ 155, 219 (planet around BD)"}
+    - {name: OGLE-2016-BLG-0613, ref: "Han et al. 2017, AJ 154, 223 (planet in binary)"}
+    - {name: OGLE-2018-BLG-1700, ref: "Han et al. 2020, AJ 159, 48 (planet in binary)"}
+    - {name: OGLE-2016-BLG-1469, ref: "Han et al. 2017, ApJ 843, 59 (BD binary, caustic crossing)"}
+    - {name: KMT-2020-BLG-0414, ref: "Zang et al. 2021, RAA 21, 239 (planets, WD host)"}
+    - {name: OGLE-2014-BLG-1722, ref: "Suzuki et al. 2018, AJ 155, 263 (two planets)"}
+  gate:
+    min_controls_reached_frac: 0.7     # else the controls stage is DEGRADED
+    injection_rho_l: [0.5, 0.7, 0.85]  # injected into every reached control's baseline
+    min_recovery_strong: 0.7           # recovered fraction among injections with expected dchi2 > 500

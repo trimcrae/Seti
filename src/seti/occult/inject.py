@@ -21,9 +21,7 @@ import numpy as np
 
 from . import detect as D
 
-# rho_L grid of the sensitivity map: the wing regime where a step is
-# measurable (u_c from ~3.3 down to ~0.1) and the central-hole regime.
-RHO_L_GRID = (0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.05, 1.3, 2.0)
+RHO_L_GRID = D.RHO_L_GRID
 U0_EDGES = (0.0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5)
 
 
@@ -55,15 +53,8 @@ def recovered(rec: dict, rho_l: float, tol: float = 0.05, tol_hole: float = 0.15
 
 
 def expected_map(ev: D.Event, fit: D.Fit, e=None, grid=RHO_L_GRID) -> dict:
-    """Fisher-style expected Delta chi^2 for each rho_L on the grid (0 where u0 >= u_c)."""
-    out = {}
-    for rl in grid:
-        uc = D.u_crit(rl)
-        if rl < 1.0 and D.u_min_fit(ev, fit) >= uc:
-            out[f"{rl:g}"] = 0.0          # blend-degenerate: minor image hidden all the time
-            continue
-        out[f"{rl:g}"] = round(D.expected_dchi2(ev, fit, rl, e), 2)
-    return out
+    """See :func:`seti.occult.detect.expected_map`."""
+    return D.expected_map(ev, fit, e, grid)
 
 
 def injection_trials(ev_raw: D.Event, conf: dict, hint: dict | None, rho_ls, seed: int = 0,

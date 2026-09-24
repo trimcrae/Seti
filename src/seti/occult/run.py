@@ -220,47 +220,62 @@ def baseline_hosts(units: list, n: int) -> list:
     return [u for _, u in pool[:n]]
 
 
-def stage_controls(out: Path, cfg: dict) -> dict:
-    from .acquire import session
+CONTROL_KEEP = ("tier", "dchi2", "dchi2_anti", "regime", "rejections", "peak_snr", "fspl",
+                "occult", "n_points", "sites", "bands", "redchi2_fspl", "parallax",
+                "err_scales", "alpha", "symmetry", "jackknife", "positive_bump",
+                "binned_redchi2_after", "binned_redchi2_reference", "hollow_centre")
+
+
+def _control_one(arg) -> dict:
+    """One control: fetch, assess, inject into its baseline (runs in a worker)."""
+    cls, item, u, conf, rho_ls = arg
+    rec = {"name": item["name"], "class": cls, "ref": item.get("ref"), "reached": False}
+    if u is None:
+        rec["why"] = "not in catalogue"
+        return rec
+    rec["unit"] = u["unit"]
+    try:
+        ev, status = unit_event(_WORKER["session"], u)
+    except Exception as exc:  # noqa: BLE001
+        rec["why"] = f"fetch failed: {exc!r}"[:200]
+        return rec
+    rec["download"] = status
+    if ev.t.size == 0:
+        rec["why"] = "no photometry in the event window"
+        return rec
+    rec["reached"] = True
+    t = time.time()
+    res = D.assess_event(ev, conf, unit_hint(u))
+    rec["seconds"] = round(time.time() - t, 1)
+    rec.update({k: res.get(k) for k in CONTROL_KEEP})
+    rec["injections"] = INJ.injection_trials(ev, conf, unit_hint(u), rho_ls)
+    return rec
+
+
+def stage_controls(out: Path, cfg: dict, workers: int = 4) -> dict:
+    from concurrent.futures import ProcessPoolExecutor
 
     units = read_catalog(out)
     conf = D.conf_with(cfg.get("detect"))
     ctl = cfg.get("controls", {})
     gate = ctl.get("gate", {})
-    s = session()
-    records = []
+    rho_ls = gate.get("injection_rho_l", [0.5, 0.7, 0.85])
     listed = [(cls, item) for cls in ("finite_source_single_lens", "binary_lens")
               for item in ctl.get(cls, [])]
     n_named = len(listed)
     listed += [("baseline", {"name": u["unit"], "ref": "ordinary joint KMT+OGLE event (injection host)"})
                for u in baseline_hosts(units, int(gate.get("n_baselines", 30)))]
-    for cls, item in listed:
-        name = item["name"]
-        rec = {"name": name, "class": cls, "ref": item.get("ref"), "reached": False}
-        u = find_unit(units, name)
-        if u is None:
-            rec["why"] = "not in catalogue"
-            records.append(rec)
-            continue
-        rec["unit"] = u["unit"]
-        ev, status = unit_event(s, u)
-        rec["download"] = status
-        if ev.t.size == 0:
-            rec["why"] = "no photometry"
-            records.append(rec)
-            continue
-        rec["reached"] = True
-        t = time.time()
-        res = D.assess_event(ev, conf, unit_hint(u))
-        rec["seconds"] = round(time.time() - t, 1)
-        for k in ("tier", "dchi2", "dchi2_anti", "regime", "rejections", "peak_snr", "fspl",
-                  "occult", "n_points", "sites", "bands", "redchi2_fspl"):
-            rec[k] = res.get(k)
-        rec["injections"] = INJ.injection_trials(ev, conf, unit_hint(u),
-                                                 gate.get("injection_rho_l", [0.5, 0.7, 0.85]))
-        records.append(rec)
-        print(f"[controls] {name}: {rec['tier']} dchi2={rec.get('dchi2')} "
-              f"inj={[(t['rho_l_inj'], t['recovered']) for t in rec['injections']]}", flush=True)
+    args = [(cls, item, find_unit(units, item["name"]), conf, rho_ls) for cls, item in listed]
+    if workers <= 1:
+        _worker_init(conf, {}, str(out / "lc_controls"))
+        records = [_control_one(a) for a in args]
+    else:
+        with ProcessPoolExecutor(max_workers=workers, initializer=_worker_init,
+                                 initargs=(conf, {}, str(out / "lc_controls"))) as pool:
+            records = list(pool.map(_control_one, args))
+    for rec in records:
+        print(f"[controls] {rec['name']}: {rec.get('tier')} dchi2={rec.get('dchi2')} "
+              f"inj={[(t['rho_l_inj'], t['recovered']) for t in rec.get('injections', [])]}", flush=True)
     v = controls_verdict(records, gate, n_named)
     res = {**_stamp(), **v, "records": records}
     write_json(out / "controls.json", res)
@@ -300,7 +315,7 @@ SCREEN_KEEP = ("tier", "dchi2", "dchi2_anti", "dbic", "regime", "u_c", "rejectio
                "sites_consistency", "bands_consistency", "symmetry", "jackknife", "steps",
                "n_in_hole", "hole_below_baseline", "positive_bump", "binned_redchi2_after",
                "colour_tested", "scan_best_dchi2", "scan_best_anti_dchi2", "hollow_centre",
-               "u_max_observed", "error", "err_scales")
+               "u_max_observed", "u_min_observed", "parallax", "error", "err_scales")
 
 
 def screen_unit(s, unit: dict, conf: dict, cfg_screen: dict, idx: int, lc_dir: Path) -> tuple[dict, list]:
@@ -320,12 +335,7 @@ def screen_unit(s, unit: dict, conf: dict, cfg_screen: dict, idx: int, lc_dir: P
     rec.update({k: res.get(k) for k in SCREEN_KEEP if k in res})
     # analytic sensitivity at this event's own solution, and injection trials
     if res.get("fspl") and res.get("tier") not in (D.TIER_NO_DATA, D.TIER_NOT_LENSING, "ERROR"):
-        try:
-            ev2, e, f0, _ = D.fit_fspl_clean(ev, conf, unit_hint(unit))
-            if ev2 is not None:
-                rec["expected"] = INJ.expected_map(ev2, f0, e)
-        except Exception as exc:  # noqa: BLE001
-            rec["expected_error"] = repr(exc)[:200]
+        rec["expected"] = res.get("expected")
         every = int(cfg_screen.get("inject_every", 8))
         if every > 0 and idx % every == 0:
             rls = INJ.pick_rho_ls(zlib.crc32(unit["unit"].encode()),
@@ -511,6 +521,12 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
         "units_in_catalogue": n_units,
         "units_screened_records": len(recs),
         "units_with_photometry": len(screened),
+        "no_data_downloaded_but_window_empty": sum(
+            1 for r in recs if r.get("tier") == D.TIER_NO_DATA
+            and any((v or {}).get("n_points_raw", 0) > 0 for v in (r.get("download") or {}).values())),
+        "no_data_nothing_downloaded": sum(
+            1 for r in recs if r.get("tier") == D.TIER_NO_DATA
+            and not any((v or {}).get("n_points_raw", 0) > 0 for v in (r.get("download") or {}).values())),
         "not_lensing_or_too_faint": tiers.get(D.TIER_NOT_LENSING, 0),
         "errors": tiers.get("ERROR", 0),
         "no_occultation": tiers.get(D.TIER_NO_OCC, 0),

@@ -190,6 +190,21 @@ def _passing():
     }
 
 
+def test_red_noise_and_bump_bars_are_relative():
+    """An event's own out-of-event red noise raises the residual bar; a huge
+    signal raises the bump bar (a 1 % model mismatch at 40,000 Delta chi^2 is
+    not a caustic)."""
+    d = _passing()
+    d.update(binned_redchi2_after=2.5, binned_redchi2_reference=2.0)
+    assert "RESIDUAL_STRUCTURE" not in D.gate_rejections(d, {})
+    d.update(binned_redchi2_after=3.5)
+    assert "RESIDUAL_STRUCTURE" in D.gate_rejections(d, {})
+    d = _passing()
+    d.update(dchi2=40000.0, positive_bump={"max_sigma": 12.0})
+    d["jackknife"].update(dchi2=40000.0, min_drop_night=39000.0, min_drop_dataset=20000.0)
+    assert "BRIGHTENING_LEFT_CAUSTIC_LIKE" not in D.gate_rejections(d, {})
+
+
 def test_the_passing_diagnostics_pass():
     assert D.gate_rejections(_passing(), {}) == []
 
@@ -205,7 +220,7 @@ def test_the_passing_diagnostics_pass():
     (lambda d: d["bands_consistency"].update(consistent=False), "CHROMATIC"),
     (lambda d: d["jackknife"].update(min_drop_night=100.0), "ONE_NIGHT_DOMINATES"),
     (lambda d: d["jackknife"].update(max_night_share=0.8), "ONE_NIGHT_DOMINATES"),
-    (lambda d: d["jackknife"].update(min_drop_dataset=100.0), "ONE_DATASET_DOMINATES"),
+    (lambda d: d["jackknife"].update(min_drop_dataset=50.0), "ONE_DATASET_DOMINATES"),
     (lambda d: d["steps"][1].update(bracketed=False), "STEP_IN_DATA_GAP"),
     (lambda d: d.update(steps=[]), "STEP_IN_DATA_GAP"),
     (lambda d: d.update(regime="hole", n_in_hole=1, hole_below_baseline=True), "HOLE_UNSAMPLED"),
@@ -275,6 +290,18 @@ def test_kmt_listpage_with_a_missing_class_column_is_read_by_coordinate_shape():
     r = A.parse_kmt_listpage(line, 2016)[0]
     assert r["dec"] == pytest.approx(-(28 + 34 / 60 + 0.05 / 3600))
     assert r["t0"] == pytest.approx(7544.69315) and r["tE"] == pytest.approx(109.77)
+
+
+def test_kmt_2023_plus_t0_convention_is_normalised():
+    """listpage.dat quotes HJD-2400000 from 2023 on; the photometry uses HJD-2450000."""
+    line = ("KMT-2025-BLG-0001 BLG01K0303.006782 1 1 17:52:40.01 -30:42:01.51  60748.35834    9.99  "
+            "0.839  17.03  17.04  17.04 1   1.86  MB250060 OB250100\n")
+    r = A.parse_kmt_listpage(line, 2025)[0]
+    assert r["t0"] == pytest.approx(10748.35834)
+    assert A.hjd_prime(2458529.584) == pytest.approx(8529.584)
+    assert A.hjd_prime(8540.21) == pytest.approx(8540.21)
+    q = A.parse_pysis(PYSIS)
+    assert A.window_mask(q["t"], r["t0"] - 20, 10).all()
 
 
 def test_parse_phot_and_pysis_and_tar():

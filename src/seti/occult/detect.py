@@ -64,7 +64,6 @@ DEFAULT_CONF: dict = {
     "min_peak_snr": 10.0,        # FSPL amplitude detection, else NOT_LENSING
     "clip_sigma": 5.0,           # local-outlier clip (vs a running median of residuals)
     "clip_window": 11,           # points in the running median
-    "err_floor_frac": 0.003,     # fractional error floor added in quadrature (x flux scale)
     "rho_star_max": 0.05,        # physical cap: a giant source at the bulge
     "rho_star_min": 1e-4,
     "dchi2_floor": 50.0,         # absolute floor on the refined Delta chi^2
@@ -76,6 +75,10 @@ DEFAULT_CONF: dict = {
     "group_min_detect_sigma": 2.0,   # a site "sees" the step if alpha/sigma exceeds this
     "jackknife_frac": 0.5,       # dropping any one night or dataset keeps >= this of Delta chi^2
     "max_night_share": 0.5,      # no single night supplies more than this share
+    "jackknife_dataset_frac": 0.2,   # dropping the best dataset keeps >= this share (and >= floor/2)
+    "bump_frac": 0.15,           # caustic-bump bar also scales with sqrt(Delta chi^2)
+    "resid_redchi2_ratio": 1.5,  # in-event binned red chi^2 vs the event's own out-of-event value
+    "baseline_u": 3.0,           # errors are measured where u exceeds this
     "bracket_days": 5.0,         # data within this of a step on both sides ...
     "bracket_frac_te": 0.1,      # ... or within this fraction of tE, whichever is larger
     "resid_redchi2_max": 2.0,    # after the occult fit, per-night binned reduced chi^2
@@ -532,11 +535,14 @@ def initial_guesses(ev: Event, hint: dict | None = None) -> list:
 
 
 def clip_local_outliers(ev: Event, model, conf) -> np.ndarray:
-    """Mask of points kept: |r - running median of r| < clip * robust sigma, per dataset.
+    """Mask of points kept, per dataset.
 
-    Measured against a *running median of the residuals*, a step (which moves
-    many consecutive points together) survives the clip; an isolated bad point
-    does not.
+    A point is clipped only if it is an outlier BOTH against a running median
+    of its model residuals AND against a running median of the flux itself.
+    Either test alone preserves a step (a median filter follows an edge); the
+    first alone also clips real structure wherever the null model is badly
+    wrong (a hollowed centre fitted by a horn), the second alone clips a
+    sparsely sampled sharp peak.  An isolated bad point fails both.
     """
     keep = np.ones(ev.t.size, dtype=bool)
     r = (ev.f - model) / ev.e
@@ -544,37 +550,45 @@ def clip_local_outliers(ev: Event, model, conf) -> np.ndarray:
         m = np.where(ev.ds == k)[0]
         if m.size < 5:
             continue
-        rr = r[m]
-        d = rr - _running_median(rr, conf["clip_window"])
-        s = 1.4826 * np.median(np.abs(d - np.median(d)))
-        if not np.isfinite(s) or s <= 0:
-            continue
-        keep[m] = np.abs(d) < conf["clip_sigma"] * s
+        bad = np.ones(m.size, dtype=bool)
+        for x in (r[m], ev.f[m] / ev.e[m]):
+            d = x - _running_median(x, conf["clip_window"])
+            sd = 1.4826 * np.median(np.abs(d - np.median(d)))
+            if not np.isfinite(sd) or sd <= 0:
+                bad[:] = False
+                break
+            bad &= np.abs(d) >= conf["clip_sigma"] * sd
+        keep[m] = ~bad
     return keep
 
 
-def renorm_errors(ev: Event, model, conf) -> tuple[np.ndarray, list]:
-    """Per-dataset error scale robust to steps, with a fractional floor.
+def renorm_errors(ev: Event, fit, conf) -> tuple[np.ndarray, list]:
+    """Per-dataset error scale that no model --- right or wrong --- can bias.
 
-    k_p2p from point-to-point differences (insensitive to steps and slow
-    trends), k_mad from the median absolute residual; the LARGER is used, so
-    a real step can only lower its own significance.
+    k = robust point-to-point scatter of the FLUX in units of the quoted
+    errors, 1.4826 median|f_i+1 - f_i| / sqrt(e_i^2 + e_i+1^2): model-free,
+    insensitive to steps and to slow variation.  Run 36015751048 measured the
+    scale on residuals about the FSPL fit instead, and wherever that null
+    model was wrong (every central-hole injection, several wing ones) the
+    errors inflated until the signal vanished.  Night-to-night red noise is
+    NOT in this scale; it is handled where it bites --- the binned
+    red-residual gate against the event's own out-of-event value, the night
+    jack-knife, and the anti-occultation null threshold.  No fractional floor:
+    a floor needs a flux scale, and neither a difference-flux zero point nor
+    the source flux of an unconverged fit is one (a floor on the latter
+    swamped the real errors ten-fold in the offline battery).
     """
     e = ev.e.copy()
-    r = (ev.f - model) / ev.e
     scales = []
     for k in range(ev.n_ds):
         m = np.where(ev.ds == k)[0]
         if m.size < 5:
             scales.append(1.0)
             continue
-        rr = r[m]
-        k_p2p = 1.4826 * np.median(np.abs(np.diff(rr))) / math.sqrt(2.0)
-        k_mad = 1.4826 * np.median(np.abs(rr - np.median(rr)))
-        kk = float(max(k_p2p, k_mad, 0.3))
+        df = np.diff(ev.f[m]) / np.sqrt(ev.e[m][1:] ** 2 + ev.e[m][:-1] ** 2)
+        kk = float(max(1.4826 * np.median(np.abs(df)), 0.3))
         scales.append(kk)
-        fscale = float(np.median(np.abs(model[m]))) if m.size else 0.0
-        e[m] = np.sqrt((ev.e[m] * kk) ** 2 + (conf["err_floor_frac"] * fscale) ** 2)
+        e[m] = ev.e[m] * kk
     return e, scales
 
 
@@ -885,11 +899,18 @@ def positive_bump(ev: Event, resid, e, t0: float, te: float, width_days: float |
             "min_sigma": float(sig[ok].min()) if ok.any() else 0.0}
 
 
-def binned_redchi2(ev: Event, resid, e, t0, te) -> float:
-    """Reduced chi^2 of night-binned residuals inside |t - t0| < 3 tE (catches red structure)."""
+def binned_redchi2(ev: Event, resid, e, t0, te, outside: bool = False) -> float | None:
+    """Reduced chi^2 of night x dataset binned residuals (catches red structure).
+
+    Inside |t - t0| < 3 tE by default; ``outside=True`` measures the same
+    statistic on the rest of the light curve --- the event's own red-noise
+    reference, against which the in-event value is judged.
+    """
     m = np.abs(ev.t - t0) < 3.0 * te
+    if outside:
+        m = ~m
     if m.sum() < 5:
-        return 0.0
+        return None if outside else 0.0
     night = np.floor(ev.t[m] - 0.3).astype(np.int64)
     key = night * 64 + ev.ds[m]
     uniq, inv = np.unique(key, return_inverse=True)
@@ -939,7 +960,7 @@ def fit_fspl_clean(ev: Event, conf: dict, hint: dict | None = None):
     info["n_clipped"] = int((~keep).sum())
     ev = ev.subset(keep)
     fit = fit_model(ev, "fspl", [(fit.t0, fit.te, fit.u0, fit.rho)] + starts[:1], conf)
-    e, scales = renorm_errors(ev, fit.model, conf)
+    e, scales = renorm_errors(ev, fit, conf)
     ev2 = ev.replace(e=e)
     fit = fit_model(ev2, "fspl", [(fit.t0, fit.te, fit.u0, fit.rho)], conf)
     # annual parallax: a long event's wings are asymmetric in a rectilinear fit,
@@ -1071,6 +1092,7 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
         rec["tier"] = TIER_NO_DATA
         return rec
     rec["fspl"] = f0.params()
+    rec["expected"] = expected_map(ev2, f0, e)
     if info["peak_snr"] < conf["min_peak_snr"] or f0.te >= 1400:
         rec["tier"] = TIER_NOT_LENSING
         return rec
@@ -1102,19 +1124,20 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
             anti.append(("wing" if rl < 1 else "hole", uth, -1.0))
 
     # ---- refinement ---------------------------------------------------------
-    # A central hole wrecks the FSPL fit (it locks onto a horn): give the hole
-    # seeds extra shape starts centred on the excess-flux centroid.
+    # A central hole wrecks the FSPL fit (it locks onto a horn), and the fit's
+    # reduced chi^2 is no trigger (it is judged with errors measured on the
+    # baseline, but a horn fit can still look passable): the cheap shape test
+    # runs on every event, and a hollow centre earns the hole seeds extra
+    # shape starts centred on the excess-flux centroid.
     hole_starts = []
-    if rec["redchi2_fspl"] > conf.get("poor_fit_redchi2", 3.0):
-        tc = excess_centroid(ev2)
-        hc = hollow_centre(ev2, tc)
-        rec["hollow_centre"] = hc
-        if hc is not None:
-            sep = max(hc["sep_days"], 0.5)
-            hole_starts = [(tc, sep * fac, u0) for u0 in (0.05, 0.2, 0.5)
-                           for fac in (0.3, 1.0, 3.0)]
-            for rl in conf.get("hole_seed_rho_l", (1.1, 1.3, 1.8, 2.5)):
-                cand.append(("hole", u_crit(rl), -2.0))
+    tc = excess_centroid(ev2)
+    hc = hollow_centre(ev2, tc)
+    rec["hollow_centre"] = hc
+    if hc is not None:
+        sep = max(hc["sep_days"], 0.5)
+        hole_starts = [(tc, sep * fac, u0) for u0 in (0.05, 0.2, 0.5) for fac in (0.3, 1.0, 3.0)]
+        for rl in conf.get("hole_seed_rho_l", (1.1, 1.3, 1.8, 2.5)):
+            cand.append(("hole", u_crit(rl), -2.0))
     rec["hole_starts_used"] = bool(hole_starts)
 
     def best_refined(cands, kind):
@@ -1179,6 +1202,7 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
                                           and np.all(fo.fs[np.unique(ev2.ds[inside])] > 0))
     rec["positive_bump"] = positive_bump(ev2, r1, e, fo.t0, fo.te)
     rec["binned_redchi2_after"] = binned_redchi2(ev2, r1, e, fo.t0, fo.te)
+    rec["binned_redchi2_reference"] = binned_redchi2(ev2, r1, e, fo.t0, fo.te, outside=True)
     rec["rejections"] = gate_rejections(rec, conf)
     rec["tier"] = TIER_REJECTED if rec["rejections"] else TIER_CANDIDATE
     return rec
@@ -1223,7 +1247,8 @@ def gate_rejections(d: dict, conf: dict) -> list:
     if jk and (jk["min_drop_night"] < conf["jackknife_frac"] * tot
                or (jk.get("max_night_share") or 0.0) > conf["max_night_share"]):
         rej.append("ONE_NIGHT_DOMINATES")
-    if jk and jk["min_drop_dataset"] < conf["jackknife_frac"] * tot:
+    if jk and jk["min_drop_dataset"] < max(0.5 * conf["dchi2_floor"],
+                                           conf["jackknife_dataset_frac"] * tot):
         rej.append("ONE_DATASET_DOMINATES")
     if d.get("regime") == "wing":
         br = d.get("steps") or []
@@ -1234,9 +1259,13 @@ def gate_rejections(d: dict, conf: dict) -> list:
             rej.append("HOLE_UNSAMPLED")
         if not d.get("hole_below_baseline"):
             rej.append("HOLE_NOT_BELOW_BASELINE")
-    if (d.get("positive_bump") or {}).get("max_sigma", 0.0) >= conf["bump_sigma"]:
+    bump_bar = max(conf["bump_sigma"], conf["bump_frac"] * math.sqrt(max(d.get("dchi2") or 0.0, 0.0)))
+    if (d.get("positive_bump") or {}).get("max_sigma", 0.0) >= bump_bar:
         rej.append("BRIGHTENING_LEFT_CAUSTIC_LIKE")
-    if (d.get("binned_redchi2_after") or 0.0) > conf["resid_redchi2_max"]:
+    ref = d.get("binned_redchi2_reference")
+    red_bar = max(conf["resid_redchi2_max"], conf["resid_redchi2_ratio"] * ref) if ref else \
+        conf["resid_redchi2_max"]
+    if (d.get("binned_redchi2_after") or 0.0) > red_bar:
         rej.append("RESIDUAL_STRUCTURE")
     if (d.get("dchi2_anti") or 0.0) >= (d.get("dchi2") or 0.0):
         rej.append("ANTI_TEMPLATE_COMPARABLE")
@@ -1280,6 +1309,23 @@ def synth_event(t0=8000.0, te=25.0, u0=0.2, rho=2e-3, rho_l=None, sites=("KMTA",
             fl = fl + rng.normal(0.0, 1.0, t.size) * err
             series.append(({"name": f"{site}_{band}", "site": site, "band": band}, t, fl, err))
     return build_event("synthetic", series, meta={"ra": ra, "dec": dec})
+
+
+# rho_L grid of the sensitivity map: the wing regime where a step is
+# measurable (u_c from ~3.3 down to ~0.1) and the central-hole regime.
+RHO_L_GRID = (0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.05, 1.3, 2.0)
+
+
+def expected_map(ev: Event, fit: Fit, e=None, grid=RHO_L_GRID) -> dict:
+    """Fisher-style expected Delta chi^2 for each rho_L on the grid (0 where u_min >= u_c)."""
+    out = {}
+    umin = u_min_fit(ev, fit)
+    for rl in grid:
+        if rl < 1.0 and umin >= u_crit(rl):
+            out[f"{rl:g}"] = 0.0          # blend-degenerate: minor image hidden all the time
+            continue
+        out[f"{rl:g}"] = round(expected_dchi2(ev, fit, rl, e), 2)
+    return out
 
 
 def expected_dchi2(ev: Event, fit: Fit, rho_l: float, e=None) -> float:

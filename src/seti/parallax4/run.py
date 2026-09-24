@@ -145,12 +145,18 @@ def _tag(i: int, n: int) -> str:
 # ---------------------------------------------------------------------------
 def stage_probe(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap) -> dict:
     rep: dict = {"stage": "probe", **_provenance()}
+    if tap is acq.gaia_tap:
+        import functools
+
+        tap = functools.partial(acq.gaia_tap, retries=2, deadline_s=240.0)
+    print("[parallax4] probe: DR4 status", flush=True)
     try:
         rep["dr4"] = acq.probe_dr4(tap=tap, http=http)
     except Exception as exc:  # noqa: BLE001
         rep["dr4"] = {"verdict": "ARCHIVE_UNREACHABLE", "error": repr(exc)[:400]}
     _write(out / "dr4_status.json", {**_provenance(), **rep["dr4"]})
     # CDN
+    print(f"[parallax4] probe: DR4 -> {rep['dr4'].get('verdict')}; listing the CDN", flush=True)
     try:
         lst = acq.list_cdn_files(http=http)
     except Exception as exc:  # noqa: BLE001
@@ -181,6 +187,7 @@ def stage_probe(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap) -
             except Exception as exc:  # noqa: BLE001
                 rep["cdn"]["first_file"] = {"error": repr(exc)[:600]}
     # DR4 prerelease + draft data model
+    print(f"[parallax4] probe: CDN {rep['cdn'].get('n_files')} files; fetching the DR4 prerelease", flush=True)
     pre_dir = out / "_prerelease"
     try:
         pr = acq.fetch_prerelease(pre_dir, http=http)
@@ -202,6 +209,7 @@ def stage_probe(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap) -
             _write(out / "dr4_datamodel.json", {**_provenance(), **parsed})
         except Exception as exc:  # noqa: BLE001
             rep["datamodel"] = {"error": repr(exc)[:400]}
+    print("[parallax4] probe: SSO + vari schemas", flush=True)
     # SSO per-transit astrometry through the tolerant reader (format validation)
     for tab in ("gaiadr3.sso_observation", "gaiafpr.sso_observation"):
         try:

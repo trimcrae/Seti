@@ -81,16 +81,50 @@ def http_get(url: str, *, timeout: float = 120.0, retries: int = 4, stream_to: P
     raise RuntimeError(f"GET {url} failed after {retries} attempts: {last!r}")
 
 
-def gaia_tap(query: str, *, retries: int = 4, tag: str = "parallax4") -> pd.DataFrame:
+class DeadlineExceeded(RuntimeError):
+    """A remote call did not return within its deadline."""
+
+
+def with_deadline(fn, deadline_s: float, label: str = "call"):
+    """Run ``fn`` in a daemon thread; raise DeadlineExceeded after
+    ``deadline_s``.  astroquery's TAP calls have no overall timeout, and one
+    hung socket must not eat a job's whole budget (the thread is abandoned,
+    and being a daemon it does not block interpreter exit)."""
+    import threading
+
+    box: dict = {}
+
+    def target():
+        try:
+            box["v"] = fn()
+        except BaseException as exc:  # noqa: BLE001
+            box["e"] = exc
+
+    th = threading.Thread(target=target, daemon=True)
+    th.start()
+    th.join(deadline_s)
+    if th.is_alive():
+        raise DeadlineExceeded(f"{label}: no answer within {deadline_s:.0f}s")
+    if "e" in box:
+        raise box["e"]
+    return box.get("v")
+
+
+def gaia_tap(query: str, *, retries: int = 4, tag: str = "parallax4",
+             deadline_s: float = 900.0) -> pd.DataFrame:
     """Gaia ADQL: async with exponential backoff, sync on the last try."""
     from astroquery.gaia import Gaia
 
     Gaia.ROW_LIMIT = -1
     last = None
+    t0 = time.monotonic()
     for attempt in range(retries):
         try:
-            job = Gaia.launch_job(query) if attempt == retries - 1 else Gaia.launch_job_async(query)
-            df = job.get_results().to_pandas()
+            sync = attempt == retries - 1
+            job = with_deadline(lambda sync=sync: (Gaia.launch_job(query) if sync else Gaia.launch_job_async(query))
+                                .get_results(), deadline_s, f"TAP {query[:60]}")
+            df = job.to_pandas()
+            print(f"[{tag}] TAP ok {len(df)} rows in {time.monotonic() - t0:.0f}s: {query[:80]}", flush=True)
             return df.rename(columns={c: c.lower() for c in df.columns})
         except Exception as exc:  # noqa: BLE001
             last = exc

@@ -181,18 +181,38 @@ def period_check(t_ok: np.ndarray, is_dip: np.ndarray, ep_times: np.ndarray,
     fmin, fmax = 1.0 / pmax, 1.0 / cfg.period_min_d
     freqs = np.linspace(fmin, fmax, cfg.period_n)
     k_indep = max(1.0, tspan * (fmax - fmin))
-    ph = (ep_times[None, :] * freqs[:, None]) % 1.0
-    ph.sort(axis=1)
-    gaps = np.diff(np.concatenate([ph, ph[:, :1] + 1.0], axis=1), axis=1)
-    gs = -np.sort(-gaps, axis=1)
-    w1 = np.clip(1.0 - gs[:, 0], 1e-12, 1.0)
-    with np.errstate(divide="ignore"):
-        lf1 = np.log(k_indep * n_ep) + (n_ep - 1) * np.log(w1)
-        if n_ep >= 3:
-            w2 = np.clip(1.0 - gs[:, 0] - gs[:, 1], 1e-12, 1.0)
-            lf2 = np.log(k_indep * n_ep * n_ep / 2.0) + (n_ep - 2) * np.log(w2)
-        else:
-            lf2 = np.full_like(lf1, np.inf)
+    def fold(times, fr):
+        n = len(times)
+        ph_ = (times[None, :] * fr[:, None]) % 1.0
+        ph_.sort(axis=1)
+        gaps_ = np.diff(np.concatenate([ph_, ph_[:, :1] + 1.0], axis=1), axis=1)
+        gs_ = -np.sort(-gaps_, axis=1)
+        w1 = np.clip(1.0 - gs_[:, 0], 1e-12, 1.0)
+        with np.errstate(divide="ignore"):
+            l1 = np.log(k_indep * n) + (n - 1) * np.log(w1)
+            if n >= 3:
+                w2 = np.clip(1.0 - gs_[:, 0] - gs_[:, 1], 1e-12, 1.0)
+                l2 = np.log(k_indep * n * n / 2.0) + (n - 2) * np.log(w2)
+            else:
+                l2 = np.full_like(l1, np.inf)
+        return ph_, gaps_, l1, l2
+
+    # Two passes keep the cost flat in the number of episodes (catalogue
+    # scale: ~10^6 eclipsing binaries reach this function): a coarse grid on
+    # <= 6 episodes spread through the baseline, then every episode on the
+    # fine frequencies around the best coarse ones.  A fold tight for all
+    # episodes is tight for any subset, so it survives the first pass.
+    # A coarse grid (4x the full-resolution step) on the subset, then the 8
+    # fine frequencies around each of the 500 best coarse ones.
+    ep_sorted = np.sort(ep_times)
+    sub = ep_sorted[np.linspace(0, n_ep - 1, min(n_ep, 6)).round().astype(int)]
+    step = (fmax - fmin) / max(cfg.period_n - 1, 1)
+    coarse = freqs[::4]
+    _, _, s1, s2 = fold(sub, coarse)
+    best_c = coarse[np.argsort(np.minimum(s1, s2))[:500]]
+    fine = (best_c[:, None] + step * np.arange(-4, 5)[None, :]).ravel()
+    freqs = np.unique(fine[(fine >= fmin) & (fine <= fmax)])
+    ph, gaps, lf1, lf2 = fold(ep_sorted, freqs)
     lfap = np.minimum(lf1, lf2)
     order = np.argsort(lfap)[:300]
     best = None

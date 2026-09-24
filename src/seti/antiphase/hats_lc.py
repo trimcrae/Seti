@@ -33,9 +33,15 @@ REGION = "us-west-2"
 
 
 def _fs():
+    """Anonymous S3 in the bucket's own region (probe run 36038625635 got HTTP
+    301 PermanentRedirect with a guessed us-west-2)."""
     import pyarrow.fs as pafs
 
-    return pafs.S3FileSystem(anonymous=True, region=REGION)
+    try:
+        region = pafs.resolve_s3_region(BUCKET)
+    except Exception:                                   # noqa: BLE001
+        region = "us-east-1"
+    return pafs.S3FileSystem(anonymous=True, region=region)
 
 
 def _read_text(fs, path: str) -> str:
@@ -151,6 +157,9 @@ def probe(test_positions=((106.329042, 6.205389),), radius_arcsec: float = 2.0) 
         fs = _fs()
         cat = resolve_catalog(fs)
         out["resolve"] = cat
+        out["region"] = getattr(fs, "region", None)
+        if "catalog" not in cat:
+            raise RuntimeError("HATS catalogue not resolved")
         pinfo = partition_info(fs, cat["catalog"])
         out["n_partitions"] = int(len(pinfo))
         out["partition_columns"] = list(pinfo.columns)

@@ -156,7 +156,7 @@ LEFT OUTER JOIN gaiadr3.vari_classifier_result AS v ON v.source_id = t.source_id
 """
 
 
-def fetch_covariates(source_ids, ledger: list, chunk: int = 50_000,
+def fetch_covariates(source_ids, ledger: list, chunk: int = 5_000,
                      budget_s: float = 5400) -> tuple[pd.DataFrame, dict]:
     ids = pd.DataFrame({"source_id": np.unique(np.asarray(source_ids, dtype=np.int64))})
     return _chunked(ids, chunk, lambda f: gaia_query(COV_QUERY, f, ledger=ledger,
@@ -195,7 +195,7 @@ def fetch_simbad(stars: pd.DataFrame, ledger: list, radius_arcsec: float = 3.0,
 
 
 def fetch_vsx(stars: pd.DataFrame, ledger: list, radius_arcsec: float = 3.0,
-              chunk: int = 5_000, budget_s: float = 1800) -> tuple[pd.DataFrame, dict]:
+              chunk: int = 1_000, budget_s: float = 1800) -> tuple[pd.DataFrame, dict]:
     r = radius_arcsec / 3600.0
     q = ('SELECT t.skey, v."Name" AS vsx_name, v."Type" AS vsx_type, v."Period" AS vsx_period, '
          'DISTANCE(POINT(\'ICRS\', t.ra, t.dec), POINT(\'ICRS\', v."RAJ2000", v."DEJ2000")) '
@@ -220,7 +220,7 @@ ID_TABLES = {
 }
 
 
-def fetch_id_positions(mission: str, ids, ledger: list, chunk: int = 5_000,
+def fetch_id_positions(mission: str, ids, ledger: list, chunk: int = 1_000,
                        budget_s: float = 1200) -> tuple[pd.DataFrame, dict]:
     """KIC / TIC ids -> (id, ra, dec) through VizieR, by upload join on the id."""
     table, idc, rac, dec = ID_TABLES[mission]

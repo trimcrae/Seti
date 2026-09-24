@@ -556,6 +556,55 @@ def epoch_clusters(h_tr: np.ndarray, h_ev: np.ndarray, *, factor: float = 10.0, 
     return (h_ev >= min_events) & (h_ev > factor * mu) & (p < p_max)
 
 
+def hp6_of(source_id) -> np.ndarray:
+    """HEALPix level-6 (nested) pixel from Gaia source_id (level-12 index in
+    the bits above 2^35; level 6 is 12 bits coarser): ~0.92 deg pixels."""
+    return (np.asarray(source_id, dtype=np.int64) >> 47).astype(np.int64)
+
+
+def _all_event_times(out: Path, n_shards: int | None) -> pd.DataFrame:
+    files = sorted(glob.glob(str(out / "events_s*of*.csv")))
+    if n_shards:
+        files = [f for f in files if f.endswith(f"of{int(n_shards)}.csv")]
+    frames = []
+    for f in files:
+        try:
+            frames.append(pd.read_csv(f, usecols=["source_id", "t_peak"]))
+        except Exception:  # noqa: BLE001
+            continue
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["source_id", "t_peak"])
+
+
+def local_coincidence(ev: pd.DataFrame, allev: pd.DataFrame, *, dt: float = 0.1) -> dict:
+    """For each row of ``ev``: how many OTHER sources in the same level-6
+    pixel have a qualifying episode within +-dt, and the Poisson probability
+    of that many given the pixel's own event rate over the DR3 baseline."""
+    from scipy.stats import poisson
+
+    a = allev.copy()
+    a["hp"] = hp6_of(a["source_id"])
+    a = a.sort_values(["hp", "t_peak"])
+    groups = {k: (g["t_peak"].to_numpy(float), g["source_id"].to_numpy(np.int64))
+              for k, g in a.groupby("hp", sort=False)}
+    span = float(np.nanmax(a["t_peak"]) - np.nanmin(a["t_peak"])) if len(a) else 1.0
+    n_out = np.zeros(len(ev), int)
+    p_out = np.ones(len(ev))
+    for i, (sid, t) in enumerate(zip(ev["source_id"].to_numpy(np.int64), ev["t_peak"].to_numpy(float),
+                                     strict=False)):
+        g = groups.get(int(hp6_of([sid])[0]))
+        if g is None:
+            continue
+        tt, ss = g
+        lo, hi = np.searchsorted(tt, t - dt), np.searchsorted(tt, t + dt, side="right")
+        others = ss[lo:hi]
+        k = int(len(np.unique(others[others != sid])))
+        n_src_events = int((ss != sid).sum())
+        mu = n_src_events * (2 * dt) / max(span, 1.0)
+        n_out[i] = k
+        p_out[i] = float(poisson.sf(k - 1, max(mu, 1e-12))) if k > 0 else 1.0
+    return {"n": n_out, "p": p_out}
+
+
 def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None) -> dict:
     rc = conf.get("reduce") or {}
     rep: dict = {"stage": "reduce", **_provenance()}
@@ -598,6 +647,17 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None)
     if len(ab):
         bi = np.clip(np.searchsorted(edges, ab["t_peak"].to_numpy(float), side="right") - 1, 0, nb - 1)
         ab["epoch_cluster"] = flagged[bi]
+        # the LOCAL form of the same veto: other sources' qualifying episodes
+        # in the same ~0.9-deg sky pixel within +-0.1 d (one scan passes a
+        # pixel in seconds; an instrument event there hits its neighbours)
+        allev = _all_event_times(out, n_shards_expected)
+        rep["n_all_events_for_local_veto"] = int(len(allev))
+        if len(allev):
+            loc = local_coincidence(ab, allev, dt=float(rc.get("local_dt_d", 0.1)))
+            ab["n_local_coincident"] = loc["n"]
+            ab["p_local_coincident"] = loc["p"]
+            ab["epoch_cluster"] = ab["epoch_cluster"] | (loc["p"] < float(rc.get("local_p_max", 1e-3)))
+            rep["n_local_coincidence_vetoed"] = int((loc["p"] < float(rc.get("local_p_max", 1e-3))).sum())
         rng = ab["rms_out_of_episode_g"].astype(float).clip(lower=1e-3)
         ab["score"] = (ab["delta_g"].abs() / rng) * np.sqrt(ab["n_transits_episode"].astype(float))
     else:

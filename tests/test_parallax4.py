@@ -649,3 +649,18 @@ def test_cdn_storage_listing_paginates():
     assert rep["route"] == "storage_listing" and rep["n_files"] == 2
     assert rep["md5"] == {"EpochPhotometry_000000-003111.csv.gz": "0123456789abcdef0123456789abcdef"}
     assert rep["total_bytes"] == 300
+
+
+def test_local_coincidence_veto():
+    """Other sources in the same ~0.9-deg pixel dipping within 0.1 d of an
+    event is a scan-local instrument signature."""
+    base = 5_000_000_000_000_000_000
+    ev = pd.DataFrame({"source_id": [base + 1, base + (1 << 50)], "t_peak": [2000.0, 2000.0]})
+    rng = np.random.default_rng(0)
+    allev = pd.DataFrame({"source_id": base + np.arange(2, 202) * 1000,
+                          "t_peak": rng.uniform(1700, 2700, 200)})
+    burst = pd.DataFrame({"source_id": base + np.arange(300, 306) * 1000,
+                          "t_peak": 2000.0 + 0.01 * np.arange(6)})
+    loc = R.local_coincidence(ev, pd.concat([allev, burst, ev], ignore_index=True))
+    assert loc["n"][0] >= 6 and loc["p"][0] < 1e-6       # same pixel as the burst
+    assert loc["n"][1] == 0 and loc["p"][1] == 1.0        # another pixel entirely

@@ -200,6 +200,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries every
+      # earlier shard's screen_<cat>_s<i>of<n>.json and stars_*.csv.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/metronome/screen_*.json results/metronome/stars_*.csv
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -231,9 +235,13 @@ jobs:
         if: always()
         with:
           name: metronome-screen-${{ matrix.catalogue }}-${{ matrix.shard }}
+          # Only this shard's own pair (run.py: <cat>_s<i>of<n>; the unsuffixed
+          # names are the n_shards=1 spelling).
           path: |
-            results/metronome/stars_*.csv
-            results/metronome/screen_*.json
+            results/metronome/stars_${{ matrix.catalogue }}_s${{ matrix.shard }}of${{ github.event.inputs.n_shards || '8' }}.csv
+            results/metronome/screen_${{ matrix.catalogue }}_s${{ matrix.shard }}of${{ github.event.inputs.n_shards || '8' }}.json
+            results/metronome/stars_${{ matrix.catalogue }}.csv
+            results/metronome/screen_${{ matrix.catalogue }}.json
           if-no-files-found: warn
 
   assess:
@@ -245,6 +253,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # assess pools every screen_*.json / stars_*.csv it finds (run.py): only
+      # this run's shard files may be on disk (docs/channel-brief.md §0.7).
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/metronome/screen_*.json results/metronome/stars_*_s*of*.csv
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -423,11 +435,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev,tess]"
-      - name: Fetch artifacts from a prior run
+      # What the in-run `redetect` job reads, in the same order: acquire, then
+      # final.  One merge-multiple over metronome-* also pulled a prior
+      # metronome-redetect, whose summary.json/candidates.json differ from
+      # final's, with no rule for which copy won (docs/channel-brief.md §0.7).
+      - name: Fetch the prior run's acquisition
         uses: actions/download-artifact@v4
         with:
-          pattern: metronome-*
-          merge-multiple: true
+          name: metronome-acquire
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/metronome/
+      - name: Fetch the prior run's assess output
+        uses: actions/download-artifact@v4
+        with:
+          name: metronome-final
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}
           path: results/metronome/
@@ -522,13 +544,34 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev,tess]"
-      - name: Fetch artifacts from a prior run (optional — the catalogued epochs)
+      # Optional: the catalogued epochs and the shortlist.  Sequential named
+      # downloads in pipeline order (acquire < final < redetect), so the latest
+      # summary.json/candidates.json wins by rule, not by a concurrent
+      # merge-multiple race (docs/channel-brief.md §0.7).
+      - name: Fetch the prior run's acquisition (optional)
         if: ${{ github.event.inputs.reduce_only_run_id != '' }}
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
-          pattern: metronome-*
-          merge-multiple: true
+          name: metronome-acquire
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/metronome/
+      - name: Fetch the prior run's assess output (optional)
+        if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: metronome-final
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/metronome/
+      - name: Fetch the prior run's redetect output (optional)
+        if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: metronome-redetect
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}
           path: results/metronome/
@@ -689,10 +732,22 @@ jobs:
           cp results/metronome/redetect.json results/metronome/stars_redetect.csv \
              results/metronome/vetstar_*.json /tmp/keep/ 2>/dev/null || true
           ls /tmp/keep
-      - name: Fetch artifacts from a prior run
+      # Re-assess reads the acquisition and the screen shards, nothing else:
+      # metronome-final/-redetect/-vetstar each carry their own summary.json
+      # and candidates.json and must not race into this merge (§0.7).
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/metronome/screen_*.json results/metronome/stars_*_s*of*.csv
+      - name: Fetch the prior run's acquisition
         uses: actions/download-artifact@v4
         with:
-          pattern: metronome-*
+          name: metronome-acquire
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/metronome/
+      - name: Fetch the prior run's screen shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: metronome-screen-*
           merge-multiple: true
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}

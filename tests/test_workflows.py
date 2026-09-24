@@ -157,3 +157,120 @@ def test_a_lane_that_can_dispatch_is_allowed_to(path):
         f"{path.name} re-fires or re-runs workflows but grants "
         f"`actions: {actions}` -- the POST comes back 403 "
         f"'Resource not accessible by integration'")
+
+
+# ---------------------------------------------------------------------------
+# Shard hygiene (docs/channel-brief.md §0.7)
+# ---------------------------------------------------------------------------
+def _purged_paths(steps) -> list[str]:
+    """Every path an `rm -f` / `rm -rf` in these steps' `run:` names."""
+    import shlex
+
+    out: list[str] = []
+    for step in steps:
+        run = (step.get("run") or "").replace("\\\n", " ")
+        for line in run.splitlines():
+            line = line.split("#", 1)[0].strip()
+            if not line.startswith(("rm ", "sudo rm ")):
+                continue
+            try:
+                words = shlex.split(line, posix=True)
+            except ValueError:
+                continue
+            out += [w.rstrip("/") for w in words
+                    if w not in ("rm", "sudo") and not w.startswith("-")
+                    and w not in ("||", "true", "2>/dev/null")]
+    return out
+
+
+def _covered(path: str, purged: list[str]) -> bool:
+    import fnmatch
+
+    p = path.rstrip("/")
+    return any(p == t or p.startswith(t + "/") or fnmatch.fnmatch(p, t)
+               for t in purged)
+
+
+def _shard_upload_offenders(doc) -> list[str]:
+    offenders = []
+    for job_name, job in (doc.get("jobs") or {}).items():
+        if "matrix" not in (job.get("strategy") or {}):
+            continue
+        steps = job.get("steps") or []
+        for k, step in enumerate(steps):
+            if "actions/upload-artifact" not in str(step.get("uses", "")):
+                continue
+            purged = _purged_paths(steps[:k])
+            for raw in str((step.get("with") or {}).get("path", "")).splitlines():
+                path = raw.strip()
+                if not path or path.startswith("!"):
+                    continue
+                # Shard-scoped by construction: named from the matrix / a step
+                # that derives the shard's own names, or staged outside the
+                # checkout (SPECTRA-PERSIST's and LANTERN's `runner.temp`).
+                if "${{" in path:
+                    continue
+                if not _covered(path, purged):
+                    offenders.append(f"{job_name}: {path}")
+    return offenders
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_a_shard_uploads_only_what_it_wrote(path):
+    """A matrix job must not upload files its checkout put there.
+
+    THE FAILURE THIS PINS, twice.  SPECTRA-PERSIST run 35758868818: each shard
+    uploaded its whole checkpoint directory, including checkpoints checked out
+    from the branch, and the reduce merged the artifacts concurrently into one
+    folder -- 14 corrupted JSON, 35 stale copies.  GROWTH-direct run
+    35859780689: each shard uploaded shard_*.csv, i.e. every OTHER shard's file
+    as checked out at job start, and assess merged with merge-multiple, so an
+    early shard's stale copies overwrote fresher results (4,358 rows reported,
+    4,725 on the branch).
+
+    THE HEURISTIC.  For every upload in a matrix job, each literal path (no
+    `${{ ... }}` in it) must be covered by an `rm -f`/`rm -rf` in an earlier
+    step of the same job -- the SEXTANT "Purge checkout-inherited shard
+    outputs" step.  A path carrying an expression is taken to be shard-scoped
+    (named by the matrix value, by a step that derives the shard's own file
+    names, or staged under `runner.temp`); that is a convention, not a proof,
+    and review is still what checks the expression really names only the
+    shard's own files.  Paths are checked whether or not anything is tracked
+    there today: a commit step can put files there tomorrow.
+    """
+    doc = yaml.load(path.read_text(), Loader=StrictLoader)
+    offenders = _shard_upload_offenders(doc)
+    assert not offenders, (
+        f"{path.name}: a matrix job uploads a checkout path it never purged "
+        f"-- stale copies of other shards' outputs ride along into the merge "
+        f"(docs/channel-brief.md §0.7): {offenders}")
+
+
+def test_the_shard_hygiene_check_catches_the_growth_direct_defect():
+    """Guard the guard: the pre-fix GROWTH-direct shape must be flagged, and
+    the SEXTANT reference fix must not be."""
+    broken = yaml.safe_load("""
+jobs:
+  measure:
+    strategy: {matrix: {shard: [0, 1]}}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m seti.growth.direct --stage measure
+      - uses: actions/upload-artifact@v4
+        with: {name: s, path: "results/growth/direct/shards/shard_*.csv"}
+""")
+    fixed = yaml.safe_load("""
+jobs:
+  fit:
+    strategy: {matrix: {shard: [0, 1]}}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/sextant/fits
+      - run: python -m seti.cli sextant --stage fit
+      - uses: actions/upload-artifact@v4
+        with: {name: f, path: results/sextant/fits/}
+""")
+    assert _shard_upload_offenders(broken) == [
+        "measure: results/growth/direct/shards/shard_*.csv"]
+    assert _shard_upload_offenders(fixed) == []

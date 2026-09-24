@@ -513,10 +513,22 @@ jobs:
                 results/ignition/acquire_s*.json results/ignition/stars_s*.csv \
                 results/ignition/screen_s*.json results/ignition/sweep_s*.json \
                 results/ignition/parent_s*.parquet
-      - name: Fetch artifacts from a prior run
+      # Named downloads of the artifacts the in-run reducer reads, never one
+      # merge-multiple over ignition-*: that also pulled the run's -final
+      # artifact, which holds second copies of the same files, with no rule
+      # for which copy won (docs/channel-brief.md §0.7).
+      - name: Fetch the prior run's sample
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ignition-sample
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/ignition/
+      - name: Fetch the prior run's shards
         uses: actions/download-artifact@v4
         with:
-          pattern: ignition-*
+          pattern: ignition-shard-*
           merge-multiple: true
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}

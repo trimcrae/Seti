@@ -2,7 +2,7 @@
 
 **Verdict:** `DEGRADED (bd partial: 95/232 targets with epochs); NO_RING_SURVIVOR; SECONDARY_FLAGS_PENDING_VET`
 
-Generated 2026-09-24T16:59:27Z by run `36016037098`. Leg provenance (the run whose files each leg's numbers come from): wd: `36016037098` (2026-09-24T16:04:43Z), pulsar: `36016037098` (2026-09-24T14:58:57Z), bd: `36016037098` (2026-09-24T16:32:10Z), ffp: `36016037098` (2026-09-24T14:57:02Z)
+Generated 2026-09-24T22:53:22Z by run `36033043407`. Leg provenance (the run whose files each leg's numbers come from): wd: `36033043407` (2026-09-24T18:44:12Z), pulsar: `36033043407` (2026-09-24T17:43:07Z), bd: `36033043407` (2026-09-24T22:26:07Z), ffp: `36033043407` (2026-09-24T17:44:10Z)
 
 ## White dwarfs
 
@@ -12,11 +12,11 @@ Generated 2026-09-24T16:59:27Z by run `36016037098`. Leg provenance (the run who
 * excess-flagged: 4,694; shapes: {'companion': 3222, 'debris_disk': 705, 'warm_ambiguous': 587, 'ring_band': 179, 'unfit': 1}
 * surviving the catalogue gates: 27; gate rejections: {'unresolved_companion': 1907, 'ledger': 926, 'wise_quality': 806, 'astrometric_registration': 789, 'background_source': 239}
 * ring-band candidates before follow-up: 0
-* after follow-up: **0** ({'comovement_untested': 27})
+* after follow-up: **0** ({'blend_untested': 25, 'background_source_no_comovement': 2})
 * sensitivity: {'n_hosts_with_500K_ring_detectable_at_f_lt_1': 24626, 'median_f_min_500K': 0.0855302469981484, 'n_hosts_with_500K_ring_detectable_at_f_lt_0p01': 3955}
 * registration test evaluated for 25932 hosts; ring-band gate reasons: {'astrometric_registration': 82, 'background_source': 41, 'ledger': 37, 'wise_quality': 19}
-* chance census (offset-position controls): None
-* mechanism per flagged excess: None; ring vetoes: None
+* chance census (offset-position controls): {'status': 'NO_CONTROLS'}
+* mechanism per flagged excess: {'cool_companion_photosphere': 3861, 'blend_or_misregistered_wise_source': 507, 'photometry_ledger_rule': 155, 'background_source_chance_superposition': 145, 'wd_dust_disk_locus': 23, 'warm_ambiguous_or_unfit': 3}; ring vetoes: {}
 
 ## Pulsars
 
@@ -52,13 +52,13 @@ Generated 2026-09-24T16:59:27Z by run `36016037098`. Leg provenance (the run who
 
 * targets: 232; with NEOWISE epochs: 95; tested (>= min epochs): 60
 * population W2 reduced-chi2 median: 3.3818401417183743; threshold 10.145520425155123
-* duty-cycle flags: **4**
+* duty-cycle flags: **1**
 * coverage: 0.409 -- DEGRADED: 95/232 targets with epochs
 
-  * `WISEPA J074457.15+562821.8` T8: n=16, chi2_red=10.3, amp=0.61 mag, high-state fraction 0.5625
-  * `WISEPC J121756.91+162640.2AB` T9: n=9, chi2_red=19.9, amp=0.18 mag, high-state fraction 0.4444444444444444
-  * `WISEPA J154151.66-225025.2` Y1: n=16, chi2_red=22.6, amp=0.43 mag, high-state fraction 0.625
   * `WISE J210200.15-442919.5` T9: n=11, chi2_red=13.3, amp=0.38 mag, high-state fraction 0.6363636363636364
+  * vetoed `WISEPA J074457.15+562821.8` T8: chi2_red=10.34290998471647, amp=0.6119999885559064 mag, W1-W2=1.559815947842294, pm_known=True -> colour_not_the_target
+  * vetoed `WISEPC J121756.91+162640.2AB` T9: chi2_red=19.924448229225284, amp=0.17849969863891602 mag, W1-W2=3.304077577591956, pm_known=True -> detection_limited_series
+  * vetoed `WISEPA J154151.66-225025.2` Y1: chi2_red=22.625207941000404, amp=0.43199968338012695 mag, W1-W2=1.8112983099130116, pm_known=True -> colour_not_the_target
   * vetoed `WISE J163940.86-684744.6` Y0pec: chi2_red=13.091026692922402, amp=0.8284997940063477 mag, W1-W2=-0.04028476517530244, pm_known=True -> colour_not_the_target
 
 ## Free-floating planetary-mass objects: hotter than cooling allows

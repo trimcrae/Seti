@@ -268,6 +268,8 @@ def run_controls(conf: dict, fetchers: dict | None = None) -> dict:
                     rec = f["gaia_alert"](ctrl["gaia_alert"])
                 elif s == "asassn":
                     rec = f["asassn"](ra, dec)
+                    if rec.get("status") == "FAILED":       # Sky Patrol is bursty: one retry
+                        rec = f["asassn"](ra, dec)
                 else:
                     continue
             except Exception as exc:                    # noqa: BLE001
@@ -561,6 +563,20 @@ def run_shard(conf: dict, idir: Path, out: Path, i: int, n: int, *, ztf_fetch=No
     flush()
     rep["ztf"] = zlog
     rep["ztf_elapsed_s"] = round(_time.monotonic() - t0, 1)
+    # completeness: the budget is spent down the W2-prescore list
+    att = set(pd.read_csv(stat_p, dtype={"source_id": str})["source_id"].astype(str)) \
+        if stat_p.exists() else set()
+    ps = targets.set_index("source_id")["ir_prescore"]
+    reached = ps[ps.index.isin(att)]
+    missed = ps[~ps.index.isin(att)]
+    rep["completeness"] = {
+        "n_targets": int(len(ps)), "n_attempted": int(len(reached)),
+        "min_prescore_attempted": float(reached.min()) if len(reached) else None,
+        "max_prescore_not_attempted": float(missed.max()) if missed.notna().any() else None,
+        "n_prescore_ge_3": int((ps >= 3).sum()),
+        "n_prescore_ge_3_attempted": int((reached >= 3).sum()),
+        "n_prescore_ge_2": int((ps >= 2).sum()),
+        "n_prescore_ge_2_attempted": int((reached >= 2).sum())}
     # --- per-shard null and injections over every evaluated star ------------
     packs = build_packs(out, tag, eps_c, meta_by)
     rep["n_packs"] = len(packs)
@@ -827,7 +843,14 @@ def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
             "coverage": {"shards_expected": n, "shards_found": len(found & expected),
                          "parent": "IGNITION tiles parent (Gaia DR3 G<14.5 dwarfs, plx>3 mas, "
                                    "|b|>15, AllWISE-photospheric), ZTF dec >= -31",
-                         "ensemble": [s.get("ensemble", {}).get("frac_epochs_fine") for s in shards]},
+                         "ensemble": [s.get("ensemble", {}).get("frac_epochs_fine") for s in shards],
+                         # every star with a W2 prescore above this was ZTF-tested, in every shard
+                         "complete_above_w2_prescore": max(
+                             [c for c in ((s.get("completeness") or {})
+                                          .get("max_prescore_not_attempted") for s in shards)
+                              if c is not None], default=None),
+                         "completeness_by_shard": {s.get("shard"): s.get("completeness")
+                                                   for s in shards}},
             "null": {"n_stars": null_stars, "n_rounds_pair": pair_rounds,
                      "pair_coupled_per_round": pc,
                      "pair_coupled_mean": float(np.mean(pc)) if pc else None,

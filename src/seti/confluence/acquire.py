@@ -49,6 +49,10 @@ def gaia_query(adql: str, upload: pd.DataFrame | None = None, name: str = "t",
             fn = Gaia.launch_job if sync else Gaia.launch_job_async
             kw = {"upload_resource": up, "upload_table_name": name} if up is not None else {}
             df = _lower(fn(adql, **kw).get_results().to_pandas())
+            if sync and len(df) in (2000, 3000, 50000):
+                # the anonymous synchronous endpoint silently caps its rows;
+                # a result exactly at a cap is a truncation, never a parent
+                raise RuntimeError(f"sync result truncated at {len(df)} rows")
             if ledger is not None:
                 ledger.append({"label": label, "attempt": a + 1, "ok": True, "rows": len(df),
                                "sync": sync, "s": round(time.time() - t0, 1)})
@@ -119,11 +123,24 @@ def _chunked(frame: pd.DataFrame, size: int, fn: Callable[[pd.DataFrame], pd.Dat
 # ---------------------------------------------------------------------------
 
 
-def fetch_accel_nss(ledger: list) -> pd.DataFrame:
-    q = ("SELECT a.source_id, a.significance, a.nss_solution_type, g.ra, g.dec "
-         "FROM gaiadr3.nss_acceleration_astro AS a "
-         "JOIN gaiadr3.gaia_source AS g USING (source_id)")
-    return gaia_query(q, ledger=ledger, label="nss_acceleration_astro")
+def fetch_accel_nss(ledger: list, n_chunks: int = 12) -> pd.DataFrame:
+    """The whole table, in source_id ranges, with no join.
+
+    Run 36006344044 asked for it joined to gaia_source in one async job: the
+    ESA archive worked on it for 7,225 s twice and returned HTTP 500 ("results
+    is null"), and the sync fallback came back with exactly 2,000 rows -- the
+    anonymous sync cap, i.e. a truncation.  Positions are not needed (ACCEL
+    rows are keyed on source_id), so there is no join, and the table goes in
+    ranges so one slow slice costs one slice.
+    """
+    edges = np.linspace(0, 6.917528443525529e18, n_chunks + 1).astype(np.int64)
+    parts = []
+    for lo, hi in zip(edges[:-1], edges[1:], strict=True):
+        q = ("SELECT source_id, significance, nss_solution_type "
+             "FROM gaiadr3.nss_acceleration_astro "
+             f"WHERE source_id >= {int(lo)} AND source_id < {int(hi)}")
+        parts.append(gaia_query(q, ledger=ledger, label=f"nss_acceleration_astro[{lo}]"))
+    return pd.concat(parts, ignore_index=True)
 
 
 COV_QUERY = """

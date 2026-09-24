@@ -495,3 +495,35 @@ every count. It is a target list, not evidence: a count at the isotropic
 expectation is what geometry predicts. Dispatched on `claude/handoff-relay`
 with `stage=probe,targets,geometry,recut,assess,targetlist`; the numbers land
 in `targetlist.json`.
+
+### 9.3 What the runner measured (runs 35992222801 → 35993…, re-reduced on run 35745111146's intermediates)
+
+Run 35860719426 died at its 300-min clock: BL's open-data API returned 503 (the
+targets stage fell back to 30,102 VizieR names and spent ~3 h in SIMBAD) and
+every ESA Gaia shell timed out. The workflow now takes `reuse_run_id`, which
+restores only a prior run's parquet intermediates, so `assess,targetlist` ran
+on run 35745111146's sample and pair tables in ~5 min.
+
+* **assess**: `PAIRLINE_MATCHES_AT_CHANCE (14 hit-beam drift matches vs 14.6
+  expected by chance; all RFI-flagged, 0 candidates)` — the parser fixes left
+  88 valid hits (no rank/injection/duplicate rows).
+* **targetlist, first pass**: 13 links at the 100 m beam against 0.55
+  isotropic. A 24× excess is a systematic until shown otherwise, and it was:
+  all 13 were 1–2″ pairs (20–150 AU projected) with Δv_tan 3–5 km/s — orbital
+  motion — and 3–6σ parallax differences, the known close-pair astrometric
+  bias. Bound-consistent pairs (Δv_tan below the escape speed at the projected
+  separation for 2 M☉, +1 km/s) and pairs closer than 4″ are now never ranked.
+* **targetlist, final** (1,320,953 links, median length 2.1 pc):
+
+  | beam | isotropic expectation | rankable links with P ≥ 0.5 | Σ P | transmitter unobserved by BL |
+  |---|---|---|---|---|
+  | 100 m L | 0.55 | **0** | 0.0 | 0 |
+  | 10 m 8 GHz | 1.73 | **0** | 0.0 | 0 |
+  | 10 m L (1.48°) | 54.8 | 28 | 28.5 | 27 |
+  | 5° | 629 | 370 | 380 | 369 |
+
+  Below isotropic everywhere (the exclusions remove ~40 % of links), so the
+  list is geometric coincidence, as expected: no star in 100 pc has a
+  measured nearest-neighbour link that puts Earth inside a 100-m or 8-GHz
+  10-m beam. The 1.48° list (all spillover, links 1.4–2.8 pc, T at 37–65 pc,
+  G = 10–17) is a target list for a wide-beam relay premise, nothing more.

@@ -283,9 +283,13 @@ def harvest(harvest_dir: Path, scores_dir: Path) -> dict:
     harvest_dir, scores_dir = Path(harvest_dir), Path(scores_dir)
     scores_dir.mkdir(parents=True, exist_ok=True)
     report = {"channels": {}}
-    for ch_dir in sorted(p for p in harvest_dir.iterdir() if p.is_dir()) \
-            if harvest_dir.exists() else []:
+    import time as _t
+    dirs = sorted((p for p in harvest_dir.iterdir() if p.is_dir()),
+                  key=lambda p: (p.name == "tailings", p.name)) if harvest_dir.exists() else []
+    for ch_dir in dirs:     # tailings (a full re-reduce) last: slowest
         ch = ch_dir.name
+        t0 = _t.time()
+        print(f"[confluence] harvest {ch}: start", flush=True)
         rec = {"manifest": manifest(ch_dir)}
         fn = EXTRACTORS.get(ch)
         if fn is None:
@@ -301,5 +305,12 @@ def harvest(harvest_dir: Path, scores_dir: Path) -> dict:
                 frame.to_parquet(scores_dir / f"{ch}.parquet", index=False)
                 rec["n_emitted"] = int(len(frame))
                 rec["n_scored"] = int(np.isfinite(frame["score"].to_numpy(float)).sum())
+        rec["elapsed_s"] = round(_t.time() - t0, 1)
         report["channels"][ch] = rec
+        print(f"[confluence] harvest {ch}: {rec.get('status')} emitted={rec.get('n_emitted')} "
+              f"({rec['elapsed_s']} s)", flush=True)
+        # partial report after every channel, so a killed step still says what it did
+        (scores_dir / "_harvest_partial.json").write_text(
+            json.dumps({k: {kk: vv for kk, vv in v.items() if kk != "manifest"}
+                        for k, v in report["channels"].items()}, default=str, indent=1))
     return report

@@ -520,8 +520,11 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
     tests = pd.concat([tests, resid], ignore_index=True)
 
     # --- members + trace ----------------------------------------------------
-    sig = tested[(tested["q_bh"] < 0.05) | (tested["p_value"] < 0.01)] \
-        if "q_bh" in tested else tested.iloc[0:0]
+    # significance is after the trials factor (BH over every test), never raw p
+    sig = tested[tested["q_bh"] < 0.05] if "q_bh" in tested else tested.iloc[0:0]
+    summary["nominal_p_lt_0.01_before_trials"] = tested[tested["p_value"] < 0.01][
+        ["channels", "mode", "n_joint", "observed", "expected", "p_value", "q_bh"]
+    ].to_dict("records")
     all_members = []
     for m in tested["members"].dropna():
         all_members += [x for x in str(m).split(";") if x]
@@ -545,7 +548,10 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
     summary["significant_groups"] = sig[["channels", "mode", "n_joint", "observed", "expected",
                                          "ratio", "p_value", "q_bh"]].to_dict("records") \
         if len(sig) else []
-    summary["n_residual_significant"] = int(((rs["p_value"] < 0.01)).sum()) if len(rs) else 0
+    if len(rs):
+        from .stats import benjamini_hochberg
+        rs = rs.assign(q_bh=benjamini_hochberg(rs["p_value"].to_numpy(float)))
+    summary["n_residual_significant"] = int((rs["q_bh"] < 0.05).sum()) if len(rs) else 0
     summary["n_members"] = int(len(tr))
     summary["n_residual_members"] = int(len(resid_tr))
     summary["residual_trace_verdicts"] = resid_tr["trace_verdict"].str.split(":").str[0] \

@@ -244,6 +244,13 @@ def reduce_survey(
     for el in Z.columns:
         joined[f"z_{el}"] = Z[el].to_numpy()
 
+    # Per-star scores over the WHOLE parent (science-neutral: nothing below
+    # reads it).  CONFLUENCE needs every star's z_max, not only the survivors,
+    # to ask whether this channel's tail shares stars with other channels'.
+    ps_cols = [c for c in ("star_id", "ra", "dec", "z_max", "z_max_signed", "element_max",
+                           "n_discrepant", "classification") if c in joined.columns]
+    joined[ps_cols].to_parquet(out_dir / f"per_star_{survey.lower()}.parquet", index=False)
+
     cand = joined[joined["classification"] == S.SPARSE].copy()
     n_sparse = int(len(cand))
 

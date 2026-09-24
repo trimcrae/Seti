@@ -201,11 +201,18 @@ def stage_probe(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap) -
             rep["datamodel"] = {"members": parsed["members"],
                                 "tables_mentioned": {k: v["mentions"] for k, v in parsed["tables"].items()}}
             # every reader role checked against the announced identifiers
-            from .schema import ASTRO_ROLES, PHOT_ROLES, resolve
+            from .schema import ASTRO_REQUIRED, ASTRO_ROLES, PHOT_REQUIRED, PHOT_ROLES, resolve
 
             idents = sorted({i for v in parsed["tables"].values() for i in v["identifiers"]})
-            rep["datamodel"]["phot_roles_resolved"] = resolve(idents, PHOT_ROLES).mapping
-            rep["datamodel"]["astro_roles_resolved"] = resolve(idents, ASTRO_ROLES).mapping
+            win = parsed.get("table_windows") or {}
+            ph_ids = win.get("epoch_photometry") or idents
+            as_ids = win.get("epoch_astrometry") or idents
+            rep["datamodel"]["pdf_text_chars"] = parsed.get("pdf_text_chars")
+            rep["datamodel"]["phot_roles_resolved"] = resolve(ph_ids, PHOT_ROLES).mapping
+            rep["datamodel"]["phot_required_missing"] = resolve(ph_ids, PHOT_ROLES, PHOT_REQUIRED).missing
+            rep["datamodel"]["astro_roles_resolved"] = resolve(as_ids, ASTRO_ROLES).mapping
+            rep["datamodel"]["astro_required_missing"] = resolve(as_ids, ASTRO_ROLES, ASTRO_REQUIRED).missing
+            rep["datamodel"]["epoch_photometry_identifiers"] = ph_ids[:400]
             _write(out / "dr4_datamodel.json", {**_provenance(), **parsed})
         except Exception as exc:  # noqa: BLE001
             rep["datamodel"] = {"error": repr(exc)[:400]}

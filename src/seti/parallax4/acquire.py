@@ -58,13 +58,15 @@ def http_get(url: str, *, timeout: float = 120.0, retries: int = 4, stream_to: P
     errors and 5xx; a 404 is returned, not raised (DR4 absence IS a 404)."""
     import requests
 
+    hdr = {"User-Agent": "seti-parallax4/1.0 (+https://github.com/trimcrae/Seti)"}
     last: Exception | None = None
     for attempt in range(retries):
         try:
             if method == "HEAD":
-                r = requests.head(url, timeout=timeout, allow_redirects=True)
+                r = requests.head(url, timeout=timeout, allow_redirects=True, headers=hdr)
                 return r.status_code, None
-            with requests.get(url, timeout=timeout, params=params, stream=stream_to is not None) as r:
+            with requests.get(url, timeout=timeout, params=params, stream=stream_to is not None,
+                              headers=hdr) as r:
                 if r.status_code >= 500:
                     raise RuntimeError(f"HTTP {r.status_code}")
                 if stream_to is not None and r.status_code == 200:
@@ -156,20 +158,29 @@ def probe_dr4(*, tap=gaia_tap, http=http_get) -> dict:
             rep["checks"]["tap_schemas"]["dr4_tables"] = sorted(str(x) for x in t.get("table_name", []))
     except Exception as exc:  # noqa: BLE001
         rep["checks"]["tap_schemas"] = {"ok": False, "error": repr(exc)[:400]}
+    # The CDN `gdr4/` directory EXISTS before release (run 36007202395 got
+    # HTTP 200 on 2026-09-24, ten weeks early), so a 200 is not evidence of
+    # DR4.  What would be: epoch-product subdirectories in its listing.
     try:
-        st, _ = http(CDN_GDR4, timeout=60.0, retries=2, method="HEAD")
-        rep["checks"]["cdn_gdr4"] = {"ok": True, "status": int(st)}
+        st, body = http(CDN_GDR4, timeout=60.0, retries=2)
+        entries = sorted(set(re.findall(r'href="([^"?/][^"]*)"', (body or b"").decode("utf-8", "replace"))))
+        epochish = [e for e in entries if re.search(r"(?i)epoch|astrometry|photometry", e)]
+        rep["checks"]["cdn_gdr4"] = {"ok": True, "status": int(st), "entries": entries[:60],
+                                     "epoch_entries": epochish}
     except Exception as exc:  # noqa: BLE001
         rep["checks"]["cdn_gdr4"] = {"ok": False, "error": repr(exc)[:300]}
     tap_ok = rep["checks"]["tap_schemas"].get("ok")
-    dr4_tap = bool(rep["checks"]["tap_schemas"].get("dr4_schemas"))
+    dr4_tables = rep["checks"]["tap_schemas"].get("dr4_tables") or []
+    dr4_tap = bool(rep["checks"]["tap_schemas"].get("dr4_schemas")) and (
+        not dr4_tables or any("epoch" in t.lower() or "gaia_source" in t.lower() for t in dr4_tables))
     cdn = rep["checks"].get("cdn_gdr4", {})
-    dr4_cdn = cdn.get("ok") and cdn.get("status") == 200
+    dr4_cdn = bool(cdn.get("ok") and cdn.get("status") == 200 and cdn.get("epoch_entries"))
+    rep["signals"] = {"tap_dr4_schema": dr4_tap, "cdn_epoch_products": dr4_cdn}
     if dr4_tap or dr4_cdn:
         rep["verdict"] = "DR4_AVAILABLE"
     elif tap_ok and rep["checks"]["tap_schemas"].get("has_gaiadr3"):
         rep["verdict"] = "DR4_NOT_RELEASED"
-    elif cdn.get("ok") and cdn.get("status") in (403, 404):
+    elif cdn.get("ok") and cdn.get("status") in (200, 403, 404):
         rep["verdict"] = "DR4_NOT_RELEASED"
     else:
         rep["verdict"] = "ARCHIVE_UNREACHABLE"
@@ -186,9 +197,15 @@ _HREF = re.compile(r'href="(EpochPhotometry_[0-9]+-[0-9]+\.csv\.gz)"')
 def list_cdn_files(*, http=http_get, base: str = CDN_EPOCH_PHOT) -> dict:
     st, body = http(base, timeout=120.0)
     if st != 200 or body is None:
-        return {"ok": False, "status": st, "files": []}
+        return {"ok": False, "status": st, "files": [],
+                "head": (body or b"")[:600].decode("utf-8", "replace")}
     txt = body.decode("utf-8", "replace")
     files = sorted(set(_HREF.findall(txt)))
+    if not files:
+        # a spelling we did not anticipate: take any csv.gz the listing names
+        files = sorted(set(re.findall(r'href="([^"?/][^"]*\.csv\.gz)"', txt)))
+    if not files:
+        return {"ok": False, "status": st, "files": [], "head": txt[:1500], "n_bytes": len(txt)}
     md5 = {}
     if "_MD5SUM.txt" in txt:
         try:
@@ -410,6 +427,28 @@ def fetch_prerelease(dest_dir: Path, *, http=http_get) -> dict:
     return rep
 
 
+def pdf_text(data: bytes) -> str:
+    """Text of a PDF: pypdf if installed, else poppler's pdftotext, else ''."""
+    try:
+        from pypdf import PdfReader
+
+        rd = PdfReader(io.BytesIO(data))
+        return "\n".join((pg.extract_text() or "") for pg in rd.pages)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        import subprocess
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as fh:
+            fh.write(data)
+            fh.flush()
+            return subprocess.run(["pdftotext", "-layout", fh.name, "-"], capture_output=True,
+                                  text=True, timeout=300).stdout
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 _COLNAME = re.compile(r"\b([a-z][a-z0-9]*(?:_[a-z0-9]+)+)\b")
 
 
@@ -424,17 +463,33 @@ def parse_datamodel(zip_path: Path) -> dict:
         for info in z.infolist():
             out["members"].append({"name": info.filename, "bytes": info.file_size})
             low = info.filename.lower()
-            if not low.endswith((".html", ".htm", ".txt", ".csv", ".xml", ".json", ".tex", ".md")):
-                continue
-            try:
-                txt = z.read(info.filename).decode("utf-8", "replace")
-            except Exception:  # noqa: BLE001
+            if low.endswith(".pdf"):
+                txt = pdf_text(z.read(info.filename))
+                out["pdf_text_chars"] = len(txt)
+                if txt:
+                    out["pdf_text_path"] = str(Path(zip_path).with_suffix(".txt"))
+                    Path(out["pdf_text_path"]).write_text(txt)
+            elif low.endswith((".html", ".htm", ".txt", ".csv", ".xml", ".json", ".tex", ".md")):
+                try:
+                    txt = z.read(info.filename).decode("utf-8", "replace")
+                except Exception:  # noqa: BLE001
+                    continue
+            else:
                 continue
             txt_plain = re.sub(r"<[^>]+>", " ", txt)
+            ids_all = sorted(set(_COLNAME.findall(txt_plain)))
+            out["tables"].setdefault(info.filename, {"mentions": [], "identifiers": ids_all[:8000]})
+            # per epoch table: the identifiers in the text that follows each
+            # mention of its name (a data-model section lists its columns
+            # right after its heading); unioned over mentions
             for key in ("epoch_photometry", "epoch_astrometry", "epoch_radial_velocity",
-                        "epoch_rv", "sso_observation", "vari_", "gaia_source"):
-                if key in low or key in txt_plain[:20000]:
-                    ids = sorted(set(_COLNAME.findall(txt_plain)))
-                    out["tables"].setdefault(info.filename, {"mentions": [], "identifiers": ids[:4000]})
-                    out["tables"][info.filename]["mentions"].append(key)
+                        "epoch_rv", "epoch_xp", "epoch_rvs", "sso_observation", "gaia_source"):
+                pos = [m.start() for m in re.finditer(re.escape(key), txt_plain)]
+                if not pos and key not in low:
+                    continue
+                out["tables"][info.filename]["mentions"].append(key)
+                win: set[str] = set()
+                for p0 in pos[:40]:
+                    win |= set(_COLNAME.findall(txt_plain[p0:p0 + 6000]))
+                out.setdefault("table_windows", {})[key] = sorted(win)[:3000]
     return out

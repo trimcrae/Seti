@@ -610,3 +610,15 @@ def test_dr4_controls_list_is_built_from_gaia_vims_and_clean_ebs(tmp_path):
     assert set(d.loc[d["role"] == "VIM_POSITIVE", "source_id"]) == {1, 2}
     assert "vim_d_ra" in d.columns
     assert R.build_dr4_controls(tmp_path / "x", tap=_dead_tap)["status"] == "UNREACHABLE"
+
+
+def test_dr4_probe_is_not_fooled_by_an_empty_cdn_directory():
+    """Run 36007202395 (2026-09-24): the CDN `gdr4/` directory answered 200
+    ten weeks before release and the probe called DR4 available.  A 200 with
+    no epoch products in the listing is not DR4."""
+    tap = lambda q, **k: pd.DataFrame({"schema_name": ["gaiadr3", "gaiafpr"]})  # noqa: E731
+    body = b'<a href="../">../</a><a href="README.txt">README.txt</a>'
+    rep = acq.probe_dr4(tap=tap, http=lambda url, **k: (200, body))
+    assert rep["verdict"] == "DR4_NOT_RELEASED"
+    body2 = b'<a href="Astrometry/">Astrometry/</a><a href="epoch_photometry/">epoch_photometry/</a>'
+    assert acq.probe_dr4(tap=tap, http=lambda url, **k: (200, body2))["verdict"] == "DR4_AVAILABLE"

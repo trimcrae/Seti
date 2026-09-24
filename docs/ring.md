@@ -303,7 +303,18 @@ superseded by run 35864331050. New legs:
   a blend in a stale cone, not the brown dwarf. Vetted out
   (`colour_not_the_target`, `proper_motion_not_propagated` now coded).
   Numeric type codes are read, shards fetch their own targets, and the
-  NEOWISE cones run as a 6-shard matrix (run 35992172700).
+  NEOWISE cones run as a 6-shard matrix.
+
+**Run 35992172700 (sharded, 2026-09-24 11:17 UTC)**: all legs and the six
+NEOWISE shards finished (each shard in ~20 min, well under budget), but the
+assess job hung in the white-dwarf follow-up — an async Gaia neighbour cone
+with no timeout — and had written nothing after three hours. The follow-up is
+now bounded (60 s per cone, 2,400 s loop, 900 s SIMBAD; unreached rows are
+`blend_untested`, never passed). Its bd shards still used the
+proper-motion-less fallback list (the 20 pc census again yielded no ≥ T6
+row), so proper-motion-less targets now adopt CatWISE2020 positions and
+motions, and the raw type values are recorded to settle the census parsing.
+Run 36016037098 carries all of it plus main's single-target-list handoff.
 
 A note on the brown-dwarf leg's scope: it tests *W2 variability* (a duty
 cycle), not a static W1/W2 excess. The static test would be wrong here as

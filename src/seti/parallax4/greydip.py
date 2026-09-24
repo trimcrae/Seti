@@ -106,21 +106,44 @@ def _wmean(x, s):
     return float(np.sum(w[m] * x[m]) / np.sum(w[m])), float(1.0 / np.sqrt(np.sum(w[m])))
 
 
-def grey_test(dg, sg, db, sb, dr, sr, cfg: GreyConfig) -> dict:
-    """Is (dg, db, dr) one achromatic fractional change?"""
+def grey_test(dg, sg, db, sb, dr, sr, cfg: GreyConfig, *, s_col: float | None = None,
+              s_gmb: float | None = None) -> dict:
+    """Is (dg, db, dr) one achromatic fractional change?
+
+    With ``s_col`` / ``s_gmb`` (the star's OWN single-transit robust scatter
+    of delta_BP - delta_RP and of delta_G - (delta_BP + delta_RP)/2, measured
+    on all its usable transits) the test is run on those two colour
+    combinations, which grey means are both zero, against the star's
+    empirical colour noise -- measurement error, intrinsic chromatic
+    variability and calibration together.  Run 36019508284 showed why: with
+    measurement errors alone, grey dips injected into real variable stars
+    were called chromatic 13% of the time, because the star's own colour at
+    that epoch is not its median colour.  Used without the division by the
+    number of episode transits (conservative: it can only widen the ratio
+    error, and GREY needs that error <= ``ratio_err_max``).
+
+    Without them (unit tests, or too few transits), the fallback is the
+    measurement-error chi^2 on the three depths."""
     d = np.array([dg, db, dr], float)
     s = np.sqrt(np.array([sg, sb, sr], float) ** 2 + cfg.calib_floor ** 2)
     out = {"depth_common": np.nan, "chi2_grey": np.nan, "p_grey": np.nan,
            "ratio_bp_rp": np.nan, "ratio_err": np.nan, "grey_class": "NO_COLOUR",
-           "ratio_vs_dust_sigma": np.nan}
+           "ratio_vs_dust_sigma": np.nan, "grey_mode": "measurement"}
     if not np.all(np.isfinite(d)) or not np.all(np.isfinite(s)):
         return out
     w = 1.0 / s ** 2
     m = float(np.sum(w * d) / np.sum(w))
-    chi2 = float(np.sum(w * (d - m) ** 2))
-    p = float(np.exp(-0.5 * chi2))                       # chi^2 survival, 2 dof
     ratio = db / dr if dr != 0 else np.nan
-    rerr = abs(ratio) * np.sqrt((s[1] / db) ** 2 + (s[2] / dr) ** 2) if db != 0 and dr != 0 else np.inf
+    if s_col is not None and s_gmb is not None and np.isfinite(s_col) and np.isfinite(s_gmb):
+        s1 = float(np.hypot(s_col, cfg.calib_floor))
+        s2 = float(np.hypot(s_gmb, cfg.calib_floor))
+        chi2 = float(((db - dr) / s1) ** 2 + ((dg - 0.5 * (db + dr)) / s2) ** 2)
+        rerr = s1 / abs(dr) if dr != 0 else np.inf
+        out["grey_mode"] = "empirical_colour"
+    else:
+        chi2 = float(np.sum(w * (d - m) ** 2))
+        rerr = abs(ratio) * np.sqrt((s[1] / db) ** 2 + (s[2] / dr) ** 2) if db != 0 and dr != 0 else np.inf
+    p = float(np.exp(-0.5 * chi2))                       # chi^2 survival, 2 dof
     out.update(depth_common=m, chi2_grey=chi2, p_grey=p, ratio_bp_rp=float(ratio),
                ratio_err=float(rerr))
     if np.isfinite(ratio) and np.isfinite(rerr) and rerr > 0:
@@ -267,6 +290,16 @@ def detect_source(lc: pd.DataFrame, cfg: GreyConfig | None = None) -> tuple[list
     summary.update(n_ok_bp=int(okb.sum()), n_ok_rp=int(okr.sum()), s_int_bp=sintb, s_int_rp=sintr,
                    mad_g=float(MAD_TO_SIGMA * np.median(np.abs(dg[okg] - np.median(dg[okg])))))
     zg = dg / sgt
+    # the star's own colour noise (see grey_test)
+    okc = okg & okb & okr
+    if okc.sum() >= 8:
+        c1 = db[okc] - dr[okc]
+        c2 = dg[okc] - 0.5 * (db[okc] + dr[okc])
+        s_col = float(MAD_TO_SIGMA * np.median(np.abs(c1 - np.median(c1))))
+        s_gmb = float(MAD_TO_SIGMA * np.median(np.abs(c2 - np.median(c2))))
+    else:
+        s_col = s_gmb = None
+    summary.update(s_col=s_col, s_gmb=s_gmb)
     vrej = lc["vrej_g"].to_numpy() | lc["vrej_bp"].to_numpy() | lc["vrej_rp"].to_numpy()
     nobs = lc["n_obs_g"].to_numpy(dtype=float, copy=True)
     tid = lc["transit_id"].to_numpy()
@@ -291,7 +324,7 @@ def detect_source(lc: pd.DataFrame, cfg: GreyConfig | None = None) -> tuple[list
             colour_ok = (np.isfinite(zb_ep) and np.isfinite(zr_ep)
                          and sign * zb_ep >= cfg.k_colour and sign * zr_ep >= cfg.k_colour)
             if colour_ok:
-                gt = grey_test(mg, smg, mb, smb, mr, smr, cfg)
+                gt = grey_test(mg, smg, mb, smb, mr, smr, cfg, s_col=s_col, s_gmb=s_gmb)
             else:
                 gt = grey_test(np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, cfg)
                 gt["grey_class"] = "G_ONLY" if (len(eb) and len(er)) else "NO_COLOUR"
@@ -341,6 +374,7 @@ def detect_source(lc: pd.DataFrame, cfg: GreyConfig | None = None) -> tuple[list
         e["s_int_g"] = sintg
         e["n_ok_g"] = int(okg.sum())
         e["med_flux_g"] = medg
+        e["s_col"] = s_col
     return events, summary
 
 
@@ -393,7 +427,9 @@ def inject_episode(lc: pd.DataFrame, depth: float, *, ratio_bp_rp: float = 1.0,
     lc = lc.sort_values("t").reset_index(drop=True).copy()
     t = lc["t"].to_numpy(float)
     ok = (np.isfinite(t) & np.isfinite(lc["f_g"].to_numpy(float)) & ~lc["bad_g"].to_numpy()
-          & np.isfinite(lc["f_bp"].to_numpy(float)) & np.isfinite(lc["f_rp"].to_numpy(float)))
+          & np.isfinite(lc["f_bp"].to_numpy(float)) & np.isfinite(lc["f_rp"].to_numpy(float))
+          & ~lc["bad_bp"].to_numpy() & ~lc["bad_rp"].to_numpy()
+          & np.isfinite(lc["e_bp"].to_numpy(float)) & np.isfinite(lc["e_rp"].to_numpy(float)))
     idx = np.nonzero(ok)[0]
     starts = [i for k, i in enumerate(idx[:-n_transits + 1] if n_transits > 1 else idx)
               if n_transits == 1 or (t[idx[k + n_transits - 1]] - t[i]) <= 0.35]

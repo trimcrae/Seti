@@ -327,7 +327,24 @@ def datalink_products(source_ids, *, retrieval_type: str = "EPOCH_PHOTOMETRY",
         params = {"RETRIEVAL_TYPE": retrieval_type, "ID": ",".join(str(s) for s in chunk),
                   "FORMAT": "votable", "RELEASE": release, "DATA_STRUCTURE": "INDIVIDUAL",
                   "VALID_DATA": "false"}
-        st, body = http(DATALINK, params=params, timeout=600.0)
+        try:
+            st, body = http(DATALINK, params=params, timeout=600.0)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[parallax4] DataLink failed ({exc!r}); trying astroquery load_data"[:300], flush=True)
+            st, body = 0, None
+        if (st != 200 or not body) and http is http_get:
+            try:
+                from astroquery.gaia import Gaia
+
+                res = Gaia.load_data(ids=chunk, retrieval_type=retrieval_type, data_release=release.replace(" ", ""),
+                                     data_structure="INDIVIDUAL", format="votable", verbose=False)
+                for key, tabs in (res or {}).items():
+                    m = re.search(r"(\d{6,20})", str(key))
+                    if m and tabs:
+                        out[int(m.group(1))] = tabs[0].to_table() if hasattr(tabs[0], "to_table") else tabs[0]
+            except Exception as exc:  # noqa: BLE001
+                print(f"[parallax4] astroquery load_data failed too: {exc!r}"[:300], flush=True)
+            continue
         if st != 200 or not body:
             continue
         if body[:2] == b"PK":
@@ -404,21 +421,43 @@ def gaia_cone(ra: float, dec: float, radius_arcsec: float, *, tap=gaia_tap) -> p
                f"CIRCLE('ICRS', {ra:.8f}, {dec:.8f}, {r:.8f}))")
 
 
-def varstrometry_samples(*, tap=gaia_tap, n_random_index: int = 20_000_000,
+def varstrometry_samples(*, tap=gaia_tap, n_chunks: int = 6, per_chunk: int = 8000,
                          g_lo: float = 13.0, g_hi: float = 17.5) -> dict[str, pd.DataFrame]:
     """The two DR3 populations for the varstrometry control: eclipsing
     binaries (strong variables) and photometrically quiet stars, each with the
     fields that carry blending (ipd_frac_multi_peak, ipd_gof_harmonic_amplitude)
-    and astrometric jitter (astrometric_excess_noise, ruwe)."""
+    and astrometric jitter (astrometric_excess_noise, ruwe).
+
+    Run 36019508284: one join restricted by random_index over the whole
+    gaia_source did not answer in 900 s.  Here each population is fetched as
+    ``n_chunks`` TOP-limited queries over source_id ranges spread across the
+    sky (source_id carries the HEALPix index, so a range is a sky patch and
+    the planner walks the primary key)."""
     cols = ("g.source_id, g.phot_g_mean_mag, g.bp_rp, g.phot_g_mean_flux_over_error, g.phot_g_n_obs, "
             "g.astrometric_excess_noise, g.ruwe, g.ipd_frac_multi_peak, g.ipd_gof_harmonic_amplitude, "
             "g.visibility_periods_used, g.parallax, g.phot_bp_rp_excess_factor")
-    ecl = tap(f"SELECT {cols} FROM gaiadr3.vari_eclipsing_binary AS v JOIN gaiadr3.gaia_source AS g "
-              f"ON g.source_id = v.source_id WHERE g.phot_g_mean_mag BETWEEN {g_lo} AND {g_hi} "
-              f"AND g.random_index < {int(n_random_index) * 5} AND g.astrometric_params_solved > 3")
-    quiet = tap(f"SELECT {cols} FROM gaiadr3.gaia_source AS g WHERE g.phot_g_mean_mag BETWEEN "
-                f"{g_lo} AND {g_hi} AND g.random_index < {int(n_random_index) // 40} "
-                "AND g.phot_variable_flag = 'NOT_AVAILABLE' AND g.astrometric_params_solved > 3")
+    top = 6917528997577384320
+    ecl_f, quiet_f = [], []
+    for k in range(n_chunks):
+        lo = int(top * (k + 0.5) / n_chunks)
+        hi = lo + int(top / n_chunks / 8)
+        where = (f"g.source_id BETWEEN {lo} AND {hi} AND g.phot_g_mean_mag BETWEEN {g_lo} AND {g_hi} "
+                 "AND g.astrometric_params_solved > 3")
+        try:
+            ecl_f.append(tap(f"SELECT TOP {per_chunk} {cols} FROM gaiadr3.vari_eclipsing_binary AS v "
+                             f"JOIN gaiadr3.gaia_source AS g ON g.source_id = v.source_id "
+                             f"WHERE v.source_id BETWEEN {lo} AND {hi} AND {where}"))
+        except Exception as exc:  # noqa: BLE001
+            print(f"[parallax4] varstrometry ecl chunk {k} failed: {exc!r}"[:300], flush=True)
+        try:
+            quiet_f.append(tap(f"SELECT TOP {per_chunk} {cols} FROM gaiadr3.gaia_source AS g WHERE {where} "
+                               "AND g.phot_variable_flag = 'NOT_AVAILABLE'"))
+        except Exception as exc:  # noqa: BLE001
+            print(f"[parallax4] varstrometry quiet chunk {k} failed: {exc!r}"[:300], flush=True)
+    ecl = pd.concat(ecl_f, ignore_index=True) if ecl_f else pd.DataFrame()
+    quiet = pd.concat(quiet_f, ignore_index=True) if quiet_f else pd.DataFrame()
+    if not len(ecl) or not len(quiet):
+        raise RuntimeError(f"varstrometry samples incomplete: ecl {len(ecl)} quiet {len(quiet)}")
     return {"eclipsing": ecl, "quiet": quiet}
 
 

@@ -168,6 +168,226 @@ def fetch_ztf_many(stars: pd.DataFrame, *, workers: int = 4, budget_s: float = 3
             "not_attempted": not_attempted[:50], "elapsed_s": round(_time.monotonic() - t0, 1)}
 
 
+# ---------------------------------------------------------------------------
+# The batched ZTF route (run 36006324981: the per-star POS query took ~52 s a
+# star per worker -- the API runs a positional TAP query of its own each time --
+# so 11k stars a shard would need ~40 h).  Object ids come from ONE TAP_UPLOAD
+# positional join against IRSA's ZTF objects table per chunk (the transport
+# IGNITION proved for NEOWISE), and light curves from the API's multi-ID form,
+# which skips the positional step.
+# ---------------------------------------------------------------------------
+IRSA_TAP = "https://irsa.ipac.caltech.edu/TAP"
+
+
+def find_ztf_objects_table(run_sync=None) -> dict:
+    """The newest ZTF objects table IRSA's own TAP_SCHEMA lists (never assumed)."""
+    import re
+
+    q = ("SELECT table_name FROM TAP_SCHEMA.tables WHERE "
+         "table_name LIKE '%ztf_objects%'")
+    try:
+        if run_sync is None:
+            import pyvo
+
+            df = pyvo.dal.TAPService(IRSA_TAP).run_sync(q).to_table().to_pandas()
+        else:
+            df = run_sync(q)
+    except Exception as exc:                            # noqa: BLE001
+        return {"status": "FAILED", "error": repr(exc)[:300]}
+    names = [str(x.decode() if isinstance(x, bytes) else x) for x in df.iloc[:, 0]] if len(df) else []
+    ranked = []
+    for n in names:
+        m = re.search(r"dr(\d+)", n)
+        ranked.append((int(m.group(1)) if m else -1, n))
+    if not ranked:
+        return {"status": "CATALOGUE_NOT_FOUND", "names": names}
+    ranked.sort()
+    return {"status": "OK", "table": ranked[-1][1], "names": names}
+
+
+def _ztf_upload_table(stars: pd.DataFrame, radius_arcsec: float):
+    from astropy.table import Table
+
+    ra2, de2, rad = [], [], []
+    for r in stars.to_dict("records"):
+        pmra = float(r.get("pmra") or 0.0) if np.isfinite(float(r.get("pmra") or 0.0)) else 0.0
+        pmde = float(r.get("pmdec") or 0.0) if np.isfinite(float(r.get("pmdec") or 0.0)) else 0.0
+        a, d = _propagate(r["ra"], r["dec"], pmra, pmde, GAIA_EPOCH, ZTF_EPOCH)
+        ra2.append(a)
+        de2.append(d)
+        rad.append(float(radius_arcsec) + 0.5 * np.hypot(pmra, pmde)
+                   * (ZTF_SPAN[1] - ZTF_SPAN[0]) / 1000.0)
+    t = Table()
+    t["sid"] = np.arange(len(stars), dtype="int64")
+    t["ra"] = np.asarray(ra2, float)
+    t["dec"] = np.asarray(de2, float)
+    return t, np.asarray(rad, float)
+
+
+def match_oids(rows: pd.DataFrame, stars: pd.DataFrame, radii) -> dict:
+    """Per star and filter, the object id with the most good epochs within its radius (pure)."""
+    out: dict = {}
+    if rows is None or not len(rows):
+        return out
+    d = rows.copy()
+    d.columns = [str(c).lower() for c in d.columns]
+    for c in ("sid", "ngoodobsrel", "ra", "dec", "ra_p", "dec_p"):
+        if c in d:
+            d[c] = pd.to_numeric(d[c], errors="coerce")
+    d["sep"] = 3600.0 * np.hypot((d["ra"] - d["ra_p"]) * np.cos(np.radians(d["dec_p"])),
+                                 d["dec"] - d["dec_p"])
+    ids = stars["source_id"].astype(str).to_numpy()
+    for (k, flt), g in d.groupby(["sid", "filtercode"]):
+        k = int(k)
+        if k < 0 or k >= len(ids):
+            continue
+        g = g[g["sep"] <= float(radii[k]) + 1e-6]
+        if not len(g):
+            continue
+        band = {"zg": "g", "zr": "r", "zi": "i"}.get(str(flt).strip(), str(flt).strip())
+        if band not in ("g", "r"):
+            continue
+        g = g.sort_values(["ngoodobsrel", "sep"], ascending=[False, True])
+        out.setdefault(ids[k], {})[band] = str(int(g["oid"].iloc[0]))
+    return out
+
+
+def parse_ztf_multi(text: str) -> dict:
+    """Multi-ID light-curve CSV -> ``{oid: {"mjd","mag","err","filtercode"}}`` (catflags == 0)."""
+    df = pd.read_csv(io.StringIO(text))
+    out: dict = {}
+    if not len(df) or "oid" not in df:
+        return out
+    if "catflags" in df:
+        df = df[pd.to_numeric(df["catflags"], errors="coerce") == 0]
+    for oid, g in df.groupby("oid"):
+        mjd = pd.to_numeric(g["mjd"], errors="coerce").to_numpy(float)
+        mag = pd.to_numeric(g["mag"], errors="coerce").to_numpy(float)
+        err = pd.to_numeric(g["magerr"], errors="coerce").to_numpy(float)
+        ok = np.isfinite(mjd) & np.isfinite(mag)
+        out[str(int(oid))] = {"mjd": mjd[ok], "mag": mag[ok], "err": err[ok],
+                              "filtercode": str(g["filtercode"].iloc[0]) if "filtercode" in g
+                              else ""}
+    return out
+
+
+def fetch_ztf_ids(oids: list[str], timeout_s: float = 180.0, retries: int = 2,
+                  session=None) -> dict:
+    import requests
+
+    s = session or requests
+    qs = "&".join(f"ID={o}" for o in oids)
+    url = f"{ZTF_API}?{qs}&BAD_CATFLAGS_MASK=32768&FORMAT=csv"
+    last = None
+    for k in range(int(retries) + 1):
+        try:
+            r = s.get(url, timeout=timeout_s)
+            if r.status_code in (429, 500, 502, 503, 504):
+                raise RuntimeError(f"HTTP {r.status_code}")
+            r.raise_for_status()
+            return {"status": "OK", "lcs": parse_ztf_multi(r.text)}
+        except Exception as exc:                        # noqa: BLE001
+            last = repr(exc)[:300]
+            _time.sleep(3.0 * (k + 1))
+    return {"status": "FAILED", "error": last}
+
+
+def fetch_ztf_batched(stars: pd.DataFrame, *, table: str, workers: int = 4,
+                      budget_s: float = 3600.0, chunk: int = 400, ids_per_request: int = 40,
+                      radius_arcsec: float = 1.5, bright_limit: float = 12.5,
+                      on_result=None, upload_fn=None, ids_fn=None) -> dict:
+    """ZTF g/r for every star via upload-join ids + multi-ID light curves."""
+    from ..ignition.acquire import _t_http_sync, _t_pyvo_sync
+
+    t0 = _time.monotonic()
+    counts: dict = {}
+    ledger: list = []
+    n_done = 0
+    rows = stars.reset_index(drop=True)
+    q = (f"SELECT p.sid, p.ra AS ra_p, p.dec AS dec_p, o.oid, o.ra, o.dec, o.filtercode, "
+         f"o.ngoodobsrel FROM {table} AS o, TAP_UPLOAD.pos AS p WHERE "
+         f"1 = CONTAINS(POINT('ICRS', o.ra, o.dec), CIRCLE('ICRS', p.ra, p.dec, {{r}}))")
+    import requests
+
+    sess = requests.Session()
+    for c0 in range(0, len(rows), int(chunk)):
+        if _time.monotonic() - t0 > budget_s:
+            break
+        sub = rows.iloc[c0:c0 + int(chunk)].reset_index(drop=True)
+        tbl, radii = _ztf_upload_table(sub, radius_arcsec)
+        qq = q.replace("{r}", f"{float(radii.max()) / 3600.0:.9f}")
+        ta = _time.monotonic()
+        got, err = None, None
+        fns = [upload_fn] if upload_fn else [_t_pyvo_sync, _t_http_sync]
+        for fn in fns:
+            try:
+                got = fn(qq, tbl, 900.0)
+                break
+            except Exception as exc:                    # noqa: BLE001
+                err = repr(exc)[:300]
+        led = {"chunk": c0, "n_stars": len(sub), "upload_s": round(_time.monotonic() - ta, 1),
+               "n_rows": None if got is None else int(len(got)), "error": err}
+        if got is None and c0 == 0 and not counts:
+            # the route itself does not work (table/columns/transport): say so
+            # and let the caller fall back, rather than failing every star
+            ledger.append(led)
+            return {"counts": counts, "route_failed": True, "error": err, "ledger": ledger,
+                    "elapsed_s": round(_time.monotonic() - t0, 1), "route": "batched",
+                    "table": table, "n_not_attempted": int(len(rows))}
+        if got is None:
+            for sid in sub["source_id"].astype(str):
+                rec = {"status": "FAILED", "error": f"upload: {err}"}
+                counts["FAILED"] = counts.get("FAILED", 0) + 1
+                if on_result:
+                    on_result(sid, rec)
+            ledger.append(led)
+            continue
+        omap = match_oids(got, sub, radii)
+        all_ids = sorted({o for v in omap.values() for o in v.values()})
+        lcs: dict = {}
+        failed_ids: set = set()
+        tb = _time.monotonic()
+        batches = [all_ids[k:k + int(ids_per_request)]
+                   for k in range(0, len(all_ids), int(ids_per_request))]
+        fetch = ids_fn or (lambda ids: fetch_ztf_ids(ids, session=sess))
+        with ThreadPoolExecutor(max_workers=max(int(workers), 1)) as ex:
+            for ids, res in zip(batches, ex.map(fetch, batches), strict=False):
+                if res.get("status") == "OK":
+                    lcs.update(res.get("lcs") or {})
+                else:
+                    failed_ids.update(ids)
+        led.update({"n_oids": len(all_ids), "lc_s": round(_time.monotonic() - tb, 1),
+                    "n_batches": len(batches), "n_failed_ids": len(failed_ids)})
+        ledger.append(led)
+        print(f"[antiphase] ztf chunk {c0}: {len(sub)} stars, {led['n_rows']} object rows, "
+              f"{len(all_ids)} oids, upload {led['upload_s']} s, lcs {led['lc_s']} s, "
+              f"failed ids {len(failed_ids)}", flush=True)
+        for sid in sub["source_id"].astype(str):
+            m = omap.get(sid, {})
+            if not m:
+                rec = {"status": "NO_ROWS"}
+            elif any(o in failed_ids for o in m.values()):
+                rec = {"status": "FAILED", "error": "light-curve batch failed"}
+            else:
+                bands = {}
+                for b, o in m.items():
+                    v = lcs.get(o)
+                    if v is None or not len(v["mjd"]):
+                        continue
+                    med = float(np.median(v["mag"]))
+                    bands[b] = {"mjd": v["mjd"], "mag": v["mag"], "err": v["err"], "oid": o,
+                                "n": int(len(v["mjd"])), "median_mag": med,
+                                "saturation_risk": bool(med < bright_limit)}
+                rec = {"status": "OK", "bands": bands} if bands else {"status": "NO_ROWS"}
+            counts[rec["status"]] = counts.get(rec["status"], 0) + 1
+            n_done += 1
+            if on_result:
+                on_result(sid, rec)
+    return {"counts": counts, "n_not_attempted": int(len(rows) - sum(counts.values())),
+            "elapsed_s": round(_time.monotonic() - t0, 1), "ledger": ledger[:400],
+            "route": "batched", "table": table}
+
+
 def neowise_epochs_cone(ra: float, dec: float, pmra: float = 0.0, pmdec: float = 0.0,
                         radius_arcsec: float = 2.5) -> tuple[pd.DataFrame, dict]:
     """IGNITION's NEOWISE cone -> (epoch table, status record) for one object."""

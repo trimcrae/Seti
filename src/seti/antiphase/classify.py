@@ -256,7 +256,9 @@ def final_verdict(coupling: dict, energy: dict | None, natural: dict, blend: dic
     if lab != "COUPLED":
         return {"verdict": lab, "natural_class": None, "untested": untested, "reasons": []}
     reasons: list[str] = []
-    for f in ("YSO_DIPPER", "RCRB_LIKE", "LPV", "EB_DUSTY_DISK"):
+    # luminosity/periodicity classes first: an R CrB star or a Mira also
+    # carries the pre-existing IR excess that the YSO test keys on
+    for f in ("RCRB_LIKE", "LPV", "EB_DUSTY_DISK", "YSO_DIPPER"):
         if f in natural.get("flags", []):
             reasons.append(f)
     chroma = str(coupling.get("chroma"))

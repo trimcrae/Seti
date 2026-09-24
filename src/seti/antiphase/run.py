@@ -147,6 +147,35 @@ def controls_gate(outcomes: dict, kinds: dict) -> str:
     return "UNTESTED"
 
 
+def choose_optical(ep: pd.DataFrame, bands: dict, meta: dict, conf: dict):
+    """The optical configuration a control is judged on (pure; tested offline)."""
+    minm = int((conf.get("coupling") or {}).get("min_matched", DEFAULT_COUPLING["min_matched"]))
+    configs = []
+    if "g" in bands and "r" in bands:
+        configs.append(("g", "r"))
+    else:
+        names = sorted(bands)
+        configs += [(a, b) for k, a in enumerate(names) for b in names[k + 1:]]
+    configs += [(b,) for b in sorted(bands)]
+    best, tried = None, []
+    for cfg in configs:
+        cc = dict(conf.get("coupling") or {})
+        cc["min_optical_bands"] = len(cfg)
+        if len(cfg) < 2:
+            cc["min_points_per_bin"] = min(int(cc.get("min_points_per_bin", 5)), 3)
+        cconf = {**conf, "coupling": cc}
+        pack = make_pack(ep, {b: bands[b] for b in cfg}, meta, cc)
+        rec = evaluate_pack(pack, cconf)
+        nm = int(rec.get("n_matched") or 0)
+        tried.append({"bands": list(cfg), "n_matched": nm, "label": rec.get("coupling_label")})
+        key = (nm >= minm and len(cfg) == 2, nm >= minm, nm, len(cfg))
+        if best is None or key > best[0]:
+            best = (key, rec, pack)
+        if cfg == ("g", "r") and nm >= minm:
+            break
+    return best[1], best[2], tried
+
+
 def _control_meta(ra: float, dec: float, fetchers: dict) -> dict:
     meta: dict = {"ra": ra, "dec": dec}
     nb = fetchers["gaia_cone"](ra, dec, 5.0)
@@ -217,6 +246,12 @@ def run_controls(conf: dict, fetchers: dict | None = None) -> dict:
         # --- IR --------------------------------------------------------------
         try:
             ep, nrec = f["neowise"](ra, dec, pmra, pmde)
+            if not len(ep):
+                # a faint or blended source can sit > 2.5" from the WISE centroid
+                ep2, nrec2 = f["neowise"](ra, dec, pmra, pmde, radius_arcsec=4.0)
+                nrec = {**nrec, "retry_4arcsec": nrec2}
+                if len(ep2):
+                    ep = ep2
         except Exception as exc:                        # noqa: BLE001
             ep, nrec = pd.DataFrame(), {"status": "FAILED", "error": repr(exc)[:300]}
         c["neowise"] = nrec
@@ -249,17 +284,13 @@ def run_controls(conf: dict, fetchers: dict | None = None) -> dict:
             outcomes[name] = c["outcome"]
             out["controls"].append(c)
             continue
-        # ZTF g/r are the survey's bands; a control with fewer runs on what it has
-        use = {b: bands[b] for b in ("g", "r") if b in bands}
-        if len(use) < 2:
-            use = bands
-        cc = dict(conf.get("coupling") or {})
-        cc["min_optical_bands"] = min(2, len(use))
-        cc["min_points_per_bin"] = min(int(cc.get("min_points_per_bin", 5)), 3) \
-            if len(use) < 2 else int(cc.get("min_points_per_bin", 5))
-        cconf = {**conf, "coupling": cc}
-        pack = make_pack(ep, use, meta, cc)
-        rec = evaluate_pack(pack, cconf)
+        # ZTF g/r are the survey's bands.  Otherwise every configuration is
+        # tried --- each available pair observed at the same epochs, then each
+        # single band --- and the one that matches the most NEOWISE epochs is
+        # kept, a two-band one whenever it reaches min_matched (ASAS-SN's V
+        # ended in 2018 as its g began, so "all bands" matches nothing).
+        rec, pack, tried = choose_optical(ep, bands, meta, conf)
+        c["optical_configurations_tried"] = tried
         c["result"] = rec
         c["series"] = {"t_yr": pack["t"], "opt": {b: v[0] for b, v in pack["opt"].items()},
                        "ir": {b: v[0] for b, v in pack["ir"].items()}}
@@ -422,8 +453,27 @@ def run_shard(conf: dict, idir: Path, out: Path, i: int, n: int, *, ztf_fetch=No
     t0 = _time.monotonic()
     budget = float(budget_s if budget_s is not None else sv.get("budget_s", 16200))
     fetch_kw = {"radius_arcsec": float(sv.get("ztf_radius_arcsec", 1.5)), "bright_limit": bright}
-    zlog = acq.fetch_ztf_many(todo, workers=int(sv.get("ztf_workers", 4)), budget_s=budget,
-                              fetch=ztf_fetch, on_result=on_result, **fetch_kw)
+    route = str(sv.get("ztf_route", "auto"))
+    zlog: dict = {}
+    if ztf_fetch is None and route in ("auto", "batched"):
+        tb = acq.find_ztf_objects_table()
+        rep["ztf_objects_table"] = tb
+        if tb.get("status") == "OK":
+            zlog = acq.fetch_ztf_batched(todo, table=tb["table"],
+                                         workers=int(sv.get("ztf_workers", 4)), budget_s=budget,
+                                         chunk=int(sv.get("ztf_chunk", 400)),
+                                         ids_per_request=int(sv.get("ztf_ids_per_request", 40)),
+                                         on_result=on_result, **fetch_kw)
+            flush()
+    if not zlog or zlog.get("route_failed"):
+        rep["ztf_batched_attempt"] = zlog or None
+        done_now = set(pd.read_csv(stat_p, dtype={"source_id": str})["source_id"].astype(str)) \
+            if stat_p.exists() else set()
+        rest = todo[~todo["source_id"].isin(done_now)]
+        left = max(budget - (_time.monotonic() - t0), 0.0)
+        zlog = acq.fetch_ztf_many(rest, workers=int(sv.get("ztf_workers", 4)), budget_s=left,
+                                  fetch=ztf_fetch, on_result=on_result, **fetch_kw)
+        zlog["route"] = "per_star"
     flush()
     rep["ztf"] = zlog
     rep["ztf_elapsed_s"] = round(_time.monotonic() - t0, 1)

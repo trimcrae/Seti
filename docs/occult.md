@@ -73,35 +73,54 @@ positional match) form **one unit** fitted jointly.
 
 `detect.assess_event`, pure numpy/scipy:
 
-1. **FSPL fit** (t₀, t_E, u₀, ρ_*), every dataset with its own linear f_s, f_b
-   (so OGLE magnitudes and KMTNet difference fluxes never need a common zero
-   point). Small-u₀ events get a grid of ρ_* and t_E starts *before* any
-   clipping (a flattened peak fitted as a point source otherwise gets clipped
-   as outliers). Local-outlier clipping against a running median of the
-   residuals (a step survives, a lone bad point does not). Per-dataset error
-   scale = max(point-to-point, MAD), so a real step can only lower its own
-   significance.
-2. **Threshold scan**: Δχ² of the occultation template for every u_c (wing)
+1. **Data preparation.** Events with > 4,000 epochs (KMTNet prime fields
+   reach ~40,000) are clipped model-free and inverse-variance binned per
+   dataset at 0.002 t_E (≤ 1 h, well inside the finite-source rounding of a
+   step). The per-dataset error scale is the **model-free** point-to-point
+   scatter of the flux in units of the quoted errors — controls run
+   36015751048 showed that scaling errors on residuals about a wrong null
+   model inflates them until the signal vanishes. Local clipping removes a
+   point only if it is an outlier against both a running median of its
+   model residuals and a running median of the flux (a median follows an
+   edge; either test alone clips real structure somewhere).
+2. **Null fit**: FSPL (t₀, t_E ≥ 0.05 d, u₀, ρ_*), every dataset with its own
+   linear f_s, f_b (OGLE magnitudes and KMTNet difference fluxes never need a
+   common zero point). Small-u₀ events get a grid of ρ_* and t_E starts
+   before any clipping. **Annual parallax** (π_E,N, π_E,E; Gould 2004
+   geometry, low-precision solar ephemeris) is fitted for t_E ≥ 10 d and kept
+   when it buys Δχ² > 20; it is carried into every occultation and anti fit,
+   and step times follow the parallax track.
+3. **Threshold scan**: Δχ² of the occultation template for every u_c (wing)
    and u_h (hole), to first order in every nuisance parameter
    (Δχ² = −2 r·d − d·d + (Jᵀd)ᵀ(JᵀJ)⁻¹(Jᵀd), all cumulative sums over u) —
    without the last term a deep step is absorbed by a shorter t_E and the scan
    points at the wrong u_c. The same scan with the sign flipped is the
    **anti-occultation**: same freedom, same sensitivity to every systematic,
    produced by no physics.
-3. **Refinement** from the best scan maxima plus fixed ρ_L seeds (and, when a
-   hollow centre is seen, a t_E/u₀ grid centred on the excess-flux centroid),
-   all shape parameters free, optimiser on a soft-edged hybrid model, every
-   reported χ² the exact finite-source occulted model.
-4. **Gates** (`detect.gate_rejections`, a pure function of the diagnostics):
-   depth tied to ρ_L (α = 1 within 3σ); each side of t₀ significant on its
-   own, equally deep, with overlapping per-side edge intervals; ≥ 2 sites see
-   it and all sites agree; bands agree (achromatic); dropping any night or
-   any dataset keeps ≥ 50 % of Δχ²; each step bracketed by data; hole sampled
-   and below baseline; no positive residual bump (caustics brighten, shadows
-   do not); no red residual; the sign-flipped (anti) template must not fit as
-   well or better. Depth comparisons (side vs side, site vs site, V vs I) add a
-   5 % systematic floor in quadrature to the formal errors.
-5. **Threshold**: a gate-passer counts only above the largest anti-occultation
+4. **Refinement** from the scan maxima and fixed ρ_L seeds (0.5, 0.7, 0.85,
+   1.3 — never filtered by the null fit's geometry, which may be the wrong
+   one), each started from the null shape, from the survey's alert solution
+   and from a u₀ < 1 restart (an occultation can drag the null fit into a
+   degenerate wide solution); a hollow centre (two horns, a trough 5σ deep)
+   adds a t_E/u₀ grid centred on the excess-flux centroid. All shape
+   parameters free; optimiser on a soft-edged hybrid model; every reported
+   χ² the exact finite-source occulted model; in the hole regime a warm-
+   started profile over ρ_L. Refinement stops starting fits after 600 s and
+   records that.
+5. **Gates** (`detect.gate_rejections`, a pure function of the diagnostics):
+   depth tied to ρ_L (α = 1 within 3σ + 0.1); each side of t₀ significant on
+   its own, equally deep, with per-side edge intervals (Δχ² ≤ 9) overlapping
+   within 2 % of u_c; ≥ 2 sites see it and all sites agree; bands agree
+   (achromatic); dropping any night keeps ≥ 50 % of Δχ², dropping the best
+   dataset keeps ≥ 20 % (and ≥ 25); each wing step (≥ 2 of them) bracketed by
+   data within max(5 d, 0.1 t_E); the hole sampled and its data ≥ 5σ below
+   the unmagnified level; no positive residual bump above
+   max(6σ, 0.15 √Δχ²) (caustics brighten, shadows do not); no red residual
+   above max(2, 1.5 × the event's own out-of-event value) carrying > 5 % of
+   the occultation's Δχ²; the sign-flipped (anti) template must not fit as
+   well or better. Depth comparisons (side vs side, site vs site, V vs I)
+   add a 5 % systematic floor in quadrature.
+6. **Threshold**: a gate-passer counts only above the largest anti-occultation
    Δχ² over all assessed events (a 1/N false-alarm level), never below 50.
 
 ## 5. Contamination model
@@ -120,15 +139,29 @@ positional match) form **one unit** fitted jointly.
 ## 6. Positive controls (run first; gate everything)
 
 `config/occult.yaml`: 10 published finite-source single-lens events and 10
-published binary-lens events must all come out NOT an occultation; opaque
-lenses (ρ_L = 0.5, 0.7, 0.85) injected into the real baselines of the
-finite-source events must be recovered (≥ 70 % of injections whose Fisher
-expected Δχ² exceeds 500). Anything else stops the screen.
+published binary-lens events must all come out NOT an occultation. Opaque
+lenses (ρ_L = 0.5, 0.7, 0.85, 1.3) are injected into the real baselines of
+every control and of 30 ordinary joint KMT+OGLE events (a fixed hash-ordered
+sample, `run.baseline_hosts`); among hosts with ≥ 2 sites (a one-site host
+cannot pass the two-site rule by construction), ≥ 70 % of the injections
+whose nuisance-projected expected Δχ² exceeds 500 must be recovered with the
+right regime and ρ_L (5 %; 15 % in the hole regime, where ρ_L trades with
+t_E and u₀). Anything else stops the screen.
+
+The gate failed on its first real-data runs, each time on a defect the real
+photometry exposed and the synthetic suite had not: a t_E floor above the
+free-floating-planet controls; no parallax; errors scaled on a wrong null
+model; KMTNet's 2023 switch of `listpage.dat` t₀ to HJD − 2,400,000 (every
+2023–2025 event read as having no photometry in its window); a
+below-baseline hole *trigger* that silenced every real hole injection; and
+refinements trapped in a degenerate null solution. Each is recorded in the
+commit that fixed it.
 
 ## 7. Sensitivity
 
-Every screened event gets the analytic expected Δχ² at its own solution on
-the ρ_L grid (0.3 … 2.0; zero by construction where u₀ ≥ u_c), and every 8th
+Every screened event gets the nuisance-projected expected Δχ² at its own
+solution on the ρ_L grid (0.3 … 2.0; zero by construction where
+u_min ≥ u_c), and every 8th
 event gets three full injection–recovery trials through the whole funnel.
 `summary.json → sensitivity` carries the recovered fraction per (ρ_L, u₀)
 cell and the fraction of the plane with ≥ 50 % efficiency.

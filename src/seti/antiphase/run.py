@@ -363,10 +363,17 @@ def run_natural(conf: dict, fetchers: dict | None = None) -> dict:
     bands_by: dict = {}
     tb = f["ztf_table"]()
     out["ztf_objects_table"] = tb
-    if tb.get("status") == "OK" and len(have):
+    zlog = {}
+    if tb.get("status") == "OK" and len(have) and nc.get("ztf_route", "per_star") == "batched":
         zlog = f["ztf_batched"](have, table=tb["table"], budget_s=3600.0,
                                 on_result=lambda s, r: bands_by.__setitem__(s, r))
-        out["ztf"] = {k: v for k, v in zlog.items() if k != "ledger"}
+    if len(have) and (not zlog or zlog.get("route_failed")):
+        rest = have[~have["source_id"].isin(set(bands_by))]
+        zlog = {**f.get("ztf_many", acq.fetch_ztf_many)(
+            rest, workers=6, budget_s=float(nc.get("ztf_budget_s", 5400.0)),
+            on_result=lambda s, r: bands_by.__setitem__(s, r)), "route": "per_star",
+            "batched_attempt": {k: v for k, v in zlog.items() if k != "ledger"} or None}
+    out["ztf"] = {k: v for k, v in zlog.items() if k != "ledger"}
     recs = []
     for r in have.to_dict("records"):
         z = bands_by.get(r["source_id"]) or {}

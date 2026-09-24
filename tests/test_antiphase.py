@@ -661,7 +661,7 @@ def test_natural_sample_is_classified_and_a_leak_is_counted():
           "ztf_batched": ztf_b, "gaia_cone": lambda *a: {"status": "OK", "rows": meta_row},
           "allwise": lambda *a: {"status": "OK", "w1mpro": 11.95, "w2mpro": 12.0,
                                  "w3mpro": 11.95}}
-    conf = {**CONF, "natural": {"types": {"RCB": 1, "UXOR": 1}}}
+    conf = {**CONF, "natural": {"types": {"RCB": 1, "UXOR": 1}, "ztf_route": "batched"}}
     res = run_natural(conf, fx)
     s = res["summary"]
     assert s["by_type"]["RCB"]["natural_classes"].get("NATURAL_CHROMATIC") == 1

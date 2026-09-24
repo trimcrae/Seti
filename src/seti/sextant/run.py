@@ -902,15 +902,38 @@ def load_sbdb(paths: Paths, numbers_needed: list[int] | None = None, log=print) 
 
 
 def load_gaia_objects(paths: Paths, gaia, release: str, log=print) -> list[dict]:
+    """The release's numbered-object list: work cache, then the COMMITTED copy.
+
+    The list is a DISTINCT over tens of millions of rows, and on a slow ESA day
+    that one query cost a probe hours (run 35865402620's probe ran 269 min).
+    It changes only with a data release, so the first run that gets it commits
+    it gzipped under ``results/sextant/`` and every later run reads it back.
+    """
     p = paths.work / f"objects_{release}.json"
     if p.exists():
         return json.loads(p.read_text())
+    committed = paths.results / f"objects_{release}.json.gz"
+    if committed.exists():
+        try:
+            with gzip.open(committed, "rt") as fh:
+                rows = json.load(fh)
+            if rows:
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(json.dumps(rows))
+                log(f"Gaia {release}: {len(rows)} numbered objects (committed list)")
+                return rows
+        except Exception as exc:                              # noqa: BLE001
+            log(f"committed object list unreadable: {exc}")
     res = gaia.object_numbers(release=release)
     if res.verdict != "OK":
         raise RuntimeError(f"object list unavailable: {res.verdict} {res.notes}")
     rows = [{"number_mp": int(r["number_mp"]), "denomination": r.get("denomination")}
             for r in res.rows if r.get("number_mp") is not None]
+    p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(rows))
+    committed.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(committed, "wt") as fh:
+        json.dump(rows, fh)
     log(f"Gaia {release}: {len(rows)} numbered objects")
     return rows
 
@@ -973,14 +996,40 @@ def sky_difference_mas(eph_a: E.AlignedEphemeris, eph_b: E.AlignedEphemeris,
     return np.arcsin(np.clip(cross, 0.0, 1.0)) * R.MAS_PER_RAD
 
 
-def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> dict:
+class _ProbeBudgetStop(Exception):
+    """The probe's clock ran out after the essentials; the rest is optional."""
+
+
+def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None,
+                budget_minutes: float | None = None, now=time.time) -> dict:
+    """Once-per-run measurements, ESSENTIALS FIRST and on a clock.
+
+    Order: SBDB, perturbers, the Gaia object list, the VizieR catalogues ---
+    everything the fit needs --- and only then the optional measurements (the
+    integrator-vs-Horizons comparison, the conventions, the A2 route
+    comparison).  With ``budget_minutes`` set, each optional section is skipped
+    once the clock has run out and the skip is recorded; the fit then uses the
+    config route/conventions and says so.  Run 35865402620's probe took 269
+    minutes and left the fit 56.
+    """
     from .acquire import GaiaSSO
 
     rec: dict = {"stage": "probe", "started_utc": _utc(), "verdict": "NOT_RUN"}
     out_path = paths.results / "probe_ephemeris.json"
+    t_start = now()
+    budget_s = (float(budget_minutes) * 60.0
+                if budget_minutes is not None and float(budget_minutes) > 0 else None)
+    rec["budget_minutes"] = float(budget_minutes) if budget_s else None
 
     def checkpoint():
         E.save_json(out_path, rec)
+
+    def out_of_time(section: str) -> bool:
+        if budget_s is None or now() - t_start <= budget_s:
+            return False
+        rec.setdefault("budget_skipped", []).append(section)
+        log(f"probe: budget spent; skipping {section}")
+        return True
 
     gaia = gaia or GaiaSSO()
     client = client or E.HorizonsClient(min_interval=float(conf["horizons_min_interval_s"]))
@@ -1028,6 +1077,9 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
         sample = sorted(set(low) | set(rnd) | set(ng[:20]))
         rec["sample"] = sample
         conv = conventions_from(conf["conventions"])
+        if out_of_time("route_and_convention_measurement"):
+            rec["route_decision"] = "UNDECIDED_PROBE_BUDGET"
+            raise _ProbeBudgetStop()
         groups, info = fetch_chunk(gaia, sample, conf["release"], paths, "probe", log=log)
         rec["gaia_pull"] = info
         checkpoint()
@@ -1038,6 +1090,8 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
         comp: dict[str, dict] = {}
         bundles_h: dict[int, EphemBundle] = {}
         for n, cols in groups.items():
+            if out_of_time("integrator_vs_horizons_remaining_objects"):
+                break
             try:
                 bh = horizons_bundle(n, cols, client, pert, conv)
             except E.EphemerisError as exc:
@@ -1076,6 +1130,8 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
         rec["route_decision"] = ("integrator" if agree else "horizons"
                                  if maxes else "UNDECIDED_NO_COMPARISON")
         checkpoint()
+        if out_of_time("conventions_and_a2_route_comparison"):
+            raise _ProbeBudgetStop()
         # (b) Conventions, measured on the lowest-numbered objects via Horizons.
         cands = [R.EpochConvention("epoch", "TCB", R.GAIA_JD_ZERO),
                  R.EpochConvention("epoch", "TDB", R.GAIA_JD_ZERO),
@@ -1124,6 +1180,8 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
         E.save_json(paths.results / "conventions.json", conv_rec)
         rec["conventions"] = {k: v for k, v in conv_rec.items() if k != "per_object"}
         conv_use = load_conventions(paths, conf)
+        if out_of_time("a2_route_comparison"):
+            raise _ProbeBudgetStop()
         # (c) End-to-end A2 from both routes on the sample.
         fits_i, fits_h = {}, {}
         for n, cols in groups.items():
@@ -1150,6 +1208,8 @@ def stage_probe(conf: dict, paths: Paths, log=print, gaia=None, client=None) -> 
             "integrator": fits_i, "horizons": fits_h,
         }
         rec["verdict"] = "OK"
+    except _ProbeBudgetStop:
+        rec["verdict"] = "OK_PARTIAL_BUDGET"
     except Exception as exc:                                  # noqa: BLE001
         rec["verdict"] = "PROBE_FAILED"
         rec["error"] = f"{type(exc).__name__}: {exc}"[:600]
@@ -2055,7 +2115,7 @@ def run(stage: str, shard: str = "0/1", cfg=None, out_dir=None, work_dir=None,
     except ValueError as exc:
         raise ValueError("--shard must be i/n, e.g. 3/16") from exc
     if stage == "probe":
-        return stage_probe(conf, paths, log=log)
+        return stage_probe(conf, paths, log=log, budget_minutes=budget_minutes)
     if stage in ("acquire", "fit", "screen"):
         return stage_shard(conf, paths, i, n, log=log, route=route,
                            max_objects=max_objects, budget_minutes=budget_minutes)

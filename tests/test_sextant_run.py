@@ -924,6 +924,54 @@ def test_an_empty_greenberg_cache_is_a_miss_and_designation_columns_parse(
     assert rec["verdict"] == "OK" and rec["tables_seen"][0]["columns"] == tab.colnames
 
 
+def test_the_probe_does_its_essentials_then_stops_on_its_clock(tmp_path, monkeypatch):
+    """Runs 35865402620 (269 min) and 35992884663 (>5 h): the probe ate the job."""
+    sbdb = {n: {"nongrav_fitted": n == 3, "epoch_jd": 2461200.5} for n in range(1, 30)}
+    monkeypatch.setattr(RUN, "load_sbdb", lambda *a, **k: {"rows": sbdb, "meta": {}})
+    pert = types.SimpleNamespace(n_bodies=1, labels=["sun"], retrieved_utc=None,
+                                 t_grid=np.array([2456820.0, 2461230.0]))
+    monkeypatch.setattr(RUN, "load_perturbers", lambda *a, **k: pert)
+    monkeypatch.setattr(RUN, "load_gaia_objects",
+                        lambda *a, **k: [{"number_mp": n} for n in range(1, 30)])
+    monkeypatch.setattr(RUN, "load_yarkovsky_catalogue", lambda *a, **k: {})
+    monkeypatch.setattr(RUN, "load_binaries", lambda *a, **k: None)
+    fetched = []
+    monkeypatch.setattr(RUN, "fetch_chunk", lambda *a, **k: fetched.append(1) or ({}, {}))
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+    clock = iter([0.0] + [60.0 * 30] * 50)          # 30 minutes gone after the essentials
+    rec = RUN.stage_probe(CONF, paths, log=lambda *a: None, gaia=_FakeGaia(),
+                          client=_FakeGaia(), budget_minutes=20, now=lambda: next(clock))
+    assert rec["verdict"] == "OK_PARTIAL_BUDGET"
+    assert rec["route_decision"] == "UNDECIDED_PROBE_BUDGET"
+    assert rec["budget_skipped"] == ["route_and_convention_measurement"]
+    assert rec["n_gaia_objects"] == 29 and fetched == []
+    # The fit reads that record and falls back to the integrator, saying so.
+    import json
+
+    assert json.loads((paths.results / "probe_ephemeris.json").read_text())[
+        "route_decision"] == "UNDECIDED_PROBE_BUDGET"
+
+
+def test_the_gaia_object_list_is_committed_once_and_reused(tmp_path):
+    paths = RUN.Paths.make(tmp_path / "results", tmp_path / "work")
+
+    class _G:
+        n = 0
+
+        def object_numbers(self, release):
+            self.n += 1
+            return types.SimpleNamespace(verdict="OK", notes=[],
+                                         rows=[{"number_mp": 5, "denomination": "Astraea"}])
+
+    g = _G()
+    assert RUN.load_gaia_objects(paths, g, "gaiafpr", log=lambda *a: None)[0]["number_mp"] == 5
+    assert (paths.results / "objects_gaiafpr.json.gz").exists()
+    # A fresh runner (empty work dir) reads the committed copy: no archive call.
+    fresh = RUN.Paths.make(tmp_path / "results", tmp_path / "work2")
+    rows = RUN.load_gaia_objects(fresh, g, "gaiafpr", log=lambda *a: None)
+    assert rows == [{"number_mp": 5, "denomination": "Astraea"}] and g.n == 1
+
+
 # ---------------------------------------------------------------------------
 # 5. The assessment
 # ---------------------------------------------------------------------------

@@ -100,6 +100,10 @@ on:
         description: "In-job clock for the fit step of the solo job, inside its 350-minute cap; the probe and assess steps need the rest."
         required: false
         default: "230"
+      solo_probe_minutes:
+        description: "Hard cap on the solo job's probe step (its own clock stops optional measurements ~8 min earlier). The fit runs regardless."
+        required: false
+        default: "30"
 
 permissions:
   contents: write
@@ -155,12 +159,22 @@ jobs:
           rm -rf results/sextant/fits
           echo "SOLO_T0=$(date +%s)" >> "$GITHUB_ENV"
       - name: Probe --- perturbers, SBDB, the ephemeris route, the conventions
+        # Bounded.  Run 35865402620's probe took 269 min and 35992884663's ran
+        # past five hours, leaving the fit nothing.  The probe does the fit's
+        # essentials first (SBDB, perturbers, the object list --- committed once
+        # obtained), then skips its optional measurements when its own clock
+        # runs out; the step timeout is the backstop for a hung archive call.
+        # A probe that fails or times out does not stop the fit: the fit falls
+        # back to the integrator route and the config conventions, and says so.
+        timeout-minutes: ${{ fromJSON(github.event.inputs.solo_probe_minutes || '30') }}
+        continue-on-error: true
         run: |
           EXTRA=""
           if [ -n "${{ github.event.inputs.route }}" ]; then
             EXTRA="--route ${{ github.event.inputs.route }}"
           fi
-          python -m seti.cli sextant --stage probe \
+          PB=$(( ${{ github.event.inputs.solo_probe_minutes || '30' }} - 8 ))
+          python -m seti.cli sextant --stage probe --budget-minutes "$PB" \
             --release ${{ github.event.inputs.release || 'gaiafpr' }} $EXTRA
       - name: Commit the probe record
         if: always()

@@ -162,6 +162,34 @@ def stage_inventory(out: Path = OUT) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def stage_resolve(out: Path = OUT) -> dict:
+    """ARC keys its stars on KIC / TIC; resolve them to positions (runner)."""
+    xi = R.RESULTS / "arc" / "xi_table.csv"
+    if not xi.exists():
+        return {"status": "NO_ARC_TABLE"}
+    from .acquire import fetch_id_positions
+    x = pd.read_csv(xi, usecols=["star_key", "star_id", "mission"])
+    led2: list = []
+    parts, arep = [], {}
+    for mission in ("kepler", "tess"):
+        ids = pd.to_numeric(x.loc[x["mission"] == mission, "star_id"], errors="coerce")
+        ids = ids.dropna().astype("int64")
+        if not len(ids):
+            continue
+        pos, arep[mission] = fetch_id_positions(mission, ids, led2)
+        if len(pos):
+            pos["star_key"] = mission + ":" + pos["id"].astype("int64").astype(str)
+            parts.append(pos[["star_key", "ra", "dec"]])
+    if parts:
+        out.mkdir(parents=True, exist_ok=True)
+        pd.concat(parts).drop_duplicates("star_key").to_csv(out / "arc_positions.csv",
+                                                             index=False)
+    rep = {"status": {k: v["status"] for k, v in arep.items()},
+           "n": int(sum(len(p) for p in parts)), "ledger": led2[-10:]}
+    print(f"[confluence] resolve: arc positions {rep['n']} {rep['status']}")
+    return rep
+
+
 def stage_harvest(harvest_dir: Path, scores_dir: Path, out: Path = OUT,
                   with_accel: bool = True) -> dict:
     from .harvest import harvest
@@ -179,6 +207,7 @@ def stage_harvest(harvest_dir: Path, scores_dir: Path, out: Path = OUT,
         except Exception as e:  # noqa: BLE001
             rep["channels"]["accel_nss"] = {"status": "NO_DATA_REACHED", "error": repr(e)[:400],
                                             "ledger": led}
+    rep["channels"]["arc_positions"] = stage_resolve(out)
     rep.update(_prov())
     # the manifest can be long; keep it, it is how the next dispatch learns layouts
     _write(out / "harvest.json", rep)
@@ -492,7 +521,7 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="confluence")
     ap.add_argument("--stage", default="assess",
-                    choices=["inventory", "harvest", "joint", "acquire", "assess", "offline"])
+                    choices=["inventory", "harvest", "resolve", "joint", "acquire", "assess", "offline"])
     ap.add_argument("--harvest-dir", default=os.environ.get("CONFLUENCE_HARVEST", "harvest"))
     ap.add_argument("--scores-dir", default=str(R.SCORES_DIR))
     ap.add_argument("--min-joint", type=int, default=MIN_JOINT)
@@ -502,6 +531,8 @@ def main(argv=None) -> int:
         stage_inventory()
     elif a.stage == "harvest":
         stage_harvest(Path(a.harvest_dir), Path(a.scores_dir), with_accel=not a.no_accel)
+    elif a.stage == "resolve":
+        stage_resolve()
     elif a.stage == "joint":
         stage_joint()
     elif a.stage == "acquire":

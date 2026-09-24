@@ -184,3 +184,22 @@ def fetch_vsx(stars: pd.DataFrame, ledger: list, radius_arcsec: float = 3.0,
     if len(out):
         out = out.sort_values("sep").drop_duplicates("key")
     return out, rep
+
+
+#: VizieR tables that turn a mission id into a position.
+ID_TABLES = {
+    "kepler": ('"V/133/kic"', '"KIC"', '"RAJ2000"', '"DEJ2000"'),
+    "tess": ('"IV/39/tic82"', '"TIC"', '"RAJ2000"', '"DEJ2000"'),
+}
+
+
+def fetch_id_positions(mission: str, ids, ledger: list, chunk: int = 5_000,
+                       budget_s: float = 1200) -> tuple[pd.DataFrame, dict]:
+    """KIC / TIC ids -> (id, ra, dec) through VizieR, by upload join on the id."""
+    table, idc, rac, dec = ID_TABLES[mission]
+    q = (f"SELECT t.id, v.{rac} AS ra, v.{dec} AS dec FROM TAP_UPLOAD.t AS t "
+         f"JOIN {table} AS v ON v.{idc} = t.id")
+    up = pd.DataFrame({"id": np.unique(np.asarray(ids, dtype=np.int64))})
+    return _chunked(up, chunk, lambda f: tap_query(VIZIER_TAP, q, f, ledger=ledger,
+                                                   label=f"ids_{mission}"),
+                    budget_s, ledger, f"ids_{mission}")

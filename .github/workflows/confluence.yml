@@ -114,6 +114,13 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
 
+      - name: Resolve mission ids (ARC KIC/TIC -> positions) if not yet done
+        if: ${{ github.event.inputs.stage != 'assess' }}
+        run: |
+          if [ ! -f results/confluence/arc_positions.csv ]; then
+            python -u -m seti.confluence.run --stage resolve
+          fi
+
       - name: Inventory and joint table
         if: ${{ github.event.inputs.stage != 'assess' }}
         run: |
@@ -127,7 +134,7 @@ jobs:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
           scripts/commit_results.sh "confluence: harvest + joint table" \
-            $(ls results/confluence/*.json results/confluence/joint_long.parquet 2>/dev/null)
+            $(ls results/confluence/*.json results/confluence/*.csv results/confluence/joint_long.parquet 2>/dev/null)
 
       - name: Acquire covariates and known-class tags
         if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire+assess' }}

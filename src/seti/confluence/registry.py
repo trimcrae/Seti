@@ -242,6 +242,22 @@ def _spark() -> pd.DataFrame:
                        score="_s", flag="survivor")
 
 
+def _arc() -> pd.DataFrame:
+    """ARC xi over its assessable stars; positions from the runner's id resolution."""
+    p = RESULTS / "arc" / "xi_table.csv"
+    pos = RESULTS / "confluence" / "arc_positions.csv"
+    if not p.exists():
+        return pd.DataFrame(columns=STD_COLUMNS)
+    x = pd.read_csv(p, low_memory=False)
+    x = x[x["assessable"].astype(str).str.lower().eq("true")].copy()
+    if pos.exists():
+        ps = pd.read_csv(pos)
+        x = x.merge(ps[["star_key", "ra", "dec"]], on="star_key", how="left")
+    x["_f"] = x["tier"].astype(str).isin(["candidate", "interest"])
+    return standardise(x, sid=None, key_ns="arc", key_col="star_key",
+                       score="xi_conservative_max", flag="_f")
+
+
 def _accel_committed() -> pd.DataFrame:
     p = RESULTS / "accel" / "accel_candidates.csv"
     if not p.exists():
@@ -334,6 +350,11 @@ REGISTRY: list[ChannelSpec] = [
                 "TESS-vs-Kepler transit depth change z (PDCSAP)",
                 "KOIs with a measured TESS depth", _growth,
                 source_files=["growth/direct/measurements.csv"]),
+    ChannelSpec("arc", "arc", F({"kepler", "tess"}), F(),
+                "xi: flare energy above the starspot energy ceiling (conservative)",
+                "4,206 assessable Kepler/TESS flare stars", _arc,
+                notes="positions resolved from KIC/TIC on the runner (arc_positions.csv)",
+                source_files=["arc/xi_table.csv", "confluence/arc_positions.csv"]),
     ChannelSpec("spark", "spark", F({"euclid"}), F(),
                 "S/N of the strongest non-stellar emission feature",
                 "Euclid Q1 point sources with >=1 line feature (Gaia-matched)", _spark,
@@ -360,9 +381,6 @@ TAIL_ONLY: dict[str, dict] = {
                 "the SDSS/DESI stellar parent", "instrument": "sdss/desi", "editable": True},
     "fallout": {"have": "21 candidates", "need": "per-star template misfit over GALAH DR4",
                 "instrument": "galah", "editable": True},
-    "arc": {"have": "xi per star (8,908) keyed on KIC/TIC, no positions",
-            "need": "KIC/TIC -> Gaia DR3 resolution", "instrument": "kepler/tess",
-            "editable": True},
     "metronome": {"have": "screen counts", "need": "per-star clock statistic",
                   "instrument": "kepler/tess", "editable": True},
     "ember": {"have": "5,000 of 412,914 ladder verdicts", "need": "per-star early-epoch excess",

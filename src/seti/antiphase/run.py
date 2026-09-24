@@ -563,6 +563,20 @@ def run_shard(conf: dict, idir: Path, out: Path, i: int, n: int, *, ztf_fetch=No
     flush()
     rep["ztf"] = zlog
     rep["ztf_elapsed_s"] = round(_time.monotonic() - t0, 1)
+    # completeness: the budget is spent down the W2-prescore list
+    att = set(pd.read_csv(stat_p, dtype={"source_id": str})["source_id"].astype(str)) \
+        if stat_p.exists() else set()
+    ps = targets.set_index("source_id")["ir_prescore"]
+    reached = ps[ps.index.isin(att)]
+    missed = ps[~ps.index.isin(att)]
+    rep["completeness"] = {
+        "n_targets": int(len(ps)), "n_attempted": int(len(reached)),
+        "min_prescore_attempted": float(reached.min()) if len(reached) else None,
+        "max_prescore_not_attempted": float(missed.max()) if missed.notna().any() else None,
+        "n_prescore_ge_3": int((ps >= 3).sum()),
+        "n_prescore_ge_3_attempted": int((reached >= 3).sum()),
+        "n_prescore_ge_2": int((ps >= 2).sum()),
+        "n_prescore_ge_2_attempted": int((reached >= 2).sum())}
     # --- per-shard null and injections over every evaluated star ------------
     packs = build_packs(out, tag, eps_c, meta_by)
     rep["n_packs"] = len(packs)

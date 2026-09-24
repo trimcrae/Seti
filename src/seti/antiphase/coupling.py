@@ -404,26 +404,37 @@ def assess_coupling(epoch_t_yr, optical: dict, ir: dict, conf: dict | None = Non
     return res
 
 
-def ir_rise_prescore(t_yr, ir: dict, t_min: float = 2018.2) -> float:
-    """Cheap ordering score: the largest two-band IR brightening (sigma) at an
-    epoch after ``t_min`` against the star's pre-``t_min`` median.  Used only
-    to decide which stars fetch ZTF first when a budget may run out."""
+def ir_rise_prescore(t_yr, ir: dict, t_min: float = 2018.2, band: str = "W2") -> float:
+    """The order in which stars fetch ZTF, and the survey's completeness variable.
+
+    The largest ``band`` (default W2) brightening, in sigma, at an epoch after
+    ``t_min``, against the larger-offset of two references: the star's
+    pre-``t_min`` median and its all-epoch median.  W2 alone, because a ~300 K
+    re-radiator moves W2 and not W1.  A COUPLED star needs a W2 rise at its
+    faded epochs of >= 3 sigma (``n_sigma_ir``) against its unfaded epochs, so
+    every coupled star has a prescore near or above that; the ZTF budget is
+    spent from the top of this list down, and the prescore of the last star
+    reached is reported as the completeness limit.
+    """
     t = np.asarray(t_yr, float)
+    if band not in ir:
+        return float("nan")
+    m, e = (np.asarray(x, float) for x in ir[band])
+    ok = np.isfinite(m) & np.isfinite(e)
+    pre = (t < t_min) & ok
+    post = (t >= t_min) & ok
+    if post.sum() < 1 or ok.sum() < 4:
+        return float("nan")
     zs = []
-    for b in ("W1", "W2"):
-        if b not in ir:
-            return float("nan")
-        m, e = (np.asarray(x, float) for x in ir[b])
-        pre = (t < t_min) & np.isfinite(m)
-        post = (t >= t_min) & np.isfinite(m)
-        if pre.sum() < 3 or post.sum() < 1:
-            return float("nan")
-        base = float(np.median(m[pre]))
-        berr = 1.2533 * float(np.sqrt(np.mean(e[pre] ** 2) / pre.sum()))
-        zs.append((base - m) / np.sqrt(e ** 2 + berr ** 2))
-    z = np.minimum(zs[0], zs[1])
-    z = np.where(t >= t_min, z, np.nan)
-    return float(np.nanmax(z)) if np.isfinite(z).any() else float("nan")
+    for sel in ((pre if pre.sum() >= 3 else None), ok):
+        if sel is None:
+            continue
+        base = float(np.median(m[sel]))
+        berr = 1.2533 * float(np.sqrt(np.mean(e[sel] ** 2) / sel.sum()))
+        zs.append(np.where(post, (base - m) / np.sqrt(e ** 2 + berr ** 2), np.nan))
+    v = np.vstack(zs) if zs else np.full((1, 1), np.nan)
+    v = v[np.isfinite(v)]
+    return float(v.max()) if v.size else float("nan")
 
 
 __all__ = ["DEFAULT_COUPLING", "CouplingResult", "assess_coupling", "bin_at_epochs",

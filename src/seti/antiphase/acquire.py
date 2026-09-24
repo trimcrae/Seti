@@ -295,7 +295,8 @@ def fetch_ztf_ids(oids: list[str], timeout_s: float = 180.0, retries: int = 2,
 def fetch_ztf_batched(stars: pd.DataFrame, *, table: str, workers: int = 4,
                       budget_s: float = 3600.0, chunk: int = 400, ids_per_request: int = 40,
                       radius_arcsec: float = 1.5, bright_limit: float = 12.5,
-                      on_result=None, upload_fn=None, ids_fn=None) -> dict:
+                      on_result=None, upload_fn=None, ids_fn=None,
+                      upload_timeout_s: float = 600.0) -> dict:
     """ZTF g/r for every star via upload-join ids + multi-ID light curves."""
     from ..ignition.acquire import _t_http_sync, _t_pyvo_sync
 
@@ -319,12 +320,16 @@ def fetch_ztf_batched(stars: pd.DataFrame, *, table: str, workers: int = 4,
         ta = _time.monotonic()
         got, err = None, None
         fns = [upload_fn] if upload_fn else [_t_pyvo_sync, _t_http_sync]
+        from ..ignition.revet import _timed
+
         for fn in fns:
-            try:
-                got = fn(qq, tbl, 900.0)
+            # pyvo's run_sync has no timeout of its own: run 36018334549's first
+            # upload join against the ZTF objects table ran past its 30-min
+            # budget without returning.  Every attempt is time-boxed.
+            got, err = _timed(lambda fn=fn, qq=qq, tbl=tbl: fn(qq, tbl, float(upload_timeout_s)),
+                              float(upload_timeout_s))
+            if got is not None:
                 break
-            except Exception as exc:                    # noqa: BLE001
-                err = repr(exc)[:300]
         led = {"chunk": c0, "n_stars": len(sub), "upload_s": round(_time.monotonic() - ta, 1),
                "n_rows": None if got is None else int(len(got)), "error": err}
         if got is None and c0 == 0 and not counts:

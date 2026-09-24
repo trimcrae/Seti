@@ -480,9 +480,21 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
             if len(lead) else None
         ctrl["leading20"] = [{"star": s, "sum_neglog_pct": round(float(v), 2),
                               "known": s in known} for s, v in lead.items()]
-        ctrl["status"] = ("PASS" if (mem_att and base_rate == base_rate
-                                     and mem_rate > base_rate) else
-                          ("UNTESTED" if not mem_att else "FAIL"))
+        # enrichment must be significant, not merely > 1
+        from scipy.stats import binom
+        n_m, k_m = len(mem_att), len(mem_att & known)
+        p_enr = float(binom.sf(k_m - 1, n_m, base_rate)) if n_m and base_rate == base_rate \
+            else float("nan")
+        ctrl["n_overlap_known"] = k_m
+        ctrl["p_enrichment_binomial"] = p_enr
+        if not mem_att:
+            ctrl["status"] = "UNTESTED"
+        elif p_enr < 0.01:
+            ctrl["status"] = "PASS"
+        elif mem_rate > base_rate:
+            ctrl["status"] = "WEAK"      # the right direction, not significant
+        else:
+            ctrl["status"] = "FAIL"
     summary["control_known_classes"] = ctrl
 
     # --- positive control 2: injection-recovery on the largest pairs ---------
@@ -554,7 +566,8 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
         v = "NO_TESTABLE_PAIR"
     elif not controls_ok:
         v = "CONTROLS_FAILED" if (summary["control_injection"] == "FAIL"
-                                  or ctrl.get("status") == "FAIL") else "CONTROLS_UNTESTED"
+                                  or ctrl.get("status") in ("FAIL", "WEAK")) \
+            else "CONTROLS_UNTESTED"
     elif len(sig) == 0:
         v = "NO_EXCESS_CONFLUENCE"
     elif summary["n_residual_significant"] == 0:

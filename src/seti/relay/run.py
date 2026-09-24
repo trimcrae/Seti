@@ -1150,7 +1150,14 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
     if not any_on:
         rep["verdict"] = f"{V_NO_PAIRLINE_HIT} ({len(hits)} hits, {rep['n_hits_matched_to_sample']} on sample stars)"
     elif not cands:
-        rep["verdict"] = f"{V_PAIRLINE_OFF_PRIOR} ({any_on} pair-line hit tests, 0 inside the prior after RFI)"
+        n_dm = sum(int(v.get("n_drift_match") or 0) for v in rep["beams"].values())
+        n_dm_exp = sum(float(v.get("n_expected_drift_match") or 0.0) for v in rep["beams"].values())
+        if n_dm:
+            # hits DID fall inside the prior -- at the chance rate -- and every one is RFI
+            rep["verdict"] = (f"{V_PAIRLINE_CHANCE} ({n_dm} hit-beam drift matches vs {n_dm_exp:.1f} expected "
+                              f"by chance; all RFI-flagged, 0 candidates)")
+        else:
+            rep["verdict"] = f"{V_PAIRLINE_OFF_PRIOR} ({any_on} pair-line hit tests, 0 inside the prior)"
     else:
         n_exp = sum(float(v.get("n_expected_by_chance") or 0.0) for v in rep["beams"].values())
         n_uniq = len({(str(c["target"]), float(c["freq_mhz"]), float(c["drift_hz_s"])) for c in cands})

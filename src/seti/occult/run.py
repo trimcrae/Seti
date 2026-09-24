@@ -220,7 +220,7 @@ def baseline_hosts(units: list, n: int) -> list:
     return [u for _, u in pool[:n]]
 
 
-CONTROL_KEEP = ("tier", "dchi2", "dchi2_anti", "regime", "rejections", "peak_snr", "fspl",
+CONTROL_KEEP = ("n_points_raw", "n_points_fit", "binned_days", "budget_exceeded", "tier", "dchi2", "dchi2_anti", "regime", "rejections", "peak_snr", "fspl",
                 "occult", "n_points", "sites", "bands", "redchi2_fspl", "parallax",
                 "err_scales", "alpha", "symmetry", "jackknife", "positive_bump",
                 "binned_redchi2_after", "binned_redchi2_reference", "hollow_centre")
@@ -270,12 +270,20 @@ def stage_controls(out: Path, cfg: dict, workers: int = 4) -> dict:
         _worker_init(conf, {}, str(out / "lc_controls"))
         records = [_control_one(a) for a in args]
     else:
+        from concurrent.futures import as_completed
+
+        records = [None] * len(args)
+        t0 = time.time()
         with ProcessPoolExecutor(max_workers=workers, initializer=_worker_init,
                                  initargs=(conf, {}, str(out / "lc_controls"))) as pool:
-            records = list(pool.map(_control_one, args))
-    for rec in records:
-        print(f"[controls] {rec['name']}: {rec.get('tier')} dchi2={rec.get('dchi2')} "
-              f"inj={[(t['rho_l_inj'], t['recovered']) for t in rec.get('injections', [])]}", flush=True)
+            futs = {pool.submit(_control_one, a): i for i, a in enumerate(args)}
+            for fut in as_completed(futs):
+                rec = fut.result()
+                records[futs[fut]] = rec
+                print(f"[controls {time.time() - t0:6.0f}s] {rec['name']}: {rec.get('tier')} "
+                      f"dchi2={rec.get('dchi2')} n={rec.get('n_points_fit')} sec={rec.get('seconds')} "
+                      f"inj={[(t['rho_l_inj'], t['recovered']) for t in rec.get('injections', [])]}",
+                      flush=True)
     v = controls_verdict(records, gate, n_named)
     res = {**_stamp(), **v, "records": records}
     write_json(out / "controls.json", res)
@@ -309,7 +317,7 @@ def save_lc(lc_dir: Path, ev: D.Event) -> str:
     return str(p)
 
 
-SCREEN_KEEP = ("tier", "dchi2", "dchi2_anti", "dbic", "regime", "u_c", "rejections", "peak_snr",
+SCREEN_KEEP = ("n_points_raw", "n_points_fit", "binned_days", "budget_exceeded", "tier", "dchi2", "dchi2_anti", "dbic", "regime", "u_c", "rejections", "peak_snr",
                "lensing_dchi2", "fspl", "occult", "n_points", "n_clipped", "sites", "bands",
                "redchi2_fspl", "alpha", "alpha_by_site", "alpha_by_band", "sites_seeing_step",
                "sites_consistency", "bands_consistency", "symmetry", "jackknife", "steps",

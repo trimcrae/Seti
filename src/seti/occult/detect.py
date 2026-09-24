@@ -41,6 +41,7 @@ The funnel (``assess_event``):
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -87,6 +88,11 @@ DEFAULT_CONF: dict = {
     "refine_top": 2,             # scan maxima refined per regime
     "seed_rho_l": [0.5, 0.7, 0.85, 1.3],   # always refined too (deep steps mislead a scan)
     "max_nfev": 300,
+    "bin_above_points": 4000,    # events with more epochs are binned (see bin_event)
+    "bin_frac_te": 0.002,        # bin width = this x tE ...
+    "bin_max_days": 0.042,       # ... at most 1 h ...
+    "bin_min_days": 0.005,       # ... and no binning below 7 min
+    "unit_budget_s": 600.0,      # refinement stops starting new fits after this (recorded)
 }
 
 
@@ -218,6 +224,44 @@ def build_event(name: str, series: list, meta: dict | None = None) -> Event:
                np.concatenate(ds), dsets, meta or {})
     o = np.argsort(ev.t, kind="stable")
     return Event(name, ev.t[o], ev.f[o], ev.e[o], ev.ds[o], dsets, ev.meta)
+
+
+def bin_event(ev: Event, width: float) -> Event:
+    """Inverse-variance bin each dataset in time bins of ``width`` days.
+
+    KMTNet's prime fields deliver up to ~40,000 epochs per event; a bin of
+    ~1 h (well below the finite-source rounding of a step, 2 rho_* tE, for
+    any tE > ~1 d) keeps every feature the detector tests and cuts the cost
+    of each of the ~50 non-linear fits several-fold.  Datasets are never
+    mixed; a bin holding one point is that point.
+    """
+    if ev.t.size == 0 or width <= 0:
+        return ev
+    ts, fs, es, ds = [], [], [], []
+    for k in range(ev.n_ds):
+        m = np.where(ev.ds == k)[0]
+        if m.size == 0:
+            continue
+        t, f, e = ev.t[m], ev.f[m], ev.e[m]
+        b = np.floor((t - t.min()) / width).astype(np.int64)
+        uniq, inv = np.unique(b, return_inverse=True)
+        w = 1.0 / (e * e)
+        sw = np.bincount(inv, w)
+        ts.append(np.bincount(inv, w * t) / sw)
+        fs.append(np.bincount(inv, w * f) / sw)
+        es.append(1.0 / np.sqrt(sw))
+        ds.append(np.full(uniq.size, k, dtype=int))
+    t = np.concatenate(ts)
+    o = np.argsort(t, kind="stable")
+    return Event(ev.name, t[o], np.concatenate(fs)[o], np.concatenate(es)[o],
+                 np.concatenate(ds)[o], ev.datasets, dict(ev.meta))
+
+
+def bin_width_for(te_hint, conf) -> float:
+    """Bin width: ``bin_frac_te`` x tE, clipped to [0, ``bin_max_days``]; 0 disables."""
+    te = float(te_hint) if te_hint else 20.0
+    w = min(conf.get("bin_frac_te", 0.002) * te, conf.get("bin_max_days", 0.042))
+    return w if w >= conf.get("bin_min_days", 0.005) else 0.0
 
 
 def clean_event(ev: Event) -> Event:
@@ -940,6 +984,25 @@ def fit_fspl_clean(ev: Event, conf: dict, hint: dict | None = None):
     info: dict = {}
     ev = clean_event(ev)
     info["n_points_raw"] = int(ev.t.size)
+    if ev.t.size > conf.get("bin_above_points", 4000):
+        # an isolated bad point must not be averaged into a bin: a model-free
+        # clip first (outlier against the running median of the flux)
+        keep = np.ones(ev.t.size, dtype=bool)
+        for k in range(ev.n_ds):
+            m = np.where(ev.ds == k)[0]
+            if m.size < 7:
+                continue
+            x = ev.f[m] / ev.e[m]
+            d = x - _running_median(x, conf["clip_window"])
+            sd = 1.4826 * np.median(np.abs(d - np.median(d)))
+            if np.isfinite(sd) and sd > 0:
+                keep[m] = np.abs(d) < conf["clip_sigma"] * sd
+        ev = ev.subset(keep)
+        w = bin_width_for((hint or {}).get("tE"), conf)
+        if w > 0:
+            ev = bin_event(ev, w)
+        info["binned_days"] = w
+    info["n_points_fit"] = int(ev.t.size)
     if ev.t.size < conf["min_points"]:
         info["reason"] = "too_few_points"
         return None, None, None, info
@@ -1073,6 +1136,12 @@ def hollow_centre(ev: Event, tc: float | None, min_depth: float = 0.3) -> dict |
     trough = float(np.min(f[mid])) - base
     if trough > (1.0 - min_depth) * horn:
         return None
+    # the physics: inside the hole the source is hidden entirely, so the flux
+    # sits BELOW the unmagnified baseline --- a binary's trough between two
+    # caustic peaks never does (A >= 1 everywhere, and ~3 between caustics)
+    noise = 1.4826 * float(np.median(np.abs(np.diff(ev.f[m])))) / math.sqrt(2.0)
+    if trough > -3.0 * max(noise, 1e-12):
+        return None
     return {"sep_days": float(t[ir] - t[il]), "horn": float(horn), "trough": trough}
 
 
@@ -1140,9 +1209,15 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
             cand.append(("hole", u_crit(rl), -2.0))
     rec["hole_starts_used"] = bool(hole_starts)
 
+    t_start = time.time()
+    budget = float(conf.get("unit_budget_s", 600.0))
+
     def best_refined(cands, kind):
         best = None
         for regime, uth, v in cands:
+            if time.time() - t_start > budget:
+                rec["budget_exceeded"] = True
+                break
             try:
                 ft = _refine(ev2, f0, regime, uth, conf, kind,
                              hole_starts if (regime == "hole" and v == -2.0) else ())

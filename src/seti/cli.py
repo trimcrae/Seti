@@ -1112,6 +1112,12 @@ def _cmd_ignition(args, cfg):
     return _ignition_main(list(args.rest))
 
 
+def _cmd_occult(args, cfg):
+    from .occult.run import main as _occult_main
+
+    return _occult_main(list(args.rest))
+
+
 # --- FORGE ---
 def _cmd_forge(args, cfg):
     from .forge.run import main as _forge_main
@@ -2396,6 +2402,11 @@ def main(argv=None):
                             "flags are passed through to seti.ignition.run")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_ignition)
+    p = sub.add_parser("occult",
+                       help="OCCULT (S40): an opaque microlens occulting its own images in "
+                            "OGLE/KMTNet/MOA photometry; flags pass through to seti.occult.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_occult)
     p = sub.add_parser("uline",
                        help="ULINE (S54): industrial fluorine molecules in public U-line lists; "
                             "flags are passed through to seti.uline.run")

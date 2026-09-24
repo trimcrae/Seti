@@ -173,9 +173,19 @@ def knn_propensity(cov: pd.DataFrame, y: pd.Series, covariates: Sequence[str],
         X[:, j] = (col - med) / iqr
     kk = int(min(max(k, 1), n - 1))
     tree = cKDTree(X)
-    _, idx = tree.query(X, k=kk + 1)
-    idx = idx[:, 1:]  # drop self (ties: the self may sit anywhere in the first slots)
-    return yv[idx].mean(axis=1)
+    out = np.empty(n)
+    step = 20_000     # bounded memory: n x (k+1) indices per block
+    for s0 in range(0, n, step):
+        rows = np.arange(s0, min(n, s0 + step))
+        _, idx = tree.query(X[rows], k=kk + 1)
+        # drop the star itself by identity (with tied covariates it need not be
+        # the first neighbour); where it is absent, drop the farthest instead
+        is_self = idx == rows[:, None]
+        has = is_self.any(axis=1)
+        is_self[~has, -1] = True
+        keep = idx[~is_self].reshape(len(rows), kk)
+        out[rows] = yv[keep].mean(axis=1)
+    return out
 
 
 def poisson_binomial_sf(p: np.ndarray, o: int) -> float:
@@ -186,6 +196,11 @@ def poisson_binomial_sf(p: np.ndarray, o: int) -> float:
         return 1.0
     if p.size == 0:
         return 0.0
+    if o > 5000:
+        # far outside the regime this channel meets; a refined normal tail
+        from scipy.stats import norm
+        mu, sd = p.sum(), np.sqrt((p * (1 - p)).sum())
+        return float(norm.sf((o - 0.5 - mu) / max(sd, 1e-12)))
     # dist[j] = P(count == j) for j < o; mass that reaches o is absorbed
     dist = np.zeros(o)
     dist[0] = 1.0

@@ -172,6 +172,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries earlier runs'
+      # acquire_s*of*.json; a shard uploads only the files it wrote.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/cradle/parent_s*of*.csv results/cradle/acquire_s*of*.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -196,8 +200,8 @@ jobs:
         with:
           name: cradle-acquire-${{ matrix.shard }}
           path: |
-            results/cradle/parent_s*.csv
-            results/cradle/acquire_s*.json
+            results/cradle/parent_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
+            results/cradle/acquire_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.json
           if-no-files-found: warn
 
   screen:
@@ -209,6 +213,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): screen pools every acquire_s*of*.json
+      # it finds (run.py) — only this run's shards may be on disk.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/cradle/parent_s*of*.csv results/cradle/acquire_s*of*.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -272,6 +280,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries earlier runs'
+      # ages_s*of*.json; a shard uploads only the files it wrote.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/cradle/enriched_s*of*.csv results/cradle/ages_s*of*.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -307,8 +319,8 @@ jobs:
         with:
           name: cradle-ages-${{ matrix.shard }}
           path: |
-            results/cradle/enriched_s*.csv
-            results/cradle/ages_s*.json
+            results/cradle/enriched_s${{ matrix.shard }}of${{ needs.plan.outputs.n_age_shards }}.csv
+            results/cradle/ages_s${{ matrix.shard }}of${{ needs.plan.outputs.n_age_shards }}.json
           if-no-files-found: warn
 
   assess:
@@ -320,6 +332,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): only this run's shard files may be on disk.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/cradle/parent_s*of*.csv results/cradle/acquire_s*of*.json results/cradle/enriched_s*of*.csv results/cradle/ages_s*of*.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -419,6 +434,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): only the named run's shard files may be on disk.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/cradle/parent_s*of*.csv results/cradle/acquire_s*of*.json results/cradle/enriched_s*of*.csv results/cradle/ages_s*of*.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -426,10 +444,39 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Fetch artifacts from a prior run
+      # Named downloads of the artifacts the in-run reducer reads, never one
+      # merge-multiple over cradle-*: that also pulled the run's -final
+      # artifact, which holds second copies of the same files, with no rule
+      # for which copy won (docs/channel-brief.md §0.7).
+      - name: Fetch the prior run's probe
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: cradle-probe
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/cradle/
+      - name: Fetch the prior run's acquire shards
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: cradle-acquire-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/cradle/
+      - name: Fetch the prior run's screen
         uses: actions/download-artifact@v4
         with:
-          pattern: cradle-*
+          name: cradle-screen
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/cradle/
+      - name: Fetch the prior run's ages shards
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: cradle-ages-*
           merge-multiple: true
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}

@@ -285,6 +285,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): drop earlier runs' per-shard
+      # NEOWISE records.  targets.csv / acquire_targets.json stay: shards > 0
+      # read them (run.py::stage_acquire) and only shard 0 uploads them.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -f results/ring/bd/acquire_shard*.json results/ring/bd/acquire_bd_shard*.json results/ring/bd/epochs_bd_shard*.csv results/ring/bd/neowise_stars_bd_shard*.csv
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -301,7 +306,18 @@ jobs:
         if: always()
         with:
           name: ring-bd-shard-${{ matrix.shard }}
-          path: results/ring/bd/
+          # Only this shard's own files (IGNITION's EpochStore, tag bd_shard<i>,
+          # plus run.py's acquire_shard<i>.json).  The whole of bd/ carried the
+          # checked-out targets.csv / screen.json / bd_screened.csv into every
+          # shard's artifact, and `assess` merges them with merge-multiple.
+          # The target list travels once, from shard 0, which built it.
+          path: |
+            results/ring/bd/epochs_bd_shard${{ matrix.shard }}.csv
+            results/ring/bd/neowise_stars_bd_shard${{ matrix.shard }}.csv
+            results/ring/bd/acquire_bd_shard${{ matrix.shard }}.json
+            results/ring/bd/acquire_shard${{ matrix.shard }}.json
+            ${{ matrix.shard == 0 && 'results/ring/bd/targets.csv' || '' }}
+            ${{ matrix.shard == 0 && 'results/ring/bd/acquire_targets.json' || '' }}
           if-no-files-found: warn
 
   assess:
@@ -334,6 +350,11 @@ jobs:
         with:
           pattern: ring-leg-*
           path: results/ring/_legs/
+      # The bd screen globs acquire_shard*.json / epochs_bd_shard*.csv: when
+      # this run acquired, only its own shards' files may be on disk (§0.7).
+      - name: Purge checkout-inherited shard outputs
+        if: ${{ needs.plan.outputs.has_bd == 'true' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'acquire') }}
+        run: rm -f results/ring/bd/acquire_shard*.json results/ring/bd/acquire_bd_shard*.json results/ring/bd/epochs_bd_shard*.csv results/ring/bd/neowise_stars_bd_shard*.csv
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:

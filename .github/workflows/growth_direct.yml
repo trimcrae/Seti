@@ -429,11 +429,22 @@ jobs:
             results/growth/direct/vet/shard_${S}/centroid/verdicts.csv \
             results/growth/direct/vet/shard_${S}/centroid/census.csv \
             results/growth/direct/vet/shard_${S}/centroid/offsets.csv
+      # ONLY THIS SHARD'S DIRECTORY (direct.py writes vet/shard_NN/).  The
+      # refresh above checks out every committed vet/shard_*/ and vet_gather
+      # merges all uploads with merge-multiple: uploading vet/ whole re-delivered
+      # stale copies of the other shards' files --- the measure-job defect of
+      # run 35859780689 again (docs/channel-brief.md §0.7).  The glob's one '?'
+      # matches only shard_NN and keeps the artifact root at vet/ (a literal
+      # single directory is uploaded flattened).
+      - name: Shard tag
+        id: tag
+        if: always()
+        run: echo "s=$(printf '%02d' ${{ matrix.shard }})" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: growth-direct-vet-${{ matrix.shard }}
-          path: results/growth/direct/vet/
+          path: results/growth/direct/vet/shard?${{ steps.tag.outputs.s }}/
           if-no-files-found: warn
 
   vet_gather:

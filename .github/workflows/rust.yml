@@ -152,6 +152,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries every
+      # earlier field's results/rust/<field>/; purge them so this job's upload
+      # cannot carry a stale copy of another shard's field.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/rust
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -173,14 +178,25 @@ jobs:
             --time-budget-s ${{ github.event.inputs.time_budget_s || '2400' }}
           echo "=== field summary ==="
           cat results/rust/*/field_summary.json
+      # Only this field's own directory (<tag>, run.py::_field_tag),
+      # through a glob whose one '?' matches only it and keeps the artifact
+      # root at results/rust/ (a literal single directory is uploaded flattened).
       - name: Shard name
         id: nm
-        run: echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+        if: always()
+        run: |
+          echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          ra, dec = (float(x) for x in "${{ matrix.field }}".split(",")[:2])
+          r = float("${{ github.event.inputs.radius_deg || '0.5' }}")
+          d = "" + f"ra{ra:.3f}_dec{dec:+.3f}_r{r:.2f}"
+          print("glob=?" + d[1:])
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: rust-field-${{ steps.nm.outputs.tag }}
-          path: results/rust/
+          path: results/rust/${{ steps.nm.outputs.glob }}/
           if-no-files-found: warn
 
   vet:

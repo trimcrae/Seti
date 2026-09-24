@@ -433,6 +433,7 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1, max
     ev_path = out / f"events_{tag}.csv"
     ab_path = out / f"eventsAB_{tag}.csv"
     inj_path = out / f"injections_{tag}.csv"
+    pix_path = out / f"pixel_epochs_{tag}.csv"
     ctrl = _read(out / "controls.json")
     if not force and ctrl.get("gate_photometric") != "PASS":
         rep = {"stage": "sweep", "shard": shard, "n_shards": n_shards, **_provenance(),
@@ -489,6 +490,9 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1, max
             continue
         okt = np.isfinite(ph["t"].to_numpy(float)) & ~ph["bad_g"].to_numpy() & np.isfinite(ph["f_g"].to_numpy(float))
         h_tr += np.histogram(ph["t"].to_numpy(float)[okt], bins=edges)[0]
+        # the local veto's denominator: usable transits per (sky pixel, 0.1 d)
+        pe = pixel_epoch_counts(ph["source_id"].to_numpy(np.int64)[okt], ph["t"].to_numpy(float)[okt])
+        pe.to_csv(pix_path, mode="a", header=not pix_path.exists(), index=False)
         ev, cnt = G.detect_frame(ph, gcfg)
         for k in ("n_sources", "n_searched", "n_too_few", "n_transits_ok_g"):
             counts[k] = counts.get(k, 0) + int(cnt[k])
@@ -576,10 +580,41 @@ def _all_event_times(out: Path, n_shards: int | None) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["source_id", "t_peak"])
 
 
-def local_coincidence(ev: pd.DataFrame, allev: pd.DataFrame, *, dt: float = 0.1) -> dict:
+PIX_DT = 0.1   # d, the pixel-epoch bin
+
+
+def pixel_epoch_counts(source_id: np.ndarray, t: np.ndarray) -> pd.DataFrame:
+    """Usable transits per (HEALPix-6 pixel, 0.1-d bin)."""
+    if not len(t):
+        return pd.DataFrame(columns=["hp", "tb", "n"])
+    df = pd.DataFrame({"hp": hp6_of(source_id), "tb": np.floor(np.asarray(t) / PIX_DT).astype(np.int64)})
+    return df.groupby(["hp", "tb"]).size().rename("n").reset_index()
+
+
+def _pixel_epochs(out: Path, n_shards: int | None) -> pd.DataFrame | None:
+    files = sorted(glob.glob(str(out / "pixel_epochs_s*of*.csv")))
+    if n_shards:
+        files = [f for f in files if f.endswith(f"of{int(n_shards)}.csv")]
+    if not files:
+        return None
+    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    return df.groupby(["hp", "tb"])["n"].sum().reset_index()
+
+
+def local_coincidence(ev: pd.DataFrame, allev: pd.DataFrame, pix: pd.DataFrame, *,
+                      dt: float = 0.1) -> dict:
     """For each row of ``ev``: how many OTHER sources in the same level-6
-    pixel have a qualifying episode within +-dt, and the Poisson probability
-    of that many given the pixel's own event rate over the DR3 baseline."""
+    pixel have a qualifying episode within +-dt, against the number expected
+    from the pixel's own episodes-per-usable-transit rate times the usable
+    transits the pixel actually had in that window.
+
+    The denominator matters.  Gaia visits a pixel ~40 times in 34 months and
+    every source in it is observed at the same visits, so episodes of
+    unrelated variables pile onto those epochs by construction.  Run
+    36028172559 used a uniform-in-time null (rate x 2dt / baseline) and
+    vetoed 77,258 of 110,188 tier-A/B episodes -- a wrong null, not an
+    instrument.  This version counts transits per (pixel, 0.1-d bin) in the
+    sweep and normalises by them."""
     from scipy.stats import poisson
 
     a = allev.copy()
@@ -587,23 +622,31 @@ def local_coincidence(ev: pd.DataFrame, allev: pd.DataFrame, *, dt: float = 0.1)
     a = a.sort_values(["hp", "t_peak"])
     groups = {k: (g["t_peak"].to_numpy(float), g["source_id"].to_numpy(np.int64))
               for k, g in a.groupby("hp", sort=False)}
-    span = float(np.nanmax(a["t_peak"]) - np.nanmin(a["t_peak"])) if len(a) else 1.0
+    ptot = pix.groupby("hp")["n"].sum()
+    pix_idx = {k: (g["tb"].to_numpy(np.int64), g["n"].to_numpy(float))
+               for k, g in pix.sort_values(["hp", "tb"]).groupby("hp", sort=False)}
     n_out = np.zeros(len(ev), int)
+    mu_out = np.zeros(len(ev))
     p_out = np.ones(len(ev))
     for i, (sid, t) in enumerate(zip(ev["source_id"].to_numpy(np.int64), ev["t_peak"].to_numpy(float),
                                      strict=False)):
-        g = groups.get(int(hp6_of([sid])[0]))
-        if g is None:
+        hp = int(hp6_of([sid])[0])
+        g = groups.get(hp)
+        pe = pix_idx.get(hp)
+        if g is None or pe is None or hp not in ptot.index:
             continue
         tt, ss = g
         lo, hi = np.searchsorted(tt, t - dt), np.searchsorted(tt, t + dt, side="right")
         others = ss[lo:hi]
         k = int(len(np.unique(others[others != sid])))
-        n_src_events = int((ss != sid).sum())
-        mu = n_src_events * (2 * dt) / max(span, 1.0)
-        n_out[i] = k
+        rate = float((ss != sid).sum()) / max(float(ptot.loc[hp]), 1.0)
+        tb, nn = pe
+        b0, b1 = int(np.floor((t - dt) / PIX_DT)), int(np.floor((t + dt) / PIX_DT))
+        n_tr = float(nn[(tb >= b0) & (tb <= b1)].sum())
+        mu = rate * n_tr
+        n_out[i], mu_out[i] = k, mu
         p_out[i] = float(poisson.sf(k - 1, max(mu, 1e-12))) if k > 0 else 1.0
-    return {"n": n_out, "p": p_out}
+    return {"n": n_out, "mu": mu_out, "p": p_out}
 
 
 def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None) -> dict:
@@ -652,10 +695,13 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None)
         # in the same ~0.9-deg sky pixel within +-0.1 d (one scan passes a
         # pixel in seconds; an instrument event there hits its neighbours)
         allev = _all_event_times(out, n_shards_expected)
+        pix = _pixel_epochs(out, n_shards_expected)
         rep["n_all_events_for_local_veto"] = int(len(allev))
-        if len(allev):
-            loc = local_coincidence(ab, allev, dt=float(rc.get("local_dt_d", 0.1)))
+        rep["local_veto"] = "RUN" if (len(allev) and pix is not None) else "NOT_RUN(no pixel-epoch counts)"
+        if len(allev) and pix is not None:
+            loc = local_coincidence(ab, allev, pix, dt=float(rc.get("local_dt_d", 0.1)))
             ab["n_local_coincident"] = loc["n"]
+            ab["mu_local_coincident"] = loc["mu"]
             ab["p_local_coincident"] = loc["p"]
             ab["epoch_cluster"] = ab["epoch_cluster"] | (loc["p"] < float(rc.get("local_p_max", 1e-3)))
             rep["n_local_coincidence_vetoed"] = int((loc["p"] < float(rc.get("local_p_max", 1e-3))).sum())
@@ -872,7 +918,7 @@ def stage_vet(conf: dict, out: Path, *, tap=acq.gaia_tap) -> dict:
 
 
 def stage_deepvet(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap,
-                  simbad=None, vsx=None, max_n: int = 60) -> dict:
+                  simbad=None, vsx=None, ztf_fetch=None, max_n: int = 60) -> dict:
     """Trace each Gaia-vet survivor to a mechanism (``deepvet.classify_fate``)."""
     from . import deepvet as DV
 
@@ -933,6 +979,15 @@ def stage_deepvet(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap,
                 rec["n_gaia_30as"] = int(len(cone)) - 1
             except Exception:  # noqa: BLE001
                 rec["n_gaia_30as"] = None
+        if np.isfinite(ra) and dec > -31:
+            try:
+                ztf = ztf_fetch(ra, dec) if ztf_fetch else DV.fetch_ztf(ra, dec)
+                dips = [float(x) for x in v.loc[(v["source_id"] == sid) & (v["kind"] == "DIP"), "t_peak"]]
+                rec.update(DV.ztf_eclipse_test(ztf, dips or [float(r["t_peak"])]))
+            except Exception as exc:  # noqa: BLE001
+                rec["ztf_class"] = f"ZTF_ERROR:{exc!r}"[:120]
+        else:
+            rec["ztf_class"] = "ZTF_SOUTH_OF_COVERAGE"
         fate, fl = DV.classify_fate(rec)
         rec["fate"], rec["fate_flags"] = fate, ";".join(fl)
         rows.append(rec)

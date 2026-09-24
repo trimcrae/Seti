@@ -208,6 +208,7 @@ jobs:
         run: |
           rm -f results/parallax4/sweep_s*of*.json results/parallax4/events_s*of*.csv
           rm -f results/parallax4/eventsAB_s*of*.csv results/parallax4/injections_s*of*.csv
+          rm -f results/parallax4/pixel_epochs_s*of*.csv
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -238,6 +239,7 @@ jobs:
             results/parallax4/events_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
             results/parallax4/eventsAB_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
             results/parallax4/injections_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
+            results/parallax4/pixel_epochs_s${{ matrix.shard }}of${{ needs.plan.outputs.n_shards }}.csv
           if-no-files-found: warn
 
   reduce:
@@ -253,6 +255,7 @@ jobs:
         run: |
           rm -f results/parallax4/sweep_s*of*.json results/parallax4/events_s*of*.csv
           rm -f results/parallax4/eventsAB_s*of*.csv results/parallax4/injections_s*of*.csv
+          rm -f results/parallax4/pixel_epochs_s*of*.csv
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

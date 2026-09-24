@@ -190,23 +190,31 @@ def stage_resolve(out: Path = OUT) -> dict:
     return rep
 
 
+def stage_accel(scores_dir: Path = R.SCORES_DIR, out: Path = OUT) -> dict:
+    """ACCEL's parent is a whole Gaia table; acquired here, recorded in accel.json."""
+    from .acquire import fetch_accel_nss
+    led: list = []
+    try:
+        a = fetch_accel_nss(led)
+        a["_s"] = pd.to_numeric(a["significance"], errors="coerce")
+        fr = R.standardise(a, sid="source_id", score="_s", flag=None)
+        Path(scores_dir).mkdir(parents=True, exist_ok=True)
+        fr.to_parquet(Path(scores_dir) / "accel_nss.parquet", index=False)
+        rep = {"status": "OK", "n_emitted": int(len(fr)), "ledger": led}
+    except Exception as e:  # noqa: BLE001
+        rep = {"status": "NO_DATA_REACHED", "error": repr(e)[:400], "ledger": led}
+    rep.update(_prov())
+    _write(out / "accel.json", rep)
+    print(f"[confluence] accel: {rep['status']} {rep.get('n_emitted')}")
+    return rep
+
+
 def stage_harvest(harvest_dir: Path, scores_dir: Path, out: Path = OUT,
                   with_accel: bool = True) -> dict:
     from .harvest import harvest
     rep = harvest(harvest_dir, scores_dir)
     if with_accel:
-        from .acquire import fetch_accel_nss
-        led: list = []
-        try:
-            a = fetch_accel_nss(led)
-            a["_s"] = pd.to_numeric(a["significance"], errors="coerce")
-            fr = R.standardise(a, sid="source_id", score="_s", flag=None)
-            fr.to_parquet(Path(scores_dir) / "accel_nss.parquet", index=False)
-            rep["channels"]["accel_nss"] = {"status": "OK", "n_emitted": int(len(fr)),
-                                            "ledger": led}
-        except Exception as e:  # noqa: BLE001
-            rep["channels"]["accel_nss"] = {"status": "NO_DATA_REACHED", "error": repr(e)[:400],
-                                            "ledger": led}
+        rep["channels"]["accel_nss"] = stage_accel(scores_dir, out)
     rep["channels"]["arc_positions"] = stage_resolve(out)
     rep.update(_prov())
     # the manifest can be long; keep it, it is how the next dispatch learns layouts
@@ -424,6 +432,15 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
                 "overlap_members": len(mem), "overlap_members_tagged": len(mem_att),
                 "overlap_known_rate": mem_rate,
                 "enrichment": (mem_rate / base_rate) if base_rate and base_rate > 0 else None}
+        # "leading": the most extreme overlap members (sum over the member's
+        # channels of -log10 percentile) -- are they the known classes?
+        lead = J[J["star"].isin(mem_att)].assign(
+            lp=lambda d: -np.log10(d["pct"].clip(lower=1e-9)))
+        lead = lead.groupby("star")["lp"].sum().sort_values(ascending=False).head(20)
+        ctrl["leading20_known_rate"] = float(np.mean([s in known for s in lead.index])) \
+            if len(lead) else None
+        ctrl["leading20"] = [{"star": s, "sum_neglog_pct": round(float(v), 2),
+                              "known": s in known} for s, v in lead.items()]
         ctrl["status"] = ("PASS" if (mem_att and base_rate == base_rate
                                      and mem_rate > base_rate) else
                           ("UNTESTED" if not mem_att else "FAIL"))
@@ -521,7 +538,8 @@ def stage_assess(out: Path = OUT, min_joint: int = MIN_JOINT, n_inject: int = 40
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="confluence")
     ap.add_argument("--stage", default="assess",
-                    choices=["inventory", "harvest", "resolve", "joint", "acquire", "assess", "offline"])
+                    choices=["inventory", "harvest", "accel", "resolve", "joint", "acquire", "assess",
+                             "offline"])
     ap.add_argument("--harvest-dir", default=os.environ.get("CONFLUENCE_HARVEST", "harvest"))
     ap.add_argument("--scores-dir", default=str(R.SCORES_DIR))
     ap.add_argument("--min-joint", type=int, default=MIN_JOINT)
@@ -531,6 +549,8 @@ def main(argv=None) -> int:
         stage_inventory()
     elif a.stage == "harvest":
         stage_harvest(Path(a.harvest_dir), Path(a.scores_dir), with_accel=not a.no_accel)
+    elif a.stage == "accel":
+        stage_accel(Path(a.scores_dir))
     elif a.stage == "resolve":
         stage_resolve()
     elif a.stage == "joint":

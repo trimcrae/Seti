@@ -156,15 +156,17 @@ def fetch_density(stars: pd.DataFrame, ledger: list, radius_arcsec: float = 30.0
 def fetch_simbad(stars: pd.DataFrame, ledger: list, radius_arcsec: float = 3.0,
                  chunk: int = 5_000, budget_s: float = 1800) -> tuple[pd.DataFrame, dict]:
     r = radius_arcsec / 3600.0
-    q = ("SELECT t.key, b.main_id, b.otype, "
+    q = ("SELECT t.skey, b.main_id, b.otype, "
          "DISTANCE(POINT('ICRS', t.ra, t.dec), POINT('ICRS', b.ra, b.dec)) * 3600.0 AS sep "
          "FROM TAP_UPLOAD.t AS t JOIN basic AS b ON 1 = CONTAINS(POINT('ICRS', b.ra, b.dec), "
          f"CIRCLE('ICRS', t.ra, t.dec, {r:.7f}))")
-    up = stars[["key", "ra", "dec"]].dropna().copy()
+    # "key" is too close to reserved words in some ADQL parsers: upload as skey
+    up = stars[["key", "ra", "dec"]].dropna().rename(columns={"key": "skey"})
     out, rep = _chunked(up, chunk, lambda f: tap_query(SIMBAD_TAP, q, f, ledger=ledger,
                                                        label="simbad"),
                         budget_s, ledger, "simbad")
     if len(out):
+        out = out.rename(columns={"skey": "key"})
         out = out.sort_values("sep").drop_duplicates("key")
     return out, rep
 
@@ -172,16 +174,18 @@ def fetch_simbad(stars: pd.DataFrame, ledger: list, radius_arcsec: float = 3.0,
 def fetch_vsx(stars: pd.DataFrame, ledger: list, radius_arcsec: float = 3.0,
               chunk: int = 5_000, budget_s: float = 1800) -> tuple[pd.DataFrame, dict]:
     r = radius_arcsec / 3600.0
-    q = ('SELECT t.key, v."Name" AS vsx_name, v."Type" AS vsx_type, v."Period" AS vsx_period, '
+    q = ('SELECT t.skey, v."Name" AS vsx_name, v."Type" AS vsx_type, v."Period" AS vsx_period, '
          'DISTANCE(POINT(\'ICRS\', t.ra, t.dec), POINT(\'ICRS\', v."RAJ2000", v."DEJ2000")) '
          '* 3600.0 AS sep FROM TAP_UPLOAD.t AS t JOIN "B/vsx/vsx" AS v '
          'ON 1 = CONTAINS(POINT(\'ICRS\', v."RAJ2000", v."DEJ2000"), '
          f"CIRCLE('ICRS', t.ra, t.dec, {r:.7f}))")
-    up = stars[["key", "ra", "dec"]].dropna().copy()
+    # "key" is too close to reserved words in some ADQL parsers: upload as skey
+    up = stars[["key", "ra", "dec"]].dropna().rename(columns={"key": "skey"})
     out, rep = _chunked(up, chunk, lambda f: tap_query(VIZIER_TAP, q, f, ledger=ledger,
                                                        label="vsx"),
                         budget_s, ledger, "vsx")
     if len(out):
+        out = out.rename(columns={"skey": "key"})
         out = out.sort_values("sep").drop_duplicates("key")
     return out, rep
 

@@ -2614,25 +2614,70 @@ def direct_vet(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn
     return rep
 
 
-def direct_vet_gather(conf: dict, out: Path) -> dict:
+def _vet_shard_dirs(vet_dir: Path, n_shards: int | None) -> tuple[list[Path], list[dict]]:
+    """The ``vet/shard_NN`` directories that belong to a vet of ``n_shards`` shards.
+
+    With ``n_shards`` given, a directory counts only if NN < n_shards and its
+    own summary.json (when readable) says it was one of ``n_shards`` shards.
+    A ``shard_05`` left on the branch by an earlier six-shard vet is therefore
+    NOT pooled into a four-shard one; it is returned in the ignored list with
+    the reason.  ``n_shards=None`` keeps the old behaviour (every shard_*).
+    """
+    keep, ignored = [], []
+    for d in sorted(Path(p) for p in glob.glob(str(vet_dir / "shard_*"))):
+        if not d.is_dir():
+            continue
+        if n_shards is None:
+            keep.append(d)
+            continue
+        try:
+            idx = int(d.name.split("_", 1)[1])
+        except (IndexError, ValueError):
+            ignored.append({"dir": d.name, "reason": "not a shard_NN directory"})
+            continue
+        if idx >= int(n_shards):
+            ignored.append({"dir": d.name, "reason": f"index {idx} >= n_shards {n_shards}"})
+            continue
+        sp = d / "summary.json"
+        if sp.exists():
+            try:
+                own = json.loads(sp.read_text()).get("n_shards")
+            except Exception:                             # noqa: BLE001
+                own = None
+            if own is not None and int(own) != int(n_shards):
+                ignored.append({"dir": d.name,
+                                "reason": f"written by a {own}-shard vet, not {n_shards}"})
+                continue
+        keep.append(d)
+    return keep, ignored
+
+
+def direct_vet_gather(conf: dict, out: Path, *, n_shards: int | None = None) -> dict:
     """Merge the sharded vet into ``out/vet/vetted.csv`` and ``out/vet/summary.json``.
 
     A candidate that appears in no shard's ``vetted.csv`` is reported as
     ``n_candidates_not_vetted`` with its identifiers --- it is **not** dropped
     and it is **not** a pass: a candidate nobody ran stage 3 on has the
     difference-image question wide open.
+
+    ``n_shards`` is the width of THIS vet; with it, only ``shard_00`` ..
+    ``shard_<n-1>`` written by an ``n_shards``-wide vet are merged (see
+    :func:`_vet_shard_dirs`).
     """
     out = Path(out)
     vet_dir = out / "vet"
     vet_dir.mkdir(parents=True, exist_ok=True)
     frames, reps = [], []
-    for p in sorted(glob.glob(str(vet_dir / "shard_*" / "vetted.csv"))):
-        df = _read_csv(p)
+    dirs, ignored = _vet_shard_dirs(vet_dir, n_shards)
+    for d in dirs:
+        df = _read_csv(d / "vetted.csv") if (d / "vetted.csv").exists() else pd.DataFrame()
         if len(df):
             frames.append(df)
-    for p in sorted(glob.glob(str(vet_dir / "shard_*" / "summary.json"))):
+    for d in dirs:
+        if not (d / "summary.json").exists():
+            continue
         try:
-            reps.append(json.loads(Path(p).read_text()))
+            reps.append(json.loads((d / "summary.json").read_text()))
         except Exception:                                 # noqa: BLE001
             continue
     pdf = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
@@ -2645,7 +2690,8 @@ def direct_vet_gather(conf: dict, out: Path) -> dict:
                if len(cands) and "kepoi_name" in cands else pd.DataFrame())
     surv = pdf[pdf["survives_vet"].map(_b)] if len(pdf) and "survives_vet" in pdf else pd.DataFrame()
     rep = {"stage": "vet-gather", "generated_utc": _now(),
-           "n_shards_found": len(reps), "n_candidates": int(len(cands)),
+           "n_shards_found": len(reps), "n_shards_expected": n_shards,
+           "shards_ignored": ignored, "n_candidates": int(len(cands)),
            "n_vetted": int(len(pdf)), "n_candidates_not_vetted": int(len(missing)),
            "not_vetted": [{k: r.get(k) for k in ("kepoi_name", "kepler_name", "kepid", "tic_id",
                                                   "class", "pdc_z_pop", "sap_z")}
@@ -2674,7 +2720,8 @@ def direct_vet_gather(conf: dict, out: Path) -> dict:
 # ---------------------------------------------------------------------------
 def direct_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, shard: int = 0,
                n_shards: int = 1, resume: bool = True, budget_s: float | None = None,
-               query_fn=None, products_fn=None, tic_fn=None, **vet_kw) -> dict:
+               query_fn=None, products_fn=None, tic_fn=None, gather_n_shards: int | None = None,
+               **vet_kw) -> dict:
     from .run import load_growth_config  # noqa: PLC0415
 
     conf = conf if conf is not None else load_growth_config()
@@ -2700,7 +2747,7 @@ def direct_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, sh
             rep = direct_vet(conf, out, query_fn=query_fn, shard=shard, n_shards=n_shards,
                              **vet_kw)
         elif s in ("vet-gather", "vet_gather"):
-            rep = direct_vet_gather(conf, out)
+            rep = direct_vet_gather(conf, out, n_shards=gather_n_shards)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
     return rep
@@ -2718,12 +2765,15 @@ def main(argv=None):
     p.add_argument("--out-dir", default="results/growth/direct")
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--n-shards", type=int, default=1)
+    p.add_argument("--vet-shards", type=int, default=None,
+                   help="vet-gather: width of this vet; only shard_00..shard_<n-1> written by "
+                        "an n-shard vet are merged")
     p.add_argument("--no-resume", action="store_true")
     p.add_argument("--budget-s", type=float, default=None,
                    help="override direct.fetch.shard_budget_s for this shard")
     a = p.parse_args(argv)
     rep = direct_run(a.stage, out_dir=a.out_dir, shard=a.shard, n_shards=a.n_shards,
-                     resume=not a.no_resume, budget_s=a.budget_s)
+                     resume=not a.no_resume, budget_s=a.budget_s, gather_n_shards=a.vet_shards)
     if isinstance(rep, dict) and rep.get("verdict"):
         print(f"[growth-direct] verdict: {rep['verdict']}")
     return 0

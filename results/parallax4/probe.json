@@ -1,8 +1,8 @@
 {
  "stage": "probe",
- "generated_utc": "2026-09-24T14:49:01Z",
- "run_id": "36015376952",
- "git_sha": "eeee75c2b2b6b80d86efba0a4d6030223749f98f",
+ "generated_utc": "2026-09-24T15:22:14Z",
+ "run_id": "36019508284",
+ "git_sha": "a4fb318eb414319dcaf66a80956d0eba02f72e7c",
  "dr4": {
   "checks": {
    "tap_schemas": {
@@ -26,11 +26,129 @@
   "scheduled_release": "2026-12-02 (ESA Gaia DR4 content page)"
  },
  "cdn": {
-  "ok": false,
+  "ok": true,
   "status": 200,
-  "head": "<!DOCTYPE html>\n<html>\n  <head>\n    <title id=\"page-title\">File Browser</title>\n    <style>\n      body {\n        font-family: monospace;\n      }\n      #file-list {\n        white-space: pre;\n      }\n      a {\n        text-decoration: none;\n      }\n    </style>\n    <meta name=\"author\" content=\"Martin Morc with \u2661 @ cdn77.com\">\n  </head>\n  <body>\n    <h2 id=\"page-heading\"></h2>\n    <hr />\n    <div id=\"file-list\">Loading...</div>\n    <hr />\n    <script>\n      const urlParams = new URLSearchParams(window.location.search);\n      const prefix = urlParams.get('prefix') || '';\n      \n      const fetchUrl = prefix\n        ? `https://gaia.eu-1.cdn77-storage.com/?prefix=${prefix}&delimiter=/`\n        : 'https://gaia.eu-1.cdn77-storage.com/?delimiter=/';\n\n      const cdnBaseUrl = 'https://cdn.gea.esac.esa.int/';\n      const items = new Map();\n\n      const indexText = 'Index of /' + prefix;\n      document.getElementById('page-title').textContent = indexText;\n      document.getElementById('page-heading').textContent = indexText;\n\n      function formatDate(isoString) {\n        if (!isoString) return '-';\n        const date = new Date(isoString);\n        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',\n                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];\n\n        const day = String(date.getDate()).padStart(2, '0');\n        const month = months[date.getMonth()];\n        const year = date.getFullYear();\n        const hours = String(date.getHours()).padStart(2, '0');\n       ",
-  "n_bytes": 6055,
-  "n_md5": 0
+  "route": "storage_listing",
+  "n_files": 3386,
+  "total_bytes": 72811824692,
+  "n_md5": 3240,
+  "first_file": {
+   "name": "EpochPhotometry_000000-003111.csv.gz",
+   "bytes": 16280299,
+   "header": [
+    "solution_id",
+    "source_id",
+    "n_transits",
+    "transit_id",
+    "g_transit_time",
+    "g_transit_flux",
+    "g_transit_flux_error",
+    "g_transit_flux_over_error",
+    "g_transit_mag",
+    "g_transit_n_obs",
+    "bp_obs_time",
+    "bp_flux",
+    "bp_flux_error",
+    "bp_flux_over_error",
+    "bp_mag",
+    "rp_obs_time",
+    "rp_flux",
+    "rp_flux_error",
+    "rp_flux_over_error",
+    "rp_mag",
+    "photometry_flag_noisy_data",
+    "photometry_flag_sm_unavailable",
+    "photometry_flag_af1_unavailable",
+    "photometry_flag_af2_unavailable",
+    "photometry_flag_af3_unavailable",
+    "photometry_flag_af4_unavailable",
+    "photometry_flag_af5_unavailable",
+    "photometry_flag_af6_unavailable",
+    "photometry_flag_af7_unavailable",
+    "photometry_flag_af8_unavailable",
+    "photometry_flag_af9_unavailable",
+    "photometry_flag_bp_unavailable",
+    "photometry_flag_rp_unavailable",
+    "photometry_flag_sm_reject",
+    "photometry_flag_af1_reject",
+    "photometry_flag_af2_reject",
+    "photometry_flag_af3_reject",
+    "photometry_flag_af4_reject",
+    "photometry_flag_af5_reject",
+    "photometry_flag_af6_reject",
+    "photometry_flag_af7_reject",
+    "photometry_flag_af8_reject",
+    "photometry_flag_af9_reject",
+    "photometry_flag_bp_reject",
+    "photometry_flag_rp_reject",
+    "variability_flag_g_reject",
+    "variability_flag_bp_reject",
+    "variability_flag_rp_reject"
+   ],
+   "resolution": {
+    "mapping": {
+     "source_id": "source_id",
+     "transit_id": "transit_id",
+     "g_time": "g_transit_time",
+     "g_flux": "g_transit_flux",
+     "g_flux_error": "g_transit_flux_error",
+     "g_mag": "g_transit_mag",
+     "g_n_obs": "g_transit_n_obs",
+     "bp_time": "bp_obs_time",
+     "bp_flux": "bp_flux",
+     "bp_flux_error": "bp_flux_error",
+     "rp_time": "rp_obs_time",
+     "rp_flux": "rp_flux",
+     "rp_flux_error": "rp_flux_error",
+     "noisy": "photometry_flag_noisy_data",
+     "g_var_reject": "variability_flag_g_reject",
+     "bp_var_reject": "variability_flag_bp_reject",
+     "rp_var_reject": "variability_flag_rp_reject",
+     "bp_reject": "photometry_flag_bp_reject",
+     "rp_reject": "photometry_flag_rp_reject",
+     "bp_unavailable": "photometry_flag_bp_unavailable",
+     "rp_unavailable": "photometry_flag_rp_unavailable"
+    },
+    "missing": [],
+    "unused": [
+     "solution_id",
+     "n_transits",
+     "g_transit_flux_over_error",
+     "bp_flux_over_error",
+     "bp_mag",
+     "rp_flux_over_error",
+     "rp_mag",
+     "photometry_flag_sm_unavailable",
+     "photometry_flag_af1_unavailable",
+     "photometry_flag_af2_unavailable",
+     "photometry_flag_af3_unavailable",
+     "photometry_flag_af4_unavailable",
+     "photometry_flag_af5_unavailable",
+     "photometry_flag_af6_unavailable",
+     "photometry_flag_af7_unavailable",
+     "photometry_flag_af8_unavailable",
+     "photometry_flag_af9_unavailable",
+     "photometry_flag_sm_reject",
+     "photometry_flag_af1_reject",
+     "photometry_flag_af2_reject",
+     "photometry_flag_af3_reject",
+     "photometry_flag_af4_reject",
+     "photometry_flag_af5_reject",
+     "photometry_flag_af6_reject",
+     "photometry_flag_af7_reject",
+     "photometry_flag_af8_reject",
+     "photometry_flag_af9_reject"
+    ]
+   },
+   "n_sources": 5345,
+   "n_transits": 121811,
+   "read_s": 3.69,
+   "mismatched_array_rows": 0,
+   "t_range": [
+    1704.8658422613373,
+    2624.9961428754677
+   ]
+  }
  },
  "prerelease": {
   "epoch_astrometry": {
@@ -479,5 +597,5 @@
    ]
   }
  },
- "verdict": "NO_DATA_REACHED"
+ "verdict": "PROBE_OK"
 }

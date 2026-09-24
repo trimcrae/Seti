@@ -49,7 +49,7 @@ from .null import injection_efficiency, run_null, score_fap
 from .pipeline import evaluate_for_injection, evaluate_pack, ir_arrays, make_pack
 
 OUT = Path("results") / "antiphase"
-STAGES = ("controls", "natural", "shard", "reduce")
+STAGES = ("controls", "natural", "shard", "reduce", "hatsprobe")
 
 
 def _now() -> str:
@@ -967,6 +967,13 @@ def main(argv=None) -> int:
         res = run_controls(conf)
         _write_json(out / "controls.json", res)
         print(f"[antiphase] controls gate: {res['gate']}  outcomes: {res['outcomes']}")
+        return 0
+    if a.stage == "hatsprobe":
+        from .hats_lc import probe
+
+        res = probe(((106.329042, 6.205389), (200.0, 40.0), (150.0, 30.0)))
+        _write_json(out / "hats_probe.json", res)
+        print(json.dumps(_jsonable(res), indent=1)[:8000])
         return 0
     if a.stage == "natural":
         res = run_natural(conf)

@@ -1,0 +1,73 @@
+{
+  "stage": "acquire",
+  "shard": [
+    5,
+    14
+  ],
+  "n_targets": 206,
+  "n_fetched": 205,
+  "n_failed": 0,
+  "n_empty": 1,
+  "n_parse_failed": 0,
+  "n_resumed": 0,
+  "truncated": false,
+  "flag_source": "daschlab_source",
+  "service_probe_ok": true,
+  "exptime": {
+    "table_rows": 77632,
+    "source": "targets_stage",
+    "n_matched_stars": 205,
+    "match_keys": {
+      "series+platenum": 203,
+      "series+platenum+mosnum+expnum": 2
+    },
+    "unmatched_stars": 0
+  },
+  "verdict": "LIGHTCURVES_FETCHED",
+  "acquisition": {
+    "stages": [
+      {
+        "stage": "flag_definitions",
+        "status": "OK",
+        "rows": 47,
+        "query": "https://raw.githubusercontent.com/pkgw/daschlab/main/daschlab/photometry.py,lightcurves.py",
+        "source": "daschlab_source",
+        "http": {
+          "photometry.py": 200,
+          "lightcurves.py": 200
+        }
+      },
+      {
+        "stage": "plate_exptime",
+        "status": "OK",
+        "rows": 77632,
+        "query": "/home/runner/work/Seti/Seti/results/century/plate_exptime.csv",
+        "source": "targets_stage"
+      },
+      {
+        "stage": "dasch_service_probe",
+        "status": 200,
+        "rows": 1,
+        "query": "querycat (180,+20) r=60\"",
+        "body_head": "[\"ref_text,ref_number,gsc_bin_index,ra_deg,dec_deg,pos_epoch,stdmag,color,pm_ra_masyr,u_pm_ra_masyr,pm_dec_masyr,u_pm_dec_masyr,class,v_flag,mag_flag,num_matches,dra_asec,ddec_asec\",\"APASS_J120000.2+2"
+      },
+      {
+        "stage": "lightcurves",
+        "status": "OK",
+        "rows": 205,
+        "query": "shard 5/14: 206 targets",
+        "n_failed": 0,
+        "n_empty": 1,
+        "n_skipped_done": 0,
+        "truncated": false,
+        "elapsed_s": 3030.5
+      }
+    ],
+    "n_stages": 4,
+    "n_ok": 3,
+    "n_query_failed": 0,
+    "n_query_returned_zero_rows": 0,
+    "any_query_failed": false,
+    "total_rows": 77885
+  }
+}

@@ -441,6 +441,94 @@ TYC 4479-3-1, is the default reading. What is still open:
   and J/AJ/167/275 for 4 candidates.
 - `harmonise` prefers GSP-Spec Teff even when it is unphysical (2750 K).
 
+## Lead vet — trying to kill Gaia DR3 6225457312033584384 (2026-09-24)
+
+`python -m seti.cradle.leadvet` (`stage=leadvet`, optional `blocks=`).
+Dispatches, all on `claude/handoff-cradle`:
+
+- 36003679119: the first pass.
+- 36007839429 (15:17Z, 11:17 a.m. EDT): the full pass of record.
+- 36021814255 (block re-run, 15:48Z, 11:48 a.m. EDT): TESS across every pipeline,
+  NEOWISE with the AllWISE-epoch field comparison, and PSF.
+
+Everything is in `results/cradle/leadvet.json`.
+
+| test | measurement | reading |
+|---|---|---|
+| NEOWISE W1, 22 visits 2014–2024 | range 0.043 mag, χ²_red 1.85 (93rd percentile of 14 field stars of matched W1); slope +0.0020 mag/yr | flat |
+| NEOWISE W2 | range 0.099 mag (64th pct), χ²_red 6.0 (highest of 14); fade +0.0052 mag/yr against a field median of +0.0032 ± 0.0009 | most of the fade is instrumental (the field shares it); the residual +0.002 mag/yr is 2.3 MAD. At most a marginal W2 excess scatter |
+| AllWISE 2010, two visits | W3 fainter by 0.195 ± 0.033 mag, W4 by 0.09 ± 0.19. The same visit pair for 21 field sources: W3 −0.02 (MAD 0.11) | 1.9 MAD, **not significant** |
+| SED | no AKARI IRC/FIS, IRAS PSC/FSC or Herschel detection (all far above the 17 mJy W4 flux). The excess is measured at 2 wavelengths only | T_bb = 262 K (250–275) from AllWISE, 235 K (224–248) from the LS deblended forced photometry, 256 K (248–264) joint. **The cell edge (250 K) is inside the systematics.** A two-temperature fit is not constrained. W2 excess 0.34 ± 0.26 mJy, against 0.10 mJy predicted by the 262 K body; an 800 K component is ≤ 32 % of f (3σ) |
+| DESI DR1 (R ≈ 4500) | Li 6708: EW 54 mÅ blend − 10 mÅ Fe I (Soderblom+93) = **44 ± 27 mÅ**. Comparison star 1276273278883611264 (FLAME 10.9 Gyr): −23 ± 17 mÅ | below a Hyades-age G dwarf (~70–90 mÅ at 5700 K); not a youth signal, but it cannot exclude ~1 Gyr |
+| DESI chromosphere, core/model ratio | lead: Ca II K 1.68, H 1.25, IRT 0.99/1.00/0.99, Hα 0.95. Old comparison: K 2.86, H 1.51, IRT 1.00/1.04/1.03, Hα 0.99 | the K ratio is template mismatch; the lead is **no more active than a 10.9 Gyr star** |
+| TESS (SPOC, TESS-SPOC, QLP, TGLC, eleanor, TARS; sectors 11/38/65/91) | no period recurs across sectors or pipelines. QLP-SAP s91 gives 8.28 d, but it does not survive per-orbit detrending and TARS s91 gives 6.5 d. PDCSAP p5–p95 is 3.7–6.4 ppt | **no rotation detected**: consistent with an inactive star, but not a gyro age |
+| ZTF | saturated (r ≈ 12.6) | untested |
+| Kinematics | U, V, W = −61, −31, +12 km/s (LSR). Bensby+14: thin 0.94, thick 0.06. Orbit: R 6.0–9.0 kpc, e = 0.20, z_max = 0.29 kpc | a heated thin-disc orbit, typical of several Gyr, not of a young star. Not thick disc |
+| Isochrone | FLAME 5.6 (4.4–6.8) Gyr, logg 4.39, M_G = 4.80, [M/H] −0.25 (GSP-Phot) / −0.51 (StarHorse). No GSP-Spec | a main-sequence G dwarf. The isochrone age is weak, as it always is on the main sequence |
+| Companions | RUWE 0.98. Astrometric excess noise 0.071 mas (sig 5.2, common at G ≈ 13). IPD multi-peak 1 %. No NSS solution. Gaia RV −36.3 ± 2.3 (12 transits) vs DESI −42.6 km/s. **No co-moving source among 17 within 60″** (≈ 22,000 AU) | no companion found. The 6 km/s RV difference is within DESI's stellar-velocity systematics |
+| Confusion | IRSA DUST: E(B−V) 0.133, I₁₀₀ = 6.67 ± 0.09 MJy/sr (smooth). unWISE FWHM: W1 5.67″ (field 5.70 ± 0.16), W3 6.97″ (field 7.17 ± 0.42, n = 4), W4 11.1″ | point-like, low cirrus |
+| Literature | no SIMBAD object within 60″. None of 140 VizieR catalogues matching debris / infrared excess / warm dust / extreme debris / exozodi keywords has an entry within 10″. IDs: TIC 117092, 2MASS J14494466−2728225, UCAC4 313-078514 | not previously published as far as SIMBAD and VizieR index. Papers not yet ingested (2025–26) are unchecked |
+
+**Occurrence.** The Gaia parent holds **1,282,731 FGK dwarfs** (G < 13.5,
+d < 500 pc). Scaled from the lead itself, a 262 K disc with f = 10⁻² is a
+≥ 5σ W4 detection for W1 < 11.7 (G ≲ 13.3), so most of the parent is
+sensitive. Two known old EDDs come from Tycho-scale searches, BD+20 307 and
+TYC 4479-3-1. In this parent: BD+20 307 (hot, out of the cell) plus this star.
+That is ~2 per 10⁶ FGK dwarfs. In this same sample, young and age-undetermined
+EDDs pile up at 250–350 K: 27 in-cell stars have f > 5 × 10⁻³, including the
+Moór+2021 EDD TYC 8105-370-1 at 265 K. So **one old EDD in the cell is not
+statistically surprising.** What would be new is only its temperature–age
+combination.
+
+**Physics of a natural reading.** At r_bb = 1.08 AU around 0.92 L_☉ the
+orbital period is 1.1 yr. The collisional lifetime of the smallest grains is
+~P/(4πf) ≈ 3 yr (dr/r = 0.5). The dust therefore has to be resupplied, which
+means a recent event, as in every EDD. The cross-section 4πr²f ≈ 5 × 10²¹ m²
+is ~2 × 10¹⁹ kg in 1 µm grains, or ~10²¹ kg (a few % of a lunar mass)
+extended to cm sizes. One collision between asteroid-to-Moon-mass bodies
+accounts for it.
+
+**Natural late collision vs genuinely unexplained.** These tests would settle
+it:
+
+1. **Mid-IR spectrum (JWST/MIRI):**
+   - silicate emission with crystalline forsterite or enstatite, or silica →
+     impact debris (natural);
+   - featureless 8–13 µm → S53's slag-compatible class, but large grains do
+     that too.
+2. **A robust age:**
+   - a high-resolution Li abundance (A(Li)) and log R′_HK;
+   - an asteroseismic or eclipsing constraint if one appears.
+
+   An age below ~1 Gyr moves it into the ordinary young-EDD population.
+3. **Mid-IR time-domain** (a new W3/W4-like epoch, e.g. SPHEREx or NEO
+   Surveyor). EDD-like decay or brightening over years favours a collision.
+   Constancy over decades would sit oddly with a ~3 yr collisional lifetime and
+   would require a large, steady reservoir.
+4. **A dynamical trigger:** none found (no companion within 22,000 AU, clean
+   astrometry). A planet perturber is unconstrained.
+
+Nothing measured so far distinguishes it from a natural late collision.
+**It is an unusual natural-candidate object, not evidence of technology.**
+
+**The two secondaries:**
+
+- **3168144078565656832 is compromised:**
+  - a coherent **0.45 d, ~5 ppt signal in 9 TESS sectors** (QLP and SPOC). Its
+    source is unidentified (TESS pixels are 21″); if it is on-target, the star
+    is a close binary;
+  - W3 FWHM 7.69″ against the field's 6.94 ± 0.07″ (only 3 field stars);
+  - W4 centroid 4.0″ off (3.9σ);
+  - kinematically thin disc.
+- **5295632592220066688 is old but weakly detected:**
+  - genuinely old: thick disc (Bensby P_thick 0.99, z_max 1.56 kpc), GSP-Spec
+    [M/H] −0.72 and [α/Fe] +0.43, FLAME 12.2 Gyr;
+  - its excess is weak: W4 SNR 6.0, detected in 2/47 single frames;
+  - W3 FWHM 7.64″ vs 7.03 ± 0.28″ (2.1 MAD);
+  - IRSA SFD E(B−V) 0.207 at the reference pixel, over the pipeline's 0.20
+    cirrus kill, with I₁₀₀ = 11.3 MJy/sr;
+  - no TESS period, no DESI spectrum.
+
 ## The honest weakness
 
 Natural late instability explains both known old extreme debris disks, and it

@@ -619,6 +619,41 @@ def test_batched_route_that_cannot_upload_hands_back_to_the_per_star_route():
     assert log["route_failed"] and "ngoodobsrel" in log["error"]
 
 
+def test_natural_sample_is_classified_and_a_leak_is_counted():
+    from seti.antiphase.run import run_natural
+
+    rng = np.random.default_rng(24)
+    ep_dust, opt_dust = ir_epochs(rng), None
+    opt_dust = fade(ztf_points(rng), 2020.8, 2021.9, {"g": 0.4 * 1.41, "r": 0.4})
+    ep_dust = ir_step(ep_dust, 2020.8, 2021.9, ir_excess_dmag(SUN, 0.3, 700.0))
+    ep_grey, opt_grey = grey_balanced(rng, frac=0.15)
+
+    def vsx(vt, **kw):
+        return {"status": "OK", "rows": [{"name": f"{vt} A", "ra": 10.0, "dec": 5.0,
+                                          "vsx_type": vt, "max": "13", "period": ""}]}
+    series = {"vsx0": (ep_dust, opt_dust), "vsx1": (ep_grey, opt_grey)}
+
+    def neo(objs):
+        return {s: series[s][0].assign(source_id=s) for s in objs["source_id"]}, {"chunks": []}
+
+    def ztf_b(have, table, budget_s, on_result):
+        for s in have["source_id"]:
+            on_result(s, {"status": "OK", "bands": series[s][1]})
+        return {"counts": {"OK": len(have)}}
+    meta_row = [{"source_id": "x", "ra": 10.0, "dec": 5.0, "pmra": 0.0, "pmdec": 0.0,
+                 "parallax": 8.0, "phot_g_mean_mag": 13.5, "bp_rp": 0.82, "sep_arcsec": 0.1}]
+    fx = {"vsx": vsx, "neowise_many": neo, "ztf_table": lambda: {"status": "OK", "table": "t"},
+          "ztf_batched": ztf_b, "gaia_cone": lambda *a: {"status": "OK", "rows": meta_row},
+          "allwise": lambda *a: {"status": "OK", "w1mpro": 11.95, "w2mpro": 12.0,
+                                 "w3mpro": 11.95}}
+    conf = {**CONF, "natural": {"types": {"RCB": 1, "UXOR": 1}}}
+    res = run_natural(conf, fx)
+    s = res["summary"]
+    assert s["by_type"]["RCB"]["natural_classes"].get("NATURAL_CHROMATIC") == 1
+    # the grey balanced one, filed under UXOR, is exactly what a leak looks like
+    assert s["n_leaks"] == 1 and s["leaks"] == ["UXOR A"]
+
+
 def test_multi_id_csv_parser():
     csv = ("oid,mjd,mag,magerr,filtercode,catflags\n5,1,14,0.01,zg,0\n5,2,14,0.01,zg,32768\n"
            "6,1,13,0.01,zr,0\n")

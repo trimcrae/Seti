@@ -27,6 +27,10 @@ import pandas as pd
 GAIA_TAP = "https://gea.esac.esa.int/tap-server/tap"
 SIMBAD_TAP = "https://simbad.cds.unistra.fr/simbad/sim-tap"
 VIZIER_TAP = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+#: GAVO's Gaia DR3 mirror at ARI Heidelberg: same schema (gaiadr3.*), a different
+#: queue.  Used when the ESA archive refuses (runs 36006344044 / 36025896890).
+ARI_TAP = "https://gaia.ari.uni-heidelberg.de/tap"
+ESA_ATTEMPT_S = 600.0
 
 
 def _lower(df: pd.DataFrame) -> pd.DataFrame:
@@ -34,6 +38,16 @@ def _lower(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def gaia_query(adql: str, upload: pd.DataFrame | None = None, name: str = "t",
+               retries: int = 3, ledger: list | None = None, label: str = "") -> pd.DataFrame:
+    """ESA first (astroquery async, sync last); the ARI mirror if ESA refuses."""
+    try:
+        return _esa_query(adql, upload, name, retries=2, ledger=ledger, label=label)
+    except Exception:  # noqa: BLE001
+        return tap_query(ARI_TAP, adql, upload, name, retries=retries, ledger=ledger,
+                         label=f"{label}@ari", timeout=900)
+
+
+def _esa_query(adql: str, upload: pd.DataFrame | None = None, name: str = "t",
                retries: int = 3, ledger: list | None = None, label: str = "") -> pd.DataFrame:
     """astroquery async with backoff, sync on the last attempt."""
     from astropy.table import Table
@@ -48,7 +62,15 @@ def gaia_query(adql: str, upload: pd.DataFrame | None = None, name: str = "t",
         try:
             fn = Gaia.launch_job if sync else Gaia.launch_job_async
             kw = {"upload_resource": up, "upload_table_name": name} if up is not None else {}
-            df = _lower(fn(adql, **kw).get_results().to_pandas())
+            # astroquery polls an async job with no deadline (7,225 s seen);
+            # bound each attempt so the mirror gets its turn
+            from concurrent.futures import ThreadPoolExecutor
+            ex = ThreadPoolExecutor(max_workers=1)
+            fut = ex.submit(lambda f=fn, k=kw: f(adql, **k).get_results().to_pandas())
+            try:
+                df = _lower(fut.result(timeout=ESA_ATTEMPT_S))
+            finally:
+                ex.shutdown(wait=False, cancel_futures=True)
             if sync and len(df) in (2000, 3000, 50000):
                 # the anonymous synchronous endpoint silently caps its rows;
                 # a result exactly at a cap is a truncation, never a parent
@@ -67,14 +89,15 @@ def gaia_query(adql: str, upload: pd.DataFrame | None = None, name: str = "t",
 
 
 def tap_query(url: str, adql: str, upload: pd.DataFrame | None = None, name: str = "t",
-              retries: int = 3, ledger: list | None = None, label: str = "") -> pd.DataFrame:
+              retries: int = 3, ledger: list | None = None, label: str = "",
+              timeout: float = 300) -> pd.DataFrame:
     import pyvo
     import requests
     from astropy.table import Table
 
     class _S(requests.Session):   # pyvo's run_sync takes no timeout; bound every call
         def request(self, *a, **kw):
-            kw.setdefault("timeout", 300)
+            kw.setdefault("timeout", timeout)
             return super().request(*a, **kw)
 
     svc = pyvo.dal.TAPService(url, session=_S())

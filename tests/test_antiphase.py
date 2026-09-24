@@ -578,6 +578,19 @@ def test_shard_and_reduce_end_to_end(tmp_path):
     assert s["run_id"] == "test" and s["generated_utc"]
 
 
+def test_a_control_with_non_overlapping_bands_is_judged_on_the_best_single_band():
+    """ASAS-SN V ended in 2018 as its g began: V+g together match no epoch."""
+    from seti.antiphase.run import choose_optical
+
+    rng = np.random.default_rng(23)
+    ep, opt = grey_balanced(rng)
+    v = ztf_points(rng, t0=2014.2, t1=2018.3)["g"]
+    rec, pack, tried = choose_optical(ep, {"asassn_V": v, "asassn_g": opt["g"]}, SUN, CONF)
+    assert rec["optical_bands"] == "asassn_g"
+    assert rec["coupling_label"] == "COUPLED"
+    assert any(t["bands"] == ["asassn_V", "asassn_g"] and t["n_matched"] == 0 for t in tried)
+
+
 @pytest.mark.parametrize("name", ["Gaia-GIC-1", "ASASSN-21qj", "ASASSN-24fw"])
 def test_configured_controls_carry_references(name):
     c = {x["name"]: x for x in CONF["controls"]}[name]

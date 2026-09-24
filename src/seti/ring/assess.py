@@ -55,8 +55,45 @@ _PSR_HEADLINE = [
 # White-dwarf shortlist follow-up (runner; every fetcher injectable)
 # --------------------------------------------------------------------------
 
+def gaia_neighbours_bulk(positions: pd.DataFrame, radius_arcsec: float = 12.0, *,
+                         xmatch_fn=None) -> dict:
+    """Gaia DR3 neighbours of every candidate in ONE CDS X-Match (I/355/gaiadr3).
+
+    Run 36016037098 sent 27 per-object async Gaia-archive cones; every one
+    hung past its 60 s allowance while the archive was dropping connections,
+    so the blend test was untested for all 27.  CDS X-Match answers the whole
+    list in one call.  Returns ``{candidate source_id (str): neighbour frame}``
+    in the column names ``ovet.beam_blend_verdict`` reads.
+    """
+    from ..acquire.science import _xmatch
+
+    xmatch_fn = xmatch_fn or _xmatch
+    up = positions[["source_id", "ra", "dec"]].copy()
+    up["source_id"] = up["source_id"].astype(str)
+    raw = xmatch_fn(up, "vizier:I/355/gaiadr3", float(radius_arcsec))
+    if raw is None or not len(raw):
+        return {str(k): pd.DataFrame() for k in up["source_id"]}
+    ren = {"Source": "nb_source_id", "RA_ICRS": "ra_nb", "DE_ICRS": "dec_nb",
+           "Gmag": "phot_g_mean_mag", "BP-RP": "bp_rp", "pmRA": "pmra", "pmDE": "pmdec"}
+    df = raw.rename(columns={k: v for k, v in ren.items() if k in raw.columns})
+    out = {}
+    for sid, g in df.groupby(df["source_id"].astype(str)):
+        nb = pd.DataFrame({"source_id": g.get("nb_source_id", pd.Series(dtype=object))
+                           .astype(str).to_numpy(),
+                           "ra": pd.to_numeric(g.get("ra_nb"), errors="coerce").to_numpy(),
+                           "dec": pd.to_numeric(g.get("dec_nb"), errors="coerce").to_numpy(),
+                           "phot_g_mean_mag": pd.to_numeric(g.get("phot_g_mean_mag"),
+                                                            errors="coerce").to_numpy(),
+                           "bp_rp": pd.to_numeric(g.get("bp_rp"), errors="coerce").to_numpy()})
+        out[sid] = nb[nb["source_id"] != sid].reset_index(drop=True)
+    for k in up["source_id"]:
+        out.setdefault(str(k), pd.DataFrame())
+    return out
+
+
 def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
-                fetch_neighbours=None, fetch_simbad=None, xmatch_fn=None) -> pd.DataFrame:
+                fetch_neighbours=None, fetch_simbad=None, xmatch_fn=None,
+                fetch_neighbours_bulk=None) -> pd.DataFrame:
     """Known-disk membership, CatWISE co-movement, beam blending, SIMBAD identity.
 
     Each service can fail; a failed test is recorded as untested, never as
@@ -105,10 +142,13 @@ def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
                 if col in m.columns:
                     out[col] = key.map(m[col]).to_numpy()
             if {"pmra_catwise", "pmdec_catwise"} <= set(out.columns):
-                e_r = pd.to_numeric(out.get("e_pmra_catwise"), errors="coerce").fillna(50.0)
-                e_d = pd.to_numeric(out.get("e_pmdec_catwise"), errors="coerce").fillna(50.0)
-                g_r = pd.to_numeric(out.get("pmra_error"), errors="coerce").fillna(1.0)
-                g_d = pd.to_numeric(out.get("pmdec_error"), errors="coerce").fillna(1.0)
+                # Absent columns read as all-NaN Series, never a bare scalar
+                # (run 36016037098: e_pmra_catwise absent -> "'numpy.float64'
+                # object has no attribute 'fillna'" and 27/27 untested).
+                e_r = rscr._numcol(out, "e_pmra_catwise").fillna(50.0)
+                e_d = rscr._numcol(out, "e_pmdec_catwise").fillna(50.0)
+                g_r = rscr._numcol(out, "pmra_error").fillna(1.0)
+                g_d = rscr._numcol(out, "pmdec_error").fillna(1.0)
                 d_r = (pd.to_numeric(out["pmra"], errors="coerce")
                        - pd.to_numeric(out["pmra_catwise"], errors="coerce")) / np.hypot(e_r, g_r)
                 d_d = (pd.to_numeric(out["pmdec"], errors="coerce")
@@ -136,7 +176,26 @@ def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
     t_end = _time.monotonic() + budget
     pool = _cf.ThreadPoolExecutor(max_workers=int(fcfg.get("followup_workers", 4)))
     futs = {}
-    if fetch_neighbours is not None:
+    bulk = None
+    if fetch_neighbours_bulk is not None:
+        try:
+            bf = pool.submit(fetch_neighbours_bulk, out[["source_id", "ra", "dec"]])
+            bulk = bf.result(timeout=min(budget, 900.0))
+        except Exception as exc:                        # noqa: BLE001
+            print(f"[ring/wd] bulk neighbour X-Match failed ({exc!r}); per-object cones",
+                  flush=True)
+            bulk = None
+    if bulk is not None:
+        class _Done:
+            def __init__(self, v):
+                self.v = v
+
+            def result(self, timeout=None):
+                return self.v
+        for i, r in out.iterrows():
+            futs[i] = _Done(bulk.get(str(r["source_id"]), pd.DataFrame()))
+        fetch_neighbours = fetch_neighbours or (lambda ra, dec: None)
+    elif fetch_neighbours is not None:
         for i, r in out.iterrows():
             futs[i] = pool.submit(fetch_neighbours, float(r["ra"]), float(r["dec"]))
     n_timeout = 0

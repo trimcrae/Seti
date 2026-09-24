@@ -824,6 +824,46 @@ def series_stats(t, mag, err) -> dict:
             "duty_cycle_high": frac, "two_state_sep_mag": sep}
 
 
+def scan_parity_stats(t, mag, err) -> dict:
+    """How much of a series' variance is an even/odd-epoch (scan-direction) split.
+
+    NEOWISE visits a field every ~6 months, alternately on the ascending and
+    descending scan, so consecutive epochs see the source at opposite PSF
+    orientations.  A blend (an unresolved binary, a neighbour at a few arcsec)
+    is measured differently on the two scans and alternates epoch by epoch; real
+    atmospheric variability has no reason to lock to that parity.
+    """
+    t = np.asarray(t, float)
+    m = np.asarray(mag, float)
+    e = np.asarray(err, float)
+    ok = np.isfinite(t) & np.isfinite(m) & np.isfinite(e) & (e > 0)
+    t, m, e = t[ok], m[ok], e[ok]
+    if m.size < 4:
+        return {"parity_frac": np.nan, "parity_z": np.nan}
+    order = np.argsort(t)
+    m, e = m[order], e[order]
+    par = np.arange(m.size) % 2 == 0
+    me, mo = m[par].mean(), m[~par].mean()
+    se = np.sqrt((e[par] ** 2).sum()) / par.sum()
+    so = np.sqrt((e[~par] ** 2).sum()) / (~par).sum()
+    z = abs(me - mo) / np.hypot(se, so) if np.hypot(se, so) > 0 else np.nan
+    var = m.var()
+    frac = ((me - mo) ** 2 * par.mean() * (1 - par.mean()) / var) if var > 0 else np.nan
+    return {"parity_frac": float(frac), "parity_z": float(z)}
+
+
+# Empirical W1-W2 of late-T and Y dwarfs (numeric type, T0 = 20), from the
+# Kirkpatrick+2011/2019/2021 colour-type relations; CH4 in W1 drives it.
+_BD_W1W2 = ((26.0, 1.9), (27.0, 2.2), (28.0, 2.6), (29.0, 3.0), (30.0, 3.5), (31.0, 4.0),
+            (32.0, 4.3))
+
+
+def expected_w1_w2(spt_num):
+    x, y = zip(*_BD_W1W2, strict=False)
+    v = np.interp(np.asarray(spt_num, float), x, y, left=np.nan, right=y[-1])
+    return v
+
+
 def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
               ) -> tuple[pd.DataFrame, dict]:
     """Per object: W1 and W2 series statistics; a duty-cycle flag against both
@@ -844,6 +884,12 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
             gb = g[g["band"] == band] if len(g) else g
             st = series_stats(gb["t_yr"] if len(gb) else [], gb["mag"] if len(gb) else [],
                               gb["err"] if len(gb) else [])
+            st.update(scan_parity_stats(gb["t_yr"] if len(gb) else [],
+                                        gb["mag"] if len(gb) else [],
+                                        gb["err"] if len(gb) else []))
+            nexp = pd.to_numeric(gb["n_exp"], errors="coerce") if len(gb) and "n_exp" in gb \
+                else pd.Series(dtype=float)
+            st["mean_n_exp"] = float(nexp.mean()) if len(nexp) else np.nan
             rec.update({f"{band.lower()}_{k}": v for k, v in st.items()})
         rows.append(rec)
     out = pd.DataFrame(rows)
@@ -867,9 +913,14 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
     # J1813+2835, had W1-W2 = 0.93).  Untestable without W1 epochs.
     tmap = targets.assign(source_id=targets["source_id"].astype(str)).set_index("source_id")
     col_min = float(b.get("w1_w2_min_late_t", 1.5))
+    tol = float(b.get("w1_w2_tolerance_mag", 1.0))
     out["w1_w2_mean"] = out["w1_mean_mag"] - out["w2_mean_mag"]
-    late = pd.to_numeric(out["spt_num"], errors="coerce") >= float(b["spt_min_numeric"])
-    out["colour_identity_ok"] = ~(late & (out["w1_w2_mean"] < col_min)).fillna(False)
+    spn = pd.to_numeric(out["spt_num"], errors="coerce")
+    late = spn >= float(b["spt_min_numeric"])
+    # The type-dependent expectation, with a tolerance; never looser than the floor.
+    out["w1_w2_expected"] = expected_w1_w2(spn)
+    need = np.maximum(col_min, out["w1_w2_expected"] - tol)
+    out["colour_identity_ok"] = ~(late & (out["w1_w2_mean"] < need)).fillna(False)
     # Vet 2 -- was the cone following the target?  Without a proper motion the
     # cone sat at one epoch's position for a decade while a nearby brown dwarf
     # moved arcseconds; the series then mixes the target with whatever else
@@ -882,6 +933,17 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
     reason = pd.Series("", index=out.index, dtype=object)
     reason[raw_flag & ~out["colour_identity_ok"]] = "colour_not_the_target"
     reason[raw_flag & (reason == "") & ~out["pm_known"]] = "proper_motion_not_propagated"
+    # Vet 3 -- a scan-direction (even/odd epoch) alternation is a blend.
+    par = (out["w2_parity_frac"] >= float(b.get("parity_frac_max", 0.5))) & \
+        (out["w2_parity_z"] >= float(b.get("parity_z_min", 3.0)))
+    reason[raw_flag & (reason == "") & par.fillna(False)] = "scan_parity_blend"
+    # Vet 4 -- at the single-exposure detection limit only the upward noise
+    # excursions are detected, so epoch means scatter beyond their errors: a
+    # series built from far fewer detected exposures per epoch than the
+    # population's is detection-limited, not variable.
+    pop_nexp = float(np.nanmedian(out.loc[have, "w2_mean_n_exp"])) if have.any() else np.nan
+    lim = (out["w2_mean_n_exp"] < float(b.get("n_exp_frac_min", 0.6)) * pop_nexp)
+    reason[raw_flag & (reason == "") & lim.fillna(False)] = "detection_limited_series"
     out["duty_cycle_veto"] = reason
     out["duty_cycle_candidate"] = raw_flag
     out["duty_cycle_flag"] = raw_flag & (reason == "")
@@ -902,7 +964,9 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
         "duty_cycle_vetoed": _records(out.loc[out["duty_cycle_candidate"]
                                               & ~out["duty_cycle_flag"],
                                               ["source_id", "spt", "w2_n_epochs", "w2_chi2_red",
-                                               "w2_amp_mag", "w1_w2_mean", "pm_known",
+                                               "w2_amp_mag", "w1_w2_mean", "w1_w2_expected",
+                                               "w2_parity_frac", "w2_parity_z",
+                                               "w2_mean_n_exp", "pm_known",
                                                "duty_cycle_veto"]]),
         "flagged": out.loc[out["duty_cycle_flag"], ["source_id", "spt", "w2_n_epochs",
                                                      "w2_chi2_red", "w2_amp_mag",

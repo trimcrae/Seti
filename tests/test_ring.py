@@ -1073,3 +1073,48 @@ def test_wd_control_positions_ring_each_host(cfg):
     assert len(pos) == 8 and pos["source_id"].iloc[0] == "7|c0"
     sep = np.hypot((pos["ra"] - 100.0) * np.cos(np.radians(30.0)), pos["dec"] - 30.0) * 3600
     assert np.allclose(sep, 45.0, rtol=1e-3)
+
+
+def test_bd_scan_parity_and_detection_limit_vets(cfg):
+    rng = np.random.default_rng(11)
+    ids = [f"T{i}" for i in range(10)]
+    targets = pd.DataFrame({"source_id": ids, "spt": "T9", "spt_num": 29.0,
+                            "pmra": 300.0, "pmdec": 0.0})
+    eps = []
+    for i in ids:
+        e = _bd_epochs(rng, i, 16, switch=False)
+        e["n_exp"] = 12
+        eps.append(e)
+    ep = pd.concat(eps, ignore_index=True)
+    # W1 made ~3.4 mag fainter than W2 so the T9 colour check passes for all.
+    ep.loc[ep["band"] == "W1", "mag"] += 0.9
+    w2 = ep["band"] == "W2"
+    # T0: an even/odd (scan-direction) alternation of 0.4 mag -- a blend.
+    m0 = w2 & (ep["source_id"] == "T0")
+    ep.loc[m0, "mag"] += np.where(ep.loc[m0, "epoch"] % 2 == 0, 0.4, 0.0)
+    # T1: switches, but every epoch holds only 3 detected exposures (vs 12).
+    m1 = ep["source_id"] == "T1"
+    ep.loc[m1 & w2, "mag"] -= np.where(ep.loc[m1 & w2, "epoch"] % 3 == 0, 0.5, 0.0)
+    ep.loc[m1, "n_exp"] = 3
+    out, s = rscr.screen_bd(ep, targets, cfg)
+    o = out.set_index("source_id")
+    assert o.loc["T0", "duty_cycle_veto"] == "scan_parity_blend"
+    assert o.loc["T1", "duty_cycle_veto"] == "detection_limited_series"
+    assert s["n_duty_cycle_flags"] == 0
+
+
+def test_expected_colour_rises_with_type():
+    e = rscr.expected_w1_w2([26.0, 28.0, 31.0])
+    assert e[0] < e[1] < e[2] and e[2] == pytest.approx(4.0)
+
+
+def test_bulk_gaia_neighbours_exclude_the_candidate_itself():
+    pos = pd.DataFrame({"source_id": [11, 22], "ra": [10.0, 20.0], "dec": [0.0, 0.0]})
+
+    def xm(up, table, r):
+        return pd.DataFrame({"source_id": ["11", "11", "22"], "Source": ["11", "99", "22"],
+                             "RA_ICRS": [10.0, 10.001, 20.0], "DE_ICRS": [0.0, 0.0, 0.0],
+                             "Gmag": [17.0, 18.0, 16.0], "BP-RP": [0.1, 1.5, 0.0]})
+
+    nb = rass.gaia_neighbours_bulk(pos, xmatch_fn=xm)
+    assert list(nb["11"]["source_id"]) == ["99"] and nb["22"].empty

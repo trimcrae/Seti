@@ -352,6 +352,7 @@ def stage_assess(cfg: dict, out: Path, *, followup: bool = True,
                 from ..discriminate.blend import fetch_neighbours
                 ff = {"fetch_known_disks": fetch_known_disks,
                       "fetch_neighbours": fetch_neighbours,
+                      "fetch_neighbours_bulk": ass.gaia_neighbours_bulk,
                       "fetch_simbad": fetch_simbad_context}
             _log(f"wd follow-up on {len(short)} shortlisted white dwarfs")
             fu = ass.wd_followup(short, cfg, **ff)

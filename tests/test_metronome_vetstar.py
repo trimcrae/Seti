@@ -651,12 +651,12 @@ def test_stage_writes_a_verdict_and_a_fold_table(tmp_path):
     assert "UNEQUAL_MINIMA_AT_2P" in rep["verdict"]
     assert "DEGRADED" not in rep["verdict"]
     assert rep["gaia"]["match"]["source_id"] == "2050000000000000000"
-    assert (tmp_path / "vetstar.json").exists()
-    fold = pd.read_csv(tmp_path / "vetstar_fold.csv")
+    assert (tmp_path / "vetstar_kepler_5879574.json").exists()
+    fold = pd.read_csv(tmp_path / "vetstar_fold_kepler_5879574.csv")
     assert set(fold["fold"]) == {"fold_at_period", "fold_at_period_flares_masked",
                                  "fold_at_2p", "fold_at_2p_flares_masked"}
     assert len(fold) == 400
-    assert json.loads((tmp_path / "vetstar.json").read_text())["verdict"] == rep["verdict"]
+    assert json.loads((tmp_path / "vetstar_kepler_5879574.json").read_text())["verdict"] == rep["verdict"]
 
 
 def test_stage_says_no_lightcurve_rather_than_guessing(tmp_path):
@@ -676,7 +676,7 @@ def test_stage_says_no_lightcurve_rather_than_guessing(tmp_path):
     assert "NO_MUNDANE_EXPLANATION_FOUND" in rep["verdict"]
     assert "gaia:gaia_source" in rep["unreached"]
     assert any(u.startswith("vizier_cones:") for u in rep["unreached"])
-    assert (tmp_path / "vetstar.json").exists()
+    assert (tmp_path / "vetstar_kepler_5879574.json").exists()
 
 
 def test_stage_reports_a_catalogued_binary_from_a_cone(tmp_path):
@@ -1140,7 +1140,7 @@ def test_the_vet_demotes_the_star_in_summary_and_candidates(tmp_path):
     assert s["n_interest"] == 1
     assert s["funnel"]["stars_demoted_by_vetstar"] == 1
     assert "VETSTAR_DEMOTED_1" in s["verdict"]
-    assert s["vetstar"]["veto"] == "vet_contaminating_variable_at_p"
+    assert s["vetstar"]["per_star"]["kepler:5879574"]["veto"] == "vet_contaminating_variable_at_p"
     # the tier counts are RECOMPUTED, not patched: they must agree with
     # n_candidates, which is the contradiction this file once carried
     assert s["tiers"]["candidate"] == 0 == s["n_candidates"]
@@ -1331,7 +1331,7 @@ def test_rebuild_is_idempotent(tmp_path):
     pd.DataFrame({"star_key": ["a", "b"], "tier": ["candidate", "watch"]}).to_csv(
         tmp_path / "stars_vetted.csv", index=False)
     (tmp_path / "candidates.json").write_text(_json.dumps({
-        "candidates": [{"star_key": "a", "tier": "none"}], "watch": []}))
+        "candidates": [{"star_key": "a", "tier": "none", "first_veto": "vet_x"}], "watch": []}))
     base = {"verdict": "old", "degraded": [], "funnel": {},
             "generated_utc": "2026-09-21T21:42:31Z"}
     first = rebuild_summary(tmp_path, dict(base), stage="vetstar",

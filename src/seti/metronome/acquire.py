@@ -2074,17 +2074,237 @@ def fetch_positions_by_id(ids, mission: str, *, query_fn=None,
     return pd.DataFrame(columns=["star_id", "ra", "dec"])
 
 
+def _mast_tic_query(ids):                                  # pragma: no cover - network
+    # One id per request, each bounded.  MEASURED 2026-09-23: run
+    # 35869870343's aperture stage hit its 180-minute job limit with no
+    # output; a multi-id `query_criteria` is MAST's slow asynchronous path
+    # and has no timeout of its own.
+    from astroquery.mast import Catalogs
+
+    try:
+        Catalogs.TIMEOUT = 120
+    except Exception:                                     # noqa: BLE001
+        pass
+    frames = []
+    for i in ids:
+        tab = Catalogs.query_criteria(catalog="Tic", ID=int(i))
+        if tab is not None and len(tab):
+            df = tab.to_pandas()
+            frames.append(df[[c for c in ("ID", "ra", "dec") if c in df.columns]])
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+
+def fetch_tic_positions_mast(ids, *, query_fn=None, log: AcquisitionLog | None = None,
+                             chunk: int = 20) -> pd.DataFrame:
+    """TIC positions from MAST's own catalogue service, for the ids VizieR missed.
+
+    MEASURED 2026-09-23: every ``positions_tess`` query against VizieR's
+    ``IV/39/tic82`` and ``IV/38/tic`` returned ZERO rows on the runner (five
+    vetstar runs, and all 123 TESS stars of the 2026-09-21 shortlist carried
+    ``variability_catalogue_unreached``), while MAST answered the same runners'
+    light-curve requests.  So MAST's TIC is the fallback -- the same archive
+    the photometry came from.
+    """
+    query_fn = query_fn or _mast_tic_query
+    ids = [str(i).strip() for i in ids if re.fullmatch(r"\d+", str(i).strip())]
+    frames = []
+    for i in range(0, len(ids), int(chunk)):
+        block = ids[i:i + int(chunk)]
+        try:
+            df = query_fn(block)
+        except Exception as exc:                          # noqa: BLE001
+            if log:
+                log.record("positions_tess_mast", f"TIC {len(block)} ids", error=repr(exc))
+            continue
+        n = int(len(df)) if df is not None else 0
+        if log:
+            log.record("positions_tess_mast", f"TIC {len(block)} ids", rows=n)
+        if n:
+            frames.append(pd.DataFrame({
+                "star_id": df.iloc[:, 0].map(clean_star_id),
+                "ra": pd.to_numeric(df.iloc[:, 1], errors="coerce"),
+                "dec": pd.to_numeric(df.iloc[:, 2], errors="coerce")}))
+    if not frames:
+        return pd.DataFrame(columns=["star_id", "ra", "dec"])
+    out = pd.concat(frames, ignore_index=True).dropna(subset=["ra", "dec"])
+    return out.drop_duplicates("star_id").reset_index(drop=True)
+
+
+def fetch_positions(ids, mission: str, *, query_fn=None, mast_fn=None,
+                    log: AcquisitionLog | None = None, tables: dict | None = None
+                    ) -> pd.DataFrame:
+    """VizieR KIC/TIC first, MAST's TIC for whatever TESS ids that missed."""
+    ids = [str(i).strip() for i in ids if str(i).strip()]
+    pos = fetch_positions_by_id(ids, mission, query_fn=query_fn, log=log, tables=tables)
+    if len(pos):
+        pos = pos.dropna(subset=["ra", "dec"])
+    # an injected VizieR query_fn with no MAST stand-in is an offline caller:
+    # the fallback is not taken rather than opening a socket behind its back.
+    # The REAL tap_query is not an injection (MEASURED: run 35863149850's
+    # aperture stage passed it explicitly, skipped MAST, and positioned 0 of
+    # 123 TESS stars).
+    live = query_fn is None or query_fn is tap_query
+    if str(mission).startswith("tess") and (mast_fn is not None or live):
+        have =set(pos["star_id"].astype(str)) if len(pos) else set()
+        want = [i for i in ids if i not in have]
+        if want:
+            extra = fetch_tic_positions_mast(want, query_fn=mast_fn, log=log)
+            if len(extra):
+                pos = pd.concat([pos, extra], ignore_index=True) if len(pos) else extra
+    if not len(pos):
+        return pd.DataFrame(columns=["star_id", "ra", "dec"])
+    return pos.drop_duplicates("star_id").reset_index(drop=True)
+
+
 def _vizier_cone(table: str, ra: float, dec: float, radius_arcsec: float):
     from astropy import units as u
     from astropy.coordinates import SkyCoord
     from astroquery.vizier import Vizier
 
-    v = Vizier(columns=["**"], row_limit=50)
+    v = Vizier(columns=["**"], row_limit=50, timeout=90)
     res = v.query_region(SkyCoord(ra * u.deg, dec * u.deg), radius=radius_arcsec * u.arcsec,
                          catalog=table)
     if res is None or len(res) == 0:
         return pd.DataFrame()
     return res[0].to_pandas()
+
+
+def _vizier_cone_with_sep(table: str, ra: float, dec: float,
+                          radius_arcsec: float):                 # pragma: no cover - network
+    """A VizieR cone whose rows carry ``_sep_arcsec``, the distance from the
+    cone centre, converted with the column's own unit before pandas drops it."""
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
+    from astroquery.vizier import Vizier
+
+    v = Vizier(columns=["**", "+_r"], row_limit=500, timeout=90)
+    res = v.query_region(SkyCoord(ra * u.deg, dec * u.deg), radius=radius_arcsec * u.arcsec,
+                         catalog=table)
+    if res is None or len(res) == 0:
+        return pd.DataFrame()
+    t = res[0]
+    sep = None
+    if "_r" in t.colnames:
+        col = t["_r"]
+        unit = getattr(col, "unit", None) or u.arcmin      # VizieR's default for _r
+        try:
+            sep = (np.asarray(col, dtype=float) * u.Unit(unit)).to(u.arcsec).value
+        except Exception:                                  # noqa: BLE001
+            sep = None
+    df = t.to_pandas()
+    if sep is not None:
+        df["_sep_arcsec"] = sep
+    return df
+
+
+_RA_PATTERNS = [r"^_?raj2000$", r"^ra_?icrs$", r"^_?ra$", r"^radeg$", r"^ra_?deg$"]
+_DE_PATTERNS = [r"^_?dej2000$", r"^de_?icrs$", r"^_?dec?$", r"^dedeg$", r"^de_?deg$"]
+
+
+def row_separation_arcsec(row, ra0: float, dec0: float, roles: dict) -> float:
+    """Distance of a catalogue row from the target: the row's own coordinates
+    when it has numeric ones, VizieR's ``_sep_arcsec`` otherwise, NaN if
+    neither -- never assumed to be zero."""
+    ra = pd.to_numeric(row.get(roles.get("ra")), errors="coerce") if roles.get("ra") \
+        else np.nan
+    de = pd.to_numeric(row.get(roles.get("dec")), errors="coerce") if roles.get("dec") \
+        else np.nan
+    if pd.notna(ra) and pd.notna(de):
+        r1, d1, r2, d2 = map(np.radians, (float(ra0), float(dec0), float(ra), float(de)))
+        s = np.sin((d2 - d1) / 2) ** 2 + np.cos(d1) * np.cos(d2) * np.sin((r2 - r1) / 2) ** 2
+        return float(np.degrees(2 * np.arcsin(np.sqrt(min(1.0, s)))) * 3600.0)
+    s = pd.to_numeric(row.get("_sep_arcsec"), errors="coerce")
+    return float(s) if pd.notna(s) else float("nan")
+
+
+def fetch_aperture_neighbours(positions: pd.DataFrame, catalogues: dict, *,
+                              radius_arcsec_by_mission: dict, mission: str,
+                              identity_radius_arcsec: float = 3.0, cone_fn=None,
+                              max_workers: int = 8, log: AcquisitionLog | None = None) -> tuple[dict, dict]:
+    """Variable stars NEAR each target -- the aperture-scale cone.
+
+    The identity cone (:func:`fetch_variable_context`, 3") asks *is this star a
+    variable?*  This one asks *is a variable putting flux into this star's
+    aperture?*, which is a different radius: a Kepler pixel is 3.98" and the
+    optimal mask several of them (contaminating radius 10-20"); a TESS pixel is
+    21" (1-2 arcmin).  MEASURED 2026-09-22: kepler:5879574's clock was KIC
+    5879583, an RR Lyrae 13.3" away at P = 0.4232946 d, outside every cone the
+    assess stage ran.
+
+    Rows inside ``identity_radius_arcsec`` are the target itself and are left
+    to the identity veto; rows whose separation cannot be measured are kept
+    and marked, never silently counted as the target.  Returns
+    ``({star_id: [{source, name, period, vtype, sep_arcsec}]}, {star_id: {source}})``.
+    """
+    cone_fn = cone_fn or _vizier_cone_with_sep
+    radius = float((radius_arcsec_by_mission or {}).get(
+        mission, (radius_arcsec_by_mission or {}).get("default", 20.0)))
+    out: dict[str, list] = {}
+    reached: dict[str, set] = {}
+    from concurrent.futures import ThreadPoolExecutor
+
+    stars = []
+    for _, r in positions.iterrows():
+        ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
+        if np.isfinite(ra) and np.isfinite(dec):
+            stars.append((str(r["star_id"]), ra, dec))
+
+    def _one(args):
+        table, sid, ra, dec = args
+        try:
+            return sid, ra, dec, cone_fn(table, ra, dec, radius), None
+        except Exception as exc:                          # noqa: BLE001
+            return sid, ra, dec, None, exc
+
+    for name, spec in (catalogues or {}).items():
+        table = spec.get("table")
+        n_ok = n_fail = n_hits = 0
+        # the cones are independent network calls; eight at a time (MEASURED:
+        # 123 TESS stars x 3 catalogues serially outran a 180-minute job)
+        with ThreadPoolExecutor(max_workers=int(max_workers)) as ex:
+            results = list(ex.map(_one, [(table, s, a, d) for s, a, d in stars]))
+        print(f"[metronome/aperture] {mission} {name}: {len(results)} cones r={radius}\"",
+              flush=True)
+        for sid, ra, dec, df, exc in results:
+            if exc is not None:
+                n_fail += 1
+                if log and n_fail <= 3:
+                    log.record(f"aperture_{name}", f"cone {table} ({ra:.5f},{dec:.5f}) "
+                               f"r={radius}\"", error=repr(exc))
+                continue
+            n_ok += 1
+            reached.setdefault(sid, set()).add(name)
+            if df is None or not len(df):
+                continue
+            roles = resolve_columns(df.columns, {
+                "period": spec.get("period_patterns") or [r"^period$", r"^per$", r"^p$"],
+                "vtype": spec.get("type_patterns") or [r"^type$", r"^vtype$", r"^class$"],
+                "name": spec.get("name_patterns") or [r"^name$", r"^source$", r"^id$",
+                                                      r"^source_?id$", r"^oid$"],
+                "ra": _RA_PATTERNS, "dec": _DE_PATTERNS})
+            for _, row in df.iterrows():
+                sep = row_separation_arcsec(row, ra, dec, roles)
+                if np.isfinite(sep) and sep <= float(identity_radius_arcsec):
+                    continue                      # the target itself
+                if np.isfinite(sep) and sep > radius * 1.001:
+                    continue
+                p = pd.to_numeric(row.get(roles.get("period")), errors="coerce") \
+                    if roles.get("period") else np.nan
+                out.setdefault(sid, []).append({
+                    "source": name,
+                    "name": str(row.get(roles.get("name"), "")) if roles.get("name") else "",
+                    "period": float(p) if pd.notna(p) else float("nan"),
+                    "vtype": str(row.get(roles.get("vtype"), "")) if roles.get("vtype") else "",
+                    "sep_arcsec": sep,
+                    "sep_measured": bool(np.isfinite(sep))})
+                n_hits += 1
+        if log:
+            log.record(f"aperture_{name}", f"{n_ok + n_fail} cones on {table} r={radius}\"",
+                       rows=n_hits if n_ok else None,
+                       error=None if n_ok else ("every cone failed" if n_fail else None),
+                       extra={"n_cones_ok": n_ok, "n_cones_failed": n_fail,
+                              "radius_arcsec": radius, "mission": mission})
+    return out, reached
 
 
 def fetch_variable_context(positions: pd.DataFrame, catalogues: dict, *, cone_fn=None,

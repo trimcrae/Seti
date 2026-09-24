@@ -843,7 +843,14 @@ def run_reduce(conf: dict, out: Path, n: int, *, fetchers: dict | None = None,
             "coverage": {"shards_expected": n, "shards_found": len(found & expected),
                          "parent": "IGNITION tiles parent (Gaia DR3 G<14.5 dwarfs, plx>3 mas, "
                                    "|b|>15, AllWISE-photospheric), ZTF dec >= -31",
-                         "ensemble": [s.get("ensemble", {}).get("frac_epochs_fine") for s in shards]},
+                         "ensemble": [s.get("ensemble", {}).get("frac_epochs_fine") for s in shards],
+                         # every star with a W2 prescore above this was ZTF-tested, in every shard
+                         "complete_above_w2_prescore": max(
+                             [c for c in ((s.get("completeness") or {})
+                                          .get("max_prescore_not_attempted") for s in shards)
+                              if c is not None], default=None),
+                         "completeness_by_shard": {s.get("shard"): s.get("completeness")
+                                                   for s in shards}},
             "null": {"n_stars": null_stars, "n_rounds_pair": pair_rounds,
                      "pair_coupled_per_round": pc,
                      "pair_coupled_mean": float(np.mean(pc)) if pc else None,

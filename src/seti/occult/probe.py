@@ -67,6 +67,54 @@ def _strip(rec: dict, links: bool = True) -> dict:
     return rec
 
 
+OGLE_DATA = "https://www.astrouw.edu.pl/ogle/ogle4/ews/"
+MOA_HOSTS = ("https://it019909.massey.ac.nz/moa/", "https://www.massey.ac.nz/~iabond/moa/")
+
+
+def _probe_round2(s, recs: dict) -> None:
+    """Round 2 (after run 36003872955): the data hosts the round-1 pages pointed at."""
+    recs.setdefault("ogle2", [])
+    recs.setdefault("kmt2", [])
+    recs.setdefault("moa2", [])
+    for yr in (2011, 2015, 2019, 2022, 2023, 2024, 2025):
+        for name in ("lenses.par", "blg-0001/phot.dat", "blg-0001.tar.gz", ""):
+            r = fetch(s, f"{OGLE_DATA}{yr}/{name}", head_chars=1200)
+            _strip(r)
+            if "links" in r:
+                r["links"] = r["links"][:30]
+            recs["ogle2"].append(r)
+        for name in ("ews.html", "lenses.par"):
+            r = _strip(fetch(s, f"{OGLE_ROOT}{yr}/{name}", head_chars=3000))
+            if "links" in r:
+                r["n_links"] = len(r["links"])
+                r["links"] = r["links"][:40]
+            recs["ogle2"].append(r)
+    for yr in range(2016, 2027):
+        root = KMT_ROOTS[0]
+        r = fetch(s, f"{root}{yr}/listpage.dat", head_chars=3000)
+        r["tail"] = r.get("_text", "")[-600:]
+        r.pop("_text", None)
+        recs["kmt2"].append(r)
+    for u in (f"{KMT_ROOTS[0]}2019/view.php?event=KMT-2019-BLG-0001",
+              f"{KMT_ROOTS[0]}2016/view.php?event=KMT-2016-BLG-1000"):
+        r = fetch(s, u, head_chars=6000)
+        text = r.pop("_text", "")
+        r["links"] = [lk for lk in extract_links(text, u, 200) if "pysis" in lk or "diapl" in lk]
+        recs["kmt2"].append(r)
+    for u in (f"{KMT_ROOTS[0]}2025/data/KB250001/pysis/pysis.tar.gz",
+              f"{KMT_ROOTS[0]}2019/data/KB190001/pysis/pysis.tar.gz",
+              f"{KMT_ROOTS[0]}2025/data/KB250001/diapl/KMTC01_I.diapl"):
+        r = fetch(s, u, head_chars=600)
+        r.pop("_text", None)
+        recs["kmt2"].append(r)
+    for host in MOA_HOSTS:
+        for p in ("alert2019/alert.php", "alert2019/", "alert/", "alert2023/alert.php"):
+            r = _strip(fetch(s, host + p))
+            if "links" in r:
+                r["links"] = r["links"][:40]
+            recs["moa2"].append(r)
+
+
 def run_probe(out_dir: Path) -> dict:
     import requests
 
@@ -135,6 +183,8 @@ def run_probe(out_dir: Path) -> dict:
                 r = fetch(s, lk, head_chars=800)
                 r.pop("_text", None)
                 recs["moa"].append(r)
+
+    _probe_round2(s, recs)
 
     def _ok(lst, pred):
         return sum(1 for r in lst if r.get("status") == 200 and pred(r))

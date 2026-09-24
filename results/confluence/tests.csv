@@ -1,45 +1,516 @@
-channels,k,n_joint,mode,status,tail_counts,rule,members,p_value,q_bh,observed,expected,ratio
-cenotaph_committed+dimming_dip,2,42,0.01,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_dip': 3}",strict,,,,,,
-cenotaph_committed+dimming_dip,2,42,0.05,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_dip': 5}",strict,,,,,,
-cenotaph_committed+dimming_dip,2,42,flag,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 1, 'dimming_dip': 0}",strict,,,,,,
-cenotaph_committed+dimming_secular,2,42,0.01,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_secular': 2}",strict,,,,,,
-cenotaph_committed+dimming_secular,2,42,0.05,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_secular': 6}",strict,,,,,,
-cenotaph_committed+dimming_secular,2,42,flag,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 1, 'dimming_secular': 0}",strict,,,,,,
-cenotaph_committed+growth,2,118,0.01,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'growth': 0}",strict,,,,,,
-cenotaph_committed+growth,2,118,0.05,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'growth': 1}",strict,,,,,,
-cenotaph_committed+growth,2,118,flag,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'growth': 0}",strict,,,,,,
-cenotaph_committed+spark,2,4,,JOINT_TOO_SMALL,,strict,,,,,,
-dimming_dip+growth,2,0,,JOINT_TOO_SMALL,,strict,,,,,,
-dimming_dip+spark,2,0,,JOINT_TOO_SMALL,,strict,,,,,,
-dimming_secular+growth,2,0,,JOINT_TOO_SMALL,,strict,,,,,,
-dimming_secular+spark,2,0,,JOINT_TOO_SMALL,,strict,,,,,,
-growth+spark,2,0,,JOINT_TOO_SMALL,,strict,,,,,,
-cenotaph_committed+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,strict,,,,,,
-cenotaph_committed+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,strict,,,,,,
-cenotaph_committed+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,strict,,,,,,
-cenotaph_committed+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,strict,,,,,,
-cenotaph_committed+growth+spark,3,0,,JOINT_TOO_SMALL,,strict,,,,,,
-dimming_dip+growth+spark,3,0,,JOINT_TOO_SMALL,,strict,,,,,,
-dimming_secular+growth+spark,3,0,,JOINT_TOO_SMALL,,strict,,,,,,
-cenotaph_committed+dimming_dip,2,42,0.01,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_dip': 3}",strict_minus_known,,,,,,
-cenotaph_committed+dimming_dip,2,42,0.05,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_dip': 5}",strict_minus_known,,,,,,
-cenotaph_committed+dimming_dip,2,42,flag,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 1, 'dimming_dip': 0}",strict_minus_known,,,,,,
-cenotaph_committed+dimming_secular,2,42,0.01,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_secular': 2}",strict_minus_known,,,,,,
-cenotaph_committed+dimming_secular,2,42,0.05,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'dimming_secular': 6}",strict_minus_known,,,,,,
-cenotaph_committed+dimming_secular,2,42,flag,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 1, 'dimming_secular': 0}",strict_minus_known,,,,,,
-cenotaph_committed+growth,2,118,0.01,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'growth': 0}",strict_minus_known,,,,,,
-cenotaph_committed+growth,2,118,0.05,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'growth': 1}",strict_minus_known,,,,,,
-cenotaph_committed+growth,2,118,flag,EMPTY_TAIL_IN_JOINT,"{'cenotaph_committed': 0, 'growth': 0}",strict_minus_known,,,,,,
-cenotaph_committed+spark,2,4,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-dimming_dip+growth,2,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-dimming_dip+spark,2,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-dimming_secular+growth,2,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-dimming_secular+spark,2,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-growth+spark,2,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-cenotaph_committed+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-cenotaph_committed+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-cenotaph_committed+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-cenotaph_committed+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-cenotaph_committed+growth+spark,3,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-dimming_dip+growth+spark,3,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
-dimming_secular+growth+spark,3,0,,JOINT_TOO_SMALL,,strict_minus_known,,,,,,
+channels,k,n_joint,mode,status,tail_counts,observed,expected,null_sd,ratio,p_value,n_cells,frac_joint_in_singletons,members,p_cells,expected_cells,n_cells_coarse,covariates_used,covariates_missing,q_bh,rule
+accel_nss+baffle_bright_deficit,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ignition,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ring_wd,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+tailings,2,10,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+ignition,2,56,0.01,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_deficit': 0, 'ignition': 4}",,,,,,,,,,,,,,,strict
+baffle_bright_deficit+ignition,2,56,0.05,TESTED,"{'baffle_bright_deficit': 4, 'ignition': 9}",1.0,0.643,0.7972,1.555,0.47623840066737577,0.0,0.05357142857142857,gaia:4387079367952007168,0.25000000000000006,0.2667,13.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+baffle_bright_deficit+ignition,2,56,flag,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_deficit': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict
+baffle_bright_deficit+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+tailings,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+ignition,2,56,0.01,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_excess': 0, 'ignition': 4}",,,,,,,,,,,,,,,strict
+baffle_bright_excess+ignition,2,56,0.05,TESTED,"{'baffle_bright_excess': 1, 'ignition': 9}",0.0,0.1607,0.4002,0.0,1.0,0.0,0.05357142857142857,,1.0,0.0,13.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+baffle_bright_excess+ignition,2,56,flag,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_excess': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict
+baffle_bright_excess+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+tailings,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_dip,2,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_secular,2,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+growth,2,11,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+spark,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+tailings,2,8556,0.01,TESTED,"{'cenotaph': 110, 'tailings': 42}",0.0,0.5197,0.7208,0.0,1.0,0.0,0.0018700327255726976,,0.9999999999999999,0.524,128.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+cenotaph+tailings,2,8556,0.05,TESTED,"{'cenotaph': 545, 'tailings': 257}",27.0,16.7411,4.0824,1.613,0.012559609124838136,0.0,0.0018700327255726976,gaia:142730353190144;gaia:1533668950943689216;gaia:1542286579486364928;gaia:1629449814021664384;gaia:1688148582299761280;gaia:2130444383165554816;gaia:2242268117323078656;gaia:2501160637024503936;gaia:2564788168037499008;gaia:2575778375168277632;gaia:3263065157908036992;gaia:3263390780852887424;gaia:3264840246415593728;gaia:3672713190070099328;gaia:4015983988732445440;gaia:4029291137444958848;gaia:4029751214341595648;gaia:4227796313889239296;gaia:4651830875919909888;gaia:5292084502555239168;gaia:5778681482328495360;gaia:6084316715232273792;gaia:6563838062795002880;gaia:78077214041736192;gaia:791586975443778304;gaia:840585302385165312;gaia:873622740581374848,0.007826527353164515,16.767,128.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,0.2386325733719246,strict
+cenotaph+tailings,2,8556,flag,TESTED,"{'cenotaph': 56, 'tailings': 192}",1.0,1.2744,1.1285,0.785,0.7205261805288637,0.0,0.0018700327255726976,gaia:5778681482328495360,0.7364077567389052,1.3037,128.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+cradle+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+growth,2,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+tailings,2,1620,0.01,EMPTY_TAIL_IN_JOINT,"{'cradle': 0, 'tailings': 28}",,,,,,,,,,,,,,,strict
+cradle+tailings,2,1620,0.05,TESTED,"{'cradle': 5, 'tailings': 75}",0.0,0.673,0.8196,0.0,1.0,0.0,0.012345679012345678,,1.0,0.5613,85.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+cradle+tailings,2,1620,flag,TESTED,"{'cradle': 60, 'tailings': 35}",1.0,1.7092,1.3051,0.585,0.8195279002030069,0.0,0.012345679012345678,gaia:1166668015590073600,0.8005315913015612,1.4793,85.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+dimming_dip+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+ignition,2,64,0.01,EMPTY_TAIL_IN_JOINT,"{'dimming_dip': 6, 'ignition': 0}",,,,,,,,,,,,,,,strict
+dimming_dip+ignition,2,64,0.05,TESTED,"{'dimming_dip': 7, 'ignition': 2}",0.0,0.2187,0.4668,0.0,1.0,0.0,0.0625,,1.0,0.0,9.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+dimming_dip+ignition,2,64,flag,EMPTY_TAIL_IN_JOINT,"{'dimming_dip': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict
+dimming_dip+ring_wd,2,1,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+tailings,2,141,0.01,TESTED,"{'dimming_dip': 7, 'tailings': 1}",1.0,0.0814,0.2852,12.285,0.07819717072392776,0.0,0.014184397163120567,pos:ztf:574215300008634,0.04347826086956521,0.0435,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,0.4952487479182091,strict
+dimming_dip+tailings,2,141,0.05,TESTED,"{'dimming_dip': 7, 'tailings': 11}",1.0,0.5355,0.7304,1.867,0.4152287347507327,0.0,0.014184397163120567,pos:ztf:574215300008634,0.34981428971504575,0.4076,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+dimming_dip+tailings,2,141,flag,TESTED,"{'dimming_dip': 2, 'tailings': 5}",0.0,0.0712,0.2668,0.0,1.0,0.0,0.014184397163120567,,1.0,0.1,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+dimming_secular+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+ignition,2,64,0.01,EMPTY_TAIL_IN_JOINT,"{'dimming_secular': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict
+dimming_secular+ignition,2,64,0.05,TESTED,"{'dimming_secular': 7, 'ignition': 2}",0.0,0.2187,0.4668,0.0,1.0,0.0,0.0625,,1.0,0.1176,9.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+dimming_secular+ignition,2,64,flag,EMPTY_TAIL_IN_JOINT,"{'dimming_secular': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict
+dimming_secular+ring_wd,2,1,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+tailings,2,141,0.01,TESTED,"{'dimming_secular': 1, 'tailings': 1}",0.0,0.0136,0.1166,0.0,1.0,0.0,0.014184397163120567,,1.0,0.0,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+dimming_secular+tailings,2,141,0.05,TESTED,"{'dimming_secular': 17, 'tailings': 11}",2.0,1.1286,1.0577,1.772,0.3116321153473181,0.0,0.014184397163120567,pos:ztf:574215300008634;pos:ztf:619211300002021,0.24363056106166245,0.9565,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+dimming_secular+tailings,2,141,flag,EMPTY_TAIL_IN_JOINT,"{'dimming_secular': 0, 'tailings': 5}",,,,,,,,,,,,,,,strict
+growth+ignition,2,10,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+ring_wd,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+tailings,2,782,0.01,TESTED,"{'growth': 2, 'tailings': 1}",0.0,0.0,0.0,,1.0,0.0,0.0038363171355498722,,1.0,0.0,11.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+growth+tailings,2,782,0.05,TESTED,"{'growth': 28, 'tailings': 29}",0.0,1.1422,1.0677,0.0,1.0,0.0,0.0038363171355498722,,0.9999999999999999,1.0267,11.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+growth+tailings,2,782,flag,EMPTY_TAIL_IN_JOINT,"{'growth': 0, 'tailings': 18}",,,,,,,,,,,,,,,strict
+ignition+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ignition+spark,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ignition+tailings,2,12937,0.01,TESTED,"{'ignition': 111, 'tailings': 94}",3.0,0.7084,0.8415,4.235,0.03514254078243224,0.0,0.001159465100100487,gaia:1557054841712790784;gaia:2262403645557872000;gaia:4766624936407586816,0.021475026006476102,0.5961,125.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,0.33385413743310627,strict
+ignition+tailings,2,12937,0.05,TESTED,"{'ignition': 597, 'tailings': 456}",23.0,19.4026,4.3963,1.185,0.2345709417307425,0.0,0.001159465100100487,gaia:1557054841712790784;gaia:1649107363939137408;gaia:1656035111828056448;gaia:1656169733282918016;gaia:2262403645557872000;gaia:2320596123092361088;gaia:2320860074602561408;gaia:2584323676460095872;gaia:2588186913643455616;gaia:3314004947508111488;gaia:370022122725268992;gaia:37589244536949888;gaia:4017491762771128320;gaia:4627959172772276992;gaia:4639131104263250176;gaia:4766624936407586816;gaia:4766998839078958336;gaia:5485723373675747200;gaia:6235898137020626048;gaia:702978845189260800;gaia:709369206770258048;gaia:776939311601097728;gaia:781954424653326848,0.22002515885251123,19.368,125.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict
+ignition+tailings,2,12937,flag,EMPTY_TAIL_IN_JOINT,"{'ignition': 0, 'tailings': 262}",,,,,,,,,,,,,,,strict
+ring_wd+slag,2,17,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ring_wd+spark,2,32,0.01,EMPTY_TAIL_IN_JOINT,"{'ring_wd': 0, 'spark': 0}",,,,,,,,,,,,,,,strict
+ring_wd+spark,2,32,0.05,TESTED,"{'ring_wd': 1, 'spark': 1}",0.0,0.0312,0.1766,0.0,1.0,0.0,0.0,,1.0,0.0,4.0,"abs_b,scan_coverage,wise_depth","phot_g_mean_mag,bp_rp,ruwe,log_density",1.0,strict
+ring_wd+spark,2,32,flag,EMPTY_TAIL_IN_JOINT,"{'ring_wd': 0, 'spark': 0}",,,,,,,,,,,,,,,strict
+ring_wd+tailings,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+slag+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+slag+tailings,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+spark+tailings,2,1,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_deficit+dimming_dip,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_deficit+dimming_secular,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_deficit+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_deficit+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_deficit+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_deficit+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_deficit+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess+dimming_dip,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess+dimming_secular,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+baffle_bright_excess+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_dip+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_dip+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_secular+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_secular+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ignition+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+accel_nss+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_dip+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_secular+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+ignition+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_dip+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_secular+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+ignition+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_excess+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_dip+tailings,3,2,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+dimming_secular+tailings,3,2,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+growth+tailings,3,6,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cenotaph+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+growth+tailings,3,4,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+cradle+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+ignition+tailings,3,7,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_dip+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+ignition+tailings,3,7,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+dimming_secular+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+ignition+tailings,3,6,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+growth+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ignition+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ignition+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ignition+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ring_wd+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ring_wd+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+ring_wd+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+slag+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict
+baffle_bright_deficit+cradle,2,609,0.01,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_deficit': 7, 'cradle': 0}",,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+cradle,2,609,0.05,TESTED,"{'baffle_bright_deficit': 47, 'cradle': 1}",0.0,0.0838,0.2894,0.0,1.0,0.0,0.021346469622331693,,0.9999999999999998,0.1042,42.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,relaxed_only
+baffle_bright_deficit+cradle,2,609,flag,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_deficit': 0, 'cradle': 0}",,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+ring_wd,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle,2,609,0.01,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_excess': 1, 'cradle': 0}",,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle,2,609,0.05,TESTED,"{'baffle_bright_excess': 7, 'cradle': 1}",0.0,0.0022,0.0469,0.0,1.0,0.0,0.021346469622331693,,1.0,0.0,42.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,relaxed_only
+baffle_bright_excess+cradle,2,609,flag,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_excess': 0, 'cradle': 0}",,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+ring_wd,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+cenotaph+ignition,2,83974,0.01,TESTED,"{'cenotaph': 839, 'ignition': 1093}",1.0,2.6994,1.6426,0.37,0.9327951790515403,0.0,9.526758282325482e-05,gaia:775465381904069760,0.9859945850469201,4.2127,155.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,relaxed_only
+cenotaph+ignition,2,83974,0.05,TESTED,"{'cenotaph': 4515, 'ignition': 5887}",143.0,143.9054,11.9745,0.994,0.5412981229093444,0.0,9.526758282325482e-05,gaia:1000030908071852416;gaia:1001379429020584448;gaia:1013998420892526592;gaia:1038094115135338752;gaia:1054161347271597568;gaia:1077769545547349504;gaia:10838573309775744;gaia:1094944054613614720;gaia:1099544411263165824;gaia:1104376386910290176;gaia:1138935686638328576;gaia:1171631692114042240;gaia:1335693734810016000;gaia:1338459113930564480;gaia:1340186549774902400;gaia:1383946386709817216;gaia:142907271473579008;gaia:1465845885422313600;gaia:1520110701262890624;gaia:1521943174829496192;gaia:1531808199312686720;gaia:1537114545507342208;gaia:1581586969056512000;gaia:1611431700364781056;gaia:1637211885076967936;gaia:1687154761227199488;gaia:2120508508899473024;gaia:222323145219132544;gaia:2289542203874035328;gaia:2294021231990541184;gaia:2506977259693951616;gaia:2516769780833827968;gaia:2568768812447297920;gaia:2573904085800011648;gaia:2598317156651909504;gaia:2671109499334427648;gaia:2697548394591284992;gaia:2892851174701611520;gaia:2893531905540963712;gaia:2915353401718894848;gaia:2962267535652797440;gaia:2970358291964251776;gaia:3013337445579766912;gaia:310429279694149632;gaia:3189535627039276032;gaia:3192601821371810304;gaia:3192890752409564288;gaia:3252386323023791872;gaia:3302199078844538368;gaia:3307256797971421184;gaia:335791332159134720;gaia:350235242754091392;gaia:3561750858847883648;gaia:3564744863369781632;gaia:3810039512320160256;gaia:3846869372279407104;gaia:3871283753096037888;gaia:3873036859962233344;gaia:3882514680257895168;gaia:3883500912123698304;gaia:3883587666167860608;gaia:3887211656492755712;gaia:3918481187366291200;gaia:3923576942725178752;gaia:4000112641464733056;gaia:4023568351220853248;gaia:4032919762039554816;gaia:4336517054437923328;gaia:4356452437204771968;gaia:4373918140749319424;gaia:4421763698470227968;gaia:4437965418921653376;gaia:4489365629014193024;gaia:4555500016474402688;gaia:4562687627063152000;gaia:4616009199366093312;gaia:4636413416461338240;gaia:4685480226663761408;gaia:4756986999746124544;gaia:503597495418747136;gaia:5039123573202803712;gaia:5054191929089183104;gaia:5054211655875867008;gaia:506222025490304;gaia:5075629249031146112;gaia:5186787778654480128;gaia:5279802197464067200;gaia:5401456085266038400;gaia:5492533306320106496;gaia:551758509895938048;gaia:552872212095551104;gaia:566507079695619456;gaia:5740989227291625728;gaia:5744329608041153408;gaia:5745798972187000832;gaia:577248659759735680;gaia:5777236243012456832;gaia:6121406609687265280;gaia:6123505199428253440;gaia:614516881261197568;gaia:616052722910630272;gaia:6208380315910605568;gaia:6240385484488252416;gaia:6264299656232111104;gaia:629896781190483456;gaia:6331648557359127680;gaia:6357870908954790400;gaia:6362860771894283776;gaia:6368347850314538752;gaia:6383159401516027392;gaia:6411488357260638464;gaia:6425451021063449600;gaia:6431707517105194112;gaia:6447550380147254528;gaia:6450627500877081600;gaia:6450786174148749056;gaia:6475011743906022528;gaia:6526100933945494784;gaia:6602448096503264512;gaia:6645757657659909760;gaia:6684338210711089024;gaia:6766181458238928640;gaia:6775994569451567872;gaia:6786610418639970304;gaia:6850529191387407360;gaia:6851667701319962112;gaia:687810631310508544;gaia:6903488990005376768;gaia:706263185203666304;gaia:754308029406518400;gaia:7618142407346048;gaia:767236778616248320;gaia:775465381904069760;gaia:780235376878167168;gaia:805032692683910144;gaia:818719486442056704;gaia:829144127988277248;gaia:853052389853947904;gaia:879349061562709632;gaia:88678125336798720;gaia:908719117380881408;gaia:909714312842462720;gaia:949035180817927552,0.9991791267928434,180.9876,155.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,relaxed_only
+cenotaph+ignition,2,83974,flag,TESTED,"{'cenotaph': 437, 'ignition': 1}",0.0,0.0013,0.0361,0.0,1.0,0.0,9.526758282325482e-05,,0.9999999999999998,0.0017,155.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,relaxed_only
+accel_nss+baffle_bright_deficit+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+accel_nss+baffle_bright_excess+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+cradle+dimming_dip,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+cradle+dimming_secular,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+cradle+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+cradle+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+cradle+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+cradle+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+dimming_dip+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+dimming_secular+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_deficit+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle+dimming_dip,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle+dimming_secular,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+cradle+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+dimming_dip+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+dimming_secular+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+baffle_bright_excess+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+cenotaph+dimming_dip+ignition,3,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+cenotaph+dimming_secular+ignition,3,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+cenotaph+growth+ignition,3,4,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+cenotaph+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+cenotaph+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,relaxed_only
+cenotaph+ignition+tailings,3,7536,0.01,TESTED,"{'cenotaph': 106, 'ignition': 81, 'tailings': 36}",0.0,0.002,0.0451,0.0,1.0,0.0,0.0015923566878980893,,0.9999999999999994,0.0021,114.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,relaxed_only
+cenotaph+ignition+tailings,3,7536,0.05,TESTED,"{'cenotaph': 534, 'ignition': 451, 'tailings': 233}",0.0,0.5556,0.7454,0.0,1.0,0.0,0.0015923566878980893,,0.9999999999999978,0.5885,114.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,relaxed_only
+cenotaph+ignition+tailings,3,7536,flag,EMPTY_TAIL_IN_JOINT,"{'cenotaph': 54, 'ignition': 0, 'tailings': 171}",,,,,,,,,,,,,,,relaxed_only
+accel_nss+baffle_bright_deficit,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ignition,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ring_wd,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+tailings,2,10,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+ignition,2,56,0.01,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_deficit': 0, 'ignition': 4}",,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+ignition,2,56,0.05,TESTED,"{'baffle_bright_deficit': 4, 'ignition': 9}",1.0,0.643,0.7972,1.555,0.47623840066737577,0.0,0.05357142857142857,gaia:4387079367952007168,0.25000000000000006,0.2667,13.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+baffle_bright_deficit+ignition,2,56,flag,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_deficit': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+tailings,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+ignition,2,56,0.01,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_excess': 0, 'ignition': 4}",,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+ignition,2,56,0.05,TESTED,"{'baffle_bright_excess': 1, 'ignition': 9}",0.0,0.1607,0.4002,0.0,1.0,0.0,0.05357142857142857,,1.0,0.0,13.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+baffle_bright_excess+ignition,2,56,flag,EMPTY_TAIL_IN_JOINT,"{'baffle_bright_excess': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+tailings,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_dip,2,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_secular,2,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+growth,2,11,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+spark,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+tailings,2,8439,0.01,TESTED,"{'cenotaph': 107, 'tailings': 42}",0.0,0.4929,0.7019,0.0,1.0,0.0,0.0017774617845716318,,1.0,0.5124,127.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+cenotaph+tailings,2,8439,0.05,TESTED,"{'cenotaph': 532, 'tailings': 244}",25.0,16.0538,3.9979,1.557,0.02284248128208508,0.0,0.0017774617845716318,gaia:142730353190144;gaia:1533668950943689216;gaia:1542286579486364928;gaia:1629449814021664384;gaia:1688148582299761280;gaia:2242268117323078656;gaia:2564788168037499008;gaia:2575778375168277632;gaia:3263065157908036992;gaia:3263390780852887424;gaia:3264840246415593728;gaia:3672713190070099328;gaia:4015983988732445440;gaia:4029291137444958848;gaia:4029751214341595648;gaia:4227796313889239296;gaia:4651830875919909888;gaia:5292084502555239168;gaia:5778681482328495360;gaia:6084316715232273792;gaia:6563838062795002880;gaia:78077214041736192;gaia:791586975443778304;gaia:840585302385165312;gaia:873622740581374848,0.014036166818966413,15.9118,127.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,0.4111646630775314,strict_minus_known
+cenotaph+tailings,2,8439,flag,TESTED,"{'cenotaph': 54, 'tailings': 181}",1.0,1.2203,1.1043,0.819,0.704982881029631,0.0,0.0017774617845716318,gaia:5778681482328495360,0.7238041307070814,1.2582,127.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+cradle+dimming_dip,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_secular,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+growth,2,8,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+tailings,2,1558,0.01,EMPTY_TAIL_IN_JOINT,"{'cradle': 0, 'tailings': 18}",,,,,,,,,,,,,,,strict_minus_known
+cradle+tailings,2,1558,0.05,TESTED,"{'cradle': 4, 'tailings': 52}",0.0,0.3127,0.559,0.0,1.0,0.0,0.014120667522464698,,1.0,0.2591,85.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+cradle+tailings,2,1558,flag,TESTED,"{'cradle': 55, 'tailings': 27}",0.0,1.4101,1.1854,0.0,1.0,0.0,0.014120667522464698,,1.0,1.3535,85.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+dimming_dip+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ignition,2,64,0.01,EMPTY_TAIL_IN_JOINT,"{'dimming_dip': 6, 'ignition': 0}",,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ignition,2,64,0.05,TESTED,"{'dimming_dip': 7, 'ignition': 2}",0.0,0.2187,0.4668,0.0,1.0,0.0,0.0625,,1.0,0.0,9.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+dimming_dip+ignition,2,64,flag,EMPTY_TAIL_IN_JOINT,"{'dimming_dip': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ring_wd,2,1,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+tailings,2,141,0.01,TESTED,"{'dimming_dip': 7, 'tailings': 1}",1.0,0.0814,0.2852,12.285,0.07819717072392776,0.0,0.014184397163120567,pos:ztf:574215300008634,0.04347826086956521,0.0435,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,0.6764967429367953,strict_minus_known
+dimming_dip+tailings,2,141,0.05,TESTED,"{'dimming_dip': 7, 'tailings': 11}",1.0,0.5355,0.7304,1.867,0.4152287347507327,0.0,0.014184397163120567,pos:ztf:574215300008634,0.34981428971504575,0.4076,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+dimming_dip+tailings,2,141,flag,TESTED,"{'dimming_dip': 2, 'tailings': 5}",0.0,0.0712,0.2668,0.0,1.0,0.0,0.014184397163120567,,1.0,0.1,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+dimming_secular+growth,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ignition,2,64,0.01,EMPTY_TAIL_IN_JOINT,"{'dimming_secular': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ignition,2,64,0.05,TESTED,"{'dimming_secular': 7, 'ignition': 2}",0.0,0.2187,0.4668,0.0,1.0,0.0,0.0625,,1.0,0.1176,9.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+dimming_secular+ignition,2,64,flag,EMPTY_TAIL_IN_JOINT,"{'dimming_secular': 0, 'ignition': 0}",,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ring_wd,2,1,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+tailings,2,141,0.01,TESTED,"{'dimming_secular': 1, 'tailings': 1}",0.0,0.0136,0.1166,0.0,1.0,0.0,0.014184397163120567,,1.0,0.0,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+dimming_secular+tailings,2,141,0.05,TESTED,"{'dimming_secular': 17, 'tailings': 11}",2.0,1.1286,1.0577,1.772,0.3116321153473181,0.0,0.014184397163120567,pos:ztf:574215300008634;pos:ztf:619211300002021,0.24363056106166245,0.9565,6.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+dimming_secular+tailings,2,141,flag,EMPTY_TAIL_IN_JOINT,"{'dimming_secular': 0, 'tailings': 5}",,,,,,,,,,,,,,,strict_minus_known
+growth+ignition,2,10,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+ring_wd,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+tailings,2,768,0.01,TESTED,"{'growth': 2, 'tailings': 1}",0.0,0.0,0.0,,1.0,0.0,0.00390625,,1.0,0.0,11.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+growth+tailings,2,768,0.05,TESTED,"{'growth': 28, 'tailings': 24}",0.0,0.9596,0.9788,0.0,1.0,0.0,0.00390625,,1.0,0.8542,11.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+growth+tailings,2,768,flag,EMPTY_TAIL_IN_JOINT,"{'growth': 0, 'tailings': 15}",,,,,,,,,,,,,,,strict_minus_known
+ignition+slag,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ignition+spark,2,3,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ignition+tailings,2,12806,0.01,TESTED,"{'ignition': 97, 'tailings': 87}",2.0,0.572,0.7562,3.497,0.11274945715613253,0.0,0.0010932375449008277,gaia:1557054841712790784;gaia:2262403645557872000,0.08999706222553537,0.5039,124.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,0.6764967429367953,strict_minus_known
+ignition+tailings,2,12806,0.05,TESTED,"{'ignition': 543, 'tailings': 427}",18.0,16.9966,4.1153,1.059,0.4356487147380601,0.0,0.0010932375449008277,gaia:1557054841712790784;gaia:1649107363939137408;gaia:1656035111828056448;gaia:1656169733282918016;gaia:2262403645557872000;gaia:2584323676460095872;gaia:2588186913643455616;gaia:3314004947508111488;gaia:370022122725268992;gaia:37589244536949888;gaia:4627959172772276992;gaia:4766998839078958336;gaia:5485723373675747200;gaia:6235898137020626048;gaia:702978845189260800;gaia:709369206770258048;gaia:776939311601097728;gaia:781954424653326848,0.4247220199464456,16.8946,124.0,"phot_g_mean_mag,bp_rp,abs_b,ruwe,scan_coverage,wise_depth",log_density,1.0,strict_minus_known
+ignition+tailings,2,12806,flag,EMPTY_TAIL_IN_JOINT,"{'ignition': 0, 'tailings': 253}",,,,,,,,,,,,,,,strict_minus_known
+ring_wd+slag,2,12,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ring_wd+spark,2,27,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ring_wd+tailings,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+slag+spark,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+slag+tailings,2,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+spark+tailings,2,1,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_deficit+dimming_dip,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_deficit+dimming_secular,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_deficit+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_deficit+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_deficit+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_deficit+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_deficit+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess+dimming_dip,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess+dimming_secular,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+baffle_bright_excess+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_dip+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_dip+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_secular+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_secular+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ignition+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+accel_nss+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_dip+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_secular+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+ignition+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_deficit+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_dip+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_secular+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+ignition+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+baffle_bright_excess+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_dip+tailings,3,2,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+dimming_secular+tailings,3,2,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+growth+tailings,3,6,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cenotaph+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_dip+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_dip+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_dip+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_dip+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_secular+growth,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_secular+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_secular+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+dimming_secular+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+growth+tailings,3,4,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+cradle+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ignition+tailings,3,7,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_dip+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+growth+ignition,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+growth+ring_wd,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+growth+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+growth+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+growth+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ignition+tailings,3,7,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+dimming_secular+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+ignition+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+ignition+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+ignition+tailings,3,6,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+ring_wd+slag,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+ring_wd+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+ring_wd+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+growth+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ignition+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ignition+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ignition+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ring_wd+slag+spark,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ring_wd+slag+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+ring_wd+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known
+slag+spark+tailings,3,0,,JOINT_TOO_SMALL,,,,,,,,,,,,,,,,strict_minus_known

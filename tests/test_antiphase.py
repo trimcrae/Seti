@@ -578,6 +578,54 @@ def test_shard_and_reduce_end_to_end(tmp_path):
     assert s["run_id"] == "test" and s["generated_utc"]
 
 
+def test_batched_ztf_route_matches_ids_and_assembles_bands():
+    stars = pd.DataFrame({"source_id": ["a", "b", "c"], "ra": [10.0, 20.0, 30.0],
+                          "dec": [5.0, 6.0, 7.0], "pmra": [0.0, 0.0, 0.0],
+                          "pmdec": [0.0, 0.0, 0.0]})
+
+    def upload(q, tbl, timeout):
+        assert "TAP_UPLOAD.pos" in q and "ztf_objects_dr24" in q
+        rows = []
+        for k in range(len(tbl)):
+            ra, dec = float(tbl["ra"][k]), float(tbl["dec"][k])
+            if k == 2:
+                continue                                    # star c: no ZTF object
+            rows += [{"sid": k, "ra_p": ra, "dec_p": dec, "oid": 100 + k, "ra": ra, "dec": dec,
+                      "filtercode": "zg", "ngoodobsrel": 300},
+                     {"sid": k, "ra_p": ra, "dec_p": dec, "oid": 200 + k, "ra": ra, "dec": dec,
+                      "filtercode": "zr", "ngoodobsrel": 400},
+                     # a fainter neighbour 1" away with fewer epochs loses
+                     {"sid": k, "ra_p": ra, "dec_p": dec, "oid": 900 + k, "ra": ra,
+                      "dec": dec + 1.0 / 3600, "filtercode": "zr", "ngoodobsrel": 20}]
+        return pd.DataFrame(rows)
+
+    def ids(oids):
+        return {"status": "OK", "lcs": {o: {"mjd": np.arange(10.0) + 58500, "mag": np.full(10, 14.0),
+                                            "err": np.full(10, 0.01)} for o in oids}}
+    got = {}
+    log = acq.fetch_ztf_batched(stars, table="ztf_objects_dr24", upload_fn=upload, ids_fn=ids,
+                                on_result=lambda s, r: got.__setitem__(s, r))
+    assert log["counts"] == {"OK": 2, "NO_ROWS": 1}
+    assert got["a"]["bands"]["g"]["oid"] == "100" and got["a"]["bands"]["r"]["oid"] == "200"
+    assert got["c"]["status"] == "NO_ROWS"
+
+
+def test_batched_route_that_cannot_upload_hands_back_to_the_per_star_route():
+    stars = pd.DataFrame({"source_id": ["a"], "ra": [10.0], "dec": [5.0]})
+
+    def bad(q, tbl, timeout):
+        raise RuntimeError("no such column ngoodobsrel")
+    log = acq.fetch_ztf_batched(stars, table="t", upload_fn=bad, ids_fn=lambda i: {})
+    assert log["route_failed"] and "ngoodobsrel" in log["error"]
+
+
+def test_multi_id_csv_parser():
+    csv = ("oid,mjd,mag,magerr,filtercode,catflags\n5,1,14,0.01,zg,0\n5,2,14,0.01,zg,32768\n"
+           "6,1,13,0.01,zr,0\n")
+    d = acq.parse_ztf_multi(csv)
+    assert len(d["5"]["mjd"]) == 1 and len(d["6"]["mjd"]) == 1
+
+
 def test_a_control_with_non_overlapping_bands_is_judged_on_the_best_single_band():
     """ASAS-SN V ended in 2018 as its g began: V+g together match no epoch."""
     from seti.antiphase.run import choose_optical

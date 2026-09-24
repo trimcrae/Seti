@@ -453,8 +453,27 @@ def run_shard(conf: dict, idir: Path, out: Path, i: int, n: int, *, ztf_fetch=No
     t0 = _time.monotonic()
     budget = float(budget_s if budget_s is not None else sv.get("budget_s", 16200))
     fetch_kw = {"radius_arcsec": float(sv.get("ztf_radius_arcsec", 1.5)), "bright_limit": bright}
-    zlog = acq.fetch_ztf_many(todo, workers=int(sv.get("ztf_workers", 4)), budget_s=budget,
-                              fetch=ztf_fetch, on_result=on_result, **fetch_kw)
+    route = str(sv.get("ztf_route", "auto"))
+    zlog: dict = {}
+    if ztf_fetch is None and route in ("auto", "batched"):
+        tb = acq.find_ztf_objects_table()
+        rep["ztf_objects_table"] = tb
+        if tb.get("status") == "OK":
+            zlog = acq.fetch_ztf_batched(todo, table=tb["table"],
+                                         workers=int(sv.get("ztf_workers", 4)), budget_s=budget,
+                                         chunk=int(sv.get("ztf_chunk", 400)),
+                                         ids_per_request=int(sv.get("ztf_ids_per_request", 40)),
+                                         on_result=on_result, **fetch_kw)
+            flush()
+    if not zlog or zlog.get("route_failed"):
+        rep["ztf_batched_attempt"] = zlog or None
+        done_now = set(pd.read_csv(stat_p, dtype={"source_id": str})["source_id"].astype(str)) \
+            if stat_p.exists() else set()
+        rest = todo[~todo["source_id"].isin(done_now)]
+        left = max(budget - (_time.monotonic() - t0), 0.0)
+        zlog = acq.fetch_ztf_many(rest, workers=int(sv.get("ztf_workers", 4)), budget_s=left,
+                                  fetch=ztf_fetch, on_result=on_result, **fetch_kw)
+        zlog["route"] = "per_star"
     flush()
     rep["ztf"] = zlog
     rep["ztf_elapsed_s"] = round(_time.monotonic() - t0, 1)

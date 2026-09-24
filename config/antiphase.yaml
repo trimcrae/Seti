@@ -53,6 +53,10 @@ classify:
 survey:
   ignition_run_id: "35923951760"   # the IGNITION tiles run whose shard artifacts are the parent
   ignition_shards: 12
+  ztf_route: auto                  # auto/batched: upload-join object ids + multi-ID light curves;
+                                   # per_star: one POS query a star (~52 s each, run 36006324981)
+  ztf_chunk: 400                   # stars per TAP_UPLOAD join
+  ztf_ids_per_request: 40          # object ids per multi-ID light-curve request
   ztf_workers: 4                   # concurrent IRSA ZTF requests per shard
   ztf_bright_limit: 12.5           # median ZTF mag brighter than this: saturation risk, excluded
   ztf_radius_arcsec: 1.5

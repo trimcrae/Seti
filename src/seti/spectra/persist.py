@@ -85,7 +85,10 @@ CHI2_P_INCONSISTENT = 0.01
 #      inverse-variance stack of the exposure HDUs as a second reference
 #   4: the null's own standard error propagated into the corrected error, and
 #      no correction at all from a null too thin to mean anything
-CKPT_VERSION = 4
+#   5: the DESI route's null re-measures the SPARCL coadd at the same offsets,
+#      so the DESI coadd significance is calibrated like the SDSS one (it fell
+#      back to the uncalibrated number under v4)
+CKPT_VERSION = 5
 
 # Offsets used for the in-spectrum null.  24 is enough to place the median to
 # ~0.3 sigma and costs nothing once the arrays are in memory.
@@ -804,13 +807,26 @@ def sdss_measure_at(parsed: dict, mode: str):
     return lambda lam: sdss_exposure_measurements(parsed, lam, mode)
 
 
-def desi_measure_at(collected: list[dict], mode: str):
+def desi_measure_at(collected: list[dict], mode: str, coadd: dict | None = None):
     """A ``measure_at`` callable over DESI cframe rows already in memory.
 
     The DESI route downloads tens of MB per exposure, so the null can only be
     afforded if the arrays are reused; ``collected`` is what
     :func:`desi_exposure_measurements` kept while it was reading them.
+
+    ``coadd`` (``wave, flux, ivar`` and optionally ``mask, sky``: the SPARCL
+    coadd the DESI route uses as its reference) is re-measured at each offset
+    too.  Without it the null has no coadd measurements, and the DESI coadd
+    significance could not be calibrated like the SDSS one -- it fell back to
+    the raw number, which on SDSS runs a median ~3x the calibrated one.
     """
+    def _coadd_at(lam):
+        if not coadd or np.asarray(coadd.get("wave", []), float).size < 50:
+            return None
+        return measure_line(coadd["wave"], coadd["flux"], coadd["ivar"], lam,
+                            lsf_fwhm_A(lam, "DESI-DR1"), mode, mask=coadd.get("mask"),
+                            sky=coadd.get("sky"))
+
     def _at(lam):
         out = []
         for d in collected:
@@ -826,7 +842,7 @@ def desi_measure_at(collected: list[dict], mode: str):
                 c = combine_measurements(arms)
                 c["expid"] = d.get("expid")
                 out.append(c)
-        return None, out
+        return _coadd_at(lam), out
     return _at
 
 
@@ -1353,14 +1369,30 @@ def second_epoch(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
     return res
 
 
-def lsf_fwhm_measured(wave, wave_sigma, lam0: float, window_A: float = 20.0) -> float:
-    """Instrumental FWHM at ``lam0`` from the pipeline's own LSF column.
+def sdss_pixel_A(lam: float) -> float:
+    """Width in A of one SDSS/BOSS log-lambda pixel (1e-4 dex) at ``lam``."""
+    return float(lam) * np.log(10.0) * 1e-4
+
+
+def lsf_fwhm_measured(wave, wave_sigma, lam0: float, window_A: float = 20.0,
+                      release: str = "") -> float:
+    """Instrumental FWHM (A) at ``lam0`` from the pipeline's own LSF column.
 
     SPARCL serves ``wave_sigma`` (and an SDSS spec file a ``wdisp``) per pixel;
     using it instead of a nominal R = 2000 matters here, because SDSS's real
     resolution runs from about 1500 to 2500 across the spectrum and between
     fibres, and a line called "40 % broader than the LSF" against the wrong LSF
     is not an argument about anything.
+
+    **Units.**  For SDSS the column is the pipeline's ``wdisp``, whose unit is
+    the log-lambda PIXEL (1e-4 dex), not the angstrom.  Read as angstroms it
+    gave 1.7-2.2 A FWHM at 6400-8800 A on every line of the first control run
+    (35751666444) -- R = 3400-5100, which the SDSS spectrographs (R ~ 1500-2600)
+    cannot deliver -- and every candidate came out "2-4x broader than the LSF".
+    Multiplying by the pixel width gives 3.2-3.5 A, i.e. R ~ 2000-2500.  The
+    control stage cross-checks this against the SAS file's own ``wdisp`` and
+    against sky lines fitted in the same spectrum (``lsf_from_sky``).  For any
+    other release the column is taken to be in angstroms.
     """
     w = np.asarray(wave, float)
     s = np.asarray(wave_sigma, float) if wave_sigma is not None else None
@@ -1371,7 +1403,78 @@ def lsf_fwhm_measured(wave, wave_sigma, lam0: float, window_A: float = 20.0) -> 
     v = v[np.isfinite(v) & (v > 0)]
     if v.size == 0:
         return float("nan")
-    return float(2.3548 * np.median(v))
+    sig = float(np.median(v))
+    rel = (release or "").upper()
+    if rel.startswith("SDSS") or rel.startswith("BOSS") or rel.startswith("EBOSS"):
+        sig *= sdss_pixel_A(lam0)
+    return float(2.3548 * sig)
+
+
+def lsf_from_sky(wave, sky, lam0: float, search_A: float = 350.0, max_lines: int = 8,
+                 min_sep_A: float = 10.0) -> dict:
+    """The instrumental FWHM measured directly on sky lines in the same spectrum.
+
+    Airglow lines are unresolved at R ~ 2000, so a Gaussian fitted to the
+    brightest isolated sky-model peaks near ``lam0`` is the LSF with no unit
+    convention to get wrong.  (OH Lambda-doublets are split by < 1 A in the red,
+    so this runs a few per cent HIGH if anything -- which makes it conservative
+    for the question "is the candidate broader than the LSF?".)
+    """
+    from scipy.optimize import curve_fit
+    out = {"lsf_sky_fwhm_A": float("nan"), "lsf_sky_n": 0, "lsf_sky_mad_A": float("nan"),
+           "lsf_sky_lines_A": []}
+    w = np.asarray(wave, float)
+    if sky is None:
+        return out
+    sk = np.asarray(sky, float)
+    if sk.size != w.size or w.size < 50:
+        return out
+    win = np.isfinite(sk) & (np.abs(w - float(lam0)) <= search_A)
+    if win.sum() < 30:
+        return out
+    idx = np.where(win)[0]
+    base = float(np.median(sk[idx]))
+    noise = _mad_std(sk[idx]) or 1e-9
+    peaks = [i for i in idx[1:-1] if sk[i] >= sk[i - 1] and sk[i] >= sk[i + 1]
+             and sk[i] - base > 8.0 * noise]
+    peaks.sort(key=lambda i: -sk[i])
+    chosen: list[int] = []
+    for i in peaks:
+        if all(abs(w[i] - w[j]) >= min_sep_A for j in chosen):
+            # isolated: no comparably bright peak within min_sep_A
+            if not any(abs(w[i] - w[k]) < min_sep_A and k != i and sk[k] - base
+                       > 0.3 * (sk[i] - base) for k in peaks):
+                chosen.append(i)
+        if len(chosen) >= max_lines:
+            break
+
+    def _g(x, a, mu, sg, c0, c1):
+        return a * np.exp(-0.5 * ((x - mu) / sg) ** 2) + c0 + c1 * x
+
+    fw = []
+    for i in chosen:
+        sel = np.abs(w - w[i]) <= 0.6 * min_sep_A
+        x = w[sel] - w[i]
+        y = sk[sel]
+        if sel.sum() < 7:
+            continue
+        pix = float(np.median(np.diff(w[sel])))
+        try:
+            pp, _ = curve_fit(_g, x, y, p0=[sk[i] - base, 0.0, 1.5 * pix, base, 0.0],
+                              bounds=([0, -2 * pix, 0.3 * pix, -np.inf, -np.inf],
+                                      [np.inf, 2 * pix, 6 * pix, np.inf, np.inf]),
+                              maxfev=5000)
+        except Exception:  # noqa: BLE001
+            continue
+        f = 2.3548 * float(pp[2])
+        if np.isfinite(f):
+            fw.append(f)
+            out["lsf_sky_lines_A"].append(round(float(w[i]), 2))
+    if fw:
+        a = np.asarray(fw, float)
+        out.update({"lsf_sky_fwhm_A": float(np.median(a)), "lsf_sky_n": int(a.size),
+                    "lsf_sky_mad_A": float(_mad_std(a)) if a.size > 1 else float("nan")})
+    return out
 
 
 def fit_line_profile(wave, flux, ivar, lam0: float, fwhm_guess: float, mode: str = "emission",
@@ -1530,6 +1633,310 @@ def background_galaxy_scan(wave, flux, ivar, lam0: float, release: str,
     return out
 
 
+# Night-sky and artificial-light emission, VACUUM wavelengths (SDSS and DESI
+# spectra are on vacuum grids; the air values the literature quotes are 1.5-2.4 A
+# shorter in the optical).  Not the OH forest -- that lives in linelist.py -- but
+# the atomic lines a narrow-line search trips over.
+SKY_ATOMIC_VAC = {
+    "[OI]5577 airglow": 5578.89, "[OI]6300 airglow": 6302.05, "[OI]6364 airglow": 6365.54,
+    "NaD2 airglow/lamp": 5891.58, "NaD1 airglow/lamp": 5897.56,
+    "Hg 4047 lamp": 4047.71, "Hg 4358 lamp": 4359.56, "Hg 5461 lamp": 5462.27,
+    "Hg 5770 lamp": 5771.20, "Hg 5791 lamp": 5792.27,
+    "Na HPS 5683 lamp": 5684.20, "Na HPS 5688 lamp": 5689.78,
+    "Na HPS 8183 lamp": 8185.50, "Na HPS 8195 lamp": 8197.05,
+    "K I 7665 lamp": 7667.02, "K I 7699 lamp": 7701.08,
+}
+
+
+def nearest_sky_atomic(lam: float) -> dict:
+    """The nearest listed atomic sky / street-lamp line to an observed wavelength."""
+    name, ref = min(SKY_ATOMIC_VAC.items(), key=lambda kv: abs(kv[1] - float(lam)))
+    return {"sky_atomic_line": name, "sky_atomic_dA": round(float(lam) - ref, 2)}
+
+
+def nebular_family_calibrated(spectra: list[dict], lam0: float, release: str,
+                              n_null: int = 24, seed: int = 11, min_sig: float = 3.0) -> dict:
+    """Background-galaxy test on EVERY epoch at once, calibrated against its own null.
+
+    ``background_galaxy_scan`` measures the companions in one coadd, and a single
+    SDSS epoch of an M dwarf is too shallow to decide it: for 0412-51942-0465 the
+    companions at the Halpha redshift came out at 1.9-3.9 sigma, suggestive and
+    not decisive.  The same object has nine epochs.  Here each companion is
+    measured in every spectrum of the position and combined by inverse variance,
+    which is sqrt(N) deeper; and because the per-spectrum estimator carries a
+    small bias that a combination multiplies by sqrt(N) (the lesson of the
+    per-exposure null), the combined significance is re-measured at ``n_null``
+    random offsets 12-200 A from each companion in the same spectra and quoted
+    against that null: ``sig_cal = (sig - median_null) / max(MAD_null, 1)``.
+
+    ``spectra``: dicts with ``wave, flux, ivar``.  Returns every anchor tried,
+    best first by the number of calibrated companions at >= ``min_sig``.
+    """
+    from .galaxy_reject import GALAXY_LINES
+    out: dict = {"n_spectra": len(spectra), "anchors": [], "best": {}}
+    sp = [d for d in spectra if np.asarray(d.get("wave", []), float).size >= 50]
+    out["n_spectra"] = len(sp)
+    if not sp:
+        out["error"] = "no spectra"
+        return out
+    rng = np.random.default_rng(seed)
+    offs = rng.uniform(12.0, 200.0, n_null) * rng.choice([-1.0, 1.0], n_null)
+
+    def _comb(lam):
+        fw = lsf_fwhm_A(lam, release)
+        ms = [measure_line(d["wave"], d["flux"], d["ivar"], lam, fw, "emission") for d in sp]
+        ms = [m for m in ms if m.get("testable") and np.isfinite(m.get("err", np.nan))
+              and m["err"] > 0]
+        if not ms:
+            return None, 0
+        wts = np.array([1.0 / m["err"] ** 2 for m in ms])
+        F = float(np.sum(wts * np.array([m["F"] for m in ms])) / np.sum(wts))
+        return F * np.sqrt(np.sum(wts)), len(ms)
+
+    for anchor, rest in GALAXY_LINES.items():
+        z = float(lam0) / float(rest) - 1.0
+        if not (-0.002 <= z <= 1.2):
+            continue
+        comps = []
+        for name, r2 in GALAXY_LINES.items():
+            if name == anchor:
+                continue
+            obs = r2 * (1.0 + z)
+            if abs(obs - float(lam0)) < 2.0 * lsf_fwhm_A(float(lam0), release):
+                continue
+            sig, n_used = _comb(obs)
+            if sig is None:
+                continue
+            null = [v for v in (_comb(obs + o)[0] for o in offs) if v is not None]
+            if len(null) >= 8:
+                med = float(np.median(null))
+                mad = max(float(_mad_std(np.asarray(null, float))), 1.0)
+            else:
+                med, mad = 0.0, 1.0
+            comps.append({"line": name, "obs_A": round(obs, 2), "n_spectra": n_used,
+                          "sig_raw": round(float(sig), 2), "null_median": round(med, 2),
+                          "null_mad": round(mad, 2), "n_null": len(null),
+                          "sig_cal": round((float(sig) - med) / mad, 2)})
+        if not comps:
+            continue
+        n3 = sum(1 for c in comps if c["sig_cal"] >= min_sig)
+        out["anchors"].append({"anchor": anchor, "z": round(z, 6), "n_companions_ge3_cal": n3,
+                               "strongest_cal": max(c["sig_cal"] for c in comps),
+                               "companions": sorted(comps, key=lambda c: -c["sig_cal"])})
+    out["anchors"].sort(key=lambda a: (a["n_companions_ge3_cal"], a["strongest_cal"]),
+                        reverse=True)
+    if out["anchors"]:
+        out["best"] = {k: out["anchors"][0][k] for k in
+                       ("anchor", "z", "n_companions_ge3_cal", "strongest_cal")}
+    return out
+
+
+def sdss_lite_urls(plate: int, mjd: int, fiber: int, run2d: str | None) -> list[str]:
+    """SAS URLs for the LITE (coadd-only) spec file of one fibre, best first."""
+    name = f"spec-{int(plate):04d}-{int(mjd)}-{int(fiber):04d}.fits"
+    r2d = str(run2d or "").strip()
+    order = [r2d] if r2d else []
+    order += [a for a in ("26", "104", "103", "v5_13_2") if a != r2d]
+    urls = []
+    for a in order:
+        base = "eboss" if a.startswith("v") else "sdss"
+        urls.append(f"{SDSS_SAS}/{base}/spectro/redux/{a}/spectra/lite/{int(plate):04d}/{name}")
+    return urls
+
+
+def _fetch_sdss_coadd(plate: int, mjd: int, fiber: int, run2d: str | None) -> dict | None:
+    """One fibre's coadd (wave, flux, ivar, sky, wdisp) from the SAS lite file."""
+    from astropy.io import fits
+    urls = sdss_lite_urls(plate, mjd, fiber, run2d) + sdss_spec_urls(plate, mjd, fiber, run2d)[:2]
+    for url in urls:
+        data = fetch_bytes(url, max_bytes=60_000_000, tries=2)
+        if data is None:
+            continue
+        try:
+            with fits.open(io.BytesIO(data), memmap=False) as hd:
+                got = parse_sdss_spec(hd)
+        except Exception:  # noqa: BLE001
+            continue
+        if got.get("coadd") is not None:
+            got["coadd"]["url"] = url
+            return got["coadd"]
+    return None
+
+
+def sdss_fibre_neighbours(plate: int, mjd: int, fiber: int, run2d: str | None, lam0: float,
+                          mode: str, lsf_A: float, n_random: int = 24, seed: int = 3,
+                          fetch=None) -> dict:
+    """The same wavelength in the OTHER fibres of the same plate and night.
+
+    Two things that SPARCL cannot be asked (its ``find`` takes no plate or fibre
+    constraint -- the first control run's same-plate sample failed on exactly
+    that, ``UnknownField``):
+
+    * **cross-talk**: on the slit head fibre ``k`` sits between ``k-1`` and
+      ``k+1``, so a bright emission line in a neighbour leaks a narrow copy into
+      its trace at the same wavelength.  The neighbours' own line flux at
+      ``lam0`` is measured, and the ratio target / neighbour is what decides it
+      (SDSS cross-talk is at the <~1 % level).
+    * **a detector column**: a bad column puts a feature at one wavelength in
+      many fibres of that plate; ``n_random`` other fibres of the plate are
+      measured at the same wavelength.
+
+    Per-fibre coadds are read from the SAS lite files.  ``fetch(plate, mjd,
+    fiber, run2d)`` can be injected for tests.
+    """
+    fetch = fetch or _fetch_sdss_coadd
+    per_spec = 320 if str(run2d or "").strip() in ("26", "103", "104") else 500
+    n_fib = 2 * per_spec
+    block = (int(fiber) - 1) // per_spec
+    lo, hi = block * per_spec + 1, (block + 1) * per_spec
+    nb = [f for f in (fiber - 3, fiber - 2, fiber - 1, fiber + 1, fiber + 2, fiber + 3)
+          if lo <= f <= hi]
+    rng = np.random.default_rng(seed + int(plate))
+    pool = [f for f in range(1, n_fib + 1) if abs(f - fiber) > 3]
+    rand = sorted(int(x) for x in rng.choice(pool, size=min(n_random, len(pool)),
+                                             replace=False))
+    out = {"plate": int(plate), "mjd": int(mjd), "fiber": int(fiber),
+           "fibres_per_spectrograph": per_spec, "target": None,
+           "neighbours": [], "same_plate": {"n_measured": 0}, "same_plate_fibres": []}
+
+    def _m(f):
+        co = fetch(int(plate), int(mjd), int(f), run2d)
+        if co is None:
+            return None, None
+        m = measure_line(co["wave"], co["flux"], co["ivar"], lam0, lsf_A, mode,
+                         sky=co.get("sky"))
+        return m, co
+
+    tm, tco = _m(fiber)
+    if tm is not None:
+        out["target"] = _json_safe({k: tm.get(k) for k in
+                                    ("testable", "F", "err", "sig", "ew", "cont",
+                                     "sky_peak_sig")})
+        if tco is not None and tco.get("wdisp") is not None:
+            wd = np.asarray(tco["wdisp"], float)
+            near = (np.abs(np.asarray(tco["wave"], float) - lam0) <= 20.0) & \
+                np.isfinite(wd) & (wd > 0)
+            if near.any():
+                out["target_wdisp_pix"] = float(np.median(wd[near]))
+                out["lsf_file_wdisp_fwhm_A"] = float(2.3548 * np.median(wd[near])
+                                                     * sdss_pixel_A(lam0))
+        out["target_file"] = (tco or {}).get("url")
+    tF = (tm or {}).get("F")
+    for f in nb:
+        m, _co = _m(f)
+        if m is None:
+            out["neighbours"].append({"fiber": f, "offset": f - int(fiber),
+                                      "testable": False, "reason": "unreachable"})
+            continue
+        rec = {"fiber": f, "offset": f - int(fiber)}
+        rec.update({k: m.get(k) for k in ("testable", "F", "err", "sig", "ew", "cont")})
+        if (m.get("testable") and tF is not None and np.isfinite(tF)
+                and np.isfinite(m.get("F", np.nan)) and m["F"] > 0):
+            rec["target_over_neighbour_F"] = float(tF / m["F"])
+        out["neighbours"].append(_json_safe(rec))
+    meas = []
+    for f in rand:
+        m, _co = _m(f)
+        if m is None:
+            continue
+        meas.append(m)
+        out["same_plate_fibres"].append(_json_safe({"fiber": f, "sig": m.get("sig"),
+                                                    "testable": m.get("testable")}))
+    out["same_plate"] = _control_stats(meas)
+    tn = [n for n in out["neighbours"] if n.get("testable")]
+    sigs = [float(n["sig"]) for n in tn if n.get("sig") is not None
+            and np.isfinite(float(n["sig"]))]
+    out["max_neighbour_sig"] = max(sigs) if sigs else None
+    # Cross-talk is plausible only if a neighbour HAS a line at this wavelength
+    # and it is bright enough that <~2 % of it would make the target's.
+    out["crosstalk_plausible"] = bool(any(
+        float(n.get("sig") or 0) >= 5.0
+        and 0 < float(n.get("target_over_neighbour_F") or 1e9) <= 0.02 for n in tn))
+    return out
+
+
+def _control_measure(client, release: str, ids: list[str], zs: dict, lam0: float, mode: str,
+                     z_cand: float) -> dict:
+    """Observed-frame and stellar-frame measurements of ``lam0`` in ``ids``."""
+    lam_rest = float(lam0) / (1.0 + float(z_cand or 0.0))
+    obs, star = [], []
+    got = sparcl_retrieve(client, ids, release)
+    for r in got:
+        wave = np.asarray(r.get("wavelength", []), float)
+        flux = np.asarray(r.get("flux", []), float)
+        iv = np.asarray(r.get("ivar", []), float)
+        if wave.size < 50:
+            continue
+        obs.append(measure_line(wave, flux, iv, lam0, lsf_fwhm_A(lam0, release), mode))
+        try:
+            zc = float(zs.get(str(r.get("sparcl_id")), 0.0) or 0.0)
+        except (TypeError, ValueError):
+            zc = 0.0
+        lam_star = lam_rest * (1.0 + zc)
+        star.append(measure_line(wave, flux, iv, lam_star, lsf_fwhm_A(lam_star, release),
+                                 mode))
+    return {"n_retrieved": len(got), "obs_frame": _control_stats(obs),
+            "star_frame": _control_stats(star)}
+
+
+def same_type_sample(client, release: str, lam0: float, mode: str, z_cand: float,
+                     subclass: str, n: int = 40, exclude_ids: tuple = (), seed: int = 0,
+                     pool: int = 2000) -> dict:
+    """``control_sample`` restricted to stars the survey itself typed ``subclass``.
+
+    SPARCL's ``find`` does not take ``subclass`` (run 35751666444: UnknownField),
+    so the first control run's "same-type" sample silently fell back to "any
+    star" -- with the same random seed, i.e. the SAME forty spectra, and every
+    same-type number in that control.json is a copy of the any-star number.
+    Here a pool of stars is found, their ``subclass`` is retrieved (a
+    metadata-only retrieve), and the sample is drawn from the matches.  Exact
+    subclass first (M1), then the same class letter (M) if fewer than 10 match;
+    which one was used is on the record.
+    """
+    out = {"release": release, "wavelength": lam0, "subclass": subclass,
+           "n_requested": int(n), "constraint": "", "error": "",
+           "obs_frame": {"n_measured": 0}, "star_frame": {"n_measured": 0}}
+    try:
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "redshift"],
+            constraints={"data_release": [release], "spectype": ["STAR"]}, limit=int(pool)))
+    except Exception as exc:  # noqa: BLE001
+        out["error"] = f"find: {exc!r}"[:300]
+        return out
+    recs = [r for r in _records(found) if str(_rget(r, "sparcl_id") or "") not in
+            set(exclude_ids)]
+    zs = {str(_rget(r, "sparcl_id")): _rget(r, "redshift", 0.0) for r in recs}
+    ids = list(zs)
+    key = "subtype" if release.upper().startswith("DESI") else "subclass"
+    typed: dict[str, str] = {}
+    for k in range(0, len(ids), 500):
+        chunk = ids[k:k + 500]
+        try:
+            got = _find_with_retry(lambda c=chunk: client.retrieve(
+                uuid_list=c, include=["sparcl_id", key], dataset_list=[release]))
+        except Exception as exc:  # noqa: BLE001
+            out["error"] = f"retrieve {key}: {exc!r}"[:300]
+            continue
+        for r in _records(got):
+            typed[str(_rget(r, "sparcl_id"))] = survey_subclass(_rget(r, key))
+    out["n_pool"], out["n_pool_typed"] = len(ids), len(typed)
+    exact = [i for i, t in typed.items() if t == subclass]
+    letter = [i for i, t in typed.items() if t[:1] == subclass[:1]]
+    if len(exact) >= 10:
+        chosen, out["constraint"] = exact, f"{key}={subclass} (retrieved, exact)"
+    elif len(letter) >= 10:
+        chosen, out["constraint"] = letter, f"{key}={subclass[:1]}* (retrieved, class letter)"
+    else:
+        out["error"] = out["error"] or (f"only {len(exact)} exact / {len(letter)} same-letter "
+                                        f"{key} matches in a pool of {len(typed)}")
+        return out
+    out["n_matching"] = len(chosen)
+    rng = np.random.default_rng(seed)
+    pick = [chosen[int(i)] for i in rng.permutation(len(chosen))[:int(n)]]
+    out.update(_control_measure(client, release, pick, zs, lam0, mode, z_cand))
+    return out
+
+
 def survey_subclass(sptype: str | None) -> str:
     """A SIMBAD spectral type reduced to what a survey pipeline calls a subclass.
 
@@ -1649,7 +2056,8 @@ def control_sample(client, release: str, lam0: float, mode: str, z_cand: float,
 
 
 def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mode: str,
-                 tol_arcsec: float = 2.0, max_epochs: int = 20) -> dict:
+                 tol_arcsec: float = 2.0, max_epochs: int = 20,
+                 keep: list | None = None) -> dict:
     """Every SPARCL spectrum at the position, measured one by one.
 
     ``second_epoch`` keeps only the best of them, which answers "was it seen
@@ -1689,12 +2097,17 @@ def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
                 w = np.asarray(r.get("wavelength", []), float)
                 if w.size < 50:
                     continue
-                lsf = lsf_fwhm_measured(w, r.get("wave_sigma"), lam0)
+                lsf = lsf_fwhm_measured(w, r.get("wave_sigma"), lam0, release=rel)
                 if not np.isfinite(lsf):
                     lsf = lsf_fwhm_A(lam0, rel)
                 m = measure_line(w, np.asarray(r.get("flux", []), float),
                                  np.asarray(r.get("ivar", []), float), lam0, lsf, mode,
                                  sky=r.get("sky"))
+                if keep is not None:
+                    # the arrays, for the epoch-stacked background-galaxy test
+                    keep.append({"spec_id": sid, "wave": w,
+                                 "flux": np.asarray(r.get("flux", []), float),
+                                 "ivar": np.asarray(r.get("ivar", []), float)})
                 fit = fit_line_profile(w, np.asarray(r.get("flux", []), float),
                                        np.asarray(r.get("ivar", []), float), lam0, lsf, mode)
                 # WHICH fibre of which plate: SDSS repeat spectra of one object
@@ -1703,7 +2116,11 @@ def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
                 # one fibre confirm a detector defect exactly as well as they
                 # confirm a source, and the summary's best-of number cannot say
                 # which.
-                ids_ = sdss_ids_from_record(r) or {}
+                # SDSS only: a DESI TARGETID is > 2**50 and would be decoded
+                # as a specObjID into a fictitious "plate 2048" (control run
+                # 35863951810 did exactly that).
+                ids_ = (sdss_ids_from_record(r) or {}) if rel.upper().startswith(
+                    ("SDSS", "BOSS")) else {}
                 fibre_key = (ids_.get("plate"), ids_.get("fiberid"))
                 if fibre_key != (None, None):
                     seen_fibres.add(fibre_key)
@@ -1787,13 +2204,28 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
                 o = own[0]
                 w = np.asarray(o.get("wavelength", []), float)
                 lam = float(r["wavelength"])
-                lsf = lsf_fwhm_measured(w, o.get("wave_sigma"), lam)
-                if not np.isfinite(lsf):
-                    lsf = lsf_fwhm_A(lam, rel)
-                    e["lsf_source"] = "nominal"
+                # Three LSF estimates, all recorded: the SPARCL column in its
+                # correct unit, the same column read the way run 35751666444
+                # read it (as angstroms -- kept so the correction is visible),
+                # and sky lines fitted in this very spectrum.  The sky-line
+                # value needs no unit convention and is preferred when >= 3
+                # isolated lines were fitted.
+                ws = o.get("wave_sigma")
+                lsf_ws = lsf_fwhm_measured(w, ws, lam, release=rel)
+                e["lsf_wave_sigma_fwhm_A"] = round(float(lsf_ws), 3) \
+                    if np.isfinite(lsf_ws) else None
+                raw = lsf_fwhm_measured(w, ws, lam)
+                e["lsf_wave_sigma_read_as_A_fwhm"] = round(float(raw), 3) \
+                    if np.isfinite(raw) else None
+                e.update(_json_safe(lsf_from_sky(w, o.get("sky"), lam)))
+                if int(e.get("lsf_sky_n") or 0) >= 3:
+                    lsf, e["lsf_source"] = float(e["lsf_sky_fwhm_A"]), "sky_lines"
+                elif np.isfinite(lsf_ws):
+                    lsf, e["lsf_source"] = float(lsf_ws), "wave_sigma"
                 else:
-                    e["lsf_source"] = "wave_sigma"
+                    lsf, e["lsf_source"] = lsf_fwhm_A(lam, rel), "nominal"
                 e["lsf_fwhm_A"] = round(float(lsf), 3)
+                e["lsf_nominal_fwhm_A"] = round(lsf_fwhm_A(lam, rel), 3)
                 fit = fit_line_profile(w, np.asarray(o.get("flux", []), float),
                                        np.asarray(o.get("ivar", []), float), lam, lsf,
                                        str(r.get("search_mode", "emission")))
@@ -1801,6 +2233,12 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
                 if fit.get("fit_ok") and lsf > 0:
                     e["fwhm_over_lsf"] = round(float(fit["fit_fwhm_A"]) / lsf, 3)
                     e["fwhm_over_lsf_err"] = round(float(fit["fit_fwhm_err_A"]) / lsf, 3)
+                    for k in ("lsf_wave_sigma_fwhm_A", "lsf_sky_fwhm_A"):
+                        v = e.get(k)
+                        if v is not None and np.isfinite(float(v)) and float(v) > 0:
+                            e["fwhm_over_" + k.replace("_fwhm_A", "")] = round(
+                                float(fit["fit_fwhm_A"]) / float(v), 3)
+                e.update(nearest_sky_atomic(lam))
                 # Is it one nebular line of a background galaxy in the fibre?
                 e["background_galaxy"] = _json_safe(background_galaxy_scan(
                     w, np.asarray(o.get("flux", []), float),
@@ -1820,43 +2258,82 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
         except Exception as exc:  # noqa: BLE001
             e["fit_error"] = repr(exc)[:300]
         # Every epoch at the position, one by one, not just the best of them.
+        kept: list[dict] = []
         try:
             e["epoch_series"] = epoch_series(
                 client, float(r["ra"]), float(r["dec"]), str(r["spec_id"]),
-                float(r["wavelength"]), str(r.get("search_mode", "emission")))
+                float(r["wavelength"]), str(r.get("search_mode", "emission")), keep=kept)
         except Exception as exc:  # noqa: BLE001
             e["epoch_series"] = {"error": repr(exc)[:300]}
+        # The background-galaxy test on every epoch at once, against its null.
+        if str(r.get("search_mode", "emission")) != "absorption" and kept:
+            try:
+                e["nebular_family_epochs"] = _json_safe(nebular_family_calibrated(
+                    kept, float(r["wavelength"]), rel))
+            except Exception as exc:  # noqa: BLE001
+                e["nebular_family_epochs"] = {"error": repr(exc)[:300]}
+        del kept
         # Three samples.  Stars of this object's own type and stars of any type:
         # a feature the spectral TYPE makes appears in the first and not the
         # second; one the sky makes appears in both.  And other FIBRES of the
         # same plate: a bad CCD column puts a narrow feature at one wavelength
         # in every fibre of that exposure set, and it is in every exposure and
         # in every repeat observation of the plate, so nothing upstream sees it.
-        plate = None
+        # Not \d{4} below: eBOSS plates run past 9999 and a five-digit plate
+        # would silently lose its same-plate control.
         ident = str(r.get("identifier") or "")
-        # Not \d{4}: eBOSS plates run past 9999 and a five-digit plate would
-        # silently lose its same-plate control.
-        m = re.match(r"^(\d+)-(\d+)-(\d+)$", ident)
-        if m:
-            plate = int(m.group(1))
-        samples = [("same_type", sub, None, ""), ("any_star", None, None, "")]
-        if plate is not None:
-            samples.append(("same_plate", None, {"plate": [plate]}, f"plate={plate}"))
+        mode_ = str(r.get("search_mode", "emission"))
+        lam_ = float(r["wavelength"])
+        try:
+            e["any_star"] = control_sample(client, rel, lam_, mode_, z, subclass=None, n=n,
+                                           exclude_ids=(str(r["spec_id"]),))
+        except Exception as exc:  # noqa: BLE001
+            e["any_star"] = {"error": repr(exc)[:300]}
+        if sub:
+            # Drawn from a DIFFERENT seed as well as a different pool, so it can
+            # never again be a byte-for-byte copy of the any-star sample.
+            try:
+                e["same_type"] = same_type_sample(client, rel, lam_, mode_, z, sub, n=n,
+                                                  exclude_ids=(str(r["spec_id"]),), seed=1)
+            except Exception as exc:  # noqa: BLE001
+                e["same_type"] = {"error": repr(exc)[:300]}
+        else:
+            e["same_type"] = {"error": "no spectral type known for this object"}
+        # Same plate and adjacent fibres, from the SAS files (SPARCL cannot be
+        # asked for a plate or a fibre).
+        mm = re.match(r"^(\d+)-(\d+)-(\d+)$", ident)
+        if mm and rel.upper().startswith("SDSS"):
+            try:
+                run2d = None
+                try:
+                    ck = json.loads((out_dir / "ckpt" / f"{r['spec_id']}.json").read_text())
+                    run2d = (ck.get("provenance") or {}).get("run2d")
+                except (OSError, ValueError):
+                    pass
+                nbr = sdss_fibre_neighbours(int(mm.group(1)), int(mm.group(2)),
+                                            int(mm.group(3)), run2d, lam_, mode_,
+                                            float(e.get("lsf_fwhm_A") or
+                                                  lsf_fwhm_A(lam_, rel)))
+                e["fibres"] = nbr
+                e["same_plate"] = {"constraint": f"plate={mm.group(1)} (SAS lite files)",
+                                   "obs_frame": nbr.get("same_plate")}
+                # Units check on the LSF column: the SAS file's wdisp is in
+                # pixels by the data model; SPARCL's wave_sigma for the same
+                # fibre should equal it if SPARCL passes it through unconverted.
+                wd = nbr.get("target_wdisp_pix")
+                if wd:
+                    e["lsf_file_wdisp_fwhm_A"] = round(float(nbr["lsf_file_wdisp_fwhm_A"]), 3)
+                    rawv = e.get("lsf_wave_sigma_read_as_A_fwhm")
+                    if rawv:
+                        e["wave_sigma_over_file_wdisp"] = round(
+                            float(rawv) / 2.3548 / float(wd), 3)
+                    if e.get("fit_ok") and e.get("fit_fwhm_A"):
+                        e["fwhm_over_lsf_file_wdisp"] = round(
+                            float(e["fit_fwhm_A"]) / float(nbr["lsf_file_wdisp_fwhm_A"]), 3)
+            except Exception as exc:  # noqa: BLE001
+                e["same_plate"] = {"error": repr(exc)[:300]}
         else:
             e["same_plate"] = {"error": "no plate in the identifier (not an SDSS route)"}
-        for name, sc, extra, lbl in samples:
-            if name == "same_type" and not sub:
-                e[name] = {"error": "no spectral type known for this object"}
-                continue
-            try:
-                e[name] = control_sample(client, rel, float(r["wavelength"]),
-                                         str(r.get("search_mode", "emission")), z,
-                                         subclass=sc, n=n,
-                                         exclude_ids=(str(r["spec_id"]),),
-                                         extra_constraint=extra, label=lbl)
-            except Exception as exc:  # noqa: BLE001
-                e[name] = {"error": repr(exc)[:300]}
-            time.sleep(0.5)
         sa = (e.get("same_type", {}).get("obs_frame") or {})
         an = (e.get("any_star", {}).get("obs_frame") or {})
         sp = (e.get("same_plate", {}).get("obs_frame") or {})
@@ -1880,7 +2357,7 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
         entries.append(_json_safe(e))
         # Commit-what-you-have after every line: the job has a wall-clock cap
         # and the traffic per line is not known in advance.
-        rep = {"n": len(entries), "n_lines_selected": int(len(sel)),
+        rep = {**_provenance(), "n": len(entries), "n_lines_selected": int(len(sel)),
                "n_control_requested": int(n), "elapsed_s": round(time.time() - t_start, 1),
                "stopped_early": False, "entries": entries}
         (out_dir / "control.json").write_text(json.dumps(_json_safe(rep), indent=2))
@@ -1892,7 +2369,7 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
             (out_dir / "control.json").write_text(json.dumps(_json_safe(rep), indent=2))
             return rep
         time.sleep(0.5)
-    rep = {"n": len(entries), "n_lines_selected": int(len(sel)),
+    rep = {**_provenance(), "n": len(entries), "n_lines_selected": int(len(sel)),
            "n_control_requested": int(n), "elapsed_s": round(time.time() - t_start, 1),
            "stopped_early": False, "entries": entries}
     (out_dir / "control.json").write_text(json.dumps(_json_safe(rep), indent=2))
@@ -1911,6 +2388,73 @@ def _ckpt_current(path: Path) -> bool:
         return int(json.loads(path.read_text()).get("ckpt_version", 1)) == CKPT_VERSION
     except (OSError, ValueError, TypeError):
         return False
+
+
+def _provenance() -> dict:
+    """When, by which workflow run and which commit an output file was written."""
+    return {"generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "github_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+            "code_sha": os.environ.get("GITHUB_SHA", "")[:12]}
+
+
+def _read_ckpt(path: Path) -> dict | None:
+    """A checkpoint's contents, or None if the file is not a whole JSON object."""
+    try:
+        d = json.loads(Path(path).read_text())
+    except (OSError, ValueError, TypeError):
+        return None
+    return d if isinstance(d, dict) and d.get("spec_id") else None
+
+
+def merge_checkpoints(dest: Path, incoming: Path, prefer_sha: str = "") -> dict:
+    """Merge per-shard checkpoint directories into ``dest``, one file at a time.
+
+    Run 35758868818 measured all 141 spectra and then lost 49 of them in the
+    merge: every shard uploaded the WHOLE ckpt directory (the checkpoints it
+    fetched from the branch as well as the ones it wrote), and
+    ``download-artifact`` with ``merge-multiple`` unpacked the shard archives
+    CONCURRENTLY into one directory.  Where two archives held the same file --
+    shard 0's fresh v4 measurement and shard 1's stale v2 copy of it -- the two
+    writes raced: 14 files came out as the interleaving of both (not JSON at
+    all, and the reduce died on the first) and 35 as the stale copy.
+
+    Here each artifact is unpacked into its own directory under ``incoming``
+    and the choice is made per file, deterministically: a file that does not
+    parse is never chosen; of the rest the highest ``ckpt_version`` wins, then
+    the one measured by ``prefer_sha`` (the dispatched commit), then the one
+    already in ``dest``.  ``dest``'s own copy takes part, so a corrupt file
+    already committed is replaced by a good one when a shard has it.
+    """
+    dest, incoming = Path(dest), Path(incoming)
+    dest.mkdir(parents=True, exist_ok=True)
+    cands: dict[str, list[tuple]] = {}
+    for p in sorted(dest.glob("*.json")):
+        cands.setdefault(p.name, []).append((p, _read_ckpt(p), True))
+    for p in sorted(incoming.rglob("*.json")) if incoming.exists() else []:
+        cands.setdefault(p.name, []).append((p, _read_ckpt(p), False))
+    stats = {"n_files": len(cands), "n_replaced": 0, "n_unreadable_dropped": 0,
+             "n_unreadable_kept": 0, "unreadable_kept": []}
+    for name, lst in cands.items():
+        good = [(p, d, own) for p, d, own in lst if d is not None]
+        stats["n_unreadable_dropped"] += sum(1 for _, d, _o in lst if d is None and not _o)
+        if not good:
+            stats["n_unreadable_kept"] += 1
+            stats["unreadable_kept"].append(name)
+            continue
+
+        def _key(t):
+            _p, d, own = t
+            try:
+                v = int(d.get("ckpt_version", 1))
+            except (TypeError, ValueError):
+                v = 1
+            sha = str(d.get("code_sha", "") or "")
+            return (v, bool(prefer_sha) and sha[:12] == prefer_sha[:12], own)
+        best = max(good, key=_key)
+        if not best[2]:
+            (dest / name).write_text(best[0].read_text())
+            stats["n_replaced"] += 1
+    return stats
 
 
 def load_survivors(root: Path):
@@ -2050,8 +2594,12 @@ def process_spectrum(rec: dict, cand_rows: list[dict], release: str, workdir: Pa
                 ex = desi_exposure_measurements(rows, lam0, mode, workdir, max_exposures,
                                                 collect=collected) if rows else []
                 if collected:
-                    null_by_line[lam0] = offset_null(desi_measure_at(collected, mode), lam0,
-                                                     n=N_NULL_OFFSETS)
+                    co_arrays = ({"wave": wave, "flux": flux, "ivar": ivar,
+                                  "mask": rec.get("mask"), "sky": sky}
+                                 if wave.size else None)
+                    null_by_line[lam0] = offset_null(
+                        desi_measure_at(collected, mode, coadd=co_arrays), lam0,
+                        n=N_NULL_OFFSETS)
                 if rows and not any(e.get("testable") for e in ex):
                     # cframes unreachable: try the per-exposure healpix spectra file.
                     for t in hit:
@@ -2390,8 +2938,16 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     per_exp = {}
     n_stale = 0
     code_shas: dict[str, int] = {}
+    unreadable: list[str] = []
     for p in sorted(ckpt.glob("*.json")):
-        r = json.loads(p.read_text())
+        r = _read_ckpt(p)
+        if r is None:
+            # A truncated or interleaved checkpoint is not a measurement.  It
+            # must not take the whole reduce down with it (run 35758868818
+            # lost a complete 141-spectrum run that way); it is counted and
+            # named in the summary instead, and the next run re-measures it.
+            unreadable.append(p.name)
+            continue
         sha = str(r.get("code_sha", "") or "unrecorded")
         code_shas[sha] = code_shas.get(sha, 0) + 1
         # A checkpoint from a superseded estimator is not evidence; it is a
@@ -2548,10 +3104,17 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     vcounts = tab["verdict"].value_counts().to_dict()
     alive = tab[tab["verdict"] == "ALIVE_persistent_unidentified"]
     summary = {
+        # Which run wrote this file.  A summary with no provenance cannot be
+        # matched to the artefacts it describes, and on 2026-09-23 this one
+        # had silently outlived two later runs.
+        **_provenance(),
         "n_survivors_in": int(len(df)), "n_spectra_in": int(df["spec_id"].nunique()),
         "n_checkpointed_spectra": int(len(list(ckpt.glob("*.json")))),
         "ckpt_version": CKPT_VERSION,
         "n_checkpoints_stale_ignored": int(n_stale),
+        "n_checkpoints_unreadable": len(unreadable),
+        "checkpoints_unreadable": unreadable,
+        "n_spectra_measured_current": int(n_current),
         "checkpoint_code_shas": dict(sorted(code_shas.items(), key=lambda kv: -kv[1])),
         "persistence_class_counts": {k: int(v) for k, v in counts.items()},
         "verdict_counts": {k: int(v) for k, v in vcounts.items()},
@@ -2913,9 +3476,463 @@ def diagnose(root: Path, n: int = 8, release: str = "SDSS") -> dict:
     return out
 
 
+def _sdss_lite_specobj(plate: int, mjd: int, fiber: int, run2d: str | None) -> dict:
+    """Pipeline CLASS / SUBCLASS / Z of one fibre from its lite file's SPECOBJ HDU."""
+    from astropy.io import fits
+    for url in sdss_lite_urls(plate, mjd, fiber, run2d):
+        data = fetch_bytes(url, max_bytes=60_000_000, tries=2)
+        if data is None:
+            continue
+        try:
+            with fits.open(io.BytesIO(data), memmap=False) as hd:
+                got = parse_sdss_spec(hd)
+                so = {}
+                for h in hd[1:]:
+                    if str(h.header.get("EXTNAME", "")).upper() == "SPECOBJ":
+                        row = h.data[0]
+                        names = [n.upper() for n in h.columns.names]
+                        for k in ("CLASS", "SUBCLASS", "Z", "Z_ERR", "ZWARNING", "OBJTYPE",
+                                  "SN_MEDIAN_ALL"):
+                            if k in names:
+                                v = row[names.index(k)]
+                                so[k.lower()] = v.strip() if isinstance(v, str) else (
+                                    float(v) if np.ndim(v) == 0 else None)
+                return {"url": url, "coadd": got.get("coadd"), "specobj": _json_safe(so)}
+        except Exception:  # noqa: BLE001
+            continue
+    return {}
+
+
+def _galaxy_lines_at(lam0: float, z: float, tol_A: float = 4.0) -> list[str]:
+    """Which nebular lines land within ``tol_A`` of ``lam0`` at redshift ``z``."""
+    from .galaxy_reject import GALAXY_LINES
+    return [n for n, r in GALAXY_LINES.items() if abs(r * (1 + z) - lam0) <= tol_A]
+
+
+def _sky_peak_near(wave, sky, lam0: float, half_A: float = 15.0) -> dict:
+    w = np.asarray(wave, float)
+    s = np.asarray(sky, float) if sky is not None else None
+    if s is None or s.size != w.size:
+        return {}
+    sel = np.abs(w - lam0) <= half_A
+    if sel.sum() < 5:
+        return {}
+    idx = np.where(sel)[0]
+    i = idx[int(np.nanargmax(s[idx]))]
+    base = float(np.nanmedian(s[idx]))
+    at = np.abs(w - lam0) <= 2.0
+    return {"sky_peak_A": round(float(w[i]), 2), "sky_peak_dA": round(float(w[i] - lam0), 2),
+            "sky_peak_over_median": round(float(s[i] / base), 2) if base > 0 else None,
+            "sky_at_line_over_median": round(float(np.nanmax(s[at]) / base), 2)
+            if base > 0 and at.any() else None}
+
+
+def recheck_line(root: Path, plate: int, mjd: int, fibers: list[int], lam0: float,
+                 run2d: str = "26", n_plate: int = 160, n_other: int = 60,
+                 max_other_plates: int = 10) -> dict:
+    """Close one open line: are the same-plate co-detections galaxies, a shared
+    sky-subtraction residual, or a same-night instrument feature?
+
+    For the target fibre and each same-plate co-detection: the pipeline class
+    and redshift, whether a nebular line of that redshift sits at ``lam0``, the
+    spectrum's own best nebular family, and -- from the FULL spec file -- the
+    per-exposure line flux against the per-exposure sky model at ``lam0`` (a
+    sky residual scales with the sky), and where the nearest sky-model peak
+    actually is on the vacuum grid.  Then ``n_plate`` fibres of the same plate
+    for the rate, and ``n_other`` fibres on every other plate observed the same
+    MJD (from the SAS platelist) for a same-night feature.
+    """
+    from astropy.io import fits
+    out: dict = {**_provenance(), "plate": plate, "mjd": mjd, "lam0": lam0, "fibres": []}
+    fw = lsf_fwhm_A(lam0, "SDSS-DR17")
+    for f in fibers:
+        rec: dict = {"fiber": int(f)}
+        lite = _sdss_lite_specobj(plate, mjd, f, run2d)
+        co = lite.get("coadd")
+        rec["specobj"] = lite.get("specobj")
+        if co is not None:
+            m = measure_line(co["wave"], co["flux"], co["ivar"], lam0, fw, "emission",
+                             sky=co.get("sky"))
+            rec["coadd"] = _json_safe({k: m.get(k) for k in ("sig", "F", "ew", "cont",
+                                                             "sky_peak_sig")})
+            rec["coadd_sky_peak"] = _sky_peak_near(co["wave"], co.get("sky"), lam0)
+            rec["nebular_scan"] = _json_safe(background_galaxy_scan(
+                co["wave"], co["flux"], co["ivar"], lam0, "SDSS-DR17"))
+            z = (rec["specobj"] or {}).get("z")
+            if z is not None:
+                rec["lines_at_lam0_for_pipeline_z"] = _galaxy_lines_at(lam0, float(z))
+                # at the pipeline z, measure the whole nebular family directly
+                rec["nebular_at_pipeline_z"] = _json_safe(nebular_family_calibrated(
+                    [co], lam0, "SDSS-DR17")) if rec["lines_at_lam0_for_pipeline_z"] else None
+        # per-exposure: line flux vs sky
+        for url in sdss_spec_urls(plate, mjd, f, run2d)[:2]:
+            data = fetch_bytes(url, max_bytes=200_000_000, tries=2)
+            if data is None:
+                continue
+            try:
+                with fits.open(io.BytesIO(data), memmap=False) as hd:
+                    parsed = parse_sdss_spec(hd)
+            except Exception:  # noqa: BLE001
+                continue
+            if not parsed.get("exposures"):
+                continue
+            _fc, ex = sdss_exposure_measurements(parsed, lam0, "emission")
+            peaks = [_sky_peak_near(e["wave"], e.get("sky"), lam0)
+                     for e in parsed["exposures"] if abs(np.nanmedian(e["wave"]) - lam0) < 3000]
+            rec["exposures"] = [_json_safe({k: e.get(k) for k in
+                                            ("expid", "sig", "F", "err", "sky_level",
+                                             "sky_peak_sig", "n_cosmic")}) for e in ex]
+            rec["exposure_sky_peaks"] = [p for p in peaks if p]
+            F = np.array([e.get("F", np.nan) for e in ex], float)
+            S = np.array([e.get("sky_level", np.nan) for e in ex], float)
+            ok = np.isfinite(F) & np.isfinite(S)
+            if ok.sum() >= 3 and np.std(S[ok]) > 0 and np.std(F[ok]) > 0:
+                rec["corr_F_vs_sky"] = float(np.corrcoef(F[ok], S[ok])[0, 1])
+            rec["full_file"] = url
+            break
+        out["fibres"].append(_json_safe(rec))
+
+    def _rate(pl: int, mj: int, r2d: str, n: int, seed: int) -> dict:
+        rng = np.random.default_rng(seed)
+        per_spec = 320 if r2d in ("26", "103", "104") else 500
+        fibs = sorted(int(x) for x in rng.choice(np.arange(1, 2 * per_spec + 1),
+                                                 size=min(n, 2 * per_spec), replace=False))
+        sig, hits = [], []
+        for f in fibs:
+            if pl == plate and f in fibers:
+                continue
+            co = _fetch_sdss_coadd(pl, mj, f, r2d)
+            if co is None:
+                continue
+            m = measure_line(co["wave"], co["flux"], co["ivar"], lam0, fw, "emission")
+            if m.get("testable") and np.isfinite(m["sig"]):
+                sig.append(float(m["sig"]))
+                if m["sig"] >= 4.5:
+                    hits.append({"fiber": f, "sig": round(float(m["sig"]), 2)})
+        a = np.asarray(sig, float)
+        return {"plate": pl, "mjd": mj, "run2d": r2d, "n_measured": int(a.size),
+                "n_ge4p5": int((a >= 4.5).sum()), "n_ge5": int((a >= 5).sum()),
+                "sig_median": float(np.median(a)) if a.size else None, "hits": hits}
+
+    out["same_plate_rate"] = _rate(plate, mjd, run2d, n_plate, 101)
+    # every other plate observed the same MJD (same night)
+    others = []
+    tried = []
+    for url in (f"{SDSS_SAS}/sdss/spectro/redux/platelist.fits",
+                f"{SDSS_SAS}/sdss/spectro/redux/plates-dr17.fits",
+                f"{SDSS_SAS}/sdss/spectro/redux/26/platelist.fits",
+                f"{SDSS_SAS}/eboss/spectro/redux/platelist.fits",
+                "https://data.sdss.org/sas/dr16/sdss/spectro/redux/platelist.fits",
+                "https://data.sdss.org/sas/dr12/sdss/spectro/redux/platelist.fits",
+                "https://data.sdss.org/sas/dr9/sdss/spectro/redux/platelist.fits"):
+        if others:
+            break
+        data = fetch_bytes(url, max_bytes=300_000_000, tries=2)
+        if data is None:
+            tried.append(url)
+            out["platelist_error"] = f"unreachable: {', '.join(tried)}"
+            continue
+        out["platelist_url"] = url
+        try:
+            with fits.open(io.BytesIO(data), memmap=False) as hd:
+                d = hd[1].data
+                names = [n.upper() for n in hd[1].columns.names]
+                P = np.asarray(d[hd[1].columns.names[names.index("PLATE")]]).astype(int)
+                M = np.asarray(d[hd[1].columns.names[names.index("MJD")]]).astype(int)
+                R = np.asarray(d[hd[1].columns.names[names.index("RUN2D")]]).astype(str)
+                sel = (M == int(mjd)) & (P != int(plate))
+                seen = set()
+                for p_, r_ in zip(P[sel], R[sel], strict=True):
+                    if p_ not in seen:
+                        seen.add(int(p_))
+                        others.append((int(p_), str(r_).strip()))
+        except Exception as exc:  # noqa: BLE001
+            out["platelist_error"] = repr(exc)[:300]
+    out["same_mjd_plates"] = [p for p, _ in others]
+    out["same_mjd_rates"] = [_rate(p, mjd, r or run2d, n_other, 200 + k)
+                             for k, (p, r) in enumerate(others[:max_other_plates])]
+    od = Path(root) / "results" / "spectra_persist"
+    od.mkdir(parents=True, exist_ok=True)
+    (od / f"recheck_{plate}_{mjd}_{int(round(lam0))}.json").write_text(
+        json.dumps(_json_safe(out), indent=1))
+    return out
+
+
+def _parse_lamost_fits(data: bytes) -> dict | None:
+    """wave (vacuum), flux, ivar from a LAMOST low-resolution spectrum file.
+
+    Two layouts exist: DR1-DR7 put a 5-row image in the primary HDU (flux,
+    invvar, wavelength, andmask, ormask); DR8+ put a binary table in HDU 1 with
+    FLUX / IVAR / WAVELENGTH array columns.
+    """
+    from astropy.io import fits
+    try:
+        with fits.open(io.BytesIO(data), memmap=False) as hd:
+            p = hd[0].data
+            if p is not None and np.ndim(p) == 2 and p.shape[0] >= 3:
+                return {"wave": np.asarray(p[2], float), "flux": np.asarray(p[0], float),
+                        "ivar": np.asarray(p[1], float),
+                        "header": {k: str(hd[0].header.get(k)) for k in
+                                   ("OBSID", "DATE-OBS", "CLASS", "SUBCLASS", "Z", "SNRR",
+                                    "VACUUM") if k in hd[0].header}}
+            for h in hd[1:]:
+                names = [n.upper() for n in getattr(h, "columns", []).names] \
+                    if hasattr(h, "columns") else []
+                if "FLUX" in names and "WAVELENGTH" in names:
+                    d = h.data
+                    cn = h.columns.names
+                    return {"wave": np.asarray(d[cn[names.index("WAVELENGTH")]][0], float),
+                            "flux": np.asarray(d[cn[names.index("FLUX")]][0], float),
+                            "ivar": np.asarray(d[cn[names.index("IVAR")]][0], float)
+                            if "IVAR" in names else None,
+                            "header": {k: str(hd[0].header.get(k)) for k in
+                                       ("OBSID", "DATE-OBS", "CLASS", "SUBCLASS", "Z",
+                                        "SNRR", "VACUUM") if k in hd[0].header}}
+    except Exception:  # noqa: BLE001
+        return None
+    return None
+
+
+def recheck_second_epoch_and_template(root: Path, spec_id: str, ra: float, dec: float,
+                                      lam0: float, subclass: str, radius_arcsec: float = 3.0,
+                                      n_template: int = 40) -> dict:
+    """Second epoch from every reachable archive, and a same-subclass template.
+
+    * SPARCL at ``radius_arcsec`` (SDSS DR16/17, BOSS, eBOSS, DESI DR1): every
+      spectrum at the position, the line measured in each.
+    * LAMOST low-resolution (R ~ 1800, vacuum wavelengths): VizieR catalogues
+      give the obsid; the spectrum is pulled from the LAMOST data release sites.
+    * An empirical template: the median of ``n_template`` continuum-normalised
+      spectra of the survey's own ``subclass``, the detector run on the template
+      at ``lam0`` and on the target divided by it.  A pseudo-continuum peak
+      between molecular band heads shows up in the template itself.
+    """
+    out: dict = {**_provenance(), "spec_id": spec_id, "ra": ra, "dec": dec, "lam0": lam0,
+                 "subclass": subclass, "sparcl": [], "lamost": [], "lamost_errors": []}
+    fw = lsf_fwhm_A(lam0, "SDSS-DR17")
+    client = _make_client()
+    # ---- SPARCL, every release, 3 arcsec
+    d = radius_arcsec / 3600.0
+    cosd = max(np.cos(np.radians(dec)), 1e-3)
+    cons = {"ra": [ra - d / cosd, ra + d / cosd], "dec": [dec - d, dec + d]}
+    try:
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "ra", "dec", "data_release", "dateobs_center"],
+            constraints=cons, limit=100))
+        recs = list(_records(found))
+    except Exception as exc:  # noqa: BLE001
+        recs = []
+        out["sparcl_error"] = repr(exc)[:300]
+    by_rel: dict[str, list[str]] = {}
+    for r in recs:
+        by_rel.setdefault(str(_rget(r, "data_release", "")), []).append(
+            str(_rget(r, "sparcl_id")))
+    target = None
+    for rel, ids in by_rel.items():
+        for r in sparcl_retrieve(client, ids, rel):
+            w = np.asarray(r.get("wavelength", []), float)
+            if w.size < 50:
+                continue
+            m = measure_line(w, np.asarray(r.get("flux", []), float),
+                             np.asarray(r.get("ivar", []), float), lam0,
+                             lsf_fwhm_A(lam0, rel), "emission")
+            ids_ = (sdss_ids_from_record(r) or {}) if rel.upper().startswith(
+                ("SDSS", "BOSS")) else {}
+            out["sparcl"].append(_json_safe({
+                "sparcl_id": r.get("sparcl_id"), "data_release": rel,
+                "plate": ids_.get("plate"), "mjd": ids_.get("mjd"),
+                "fiberid": ids_.get("fiberid"), "sig": m.get("sig"), "ew": m.get("ew"),
+                "testable": m.get("testable"), "subclass": r.get("subclass")}))
+            if str(r.get("sparcl_id")) == str(spec_id):
+                target = r
+    # ---- LAMOST
+    obsids = []
+    try:
+        from astropy import units as u
+        from astropy.coordinates import SkyCoord
+        from astroquery.vizier import Vizier
+        viz = Vizier(columns=["**"], row_limit=50)
+        c = SkyCoord(ra * u.deg, dec * u.deg)
+        for cat in ("V/164", "V/156", "V/153", "V/149", "V/146"):
+            try:
+                res = viz.query_region(c, radius=radius_arcsec * u.arcsec, catalog=cat)
+            except Exception as exc:  # noqa: BLE001
+                out["lamost_errors"].append(f"{cat}: {exc!r}"[:200])
+                continue
+            for t in res:
+                cols = {k.lower(): k for k in t.colnames}
+                key = cols.get("obsid") or cols.get("obsid_")
+                if key is None:
+                    continue
+                for row in t:
+                    try:
+                        obsids.append((cat, t.meta.get("name", cat), int(row[key])))
+                    except (TypeError, ValueError):
+                        continue
+                    keep = {}
+                    for cn in t.colnames:
+                        if cn.lower() in ("obsid", "obsdate", "class", "subclass", "teff",
+                                          "logg", "feh", "[fe/h]", "snrr", "snrg", "z",
+                                          "rv", "hrv", "_r"):
+                            v = row[cn]
+                            keep[cn] = v.item() if hasattr(v, "item") else str(v)
+                    out.setdefault("lamost_catalogue", []).append(
+                        _json_safe({"catalog": t.meta.get("name", cat), **keep}))
+    except Exception as exc:  # noqa: BLE001
+        out["lamost_errors"].append(f"vizier: {exc!r}"[:300])
+    out["lamost_obsids"] = sorted({o[2] for o in obsids})
+    for ob in out["lamost_obsids"]:
+        got = None
+        statuses = []
+        urls = []
+        for dr, ver in (("dr11", "v1.0"), ("dr10", "v2.0"), ("dr9", "v2.0"), ("dr8", "v2.0"),
+                        ("dr7", "v2.0"), ("dr6", "v2.0"), ("dr5", "v3")):
+            urls += [f"https://www.lamost.org/{dr}/{ver}/spectrum/fits/{ob}",
+                     f"https://www.lamost.org/{dr}/{ver}/lrs/spectrum/fits/{ob}",
+                     f"https://{dr}.lamost.org/{ver}/spectrum/fits/{ob}",
+                     f"http://{dr}.lamost.org/{ver}/spectrum/fits/{ob}"]
+        for url in urls:
+            try:
+                rr = _session().get(url, timeout=60, allow_redirects=True)
+                statuses.append(f"{rr.status_code} {len(rr.content)}B {url}")
+                body = rr.content
+                if body[:2] == b"\x1f\x8b":          # LAMOST serves .fits.gz
+                    import gzip
+                    body = gzip.decompress(body)
+                data = body if rr.status_code == 200 and body[:6] == b"SIMPLE" else None
+            except Exception as exc:  # noqa: BLE001
+                statuses.append(f"ERR {type(exc).__name__} {url}")
+                data = None
+            if not data:
+                continue
+            sp = _parse_lamost_fits(data)
+            if sp is None:
+                continue
+            got = (url, sp)
+            break
+        if got is None:
+            out["lamost"].append({"obsid": ob, "error": "spectrum unreachable",
+                                  "http": statuses})
+            continue
+        url, sp = got
+        iv = sp["ivar"] if sp["ivar"] is not None else np.ones_like(sp["flux"])
+        m = measure_line(sp["wave"], sp["flux"], iv, lam0, lam0 / 1800.0, "emission")
+        # sensitivity: what an EW 1.6 A line would give here
+        exp_sig = None
+        if m.get("testable") and m.get("cont") and m.get("err"):
+            exp_sig = float(1.6 * abs(m["cont"]) / m["err"])
+        fit = fit_line_profile(sp["wave"], sp["flux"], iv, lam0, lam0 / 1800.0, "emission")
+        # the strong OH line 9.4 A redward (6863.96 air = 6865.86 vac): how big is
+        # the sky residual there in this spectrum?
+        m_oh = measure_line(sp["wave"], sp["flux"], iv, 6865.86, lam0 / 1800.0, "emission")
+        out["lamost_fit"] = _json_safe({**fit, "oh6866_sig": m_oh.get("sig"),
+                                        "oh6866_ew": m_oh.get("ew")})
+        out["lamost"].append(_json_safe({"obsid": ob, "url": url, "header": sp["header"],
+                                         "sig": m.get("sig"), "ew": m.get("ew"),
+                                         "testable": m.get("testable"),
+                                         "reason": m.get("reason"),
+                                         "expected_sig_for_ew_1p6": exp_sig}))
+    # ---- galaxies with a redshift that puts Halpha near lam0, within 20 arcmin
+    try:
+        zc = lam0 / 6564.61 - 1.0
+        dd = 20.0 / 60.0
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release"],
+            constraints={"ra": [ra - dd / cosd, ra + dd / cosd], "dec": [dec - dd, dec + dd],
+                         "redshift": [zc - 0.01, zc + 0.01]}, limit=500))
+        grp = []
+        for r in _records(found):
+            gra, gde = float(_rget(r, "ra")), float(_rget(r, "dec"))
+            sep = 3600.0 * np.hypot((gra - ra) * cosd, gde - dec)
+            grp.append({"sparcl_id": str(_rget(r, "sparcl_id")), "ra": gra, "dec": gde,
+                        "z": float(_rget(r, "redshift")), "spectype": _rget(r, "spectype"),
+                        "data_release": _rget(r, "data_release"),
+                        "sep_arcsec": round(float(sep), 1),
+                        "dv_kms_vs_halpha_z": round(
+                            (float(_rget(r, "redshift")) - zc) / (1 + zc) * 299792.458, 0)})
+        out["halpha_z"] = zc
+        out["galaxies_near_halpha_z"] = sorted(grp, key=lambda g: g["sep_arcsec"])
+    except Exception as exc:  # noqa: BLE001
+        out["galaxies_error"] = repr(exc)[:300]
+    # ---- SDSS photometric objects within 12 arcsec (is there a galaxy under the star?)
+    try:
+        sql = ("SELECT n.objID, n.distance, p.ra, p.dec, p.type, p.r, p.petroRad_r, p.clean "
+               f"FROM dbo.fGetNearbyObjEq({ra}, {dec}, 0.2) n JOIN PhotoObj p "
+               "ON n.objID = p.objID ORDER BY n.distance")
+        rr = _session().get("https://skyserver.sdss.org/dr17/SkyServerWS/SearchTools/SqlSearch",
+                            params={"cmd": sql, "format": "json"}, timeout=120)
+        js = rr.json()
+        rows = js[0].get("Rows", []) if isinstance(js, list) and js else []
+        out["sdss_photo_within_12arcsec"] = [
+            {**row, "distance_arcsec": round(60.0 * float(row.get("distance", 0)), 2),
+             "type_name": {3: "GALAXY", 6: "STAR"}.get(int(row.get("type", 0)), "OTHER")}
+            for row in rows]
+    except Exception as exc:  # noqa: BLE001
+        out["sdss_photo_error"] = repr(exc)[:300]
+    # ---- template from same-subclass stars
+    try:
+        tpl = {"subclass": subclass}
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "redshift"],
+            constraints={"data_release": ["SDSS-DR17"], "spectype": ["STAR"]}, limit=3000))
+        ids = [str(_rget(r, "sparcl_id")) for r in _records(found)
+               if str(_rget(r, "sparcl_id")) != str(spec_id)]
+        typed = []
+        for k in range(0, len(ids), 500):
+            got = _find_with_retry(lambda c=ids[k:k + 500]: client.retrieve(
+                uuid_list=c, include=["sparcl_id", "subclass"], dataset_list=["SDSS-DR17"]))
+            typed += [str(_rget(r, "sparcl_id")) for r in _records(got)
+                      if str(_rget(r, "subclass") or "").strip().upper().startswith(
+                          subclass.upper())]
+        rng = np.random.default_rng(5)
+        pick = [typed[int(i)] for i in rng.permutation(len(typed))[:n_template]]
+        grid = np.arange(lam0 - 150.0, lam0 + 150.0, 0.5)
+        stack = []
+        for r in sparcl_retrieve(client, pick, "SDSS-DR17"):
+            w = np.asarray(r.get("wavelength", []), float)
+            f = np.asarray(r.get("flux", []), float)
+            if w.size < 50 or not (w.min() < grid[0] and w.max() > grid[-1]):
+                continue
+            fi = np.interp(grid, w, f)
+            med = np.nanmedian(fi)
+            if np.isfinite(med) and med > 0:
+                stack.append(fi / med)
+        tpl["n_used"] = len(stack)
+        tpl["n_typed_pool"] = len(typed)
+        if len(stack) >= 10:
+            T = np.nanmedian(np.asarray(stack), axis=0)
+            iv_t = np.full(grid.size, 1.0 / max(_mad_std(np.diff(T)) / np.sqrt(2), 1e-4) ** 2)
+            mt = measure_line(grid, T, iv_t, lam0, fw, "emission")
+            tpl["template_line"] = _json_safe({k: mt.get(k) for k in ("sig", "ew", "F")})
+            if target is not None:
+                w = np.asarray(target["wavelength"], float)
+                f = np.asarray(target["flux"], float)
+                iv = np.asarray(target["ivar"], float)
+                sel = (w > grid[0]) & (w < grid[-1])
+                Ti = np.interp(w[sel], grid, T)
+                fn = f[sel] / np.nanmedian(f[sel])
+                ratio = fn / Ti
+                ivr = iv[sel] * (np.nanmedian(f[sel]) * Ti) ** 2
+                mr = measure_line(w[sel], ratio, ivr, lam0, fw, "emission")
+                mo = measure_line(w[sel], fn, iv[sel] * np.nanmedian(f[sel]) ** 2, lam0, fw,
+                                  "emission")
+                tpl["target_line"] = _json_safe({k: mo.get(k) for k in ("sig", "ew")})
+                tpl["target_over_template_line"] = _json_safe({k: mr.get(k)
+                                                               for k in ("sig", "ew")})
+        out["template"] = tpl
+    except Exception as exc:  # noqa: BLE001
+        out["template"] = {"error": repr(exc)[:300]}
+    od = Path(root) / "results" / "spectra_persist"
+    od.mkdir(parents=True, exist_ok=True)
+    (od / f"recheck_epochs_{str(spec_id)[:8]}_{int(round(lam0))}.json").write_text(
+        json.dumps(_json_safe(out), indent=1))
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="seti.spectra.persist")
-    ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose", "control"],
+    ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose", "control",
+                                        "recheck", "recheck2"],
                     default="run")
     ap.add_argument("--root", default=".")
     ap.add_argument("--shard", type=int, default=0)
@@ -2925,6 +3942,12 @@ def main(argv=None) -> int:
     ap.add_argument("--release", default="", help="only SDSS or DESI survivors")
     ap.add_argument("--n-control", type=int, default=40,
                     help="control-stage: comparison spectra per surviving line")
+    ap.add_argument("--incoming", default="",
+                    help="reduce: a directory of per-shard checkpoint directories to "
+                         "merge into ckpt/ first (see merge_checkpoints)")
+    ap.add_argument("--recheck", default="", help="recheck: PLATE:MJD:FIB1,FIB2,...")
+    ap.add_argument("--recheck-lam", default="0")
+    ap.add_argument("--recheck-run2d", default="26")
     ap.add_argument("--no-simbad", action="store_true")
     ap.add_argument("--no-nist", action="store_true")
     a = ap.parse_args(argv)
@@ -2935,10 +3958,25 @@ def main(argv=None) -> int:
         diagnose(root, n=a.top or 8, release=a.release or "SDSS")
     elif a.stage == "control":
         controls(root, n=a.n_control)
+    elif a.stage == "recheck2":
+        sid, ra, dec, sub = a.recheck.split(":")
+        rep = recheck_second_epoch_and_template(root, sid, float(ra), float(dec),
+                                                float(a.recheck_lam), sub)
+        print(json.dumps(rep, default=str)[:6000])
+    elif a.stage == "recheck":
+        pl, mj, fibs = a.recheck.split(":")
+        rep = recheck_line(root, int(pl), int(mj), [int(x) for x in fibs.split(",")],
+                           float(a.recheck_lam), run2d=a.recheck_run2d)
+        print(json.dumps({k: v for k, v in rep.items() if k != "fibres"}, default=str)[:4000])
     elif a.stage == "run":
         st = run_shard(root, a.shard, a.n_shards, a.top, a.max_exposures, a.release)
         print("[persist] shard stats:", json.dumps(st))
     else:
+        if a.incoming:
+            ms = merge_checkpoints(root / "results" / "spectra_persist" / "ckpt",
+                                   Path(a.incoming),
+                                   prefer_sha=os.environ.get("GITHUB_SHA", ""))
+            print("[persist] checkpoint merge:", json.dumps(ms))
         reduce_results(root, do_simbad=not a.no_simbad, do_nist=not a.no_nist)
     return 0
 
@@ -2954,4 +3992,4 @@ __all__ = ["measure_line", "combine_measurements", "classify_persistence", "deco
            "run_shard", "reduce_results", "final_verdict", "probe", "diagnose",
            "control_sample", "controls", "fit_line_profile", "lsf_fwhm_measured",
            "epoch_series", "background_galaxy_scan", "plate_context", "pixel_coincidence",
-           "survey_subclass", "main"]
+           "survey_subclass", "merge_checkpoints", "main"]

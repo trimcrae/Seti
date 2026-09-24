@@ -39,9 +39,18 @@ on:
         description: "Debug cap on the Gaia sample (0 = the whole 100 pc sample)"
         required: false
         default: "0"
+      reuse_run_id:
+        description: >-
+          Re-reduce without re-acquiring: download this earlier relay run's
+          artifact and restore ONLY its parquet intermediates (Gaia sample,
+          pair tables) into results/relay/, then run e.g. stage=assess,targetlist.
+          The committed JSON/CSV on the branch must come from the same run.
+        required: false
+        default: ""
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: relay-${{ github.ref_name }}
@@ -63,6 +72,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           pip install pyarrow
+      - name: Restore a prior run's parquet intermediates
+        if: ${{ github.event.inputs.reuse_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: relay-run
+          run-id: ${{ github.event.inputs.reuse_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/relay-prior
+      - name: Copy only the parquet files
+        if: ${{ github.event.inputs.reuse_run_id != '' }}
+        run: |
+          set -e
+          ls -la "$RUNNER_TEMP/relay-prior" | head -50
+          n=0
+          for f in "$RUNNER_TEMP"/relay-prior/*.parquet; do
+            [ -e "$f" ] || continue
+            cp "$f" results/relay/; n=$((n+1)); echo "restored $(basename "$f")"
+          done
+          if [ "$n" = "0" ]; then echo "::error::no parquet in run ${{ github.event.inputs.reuse_run_id }}'s artifact"; exit 1; fi
+          echo "reused_run_id=${{ github.event.inputs.reuse_run_id }}" > results/relay/.reused_from
       - name: Offline gate — the injected pair and its drift prior must be recovered on this runner
         run: python -m pytest tests/test_relay.py -q -p no:cacheprovider
       - name: Run
@@ -124,6 +153,8 @@ jobs:
           v = s.get("verdict", ""); f = s.get("funnel", {})
           if f.get("n_stars_100pc", 0) == 0 and "NO_DATA_REACHED" not in v:
               print(f"::error::verdict {v!r} with no Gaia sample is a disguised no-data run"); sys.exit(1)
+          if "PAIRLINE_MATCHES_AT_CHANCE" in v:
+              print("::notice::pair-line matches at the chance expectation (chance.py) -- not a detection")
           if "PAIRLINE_DRIFT_MATCH" in v:
               print(f"::notice::{len(s.get('candidates', []))} hit-beam matches inside the prior — see results/relay/hits.json for the chance expectation per beam")
           if "NO_PAIRLINE_HIT" in v or "PAIRLINE_HITS_OFF_PRIOR" in v:
@@ -151,6 +182,7 @@ jobs:
             results/relay/acquisition_log.json \
             results/relay/pairs_targets.csv.gz \
             results/relay/bl_files.csv.gz \
+            $(ls results/relay/targetlist.json results/relay/targetlist.csv.gz results/relay/chance_*.json 2>/dev/null) \
             $(ls results/relay/pairs_full_*.csv.gz 2>/dev/null)
       - uses: actions/upload-artifact@v4
         if: always()

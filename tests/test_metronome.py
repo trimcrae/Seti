@@ -567,7 +567,9 @@ def test_every_rejection_rule_has_a_counter():
             dict(_sig_record(p_pool=0.4), star_key="k:8"),
             dict(_sig_record(pn_n_trials=0, jitter=0.001, jitter_floor=0.001),
                  star_key="k:9"),
-            dict(_sig_record(period=200.0, cycles_span=2.0), star_key="k:10")]
+            dict(_sig_record(period=200.0, cycles_span=2.0), star_key="k:10"),
+            dict(_sig_record(period=0.4232741), star_key="k:11"),
+            dict(_sig_record(), star_key="k:12")]
     # population_period needs a population: a TESS background wide of k:1's
     # 13.7 d, plus six stars piled up on one period
     rng = np.random.default_rng(3)
@@ -579,7 +581,13 @@ def test_every_rejection_rule_has_a_counter():
            "k:2": {"mission": "kepler", "prot": 11.0, "variability_catalogues_reached": True},
            "k:3": {"mission": "kepler", "prot": 30.0, "variability_catalogues_reached": True,
                    "catalogued_periods": [("vsx", 0.5668, "RRAB")]},
-           "k:4": FULL_CTX, "k:5": FULL_CTX, "k:7": FULL_CTX, "k:8": FULL_CTX, "k:9": FULL_CTX}
+           "k:4": FULL_CTX, "k:5": FULL_CTX, "k:7": FULL_CTX, "k:8": FULL_CTX, "k:9": FULL_CTX,
+           "k:11": dict(FULL_CTX, aperture_catalogues_reached=True, aperture_neighbours=[
+               {"source": "vsx", "name": "KIC 5879583", "period": 0.4232946,
+                "vtype": "RR", "sep_arcsec": 13.3}]),
+           "k:12": dict(FULL_CTX, aperture_catalogues_reached=False, aperture_neighbours=[
+               {"source": "vsx", "name": "V1", "period": 17.0, "vtype": "ROT",
+                "sep_arcsec": 40.0}])}
     vetted = assign_tiers(recs, ctx, VET)
     first = rejection_counters(vetted)["first_veto"]
     for rule in HARD_VETO_ORDER + ("insufficient_events", "not_significant"):

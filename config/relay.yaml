@@ -219,6 +219,24 @@ assess:
   match_window_sigma: 3.0        # a hit matches the prior within this many half-widths (tight)
   recurrence_khz: 1.0            # a frequency seen on >= 3 unrelated sightlines within this is instrumental
   recurrence_min_sightlines: 3
+  # the same rule at a width a drifting emitter family actually occupies: the
+  # 1 kHz rule missed seven Enriquez+2017 events inside 1380.88-1381.21 MHz on
+  # seven different stars (run 35745111146).  With ~90 hits over ~800 MHz the
+  # chance of three unrelated sightlines inside 500 kHz is ~0.05 per run.
+  recurrence_wide_khz: 500.0
+  # known terrestrial / satellite allocations in and around L band (MHz).
+  # verify: ITU-R Radio Regulations Art. 5 and the GNSS interface documents;
+  # these are the downlinks and radars every GBT L-band paper names as RFI.
+  known_rfi_bands_mhz:
+    - {name: "DME/TACAN aeronautical radionavigation", lo: 960.0,  hi: 1164.0}
+    - {name: "GPS L5 / Galileo E5",                    lo: 1164.0, hi: 1215.0}
+    - {name: "GPS L2 / GLONASS L2 / Galileo E6",       lo: 1215.0, hi: 1300.0}
+    - {name: "GPS L3 (1381.05 MHz, P(Y) main lobe)",   lo: 1370.8, hi: 1391.3}
+    - {name: "Inmarsat / MSS downlink",                lo: 1518.0, hi: 1559.0}
+    - {name: "GPS L1 / Galileo E1 / BeiDou B1",        lo: 1559.0, hi: 1591.0}
+    - {name: "GLONASS L1",                             lo: 1597.0, hi: 1606.0}
+    - {name: "Iridium downlink",                       lo: 1616.0, hi: 1626.5}
+  uniform_drift_range_hz_s: 4.0     # the +/-4 Hz/s every BL/UCLA pipeline searches, for the window-fraction figure
   # the supplementary rest-frequency test (drift.magic_lines_mhz): a relay
   # de-drifted so the RECEIVER sees a chosen rest line puts it, for Earth, at
   # f_rest (1 + (v_TR - v_TE)/c).  It needs both radial velocities, so it runs
@@ -226,3 +244,26 @@ assess:
   # trials are counted and priced separately from the drift test's.
   magic_line_window_kms: 5.0        # RV tolerance on the offset, both stars (Gaia DR3 envelope)
   magic_search_bandwidth_mhz: 800.0 # the 1.1-1.9 GHz span a BL L-band hit could have landed in
+
+targetlist:
+  # the nearest-neighbour link list (src/seti/relay/targetlist.py): which stars'
+  # SHORT links put Earth in the beam.  Not a detection test -- a target list.
+  k_neighbours: 5                 # each star links to its 5 nearest sample neighbours
+  link_max_pc: 10.0               # ...within 10 pc (median NN distance in the sample is ~1-2 pc)
+  min_separation_pc: 0.05         # same bound-binary cut as the geometry
+  theta_min_rad: 1.0e-4           # radio beams only: the optical beam admits nothing
+  alpha_prefilter_factor: 3.0     # Monte Carlo every link with measured alpha < 3x the widest half-beam
+  n_mc: 400                       # parallax draws per link
+  seed: 60
+  parallax_diff_sigma_min: 3.0    # radial separation must be measured, or the alignment is parallax noise
+  comoving_dv_tan_max_kms: 3.0    # |dv_tan| below this ...
+  comoving_proj_sep_max_pc: 1.0   # ... at projected separation below this: likely bound, excluded
+  observed_telescope: GBT         # "observed" = within half this telescope's L-band HPBW of a resolved BL target
+  n_report: 40
+  # bound systems: dv_tan below the escape speed at the projected separation
+  # (m_tot below) plus a margin is consistent with orbital motion -> excluded.
+  bound_m_tot_msun: 2.0
+  bound_dv_margin_kms: 1.0
+  # Gaia close-pair astrometry: parallaxes of pairs closer than this on the sky
+  # are biased (run 35992222801's first list was all 1-2" pairs); never ranked.
+  min_sky_sep_arcsec: 4.0

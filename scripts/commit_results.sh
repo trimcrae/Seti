@@ -115,6 +115,40 @@ sys.exit(0 if ("NO_DATA_REACHED" in v or "NO_SHARD_OUTPUTS" in v) else 1)
 PY
 }
 
+# A TRACKED DIRECTORY is expanded into the files inside it that this run
+# actually changed or created, and each is then judged as a path of its own.
+#
+# On 2026-09-22 SEXTANT's solo run 35746692260 handed this script
+# `results/sextant`, which on its branch held one tracked file (probe.json).
+# The probe and assess steps wrote a dozen NEW files beside it --- the probe's
+# route measurement, the shard CSV/JSON, controls.json, summary.json --- and
+# left probe.json alone.  `_produced` asked `git diff HEAD -- results/sextant`,
+# which only ever sees TRACKED files, answered "unchanged", and both commits
+# were skipped: "this run produced none of the requested paths".  Untracked
+# files under a tracked directory are exactly as much this run's authorship as
+# an untracked top-level path is.
+#
+# Expanding (rather than laying the whole directory over the branch) keeps the
+# ZTF rule inside directories too: a file the run left identical to its
+# checkout is still not committed over a newer copy on the branch, and a
+# summary.json inside the directory still passes through the no-data guard.
+expanded=()
+for p in "$@"; do
+  if [ "$p" != "--prune" ] && [ -d "$p" ] \
+     && git ls-files --error-unmatch -- "$p" >/dev/null 2>&1; then
+    found=0
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      expanded+=("$f"); found=1
+    done < <( { git -c core.quotepath=off diff --name-only HEAD -- "$p"
+                git -c core.quotepath=off ls-files --others -- "$p"; } | sort -u )
+    [ "$found" -eq 1 ] || expanded+=("$p")   # keeps the "unchanged" message
+  else
+    expanded+=("$p")
+  fi
+done
+set -- "${expanded[@]}"
+
 stage="$(mktemp -d)"
 present=()
 prune=()

@@ -60,6 +60,39 @@ hard way. Deviating costs runs.
    *after* the acquisition, deep in a stage the sandbox always ran green. The
    cheapest check is a throwaway venv on the runner's majors — building one and
    running `pytest tests/test_<channel>.py` under it takes a couple of minutes.
+7. **A shard uploads only what it wrote; a merge has a rule for which copy
+   wins.** Every job checks out the branch, and the branch carries earlier
+   runs' shard files. A matrix job whose `upload-artifact` path is a directory
+   or glob therefore uploads stale copies of *other* shards' outputs alongside
+   its own, and a reducer that merges artifacts (`merge-multiple: true`,
+   `pattern:` into one directory) writes each overlapping file several times,
+   concurrently, with no rule for which copy lands. It bit twice: SPECTRA-PERSIST
+   run 35758868818 (14 corrupted JSON, 35 stale copies) and GROWTH-direct run
+   35859780689 (the summary said 4,358 rows while the branch held 4,725).
+   A sweep on 2026-09-24 found it in 16 more channels. In CRADLE it goes further:
+   `UnitStore` resumes from `acquire_s<i>of<n>.json`, so a checked-out copy
+   tells a shard its units are already done when their CSV was never
+   committed. The rule:
+   - **Purge first.** Straight after checkout, `rm` every shard-output family
+     the job writes (SEXTANT's "Purge checkout-inherited shard outputs" is the
+     reference). Do the same in the reducer before downloading, so the reduce
+     never pools a checked-out earlier run's shard files with this run's.
+     Leave a file only if the job is *meant* to resume from its own copy, as
+     GROWTH `measure` does, and then upload only that shard's copy.
+   - **Upload by the shard's own name.** Name the shard's files explicitly
+     (`shard_${S}.csv`, `_s${i}of${n}`), or stage what the shard wrote in
+     `$RUNNER_TEMP` and upload that (SPECTRA-PERSIST and LANTERN mark the tree
+     with `touch` and then keep only files that are `-newer` than the mark).
+     One trap: a single literal directory is uploaded *flattened*, with the
+     directory itself as the artifact root. Match a per-shard directory
+     through a glob with one `?` (`shards/3?of_14/`) so the root stays one
+     level up.
+   - **Reduce-only jobs download artifacts by name.** A `<channel>-*`
+     pattern over a finished run also pulls `<channel>-final`, which holds
+     second copies of the same files.
+   `tests/test_workflows.py::test_a_shard_uploads_only_what_it_wrote` flags
+   any literal upload path in a matrix job that no earlier `rm` in that job
+   covers.
 
 ## 1. Layout
 

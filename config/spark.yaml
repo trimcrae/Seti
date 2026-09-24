@@ -66,10 +66,22 @@ euclid:
   # resels) on >= `recurrence_min_stars` DIFFERENT stars is instrumental.
   recurrence_bin_resel: 1.0
   recurrence_min_stars: 3
+  # Survivor vet (bounded: survivors only). A MER neighbour inside the blend
+  # radius or the dispersion corridor carrying at least this fraction of the
+  # star's H flux is a trace-overlap kill; a neighbour whose SPE redshift puts
+  # a galaxy line at the survivor's wavelength, or which carries a feature at
+  # the same wavelength, is a neighbour-line kill.
+  vet_neighbour_flux_ratio: 0.1
+  max_vet_survivors: 200
   # Trials: N_stars_with_spectra x N_resels(band) unless the run measures it.
   trials_alpha: 0.01
   max_rows_per_strip: 400000
   time_budget_s: 15000
+  # Footprint clause for the strip queries: false = range predicates on the
+  # catalogue's ra/dec, true = an ADQL CIRCLE the service can index. The first
+  # strip of a shard is measured and the faster clause is kept for the rest.
+  footprint_spatial: false
+  slow_query_s: 900
 
 # ---------------------------------------------------------------------------
 # S48 — SPHEREx QR2 spectral images (0.75–5 um, R 35–130, 6.15" pixels)

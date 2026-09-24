@@ -243,8 +243,8 @@ jobs:
           for id in "${IDS[@]}"; do
             id="$(echo "$id" | tr -d '[:space:]')"; [ -z "$id" ] && continue
             d="$RUNNER_TEMP/prior/$id"; mkdir -p "$d"
-            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -D "$d"; then
-              for a in "$d"/lantern-obs-*; do
+            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -p 'lantern-final' -D "$d"; then
+              for a in "$d"/lantern-final "$d"/lantern-obs-*; do
                 [ -d "$a/obs" ] && cp -Rn "$a/obs/." results/lantern/obs/ || true
               done
             else
@@ -259,6 +259,13 @@ jobs:
             /usr/lib/jvm /usr/local/.ghcup /opt/hostedtoolcache/CodeQL 2>/dev/null || true
           df -h / | tail -1
           free -g | head -2
+      # Shard hygiene (docs/channel-brief.md §0.7).  obs/ now holds every
+      # prior run's checkpoints (the accumulate step), identical in every
+      # shard; uploading obs/ whole put N copies of each into `assess`'s
+      # merge-multiple download, and a checkpoint one shard REDID raced the
+      # stale copies the others carried.  Mark the tree, upload what is newer.
+      - name: Mark the pre-screen state
+        run: touch "$RUNNER_TEMP/screen_t0"
       - name: Screen shard ${{ matrix.shard }}
         run: |
           python -m seti.lantern.run screen \
@@ -270,13 +277,21 @@ jobs:
             --work-dir "$RUNNER_TEMP/lantern_work"
           echo "=== shard log ==="
           python -c "import json; s=json.load(open('results/lantern/screen_shard${{ matrix.shard }}.json')); print(json.dumps({k: s[k] for k in ('verdict','counts','n_units','bytes_downloaded','elapsed_minutes')}, indent=1))"
+      - name: Stage this shard's own outputs
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/own"
+          cd results/lantern
+          if [ -d obs ]; then
+            find obs -type f -newer "$RUNNER_TEMP/screen_t0" -exec cp --parents {} "$RUNNER_TEMP/own/" \;
+          fi
+          cp screen_shard${{ matrix.shard }}.json "$RUNNER_TEMP/own/" 2>/dev/null || true
+          echo "own checkpoints: $(find "$RUNNER_TEMP/own" -name '*.json' | wc -l)"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: lantern-obs-${{ matrix.shard }}
-          path: |
-            results/lantern/obs/
-            results/lantern/screen_shard${{ matrix.shard }}.json
+          path: ${{ runner.temp }}/own/
           if-no-files-found: warn
 
   assess:
@@ -310,8 +325,8 @@ jobs:
           for id in "${IDS[@]}"; do
             id="$(echo "$id" | tr -d '[:space:]')"; [ -z "$id" ] && continue
             d="$RUNNER_TEMP/prior/$id"; mkdir -p "$d"
-            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -D "$d"; then
-              for a in "$d"/lantern-obs-*; do
+            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -p 'lantern-final' -D "$d"; then
+              for a in "$d"/lantern-final "$d"/lantern-obs-*; do
                 [ -d "$a/obs" ] && cp -Rn "$a/obs/." results/lantern/obs/ || true
               done
             fi
@@ -378,14 +393,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # lantern-final holds that run's whole merged tree, obs/ included, so it
+      # overlaps every lantern-obs-* artifact: each artifact is downloaded to
+      # its own directory and laid in with an explicit precedence, never
+      # merged concurrently (docs/channel-brief.md §0.7).
       - name: Fetch checkpoints from a prior run
         uses: actions/download-artifact@v4
         with:
           pattern: lantern-*
-          merge-multiple: true
+          merge-multiple: false
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}
-          path: results/lantern/
+          path: ${{ runner.temp }}/reduce/
+      - name: Lay the prior run's artifacts in (lantern-final wins)
+        run: |
+          R="$RUNNER_TEMP/reduce"
+          mkdir -p results/lantern
+          if [ -d "$R/lantern-final" ]; then
+            cp -R "$R/lantern-final/." results/lantern/
+          elif [ -d "$R/lantern-inventory" ]; then
+            cp -R "$R/lantern-inventory/." results/lantern/
+          fi
+          for a in "$R"/lantern-obs-*; do
+            [ -d "$a" ] && cp -Rn "$a/." results/lantern/ || true
+          done
+          echo "checkpoints: $(find results/lantern/obs -name '*.json' 2>/dev/null | wc -l)"
       - name: Fetch further prior runs' checkpoints
         if: ${{ github.event.inputs.prior_run_ids != '' }}
         env:
@@ -396,8 +428,8 @@ jobs:
           for id in "${IDS[@]}"; do
             id="$(echo "$id" | tr -d '[:space:]')"; [ -z "$id" ] && continue
             d="$RUNNER_TEMP/prior/$id"; mkdir -p "$d"
-            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -D "$d"; then
-              for a in "$d"/lantern-obs-*; do
+            if gh run download "$id" -R "${{ github.repository }}" -p 'lantern-obs-*' -p 'lantern-final' -D "$d"; then
+              for a in "$d"/lantern-final "$d"/lantern-obs-*; do
                 [ -d "$a/obs" ] && cp -Rn "$a/obs/." results/lantern/obs/ || true
               done
             fi

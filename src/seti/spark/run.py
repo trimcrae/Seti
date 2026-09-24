@@ -51,7 +51,7 @@ from . import spherex as S
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_NONE = "NO_SPARK_SURVIVOR"
 VERDICT_CANDIDATES = "SPARK_CANDIDATES_PENDING_VET"
-STAGES = ("probe", "euclid", "spherex", "screen", "assess", "all")
+STAGES = ("probe", "euclid", "spherex", "screen", "assess", "vet", "all")
 
 DEFAULTS: dict = {
     "services": {"irsa_tap": "https://irsa.ipac.caltech.edu/TAP",
@@ -69,6 +69,8 @@ DEFAULTS: dict = {
                "plx_over_error_min": 5.0, "gaia_g_max": 21.5, "blend_radius_arcsec": 6.0, "blend_dmag": 2.0,
                "dispersion_neighbour_radius_arcsec": 140.0, "dispersion_neighbour_halfwidth_arcsec": 3.0,
                "recurrence_bin_resel": 1.0, "recurrence_min_stars": 3, "trials_alpha": 0.01,
+               "vet_neighbour_flux_ratio": 0.1, "max_vet_survivors": 200,
+               "footprint_spatial": False, "slow_query_s": 900.0,
                "max_rows_per_strip": 400000, "time_budget_s": 15000},
     "spherex": {"obscore_table": "spherex.obscore", "plane_table": "spherex.plane",
                 "artifact_table": "spherex.artifact", "splices_table": "splices",
@@ -487,7 +489,9 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
         return led
     spec_table = (probe_rec.get("euclid") or {}).get("spectra_table") or (tables.get("spectra") or [None])[0]
     roles_spec = {}
-    if with_denominator and spec_table:
+    if not with_denominator:
+        spec_table = None                      # --no-denominator: never build the denominator query
+    elif spec_table:
         names, _ = E.discover_columns(spec_table, irsa_query)
         roles_spec = E.resolve_roles(names, E.SPECTRA_ROLES)
         if not roles_spec.get("object_id"):
@@ -503,6 +507,8 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
         units = units[:int(max_units)]
     led["n_units"] = len(units)
     maxrec = int(ec.get("max_rows_per_strip", 400000))
+    spatial = bool(ec.get("footprint_spatial", False))
+    probed_route = False
     gaia_cache: dict[str, pd.DataFrame] = {}
     for u in units:
         if _time.monotonic() - t0 > budget:
@@ -525,11 +531,37 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
             led["gaia"][u["field"]] = {k: grec.get(k) for k in ("route", "status", "n_rows")}
             if not len(gdf):
                 led["degraded"].append(f"Gaia cone for {u['field']} returned nothing ({grec.get('status')})")
-        # the line x MER strip
-        adql_fn = lambda unit, _t=tables, _rl=roles_line, _rm=roles_mer: E.strip_adql(  # noqa: E731
-            _t, _rl, _rm, unit, snr_min=float(ec["snr_acquire_min"]))
+        # the line x MER strip.  `spatial` picks the footprint clause; which one
+        # this archive answers faster is measured on the first strip, below.
+        adql_fn = lambda unit, _sp=spatial, _t=tables, _rl=roles_line, _rm=roles_mer: E.strip_adql(  # noqa: E731
+            _t, _rl, _rm, unit, snr_min=float(ec["snr_acquire_min"]), spatial=_sp)
         raw, r = E.fetch_strip(adql_fn, u, irsa_query, maxrec=maxrec, label="lines", log=led["queries"])
         urec["lines_status"] = r.get("status")
+        urec["footprint_clause"] = "spatial" if spatial else "range"
+        # first strip: if the range clause failed or crawled, try the spatial one once
+        if not probed_route:
+            probed_route = True
+            slow = float(ec.get("slow_query_s", 900.0))
+            if r.get("status") == "QUERY_FAILED" or float(r.get("seconds") or 0.0) > slow:
+                alt = not spatial
+                adql_alt = lambda unit, _sp=alt, _t=tables, _rl=roles_line, _rm=roles_mer: E.strip_adql(  # noqa: E731
+                    _t, _rl, _rm, unit, snr_min=float(ec["snr_acquire_min"]), spatial=_sp)
+                raw2, r2 = E.fetch_strip(adql_alt, u, irsa_query, maxrec=maxrec,
+                                         label="lines_alt_footprint", log=led["queries"])
+                led["footprint_probe"] = {"first": {"spatial": spatial, "status": r.get("status"),
+                                                    "seconds": r.get("seconds"), "n_rows": r.get("n_rows")},
+                                          "alternative": {"spatial": alt, "status": r2.get("status"),
+                                                          "seconds": r2.get("seconds"), "n_rows": r2.get("n_rows")}}
+                better = (r2.get("status") != "QUERY_FAILED"
+                          and (r.get("status") == "QUERY_FAILED"
+                               or float(r2.get("seconds") or 1e9) < float(r.get("seconds") or 1e9)))
+                if better:
+                    spatial = alt
+                    raw, r = raw2, r2
+                    urec["footprint_clause"] = "spatial" if spatial else "range"
+                    led["degraded"].append(f"switched the footprint clause to "
+                                           f"{'spatial' if spatial else 'range'} after the first strip")
+            led["footprint_clause"] = "spatial" if spatial else "range"
         urec["n_raw_rows"] = int(len(raw))
         if r.get("status") == "QUERY_FAILED":
             led["degraded"].append(f"strip {tag}: lines query failed")
@@ -538,8 +570,8 @@ def euclid_stage(conf: dict, out_dir: Path, *, shard: int = 0, n_shards: int = 1
         feat.to_csv(strip_csv, index=False)
         # the denominator strip (objects with a spectrum) -> stars with spectra
         if spec_table:
-            adql_d = lambda unit, _s=spec_table, _rs=roles_spec, _t=tables, _rm=roles_mer: E.denominator_adql(  # noqa: E731
-                _s, _rs, _t, _rm, unit)
+            adql_d = lambda unit, _sp=spatial, _s=spec_table, _rs=roles_spec, _t=tables, _rm=roles_mer: E.denominator_adql(  # noqa: E731
+                _s, _rs, _t, _rm, unit, spatial=_sp)
             drow, rd = E.fetch_strip(adql_d, u, irsa_query, maxrec=maxrec, label="spectra", log=led["queries"])
             urec["spectra_status"] = rd.get("status")
             urec["n_objects_with_spectra"] = int(len(drow))
@@ -610,6 +642,114 @@ def screen_euclid_local(conf: dict, out_dir: Path, *, shard: int | None = None) 
     funnel["n_survivors"] = int(screened["survivor"].sum()) if len(screened) else 0
     _write_json(edir / f"screen{tag}.json", funnel)
     return funnel
+
+
+def vet_euclid(conf: dict, out_dir: Path, *, irsa_query=None, probe_rec: dict | None = None,
+               max_survivors: int | None = None) -> dict:
+    """Ask the Euclid catalogues themselves about each survivor's neighbourhood.
+
+    The Gaia blend test cannot see a faint galaxy on the star's trace, and an
+    overlapping trace is the dominant slitless systematic.  For survivors only
+    (so the cost is bounded): every MER source in the dispersion corridor and
+    the blend radius, its SPE redshift, and any feature it carries at the
+    survivor's own wavelength.  Writes ``euclid/vet.json`` and adds the vet
+    columns to ``euclid/features_all.csv``.
+    """
+    ec = conf["euclid"]
+    edir = out_dir / "euclid"
+    rec: dict = {"stage": "vet_euclid", "generated_at": _now(), "survivors": [], "degraded": []}
+    fp = edir / "features_all.csv"
+    if not fp.exists():
+        rec["status"] = "NO_FEATURE_TABLE"
+        _write_json(edir / "vet.json", rec)
+        return rec
+    d = pd.read_csv(fp)
+    surv = d[d["survivor"].astype(bool)] if "survivor" in d else pd.DataFrame()
+    rec["n_survivors_in"] = int(len(surv))
+    if not len(surv):
+        rec["status"] = "NO_SURVIVORS"
+        _write_json(edir / "vet.json", rec)
+        return rec
+    if irsa_query is None:
+        rec["status"] = VERDICT_NO_DATA
+        rec["degraded"].append("no IRSA query function; the neighbour vet was NOT run")
+        _write_json(edir / "vet.json", rec)
+        return rec
+    probe_rec = probe_rec or _read_json(out_dir / "probe.json", {}) or {}
+    tables = dict(ec["tables"])
+    roles_mer = (probe_rec.get("euclid") or {}).get("roles_mer") or {}
+    roles_line = (probe_rec.get("euclid") or {}).get("roles_line") or {}
+    if not roles_mer.get("ra"):
+        names, _ = E.discover_columns(tables["mer"], irsa_query)
+        roles_mer = E.resolve_roles(names, E.MER_ROLES)
+    if not roles_line.get("wl"):
+        names, _ = E.discover_columns(tables["lines"], irsa_query)
+        roles_line = E.resolve_roles(names, E.LINE_ROLES)
+    spec_table = (probe_rec.get("euclid") or {}).get("spectra_table") or (tables.get("spectra") or [None])[0]
+    roles_spec: dict = {}
+    if spec_table:
+        names, _ = E.discover_columns(spec_table, irsa_query)
+        roles_spec = E.resolve_roles(names, E.SPECTRA_ROLES)
+        if not roles_spec.get("object_id") or not roles_spec.get("spe_z"):
+            rec["degraded"].append(f"{spec_table} carries no object_id/spe_z; the neighbour-redshift test was not run")
+            spec_table = None
+    # the wavelength scale the strips were read with (ų -> µm etc.)
+    scale = 1.0
+    for j in sorted(glob.glob(str(edir / "strip_*.json"))):
+        w = (_read_json(j, {}) or {}).get("wavelength") or {}
+        if w.get("wavelength_scale"):
+            scale = float(w["wavelength_scale"])
+            break
+    rec["wavelength_scale"] = scale
+    cap = int(max_survivors or ec.get("max_vet_survivors", 200))
+    rows: list[dict] = []
+    for _, s in surv.head(cap).iterrows():
+        sv = {k: s.get(k) for k in ("object_id", "gaia_source_id", "field", "ra", "dec", "wl_um", "snr")}
+        r: dict = dict(sv)
+        q = E.neighbour_box_adql(tables, roles_mer, float(s["ra"]), float(s["dec"]),
+                                 along_arcsec=float(ec.get("dispersion_neighbour_radius_arcsec", 140.0)) + 10.0,
+                                 across_arcsec=max(float(ec.get("blend_radius_arcsec", 6.0)),
+                                                   float(ec.get("dispersion_neighbour_halfwidth_arcsec", 3.0))) + 4.0)
+        st, nbrs = _try(irsa_query, q)
+        r["mer_query"] = st
+        if nbrs is None:
+            rec["degraded"].append(f"neighbour query failed for object {sv.get('object_id')}")
+            rows.append(r)
+            continue
+        ids = []
+        if "m_object_id" in nbrs:
+            ids = [x for x in nbrs["m_object_id"].tolist()]
+        z_rows = line_rows = None
+        if spec_table and ids:
+            stz, z_rows = _try(irsa_query, E.neighbour_z_adql(spec_table, roles_spec, ids))
+            r["z_query"] = stz
+        if ids and roles_line.get("wl"):
+            lam = float(s["wl_um"])
+            half = 2.0 * lam / float(ec.get("resolving_power", 450.0))
+            stl, line_rows = _try(irsa_query, E.neighbour_line_adql(
+                tables["lines"], roles_line, ids, (lam - half) / scale, (lam + half) / scale))
+            r["line_query"] = stl
+        r.update(E.classify_neighbours(sv, nbrs, ec, z_rows=z_rows, line_rows=line_rows,
+                                       wavelength_scale=scale))
+        rows.append(r)
+        print(f"[spark] vet object {sv.get('object_id')}: {r.get('n_in_corridor')} in corridor, "
+              f"overlap={r.get('neighbour_trace_overlap')}, line_at_z={r.get('neighbour_line_at_z')}", flush=True)
+    rec["survivors"] = rows
+    rec["n_vetted"] = len(rows)
+    rec["n_trace_overlap"] = int(sum(1 for r in rows if r.get("neighbour_trace_overlap")))
+    rec["n_neighbour_line_at_z"] = int(sum(1 for r in rows if r.get("neighbour_line_at_z")))
+    rec["n_clean_after_vet"] = int(sum(1 for r in rows if not r.get("neighbour_trace_overlap")
+                                       and not r.get("neighbour_line_at_z")))
+    rec["status"] = "OK"
+    _write_json(edir / "vet.json", rec)
+    # carry the verdict back onto the feature table
+    by_obj = {r.get("object_id"): r for r in rows}
+    d["vet_trace_overlap"] = [bool((by_obj.get(o) or {}).get("neighbour_trace_overlap", False)) for o in d.get("object_id", [])]
+    d["vet_neighbour_line_at_z"] = [bool((by_obj.get(o) or {}).get("neighbour_line_at_z", False)) for o in d.get("object_id", [])]
+    d["vet_n_in_corridor"] = [(by_obj.get(o) or {}).get("n_in_corridor") for o in d.get("object_id", [])]
+    d["survivor_after_vet"] = (d["survivor"].astype(bool) & ~d["vet_trace_overlap"] & ~d["vet_neighbour_line_at_z"])
+    d.to_csv(fp, index=False)
+    return rec
 
 
 # --------------------------------------------------------------------------
@@ -934,6 +1074,16 @@ def assess(conf: dict, out_dir: Path) -> dict:
         ntrials = max(1, nstars * nres)
         d["p_global"] = np.minimum(1.0, d["p_single"] * ntrials)
         d["significant_after_trials"] = d["p_global"] < float(ec["trials_alpha"])
+        # the neighbour vet, when it has run (bounded: survivors only)
+        vrec = _read_json(edir / "vet.json", {}) or {}
+        by_obj = {r.get("object_id"): r for r in vrec.get("survivors", [])}
+        if by_obj:
+            d["vet_trace_overlap"] = [bool((by_obj.get(o) or {}).get("neighbour_trace_overlap", False)) for o in d["object_id"]]
+            d["vet_neighbour_line_at_z"] = [bool((by_obj.get(o) or {}).get("neighbour_line_at_z", False)) for o in d["object_id"]]
+            d["vet_n_in_corridor"] = [(by_obj.get(o) or {}).get("n_in_corridor") for o in d["object_id"]]
+            d["vet_ran"] = [o in by_obj for o in d["object_id"]]
+            d["survivor_after_vet"] = (d["survivor"] & d["vet_ran"]
+                                       & ~d["vet_trace_overlap"] & ~d["vet_neighbour_line_at_z"])
         d = d.sort_values(["survivor", "snr"], ascending=[False, False]).reset_index(drop=True)
         d.to_csv(edir / "features_all.csv", index=False)
         eu.update(n_features_on_stars=int(len(d)), n_stars_with_features=int(d["gaia_source_id"].nunique()),
@@ -946,6 +1096,12 @@ def assess(conf: dict, out_dir: Path) -> dict:
                   recurrent_bins=[{"wl_um": round(float(math.exp((k + 0.5) * bin_um / R)), 4), "n_stars": int(v)} for k, v in counts.items() if v >= minst],
                   industrial_flag_counts={str(k): int(v) for k, v in d.loc[d["industrial_flag"].fillna("") != "", "industrial_flag"].value_counts().items()},
                   survivors=d[d["survivor"]].head(50).to_dict(orient="records"))
+        if by_obj:
+            eu["vet"] = {k: vrec.get(k) for k in ("n_vetted", "n_trace_overlap", "n_neighbour_line_at_z",
+                                                  "n_clean_after_vet", "status")}
+            eu["n_survivors_after_vet"] = int(d["survivor_after_vet"].sum())
+        else:
+            eu["vet"] = {"status": "NOT_RUN"}
         eu["verdict"] = VERDICT_CANDIDATES if eu["n_survivors"] else VERDICT_NONE
     else:
         eu.update(n_features_on_stars=0, n_stars_with_features=0, n_survivors=0)
@@ -1067,7 +1223,7 @@ def spark_run(stage: str = "all", out_dir: Path | str = "results/spark", *, shar
               config: dict | None = None, fields: list[str] | None = None, boxes: list[str] | None = None,
               max_images: int | None = None, max_seeds: int | None = None, max_units: int | None = None,
               no_denominator: bool = False, offline: bool = False,
-              probe_skip_spherex: bool = False) -> dict:
+              probe_skip_spherex: bool = False, max_vet: int | None = None) -> dict:
     conf = config or load_spark_config()
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -1096,8 +1252,11 @@ def spark_run(stage: str = "all", out_dir: Path | str = "results/spark", *, shar
     if stage == "screen":
         result["euclid_screen"] = screen_euclid_local(conf, out, shard=i if shard else None)
         result["spherex_screen"] = screen_spherex_local(conf, out, shard=i if shard else None)
-    if stage in ("assess", "all"):
+    if stage in ("assess", "all", "vet"):
         result["summary"] = assess(conf, out)
+    if stage in ("vet", "all"):
+        result["vet_euclid"] = vet_euclid(conf, out, irsa_query=irsa, max_survivors=max_vet)
+        result["summary"] = assess(conf, out)          # the vet columns reach the summary
     return result
 
 
@@ -1114,6 +1273,7 @@ def _add_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument("--offline", action="store_true", help="no network (writes NO_DATA_REACHED ledgers)")
     p.add_argument("--probe-skip-spherex", action="store_true",
                    help="probe stage: Euclid + Gaia only (no SPHEREx product download)")
+    p.add_argument("--max-vet", type=int, default=None, help="cap on survivors sent through the neighbour vet")
 
 
 def _cmd_spark(args, _cfg=None):
@@ -1122,7 +1282,8 @@ def _cmd_spark(args, _cfg=None):
                     boxes=[x for x in args.boxes.split(",") if x] or None,
                     max_images=args.max_images, max_seeds=args.max_seeds, max_units=args.max_units,
                     no_denominator=args.no_denominator, offline=args.offline,
-                    probe_skip_spherex=getattr(args, "probe_skip_spherex", False))
+                    probe_skip_spherex=getattr(args, "probe_skip_spherex", False),
+                    max_vet=getattr(args, "max_vet", None))
     if "summary" in res:
         s = res["summary"]
         print(json.dumps({"verdict": s.get("verdict"), "stage_counts": s.get("stage_counts"),

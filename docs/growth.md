@@ -1299,3 +1299,109 @@ Two consequences, both of which the stage is built to honour:
 2. **The search is a search of that tail.** A `not_measurable` row is not a
    planet that failed a test; it is a planet no test was possible on. Counting
    it as a null would be the error the whole channel exists to avoid.
+
+
+### 11.11 Run 35738702139 — coverage, and every depth-change row traced
+
+*Written 2026-09-23 from `results/growth/direct/summary.json` (assess job,
+generated 2026-09-22T20:27:21Z — the same run whose shard files it
+aggregates; checked against `measurements.csv`, 4,725 rows).*
+
+**Shards.** 16 dispatched. 13 finished (0–5, 8–13, 15). Shards 6, 7 and 14
+died with exit 1 after 121, 168 and 117 targets: shard 6's log shows the
+`OverflowError` of §11.9; 7 and 14 checked out the branch at 14:47–14:50Z,
+before the fix landed (commit f8f4ff5e, 14:59Z), and ended the same way. That
+code fault is fixed (clamped `detectable_change_ppm`, per-target guard). **468
+targets were never reached.** The 13 result commits of that run had not
+reached `main` when this was written; they are merged on
+`claude/handoff-growth-century`, and the stage was resumed there with
+`n_shards=16, resume=true, targets_run_id=35738702139` (run 35859780689),
+which also redoes the 652 rows still resting on an unchecked (possibly
+truncated) TIC id.
+
+**Coverage of the 4,725 confirmed/candidate KOIs.** Light curves reached
+3,498; a TESS depth on **both** SAP and PDCSAP 3,145; expected S/N ≥ 3
+(`measurable`) 296; measurable in both families 255. Everything below is
+about those 255 plus the 41 whose transit was not recovered.
+
+**Population systematic (not a result).** Across the 540 PDCSAP rows usable
+for the offset, the median `ln(D_TESS/D_Kepler)` is **+0.52** (PDCSAP depths
+~1.7× Kepler's) with a robust z-scatter of 4.5; SAP: +0.01, scatter 3.9. The
+classifier subtracts the offset and divides by the scatter before any gate.
+Its most likely sources are the ones this stage already names: PDCSAP's
+crowding correction on faint, crowded Kepler-field stars in 21″ pixels, and
+the upward bias of a depth fitted at the best of up to 161 epoch offsets on
+low-S/N transits (§11.6). It is recorded as a systematic to be explained, and
+not as anything else.
+
+**Candidates at 5σ in both families: 0.** The ten rows that changed class,
+with their fates:
+
+| KOI | class | Kepler (TESS band) | PDCSAP | SAP | fate |
+|---|---|---|---|---|---|
+| K05308.01 | shallower_tess | 33,178 | 24,837 ± 1,324 | 9,763 ± 290 | SAP dilution; PDCSAP consistent |
+| K01225.01 | shallower_tess | 40,601 | 41,705 ± 1,566 | 11,294 ± 340 | SAP dilution |
+| K00217.01 Kepler-71 b | shallower_tess | 20,455 | 22,411 ± 950 | 3,668 ± 145 | SAP dilution |
+| K00183.01 Kepler-423 b | shallower_tess | 17,380 | 16,353 ± 543 | 2,236 ± 92 | SAP dilution |
+| K01176.01 Kepler-785 b | shallower_tess | 28,530 | 28,265 ± 1,649 | 883 ± 63 | SAP dilution (×32) |
+| K01546.01 | shallower_tess | 15,622 | 17,368 ± 957 | 4,033 ± 160 | SAP dilution |
+| K03810.01 | shallower_tess | 49,373 | 39,952 ± 1,861 | 7,681 ± 390 | SAP dilution |
+| K00883.01 | shallower_tess | 35,592 | 38,406 ± 1,850 | 7,868 ± 273 | SAP dilution |
+| K07865.01 | crowding_correction | 2,944 | 17,855 ± 310 | 3,225 ± 52 | PDCSAP-only; Kepler-718 b pattern |
+| K03678.01 Kepler-1513 b | deeper_tess (vetoed) | 7,316 | 12,266 ± 505 | 18,546 ± 503 | one TESS event, T14 ×0.40 |
+
+(depths in ppm)
+
+* **The eight `shallower_tess`** are one phenomenon. In every case PDCSAP
+  agrees with Kepler (population z between −1.2 and −2.5) and raw SAP is
+  shallower by factors of 3–32, `sap_minus_pdcsap_z` −23 to −52. That is
+  exactly what uncorrected blending does to SAP in TESS's 21″ pixels, and
+  these are faint (Kp 14.1–16.8) stars; the SAP/PDCSAP depth ratio (0.03–0.39)
+  is the implied flux fraction of the target in the aperture (TESS `CROWDSAP`,
+  not read by this stage — the vet should compare the two). No depth change.
+* **K07865.01** is the Kepler-718 b pattern: PDCSAP six times deeper than
+  Kepler while raw SAP matches Kepler (z_pop 0.37). A depth that exists only
+  after the crowding correction is the correction, not the planet. It also
+  carries a Kepler false-positive flag, a grazing impact (b = 1.26) and a
+  duration that tracks b. Not growth.
+* **Kepler-1513 b** rests on a single TESS transit (P = 160.9 d) found 54 min
+  from the linear ephemeris with a duration 0.40× the Kepler one, which the
+  duration gate vetoes (`duration_not_fixed_b`). A 0.4× event is not the same
+  chord of the same planet; this system has published TTVs, so an ephemeris
+  drift that put the fold on a noise feature is the leading reading.
+  PDCSAP z_pop = −0.02, SAP z_pop = +4.2: below the gate even before the veto.
+* **`transit_not_recovered` (41).** 37 have a PDCSAP expected S/N below 8
+  (two have no PDCSAP estimate), where a miss is mostly noise. K00080.01 (grazing, b = 1.23), K00134.01 and Kepler-419 b
+  (K01474.01) have expected S/N 10–12 and are not yet traced. Several are systems with published large TTVs, where the
+  transit can fall outside the ±50–370 min epoch window (Kepler-88 b,
+  Kepler-9 b and c, Kepler-90 g) — ephemeris drift, to be confirmed by a wider
+  window rather than assumed. The strongest one that is
+  not is **K01251.01** (P = 0.576 d, b = 1.11, Kp 15.2): expected S/N 27
+  (PDCSAP) and 121 (SAP), yet the fold returns a *negative* depth
+  (−5,618 ± 469 and −1,255 ± 106 ppm). A significant brightening at the
+  transit phase is not a vanished transit. It points at the light curve being
+  dominated by something else in the 21″ aperture (a variable neighbour), or
+  at the wrong star. It is listed for the vet, not believed.
+
+The vet job of that run found `n_candidates = 0` and vetted nothing, which is
+consistent with the table above. The rows here are not candidates and none is
+written up.
+
+**Resume run 35859780689 (2026-09-23).** Shards 1, 6, 7 and 14 finished
+(282/311/276/287 rows; 158 + 79 + 93 + 67 + 22 rows redone because their TIC
+had never been checked); every shard file now holds all its targets (4,725
+rows, 0 NOT_REACHED, 0 pending TIC recheck). **Its committed `summary.json`
+(12:48:41Z) does not describe those files**: it says 4,358 rows and 368
+NOT_REACHED. Cause: each measure artifact was globbed `shard_*.csv` and so
+carried stale copies of the other shards; assess's `merge-multiple` let an
+early shard's stale copy overwrite a late shard's result. Fixed (each shard
+uploads only its own files; `tests/test_growth_direct_workflow.py`); assess
+re-dispatched. Re-aggregated offline from the committed shard files: light
+curves 4,239; TESS depth in both families 3,764 / 3,788; measurable 351; both
+305; **candidates 0**; classes shallower_tess 8 (the same eight SAP-dilution
+cases), deeper_tess 2 (Kepler-1513 b, vetoed as above; **Kepler-145 c**:
+SAP 1,781 ± 196 vs Kepler 397 ppm, z_pop +3.0, PDCSAP 847 ± 239, z_pop +0.1,
+3 transits — a SAP-only excess that PDCSAP does not share, below the gate, in
+a system with known TTVs), transit_not_recovered 46. K07865.01 drops from
+`crowding_correction` to `consistent` only because the larger population
+rescaled its PDCSAP z_pop from 5.3 to 4.9; the trace is unchanged.

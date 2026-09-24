@@ -37,16 +37,41 @@ targets:
   period_min: 0.2          # an hour-long exposure smears anything shorter beyond recovery
   period_max: 100.0
   amp_min: 0.3             # catalogued amplitude the plates' ~0.1–0.15 mag errors can resolve
-  max_variables_per_field: 150
+  # The per-field VSX cone is OFF: run 35748748365 showed it returns eclipsers
+  # (EA/EB/EW/ELL), whose geometric period cannot cease.  The cessation
+  # population is the all-sky `pulsators` block below.
+  max_variables_per_field: 0
   max_bright_per_field: 80
   refcat: apass            # calibrated magnitudes on the APASS B scale
   match_radius_arcsec: 15.0
   tile_arcmin: 10.0
   min_ndet_bright: 50
 
+pulsators:
+  # The CESSATION population (docs/century.md §6.4): catalogued pulsators from
+  # AAVSO VSX (GCVS fallback), ALL SKY, selected by TYPE.  An oscillator can
+  # stop; an eclipse cannot.  Uncertain types (":") are refused, and a missing
+  # catalogued amplitude is a rejection, not a pass.
+  enabled: true
+  b_mean_max: 14.0         # estimated MEAN B (V moved by the class's typical B-V)
+  b_mean_min: 8.0          # photographic saturation
+  amp_min: 0.3             # the plates' ~0.1-0.15 mag errors
+  max_total: 2400          # round-robin across classes when it binds
+  catalogue_timeout_s: 900
+  classes:                 # period windows (d) and per-class caps, brightest first
+    cepheid:     {period_min: 0.3,  period_max: 100.0, max_n: 700}
+    rv_tauri:    {period_min: 20.0, period_max: 200.0, max_n: 120}
+    rr_lyrae:    {period_min: 0.2,  period_max: 1.2,   max_n: 900}
+    delta_scuti: {period_min: 0.07, period_max: 0.3,   max_n: 250}   # 0.07 d: |sinc| >= 0.5 at a 60-min exposure
+    mira:        {period_min: 80.0, period_max: 450.0, max_n: 500}   # >= ~1.6 cycles per 2-yr block
+    semiregular: {period_min: 30.0, period_max: 450.0, max_n: 150}   # SRA only
+
 acquire:
   pause_s: 0.5             # be a good citizen toward the DASCH API
-  time_budget_s: 12000
+  # acquire + screen budgets share ONE sweep job (timeout-minutes 350):
+  # 10800 + 7200 s = 300 min leaves 50 min for install, gate, the one star each
+  # clock always lets through, and the upload.  tests/test_century.py checks it.
+  time_budget_s: 10800
   timeout_s: 180
   max_consecutive_failures: 25
   checkpoint_every: 25
@@ -123,7 +148,7 @@ screen:
   # so a shard that drew more variables than expected would otherwise run past
   # the job timeout and be killed with nothing uploaded.  screen.jsonl is
   # appended per star, so a truncated shard resumes rather than restarts.
-  time_budget_s: 9000
+  time_budget_s: 7200
 
 vet:
   pm_max_masyr: 50.0         # 5" per century at plate scales of 60–600"/mm

@@ -109,6 +109,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries every
+      # earlier field's results/knell/<field>/; purge them so this job's upload
+      # cannot carry a stale copy of another shard's field.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/knell
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -135,14 +140,25 @@ jobs:
             $MS
           echo "=== field summary ==="
           cat results/knell/*/field_summary.json
+      # Only this field's own directory (<tag>, run.py::_field_tag),
+      # through a glob whose one '?' matches only it and keeps the artifact
+      # root at results/knell/ (a literal single directory is uploaded flattened).
       - name: Shard name
         id: nm
-        run: echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+        if: always()
+        run: |
+          echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          ra, dec = (float(x) for x in "${{ matrix.field }}".split(",")[:2])
+          r = float("${{ github.event.inputs.radius_deg || '0.5' }}")
+          d = "" + f"ra{ra:.3f}_dec{dec:+.3f}_r{r:.2f}"
+          print("glob=?" + d[1:])
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: knell-field-${{ steps.nm.outputs.tag }}
-          path: results/knell/
+          path: results/knell/${{ steps.nm.outputs.glob }}/
           if-no-files-found: warn
 
   # ------------------------------------------------------------------
@@ -163,6 +179,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      # Shard hygiene (docs/channel-brief.md §0.7): the branch carries every
+      # earlier field's results/knell/<field>/; purge them so this job's upload
+      # cannot carry a stale copy of another shard's field.
+      - name: Purge checkout-inherited shard outputs
+        run: rm -rf results/knell
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -180,14 +201,25 @@ jobs:
             --max-targets 200
           echo "=== cross summary ==="
           cat results/knell/cross_*/cross_summary.json || true
+      # Only this field's own directory (cross_<tag>, run.py::_field_tag),
+      # through a glob whose one '?' matches only it and keeps the artifact
+      # root at results/knell/ (a literal single directory is uploaded flattened).
       - name: Shard name
         id: nm
-        run: echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+        if: always()
+        run: |
+          echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          ra, dec = (float(x) for x in "${{ matrix.field }}".split(",")[:2])
+          r = float("${{ github.event.inputs.radius_deg || '0.5' }}")
+          d = "cross_" + f"ra{ra:.3f}_dec{dec:+.3f}_r{r:.2f}"
+          print("glob=?" + d[1:])
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: knell-cross-${{ steps.nm.outputs.tag }}
-          path: results/knell/
+          path: results/knell/${{ steps.nm.outputs.glob }}/
           if-no-files-found: warn
 
   vet:
@@ -297,10 +329,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # Named downloads of the artifacts the in-run reducer reads, never one
+      # merge-multiple over knell-*: that also pulled the run's -final
+      # artifact, which holds second copies of the same files, with no rule
+      # for which copy won (docs/channel-brief.md §0.7).
       - name: Fetch field artifacts from a prior run
         uses: actions/download-artifact@v4
         with:
-          pattern: knell-*
+          pattern: knell-field-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/knell/
+      - name: Fetch cross-survey artifacts from a prior run
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: knell-cross-*
           merge-multiple: true
           run-id: ${{ github.event.inputs.reduce_only_run_id }}
           github-token: ${{ github.token }}

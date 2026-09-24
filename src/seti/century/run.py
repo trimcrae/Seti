@@ -65,10 +65,12 @@ from .scatter import (
 from .step import MENZEL_GAP_END, MENZEL_GAP_START, fit_step_slope
 from .targets import (
     EXPOSURE_KEY_COLS,
+    PULSATOR_FIELD,
     field_tag,
     match_refcat,
     plate_density,
     select_bright,
+    select_pulsators,
     select_variables,
 )
 from .vet import vet_row
@@ -85,10 +87,15 @@ DEFAULTS: dict = {
     "radius_deg": 1.0,
     "gap": {"start": MENZEL_GAP_START, "end": MENZEL_GAP_END},
     "targets": {"mag_max": 13.0, "bright_mag_min": 8.0, "period_min": 0.2,
-                "period_max": 100.0, "amp_min": 0.3, "max_variables_per_field": 150,
+                "period_max": 100.0, "amp_min": 0.3, "max_variables_per_field": 0,
                 "max_bright_per_field": 80, "refcat": "apass", "match_radius_arcsec": 15.0,
                 "tile_arcmin": 10.0, "min_ndet_bright": 50},
-    "acquire": {"pause_s": 0.5, "time_budget_s": 12000, "timeout_s": 180,
+    # The cessation population (docs/century.md §6.4): catalogued pulsators,
+    # all sky.  Per-class period windows and caps live in pulsators.py
+    # (DEFAULT_CLASS_LIMITS) and are overridden under ``classes``.
+    "pulsators": {"enabled": True, "b_mean_max": 14.0, "b_mean_min": 8.0, "amp_min": 0.3,
+                  "max_total": 2400, "catalogue_timeout_s": 900.0, "classes": {}},
+    "acquire": {"pause_s": 0.5, "time_budget_s": 10800, "timeout_s": 180,
                 "max_consecutive_failures": 25, "checkpoint_every": 25},
     "lightcurve": {"default_err": 0.15, "min_detections": 40, "min_span_yr": 20.0},
     "blocks": {"block_years": 2.0, "origin_year": 1880.0, "min_epochs_block": 20,
@@ -111,7 +118,7 @@ DEFAULTS: dict = {
     "ensemble": {"min_stars": 8, "mag_bin": 1.0},
     # A wall clock for the screen stage, inside the job's timeout-minutes, so an
     # overrun still uploads the stars it did screen instead of being killed.
-    "screen": {"time_budget_s": 9000},
+    "screen": {"time_budget_s": 7200},
     "vet": {"pm_max_masyr": 50.0, "bright_limit_mag": 8.0, "lpv_colour_min": 1.5,
             "mean_shift_max_mag": 0.10, "gaia_radius_arcsec": 5.0},
     "flag_bits": {"aflags": {}, "bflags": {}},
@@ -400,7 +407,19 @@ def stage_probe(conf: dict, out_root: Path) -> dict:
 
 def stage_targets(conf: dict, out_root: Path, *, fields=None, radius_deg: float | None = None,
                   max_variables: int | None = None, max_bright: int | None = None,
-                  include_bright: bool = True) -> pd.DataFrame:
+                  include_bright: bool = True, max_pulsators: int | None = None,
+                  include_pulsators: bool | None = None,
+                  pulsator_catalogue_fn=None) -> pd.DataFrame:
+    """Three populations, each carrying the question it can answer.
+
+    * **pulsators** (all sky, by catalogued TYPE) carry the cessation test ---
+      an oscillator can stop, an eclipse cannot (docs/century.md §6.4);
+    * **bright** refcat stars in the configured fields carry the fade and
+      rising-scatter tests, which need the field ensemble;
+    * field **variables** (the old per-field VSX cone, any periodic type) are
+      off by default (``max_variables_per_field: 0``): run 35748748365 showed
+      they are eclipsers, whose geometric period cannot cease.
+    """
     out_root.mkdir(parents=True, exist_ok=True)
     tc = conf["targets"]
     fields = fields if fields is not None else conf["fields"]
@@ -435,9 +454,39 @@ def stage_targets(conf: dict, out_root: Path, *, fields=None, radius_deg: float 
                 bstars["field"] = tag
                 frames.append(bstars)
         _time.sleep(float(conf["acquire"]["pause_s"]))
+    pc = conf.get("pulsators", {}) or {}
+    do_puls = bool(pc.get("enabled", True)) if include_pulsators is None else bool(include_pulsators)
+    puls_funnel: dict = {"enabled": do_puls}
+    if do_puls:
+        pdf, pf = select_pulsators(conf, log=log, max_total=max_pulsators,
+                                   catalogue_fn=pulsator_catalogue_fn)
+        puls_funnel.update(pf)
+        if len(pdf):
+            # A pulsator that also fell in a field cone (as a field variable, or
+            # as a bright refcat star) is measured once, as a pulsator --- and a
+            # large-amplitude variable must not sit in the bright stars' field
+            # ensemble, whose job is to describe the PLATES.
+            if frames:
+                prev = pd.concat(frames, ignore_index=True)
+                pv = prev[prev["kind"].isin(["variable", "bright"])] if "kind" in prev \
+                    else prev.iloc[0:0]
+                if len(pv):
+                    cosd = np.cos(np.radians(pdf["dec"].to_numpy(float)))[:, None]
+                    sep = 3600.0 * np.hypot(
+                        (pdf["ra"].to_numpy(float)[:, None] - pv["ra"].to_numpy(float)[None, :])
+                        * cosd,
+                        pdf["dec"].to_numpy(float)[:, None] - pv["dec"].to_numpy(float)[None, :])
+                    dup_v = (sep <= 5.0).any(axis=0)
+                    if dup_v.any():
+                        drop_names = set(pv["name"].astype(str).to_numpy()[dup_v])
+                        frames = [f[~(f["kind"].isin(["variable", "bright"])
+                                      & f["name"].astype(str).isin(drop_names))]
+                                  for f in frames]
+                        puls_funnel["n_field_stars_superseded"] = int(dup_v.sum())
+            frames.append(pdf)
     cols = ["target_id", "name", "ra", "dec", "kind", "vtype", "period_cat", "mag_cat",
             "amp_cat", "source", "field", "gsc_bin_index", "ref_number", "pm_total_masyr",
-            "colour", "n_det_cat"]
+            "colour", "n_det_cat", "pulsator_class", "mag_max_cat", "band_cat"]
     if frames:
         df = pd.concat(frames, ignore_index=True)
         for c in cols:
@@ -459,10 +508,16 @@ def stage_targets(conf: dict, out_root: Path, *, fields=None, radius_deg: float 
             "n_targets": int(len(df)),
             "n_variables": int((df["kind"] == "variable").sum()) if len(df) else 0,
             "n_bright": int((df["kind"] == "bright").sum()) if len(df) else 0,
+            "n_pulsators": int((df["kind"] == "pulsator").sum()) if len(df) else 0,
+            "n_pulsators_by_class": ({str(k): int(v) for k, v in
+                                      df.loc[df["kind"] == "pulsator", "pulsator_class"]
+                                      .value_counts().items()} if len(df) else {}),
+            "pulsators": puls_funnel,
             "fields": dens, "radius_deg": radius, "acquisition": log.as_dict()}
     _write_json(out_root / "targets_summary.json", summ)
     print(f"[century/targets] {summ['n_targets']} targets "
-          f"({summ['n_variables']} variables, {summ['n_bright']} bright)")
+          f"({summ['n_pulsators']} pulsators {summ['n_pulsators_by_class']}, "
+          f"{summ['n_variables']} field variables, {summ['n_bright']} bright)")
     return df
 
 
@@ -496,6 +551,11 @@ def _shard_exposure_table(mine: pd.DataFrame, conf: dict,
     Returns ``(table, source)``; an empty table and ``"none"`` when no field
     answered, which is a degradation the caller records, never a guess.
     """
+    if mine is not None and len(mine) and "kind" in mine.columns:
+        # All-sky pulsators get their own queryexps at their own position in
+        # stage_acquire; a "field centre" of stars scattered over the sky is
+        # a point no plate list describes.
+        mine = mine[mine["kind"].astype(str) != "pulsator"]
     if mine is None or not len(mine) or "ra" not in mine.columns:
         return pd.DataFrame(), "none"
     frames: list[pd.DataFrame] = []
@@ -629,7 +689,7 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
                extra={"status": pr.status, "body_head": pr.body_head[:200]})
 
     t0 = _time.monotonic()
-    n_fetched = n_failed = n_empty = n_skipped = 0
+    n_fetched = n_failed = n_empty = n_skipped = n_parse_failed = 0
     consecutive = 0
     truncated = False
     since_ckpt = 0
@@ -678,7 +738,21 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
             _time.sleep(pause)
             continue
         consecutive = 0
-        lc = from_api_frame(lr.frame, a, b, default_err=float(conf["lightcurve"]["default_err"]))
+        try:
+            lc = from_api_frame(lr.frame, a, b,
+                                default_err=float(conf["lightcurve"]["default_err"]))
+        except Exception as exc:                          # noqa: BLE001
+            # One malformed light curve must cost that star, never the shard:
+            # run 35862579322 lost all 14 shards on their first star to an
+            # exception here, wrote no acquire_summary.json, and assess then
+            # (correctly) reported NO_SHARDS_PRESENT.  A parse failure is a
+            # NON-measurement with the exception verbatim.
+            rec.update({"status": "lightcurve_parse_failed", "error": repr(exc)[:300],
+                        "n_rows": lr.n_rows, "columns": lr.columns[:30]})
+            n_parse_failed += 1
+            _append(status_path, rec)
+            _time.sleep(pause)
+            continue
         if lc is None or lc.n_det == 0:
             rec.update({"status": "empty_lightcurve", "n_rows": lr.n_rows,
                         "columns": lr.columns[:30]})
@@ -686,8 +760,26 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
             _append(status_path, rec)
             _time.sleep(pause)
             continue
-        eprov = attach_exptime(lc, exp_tab) if len(exp_tab) else {"key": "none",
-                                                                  "matched_det": 0}
+        star_tab = exp_tab
+        pos_plates: dict = {}
+        if str(row.get("kind")) == "pulsator":
+            # An all-sky pulsator shares no field with anything: its exposure
+            # durations come from a queryexps at ITS position (the plates that
+            # cover it), never from a neighbouring field's plate list, which
+            # would leave most of its plates unmatched and so unsmeared.
+            collected: list[pd.DataFrame] = []
+            dens_star = plate_density(float(row["ra"]), float(row["dec"]), log=None,
+                                      exposures_out=collected,
+                                      timeout_s=float(ac["timeout_s"]))
+            star_tab = collected[0] if collected else pd.DataFrame()
+            pos_plates = {k: dens_star.get(k) for k in ("ok", "n_plates", "n_pre_gap",
+                                                        "n_post_gap", "lim_median", "lim_p90",
+                                                        "n_exptimes")}
+            rec["queryexps_ok"] = bool(dens_star.get("ok"))
+            rec["n_plates_at_position"] = int(dens_star.get("n_plates") or 0)
+            _time.sleep(pause)
+        eprov = attach_exptime(lc, star_tab) if len(star_tab) else {"key": "none",
+                                                                    "matched_det": 0}
         if eprov.get("matched_det"):
             meta_exptime["n_matched_stars"] += 1
             k = str(eprov.get("key"))
@@ -700,7 +792,8 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
                               "exptime_unit": lc.exptime_unit, "exptime": eprov,
                               "gsc_bin_index": int(gbi), "ref_number": int(rn),
                               "pm_total_masyr": rec.get("pm_total_masyr"),
-                              "colour": rec.get("colour")}
+                              "colour": rec.get("colour"),
+                              "plates_at_position": pos_plates}
         rec.update({"status": "ok", "n_rows": lr.n_rows, "n_det": lc.n_det, "n_nd": lc.n_nd})
         n_fetched += 1
         since_ckpt += 1
@@ -716,7 +809,8 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
                                       "elapsed_s": round(_time.monotonic() - t0, 1)})
     rep = {"stage": "acquire", "shard": list(shard), "n_targets": int(len(mine)),
            "n_fetched": n_fetched, "n_failed": n_failed, "n_empty": n_empty,
-           "n_resumed": len(prev), "truncated": truncated, "flag_source": flag_src,
+           "n_parse_failed": n_parse_failed, "n_resumed": len(prev), "truncated": truncated,
+           "flag_source": flag_src,
            "service_probe_ok": bool(pr.ok), "exptime": meta_exptime,
            "verdict": ("NO_DATA_REACHED" if (n_fetched + len(prev)) == 0 and not pr.ok
                        else "NO_LIGHTCURVES" if (n_fetched + len(prev)) == 0
@@ -749,6 +843,10 @@ def screen_star(lc: CenturyLC, target: dict, conf: dict, *, rng=None,
     row: dict = {"target_id": target.get("target_id"), "name": target.get("name"),
                  "kind": target.get("kind"), "field": target.get("field"),
                  "vtype": target.get("vtype", ""), "period_cat": target.get("period_cat"),
+                 "pulsator_class": ("" if target.get("pulsator_class") is None
+                                    or (isinstance(target.get("pulsator_class"), float)
+                                        and np.isnan(target.get("pulsator_class")))
+                                    else str(target.get("pulsator_class"))),
                  "amp_cat": target.get("amp_cat"), "mag_cat": target.get("mag_cat"),
                  "ra": target.get("ra"), "dec": target.get("dec"),
                  "n_raw": lc.n_raw, "n_det": lc.n_det, "n_nd": lc.n_nd,
@@ -923,11 +1021,22 @@ def _load_rows(out_root: Path) -> list[dict]:
     return list(seen.values())
 
 
+def _in_field_ensemble(r: dict) -> bool:
+    """Whether a star may describe its field's PLATES.  All-sky pulsators may
+    not: they share no field, and ``allsky_pulsators`` is a label, not a patch
+    of sky --- a "common mode" over it would be the whole sky's median, applied
+    to every field.  (They are also large-amplitude variables, which is the
+    last thing an ensemble of the plates' own history should contain.)"""
+    return str(r.get("kind")) != "pulsator" and str(r.get("field")) != PULSATOR_FIELD
+
+
 def field_common_mode(rows: list[dict], *, min_stars: int = 8, mag_bin: float = 1.0) -> dict:
     """Per field, per magnitude bin, per year: the median offset of every star's
     annual median from its own median.  The plates' shared history."""
     acc: dict = {}
     for r in rows:
+        if not _in_field_ensemble(r):
+            continue
         ann = r.get("annual") or {}
         if not ann.get("year"):
             continue
@@ -1072,7 +1181,7 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
     srows = []
     for r in rows:
         ss = season_scatter_from_dict(r.get("season") or {})
-        if ss is not None:
+        if ss is not None and _in_field_ensemble(r):
             srows.append({"_ss": ss, "_ccd": str(r.get("field")), "_row": r})
     ens_diag = ensemble_detrend_scatter(srows, min_stars=int(ens["min_stars"]), min_seasons=4) \
         if srows else {"ensemble_verdict": "NOT_APPLIED_NO_ROWS"}
@@ -1128,8 +1237,10 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
 
     # Gaia context for anything still a candidate, then the gauntlet.
     any_cand = [r for r in rows if (r.get("cess_status") == "cessation"
-                                    or r.get("fade_corr_is_fade") or r.get("fade_is_fade")
-                                    or r.get("rust_corr_is_rust") or r.get("rust_is_rust"))]
+                                    or (_in_field_ensemble(r)
+                                        and (r.get("fade_corr_is_fade") or r.get("fade_is_fade")
+                                             or r.get("rust_corr_is_rust")
+                                             or r.get("rust_is_rust"))))]
     gctx = _gaia_context(any_cand, conf, log) if (gaia and any_cand) else {}
     if any_cand and not gctx:
         degraded.append("gaia_context_not_reached")
@@ -1144,6 +1255,15 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
         vr["fade_is_fade"] = bool(r.get("fade_corr_is_fade")) if r.get("ensemble_applied") \
             else bool(r.get("fade_is_fade"))
         vr["rust_is_rust"] = bool(r.get("rust_corr_is_rust")) if srows else bool(r.get("rust_is_rust"))
+        if not _in_field_ensemble(r):
+            # The fade and rising-scatter questions are asked of the BRIGHT
+            # field sample, where the field ensemble can take the plates' own
+            # history out.  A pulsator's raw fade / scatter statistics stay in
+            # the screen table, but they are not candidacies: without an
+            # ensemble a pulsator "fade" is the Hippke/Lund failure mode.
+            vr["fade_is_fade"] = False
+            vr["rust_is_rust"] = False
+            r["fade_scatter_scope"] = "not_scored_pulsator"
         r.update(vet_row(vr, vc))
 
     # Funnel.
@@ -1183,6 +1303,20 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
         "n_rust_candidates_corrected": cnt(lambda r: bool(r.get("rust_corr_is_rust"))),
         "n_candidates_any": cnt(lambda r: r.get("verdict") not in ("not_candidate", None)),
         "n_survivors": cnt(lambda r: r.get("verdict") == "survivor"),
+        # The cessation population, by class: how many pulsators reached a
+        # usable light curve, how many were still periodic across the century,
+        # and how many cessation candidates each class produced.
+        "pulsators": {
+            cls: {"n_screened": cnt(lambda r, c=cls: r.get("pulsator_class") == c),
+                  "n_usable": cnt(lambda r, c=cls: r.get("pulsator_class") == c
+                                  and bool(r.get("usable"))),
+                  "n_still_periodic": cnt(lambda r, c=cls: r.get("pulsator_class") == c
+                                          and r.get("cess_status") == "still_periodic"),
+                  "n_cess_candidates_confirmed": cnt(
+                      lambda r, c=cls: r.get("pulsator_class") == c
+                      and r.get("cess_status") == "cessation")}
+            for cls in sorted({str(r.get("pulsator_class")) for r in rows
+                               if r.get("kind") == "pulsator" and r.get("pulsator_class")})},
     }
     kills: dict[str, int] = {}
     for r in rows:
@@ -1198,7 +1332,15 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
     # archive that no request was ever made to support.  Observed 2026-09-22:
     # run 35748748365 was cancelled between its targets and sweep jobs, and
     # its `assess` job --- guarded by `if: always()` --- was still scheduled.
-    if not acq_reps:
+    shard_dirs_present = bool(glob.glob(str(out_root / "shards" / "*" / "screen_summary.json"))
+                              or glob.glob(str(out_root / "shards" / "*" / "acquire.jsonl")))
+    if not acq_reps and shard_dirs_present:
+        # Shards ran and uploaded, but no acquire stage finished: it CRASHED.
+        # Run 35862579322 read as NO_SHARDS_PRESENT for exactly this reason,
+        # which pointed at the workflow rather than at the exception.
+        verdict = "ACQUIRE_CRASHED"
+        degraded.append("acquire_stage_raised_in_every_shard")
+    elif not acq_reps:
         verdict = "NO_SHARDS_PRESENT"
     elif n_attempted == 0 and n_targets == 0:
         verdict = "NO_TARGETS"
@@ -1214,7 +1356,8 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
         verdict = "CANDIDATES_ALL_TRACED"
     else:
         verdict = "SURVIVORS_FOR_FOLLOWUP"
-    if degraded and verdict not in ("NO_DATA_REACHED", "NO_TARGETS", "NO_SHARDS_PRESENT"):
+    if degraded and verdict not in ("NO_DATA_REACHED", "NO_TARGETS", "NO_SHARDS_PRESENT",
+                                    "ACQUIRE_CRASHED"):
         verdict_full = f"{verdict} — DEGRADED ({', '.join(degraded)})"
     else:
         verdict_full = verdict
@@ -1227,7 +1370,7 @@ def stage_assess(conf: dict, out_root: Path, *, confirm: bool = True, gaia: bool
                                   "median_n_det": [], "median_span_yr": []})
         d["n_screened"] += 1
         d["n_usable"] += int(bool(r.get("usable")))
-        d["n_variables"] += int(r.get("kind") == "variable")
+        d["n_variables"] += int(r.get("kind") in ("variable", "pulsator"))
         d["median_n_det"].append(float(r.get("n_good", 0) or 0))
         d["median_span_yr"].append(float(r.get("span_yr", 0) or 0))
     for d in fields.values():
@@ -1278,6 +1421,8 @@ def add_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument("--radius-deg", type=float, default=None)
     p.add_argument("--max-variables", type=int, default=None, help="per field")
     p.add_argument("--max-bright", type=int, default=None, help="per field (0 = none)")
+    p.add_argument("--max-pulsators", type=int, default=None,
+                   help="cap on all-sky pulsators (0 = none; default pulsators.max_total)")
     p.add_argument("--max-targets", type=int, default=None, help="cap per shard (acquire)")
     p.add_argument("--max-stars", type=int, default=None, help="cap per shard (screen)")
     p.add_argument("--time-budget-s", type=float, default=None,
@@ -1326,7 +1471,10 @@ def run_args(args) -> int:
     if st == "targets" or (st == "all" and not (out_root / "targets.csv").exists()):
         stage_targets(conf, out_root, fields=fields, radius_deg=args.radius_deg,
                       max_variables=args.max_variables, max_bright=args.max_bright,
-                      include_bright=(args.max_bright is None or args.max_bright > 0))
+                      include_bright=(args.max_bright is None or args.max_bright > 0),
+                      max_pulsators=args.max_pulsators,
+                      include_pulsators=(None if args.max_pulsators is None
+                                         else args.max_pulsators > 0))
     if st in ("acquire", "all"):
         stage_acquire(conf, out_root, shard, time_budget_s=args.time_budget_s,
                       max_targets=args.max_targets, pause_s=args.pause_s)

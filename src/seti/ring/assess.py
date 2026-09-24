@@ -42,6 +42,12 @@ _PSR_HEADLINE = [
     "w1_w2", "t_colour_k", "shape_class", "p_chance", "veto_reason", "verdict",
     "ring_candidate", "f_min_300K_W2", "f_min_500K_W2", "f_min_700K_W2",
     "ring_radius_300K_au", "ring_radius_500K_au", "ring_radius_700K_au",
+    "localised", "colour_source", "w1_w2_err", "colour_secure", "e_W1mag_cat", "e_W2mag_cat",
+    "p_chance_ring", "p_chance_any", "p_chance_trials", "allwise_p_chance_ring",
+    "catwise_p_chance_ring",
+    "allwise_n_control_ring_hits", "catwise_n_control_ring_hits",
+    "allwise_n_sources_in_radius", "catwise_n_sources_in_radius",
+    "allwise_n_sources_in_beam", "catwise_n_sources_in_beam",
 ]
 
 
@@ -208,10 +214,13 @@ def compose_verdict(legs: dict) -> tuple[str, list[str]]:
     """One channel verdict from the four leg summaries."""
     degraded = [k for k, s in legs.items()
                 if not s or s.get("status") in (None, "NO_DATA_REACHED", "QUERY_FAILED",
-                                                 "NOT_RUN")]
+                                                 "NOT_RUN", "NO_TESTABLE_OBJECTS",
+                                                 "INSUFFICIENT_EPOCHS")]
+    partial = [k for k, s in legs.items() if k not in degraded and s
+               and s.get("coverage_degraded")]
     reached = [k for k in legs if k not in degraded]
     if not reached:
-        return "NO_DATA_REACHED", degraded
+        return "NO_DATA_REACHED", degraded + partial
     wd = legs.get("wd") or {}
     psr = legs.get("pulsar") or {}
     bd = legs.get("bd") or {}
@@ -226,14 +235,26 @@ def compose_verdict(legs: dict) -> tuple[str, list[str]]:
         v = "NO_RING_SURVIVOR; SECONDARY_FLAGS_PENDING_VET"
     else:
         v = "NO_RING_SURVIVOR"
+    notes = []
     if degraded:
-        v = f"DEGRADED ({', '.join(degraded)} not reached); {v}"
-    return v, degraded
+        notes.append(f"{', '.join(degraded)} not reached")
+    if partial:
+        notes.append("; ".join(f"{k} partial: {legs[k]['coverage_degraded']}" for k in partial))
+    if notes:
+        v = f"DEGRADED ({'; '.join(notes)}); {v}"
+    return v, degraded + partial
 
 
 def report_md(summary: dict) -> str:
     L = ["# RING — rings around the dead (S63)", "",
-         f"**Verdict:** `{summary.get('verdict')}`", ""]
+         f"**Verdict:** `{summary.get('verdict')}`", "",
+         f"Generated {summary.get('generated_at')} by run `{summary.get('run_id')}`. "
+         "Leg provenance (the run whose files each leg's numbers come from): "
+         + ", ".join(f"{k}: `{(v or {}).get('run_id')}` ({(v or {}).get('generated_at')})"
+                     for k, v in (summary.get("leg_provenance") or {}).items()), ""]
+    cons = summary.get("consistency") or {}
+    if cons.get("failures"):
+        L += ["**Self-consistency failures:** " + "; ".join(cons["failures"]), ""]
     legs = summary.get("legs", {})
     wd = legs.get("wd") or {}
     if wd:
@@ -266,7 +287,25 @@ def report_md(summary: dict) -> str:
               f"* vetoes: {psr.get('veto_reasons')}",
               f"* surviving: {psr.get('n_surviving', 0):,}; ring-band: "
               f"**{psr.get('n_ring_candidates', 0):,}**",
+              f"* localised hosts (2 x position error <= the widest aperture): "
+              f"{psr.get('n_localised', 'n/a')}",
+              f"* chance census (observed vs the local-control expectation): "
+              f"{psr.get('chance_census')}",
               f"* sensitivity: {psr.get('sensitivity')}", ""]
+        fates = psr.get("ring_band_fates") or []
+        if fates:
+            L += ["### Every ring-band-coloured counterpart and its fate", "",
+                  "| pulsar | localised | pos err (\") | colour src | W1-W2 | T (K) | "
+                  "p_chance(ring) | veto |", "|---|---|---|---|---|---|---|---|"]
+            for f in fates:
+                def _f(x, fmt):
+                    return "n/a" if x is None else format(x, fmt)
+                L.append(f"| {f.get('jname')} | {f.get('localised')} | "
+                         f"{_f(f.get('pos_err_arcsec'), '.3g')} | {f.get('colour_source')} | "
+                         f"{_f(f.get('w1_w2'), '.2f')} +/- {_f(f.get('w1_w2_err'), '.2f')} | "
+                         f"{_f(f.get('t_colour_k'), '.0f')} | {_f(f.get('p_chance_ring'), '.2g')} | "
+                         f"{f.get('veto_reason') or 'SURVIVING'} |")
+            L.append("")
         tv = summary.get("two_target_vet", [])
         if tv:
             L += ["### The two pulsar-planet systems", ""]
@@ -285,7 +324,10 @@ def report_md(summary: dict) -> str:
               f"{bd.get('n_with_epochs', 0):,}; tested (>= min epochs): {bd.get('n_tested', 0):,}",
               f"* population W2 reduced-chi2 median: {bd.get('population_w2_chi2_median')}; "
               f"threshold {bd.get('w2_chi2_threshold')}",
-              f"* duty-cycle flags: **{bd.get('n_duty_cycle_flags', 0):,}**", ""]
+              f"* duty-cycle flags: **{bd.get('n_duty_cycle_flags', 0):,}**",
+              f"* coverage: {bd.get('epoch_coverage')}"
+              + (f" -- DEGRADED: {bd['coverage_degraded']}" if bd.get("coverage_degraded")
+                 else ""), ""]
         for f in bd.get("flagged", [])[:30]:
             L.append(f"  * `{f.get('source_id')}` {f.get('spt')}: n={f.get('w2_n_epochs')}, "
                      f"chi2_red={f.get('w2_chi2_red'):.1f}, amp={f.get('w2_amp_mag'):.2f} mag, "
@@ -294,6 +336,9 @@ def report_md(summary: dict) -> str:
     ffp = legs.get("ffp") or {}
     if ffp:
         L += ["## Free-floating planetary-mass objects: hotter than cooling allows", "",
+              f"* with L_bol: {ffp.get('n_with_lbol')}; with a group: {ffp.get('n_with_group')}; "
+              f"age sources: {ffp.get('age_source_counts')}; unmatched group names: "
+              f"{ffp.get('unmatched_group_names')}",
               f"* objects: {ffp.get('n_objects', 0):,}; testable (L_bol and an age): "
               f"{ffp.get('n_testable', 0):,}; catalogued planetary-mass: "
               f"{ffp.get('n_catalogued_planetary_mass', 0):,}",
@@ -306,11 +351,85 @@ def report_md(summary: dict) -> str:
     return "\n".join(L)
 
 
+def json_safe(x):
+    """Strict-JSON copy: NaN/inf -> None, numpy scalars -> Python, recursively.
+
+    ``json.dumps`` writes a Python float NaN as the bare token ``NaN`` (and inf
+    as ``Infinity``) without consulting ``default``; the summary of run
+    35752692549 carried both, which strict parsers reject.
+    """
+    if isinstance(x, dict):
+        return {str(k): json_safe(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [json_safe(v) for v in x]
+    if isinstance(x, np.ndarray):
+        return [json_safe(v) for v in x.tolist()]
+    if isinstance(x, (np.bool_,)):
+        return bool(x)
+    if isinstance(x, (np.integer,)):
+        return int(x)
+    if isinstance(x, (float, np.floating)):
+        return float(x) if np.isfinite(x) else None
+    if x is pd.NA or x is pd.NaT:
+        return None
+    return x
+
+
+def consistency_checks(summary: dict) -> dict:
+    """Do the summary's own counts add up?  Failures are listed, not raised."""
+    fails, checked = [], 0
+    legs = summary.get("legs") or {}
+    psr = legs.get("pulsar") or {}
+    if psr.get("status") == "OK":
+        n_any = psr.get("n_with_any_counterpart")
+        for name in ("shape_counts",):
+            tot = sum((psr.get(name) or {}).values())
+            checked += 1
+            if tot != n_any:
+                fails.append(f"pulsar {name} sum {tot} != n_with_any_counterpart {n_any}")
+        vetoed = sum((psr.get("veto_reasons") or {}).values())
+        checked += 1
+        if vetoed + int(psr.get("n_surviving") or 0) != n_any:
+            fails.append(f"pulsar vetoed {vetoed} + surviving {psr.get('n_surviving')} "
+                         f"!= n_with_any_counterpart {n_any}")
+        checked += 1
+        if len(psr.get("survivors") or []) != min(50, int(psr.get("n_surviving") or 0)):
+            fails.append("pulsar survivors list length != n_surviving")
+        fates = psr.get("ring_band_fates")
+        if fates is not None:
+            checked += 1
+            if len(fates) != int((psr.get("shape_counts") or {}).get("ring_band", 0)):
+                fails.append("ring_band_fates length != shape_counts.ring_band")
+    bd = legs.get("bd") or {}
+    if bd.get("status") == "OK":
+        checked += 1
+        if not (int(bd.get("n_tested") or 0) <= int(bd.get("n_with_epochs") or 0)
+                <= int(bd.get("n_targets") or 0)):
+            fails.append("bd n_tested <= n_with_epochs <= n_targets violated")
+        acq = (summary.get("acquisition") or {}).get("bd") or {}
+        checked += 1
+        if acq.get("status") in (None, "NOT_RUN") and not bd.get("coverage_degraded"):
+            fails.append("bd screened OK but no acquisition record, and not marked degraded")
+    ffp = legs.get("ffp") or {}
+    if ffp.get("n_objects"):
+        checked += 1
+        if int(ffp.get("n_testable") or 0) > int(ffp.get("n_objects") or 0):
+            fails.append("ffp n_testable > n_objects")
+    gen = summary.get("generated_at")
+    for k, v in (summary.get("leg_provenance") or {}).items():
+        checked += 1
+        if v.get("generated_at") and gen and v["generated_at"] > gen:
+            fails.append(f"leg {k} generated after the summary")
+    return {"n_checks": checked, "failures": fails, "ok": not fails}
+
+
 def write_summary(out_dir: Path, summary: dict) -> None:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=_json_default))
-    (out_dir / "REPORT.md").write_text(report_md(summary))
+    safe = json_safe(summary)
+    (out_dir / "summary.json").write_text(json.dumps(safe, indent=2, default=_json_default,
+                                                     allow_nan=False))
+    (out_dir / "REPORT.md").write_text(report_md(safe))
 
 
 def _json_default(x):
@@ -326,4 +445,5 @@ def _json_default(x):
 
 
 __all__ = ["wd_followup", "two_target_vet", "compose_verdict", "report_md", "write_summary",
+           "json_safe", "consistency_checks",
            "_WD_HEADLINE", "_PSR_HEADLINE", "ph"]

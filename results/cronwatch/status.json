@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-09-24T23:15:38Z",
+ "checked_at_utc": "2026-09-25T01:28:11Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -35,18 +35,22 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-09-25T01:28:11Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-09-24T22:17:00Z",
+   "expected_last_fire_utc": "2026-09-25T01:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.19,
+   "hours_since_last_run": 3.07,
    "last_scheduled_run_utc": "2026-09-24T22:23:50Z",
+   "missed_by": "silence",
    "name": "ci",
-   "overdue": false,
-   "status": "OK",
+   "note": "ci has not run on its schedule for 3.07 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-09-25T01:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -55,14 +59,14 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-09-24T18:43:00Z",
+   "expected_last_fire_utc": "2026-09-25T00:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-09-24T21:47:00Z",
    "name": "cronwatch",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "cronwatch.yml"
   },
   {
@@ -218,11 +222,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-09-24T22:17:00Z",
+   "expected_last_fire_utc": "2026-09-25T01:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-24T22:21:25Z",
+   "last_scheduled_run_utc": "2026-09-25T01:27:37Z",
    "name": "watchdog",
    "overdue": false,
    "status": "OK",

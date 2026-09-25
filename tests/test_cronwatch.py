@@ -640,3 +640,69 @@ def test_silence_never_overrides_the_refusals():
     fresh = assess([_hourly()], {"watchdog.yml": long_ago}, now,
                    changed_at={"watchdog.yml": born})[0]
     assert fresh["status"] == "SCHEDULE_TOO_NEW" and fresh["overdue"] is False
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-25: an email every hour about gaps that had already healed
+# ---------------------------------------------------------------------------
+def test_the_workflow_a_sweep_runs_inside_is_never_reported_missed():
+    """A catch-up `watchdog` run reported `watchdog` itself as not firing.
+
+    It was a dispatch, so the schedule-only query could not see it -- but a
+    workflow that is running right now has not been dropped.
+    """
+    from seti.cronwatch import assess
+
+    now = datetime(2026, 9, 25, 17, 33, 49, tzinfo=timezone.utc)
+    last = datetime(2026, 9, 25, 13, 43, 23, tzinfo=timezone.utc)
+    rec = assess([_hourly()], {"watchdog.yml": last}, now,
+                 running={"watchdog.yml"})[0]
+    assert rec["status"] == "OK" and rec["overdue"] is False
+
+
+def _write_status(root, **wf):
+    d = root / "results" / "cronwatch"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "status.json").write_text(json.dumps({"workflows": [wf]}))
+
+
+def _silent_ci(silence, last="2026-09-25T13:46:59Z", slot="2026-09-25T17:17:00Z"):
+    return dict(workflow="ci.yml", name="ci", overdue=True, status="MISSED",
+                missed_by="silence", cron_matched="17 * * * *",
+                cadence_hours=1.0, expected_last_fire_utc=slot,
+                last_scheduled_run_utc=last, silent_since_utc=last,
+                hours_since_last_run=silence, silence_hours=silence,
+                hours_late=0.28, has_dispatch=True,
+                catchup_dispatched_utc="2026-09-25T17:33:49Z")
+
+
+def test_a_few_hours_of_dropped_hourly_firings_send_no_email(tmp_path):
+    from seti.alerts import scheduler_alerts
+
+    _write_status(tmp_path, **_silent_ci(3.78))
+    assert scheduler_alerts(tmp_path) == [], (
+        "a short gap is re-fired automatically; mailing it is noise")
+
+
+def test_a_long_hourly_outage_alerts_once_not_once_per_hour(tmp_path):
+    from seti.alerts import SILENCE_ALERT_HOURS, scheduler_alerts
+
+    keys = set()
+    for slot in ("2026-09-26T02:17:00Z", "2026-09-26T03:17:00Z"):
+        _write_status(tmp_path, **_silent_ci(SILENCE_ALERT_HOURS + 1, slot=slot))
+        (alert,) = scheduler_alerts(tmp_path)
+        keys.add(alert.key)
+        assert "2026-09-25T13:46:59Z" in alert.title
+    assert len(keys) == 1, "one outage, one key, however many slots it swallows"
+
+
+def test_a_dropped_slow_firing_still_alerts_per_slot(tmp_path):
+    from seti.alerts import scheduler_alerts
+
+    _write_status(tmp_path, workflow="screen.yml", name="screen", overdue=True,
+                  status="MISSED", missed_by="grace", cron_matched="40 18 * * 3",
+                  cadence_hours=168.0, expected_last_fire_utc="2026-08-26T18:40:00Z",
+                  last_scheduled_run_utc="2026-08-19T18:40:00Z", hours_late=13.0,
+                  has_dispatch=True)
+    (alert,) = scheduler_alerts(tmp_path)
+    assert alert.key == "cron:screen.yml:2026-08-26T18:40:00Z"

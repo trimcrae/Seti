@@ -258,7 +258,8 @@ def _iso(dt: datetime | None) -> str | None:
 
 def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | None],
            now: datetime, *, unknown: frozenset[str] | set[str] = frozenset(),
-           changed_at: dict[str, datetime | None] | None = None) -> list[dict]:
+           changed_at: dict[str, datetime | None] | None = None,
+           running: frozenset[str] | set[str] = frozenset()) -> list[dict]:
     """Compare each workflow's last scheduled run against what its cron promised.
 
     ``last_runs`` maps workflow file name to the start of its most recent run
@@ -273,6 +274,12 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
     three weeks overdue the moment it is merged.  Reported as SCHEDULE_TOO_NEW,
     never as MISSED, and never re-fired: the first real test of a new schedule is
     its first real slot.
+
+    ``running`` names the workflow this sweep is executing inside.  A workflow
+    that is running right now is not dropped, whatever its schedule history
+    says.  Measured on 2026-09-25: the second lane re-fired `watchdog` at 17:32
+    UTC, and that catch-up run -- a dispatch, so invisible to a query for
+    ``event == schedule`` -- then reported `watchdog` itself as not firing.
     """
     findings: list[dict] = []
     for wf in workflows:
@@ -299,6 +306,10 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
                "last_scheduled_run_utc": _iso(last),
                "has_dispatch": wf.has_dispatch,
                "status": "OK", "overdue": False, "hours_late": None}
+        if wf.file in running:
+            rec["note"] = "this sweep is running inside it"
+            findings.append(rec)
+            continue
         if wf.file in unknown:
             rec["status"] = "UNKNOWN"
             rec["note"] = ("the Actions API did not answer for this workflow; "
@@ -367,6 +378,9 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
         if last is not None:
             rec["hours_since_last_run"] = round(
                 (now - last).total_seconds() / 3600.0, 2)
+        if silence is not None:
+            rec["silence_hours"] = round(silence.total_seconds() / 3600.0, 2)
+            rec["silent_since_utc"] = _iso(since)
         # Which clock could SEE it.  "grace" means the ordinary slot test caught
         # it -- the sensitive one wherever it can speak.  "silence" means only
         # the gap since the last run could, which is the fast-cadence case the
@@ -505,6 +519,7 @@ def gate_status(api, workflow_file: str = GATE_WORKFLOW,
 def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
           ref: str = "main", dispatch: bool = True,
           dispatch_only: set[str] | None = None,
+          running: set[str] | frozenset[str] = frozenset(),
           out_dir: Path | str | None = None,
           max_catchups: int = MAX_CATCHUPS_PER_SWEEP) -> dict:
     """One pass: read the schedules, ask the API, report, and re-fire the drops.
@@ -549,7 +564,7 @@ def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
         unknown |= {wf.file for wf in workflows}
 
     findings = assess(workflows, last_runs, now, unknown=frozenset(unknown),
-                      changed_at=changed_at)
+                      changed_at=changed_at, running=frozenset(running))
     fired: list[dict] = []
     if dispatch and api is not None:
         for rec in plan_catchup(findings, state, max_catchups=max_catchups,

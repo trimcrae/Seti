@@ -1071,6 +1071,16 @@ def feed_alerts(root: Path) -> list[Alert]:
 # ---------------------------------------------------------------------------
 # Did the SCHEDULER fire at all?
 # ---------------------------------------------------------------------------
+#: A fast channel's gap is only worth an email once it has lasted this long.
+#: GitHub drops hourly firings for hours at a time as a matter of course (on
+#: 2026-09-25 `ci` and `watchdog` ran at 12:13, 13:44 and then 17:33 UTC), and
+#: each such gap is already re-fired automatically by the sweep.  Mailing each
+#: one -- under a new key every hour, because every hour is a new slot -- sent a
+#: stream of alerts about something that had fixed itself.  Half a day is the
+#: same ceiling `cronwatch.MAX_GRACE` puts on the slowest channel.
+SILENCE_ALERT_HOURS = 12.0
+
+
 def scheduler_alerts(root: Path) -> list[Alert]:
     """A cron that never fired, as reported by ``seti.cronwatch``.
 
@@ -1083,8 +1093,15 @@ def scheduler_alerts(root: Path) -> list[Alert]:
 
     The finding is read rather than computed here: asking the Actions API needs a
     token and network, both of which the hourly watchdog has and this evaluation
-    does not.  Dedup is keyed by the missed firing, so one dropped Wednesday
-    notifies once, however many times it is re-read.
+    does not.
+
+    Two kinds of miss, two dedup keys.  A slot miss (``missed_by == "grace"``,
+    the slow channels) is keyed by the missed firing, so one dropped Wednesday
+    notifies once.  A silence miss (the hourly channels) is keyed by the last
+    run the silence is measured from, so one outage notifies once however many
+    hourly slots it swallows -- and only once it has lasted
+    :data:`SILENCE_ALERT_HOURS`; shorter gaps are re-fired by the sweep and
+    recorded in ``status.json`` without a message.
     """
     rec = _load(root / "results" / "cronwatch" / "status.json")
     if not isinstance(rec, dict):
@@ -1095,16 +1112,31 @@ def scheduler_alerts(root: Path) -> list[Alert]:
             continue
         name = wf.get("name") or wf.get("workflow")
         fired = wf.get("catchup_dispatched_utc")
+        last = wf.get("last_scheduled_run_utc")
+        silence = wf.get("silence_hours", wf.get("hours_since_last_run"))
+        if wf.get("missed_by") == "silence":
+            if silence is None or float(silence) < SILENCE_ALERT_HOURS:
+                continue
+            since = wf.get("silent_since_utc") or last or "never"
+            key = f"cron:{wf.get('workflow')}:silent-since:{since}"
+            title = f"{name} has not run on its schedule since {since}"
+            what = (f"GitHub's scheduler has not started `{wf.get('workflow')}` "
+                    f"(cron `{wf.get('cron_matched')}`, cadence "
+                    f"{wf.get('cadence_hours')} h) for {silence} h. Its last "
+                    f"scheduled run was {last or 'never'}; its most recent slot "
+                    f"was {wf.get('expected_last_fire_utc')}.")
+        else:
+            key = f"cron:{wf.get('workflow')}:{wf.get('expected_last_fire_utc')}"
+            title = f"{name} did not fire at {wf.get('expected_last_fire_utc')}"
+            what = (f"GitHub's scheduler did not start `{wf.get('workflow')}` at "
+                    f"its scheduled firing of {wf.get('expected_last_fire_utc')} "
+                    f"(cron `{wf.get('cron_matched')}`, cadence "
+                    f"{wf.get('cadence_hours')} h), and it is now "
+                    f"{wf.get('hours_late')} h past that slot. Its last "
+                    f"scheduled run was {last or 'never'}.")
         out.append(Alert(
-            key=f"cron:{wf.get('workflow')}:{wf.get('expected_last_fire_utc')}",
-            severity="health", channel="cronwatch",
-            title=f"{name} did not fire at {wf.get('expected_last_fire_utc')}",
-            body=(f"GitHub's scheduler did not start `{wf.get('workflow')}` at its "
-                  f"scheduled firing of {wf.get('expected_last_fire_utc')} "
-                  f"(cron `{wf.get('cron_matched')}`, cadence "
-                  f"{wf.get('cadence_hours')} h). Its last scheduled run was "
-                  f"{wf.get('last_scheduled_run_utc') or 'never'}, "
-                  f"{wf.get('hours_late')} h ago.\n\n"
+            key=key, severity="health", channel="cronwatch", title=title,
+            body=(what + "\n\n"
                   + ("A catch-up run was dispatched automatically at "
                      f"{fired}; check that it finished.\n\n" if fired else
                      "NO catch-up was dispatched" + (
@@ -1121,6 +1153,7 @@ def scheduler_alerts(root: Path) -> list[Alert]:
             detail={k: wf.get(k) for k in (
                 "workflow", "cron_matched", "cadence_hours", "grace_hours",
                 "expected_last_fire_utc", "last_scheduled_run_utc", "hours_late",
+                "missed_by", "silence_hours", "silent_since_utc",
                 "has_dispatch", "catchup_dispatched_utc", "catchup_error")}))
     return out
 

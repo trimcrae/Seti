@@ -49,9 +49,15 @@ def main(argv=None) -> int:
         print("[cronwatch] no GITHUB_REPOSITORY/GITHUB_TOKEN -- every workflow "
               "will be UNKNOWN and nothing will be dispatched")
 
+    # The workflow this sweep runs inside is alive by construction, even when
+    # this run is a catch-up dispatch that the schedule-only query cannot see.
+    # GITHUB_WORKFLOW_REF = "owner/repo/.github/workflows/<file>@<ref>".
+    wf_ref = os.environ.get("GITHUB_WORKFLOW_REF", "")
+    running = {wf_ref.split("@", 1)[0].rsplit("/", 1)[-1]} if wf_ref else set()
+
     rep = sweep(args.root, api=api, ref=args.ref, dispatch=not args.no_dispatch,
                 dispatch_only=SELF_HEAL_ONLY if args.self_heal_only else None,
-                out_dir=args.out_dir)
+                running=running, out_dir=args.out_dir)
     print(f"[cronwatch] workflows={rep['n_workflows']} "
           f"overdue={rep['n_overdue']} unknown={rep['n_unknown']} "
           f"dispatched={rep['n_dispatched']}")

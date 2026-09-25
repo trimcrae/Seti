@@ -1,28 +1,26 @@
 {
-  "verdict": "DEGRADED (tiles_failed:640; neowise_queries_failed:3); NO_IGNITION_CANDIDATE",
-  "generated_utc": "2026-09-24T03:20:27Z",
+  "verdict": "DEGRADED (mixed_parent_routes:ari_gaia+esa_gaia+vizier_asu; tiles_failed:139; neowise_queries_failed:4); IGNITION_CANDIDATES",
+  "generated_utc": "2026-09-25T04:23:55Z",
   "endpoints": {
     "parent": {
       "esa_gaia": "https://gea.esac.esa.int/tap-server/tap"
     },
-    "parent_route_recommended_by_probe": "esa_gaia",
+    "parent_route_recommended_by_probe": "vizier_asu",
     "parent_routes_tried": [
       "esa_gaia",
       "irsa_tap",
-      "vizier_asu"
+      "vizier_asu",
+      "ari_gaia"
     ],
     "irsa_tap_probe": {
-      "status": "OK",
-      "usable": true,
-      "endpoints": {
-        "gaia": "https://gea.esac.esa.int/tap-server/tap",
-        "allwise": "https://irsa.ipac.caltech.edu/TAP"
-      },
-      "table": "allwise_p3as_psd",
-      "table_requested": "allwise_p3as_psd",
-      "gaia_only_status": "OK",
-      "error": null,
-      "n_rows": 5
+      "status": "TIMED_OUT",
+      "usable": false,
+      "endpoints": null,
+      "table": null,
+      "table_requested": null,
+      "gaia_only_status": null,
+      "error": "QueryTimeout('no answer within 600 s')",
+      "n_rows": null
     },
     "vizier_asu_probe": {
       "status": "OK",
@@ -47,56 +45,60 @@
     ],
     "errors": []
   },
-  "n_candidates": 0,
+  "n_candidates": 4,
   "n_clean": 0,
-  "n_candidates_optical_untested": 0,
+  "n_candidates_optical_untested": 4,
   "denominators": {
-    "parent_count_archive": 180066,
-    "n_rows_pulled": 180066,
-    "n_stars_in_parent_file": 180066,
+    "parent_count_archive": 422801,
+    "n_rows_pulled": 422801,
+    "n_stars_in_parent_file": 422801,
     "subsample_fraction": 1.0,
-    "n_stars_attempted_neowise": 179666,
-    "n_stars_with_neowise_rows": 179651,
-    "n_stars_screened": 181210,
+    "n_stars_attempted_neowise": 424022,
+    "n_stars_with_neowise_rows": 422941,
+    "n_stars_screened": 424417,
     "sample_mode": "tiles",
     "local_cut_counters": null,
     "parent_routes": {
-      "esa_gaia": 695
+      "esa_gaia": 841,
+      "ari_gaia": 848,
+      "vizier_asu": 2
     },
     "parent_route_fractions": null,
-    "parent_route_used": "esa_gaia",
-    "parent_routes_mixed": false,
+    "parent_route_used": "mixed",
+    "parent_routes_mixed": true,
     "vizier_capped_units": null,
     "route_note": null
   },
   "stage_counts": {
-    "screened": 181210,
-    "rise_candidates": 8,
-    "vetted": 8,
-    "survivors": 0,
+    "screened": 424417,
+    "rise_candidates": 14,
+    "vetted": 14,
+    "survivors": 4,
     "clean": 0
   },
   "veto_counters": {
     "screen": {
-      "NOT_RISING": 165088,
-      "IMPULSIVE_SHAPE": 15316,
-      "FADING": 518,
-      "INSUFFICIENT_EPOCHS": 173,
-      "ONE_BAND_ONLY": 65,
-      "SCAN_SYSTEMATIC": 41,
-      "IGNITION_CANDIDATE": 8,
-      "NOT_MONOTONIC": 1
+      "NOT_RISING": 385475,
+      "IMPULSIVE_SHAPE": 37019,
+      "FADING": 1287,
+      "INSUFFICIENT_EPOCHS": 376,
+      "ONE_BAND_ONLY": 142,
+      "SCAN_SYSTEMATIC": 94,
+      "IGNITION_CANDIDATE": 14,
+      "NOT_MONOTONIC": 10
     },
     "vet": {
       "verdicts": {
-        "rejected_rise_stellar_coloured": 5,
-        "rejected_optical_not_flat": 2,
-        "rejected_optical_variable_gaia": 1
+        "clean_optical_untested": 4,
+        "rejected_rise_stellar_coloured": 8,
+        "rejected_star_forming_region": 1,
+        "rejected_optical_not_flat": 1
       },
       "flags": {
-        "rise_stellar_coloured": 5,
-        "optical_not_flat": 2,
-        "optical_variable_gaia": 2
+        "rise_stellar_coloured": 9,
+        "star_forming_region": 1,
+        "optical_not_flat": 1,
+        "optical_variable_gaia": 1
       }
     }
   },
@@ -105,18 +107,18 @@
     "amps": {
       "0.10": {
         "n": 2400,
-        "n_recovered": 1677,
-        "fraction": 0.69875
+        "n_recovered": 1662,
+        "fraction": 0.6925
       },
       "0.20": {
         "n": 2400,
-        "n_recovered": 2251,
-        "fraction": 0.9379166666666666
+        "n_recovered": 2250,
+        "fraction": 0.9375
       },
       "0.40": {
         "n": 2400,
-        "n_recovered": 2376,
-        "fraction": 0.99
+        "n_recovered": 2374,
+        "fraction": 0.9891666666666666
       }
     },
     "note": "linear ramps of the stated amplitude over 10 yr injected on both bands of screened, non-rising stars; fraction recovered as IGNITION_CANDIDATE by the rise test alone (before the contaminant ladder)"
@@ -127,7 +129,7 @@
     "tiles_in_sky": 2047,
     "area_sky_deg2": 32451.309199148283,
     "tiles_assigned": 2047,
-    "sky_fraction_done": 0.3395,
+    "sky_fraction_done": 0.8259,
     "n_shards": 12,
     "shards_reporting": [
       "s0of12",
@@ -146,7 +148,6 @@
     "shards_stopped_on_budget": [
       "s0of12",
       "s10of12",
-      "s11of12",
       "s1of12",
       "s2of12",
       "s3of12",
@@ -158,68 +159,32 @@
       "s9of12"
     ],
     "parent_routes": {
-      "esa_gaia": 695
+      "esa_gaia": 841,
+      "ari_gaia": 848,
+      "vizier_asu": 2
     },
-    "route_used": "esa_gaia",
-    "mixed_routes": false,
+    "route_used": "mixed",
+    "mixed_routes": true,
     "dec_range_done": [
-      -84.0,
+      -88.0,
       88.0
     ],
-    "tiles_done": 695,
-    "tiles_failed": 640,
-    "tiles_partial": 0,
+    "tiles_done": 1691,
+    "tiles_failed": 139,
+    "tiles_partial": 6,
     "tiles_capped": 0,
-    "area_done_deg2": 11016.6,
-    "n_parent_done_tiles": 180066,
-    "n_stars_attempted": 179666,
-    "n_stars_ok": 179651,
-    "n_stars_failed": 3,
-    "n_stars_fallback_cone": 139,
+    "area_done_deg2": 26803.0,
+    "n_parent_done_tiles": 422801,
+    "n_stars_attempted": 424022,
+    "n_stars_ok": 422941,
+    "n_stars_failed": 4,
+    "n_stars_fallback_cone": 203,
     "note": "a DONE tile is a complete selection over its box (its parent query was uncapped unless `tiles_capped`), so every count here is exact for the area covered and says nothing about the rest of the sky"
   },
   "ensemble": {
     "per_shard_drift": [
       {
         "tag": "s0of12",
-        "drift": {
-          "W1": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0198,
-            "first_to_last_mag": 0.0198,
-            "span_yr": 10.75
-          },
-          "W2": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0633,
-            "first_to_last_mag": 0.0633,
-            "span_yr": 10.75
-          }
-        }
-      },
-      {
-        "tag": "s10of12",
-        "drift": {
-          "W1": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.0195,
-            "first_to_last_mag": 0.0195,
-            "span_yr": 10.75
-          },
-          "W2": {
-            "n_bins": 44,
-            "n_applied": 44,
-            "ptp_mag": 0.062,
-            "first_to_last_mag": 0.062,
-            "span_yr": 10.75
-          }
-        }
-      },
-      {
-        "tag": "s11of12",
         "drift": {
           "W1": {
             "n_bins": 44,
@@ -231,8 +196,46 @@
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0585,
-            "first_to_last_mag": 0.0585,
+            "ptp_mag": 0.0612,
+            "first_to_last_mag": 0.0612,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s10of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0192,
+            "first_to_last_mag": 0.0192,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0617,
+            "first_to_last_mag": 0.0617,
+            "span_yr": 10.75
+          }
+        }
+      },
+      {
+        "tag": "s11of12",
+        "drift": {
+          "W1": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.019,
+            "first_to_last_mag": 0.019,
+            "span_yr": 10.75
+          },
+          "W2": {
+            "n_bins": 44,
+            "n_applied": 44,
+            "ptp_mag": 0.0615,
+            "first_to_last_mag": 0.0615,
             "span_yr": 10.75
           }
         }
@@ -243,15 +246,15 @@
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.018,
-            "first_to_last_mag": 0.018,
+            "ptp_mag": 0.0183,
+            "first_to_last_mag": 0.0183,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0585,
-            "first_to_last_mag": 0.0585,
+            "ptp_mag": 0.0607,
+            "first_to_last_mag": 0.0607,
             "span_yr": 10.75
           }
         }
@@ -262,15 +265,15 @@
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0195,
-            "first_to_last_mag": 0.0195,
+            "ptp_mag": 0.0187,
+            "first_to_last_mag": 0.0187,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0633,
-            "first_to_last_mag": 0.0633,
+            "ptp_mag": 0.0628,
+            "first_to_last_mag": 0.0628,
             "span_yr": 10.75
           }
         }
@@ -281,15 +284,15 @@
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0181,
-            "first_to_last_mag": 0.0181,
+            "ptp_mag": 0.0182,
+            "first_to_last_mag": 0.0182,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0619,
-            "first_to_last_mag": 0.0619,
+            "ptp_mag": 0.0605,
+            "first_to_last_mag": 0.0605,
             "span_yr": 10.75
           }
         }
@@ -307,8 +310,8 @@
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.063,
-            "first_to_last_mag": 0.063,
+            "ptp_mag": 0.0625,
+            "first_to_last_mag": 0.0625,
             "span_yr": 10.75
           }
         }
@@ -345,8 +348,8 @@
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.062,
-            "first_to_last_mag": 0.062,
+            "ptp_mag": 0.061,
+            "first_to_last_mag": 0.061,
             "span_yr": 10.75
           }
         }
@@ -357,15 +360,15 @@
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.019,
-            "first_to_last_mag": 0.019,
+            "ptp_mag": 0.0198,
+            "first_to_last_mag": 0.0198,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.063,
-            "first_to_last_mag": 0.063,
+            "ptp_mag": 0.0638,
+            "first_to_last_mag": 0.0638,
             "span_yr": 10.75
           }
         }
@@ -376,15 +379,15 @@
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0195,
-            "first_to_last_mag": 0.0195,
+            "ptp_mag": 0.0192,
+            "first_to_last_mag": 0.0192,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.063,
-            "first_to_last_mag": 0.063,
+            "ptp_mag": 0.0638,
+            "first_to_last_mag": 0.0638,
             "span_yr": 10.75
           }
         }
@@ -395,22 +398,22 @@
           "W1": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0205,
-            "first_to_last_mag": 0.0205,
+            "ptp_mag": 0.02,
+            "first_to_last_mag": 0.02,
             "span_yr": 10.75
           },
           "W2": {
             "n_bins": 44,
             "n_applied": 44,
-            "ptp_mag": 0.0668,
-            "first_to_last_mag": 0.0668,
+            "ptp_mag": 0.0638,
+            "first_to_last_mag": 0.0638,
             "span_yr": 10.75
           }
         }
       }
     ],
-    "raw_two_band_fading_5sigma": 554,
-    "raw_two_band_rising_5sigma": 11,
+    "raw_two_band_fading_5sigma": 1327,
+    "raw_two_band_rising_5sigma": 26,
     "note": "per-shard median zero-point offsets by 0.25-yr bin were subtracted before the rise test (seti.ignition.ensemble); raw_* count stars whose UNCORRECTED bare linear slope is >= 5 sigma in both bands"
   },
   "shards": {
@@ -433,8 +436,9 @@
     "missing": []
   },
   "degraded": [
-    "tiles_failed:640",
-    "neowise_queries_failed:3"
+    "mixed_parent_routes:ari_gaia+esa_gaia+vizier_asu",
+    "tiles_failed:139",
+    "neowise_queries_failed:4"
   ],
   "offline": true,
   "online_vet": true,

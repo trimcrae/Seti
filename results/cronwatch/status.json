@@ -1,17 +1,17 @@
 {
- "checked_at_utc": "2026-10-01T08:53:37Z",
+ "checked_at_utc": "2026-10-01T13:52:55Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
-  "head_sha": "f1ed6c38ec8e7cf44e795840d466e2cb6e8a6a6b",
-  "run_id": 36821915488,
-  "run_started_at": "2026-10-01T05:53:01Z",
+  "head_sha": "b14fdccf1c8954486b89ab8c54b7e04f3f2954a1",
+  "run_id": 36867191940,
+  "run_started_at": "2026-10-01T13:14:03Z",
   "run_status": "completed",
-  "run_url": "https://github.com/trimcrae/Seti/actions/runs/36821915488",
+  "run_url": "https://github.com/trimcrae/Seti/actions/runs/36867191940",
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
+ "n_dispatched": 1,
  "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
@@ -39,19 +39,14 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T08:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T13:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 0.61,
-   "hours_since_last_run": 3.01,
-   "last_scheduled_run_utc": "2026-10-01T05:53:01Z",
-   "missed_by": "silence",
+   "hours_late": null,
+   "last_scheduled_run_utc": "2026-10-01T13:14:03Z",
    "name": "ci",
-   "note": "ci has not run on its schedule for 3.01 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-10-01T08:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
-   "overdue": true,
-   "silence_hours": 3.01,
-   "silent_since_utc": "2026-10-01T05:53:01Z",
-   "status": "MISSED",
+   "overdue": false,
+   "status": "WITHIN_GRACE",
    "workflow": "ci.yml"
   },
   {
@@ -60,11 +55,11 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T06:43:00Z",
+   "expected_last_fire_utc": "2026-10-01T12:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-01T06:31:27Z",
+   "last_scheduled_run_utc": "2026-10-01T13:52:22Z",
    "name": "cronwatch",
    "note": "this sweep is running inside it",
    "overdue": false,
@@ -196,10 +191,10 @@
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-30T20:08:27Z",
+   "last_scheduled_run_utc": "2026-10-01T10:18:53Z",
    "name": "tocsin-ztf",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -220,18 +215,24 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-01T13:52:55Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T08:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T13:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.6,
+   "hours_since_last_run": 5.01,
    "last_scheduled_run_utc": "2026-10-01T08:52:10Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 5.01 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-10-01T13:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "silence_hours": 5.01,
+   "silent_since_utc": "2026-10-01T08:52:10Z",
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

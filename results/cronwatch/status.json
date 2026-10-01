@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-01T21:49:30Z",
+ "checked_at_utc": "2026-10-01T22:54:17Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -12,7 +12,7 @@
   "workflow": "ci.yml"
  },
  "n_dispatched": 0,
- "n_overdue": 0,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -39,14 +39,19 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T21:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T22:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.62,
+   "hours_since_last_run": 4.0,
    "last_scheduled_run_utc": "2026-10-01T18:54:12Z",
+   "missed_by": "silence",
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 4.00 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-10-01T22:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "silence_hours": 4.0,
+   "silent_since_utc": "2026-10-01T18:54:12Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -59,7 +64,7 @@
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-01T13:52:22Z",
+   "last_scheduled_run_utc": "2026-10-01T22:53:44Z",
    "name": "cronwatch",
    "note": "this sweep is running inside it",
    "overdue": false,
@@ -219,14 +224,14 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T21:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T22:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-01T21:48:03Z",
    "name": "watchdog",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "watchdog.yml"
   }
  ]

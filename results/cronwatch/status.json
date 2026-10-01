@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-01T13:53:50Z",
+ "checked_at_utc": "2026-10-01T16:25:18Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -35,18 +35,24 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-01T16:25:18Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T13:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T16:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.14,
+   "hours_since_last_run": 3.19,
    "last_scheduled_run_utc": "2026-10-01T13:14:03Z",
+   "missed_by": "silence",
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 3.19 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-10-01T16:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "silence_hours": 3.19,
+   "silent_since_utc": "2026-10-01T13:14:03Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -66,19 +72,19 @@
    "workflow": "cronwatch.yml"
   },
   {
-   "cadence_hours": 744.0,
+   "cadence_hours": 720.0,
    "cron_matched": "20 16 1 * *",
    "crons": [
     "20 16 1 * *"
    ],
-   "expected_last_fire_utc": "2026-09-01T16:20:00Z",
+   "expected_last_fire_utc": "2026-10-01T16:20:00Z",
    "grace_hours": 12.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-09-01T19:24:08Z",
    "name": "loom-calibrate",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "loom-calibrate.yml"
   },
   {
@@ -181,19 +187,19 @@
   },
   {
    "cadence_hours": 24.0,
-   "cron_matched": "25 3 * * *",
+   "cron_matched": "25 15 * * *",
    "crons": [
     "25 15 * * *",
     "25 3 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T03:25:00Z",
+   "expected_last_fire_utc": "2026-10-01T15:25:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-01T10:18:53Z",
    "name": "tocsin-ztf",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -202,14 +208,14 @@
    "crons": [
     "10 14 * * *"
    ],
-   "expected_last_fire_utc": "2026-09-30T14:10:00Z",
+   "expected_last_fire_utc": "2026-10-01T14:10:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-09-30T19:06:56Z",
    "name": "tocsin",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin.yml"
   },
   {
@@ -218,11 +224,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T13:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T16:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-01T08:52:10Z",
+   "last_scheduled_run_utc": "2026-10-01T16:24:33Z",
    "name": "watchdog",
    "note": "this sweep is running inside it",
    "overdue": false,

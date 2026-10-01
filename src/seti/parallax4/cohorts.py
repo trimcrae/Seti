@@ -155,6 +155,9 @@ def load_cohort(out: Path, *, n_shards_expected: int | None = None,
             "legacy_csv_provenance": ("unbound bytes; record counts and CDN-file lineage only"
                                       if any("artifact_schema" not in r for r in records)
                                       else "all selected output bytes bound by manifests"),
+            "legacy_pixel_completeness": ("unresolved beyond transit/histogram lower bounds"
+                                          if any("n_pixel_transits" not in r["counts"] for r in records)
+                                          else "checked against exact n_pixel_transits"),
             "unresolved_identity_fields": [key for key in ("run_id", "git_sha")
                                             if first.get(key) in ("local", "unknown")]}
 
@@ -186,5 +189,11 @@ def read_tables(out: Path, cohort: dict, prefix: str, *, required: list[str],
                 values = pd.to_numeric(frame[key], errors="coerce").to_numpy(float)
                 if not np.isfinite(values).all() or (values < 0).any() or (values != np.floor(values)).any():
                     raise CohortError(f"{path.name}: invalid {key}")
+            total = int(frame["n"].sum())
+            exact = record["counts"].get("n_pixel_transits")
+            lower = max(record["counts"].get("n_transits_ok_g", 0),
+                        float(np.asarray(record["hist_transits"]).sum()))
+            if (exact is not None and total != exact) or total < lower:
+                raise CohortError(f"{path.name}: pixel transit total disagrees with record")
         frames.append(frame)
     return frames

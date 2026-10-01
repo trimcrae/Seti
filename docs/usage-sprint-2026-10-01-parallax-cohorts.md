@@ -16,6 +16,12 @@ writes. Incoherent or corrupt input raises CohortError and preserves existing
 reduce.json and events_AB.csv. Missing shards and partial work remain usable
 with existing DEGRADED bookkeeping. Missing legacy pixel tables disable the
 local veto; partial pixel denominators cannot be combined with all event rows.
+New sweeps count all pixel-denominator transits independently and require exact
+CSV-total agreement. Legacy records only supply searched-source transit counts
+and in-grid histograms; these are lower bounds, not equal totals (unsearched
+sources and out-of-grid transits remain legitimate). Legacy pixel totals below
+either bound fail closed; incomplete tables above both bounds remain unprovable
+without an original manifest.
 
 Final sweep records now store SHA256 manifests for all four companion CSVs
 (including absent-file markers). Checkpoints and historic artifacts lack these
@@ -36,9 +42,12 @@ Executable offline command:
 `python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py -q -p no:cacheprovider`.
 
 A dedicated read-only PARALLAX4 offline workflow checks changed code and the
-existing science suite plus new cohort/workflow regressions. Exact final code
-SHA, independent review and observed Actions receipts will be added after
-execution; no result is asserted here before the runner reports it.
+existing science suite plus new cohort/workflow regressions. First implementation `b77989d7b977da38f3ed48a43dd96d6aed76e193` passed the
+[dedicated offline check](https://github.com/trimcrae/Seti/actions/runs/36937276729)
+(lint and PARALLAX4 tests). Independent review identified a missing-count legacy
+pixel-coverage gap; the follow-up conservatively requires coverage and separates
+all-transit totals from detector searched-source counts. Final-head receipts
+remain pending until the follow-up runner reports them.
 
 ## Next task
 

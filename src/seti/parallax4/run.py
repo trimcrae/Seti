@@ -459,7 +459,10 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1, max
     h_grey = np.asarray(prog.get("hist_grey_episodes") or np.zeros(nb), dtype=float)
     h_all = np.asarray(prog.get("hist_all_episodes") or np.zeros(nb), dtype=float)
     counts = dict(prog.get("counts") or {"n_sources": 0, "n_searched": 0, "n_too_few": 0,
-                                         "n_transits_ok_g": 0, "n_events": 0, "n_AB": 0})
+                                         "n_transits_ok_g": 0, "n_events": 0, "n_AB": 0,
+                                         "n_pixel_transits": 0})
+    if not done:
+        counts.setdefault("n_pixel_transits", 0)
     per_file = list(prog.get("files") or [])
     errors = list(prog.get("errors") or [])
     t0 = _time.monotonic()
@@ -493,6 +496,8 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1, max
         # the local veto's denominator: usable transits per (sky pixel, 0.1 d)
         pe = pixel_epoch_counts(ph["source_id"].to_numpy(np.int64)[okt], ph["t"].to_numpy(float)[okt])
         pe.to_csv(pix_path, mode="a", header=not pix_path.exists(), index=False)
+        if "n_pixel_transits" in counts:
+            counts["n_pixel_transits"] += int(okt.sum())
         ev, cnt = G.detect_frame(ph, gcfg)
         for k in ("n_sources", "n_searched", "n_too_few", "n_transits_ok_g"):
             counts[k] = counts.get(k, 0) + int(cnt[k])
@@ -589,7 +594,9 @@ def _pixel_epochs(out: Path, cohort: dict) -> pd.DataFrame | None:
     frames = H.read_tables(out, cohort, "pixel_epochs", required=["hp", "tb", "n"])
     # Legacy artifacts predate this denominator. Never use a partial pixel
     # denominator with the full event numerator.
-    needed = [r for r in cohort["records"] if r["counts"].get("n_transits_ok_g", 0)]
+    needed = [r for r in cohort["records"] if r["done"] or r["counts"]["n_events"]
+              or r["counts"].get("n_pixel_transits", 0) or r["counts"].get("n_transits_ok_g", 0)
+              or np.asarray(r["hist_transits"], float).sum()]
     if not frames or any(not (out / f"pixel_epochs_{r['_tag']}.csv").exists() for r in needed):
         return None
     df = pd.concat(frames, ignore_index=True)
@@ -1181,8 +1188,8 @@ def run(stage: str = "all", *, out_dir=None, shard: int = 0, n_shards: int = 1, 
         elif s == "sweep":
             rep = stage_sweep(conf, out, shard=shard, n_shards=n_shards, max_files=max_files, force=force)
         elif s == "reduce":
-            rep = stage_reduce(conf, out, n_shards_expected=reduce_shards if reduce_shards is not None else (n_shards if n_shards > 1 else None),
-                               run_id_expected=source_run_id)
+            expected = reduce_shards if reduce_shards is not None else (n_shards if n_shards > 1 else None)
+            rep = stage_reduce(conf, out, n_shards_expected=expected, run_id_expected=source_run_id)
             if rep.get("verdict") in ("NO_SHARD_OUTPUTS", "REFUSED_CONTROLS_NOT_PASSED"):
                 break
         elif s == "vet":

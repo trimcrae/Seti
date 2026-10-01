@@ -268,3 +268,38 @@ def test_workflow_binds_source_run_and_commits_only_success():
     assert 'PARALLAX_SOURCE_RUN' in reduce["env"]
     commit = next(step for step in steps if step.get("name") == "Commit results")
     assert commit["if"] == "success()"
+
+
+def test_unknown_legacy_transit_count_cannot_hide_missing_pixel_table(tmp_path):
+    _shard(tmp_path)
+    path, record = _shard(tmp_path, index=1, pixel=False)
+    del record["counts"]["n_transits_ok_g"]
+    _save(path, record)
+    rep = R.stage_reduce({}, tmp_path, n_shards_expected=2)
+    assert rep["local_veto"].startswith("NOT_RUN")
+
+
+def test_truncated_legacy_pixel_table_fails_before_overwrite(tmp_path):
+    _shard(tmp_path)
+    pd.DataFrame({"hp": [1], "tb": [17000], "n": [50]}).to_csv(
+        tmp_path / "pixel_epochs_s0of2.csv", index=False)
+    _preserved(tmp_path, lambda: R.stage_reduce({}, tmp_path, n_shards_expected=2),
+               "pixel transit total")
+
+
+def test_legacy_pixels_can_include_unsearched_sources_and_outside_grid_transits(tmp_path):
+    path, record = _shard(tmp_path)
+    record["counts"]["n_transits_ok_g"] = 70
+    _save(path, record)
+    pd.DataFrame({"hp": [1, 1], "tb": [17000, 29000], "n": [100, 10]}).to_csv(
+        tmp_path / "pixel_epochs_s0of2.csv", index=False)
+    rep = R.stage_reduce({}, tmp_path, n_shards_expected=2)
+    assert rep["local_veto"] == "RUN"
+
+
+def test_new_exact_pixel_total_catches_loss_even_above_legacy_lower_bound(tmp_path):
+    path, record = _shard(tmp_path)
+    record["counts"]["n_pixel_transits"] = 110
+    _save(path, record)
+    _preserved(tmp_path, lambda: R.stage_reduce({}, tmp_path, n_shards_expected=2),
+               "pixel transit total")

@@ -42,15 +42,22 @@ stages; workflow commit-back requires success.
 Executable offline command:
 `python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py -q -p no:cacheprovider`.
 
-A dedicated read-only PARALLAX4 offline workflow checks changed code and the
-existing science suite plus new cohort/workflow regressions. First implementation `b77989d7b977da38f3ed48a43dd96d6aed76e193` passed the
-[dedicated offline check](https://github.com/trimcrae/Seti/actions/runs/36937276729)
-(lint and PARALLAX4 tests). Independent review identified a missing-count legacy
-pixel-coverage gap and malformed-error metadata that could raise after an
-aggregate write. Follow-ups require conservative pixel coverage, separate
-all-transit totals from detector searched-source counts, validate error-list
-metadata and finish report computation before aggregate writes. Final-head receipts
-remain pending until the follow-up runner reports them.
+Final source code: `5fa30f2e2536bf06fcae131189ea002fef0fab62`.
+Independent review by `/root/review_research` found no remaining scoped blocker
+after the pixel-coverage and error-metadata repairs.
+
+Observed [Actions run 36937937271](https://github.com/trimcrae/Seti/actions/runs/36937937271)
+at that exact source SHA: success; job `110622474723` passed lint
+(`All checks passed!`) and the complete offline PARALLAX4 suite. The quiet
+pytest log contains 72 + 49 = **121 passing cases** and no skip/fail markers.
+The independent reviewer also read these runner logs; no local Python runtime
+or unseen execution is claimed.
+
+This receipt update changes documentation only. Final head and its focused/full
+CI receipts are tracked in [PR #23](https://github.com/trimcrae/Seti/pull/23);
+main integration is delegated to the SETI coordinator after checks settle.
+Legacy CSV byte provenance and pixel completeness remain explicitly unresolved
+where old metadata cannot prove them.
 
 ## Next task
 

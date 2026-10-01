@@ -409,10 +409,12 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
         if silence is not None:
             rec["silence_hours"] = round(silence.total_seconds() / 3600.0, 2)
             rec["silent_since_utc"] = _iso(since)
-        # Preserve the alert layer's two severities of scheduler silence: an
-        # older slot discovered behind a fresh one is a silence miss, so short
-        # hourly gaps are still re-fired without sending an email every hour.
-        rec["missed_by"] = "grace" if missed == expected else "silence"
+        # Classify by the MISSED slot's cadence, not whether a fresh slot has
+        # arrived.  Otherwise one slow dropped slot changes from a slot-keyed
+        # alert to an outage-keyed alert and notifies twice.  Only cadences at
+        # least as fast as their grace need the silence identity.
+        rec["missed_by"] = ("silence" if missed_cad is not None
+                            and missed_cad <= missed_grace else "grace")
         if rec["missed_by"] == "silence":
             rec["note"] = (
                 f"{wf.name} has not run on its schedule for "

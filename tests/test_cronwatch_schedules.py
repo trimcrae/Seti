@@ -179,7 +179,7 @@ def test_slot_alerts_identify_the_mature_miss_with_legacy_fallback(tmp_path):
     assert scheduler_alerts(tmp_path)[0].key == "cron:screen.yml:2026-10-02T15:25:00Z"
 
 
-def test_silence_alert_identity_is_stable_across_a_fresh_union_slot(tmp_path):
+def test_slot_alert_identity_is_stable_across_a_fresh_union_slot(tmp_path):
     from seti.alerts import check
 
     directory = tmp_path / "results" / "cronwatch"
@@ -189,9 +189,8 @@ def test_silence_alert_identity_is_stable_across_a_fresh_union_slot(tmp_path):
     last = utc(1, 3, 30)
     before = assess(crons, utc(2, 14), last)
     after = assess(crons, utc(2, 15, 26), last)
-    # The slot-clock alert has already been sent before the fresh slot.  This
-    # test isolates the silence-key contract, which is keyed by the last run.
-    before["missed_by"] = "silence"
+    assert before["missed_by"] == after["missed_by"] == "grace"
+    assert before["missed_fire_utc"] == after["missed_fire_utc"]
     path.write_text(json.dumps({"workflows": [before]}))
     first = check(tmp_path, now=utc(2, 14))
     assert first["n_new"] == 1

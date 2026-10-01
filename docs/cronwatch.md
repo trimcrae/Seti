@@ -89,7 +89,9 @@ latest promised slot. A miss additionally carries `missed_fire_utc`,
 `missed_cron`, `missed_cadence_hours`, `missed_grace_hours`, and
 `missed_hours_late`, identifying the slot that actually aged out. Catch-up
 deduplication uses that missed slot, so another fresh firing cannot re-dispatch
-the same earlier miss. Older state records remain readable.
+the same earlier miss. Slow-slot alerts retain that same slot key across the
+rollover; cadences no longer than their grace retain the hourly outage key and
+quiet-period behavior. Older state records remain readable.
 
 The offline regressions in `tests/test_cronwatch_schedules.py` cover the real
 TOCSIN_ZTF declaration, equal and irregular spacing, overlaps, grace boundaries,

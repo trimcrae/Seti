@@ -26,7 +26,6 @@ CLI: ``seti parallax4 --stage {probe,controls,sweep,reduce,vet,dr4,watchlist,sum
 from __future__ import annotations
 
 import argparse
-import glob
 import json
 import os
 import subprocess
@@ -40,6 +39,7 @@ import numpy as np
 import pandas as pd
 
 from . import acquire as acq
+from . import cohorts as H
 from . import controls as C
 from . import epochs as E
 from . import greydip as G
@@ -525,6 +525,7 @@ def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1, max
               f"src={cnt['n_searched']} ev={len(ev)} {per_file[-1]['seconds']}s", flush=True)
     rep = _sweep_record(shard, n_shards, mine, done, counts, per_file, errors, h_tr, h_grey, h_all,
                         edges, stopped_early)
+    rep.update(artifact_schema=1, output_sha256=H.output_manifest(out, tag))
     _write(prog_path, rep)
     print(f"[parallax4] sweep {tag}: {rep['verdict']}")
     return rep
@@ -567,18 +568,11 @@ def hp6_of(source_id) -> np.ndarray:
     return (np.asarray(source_id, dtype=np.int64) >> 47).astype(np.int64)
 
 
-def _all_event_times(out: Path, n_shards: int | None) -> pd.DataFrame:
-    files = sorted(glob.glob(str(out / "events_s*of*.csv")))
-    if n_shards:
-        files = [f for f in files if f.endswith(f"of{int(n_shards)}.csv")]
-    frames = []
-    for f in files:
-        try:
-            frames.append(pd.read_csv(f, usecols=["source_id", "t_peak"]))
-        except Exception:  # noqa: BLE001
-            continue
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["source_id", "t_peak"])
-
+def _all_event_times(out: Path, cohort: dict) -> pd.DataFrame:
+    frames = H.read_tables(out, cohort, "events", required=["source_id", "t_peak", "file"],
+                           count_key="n_events", usecols=["source_id", "t_peak", "file"])
+    return (pd.concat(frames, ignore_index=True).drop(columns="file") if frames
+            else pd.DataFrame(columns=["source_id", "t_peak"]))
 
 PIX_DT = 0.1   # d, the pixel-epoch bin
 
@@ -591,15 +585,15 @@ def pixel_epoch_counts(source_id: np.ndarray, t: np.ndarray) -> pd.DataFrame:
     return df.groupby(["hp", "tb"]).size().rename("n").reset_index()
 
 
-def _pixel_epochs(out: Path, n_shards: int | None) -> pd.DataFrame | None:
-    files = sorted(glob.glob(str(out / "pixel_epochs_s*of*.csv")))
-    if n_shards:
-        files = [f for f in files if f.endswith(f"of{int(n_shards)}.csv")]
-    if not files:
+def _pixel_epochs(out: Path, cohort: dict) -> pd.DataFrame | None:
+    frames = H.read_tables(out, cohort, "pixel_epochs", required=["hp", "tb", "n"])
+    # Legacy artifacts predate this denominator. Never use a partial pixel
+    # denominator with the full event numerator.
+    needed = [r for r in cohort["records"] if r["counts"].get("n_transits_ok_g", 0)]
+    if not frames or any(not (out / f"pixel_epochs_{r['_tag']}.csv").exists() for r in needed):
         return None
-    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    df = pd.concat(frames, ignore_index=True)
     return df.groupby(["hp", "tb"])["n"].sum().reset_index()
-
 
 def local_coincidence(ev: pd.DataFrame, allev: pd.DataFrame, pix: pd.DataFrame, *,
                       dt: float = 0.1) -> dict:
@@ -649,19 +643,21 @@ def local_coincidence(ev: pd.DataFrame, allev: pd.DataFrame, pix: pd.DataFrame, 
     return {"n": n_out, "mu": mu_out, "p": p_out}
 
 
-def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None) -> dict:
+def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None,
+                 run_id_expected: str | None = None) -> dict:
     rc = conf.get("reduce") or {}
     rep: dict = {"stage": "reduce", **_provenance()}
-    recs = [_read(Path(f)) for f in sorted(glob.glob(str(out / "sweep_s*of*.json")))]
-    recs = [r for r in recs if r.get("stage") == "sweep"]
-    if n_shards_expected:
-        recs = [r for r in recs if int(r.get("n_shards", 0)) == int(n_shards_expected)]
-    refused = [r for r in recs if r.get("verdict") == "REFUSED_CONTROLS_NOT_PASSED"]
-    recs = [r for r in recs if r.get("verdict") != "REFUSED_CONTROLS_NOT_PASSED"]
+    cohort = H.load_cohort(out, n_shards_expected=n_shards_expected, run_id_expected=run_id_expected)
+    recs, refused = cohort["records"], cohort["refused"]
+    rep["input_cohort"] = {k: v for k, v in cohort.items() if k not in ("records", "refused")}
+    rep["input_cohort"]["shards"] = [r["shard"] for r in recs]
     if not recs:
+        if run_id_expected is not None:
+            raise H.CohortError("no accepted sweep records for the required source run")
         rep.update(verdict="NO_SHARD_OUTPUTS" if not refused else "REFUSED_CONTROLS_NOT_PASSED",
                    n_shards_found=0)
-        _write(out / "reduce.json", rep)
+        if not (out / "reduce.json").exists():
+            _write(out / "reduce.json", rep)
         print(f"[parallax4] reduce: {rep['verdict']}")
         return rep
     counts: dict = {}
@@ -681,11 +677,19 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None)
     rep["epoch_clusters"] = [{"t_lo": float(edges[i]), "t_hi": float(edges[i + 1]),
                               "n_transits": int(h_tr[i]), "n_grey_episodes": int(h_grey[i]),
                               "n_all_episodes": int(h_all[i])} for i in np.nonzero(flagged)[0]]
-    files = sorted(glob.glob(str(out / "eventsAB_s*of*.csv")))
-    if n_shards_expected:
-        files = [f for f in files if f.endswith(f"of{int(n_shards_expected)}.csv")]
-    frames = [pd.read_csv(f) for f in files if os.path.getsize(f) > 0]
+    # Validate every companion before writing either aggregate output.
+    frames = H.read_tables(out, cohort, "eventsAB", required=EVENT_COLS, count_key="n_AB")
     ab = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=EVENT_COLS)
+    allev = _all_event_times(out, cohort)
+    pix = _pixel_epochs(out, cohort)
+    inj_frames = H.read_tables(out, cohort, "injections",
+                              required=["file", "kind", "snr", "pre_existing_event", "recovered",
+                                        "tier", "grey_class"])
+    if inj_frames:
+        inj = pd.concat(inj_frames, ignore_index=True)
+        rep["completeness"] = C.photometric_gate(inj.to_dict("records"))
+        rep["completeness"].pop("gate", None)
+        rep["completeness"].pop("failures", None)
     n_before = len(ab)
     ab = ab.drop_duplicates(["source_id", "kind", "t_peak"]).reset_index(drop=True)
     if len(ab):
@@ -694,8 +698,6 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None)
         # the LOCAL form of the same veto: other sources' qualifying episodes
         # in the same ~0.9-deg sky pixel within +-0.1 d (one scan passes a
         # pixel in seconds; an instrument event there hits its neighbours)
-        allev = _all_event_times(out, n_shards_expected)
-        pix = _pixel_epochs(out, n_shards_expected)
         rep["n_all_events_for_local_veto"] = int(len(allev))
         rep["local_veto"] = "RUN" if (len(allev) and pix is not None) else "NOT_RUN(no pixel-epoch counts)"
         if len(allev) and pix is not None:
@@ -736,13 +738,6 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None)
                n_tier_A_after_epoch=int(len(a)), n_tier_B_after_epoch=int(len(b)),
                n_sources_tier_A_after_epoch=int(a["source_id"].nunique()) if len(a) else 0,
                degraded=degraded)
-    # completeness at scale from the in-sweep injections
-    inj_files = sorted(glob.glob(str(out / "injections_s*of*.csv")))
-    if inj_files:
-        inj = pd.concat([pd.read_csv(f) for f in inj_files if os.path.getsize(f) > 0], ignore_index=True)
-        rep["completeness"] = C.photometric_gate(inj.to_dict("records"))
-        rep["completeness"].pop("gate", None)
-        rep["completeness"].pop("failures", None)
     rep["verdict"] = (f"DEGRADED ({'; '.join(degraded)}); " if degraded else "") + \
         f"REDUCED: {len(a)} tier-A events on {rep['n_sources_tier_A_after_epoch']} sources"
     _write(out / "reduce.json", rep)
@@ -1171,7 +1166,8 @@ def stage_summary(conf: dict, out: Path) -> dict:
 # entry points
 # ---------------------------------------------------------------------------
 def run(stage: str = "all", *, out_dir=None, shard: int = 0, n_shards: int = 1, max_files: int = 0,
-        conf: dict | None = None, force: bool = False) -> dict:
+        conf: dict | None = None, force: bool = False, source_run_id: str | None = None,
+        reduce_shards: int | None = None) -> dict:
     conf = conf if conf is not None else load_config()
     out = Path(out_dir) if out_dir else OUT
     out.mkdir(parents=True, exist_ok=True)
@@ -1185,7 +1181,10 @@ def run(stage: str = "all", *, out_dir=None, shard: int = 0, n_shards: int = 1, 
         elif s == "sweep":
             rep = stage_sweep(conf, out, shard=shard, n_shards=n_shards, max_files=max_files, force=force)
         elif s == "reduce":
-            rep = stage_reduce(conf, out, n_shards_expected=n_shards if n_shards > 1 else None)
+            rep = stage_reduce(conf, out, n_shards_expected=reduce_shards if reduce_shards is not None else (n_shards if n_shards > 1 else None),
+                               run_id_expected=source_run_id)
+            if rep.get("verdict") in ("NO_SHARD_OUTPUTS", "REFUSED_CONTROLS_NOT_PASSED"):
+                break
         elif s == "vet":
             rep = stage_vet(conf, out)
         elif s == "watchlist":
@@ -1205,6 +1204,7 @@ def add_arguments(p) -> None:
     p.add_argument("--stage", default="all", help="|".join(STAGES) + "|all, or a comma list")
     p.add_argument("--shard", default="0/1", help="i/n (sweep)")
     p.add_argument("--shards", type=int, default=0, help="planned shard count (reduce)")
+    p.add_argument("--source-run-id", default="", help="required input sweep run ID (reduce)")
     p.add_argument("--max-files", type=int, default=0, help="cap on CDN files per sweep shard")
     p.add_argument("--out-dir", default="", help="results directory (default results/parallax4)")
     p.add_argument("--config", default="", help="alternative config yaml")
@@ -1216,10 +1216,11 @@ def run_from_args(a, _cfg=None) -> int:
     n_shards = a.shards or n
     conf = load_config(a.config or None)
     rep = run(a.stage, out_dir=a.out_dir or None, shard=shard, n_shards=n_shards,
-              max_files=a.max_files, conf=conf, force=a.force)
+              max_files=a.max_files, conf=conf, force=a.force, source_run_id=a.source_run_id or None,
+              reduce_shards=a.shards or None)
     if isinstance(rep, dict) and rep.get("verdict"):
         print(f"[parallax4] verdict: {rep['verdict']}")
-    return 0
+    return 1 if rep.get("verdict") in ("NO_SHARD_OUTPUTS", "REFUSED_CONTROLS_NOT_PASSED") else 0
 
 
 def main(argv=None):

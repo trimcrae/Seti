@@ -60,14 +60,33 @@ jobs:
     outputs:
       matrix: ${{ steps.mk.outputs.matrix }}
       n_shards: ${{ steps.mk.outputs.n_shards }}
+      source_run_id: ${{ steps.mk.outputs.source_run_id }}
+      reduce_inputs: ${{ steps.mk.outputs.reduce_inputs }}
     steps:
       - id: mk
+        env:
+          PARALLAX_STAGE: ${{ github.event.inputs.stage || 'all' }}
+          PARALLAX_SHARDS: ${{ github.event.inputs.shards || '24' }}
+          PARALLAX_SOURCE_RUN: ${{ github.event.inputs.reduce_only_run_id }}
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
-          n = int("${{ github.event.inputs.shards || '24' }}" or 24)
+          import os
+          stage = os.environ["PARALLAX_STAGE"]
+          source = os.environ["PARALLAX_SOURCE_RUN"]
+          n = int(os.environ["PARALLAX_SHARDS"])
+          if not 1 <= n <= 256:
+              raise SystemExit("shards must be between 1 and 256")
+          if stage == "reduce" and not source:
+              raise SystemExit("stage=reduce requires reduce_only_run_id; checkout results are preserved")
+          if source and (not source.isascii() or not source.isdigit() or int(source) < 1):
+              raise SystemExit("reduce_only_run_id must be a positive GitHub run ID")
+          if source and stage not in ("all", "sweep", "reduce"):
+              raise SystemExit("reduce_only_run_id applies only to all, sweep or reduce")
           print("matrix=" + json.dumps({"include": [{"shard": i} for i in range(n)]}))
           print(f"n_shards={n}")
+          print("source_run_id=" + (source or os.environ["GITHUB_RUN_ID"]))
+          print("reduce_inputs=" + str(stage in ("all", "sweep", "reduce")).lower())
           PY
 
   probe:
@@ -87,7 +106,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]" pypdf
       - name: Offline gate (reader on the real DR4 prerelease, detector, controls logic)
-        run: python -m pytest tests/test_parallax4.py -q -p no:cacheprovider
+        run: python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py -q -p no:cacheprovider
       - name: Probe (DR4 status, CDN list + real header, prerelease + draft data model, SSO schema)
         run: |
           python -m seti.parallax4.run --stage probe
@@ -252,6 +271,7 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
       - name: Purge checkout-inherited shard outputs
+        if: ${{ needs.plan.outputs.reduce_inputs == 'true' }}
         run: |
           rm -f results/parallax4/sweep_s*of*.json results/parallax4/events_s*of*.csv
           rm -f results/parallax4/eventsAB_s*of*.csv results/parallax4/injections_s*of*.csv
@@ -285,13 +305,20 @@ jobs:
           echo "sweep records found: $N of ${{ needs.plan.outputs.n_shards }}"
           ls -la results/parallax4/ | head -80
       - name: Reduce, vet, watchlist, DR4 (inert before release), summary
+        env:
+          PARALLAX_SOURCE_RUN: ${{ needs.plan.outputs.source_run_id }}
+          PARALLAX_REDUCE_INPUTS: ${{ needs.plan.outputs.reduce_inputs }}
         run: |
           STAGES="reduce,vet,watchlist,dr4,summary"
           case "${{ github.event.inputs.stage }}" in
             dr4) STAGES="watchlist,dr4,summary" ;;
             watchlist) STAGES="watchlist,summary" ;;
           esac
-          python -m seti.parallax4.run --stage "$STAGES" --shards ${{ needs.plan.outputs.n_shards }}
+          SOURCE_ARGS=()
+          if [ "$PARALLAX_REDUCE_INPUTS" = "true" ]; then
+            SOURCE_ARGS=(--source-run-id "$PARALLAX_SOURCE_RUN")
+          fi
+          python -m seti.parallax4.run --stage "$STAGES" --shards ${{ needs.plan.outputs.n_shards }} "${SOURCE_ARGS[@]}"
           python - <<'PY'
           import json, os
           for f in ("reduce.json", "vet.json", "watchlist.json", "dr4_status.json", "summary.json"):
@@ -322,7 +349,7 @@ jobs:
             results/parallax4/dr4_watchlist.csv
           if-no-files-found: warn
       - name: Commit results
-        if: always()
+        if: success()
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |

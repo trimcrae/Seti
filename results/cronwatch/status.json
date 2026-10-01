@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-01T06:32:55Z",
+ "checked_at_utc": "2026-10-01T08:52:50Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -39,7 +39,7 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T06:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T08:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
@@ -51,18 +51,24 @@
   },
   {
    "cadence_hours": 6.0,
+   "catchup_dispatched_utc": "2026-10-01T08:52:50Z",
    "cron_matched": "43 */6 * * *",
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T00:43:00Z",
+   "expected_last_fire_utc": "2026-10-01T06:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 2.16,
+   "hours_since_last_run": 2.36,
    "last_scheduled_run_utc": "2026-10-01T06:31:27Z",
+   "missed_by": "grace",
    "name": "cronwatch",
-   "overdue": false,
-   "status": "OK",
+   "note": "cronwatch should have fired at 2026-10-01T06:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-10-01T06:31:27Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "silence_hours": 2.36,
+   "silent_since_utc": "2026-10-01T06:31:27Z",
+   "status": "MISSED",
    "workflow": "cronwatch.yml"
   },
   {
@@ -218,11 +224,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T06:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T08:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-01T02:07:08Z",
+   "last_scheduled_run_utc": "2026-10-01T08:52:10Z",
    "name": "watchdog",
    "note": "this sweep is running inside it",
    "overdue": false,

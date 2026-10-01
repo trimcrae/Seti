@@ -3,7 +3,8 @@
 Branch: `codex/usage-sprint-2026-10-01-parallax-cohorts`.
 Base: `5b62e3bbf2db3bfca944970c1b59213f7db4ea17`.
 Scope: reducer/input integrity, offline tests and PARALLAX4 workflows.
-No science runs, result rewrites, threshold changes or main merges.
+No science runs, result rewrites or threshold changes. Main integration is
+coordinated separately after independent review and passing checks.
 
 Confirmed defects: injection tables pooled other shard widths; equal-length
 histograms pooled different time grids/runs/revisions; reduce-only without a
@@ -14,7 +15,7 @@ uniform time_edges, dimensions, finite nonnegative histograms, run/revision,
 processed-file uniqueness, event counts and CSV file lineage before aggregate
 writes. Incoherent or corrupt input raises CohortError and preserves existing
 reduce.json and events_AB.csv. Missing shards and partial work remain usable
-with existing DEGRADED bookkeeping. Missing legacy pixel tables disable the
+with DEGRADED bookkeeping, including inferred widths when --shards is omitted. Missing legacy pixel tables disable the
 local veto; partial pixel denominators cannot be combined with all event rows.
 New sweeps count all pixel-denominator transits independently and require exact
 CSV-total agreement. Legacy records only supply searched-source transit counts

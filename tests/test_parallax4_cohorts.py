@@ -305,3 +305,11 @@ def test_new_exact_pixel_total_catches_loss_even_above_legacy_lower_bound(tmp_pa
     _save(path, record)
     _preserved(tmp_path, lambda: R.stage_reduce({}, tmp_path, n_shards_expected=2),
                "pixel transit total")
+
+
+def test_inferred_width_still_reports_missing_shards(tmp_path):
+    _shard(tmp_path)
+    rep = R.stage_reduce({}, tmp_path)
+    assert rep["n_shards_found"] == 1
+    assert rep["degraded"] == ["shards_missing:1/2"]
+    assert rep["verdict"].startswith("DEGRADED")

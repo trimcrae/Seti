@@ -730,8 +730,9 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None,
     done = sum(int(r.get("n_files_done", 0)) for r in recs)
     n_err = sum(len(r.get("errors") or []) for r in recs)
     degraded = []
-    if n_shards_expected and len(recs) < int(n_shards_expected):
-        degraded.append(f"shards_missing:{len(recs)}/{n_shards_expected}")
+    expected = n_shards_expected if n_shards_expected is not None else cohort["n_shards"]
+    if len(recs) < expected:
+        degraded.append(f"shards_missing:{len(recs)}/{expected}")
     if done < planned:
         degraded.append(f"files_incomplete:{done}/{planned}")
     if n_err:

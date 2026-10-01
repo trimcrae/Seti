@@ -68,6 +68,37 @@ two have to be told apart by something that knows each channel's cadence.
    GitHub exempts from the no-recursive-triggering rule, so the workflow token
    can genuinely start the run — a push made with the same token could not.
 
+
+### Several expressions are one workflow schedule
+
+Cadence is the gap between consecutive **distinct firings of the union** of all
+of a workflow's cron expressions. TOCSIN_ZTF's `25 3 * * *` and
+`25 15 * * *` therefore give 12 h cadence and 3 h grace. Treating the latest
+expression alone as a daily schedule incorrectly gave 24 h cadence and 6 h
+grace in the committed scheduler ledger. Duplicate or overlapping expressions
+do not create a zero-length interval.
+
+A new slot also cannot erase an older dropped one. If the latest slot is still
+inside grace, the sweep checks older unsatisfied slots against **their own**
+incoming interval and grace, retaining the actual-run drift guard. This matters
+for irregular schedules: daily 03:00 and 04:00 give a 23 h interval into 03:00
+and a 1 h interval into 04:00; they do not make the workflow hourly all day.
+
+`expected_last_fire_utc`, `cadence_hours`, and `grace_hours` still describe the
+latest promised slot. A miss additionally carries `missed_fire_utc`,
+`missed_cron`, `missed_cadence_hours`, `missed_grace_hours`, and
+`missed_hours_late`, identifying the slot that actually aged out. Catch-up
+deduplication uses that missed slot, so another fresh firing cannot re-dispatch
+the same earlier miss. Slow-slot alerts retain that same slot key across the
+rollover; cadences no longer than their grace retain the hourly outage key and
+quiet-period behavior. Older state records remain readable.
+
+The offline regressions in `tests/test_cronwatch_schedules.py` cover the real
+TOCSIN_ZTF declaration, equal and irregular spacing, overlaps, grace boundaries,
+schedule introduction, unreadable histories, and catch-up deduplication. Numeric
+cron steps also follow GitHub's documented expansion: `20/15` means
+minutes 20, 35, and 50, while plain `20` means only minute 20.
+
 ## What it refuses to do
 
 Each of these is a way this check could have become noise, and noise is how a

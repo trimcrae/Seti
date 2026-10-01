@@ -1114,6 +1114,10 @@ def scheduler_alerts(root: Path) -> list[Alert]:
         fired = wf.get("catchup_dispatched_utc")
         last = wf.get("last_scheduled_run_utc")
         silence = wf.get("silence_hours", wf.get("hours_since_last_run"))
+        missed_fire = wf.get("missed_fire_utc") or wf.get("expected_last_fire_utc")
+        missed_cron = wf.get("missed_cron") or wf.get("cron_matched")
+        missed_cadence = wf.get("missed_cadence_hours", wf.get("cadence_hours"))
+        missed_hours_late = wf.get("missed_hours_late", wf.get("hours_late"))
         if wf.get("missed_by") == "silence":
             if silence is None or float(silence) < SILENCE_ALERT_HOURS:
                 continue
@@ -1126,13 +1130,13 @@ def scheduler_alerts(root: Path) -> list[Alert]:
                     f"scheduled run was {last or 'never'}; its most recent slot "
                     f"was {wf.get('expected_last_fire_utc')}.")
         else:
-            key = f"cron:{wf.get('workflow')}:{wf.get('expected_last_fire_utc')}"
-            title = f"{name} did not fire at {wf.get('expected_last_fire_utc')}"
+            key = f"cron:{wf.get('workflow')}:{missed_fire}"
+            title = f"{name} did not fire at {missed_fire}"
             what = (f"GitHub's scheduler did not start `{wf.get('workflow')}` at "
-                    f"its scheduled firing of {wf.get('expected_last_fire_utc')} "
-                    f"(cron `{wf.get('cron_matched')}`, cadence "
-                    f"{wf.get('cadence_hours')} h), and it is now "
-                    f"{wf.get('hours_late')} h past that slot. Its last "
+                    f"its scheduled firing of {missed_fire} "
+                    f"(cron `{missed_cron}`, cadence "
+                    f"{missed_cadence} h), and it is now "
+                    f"{missed_hours_late} h past that slot. Its last "
                     f"scheduled run was {last or 'never'}.")
         out.append(Alert(
             key=key, severity="health", channel="cronwatch", title=title,
@@ -1153,6 +1157,8 @@ def scheduler_alerts(root: Path) -> list[Alert]:
             detail={k: wf.get(k) for k in (
                 "workflow", "cron_matched", "cadence_hours", "grace_hours",
                 "expected_last_fire_utc", "last_scheduled_run_utc", "hours_late",
+                "missed_fire_utc", "missed_cron", "missed_cadence_hours",
+                "missed_grace_hours", "missed_hours_late",
                 "missed_by", "silence_hours", "silent_since_utc",
                 "has_dispatch", "catchup_dispatched_utc", "catchup_error")}))
     return out

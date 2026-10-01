@@ -1,18 +1,18 @@
 {
- "checked_at_utc": "2026-10-01T02:07:45Z",
+ "checked_at_utc": "2026-10-01T06:32:06Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
-  "head_sha": "7f412fd1d92a5b240bb9d01a71b2b62d8f942791",
-  "run_id": 36793031300,
-  "run_started_at": "2026-09-30T23:49:05Z",
+  "head_sha": "f1ed6c38ec8e7cf44e795840d466e2cb6e8a6a6b",
+  "run_id": 36821915488,
+  "run_started_at": "2026-10-01T05:53:01Z",
   "run_status": "completed",
-  "run_url": "https://github.com/trimcrae/Seti/actions/runs/36793031300",
+  "run_url": "https://github.com/trimcrae/Seti/actions/runs/36821915488",
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -39,11 +39,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T01:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-30T23:49:05Z",
+   "last_scheduled_run_utc": "2026-10-01T05:53:01Z",
    "name": "ci",
    "overdue": false,
    "status": "WITHIN_GRACE",
@@ -59,10 +59,11 @@
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-30T22:36:19Z",
+   "last_scheduled_run_utc": "2026-10-01T06:31:27Z",
    "name": "cronwatch",
+   "note": "this sweep is running inside it",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -181,19 +182,19 @@
   },
   {
    "cadence_hours": 24.0,
-   "cron_matched": "25 15 * * *",
+   "cron_matched": "25 3 * * *",
    "crons": [
     "25 15 * * *",
     "25 3 * * *"
    ],
-   "expected_last_fire_utc": "2026-09-30T15:25:00Z",
+   "expected_last_fire_utc": "2026-10-01T03:25:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-09-30T20:08:27Z",
    "name": "tocsin-ztf",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -214,19 +215,24 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-01T06:32:06Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-01T01:17:00Z",
+   "expected_last_fire_utc": "2026-10-01T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.25,
+   "hours_since_last_run": 4.42,
    "last_scheduled_run_utc": "2026-10-01T02:07:08Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "note": "this sweep is running inside it",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 4.42 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-10-01T06:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "silence_hours": 4.42,
+   "silent_since_utc": "2026-10-01T02:07:08Z",
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

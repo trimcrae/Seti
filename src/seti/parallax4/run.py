@@ -724,7 +724,6 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None,
     # flagged ones included, 6 significant figures): tier B at catalogue scale
     # is tens of MB.  Every tier-A/B row stays in the per-shard artifacts
     # (eventsAB_s<i>of<n>.csv), and the counts are in reduce.json.
-    ab[ab["tier"] == "A"].to_csv(out / "events_AB.csv", index=False, float_format="%.6g")
     a = ab[(ab["tier"] == "A") & ~ab["epoch_cluster"].astype(bool)] if len(ab) else ab
     b = ab[(ab["tier"] == "B") & ~ab["epoch_cluster"].astype(bool)] if len(ab) else ab
     planned = sum(int(r.get("n_files_planned", 0)) for r in recs)
@@ -747,6 +746,7 @@ def stage_reduce(conf: dict, out: Path, *, n_shards_expected: int | None = None,
                degraded=degraded)
     rep["verdict"] = (f"DEGRADED ({'; '.join(degraded)}); " if degraded else "") + \
         f"REDUCED: {len(a)} tier-A events on {rep['n_sources_tier_A_after_epoch']} sources"
+    ab[ab["tier"] == "A"].to_csv(out / "events_AB.csv", index=False, float_format="%.6g")
     _write(out / "reduce.json", rep)
     print(f"[parallax4] reduce: {rep['verdict']}")
     return rep

@@ -97,6 +97,8 @@ def test_inferred_cohort_rejects_mixed_widths(tmp_path):
     ("hist_all_episodes", [-1, 0], "invalid hist_all_episodes"),
     ("shard", 0, "filename/metadata mismatch"),
     ("done", ["cdn-0.csv.gz"], "multiple shards"),
+    ("errors", True, "errors must be a list"),
+    ("errors", {"file": "broken"}, "errors must be a list"),
 ])
 def test_invalid_cohort_fails_before_overwriting(tmp_path, key, value, match):
     _shard(tmp_path)

@@ -103,6 +103,8 @@ def load_cohort(out: Path, *, n_shards_expected: int | None = None,
                 raise CohortError(f"{tag}: invalid {key}") from exc
             if hist.shape != (nb,) or not np.isfinite(hist).all() or (hist < 0).any():
                 raise CohortError(f"{tag}: invalid {key}; expected {nb} finite nonnegative bins")
+        if not isinstance(record.get("errors", []), list):
+            raise CohortError(f"{tag}: errors must be a list")
         counts = record.get("counts")
         if not isinstance(counts, dict) or not {"n_events", "n_AB"} <= counts.keys():
             raise CohortError(f"{tag}: missing event counts")

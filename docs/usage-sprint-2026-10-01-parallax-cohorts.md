@@ -45,8 +45,10 @@ A dedicated read-only PARALLAX4 offline workflow checks changed code and the
 existing science suite plus new cohort/workflow regressions. First implementation `b77989d7b977da38f3ed48a43dd96d6aed76e193` passed the
 [dedicated offline check](https://github.com/trimcrae/Seti/actions/runs/36937276729)
 (lint and PARALLAX4 tests). Independent review identified a missing-count legacy
-pixel-coverage gap; the follow-up conservatively requires coverage and separates
-all-transit totals from detector searched-source counts. Final-head receipts
+pixel-coverage gap and malformed-error metadata that could raise after an
+aggregate write. Follow-ups require conservative pixel coverage, separate
+all-transit totals from detector searched-source counts, validate error-list
+metadata and finish report computation before aggregate writes. Final-head receipts
 remain pending until the follow-up runner reports them.
 
 ## Next task

@@ -76,8 +76,33 @@ two concrete classifier-coherence gaps: conflicting outer astrometry and a forge
 success status bypassing query-radius refusal. Both are repaired with production
 regressions in the final source.
 
-Actual final scoped/full CI, exact source/blob bindings, independent review and
-normal main integration receipts will be recorded after they settle. Controls
+Reviewed source `3165be48ea08eacf52a1c6f81c060e5a486df658` passed actual
+[scoped CI 36957884330](https://github.com/trimcrae/Seti/actions/runs/36957884330),
+job `110684827234`: lint and **262 cases in 31.57s** (173 inherited, 89 new).
+Its PR checkout `13ae39881fb43365e3dbb80ebb9a3567be611487` and reviewed source
+share tree `c6a4ab29ecc91b88e2385212de44adb6e14db9a2`.
+
+Actual [full CI 36957880959](https://github.com/trimcrae/Seti/actions/runs/36957880959)
+completed successfully on that exact source: offline job `110684816411`
+passed lint, tests, sample reproduction and upload; paper job `110684816196`
+passed build/upload. Pytest reached 100% with the existing skips retained; no
+full-suite count is inferred from the suppressed summary. Independent reviewers
+checked the original transcript and exact source/tree. The root independently
+calculated its SHA256 `cccd25746a2ef3c71e8017ed76f22dd1492c225c53b60aa4912b48e900914e45`.
+
+[PR26](https://github.com/trimcrae/Seti/pull/26) was normally merged at
+`cb41d14477b099f665d7fac45c4cb18524188486`, preserving main
+`65fad7e900faa1a88204ae87948c8a8ec69e94d5` and tested source as parents.
+The merge has the identical tested tree, with zero source difference.
+The [machine-readable receipt](usage-sprint-2026-10-01-vsx-association-receipt.json)
+binds commits, jobs, commands, original log hashes and protected blobs.
+Original [baseline](usage-sprint-2026-10-01-vsx-association-baseline.log),
+[scoped](usage-sprint-2026-10-01-vsx-association-scoped.log),
+[full offline](usage-sprint-2026-10-01-vsx-association-full-offline.log) and
+[initial lint failure](usage-sprint-2026-10-01-vsx-association-initial-lint-failure.log)
+transcripts are preserved byte-for-byte in this documentation-only checkpoint.
+Automatic CI on its later main/documentation head is separate from completed
+exact-source proof and is reported separately. Controls
 cover the original unsafe neighbor, explicit caller-reviewed positive bindings,
 epoch shifts/RA wrap/poles, missing metadata, identifier namespace/precision,
 ambiguity/duplicates, offsets, truncation boundaries, status-forgery attempts and
@@ -85,8 +110,8 @@ stage propagation without additional acquisition. Existing ZTF identity/alias
 guards are retained; legacy VSX test fixtures now require explicit synthetic
 association evidence.
 
-Stop after one reviewed implementation, actual scoped/full success and normal
-main integration plus a small receipt handoff. No science acquisition, paid job,
+The finite implementation, independent review, actual scoped/full checks and
+normal integration are complete. The small receipt checkpoint adds only documentation. No science acquisition, paid job,
 local Python execution, empirical calibration or astronomical detection is
 claimed.
 

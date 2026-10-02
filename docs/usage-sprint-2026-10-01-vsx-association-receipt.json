@@ -1,0 +1,278 @@
+{
+  "schema": "seti-usage-sprint-validation-v1",
+  "repository": "trimcrae/Seti",
+  "ai_authored": true,
+  "branch": "codex/usage-sprint-2026-10-01-vsx-association",
+  "baseline_sha": "65fad7e900faa1a88204ae87948c8a8ec69e94d5",
+  "baseline_ci": {
+    "run_id": 36954001068,
+    "head_sha": "65fad7e900faa1a88204ae87948c8a8ec69e94d5",
+    "status": "success",
+    "observation": "Parent independently observed once before this bounded task; not repeated."
+  },
+  "tested_source_sha": "3165be48ea08eacf52a1c6f81c060e5a486df658",
+  "tested_source_tree": "c6a4ab29ecc91b88e2385212de44adb6e14db9a2",
+  "pull_request_url": "https://github.com/trimcrae/Seti/pull/26",
+  "baseline_witness": {
+    "run_id": 36956258823,
+    "job_id": 110679757271,
+    "source_sha": "9a5e9c1dff2f358597f4baee0a68b0224b77ce64",
+    "status": "success",
+    "production_path": "vsx_type query and classify_fate on synthetic native-catalogue rows",
+    "synthetic_neighbor_separation_arcsec": 9,
+    "old_fate": "KNOWN_ECLIPSING_BINARY(VSX:EA)",
+    "test_result": "174 passed in 51.11s",
+    "limitations": "Synthetic reproducible production-path defect; not an observed sky misclassification or empirical false-positive rate.",
+    "original_log_excerpt": "2026-10-02T02:36:24.4632020Z .................................BASELINE_VSX_WITNESS sep_arcsec=9.000000000 fate=KNOWN_ECLIPSING_BINARY(VSX:EA)"
+  },
+  "intermediate_repair": {
+    "source_sha": "66714e213742b1349cc27a7c81c70a95b0436ab6",
+    "scoped_run_id": 36957185019,
+    "scoped_job_id": 110682649242,
+    "scoped_result": "240 passed in 36.86s",
+    "full_run_id": 36957306967,
+    "offline_job_id": 110683033235,
+    "full_conclusion": "failure",
+    "failure": "Repair-induced Ruff I001 in modified tests/test_parallax4.py import block; not a baseline/environment failure.",
+    "repaired_in": "3165be48ea08eacf52a1c6f81c060e5a486df658",
+    "additional_review_fixes": [
+      "Bind present outer target astrometry to embedded target; missing outer fields remain unfilled.",
+      "Recompute production-query epoch, center and radius covering receipt tolerance; serialized success cannot bypass missing/coherently refused query evidence."
+    ]
+  },
+  "scoped": {
+    "run_id": 36957884330,
+    "job_id": 110684827234,
+    "event": "pull_request",
+    "head_sha": "3165be48ea08eacf52a1c6f81c060e5a486df658",
+    "checkout_sha": "13ae39881fb43365e3dbb80ebb9a3567be611487",
+    "tree_sha": "c6a4ab29ecc91b88e2385212de44adb6e14db9a2",
+    "status": "completed",
+    "conclusion": "success",
+    "python_version": "3.11.16",
+    "test_count": 262,
+    "new_test_count": 89,
+    "inherited_test_count": 173,
+    "test_result": "262 passed in 31.57s",
+    "lint_result": "All checks passed!",
+    "commands": [
+      "ruff check tests/test_parallax4.py src/seti/parallax4/cohorts.py src/seti/parallax4/run.py tests/test_parallax4_cohorts.py src/seti/parallax4/deepvet.py src/seti/parallax4/vsx_association.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py tests/test_parallax4_vsx_association.py",
+      "python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py tests/test_parallax4_vsx_association.py -o addopts=\"\" -q -p no:cacheprovider"
+    ],
+    "started_at": "2026-10-02T02:56:00Z",
+    "completed_at": "2026-10-02T02:57:34Z",
+    "independently_reviewed_by": "/root/apps_round3_review"
+  },
+  "scoped_dependencies": {
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "astropy": "8.0.1",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10"
+  },
+  "implementation_blob_shas": [
+    {
+      "path": ".github/workflows/parallax4-offline.yml",
+      "git_blob_sha": "12468cf2eb0556f288f8e584ac2d31b8d602c9c7"
+    },
+    {
+      "path": "src/seti/parallax4/deepvet.py",
+      "git_blob_sha": "dcf4121d8e71bdaee82fed5d1aa8c6e40398b490"
+    },
+    {
+      "path": "src/seti/parallax4/run.py",
+      "git_blob_sha": "454999700195577c03ac7316bc733988271b6163"
+    },
+    {
+      "path": "src/seti/parallax4/vsx_association.py",
+      "git_blob_sha": "3cd6f30e23d3ed4aad6da6a91537e1d759f5aded"
+    },
+    {
+      "path": "tests/test_parallax4.py",
+      "git_blob_sha": "3d68ba54ead7c833ba8359a6e9a451f921fa8a60"
+    },
+    {
+      "path": "tests/test_parallax4_vsx_association.py",
+      "git_blob_sha": "823c25cc3482e1ad9d622dddb251f01f2d6e3755"
+    },
+    {
+      "path": "tests/test_parallax4_ztf_identity.py",
+      "git_blob_sha": "1b2b4bd3a422179b354cf9f03bd75014fc6d8e48"
+    }
+  ],
+  "preserved_blob_shas": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "git_blob_sha": "25fe9456d22b34a2bff0a7c6ca5ffb19e631255c"
+    },
+    {
+      "path": "CLAUDE.md",
+      "git_blob_sha": "3fc966586c4f31847129b02f00b8d77c43a9f46f"
+    },
+    {
+      "path": "STATUS.md",
+      "git_blob_sha": "c068c796636c0a55bf33cc880473df10e569afab"
+    },
+    {
+      "path": "config/parallax4.yaml",
+      "git_blob_sha": "ed3cb5b59a0106d96bfda2c1744b5268abe0b738"
+    },
+    {
+      "path": "docs/channels.md",
+      "git_blob_sha": "9c34d3dfcfe27eb735d4221154cad9fabd9de324"
+    },
+    {
+      "path": "docs/parallax4.md",
+      "git_blob_sha": "1b6cdf6f42e5fb1965ab3ea3650bbf92f5a9f8fa"
+    },
+    {
+      "path": "src/seti/parallax4/acquire.py",
+      "git_blob_sha": "393b5e149c5eb8c5bda60d045820d861984d5216"
+    },
+    {
+      "path": "src/seti/parallax4/cohorts.py",
+      "git_blob_sha": "8a8e7a7f27b824e7a47bb5981da24e46ea284f04"
+    }
+  ],
+  "preserved_deepvet_ztf_suffix": {
+    "starts_at": "def fetch_ztf(",
+    "unchanged_vs_baseline": true,
+    "sha256": "5dbca4bbb1a7a2f8eb78d57cb90e2bb658d1166d45daa19160f85f97f03ae4f4",
+    "characters": 7962
+  },
+  "source_diff_paths": [
+    ".github/workflows/parallax4-offline.yml",
+    "docs/usage-sprint-2026-10-01-vsx-association.md",
+    "src/seti/parallax4/deepvet.py",
+    "src/seti/parallax4/run.py",
+    "src/seti/parallax4/vsx_association.py",
+    "tests/test_parallax4.py",
+    "tests/test_parallax4_vsx_association.py",
+    "tests/test_parallax4_ztf_identity.py"
+  ],
+  "association_contract": {
+    "positive_status": "CROSS_ID_RECEIPT_POSITION_CONSISTENT",
+    "receipt_review_status": "CALLER_REVIEWED",
+    "receipt_authenticated_by_program": false,
+    "model": "Normalized constant-tangent proper-motion propagation using Gaia pmra=mu_alpha*cos(dec), mas/year.",
+    "unknown_states_preserved": [
+      "Native positional epoch is not inferred from RAJ2000/DEJ2000 or VSX photometric Epoch.",
+      "Missing Gaia reference epoch/PM remains missing.",
+      "No rows at unverified query epoch does not establish catalogue absence.",
+      "No live native cross-ID/position-epoch receipt was acquired or authenticated."
+    ],
+    "limitations": [
+      "Caller-supplied receipt is an explicit trust boundary, not programmatic authority verification.",
+      "Synthetic positive controls do not imply native live catalogue provides the required fields.",
+      "Perspective acceleration, covariance and long-baseline precision are not established.",
+      "SIMBAD/ZTF counterpart and empirical Gaia-sampling calibration remain separately unverified.",
+      "No science acquisition, local Python execution, astronomical detection or measured false-positive rate."
+    ],
+    "default_live_vsx_association_status": "CALLER_REVIEWED_RECEIPT_MISSING",
+    "vsx_can_supply_mechanism_without_receipt": false
+  },
+  "stop_condition": "One independently reviewed, scoped/full-validated implementation with normal main integration and receipt checkpoint; no continuing monitoring.",
+  "next_bounded_task": "Authoritative native position-epoch and VSX/Gaia cross-ID evidence for one named survivor; stop explicitly missing-input if unavailable. No classifier/detection claim from proximity.",
+  "local_python_executed": false,
+  "science_results_modified": false,
+  "science_or_paid_compute_dispatched": false,
+  "full": {
+    "run_id": 36957880959,
+    "url": "https://github.com/trimcrae/Seti/actions/runs/36957880959",
+    "status": "completed",
+    "conclusion": "success",
+    "event": "push",
+    "head_sha": "3165be48ea08eacf52a1c6f81c060e5a486df658",
+    "checkout_sha": "3165be48ea08eacf52a1c6f81c060e5a486df658",
+    "tree_sha": "c6a4ab29ecc91b88e2385212de44adb6e14db9a2",
+    "offline_job_id": 110684816411,
+    "paper_job_id": 110684816196,
+    "pytest_command": "pytest -q -n auto",
+    "pytest_evidence": "Reached 100% with a successful Test step; existing skips retained; no full count inferred from the suppressed summary.",
+    "lint": "passed",
+    "reproduction": "passed",
+    "analysis_upload": "passed",
+    "paper_build": "passed",
+    "paper_upload": "passed",
+    "jobs": [
+      {
+        "id": 110684816196,
+        "name": "paper",
+        "started_at": "2026-10-02T02:55:57Z",
+        "completed_at": "2026-10-02T02:58:12Z",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 110684816411,
+        "name": "offline",
+        "started_at": "2026-10-02T02:55:58Z",
+        "completed_at": "2026-10-02T03:10:52Z",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "original_offline_log_sha256": "cccd25746a2ef3c71e8017ed76f22dd1492c225c53b60aa4912b48e900914e45",
+    "paper_original_log_sha256": "ec96526520889d4d72441ce49ef13d76f18b84052e267b984ef3eeeaf4054fd9",
+    "independently_reviewed_by": "/root/apps_round3_review",
+    "original_offline_log_sha256_verification": "Independently calculated by /root from original acquired log: 62,889 UTF-8 bytes; identical SHA256."
+  },
+  "original_transcripts": [
+    {
+      "path": "docs/usage-sprint-2026-10-01-vsx-association-baseline.log",
+      "run_id": 36956258823,
+      "job_id": 110679757271,
+      "git_blob_sha": "8c5138a9bbcb9836d1e7507e0aded6be9af4bb1f",
+      "sha256": "daf453932d1dd97d3fd5edf5b47b22e21ab8e3f4e721e949499dab3294d795aa",
+      "characters": 45630,
+      "utf8_bytes": 46992
+    },
+    {
+      "path": "docs/usage-sprint-2026-10-01-vsx-association-scoped.log",
+      "run_id": 36957884330,
+      "job_id": 110684827234,
+      "git_blob_sha": "6945f412f7d2acbbeb510f8ca461ddd11630450f",
+      "sha256": "a3accfb8bffdf361053d739d15b169e907cff36102adba2953e1b93e6bbb358c",
+      "characters": 41817,
+      "utf8_bytes": 43179
+    },
+    {
+      "path": "docs/usage-sprint-2026-10-01-vsx-association-initial-lint-failure.log",
+      "run_id": 36957306967,
+      "job_id": 110683033235,
+      "git_blob_sha": "170fffda8403fa5722305e7eabf2a524f2b0689e",
+      "sha256": "db2fa14e836bc0579757c258c8a24f8c2454ca07ae0894fcfcf506428b9a51ba",
+      "characters": 42001,
+      "utf8_bytes": 43363
+    },
+    {
+      "path": "docs/usage-sprint-2026-10-01-vsx-association-full-offline.log",
+      "run_id": 36957880959,
+      "job_id": 110684816411,
+      "git_blob_sha": "04370caed40ec4eddc8c6cb0a298c46029c017c3",
+      "sha256": "cccd25746a2ef3c71e8017ed76f22dd1492c225c53b60aa4912b48e900914e45",
+      "characters": 61527,
+      "utf8_bytes": 62889
+    }
+  ],
+  "source_merge_sha": "cb41d14477b099f665d7fac45c4cb18524188486",
+  "source_merge_tree": "c6a4ab29ecc91b88e2385212de44adb6e14db9a2",
+  "source_merge_parents": [
+    "65fad7e900faa1a88204ae87948c8a8ec69e94d5",
+    "3165be48ea08eacf52a1c6f81c060e5a486df658"
+  ],
+  "source_merge_source_difference": [],
+  "independent_review": [
+    {
+      "reviewer": "/root/apps_round3_review",
+      "scope": "Method, production witness, repaired source, exact scoped/full original receipts.",
+      "status": "cleared"
+    },
+    {
+      "reviewer": "/root",
+      "scope": "Scientific contract/trust boundary, consolidated repair scope and original exact-source full receipt.",
+      "status": "cleared"
+    }
+  ],
+  "documentation_checkpoint": "Subsequent documentation-only checkpoint preserves all tested source/workflow/test and historical science blobs; its automatic CI is separate from completed exact-source proof and is reported by the final sprint handoff."
+}

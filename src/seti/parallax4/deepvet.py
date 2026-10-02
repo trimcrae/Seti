@@ -23,6 +23,8 @@ import re
 import numpy as np
 import pandas as pd
 
+from . import vsx_association as VA
+
 SIMBAD_TAP = "https://simbad.cds.unistra.fr/simbad/sim-tap"
 ZTF_LC = "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
 #: Gaia DR3 epoch-photometry time origin (BJD 2455197.5) in MJD
@@ -39,7 +41,14 @@ EB_SIMBAD = re.compile(r"(EB\*|EclBin|SB\*)", re.I)
 def classify_fate(row: dict) -> tuple[str, list[str]]:
     """(fate, flags) for one survivor from its gathered evidence."""
     flags: list[str] = []
-    vsx = str(row.get("vsx_type") or "")
+    vsx_value = VA.classification_type(row)
+    vsx = vsx_value or ""
+    vsx_gap = any(str(k).startswith("vsx_") for k in row) and vsx_value is None
+    vsx_type_gap = vsx_value == ""
+    if vsx_gap:
+        flags.append("vsx_target_association_unresolved")
+    if vsx_type_gap:
+        flags.append("vsx_type_unavailable")
     otype = str(row.get("simbad_otype") or "")
     g = row.get("phot_g_mean_mag")
     if g is not None and np.isfinite(g) and g < 11:
@@ -74,6 +83,10 @@ def classify_fate(row: dict) -> tuple[str, list[str]]:
         return "NOT_REPRODUCED", flags
     if identity_gap:
         return "EVIDENCE_INCOMPLETE(ZTF_OBJECT_IDENTITY)", flags
+    if vsx_gap:
+        return "EVIDENCE_INCOMPLETE(VSX_TARGET_ASSOCIATION)", flags
+    if vsx_type_gap:
+        return "EVIDENCE_INCOMPLETE(VSX_CLASSIFICATION)", flags
     return "UNEXPLAINED", flags
 
 
@@ -101,20 +114,48 @@ def simbad_type(ra: float, dec: float, r_arcsec: float = 5.0) -> dict:
         return {"simbad_status": f"ERROR:{exc!r}"[:120]}
 
 
-def vsx_type(ra: float, dec: float, r_arcsec: float = 10.0) -> dict:
-    r = r_arcsec / 3600.0
+def vsx_type(ra: float, dec: float, r_arcsec: float = 10.0, *,
+             target_astrometry: dict | None = None,
+             association_receipt: dict | None = None) -> dict:
+    """Bounded VSX cone candidates, never an arbitrary first-row target type.
+
+    The default live caller supplies no reviewed position-epoch/cross-ID receipt.
+    A zero-row cone at an unverified position epoch is not catalogue absence.
+    Optional receipts are a caller trust boundary, not authenticated here.
+    """
+    base = {"vsx_association_status": "CATALOGUE_QUERY_UNAVAILABLE",
+            "vsx_receipt_authenticated_by_program": False}
     try:
-        df = _tap_rows(VIZIER_TAP, 'SELECT TOP 5 * FROM "B/vsx/vsx" WHERE 1 = CONTAINS(POINT(\'ICRS\', '
-                       f"RAJ2000, DEJ2000), CIRCLE('ICRS', {ra:.7f}, {dec:.7f}, {r:.8f}))")
-        if not len(df):
-            return {"vsx_status": "NO_MATCH"}
-        cols = {c.lower(): c for c in df.columns}
-        r0 = df.iloc[0]
-        return {"vsx_status": "OK", "vsx_name": str(r0.get(cols.get("name", "Name"), "")),
-                "vsx_type": str(r0.get(cols.get("type", "Type"), "")),
-                "vsx_period": r0.get(cols.get("period", "Period"))}
+        query_ra, query_dec = float(ra), float(dec)
+        if not np.isfinite(query_ra) or not np.isfinite(query_dec) \
+                or not 0 <= query_ra < 360 or not -90 <= query_dec <= 90 \
+                or not np.isfinite(r_arcsec) or r_arcsec <= 0:
+            return {**base, "vsx_status": "INVALID_QUERY_POSITION_OR_RADIUS"}
+        context, _ = VA.receipt_context(target_astrometry, association_receipt)
+        query_epoch = None
+        if context is not None:
+            direction = context["direction"]
+            query_ra = float(np.rad2deg(np.arctan2(direction[1], direction[0])) % 360)
+            query_dec = float(np.rad2deg(np.arcsin(np.clip(direction[2], -1, 1))))
+            query_epoch = context["epoch"]
+        r = r_arcsec / 3600.0
+        query = (f'SELECT TOP {VA.MAX_CANDIDATES + 1} * FROM "B/vsx/vsx" '
+                 "WHERE 1 = CONTAINS(POINT('ICRS', RAJ2000, DEJ2000), "
+                 f"CIRCLE('ICRS', {query_ra:.10f}, {query_dec:.10f}, {r:.10f}))")
+        base.update(vsx_query=query, vsx_query_radius_arcsec=float(r_arcsec),
+                    vsx_query_ra=query_ra, vsx_query_dec=query_dec,
+                    vsx_query_position_epoch_jyear=query_epoch,
+                    vsx_query_position_epoch_status=(
+                        "CALLER_REVIEWED_RECEIPT" if query_epoch is not None else "UNVERIFIED"))
+        df = _tap_rows(VIZIER_TAP, query)
+        result = VA.audit_candidates(df, target=target_astrometry, receipt=association_receipt)
+        result["vsx_candidate_source"] = "PRODUCTION_CONE_QUERY"
+        if context is not None and context["tolerance"] > r_arcsec:
+            result.pop("vsx_type", None)
+            result["vsx_association_status"] = "MATCH_TOLERANCE_EXCEEDS_QUERY_RADIUS"
+        return {**base, **result}
     except Exception as exc:  # noqa: BLE001
-        return {"vsx_status": f"ERROR:{exc!r}"[:120]}
+        return {**base, "vsx_status": f"ERROR:{exc!r}"[:120]}
 
 
 def fetch_ztf(ra: float, dec: float, *, radius_arcsec: float = 1.5, http=None) -> pd.DataFrame:

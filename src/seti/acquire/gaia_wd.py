@@ -8,6 +8,8 @@ the parquet cache so subsequent (and offline) runs do not hit the network.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -77,9 +79,18 @@ def _fetch_gaia_astrometry(source_ids: list[int]) -> pd.DataFrame:
 
 
 def acquire_gaia_astrometry(cache_dir: Path, source_ids, force: bool = False) -> pd.DataFrame:
-    """Astrometric-quality columns (RUWE, parallax S/N, excess noise) per source."""
-    source_ids = list(source_ids)
-    params = {"table": "gaiadr3.gaia_source", "n_in": len(source_ids)}
+    """Astrometric quality cached by the ordered native integer query IDs.
+
+    Count-only legacy entries do not bind a target request and remain untouched.
+    Native query integer coercion is retained; already rounded float inputs cannot be recovered.
+    """
+    source_ids = [int(s) for s in source_ids]
+    identity = json.dumps(source_ids, separators=(",", ":")).encode("ascii")
+    params = {
+        "table": "gaiadr3.gaia_source",
+        "n_in": len(source_ids),
+        "source_ids_sha256": hashlib.sha256(identity).hexdigest(),
+    }
     return cached(
         cache_dir,
         "gaia_astrometry",

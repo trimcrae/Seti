@@ -404,6 +404,21 @@ def _complete_refinement():
     }
 
 
+def _complete_controls_receipt():
+    """A native aggregate over explicitly complete synthetic control records."""
+    record = {
+        **_complete_refinement(), "name": "synthetic-complete-control",
+        "class": "finite_source_single_lens", "reached": True,
+        "tier": D.TIER_NO_OCC, "sites": ["KMTA", "KMTC"],
+        "injections": [
+            {**_complete_refinement(), "expected_dchi2": 900,
+             "recovered": True, "rho_l_inj": 0.7}
+            for _ in range(3)
+        ],
+    }
+    return {**R.controls_verdict([record], {}, 1), "records": [record]}
+
+
 def test_recovered_requires_candidate_and_matching_rho():
     ok = {**_complete_refinement(), "tier": D.TIER_CANDIDATE, "occult": {"rho_l": 0.61}}
     assert INJ.recovered(ok, 0.6)
@@ -455,7 +470,7 @@ def test_screen_end_to_end_with_a_fake_archive(tmp_path, monkeypatch):
                      "KMT-2019-BLG-0003": D.TIER_NO_DATA}
     # resume: a second call does no new work
     assert R.stage_screen(tmp_path, cfg, 0, 1, 3600.0, workers=1)["n_new"] == 0
-    (tmp_path / "controls.json").write_text(json.dumps({"passed": True, "verdict": "CONTROLS_PASS"}))
+    (tmp_path / "controls.json").write_text(json.dumps(_complete_controls_receipt()))
     s = R.stage_assess(tmp_path, cfg, 1)
     assert s["funnel"]["units_with_photometry"] == 2
     assert s["self_consistency"]["ok"]
@@ -493,7 +508,7 @@ def test_assess_threshold_from_anti_null_and_funnel(tmp_path):
         row.update({k: v for k, v in _complete_refinement().items() if k != "dchi2_anti"})
     (sdir / "screen_s0of1.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
     (sdir / "inj_s0of1.jsonl").write_text("")
-    (tmp_path / "controls.json").write_text(json.dumps({"passed": True, "verdict": "CONTROLS_PASS"}))
+    (tmp_path / "controls.json").write_text(json.dumps(_complete_controls_receipt()))
     with gzip.open(tmp_path / "catalog.json.gz", "wt") as fh:
         json.dump({"units": [{"unit": r["unit"]} for r in rows]}, fh)
     s = R.stage_assess(tmp_path, {}, 1)

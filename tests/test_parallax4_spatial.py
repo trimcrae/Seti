@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import numpy as np
-
 import pytest
 
 from seti.parallax4 import photocentre as P

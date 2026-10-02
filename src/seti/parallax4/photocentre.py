@@ -148,6 +148,7 @@ def _wls(X, y, s):
     beta, cov, residual, chi2, _ = _weighted_svd(X, y, s)
     return beta, cov, residual, chi2
 
+
 def _jitter(X, y, s0):
     """Extra per-transit noise making chi^2/nu = 1 (0 if already <= 1)."""
     _, _, _, c0, design = _weighted_svd(X, y, s0)

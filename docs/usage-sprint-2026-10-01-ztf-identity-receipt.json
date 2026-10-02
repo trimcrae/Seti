@@ -1,0 +1,84 @@
+{
+  "schema": "seti-usage-sprint-validation-v1",
+  "repository": "trimcrae/Seti",
+  "ai_authored": true,
+  "branch": "codex/usage-sprint-2026-10-01-ztf-identity",
+  "baseline_sha": "ee57cf1891e82e615b2b4deae4677946870e977c",
+  "tested_source_sha": "5a6b07e2bdc5d05932bc2a0a88ca418a21f89929",
+  "tested_source_tree": "5821230ef5261af2b7378213ed086c7a92cdbd8e",
+  "tested_pull_request_checkout": "c83796a8070dd177fd7c7d944ee9ce06b4ad7a4a",
+  "pull_request_url": "https://github.com/trimcrae/Seti/pull/24",
+  "scoped": {
+    "run_id": 36946634335,
+    "job_id": 110650147306,
+    "url": "https://github.com/trimcrae/Seti/actions/runs/36946634335",
+    "status": "success",
+    "command": "python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py tests/test_parallax4_ztf_identity.py -q -p no:cacheprovider",
+    "cases": 141,
+    "new_identity_cases": 20,
+    "runner_python": "3.11.16",
+    "pandas": "3.0.6",
+    "astropy": "8.0.1",
+    "lint": "passed",
+    "quiet_log_evidence": "72 + 69 test dots at 100%, no fail/skip markers"
+  },
+  "independent_review": [
+    "/root/sprint_apps_review",
+    "/root"
+  ],
+  "implementation_blob_shas": [
+    {
+      "path": "src/seti/parallax4/deepvet.py",
+      "sha": "4a63351f73d360850c5fb3aaafc1fd50154f7cce"
+    },
+    {
+      "path": "src/seti/parallax4/run.py",
+      "sha": "99608b4a4c7dc153b243e9e2bc773607471f30bf"
+    },
+    {
+      "path": "tests/test_parallax4.py",
+      "sha": "129e6e3869a380654bbc17b94f0b6a535d567318"
+    },
+    {
+      "path": "tests/test_parallax4_ztf_identity.py",
+      "sha": "d91f09c057b8044e498d44aa86f0cb929439a495"
+    },
+    {
+      "path": ".github/workflows/parallax4-offline.yml",
+      "sha": "380207672c98ca390a9d1c302d347965fa67920a"
+    }
+  ],
+  "limitations": [
+    "Synthetic controls establish code behavior, not a sky detection.",
+    "Multiple oids can describe one source across fields; physical contamination is not established.",
+    "One coherent oid does not prove Gaia counterpart association.",
+    "BLS alias-window chance math and real Gaia sampling calibration remain unchanged.",
+    "Catalogue counterpart association (including VSX cone ordering) remains a separate question."
+  ],
+  "local_python_executed": false,
+  "science_results_modified": false,
+  "science_or_paid_compute_dispatched": false,
+  "next_task_analytic_counterexample": {
+    "period_d": 1,
+    "duration_d": 0.1,
+    "phase_tol": 0.03,
+    "n_dip_epochs": 6,
+    "current_expression": 0.0032212254720000006,
+    "half_period_window_fraction": 0.52,
+    "half_period_independent_uniform_chance": 0.019770609664000006,
+    "verification": "Deterministic arithmetic recomputed in V8, not a measured sky false-positive rate."
+  },
+  "full": {
+    "run_id": 36946634201,
+    "url": "https://github.com/trimcrae/Seti/actions/runs/36946634201",
+    "status": "success",
+    "offline_job_id": 110650147213,
+    "paper_job_id": 110650146902,
+    "pytest_command": "pytest -q -n auto",
+    "pytest_evidence": "Reached 100% with successful step; existing skips retained; no full count inferred from suppressed pytest summary.",
+    "lint": "passed",
+    "reproduction": "passed",
+    "paper_build": "passed"
+  },
+  "source_merge_sha": "28770826fcd782c69dad3ca0ea34ccb6055eeafb"
+}

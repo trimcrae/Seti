@@ -42,7 +42,7 @@ def recovered(rec: dict, rho_l: float, tol: float = 0.05, tol_hole: float = 0.15
     combination), and the offline battery shows 5-8 % scatter at KMTNet-like
     cadence, so the bar there is 15 %.
     """
-    if rec.get("tier") != D.TIER_CANDIDATE:
+    if rec.get("tier") != D.TIER_CANDIDATE or D.refinement_status(rec) != "COMPLETE":
         return False
     got = (rec.get("occult") or {}).get("rho_l")
     if got is None:
@@ -84,7 +84,10 @@ def injection_trials(ev_raw: D.Event, conf: dict, hint: dict | None, rho_ls, see
             "parallax": bool(f0.parallax),
             "u_c": uc, "expected_dchi2": round(exp, 2),
             "tier": rec.get("tier"), "rho_l_fit": (rec.get("occult") or {}).get("rho_l"),
-            "dchi2": rec.get("dchi2"), "rejections": rec.get("rejections", []),
+            "dchi2": rec.get("dchi2"), "dchi2_anti": rec.get("dchi2_anti"),
+            "refinement": rec.get("refinement"), "refinement_status": D.refinement_status(rec),
+            "budget_exceeded": rec.get("budget_exceeded", False),
+            "rejections": rec.get("rejections", []),
             "recovered": recovered(rec, rl, tol),
         })
     return out

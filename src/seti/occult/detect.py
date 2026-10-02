@@ -43,6 +43,7 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass, field
+from numbers import Real
 
 import numpy as np
 from scipy.optimize import least_squares
@@ -981,6 +982,7 @@ TIER_NOT_LENSING = "NOT_LENSING"
 TIER_NO_OCC = "NO_OCCULTATION"
 TIER_REJECTED = "OCCULTATION_REJECTED"
 TIER_CANDIDATE = "OCCULTATION_CANDIDATE"
+TIER_INCOMPLETE = "REFINEMENT_INCOMPLETE"
 
 
 def fit_fspl_clean(ev: Event, conf: dict, hint: dict | None = None):
@@ -1154,6 +1156,35 @@ def hollow_centre(ev: Event, tc: float | None, min_depth: float = 0.3) -> dict |
     return {"sep_days": float(t[ir] - t[il]), "horn": float(horn), "trough": trough}
 
 
+
+def refinement_status(rec: dict) -> str:
+    """Observed search coverage, not optimizer convergence or calibration.
+
+    Legacy records do not establish which planned refinements ran. A completed
+    comparison needs every planned start to return a native finite result in
+    both arms. A measured zero is valid; no result is never a measured zero.
+    """
+    arms = rec.get("refinement")
+    if arms is None:
+        return "UNKNOWN_LEGACY"
+    if not isinstance(arms, dict) or rec.get("budget_exceeded"):
+        return "INCOMPLETE"
+    for kind in ("occult", "anti"):
+        arm = arms.get(kind)
+        if not isinstance(arm, dict):
+            return "INCOMPLETE"
+        counts = [arm.get(k) for k in ("planned", "attempted", "usable")]
+        if any(not isinstance(v, int) or isinstance(v, bool) for v in counts):
+            return "INCOMPLETE"
+        planned, attempted, usable = counts
+        if planned <= 0 or attempted != planned or usable != planned or arm.get("finished") is not True:
+            return "INCOMPLETE"
+    anti = rec.get("dchi2_anti")
+    if isinstance(anti, bool) or not isinstance(anti, Real) or not math.isfinite(anti):
+        return "INCOMPLETE"
+    return "COMPLETE"
+
+
 def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) -> dict:
     """Run the whole funnel on one event; returns a JSON-able verdict record."""
     conf = conf_with(conf)
@@ -1236,12 +1267,17 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
     t_start = time.time()
     budget = float(conf.get("unit_budget_s", 600.0))
 
+    rec["refinement"] = {}
+
     def best_refined(cands, kind):
+        arm = {"planned": len(cands), "attempted": 0, "usable": 0, "finished": False}
+        rec["refinement"][kind] = arm
         best = None
         for regime, uth, v in cands:
             if time.time() - t_start > budget:
                 rec["budget_exceeded"] = True
                 break
+            arm["attempted"] += 1
             try:
                 ft = _refine(ev2, f0, regime, uth, conf, kind,
                              hole_starts if (regime == "hole" and v == -2.0) else alt_shapes)
@@ -1250,16 +1286,29 @@ def assess_event(ev: Event, conf: dict | None = None, hint: dict | None = None) 
             if ft is None:
                 continue
             d = f0.chi2 - ft.chi2
+            if not math.isfinite(d):
+                continue
+            arm["usable"] += 1
             if best is None or d > best[1]:
                 best = (ft, d, regime)
+        else:
+            arm["finished"] = True
         return best
 
     b_occ = best_refined(cand, "occult")
     b_anti = best_refined(anti, "anti")
+    rec["dchi2_anti"] = float(b_anti[1]) if b_anti else None
+    rec["refinement_status"] = refinement_status(rec)
+    if rec["refinement_status"] != "COMPLETE":
+        rec["dchi2"] = float(b_occ[1]) if b_occ else None
+        if b_occ is not None:
+            rec["occult"] = b_occ[0].params()
+        rec["rejections"] = ["REFINEMENT_COMPARISON_INCOMPLETE"]
+        rec["tier"] = TIER_INCOMPLETE
+        return rec
     if b_occ is not None and b_occ[2] == "hole" and b_occ[1] > conf["dchi2_floor"]:
         b_occ = (profile_rho_l(ev2, b_occ[0], conf), None, "hole")
         b_occ = (b_occ[0], f0.chi2 - b_occ[0].chi2, "hole")
-    rec["dchi2_anti"] = float(b_anti[1]) if b_anti else 0.0
     if b_occ is None or b_occ[1] <= 0:
         rec["dchi2"] = 0.0
         rec["tier"] = TIER_NO_OCC
@@ -1329,6 +1378,8 @@ def gate_rejections(d: dict, conf: dict) -> list:
     """
     conf = conf_with(conf)
     rej = []
+    if refinement_status(d) != "COMPLETE":
+        rej.append("REFINEMENT_COMPARISON_INCOMPLETE")
     al = d.get("alpha") or {}
     a, s = al.get("alpha"), al.get("sigma")
     lo, hi = conf["alpha_range"]

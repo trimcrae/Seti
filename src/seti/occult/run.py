@@ -168,16 +168,24 @@ def controls_verdict(records: list, gate: dict, n_listed: int) -> dict:
     named = [r for r in records if r["class"] in ("finite_source_single_lens", "binary_lens")]
     reached = [r for r in named if r.get("reached")]
     frac = len(reached) / n_listed if n_listed else 0.0
-    false_pos = [r["name"] for r in reached if r.get("tier") == D.TIER_CANDIDATE]
+    comparison_tiers = (D.TIER_NO_OCC, D.TIER_REJECTED, D.TIER_CANDIDATE, D.TIER_INCOMPLETE)
+    unverified_named = [r for r in reached if r.get("tier") in comparison_tiers
+                       and D.refinement_status(r) != "COMPLETE"]
+    false_pos = [r["name"] for r in reached if r.get("tier") == D.TIER_CANDIDATE
+                 and D.refinement_status(r) == "COMPLETE"]
     hosts = [r for r in records if r.get("reached")
              and r["class"] in ("finite_source_single_lens", "baseline")
              and len([x for x in (r.get("sites") or []) if x != "?"]) >= 2]
-    strong = [t for r in hosts for t in r.get("injections", []) if t["expected_dchi2"] > 500]
+    strong_all = [t for r in hosts for t in r.get("injections", []) if t["expected_dchi2"] > 500]
+    strong = [t for t in strong_all if D.refinement_status(t) == "COMPLETE"]
+    unverified_strong = len(strong_all) - len(strong)
     rec_frac = (sum(t["recovered"] for t in strong) / len(strong)) if strong else None
     if not reached:
         verdict = "NO_DATA_REACHED"
     elif false_pos:
         verdict = "CONTROLS_FAIL_FALSE_POSITIVE"
+    elif unverified_named or unverified_strong:
+        verdict = "CONTROLS_DEGRADED_REFINEMENT_INCOMPLETE"
     elif rec_frac is None:
         verdict = "CONTROLS_DEGRADED_NO_STRONG_INJECTIONS"
     elif rec_frac < gate.get("min_recovery_strong", 0.7):
@@ -196,7 +204,8 @@ def controls_verdict(records: list, gate: dict, n_listed: int) -> dict:
             "reached_frac": frac, "false_positives": false_pos,
             "strong_recovery_by_rho_l": {k: {"k": v[0], "n": v[1]} for k, v in by_rho.items()},
             "n_baseline_hosts": sum(1 for r in hosts if r["class"] == "baseline"),
-            "n_strong_injections": len(strong), "strong_recovery_frac": rec_frac,
+            "n_strong_injections": len(strong), "n_unverified_named": len(unverified_named),
+            "n_unverified_strong_injections": unverified_strong, "strong_recovery_frac": rec_frac,
             "passed": verdict.startswith("CONTROLS_PASS")}
 
 
@@ -220,7 +229,7 @@ def baseline_hosts(units: list, n: int) -> list:
     return [u for _, u in pool[:n]]
 
 
-CONTROL_KEEP = ("n_points_raw", "n_points_fit", "binned_days", "budget_exceeded", "tier", "dchi2", "dchi2_anti", "regime", "rejections", "peak_snr", "fspl",
+CONTROL_KEEP = ("refinement", "refinement_status", "n_points_raw", "n_points_fit", "binned_days", "budget_exceeded", "tier", "dchi2", "dchi2_anti", "regime", "rejections", "peak_snr", "fspl",
                 "occult", "n_points", "sites", "bands", "redchi2_fspl", "parallax",
                 "err_scales", "alpha", "symmetry", "jackknife", "positive_bump",
                 "binned_redchi2_after", "binned_redchi2_reference", "hollow_centre")
@@ -317,7 +326,7 @@ def save_lc(lc_dir: Path, ev: D.Event) -> str:
     return str(p)
 
 
-SCREEN_KEEP = ("n_points_raw", "n_points_fit", "binned_days", "budget_exceeded", "tier", "dchi2", "dchi2_anti", "dbic", "regime", "u_c", "rejections", "peak_snr",
+SCREEN_KEEP = ("refinement", "refinement_status", "n_points_raw", "n_points_fit", "binned_days", "budget_exceeded", "tier", "dchi2", "dchi2_anti", "dbic", "regime", "u_c", "rejections", "peak_snr",
                "lensing_dchi2", "fspl", "occult", "n_points", "n_clipped", "sites", "bands",
                "redchi2_fspl", "alpha", "alpha_by_site", "alpha_by_band", "sites_seeing_step",
                "sites_consistency", "bands_consistency", "symmetry", "jackknife", "steps",
@@ -484,12 +493,24 @@ def empirical_threshold(recs: list, floor: float) -> dict:
     the largest anti Delta chi^2 among events whose own fits did not fail
     (a 1/N false-alarm level), never below ``floor``.
     """
-    anti = np.array([r.get("dchi2_anti") or 0.0 for r in recs
-                     if r.get("tier") not in (D.TIER_NO_DATA, D.TIER_NOT_LENSING, "ERROR", None)])
+    eligible = [r for r in recs
+                if r.get("tier") not in (D.TIER_NO_DATA, D.TIER_NOT_LENSING, "ERROR", None)]
+    measured = [r for r in eligible if D.refinement_status(r) == "COMPLETE"]
+    anti = np.array([r["dchi2_anti"] for r in measured], dtype=float)
+    missing = len(eligible) - len(measured)
+    coverage = {
+        "status": "UNMEASURED" if not anti.size else ("PARTIAL" if missing else "MEASURED"),
+        "n_null": int(anti.size),
+        "n_eligible": len(eligible),
+        "n_incomplete": sum(D.refinement_status(r) == "INCOMPLETE" for r in eligible),
+        "n_unknown_legacy": sum(D.refinement_status(r) == "UNKNOWN_LEGACY" for r in eligible),
+    }
+    # The same-event maximum needs full eligible search coverage. An observed
+    # subset supplies diagnostics only; missing higher anti values are unknown.
     if anti.size == 0:
-        return {"threshold": floor, "n_null": 0}
+        return {"threshold": floor, **coverage}
     q = {f"q{int(p * 1000)}": float(np.quantile(anti, p)) for p in (0.5, 0.9, 0.99, 0.999)}
-    return {"threshold": float(max(floor, anti.max())), "n_null": int(anti.size),
+    return {"threshold": float(max(floor, anti.max())), **coverage,
             "anti_max": float(anti.max()), **q}
 
 
@@ -500,8 +521,65 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
     recs = _read_jsonl(spaths)
     trials = _read_jsonl(ipaths)
     units = read_catalog(out)
-    controls = json.loads((out / "controls.json").read_text()) if (out / "controls.json").exists() else {}
+    controls_path = out / "controls.json"
+    controls_read = "NOT_PRESENT"
+    controls = {}
+    if controls_path.exists():
+        try:
+            controls = json.loads(controls_path.read_text())
+            controls_read = "READ"
+        except json.JSONDecodeError:
+            controls_read = "MALFORMED_JSON"
+        except OSError:
+            controls_read = "READ_UNAVAILABLE"
     conf = D.conf_with(cfg.get("detect"))
+    # The controls stage retains its native records and named-record census.
+    # A cached aggregate pass alone cannot establish the new search coverage.
+    ctl_check = {"status": "UNKNOWN_LEGACY", "read_status": controls_read,
+                 "stored_verdict": controls.get("verdict") if isinstance(controls, dict) else None,
+                 "stored_passed": isinstance(controls, dict) and controls.get("passed") is True,
+                 "recomputed": None, "passed": False}
+    if controls_read in ("MALFORMED_JSON", "READ_UNAVAILABLE"):
+        ctl_check["status"] = controls_read
+    elif not isinstance(controls, dict):
+        ctl_check["status"] = "MALFORMED"
+    elif controls.get("records") is not None and controls.get("n_listed") is not None:
+        records, n_listed = controls["records"], controls["n_listed"]
+        try:
+            if not isinstance(records, list) or not isinstance(n_listed, int) \
+                    or isinstance(n_listed, bool) or n_listed <= 0:
+                raise ValueError("invalid retained controls census")
+            for record in records:
+                if not isinstance(record, dict) or record.get("class") not in (
+                        "finite_source_single_lens", "binary_lens", "baseline") \
+                        or not isinstance(record.get("name"), str) or not record["name"] \
+                        or not isinstance(record.get("reached"), bool):
+                    raise ValueError("invalid retained control record")
+                sites = record.get("sites")
+                if sites is not None and (not isinstance(sites, list)
+                                          or any(not isinstance(s, str) for s in sites)):
+                    raise ValueError("invalid retained sites")
+                injections = record.get("injections", [])
+                if not isinstance(injections, list):
+                    raise ValueError("invalid retained injections")
+                for trial in injections:
+                    if not isinstance(trial, dict):
+                        raise ValueError("invalid retained injection")
+                    expected = trial.get("expected_dchi2")
+                    if isinstance(expected, bool) or not isinstance(expected, (int, float)) \
+                            or not math.isfinite(expected) or not isinstance(trial.get("recovered"), bool):
+                        raise ValueError("invalid retained injection result")
+            census = sum(record["class"] in ("finite_source_single_lens", "binary_lens")
+                         for record in records)
+            if n_listed != census:
+                raise ValueError("retained named-record census mismatch")
+            current = controls_verdict(records, (cfg.get("controls") or {}).get("gate") or {}, n_listed)
+        except (KeyError, TypeError, ValueError, OverflowError):
+            ctl_check["status"] = "MALFORMED"
+        else:
+            ctl_check.update(status="RECOMPUTED_FROM_RETAINED_RECORDS", recomputed=current,
+                             passed=ctl_check["stored_passed"] and current["passed"])
+    ctl_ok = ctl_check["passed"]
     tiers: dict = {}
     for r in recs:
         tiers[r.get("tier")] = tiers.get(r.get("tier"), 0) + 1
@@ -510,8 +588,11 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
     for r in recs:
         for x in r.get("rejections") or []:
             rej_counts[x] = rej_counts.get(x, 0) + 1
-    cands = [r for r in recs if r.get("tier") == D.TIER_CANDIDATE]
-    above = [r for r in cands if (r.get("dchi2") or 0) >= thr["threshold"]]
+    raw_cands = [r for r in recs if r.get("tier") == D.TIER_CANDIDATE]
+    cands = [r for r in raw_cands if D.refinement_status(r) == "COMPLETE"]
+    above_before_controls = [r for r in cands if thr["status"] == "MEASURED"
+                             and (r.get("dchi2") or 0) >= thr["threshold"]]
+    above = above_before_controls if ctl_ok else []
     below = [r for r in cands if (r.get("dchi2") or 0) < thr["threshold"]]
     eff = INJ.efficiency_table(trials)
     eff_exp = INJ.efficiency_vs_expected(trials)
@@ -539,25 +620,37 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
         "errors": tiers.get("ERROR", 0),
         "no_occultation": tiers.get(D.TIER_NO_OCC, 0),
         "occultation_rejected_by_gates": tiers.get(D.TIER_REJECTED, 0),
+        "refinement_incomplete": thr["n_incomplete"],
+        "refinement_unknown_legacy": thr["n_unknown_legacy"],
+        "complete_comparisons": thr["n_null"],
+        "unverified_gate_passing_withheld": len(raw_cands) - len(cands),
+        "complete_gate_passing_withheld_for_partial_null": len(cands) if thr["status"] != "MEASURED" else 0,
         "gate_passing_below_null_threshold": len(below),
-        "gate_passing_above_null_threshold": len(above),
+        "gate_passing_above_null_threshold": len(above_before_controls),
+        "gate_passing_withheld_for_controls": len(above_before_controls) - len(above),
     }
     consistency = []
     if sum(tiers.values()) != len(recs):
         consistency.append("tier counts do not sum to records")
     if len(recs) > n_units and n_units:
         consistency.append("more records than catalogue units")
-    ctl_ok = bool(controls.get("passed"))
     if not recs:
         verdict = "NO_DATA_REACHED"
     elif not ctl_ok:
-        verdict = f"CONTROLS_NOT_PASSED({controls.get('verdict')}) -- nothing downstream is believed"
+        control_verdict = (ctl_check["recomputed"] or {}).get("verdict") or ctl_check["status"]
+        verdict = f"CONTROLS_NOT_PASSED({control_verdict}) -- nothing downstream is believed"
+    elif thr["status"] != "MEASURED":
+        verdict = f"ANTI_NULL_{thr['status']} -- no candidate promotion"
     elif above:
         verdict = f"CANDIDATES_TO_VET:{len(above)}"
+    elif thr["n_incomplete"] or thr["n_unknown_legacy"]:
+        verdict = "NO_SURVIVOR_IN_COMPLETE_COMPARISONS"
     else:
         verdict = "NO_SURVIVOR"
     summary = {
-        **_stamp(), "verdict": verdict, "controls_verdict": controls.get("verdict"),
+        **_stamp(), "verdict": verdict,
+        "controls_verdict": (ctl_check["recomputed"] or {}).get("verdict") or ctl_check["stored_verdict"],
+        "controls_validation": ctl_check,
         "funnel": funnel, "tiers": tiers, "rejection_counts": rej_counts,
         "null_threshold": thr, "coverage": {
             "units_screened_of_catalogue": f"{len(recs)}_of_{n_units}",
@@ -589,10 +682,12 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
             r["lc_file"] = str(out / "lc" / src.name)
     write_json(out / "summary.json", summary)
     write_json(out / "candidates.json", {"generated_utc": summary["generated_utc"],
-                                         "threshold": thr["threshold"], "candidates": above,
+                                         "threshold": thr["threshold"], "null_threshold": thr,
+                                         "controls_validation": ctl_check, "verdict": verdict,
+                                         "candidates": above,
                                          "gate_passing_below_threshold": below})
     # compact per-unit table and every injection trial (the full shard files are artifacts)
-    compact_keys = ("unit", "tier", "dchi2", "dchi2_anti", "regime", "u_c", "rejections",
+    compact_keys = ("refinement", "refinement_status", "budget_exceeded", "unit", "tier", "dchi2", "dchi2_anti", "regime", "u_c", "rejections",
                     "peak_snr", "n_points", "sites", "bands", "has_kmt", "has_ogle", "seconds",
                     "error", "expected")
     with gzip.open(out / "screen_compact.jsonl.gz", "wt") as fh:

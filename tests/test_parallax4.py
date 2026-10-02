@@ -679,7 +679,6 @@ def test_local_coincidence_veto():
 
 def test_deepvet_fates():
     from seti.parallax4 import deepvet as DV
-
     from seti.parallax4 import vsx_association as VA
 
     def associated(vsx_type):

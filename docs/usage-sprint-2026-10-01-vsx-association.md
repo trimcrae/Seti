@@ -54,7 +54,11 @@ states. No ad-hoc identity radius or scientific threshold is introduced.
 Positive output is named `CROSS_ID_RECEIPT_POSITION_CONSISTENT`, and reports
 `vsx_receipt_authenticated_by_program = false`.
 
-The classifier recomputes this association contract. Legacy `vsx_type` or a
+The classifier recomputes this association contract and refuses conflicting
+outer target astrometry. Production query results must retain a coherent query
+center, position epoch and radius; an evidence tolerance larger than the query
+radius cannot be bypassed by a serialized success flag. Audit-only caller-supplied
+rows are explicitly distinguished from production query results. Legacy `vsx_type` or a
 serialized success flag alone cannot supply a known mechanism, and its type is
 read back from the native row. Missing native type after a coherent association
 is a separate classification gap. Other existing mechanism paths remain in
@@ -63,6 +67,14 @@ limits are unchanged. Historical science outputs, preregistrations, queues and
 bot work are untouched.
 
 ## Validation and stop condition
+
+Intermediate source `66714e213742b1349cc27a7c81c70a95b0436ab6` passed
+240 scoped cases, but full CI failed at lint because its revised test fixture
+had an incorrectly separated import block. That repair-induced I001 error was
+fixed and the modified test added to scoped lint. Independent review also found
+two concrete classifier-coherence gaps: conflicting outer astrometry and a forged
+success status bypassing query-radius refusal. Both are repaired with production
+regressions in the final source.
 
 Actual final scoped/full CI, exact source/blob bindings, independent review and
 normal main integration receipts will be recorded after they settle. Controls

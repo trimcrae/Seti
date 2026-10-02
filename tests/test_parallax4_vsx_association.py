@@ -297,3 +297,69 @@ def test_receipt_tolerance_larger_than_query_cannot_claim_unique_match(monkeypat
     assert result["vsx_association_status"] == "MATCH_TOLERANCE_EXCEEDS_QUERY_RADIUS"
     assert "vsx_type" not in result
     assert DV.classify_fate(result)[0] == "EVIDENCE_INCOMPLETE(VSX_TARGET_ASSOCIATION)"
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("ra", 11.0), ("dec", -6.0), ("ref_epoch", 2000.0),
+    ("pmra", 1.0), ("pmdec", 1.0), ("ra", None),
+])
+def test_classifier_refuses_conflicting_present_outer_astrometry(field, value):
+    result = synthetic_association()
+    result["source_id"] = target()["source_id"]
+    result[field] = value
+    assert DV.classify_fate(result)[0] == "EVIDENCE_INCOMPLETE(VSX_TARGET_ASSOCIATION)"
+
+
+def test_classifier_accepts_matching_outer_values_without_filling_missing_fields():
+    result = synthetic_association()
+    result.update(source_id=target()["source_id"], ra=10.0, dec=-5.0)
+    assert "ref_epoch" not in result and "pmra" not in result
+    assert DV.classify_fate(result)[0] == "KNOWN_ECLIPSING_BINARY(VSX:EA)"
+
+
+def production_association(monkeypatch):
+    monkeypatch.setattr(DV, "_tap_rows", lambda *a, **kw: pd.DataFrame([native_row()]))
+    return DV.vsx_type(10, -5, target_astrometry=target(), association_receipt=receipt())
+
+
+def test_production_query_positive_requires_coherent_context(monkeypatch):
+    result = production_association(monkeypatch)
+    assert result["vsx_candidate_source"] == "PRODUCTION_CONE_QUERY"
+    assert DV.classify_fate(result)[0] == "KNOWN_ECLIPSING_BINARY(VSX:EA)"
+
+
+def test_serialized_status_cannot_bypass_tolerance_exceeding_query_radius(monkeypatch):
+    monkeypatch.setattr(DV, "_tap_rows", lambda *a, **kw: pd.DataFrame([native_row()]))
+    result = DV.vsx_type(10, -5, r_arcsec=1, target_astrometry=target(),
+                        association_receipt=receipt(max_separation_arcsec=2))
+    assert result["vsx_association_status"] == "MATCH_TOLERANCE_EXCEEDS_QUERY_RADIUS"
+    result["vsx_association_status"] = VA.SUPPORTED
+    assert DV.classify_fate(result)[0] == "EVIDENCE_INCOMPLETE(VSX_TARGET_ASSOCIATION)"
+
+
+@pytest.mark.parametrize("field", [
+    "vsx_query", "vsx_query_radius_arcsec", "vsx_query_ra", "vsx_query_dec",
+    "vsx_query_position_epoch_jyear", "vsx_query_position_epoch_status",
+])
+def test_missing_production_query_context_refuses_success_status(monkeypatch, field):
+    result = production_association(monkeypatch)
+    result.pop(field)
+    assert DV.classify_fate(result)[0] == "EVIDENCE_INCOMPLETE(VSX_TARGET_ASSOCIATION)"
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("vsx_query_radius_arcsec", 0), ("vsx_query_radius_arcsec", 0.5),
+    ("vsx_query_ra", 11), ("vsx_query_dec", -6),
+    ("vsx_query_position_epoch_jyear", 2016),
+    ("vsx_query_position_epoch_status", "UNVERIFIED"),
+])
+def test_conflicting_production_query_context_refuses(monkeypatch, field, value):
+    result = production_association(monkeypatch)
+    result[field] = value
+    assert DV.classify_fate(result)[0] == "EVIDENCE_INCOMPLETE(VSX_TARGET_ASSOCIATION)"
+
+
+def test_audit_only_result_cannot_claim_partial_production_query():
+    result = synthetic_association()
+    result["vsx_query_radius_arcsec"] = 10
+    assert DV.classify_fate(result)[0] == "EVIDENCE_INCOMPLETE(VSX_TARGET_ASSOCIATION)"

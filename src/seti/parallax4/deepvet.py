@@ -149,6 +149,7 @@ def vsx_type(ra: float, dec: float, r_arcsec: float = 10.0, *,
                         "CALLER_REVIEWED_RECEIPT" if query_epoch is not None else "UNVERIFIED"))
         df = _tap_rows(VIZIER_TAP, query)
         result = VA.audit_candidates(df, target=target_astrometry, receipt=association_receipt)
+        result["vsx_candidate_source"] = "PRODUCTION_CONE_QUERY"
         if context is not None and context["tolerance"] > r_arcsec:
             result.pop("vsx_type", None)
             result["vsx_association_status"] = "MATCH_TOLERANCE_EXCEEDS_QUERY_RADIUS"

@@ -120,6 +120,7 @@ def audit_candidates(rows: pd.DataFrame, *, target: dict | None = None,
     ]
     result = {
         "vsx_status": "ROWS_RETURNED" if len(rows) else "NO_ROWS_AT_QUERY_POSITION",
+        "vsx_candidate_source": "AUDIT_ONLY_CALLER_SUPPLIED_ROWS",
         "vsx_n_rows_returned": int(len(rows)), "vsx_n_rows_preserved": len(candidates),
         "vsx_query_truncated": bool(len(rows) > MAX_CANDIDATES),
         "vsx_candidates": candidates,
@@ -195,7 +196,32 @@ def classification_type(row: dict) -> str | None:
         return None
     if "source_id" in row and _identifier(row["source_id"]) != _identifier(target.get("source_id")):
         return None
+    for field in ("ra", "dec", "ref_epoch", "pmra", "pmdec"):
+        if field in row and (_number(row[field]) is None
+                             or _number(row[field]) != _number(target.get(field))):
+            return None
     if row.get("vsx_query_truncated") is not False:
+        return None
+    source = row.get("vsx_candidate_source")
+    query_fields = ("vsx_query", "vsx_query_radius_arcsec", "vsx_query_ra", "vsx_query_dec",
+                    "vsx_query_position_epoch_jyear", "vsx_query_position_epoch_status")
+    if source == "PRODUCTION_CONE_QUERY":
+        context, reason = receipt_context(target, row.get("vsx_association_receipt"))
+        radius = _number(row.get("vsx_query_radius_arcsec"))
+        if reason or radius is None or radius <= 0 or context["tolerance"] > radius:
+            return None
+        if not isinstance(row.get("vsx_query"), str) or not row["vsx_query"]:
+            return None
+        if _number(row.get("vsx_query_position_epoch_jyear")) != context["epoch"] \
+                or row.get("vsx_query_position_epoch_status") != "CALLER_REVIEWED_RECEIPT":
+            return None
+        direction = context["direction"]
+        expected_ra = float(np.rad2deg(np.arctan2(direction[1], direction[0])) % 360)
+        expected_dec = float(np.rad2deg(np.arcsin(np.clip(direction[2], -1, 1))))
+        if _number(row.get("vsx_query_ra")) != expected_ra \
+                or _number(row.get("vsx_query_dec")) != expected_dec:
+            return None
+    elif source != "AUDIT_ONLY_CALLER_SUPPLIED_ROWS" or any(k in row for k in query_fields):
         return None
     candidates = row.get("vsx_candidates")
     if not isinstance(candidates, list) or not all(isinstance(x, dict) for x in candidates):

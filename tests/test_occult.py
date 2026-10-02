@@ -202,6 +202,7 @@ def test_flat_star_is_not_lensing():
 
 def _passing():
     return {
+        **_complete_refinement(),
         "regime": "wing", "dchi2": 500.0, "dchi2_anti": 20.0,
         "alpha": {"alpha": 1.0, "sigma": 0.05},
         "symmetry": {"rise": {"snr": 10.0}, "fall": {"snr": 10.0}, "alpha_z": 0.5, "edges_agree": True},
@@ -390,11 +391,26 @@ def test_expected_dchi2_projects_out_what_a_refit_absorbs():
     assert 0.0 <= proj < 0.5 * raw
 
 
+
+def _complete_refinement():
+    """Explicit execution metadata for crafted synthetic diagnostic rows."""
+    return {
+        "refinement": {
+            k: {"planned": 1, "attempted": 1, "usable": 1, "finished": True}
+            for k in ("occult", "anti")
+        },
+        "refinement_status": "COMPLETE",
+        "dchi2_anti": 0.0,
+    }
+
+
 def test_recovered_requires_candidate_and_matching_rho():
-    ok = {"tier": D.TIER_CANDIDATE, "occult": {"rho_l": 0.61}}
+    ok = {**_complete_refinement(), "tier": D.TIER_CANDIDATE, "occult": {"rho_l": 0.61}}
     assert INJ.recovered(ok, 0.6)
-    assert not INJ.recovered({"tier": D.TIER_REJECTED, "occult": {"rho_l": 0.6}}, 0.6)
-    assert not INJ.recovered({"tier": D.TIER_CANDIDATE, "occult": {"rho_l": 1.2}}, 0.6)
+    assert not INJ.recovered({**_complete_refinement(), "tier": D.TIER_REJECTED,
+                              "occult": {"rho_l": 0.6}}, 0.6)
+    assert not INJ.recovered({**_complete_refinement(), "tier": D.TIER_CANDIDATE,
+                              "occult": {"rho_l": 1.2}}, 0.6)
 
 
 # --------------------------------------------------------------------------------------
@@ -455,12 +471,14 @@ def test_controls_verdict_logic():
     gate = {"min_recovery_strong": 0.7, "min_controls_reached_frac": 0.7}
     assert R.controls_verdict([], gate, 3)["verdict"] == "NO_DATA_REACHED"
     good = [{"name": "a", "class": "finite_source_single_lens", "reached": True,
-             "tier": D.TIER_NO_OCC, "sites": ["KMTA", "KMTC"],
-             "injections": [{"expected_dchi2": 900, "recovered": True, "rho_l_inj": 0.7}] * 3}]
+             **_complete_refinement(), "tier": D.TIER_NO_OCC, "sites": ["KMTA", "KMTC"],
+             "injections": [{**_complete_refinement(), "expected_dchi2": 900,
+                             "recovered": True, "rho_l_inj": 0.7}] * 3}]
     assert R.controls_verdict(good, gate, 1)["verdict"] == "CONTROLS_PASS"
     fp = [dict(good[0], tier=D.TIER_CANDIDATE)]
     assert R.controls_verdict(fp, gate, 1)["verdict"] == "CONTROLS_FAIL_FALSE_POSITIVE"
-    low = [dict(good[0], injections=[{"expected_dchi2": 900, "recovered": False}] * 3)]
+    low = [dict(good[0], injections=[{**_complete_refinement(), "expected_dchi2": 900,
+                                     "recovered": False}] * 3)]
     assert R.controls_verdict(low, gate, 1)["verdict"] == "CONTROLS_FAIL_LOW_RECOVERY"
 
 
@@ -471,6 +489,8 @@ def test_assess_threshold_from_anti_null_and_funnel(tmp_path):
             for i in range(60)]
     rows.append({"unit": "C1", "tier": D.TIER_CANDIDATE, "dchi2": 400.0, "dchi2_anti": 3.0})
     rows.append({"unit": "C2", "tier": D.TIER_CANDIDATE, "dchi2": 55.0, "dchi2_anti": 1.0})
+    for row in rows:
+        row.update({k: v for k, v in _complete_refinement().items() if k != "dchi2_anti"})
     (sdir / "screen_s0of1.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
     (sdir / "inj_s0of1.jsonl").write_text("")
     (tmp_path / "controls.json").write_text(json.dumps({"passed": True, "verdict": "CONTROLS_PASS"}))

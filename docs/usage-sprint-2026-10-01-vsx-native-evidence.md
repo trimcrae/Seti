@@ -49,9 +49,27 @@ wrong historical provenance, invented epochs/identity/availability states,
 nonverbatim excerpts and a newly supplied deep-vet input. It never writes
 scientific outputs or creates an association receipt.
 
-Supported commands are `node --test tests/parallax4-vsx-input-gap.test.mjs`
-and `node tools/parallax4-vsx-input-gap.mjs --check`; exact executed CI
-receipts will be committed after independent review and automatic validation.
+Exact reviewed source `b2c17488bbd24278eb271e601fde20a8b18d3abb`
+passed actual [CI 36961573577](https://github.com/trimcrae/Seti/actions/runs/36961573577),
+job `110696199524`: Node **22.23.3**, syntax, **35/35 cases**, original
+repository Git/SHA256 byte/raw-excerpt checks and preserved science-file check.
+The original checkout is that same source, tree
+`057103397c296b2e95699ac5b371dde61bb4a046`.
+Both independent reviewers matched the raw excerpts to original Git blobs
+and reviewed source, unknown states and actual CI.
+
+[PR27](https://github.com/trimcrae/Seti/pull/27) normally merged at
+`7f24082abe360b2441482709aa3964331b9ab688`, preserving main
+`72c8a3277f7016ef3a635d13c282d3c3a24a385d` and tested source as parents.
+The merged tree is identical to the tested source. This subsequent checkpoint
+adds only this handoff, [exact validation receipt](usage-sprint-2026-10-01-vsx-native-evidence-receipt.json)
+and [original focused transcript](usage-sprint-2026-10-01-vsx-native-evidence-focused.log),
+SHA256 `3369315fae7705e4c372d076614899580d7cb34df7fa65bd0fedbf9556cddf4a`.
+Automatic CI on the later documentation/main head is observed separately once.
+
+Executed commands: `node --test tests/parallax4-vsx-input-gap.test.mjs`
+and `node tools/parallax4-vsx-input-gap.mjs --check`, plus syntax and the
+preserved-file guard listed in the receipt.
 No local Node/Python test execution is claimed.
 
 The preceding VSX repair remains complete: tested source `3165be48`,
@@ -66,5 +84,7 @@ Only after a real native VSX target binding and an authoritative positional
 epoch source are independently supplied, acquire one target-specific source
 receipt and check native identities, edition and provenance. If unavailable,
 retain this gap. Never substitute equinox, photometric epoch, proximity or a
-synthetic receipt. This one-target missing-input result ends the science task;
-historical outputs, thresholds, shared queues and bots remain preserved.
+synthetic receipt. This one-target missing-input result ends the science task. Do not repeat the
+unchanged audit without new native target/source evidence; a later session may
+select a distinct detection-forward task under its own bounded instruction.
+Historical outputs, thresholds, shared queues and bots remain preserved.

@@ -680,10 +680,26 @@ def test_local_coincidence_veto():
 def test_deepvet_fates():
     from seti.parallax4 import deepvet as DV
 
-    assert DV.classify_fate({"vsx_type": "EA"})[0].startswith("KNOWN_ECLIPSING_BINARY")
+    from seti.parallax4 import vsx_association as VA
+
+    def associated(vsx_type):
+        # Synthetic caller-reviewed evidence, not a live VSX identity claim.
+        native = {"OID": "123", "Name": "synthetic", "Type": vsx_type,
+                  "RAJ2000": 10.0, "DEJ2000": -5.0}
+        target = {"source_id": "77", "ra": 10.0, "dec": -5.0, "ref_epoch": 2016.0,
+                  "pmra": 0.0, "pmdec": 0.0}
+        receipt = {"schema": "vsx-gaia-association-v1", "review_status": "CALLER_REVIEWED",
+                   "catalogue_table": "B/vsx/vsx", "gaia_release": "DR3",
+                   "gaia_source_id": "77", "vsx_oid": "123", "position_frame": "ICRS",
+                   "position_epoch_jyear": 2000.0, "max_separation_arcsec": 1.0,
+                   "evidence_url": "https://example.invalid/synthetic",
+                   "evidence_sha256": "a" * 64}
+        return VA.audit_candidates(pd.DataFrame([native]), target=target, receipt=receipt)
+
+    assert DV.classify_fate(associated("EA"))[0].startswith("KNOWN_ECLIPSING_BINARY")
     assert DV.classify_fate({"simbad_otype": "YSO"})[0].startswith("YOUNG_STELLAR_OBJECT")
-    assert DV.classify_fate({"vsx_type": "UXOR"})[0].startswith("YOUNG_STELLAR_OBJECT")
-    assert DV.classify_fate({"vsx_type": "RRAB"})[0].startswith("KNOWN_VARIABLE")
+    assert DV.classify_fate(associated("UXOR"))[0].startswith("YOUNG_STELLAR_OBJECT")
+    assert DV.classify_fate(associated("RRAB"))[0].startswith("KNOWN_VARIABLE")
     fate, fl = DV.classify_fate({"simbad_otype": "*", "phot_g_mean_mag": 10.2, "n_gaia_30as": 40,
                                  "min_n_obs_g": 3.0})
     assert fate == "UNEXPLAINED" and len(fl) == 3

@@ -926,6 +926,7 @@ def stage_deepvet(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap,
     from . import deepvet as DV
 
     simbad = simbad or DV.simbad_type
+    default_vsx = vsx is None
     vsx = vsx or DV.vsx_type
     gcfg = G.GreyConfig.from_dict(conf.get("grey"))
     rep: dict = {"stage": "deepvet", **_provenance()}
@@ -976,7 +977,12 @@ def stage_deepvet(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap,
             rec["reproduced"] = None
         if np.isfinite(ra):
             rec.update(simbad(ra, dec))
-            rec.update(vsx(ra, dec))
+            if default_vsx:
+                target = {k: r.get(k) for k in ("ra", "dec", "ref_epoch", "pmra", "pmdec")}
+                target["source_id"] = str(sid)
+                rec.update(vsx(ra, dec, target_astrometry=target))
+            else:
+                rec.update(vsx(ra, dec))
             try:
                 cone = acq.gaia_cone(ra, dec, 30.0, tap=tap)
                 rec["n_gaia_30as"] = int(len(cone)) - 1

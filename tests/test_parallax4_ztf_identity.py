@@ -106,9 +106,9 @@ def test_band_specific_ids_do_not_pool_or_create_false_ambiguity():
 
 
 def test_other_catalogue_explanation_retains_identity_gap_flag():
-    result = {"ztf_class": "ZTF_AMBIGUOUS_OBJECTS", "vsx_type": "EA"}
+    result = {"ztf_class": "ZTF_AMBIGUOUS_OBJECTS", "simbad_otype": "EB*"}
     fate, flags = DV.classify_fate(result)
-    assert fate == "KNOWN_ECLIPSING_BINARY(VSX:EA)"
+    assert fate == "KNOWN_BINARY(SIMBAD:EB*)"
     assert "ztf_object_identity_unresolved" in flags
 
 

@@ -215,7 +215,7 @@ def build_report(path: Path) -> dict:
     starts = [x[0] for x in groups]
     period, duration, tol, t0, k = 1.0, 0.1, 0.03, 0.0, 10
     _, masks = alias_masks(starts, period, duration, tol, t0)
-    matching = [t for t, ok in zip(starts, masks[2]) if ok]
+    matching = [t for t, ok in zip(starts, masks[2], strict=True) if ok]
     if len(starts) < k or len(matching) < k:
         raise ValueError("INSUFFICIENT_PREDECLARED_CONTROL_OPPORTUNITIES")
     chronological = starts[:k]

@@ -716,7 +716,7 @@ def test_ztf_eclipse_test_phases_gaia_dips():
     t = mjd - DV.GAIA_T0_MJD
     loss = SIM.eclipse_profile(t, 2.345, 1700.3, 0.3, 0.05, 0.25)
     z = pd.DataFrame({"mjd": mjd, "mag": 15 - 2.5 * np.log10(1 - loss) + rng.normal(0, 0.01, 600),
-                      "magerr": 0.01, "filtercode": "zr"})
+                      "magerr": 0.01, "filtercode": "zr", "oid": "9007199254740993"})
     dips = [1700.3 + 2.345 * k for k in (10, 40, 77, 120, 200)]
     r = DV.ztf_eclipse_test(z, dips)
     assert r["ztf_class"] == "ZTF_ECLIPSING_PHASED" and abs(r["ztf_period_d"] - 2.345) < 0.01

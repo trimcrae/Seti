@@ -1000,7 +1000,9 @@ def stage_deepvet(conf: dict, out: Path, *, http=acq.http_get, tap=acq.gaia_tap,
     fates = df["fate"].map(lambda x: str(x).split("(")[0]).value_counts() if len(df) else pd.Series(dtype=int)
     rep.update(fates={str(k): int(c) for k, c in fates.items()},
                unexplained=df[df["fate"] == "UNEXPLAINED"].to_dict("records") if len(df) else [])
-    rep["verdict"] = f"{int((df['fate'] == 'UNEXPLAINED').sum()) if len(df) else 0} of {len(df)} deep-vetted UNEXPLAINED"
+    rep["n_evidence_incomplete"] = int(df["fate"].str.startswith("EVIDENCE_INCOMPLETE").sum()) if len(df) else 0
+    rep["verdict"] = (f"{int((df['fate'] == 'UNEXPLAINED').sum()) if len(df) else 0} of {len(df)} "
+                      f"deep-vetted UNEXPLAINED; {rep['n_evidence_incomplete']} evidence-incomplete")
     _write(out / "deepvet.json", rep)
     print(f"[parallax4] deepvet: {rep['verdict']}; fates={rep['fates']}")
     return rep

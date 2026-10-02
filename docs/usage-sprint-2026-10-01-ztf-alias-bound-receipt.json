@@ -1,0 +1,223 @@
+{
+  "schema": "seti-usage-sprint-validation-v1",
+  "repository": "trimcrae/Seti",
+  "ai_authored": true,
+  "branch": "codex/usage-sprint-2026-10-01-ztf-alias-bound",
+  "baseline_sha": "ace1e6d631d4c49cfacf10d4e9cf126b446b138d",
+  "baseline_ci": {
+    "run_id": 36948566312,
+    "head_sha": "ace1e6d631d4c49cfacf10d4e9cf126b446b138d",
+    "status": "success",
+    "observation": "Fresh observation before selecting work; no repeat audit."
+  },
+  "tested_source_sha": "d1f5780de8f3ae541aba0c17b9733890b64e7705",
+  "tested_source_tree": "69b7a9ff559625fcbf225e641bc909748d0a8a68",
+  "pull_request_url": "https://github.com/trimcrae/Seti/pull/25",
+  "baseline_witness": {
+    "run_id": 36951305026,
+    "job_id": 110664635451,
+    "source_sha": "275076c1f63e25caa3d323fff7fa5d23e9cf006d",
+    "status": "success",
+    "production_path": "ztf_eclipse_test with fixed synthetic BLS ephemeris",
+    "old_bound": 0.003221225472,
+    "half_period_chance": 0.019770609664,
+    "old_class": "ZTF_ECLIPSING_PHASED",
+    "original_log_excerpt": "2026-10-02T01:32:52.6757804Z .BASELINE_WITNESS old=0.003221225472 half_period=0.019770609664"
+  },
+  "analytic_witness": {
+    "period_d": 1,
+    "duration_d": 0.1,
+    "phase_tol": 0.03,
+    "n_dips": 6,
+    "trial_periods_d": [
+      1,
+      2,
+      0.5
+    ],
+    "trial_phase_fractions": [
+      0.32,
+      0.22,
+      0.52
+    ],
+    "trial_probabilities": [
+      0.001073741824,
+      0.000113379904,
+      0.019770609664
+    ],
+    "repaired_bound": 0.020957731392,
+    "repaired_class": "ZTF_ECLIPSING_PHASE_AMBIGUOUS"
+  },
+  "scoped": {
+    "run_id": 36951545479,
+    "job_id": 110665368935,
+    "event": "push",
+    "head_sha": "d1f5780de8f3ae541aba0c17b9733890b64e7705",
+    "checkout_sha": "d1f5780de8f3ae541aba0c17b9733890b64e7705",
+    "tree_sha": "69b7a9ff559625fcbf225e641bc909748d0a8a68",
+    "status": "completed",
+    "conclusion": "success",
+    "python_version": "3.11.16",
+    "test_count": 173,
+    "test_result": "173 passed in 50.29s",
+    "lint_result": "All checks passed!",
+    "commands": [
+      "ruff check src/seti/parallax4/cohorts.py src/seti/parallax4/run.py tests/test_parallax4_cohorts.py src/seti/parallax4/deepvet.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py",
+      "python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py -o addopts=\"\" -q -p no:cacheprovider"
+    ],
+    "started_at": "2026-10-02T01:34:05Z",
+    "completed_at": "2026-10-02T01:35:59Z",
+    "independently_reviewed_by": "/root/apps_round3_review",
+    "limitations": [
+      "synthetic and offline tests",
+      "conditional iid-uniform phase model, not empirical Gaia-sampling calibration"
+    ]
+  },
+  "scoped_dependencies": {
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "astropy": "8.0.1",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10"
+  },
+  "independent_review": [
+    {
+      "reviewer": "/root/apps_round3_review",
+      "scope": "code, method, baseline witness, exact scoped and full CI",
+      "status": "cleared"
+    },
+    {
+      "reviewer": "/root",
+      "scope": "scientific mathematics, exact code and actual full CI",
+      "status": "cleared"
+    }
+  ],
+  "implementation_blob_shas": [
+    {
+      "path": "src/seti/parallax4/deepvet.py",
+      "sha": "1bb26b055b84e2df0c59f6f234286194e285b4a9"
+    },
+    {
+      "path": "tests/test_parallax4_ztf_phase.py",
+      "sha": "e23b989f67b4748af5f21bebf61855b0edda54d1"
+    },
+    {
+      "path": ".github/workflows/parallax4-offline.yml",
+      "sha": "113edde9eab071a750b8449e34380b522e0d4218"
+    }
+  ],
+  "preserved_blob_shas": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha": "25fe9456d22b34a2bff0a7c6ca5ffb19e631255c"
+    },
+    {
+      "path": "config/parallax4.yaml",
+      "sha": "ed3cb5b59a0106d96bfda2c1744b5268abe0b738"
+    },
+    {
+      "path": "src/seti/parallax4/greydip.py",
+      "sha": "4b39a87ea93d3ccdc753e2ab260d3f7518947cd4"
+    },
+    {
+      "path": "src/seti/parallax4/run.py",
+      "sha": "99608b4a4c7dc153b243e9e2bc773607471f30bf"
+    },
+    {
+      "path": "tests/test_parallax4.py",
+      "sha": "129e6e3869a380654bbc17b94f0b6a535d567318"
+    },
+    {
+      "path": "tests/test_parallax4_cohorts.py",
+      "sha": "cb90190ace1a10215ae3c8db3115eebcb2cfe13c"
+    },
+    {
+      "path": "tests/test_parallax4_ztf_identity.py",
+      "sha": "d91f09c057b8044e498d44aa86f0cb929439a495"
+    }
+  ],
+  "source_diff_paths": [
+    ".github/workflows/parallax4-offline.yml",
+    "docs/usage-sprint-2026-10-01-ztf-alias-bound.md",
+    "src/seti/parallax4/deepvet.py",
+    "tests/test_parallax4_ztf_phase.py"
+  ],
+  "limitations": [
+    "Conditional independent uniform Gaia episode phases within each fixed ZTF-derived alias ephemeris; no independence between aliases required.",
+    "Real Gaia cadence, correlated or duplicated episodes and ephemeris uncertainty are not empirically calibrated.",
+    "Synthetic witness and deterministic quadrature are analytic code controls, not sky false-positive-rate measurements or detections.",
+    "No Gaia/ZTF target association is established by this mathematical repair.",
+    "Existing full-suite skips are retained; no local Python or catalogue science execution is claimed."
+  ],
+  "local_python_executed": false,
+  "science_results_modified": false,
+  "science_or_paid_compute_dispatched": false,
+  "next_task": "Proper-motion-aware counterpart evidence for VSX cone matching; preserve missing/ambiguous evidence instead of assigning arbitrary catalogue type.",
+  "tested_pull_request_checkout": "6db2a1fcc5e573e398c9042c64e8609f92d11319",
+  "full": {
+    "run_id": 36951571064,
+    "url": "https://github.com/trimcrae/Seti/actions/runs/36951571064",
+    "status": "success",
+    "head_sha": "d1f5780de8f3ae541aba0c17b9733890b64e7705",
+    "event": "pull_request",
+    "checkout_sha": "6db2a1fcc5e573e398c9042c64e8609f92d11319",
+    "tree_sha": "69b7a9ff559625fcbf225e641bc909748d0a8a68",
+    "offline_job_id": 110665447332,
+    "paper_job_id": 110665447159,
+    "pytest_command": "pytest -q -n auto",
+    "pytest_evidence": "Reached 100% with a successful Test step; existing skips retained; no full count inferred from the suppressed summary.",
+    "lint": "passed",
+    "reproduction": "passed",
+    "analysis_upload": "passed",
+    "paper_build": "passed",
+    "paper_upload": "passed",
+    "jobs": [
+      {
+        "id": 110665447159,
+        "name": "paper",
+        "started_at": "2026-10-02T01:34:24Z",
+        "completed_at": "2026-10-02T01:36:59Z",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 110665447332,
+        "name": "offline",
+        "started_at": "2026-10-02T01:34:25Z",
+        "completed_at": "2026-10-02T01:55:51Z",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "original_offline_log_sha256": "d3a135872f7a43a49465adf1a9e7e5f503223fd108ce5dcf02fce2f069d178e9",
+    "original_offline_log_sha256_verification": "Independently calculated by /root from acquired original job transcript."
+  },
+  "preserved_bot_advance": {
+    "sha": "f9b50202839a4661afea1f76022f9bcb6b153d0f",
+    "changed_paths": [
+      "results/cronwatch/status.json",
+      "results/watchdog/status.json"
+    ],
+    "scope": "Operational status JSON only; preserve through a normal merge."
+  },
+  "original_acquisition_identity_and_fate_prefix_identical": true,
+  "full_push_confirmation": {
+    "run_id": 36951545526,
+    "status": "success",
+    "event": "push",
+    "head_sha": "d1f5780de8f3ae541aba0c17b9733890b64e7705",
+    "checkout_sha": "d1f5780de8f3ae541aba0c17b9733890b64e7705",
+    "offline_job_id": 110665698816,
+    "paper_job_id": 110665698603
+  },
+  "source_merge_sha": "ab804c8204a87b2c3db28da41901410b251bb79a",
+  "source_merge_tree": "78e68ba3f681863960b2bf08eae29e709d884574",
+  "source_merge_source_difference": [
+    "results/cronwatch/status.json",
+    "results/watchdog/status.json"
+  ],
+  "transcripts": {
+    "baseline": "docs/usage-sprint-2026-10-01-ztf-alias-bound-logs/baseline-110664635451.log",
+    "scoped": "docs/usage-sprint-2026-10-01-ztf-alias-bound-logs/scoped-110665368935.log",
+    "full_offline": "docs/usage-sprint-2026-10-01-ztf-alias-bound-logs/full-offline-110665447332.log"
+  }
+}

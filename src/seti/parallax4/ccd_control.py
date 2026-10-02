@@ -112,13 +112,13 @@ def build_report():
     offsets_values = psi_final * (SYNTHETIC_D_MAS[0] * np.sin(joint["theta"])
                                  + SYNTHETIC_D_MAS[1] * np.cos(joint["theta"]))
     offsets = {(int(row.source_id), int(row.transit_id)): float(delta)
-               for row, delta in zip(joint.itertuples(), offsets_values)}
+               for row, delta in zip(joint.itertuples(), offsets_values, strict=True)}
     reference, discordant, analytic = matched_centroids(native, offsets)
     ref_input, ref_fit = _fit_arm(reference, joint, phi)
     dis_input, dis_fit = _fit_arm(discordant, joint, phi)
     by_id = {row["transit_id"]: row for row in analytic}
     rows = []
-    for ref, dis in zip(ref_input.itertuples(), dis_input.itertuples()):
+    for ref, dis in zip(ref_input.itertuples(), dis_input.itertuples(), strict=True):
         if ref.transit_id != dis.transit_id:
             raise ValueError("SYNTHETIC_TRANSIT_ORDER_MISMATCH")
         item = dict(by_id[str(int(ref.transit_id))])

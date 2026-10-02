@@ -146,7 +146,9 @@ def _write_assess_input(root, rows):
     sdir.mkdir()
     (sdir / "screen_s0of1.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
     (sdir / "inj_s0of1.jsonl").write_text("")
-    (root / "controls.json").write_text(json.dumps({"passed": True, "verdict": "CONTROLS_PASS"}))
+    control = _control()
+    receipt = {**R.controls_verdict([control], {}, 1), "records": [control]}
+    (root / "controls.json").write_text(json.dumps(receipt))
     with gzip.open(root / "catalog.json.gz", "wt") as fh:
         json.dump({"units": [{"unit": r["unit"]} for r in rows]}, fh)
 
@@ -276,3 +278,122 @@ def test_full_eligible_null_coverage_keeps_candidate_positive(tmp_path):
     assert out["null_threshold"]["n_null"] == out["null_threshold"]["n_eligible"] == 2
     assert out["verdict"] == "CANDIDATES_TO_VET:1"
     assert [r["unit"] for r in out["candidates"]] == ["candidate"]
+
+
+@pytest.mark.parametrize("mode", [
+    "bare", "markerless-named", "markerless-injection", "missing-file", "invalid-json",
+    "not-object", "invalid-records", "missing-class", "missing-reached",
+    "bool-census", "census-mismatch", "invalid-sites", "invalid-injections",
+    "missing-expected", "invalid-recovered", "stored-false", "stored-one", "stored-string",
+    "read-unavailable",
+])
+def test_assessment_rechecks_retained_controls_before_candidate_export(monkeypatch, tmp_path, mode):
+    lc = tmp_path / "source-photometry.csv"
+    lc.write_text("synthetic sentinel\n")
+    rows = [dict(_complete(), unit="candidate", tier=D.TIER_CANDIDATE,
+                 dchi2=500, lc_file=str(lc))]
+    _write_assess_input(tmp_path, rows)
+    controls_path = tmp_path / "controls.json"
+    receipt = json.loads(controls_path.read_text())
+    # An unreached named record remains part of the native n_listed census.
+    receipt["records"].append({"name": "unreached", "class": "binary_lens", "reached": False})
+    receipt["n_listed"] = 2
+    if mode == "bare":
+        receipt = {"passed": True, "verdict": "CONTROLS_PASS"}
+    elif mode == "markerless-named":
+        receipt["records"][0].pop("refinement")
+    elif mode == "markerless-injection":
+        for trial in receipt["records"][0]["injections"]:
+            trial.pop("refinement", None)
+    elif mode == "not-object":
+        receipt = ["CONTROLS_PASS"]
+    elif mode == "invalid-records":
+        receipt["records"] = "not records"
+    elif mode == "missing-class":
+        receipt["records"][0].pop("class")
+    elif mode == "missing-reached":
+        receipt["records"][0].pop("reached")
+    elif mode == "bool-census":
+        receipt["n_listed"] = True
+    elif mode == "census-mismatch":
+        receipt["n_listed"] = 1
+    elif mode == "invalid-sites":
+        receipt["records"][0]["sites"] = "KMTA"
+    elif mode == "invalid-injections":
+        receipt["records"][0]["injections"] = {}
+    elif mode == "missing-expected":
+        receipt["records"][0]["injections"][0].pop("expected_dchi2")
+    elif mode == "invalid-recovered":
+        receipt["records"][0]["injections"][0]["recovered"] = "true"
+    elif mode == "stored-false":
+        receipt["passed"] = False
+    elif mode == "stored-one":
+        receipt["passed"] = 1
+    elif mode == "stored-string":
+        receipt["passed"] = "true"
+    controls_path.write_text(json.dumps(receipt))
+    if mode == "missing-file":
+        controls_path.unlink()
+    elif mode == "invalid-json":
+        controls_path.write_text("{damaged")
+    before = controls_path.read_bytes() if controls_path.exists() else None
+    if mode == "read-unavailable":
+        original_read = type(controls_path).read_text
+        def unavailable(path, *args, **kwargs):
+            if path == controls_path:
+                raise OSError("synthetic controls read unavailable")
+            return original_read(path, *args, **kwargs)
+        monkeypatch.setattr(type(controls_path), "read_text", unavailable)
+    copies = []
+    monkeypatch.setattr("shutil.copy2", lambda *args: copies.append(args))
+    out = R.stage_assess(tmp_path, {}, 1)
+    check = out["controls_validation"]
+    assert check["passed"] is False
+    assert out["verdict"].startswith("CONTROLS_NOT_PASSED(")
+    assert out["null_threshold"]["status"] == "MEASURED"
+    assert out["funnel"]["gate_passing_above_null_threshold"] == 1
+    assert out["funnel"]["gate_passing_withheld_for_controls"] == 1
+    assert out["candidates"] == [] and copies == []
+    assert lc.read_text() == "synthetic sentinel\n"
+    assert (controls_path.read_bytes() if controls_path.exists() else None) == before
+    artifact = json.loads((tmp_path / "candidates.json").read_text())
+    assert artifact["controls_validation"] == check
+    assert artifact["null_threshold"] == out["null_threshold"]
+    assert artifact["candidates"] == []
+    if mode in ("markerless-named", "markerless-injection"):
+        assert check["recomputed"]["verdict"] == "CONTROLS_DEGRADED_REFINEMENT_INCOMPLETE"
+    elif mode in ("stored-false", "stored-one", "stored-string"):
+        assert check["recomputed"]["passed"] is True
+    elif mode in ("bare", "missing-file"):
+        assert check["status"] == "UNKNOWN_LEGACY"
+    elif mode == "invalid-json":
+        assert check["status"] == "MALFORMED_JSON"
+    elif mode == "read-unavailable":
+        assert check["status"] == "READ_UNAVAILABLE"
+    else:
+        assert check["status"] == "MALFORMED"
+
+
+def test_assessment_complete_controls_census_keeps_native_positive_and_copies(tmp_path):
+    lc = tmp_path / "source-photometry.csv"
+    lc.write_text("synthetic sentinel\n")
+    rows = [dict(_complete(), unit="candidate", tier=D.TIER_CANDIDATE,
+                 dchi2=500, lc_file=str(lc))]
+    _write_assess_input(tmp_path, rows)
+    path = tmp_path / "controls.json"
+    receipt = json.loads(path.read_text())
+    receipt["records"].append({"name": "unreached", "class": "binary_lens", "reached": False})
+    receipt["n_listed"] = 2
+    path.write_text(json.dumps(receipt))
+    before = path.read_bytes()
+    out = R.stage_assess(tmp_path, {}, 1)
+    check = out["controls_validation"]
+    assert check["passed"] is True
+    assert check["recomputed"]["n_listed"] == 2
+    assert check["recomputed"]["n_reached"] == 1
+    assert check["recomputed"]["verdict"] == "CONTROLS_PASS_DEGRADED_COVERAGE"
+    assert out["verdict"] == "CANDIDATES_TO_VET:1"
+    assert out["funnel"]["gate_passing_withheld_for_controls"] == 0
+    assert len(out["candidates"]) == 1
+    assert (tmp_path / "lc" / lc.name).read_bytes() == lc.read_bytes()
+    assert path.read_bytes() == before

@@ -178,6 +178,37 @@ def _ztf_object_identity(z: pd.DataFrame) -> dict:
             "ztf_object_id": unique[0]}
 
 
+def _ztf_phase_chance_bound(period: float, duration: float, phase_tol: float,
+                            n_dips: int) -> tuple[float, list[dict]]:
+    """Conditional union bound for the three fixed ZTF alias ephemerides.
+
+    Each trial accepts two circular phase intervals centered at 0 and 0.5.
+    Their total measure is 4 * half_width until they touch, then 1. Under
+    independent uniform Gaia episode phases, all n fall in one trial with
+    probability measure**n. Sum those probabilities: no independence BETWEEN
+    aliases is assumed. Gaia cadence/correlated episodes or uncertain fitted
+    ephemerides can violate this null; this is not an empirical false-alarm
+    probability or a validation of the target association.
+    """
+    if not np.isfinite(period) or period <= 0:
+        raise ValueError("period must be finite and positive")
+    if not np.isfinite(duration) or duration <= 0:
+        raise ValueError("duration must be finite and positive")
+    if not np.isfinite(phase_tol) or phase_tol < 0:
+        raise ValueError("phase_tol must be finite and nonnegative")
+    if isinstance(n_dips, (bool, np.bool_)) or not isinstance(n_dips, (int, np.integer)) \
+            or n_dips < 0:
+        raise ValueError("n_dips must be a nonnegative integer")
+    trials = []
+    for period_try in (period, 2 * period, period / 2):
+        half = duration / period_try / 2 + phase_tol
+        fraction = min(1.0, 4 * half)
+        trials.append({"period_d": float(period_try), "half_width_phase": float(half),
+                       "accepted_phase_fraction": float(fraction), "n_dips": int(n_dips),
+                       "all_dips_probability": float(fraction ** n_dips)})
+    return float(min(1.0, sum(x["all_dips_probability"] for x in trials))), trials
+
+
 def ztf_eclipse_test(ztf: pd.DataFrame, gaia_dip_t: list[float], *, min_points: int = 60,
                      sde_min: float = 9.0, phase_tol: float = 0.03) -> dict:
     """Box-least-squares on the ZTF light curve (the band with more points),
@@ -218,18 +249,18 @@ def ztf_eclipse_test(ztf: pd.DataFrame, gaia_dip_t: list[float], *, min_points: 
     lo = f < np.median(f) - 5 * max(rms, 1e-4)
     out["ztf_n_low_points"] = int(lo.sum())
     if sde >= sde_min and depth > 5 * rms:
+        p_chance, trials = _ztf_phase_chance_bound(P, dur, phase_tol, len(gaia_dip_t))
         phased = []
-        for P_try in (P, 2 * P, P / 2):
+        for trial in trials:
+            P_try, half = trial["period_d"], trial["half_width_phase"]
             ph = [((tg - t0) / P_try + 0.5) % 1.0 - 0.5 for tg in gaia_dip_t]
-            half = dur / P_try / 2 + phase_tol
             ok = [abs(x) <= half or abs(abs(x) - 0.5) <= half for x in ph]
             phased.append((P_try, all(ok) and len(ok) > 0, ph))
         good = [x for x in phased if x[1]]
-        # chance that n unrelated dip times all land in the (primary or
-        # secondary) window at one of the 3 trial periods
-        n_d = max(len(gaia_dip_t), 1)
-        p_chance = float(min(1.0, 3 * (2 * (dur / P + 2 * phase_tol)) ** n_d))
-        out["phase_p_chance"] = p_chance
+        out.update(phase_p_chance=p_chance, phase_window_trials=trials,
+                   phase_p_chance_method="UNION_BOUND_FIXED_ZTF_EPHEMERIS",
+                   phase_p_chance_assumptions="INDEPENDENT_UNIFORM_GAIA_EPISODE_PHASES",
+                   phase_p_chance_is_empirical=False)
         if good and p_chance < 0.01:
             out.update(ztf_class="ZTF_ECLIPSING_PHASED", ztf_period_d=float(good[0][0]),
                        gaia_dip_phases=[float(v) for v in good[0][2]])

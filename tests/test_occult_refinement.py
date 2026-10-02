@@ -171,6 +171,8 @@ def test_reducer_withholds_legacy_and_partial_candidates_and_preserves_receipts(
     assert out["candidates"] == []
     assert out["funnel"]["complete_gate_passing_withheld_for_partial_null"] == 1
     assert out["funnel"]["unverified_gate_passing_withheld"] == 2
+    standalone = json.loads((tmp_path / "candidates.json").read_text())
+    assert standalone["null_threshold"] == out["null_threshold"]
     with gzip.open(tmp_path / "screen_compact.jsonl.gz", "rt") as fh:
         compact = [json.loads(line) for line in fh]
     by = {r["unit"]: r for r in compact}
@@ -188,6 +190,8 @@ def test_unmeasured_null_never_promotes_legacy_candidate(tmp_path):
     assert out["null_threshold"]["threshold"] == 50.0
     assert out["verdict"].startswith("ANTI_NULL_UNMEASURED")
     assert out["candidates"] == []
+    standalone = json.loads((tmp_path / "candidates.json").read_text())
+    assert standalone["null_threshold"]["status"] == "UNMEASURED"
 
 
 def _control():

@@ -343,12 +343,15 @@ def _state(tmp_path):
         "generated_utc": "2026-09-21T21:42:31Z"}))
 
 
-def test_parallel_vets_do_not_erase_each_other(tmp_path):
+def test_parallel_vets_do_not_erase_each_other(tmp_path, monkeypatch):
     """Five runs, five files, and the rebuild applies all five whichever order
     they land in -- the measured failure left one of five demotions."""
+    from seti.metronome import redetect
     from seti.metronome.reconcile import check_consistency, reconcile_all, vetstar_filename
     from seti.metronome.vetstar import reconcile_vetstar
 
+    clock = ["2026-10-02T10:33:55Z"]
+    monkeypatch.setattr(redetect, "_now", lambda: clock[0])
     _state(tmp_path)
     for k, v in FIVE.items():
         rep = {"star_key": k, "verdict": v, "generated_utc": "2026-09-23T00:35:00Z"}
@@ -363,11 +366,19 @@ def test_parallel_vets_do_not_erase_each_other(tmp_path):
     assert s["n_candidates"] == 1 and s["n_interest"] == 1
     assert s["vetstar"]["n_vetted"] == 5
     assert check_consistency(tmp_path) == []
-    # a second rebuild is a fixed point
+    # State is a fixed point; regeneration time legitimately advances.
+    assert s["generated_utc"] == clock[0]
+    clock[0] = "2026-10-02T10:33:56Z"
     again = reconcile_all(tmp_path)
     assert again["verdict"] == s["verdict"]
+    current = json.loads((tmp_path / "summary.json").read_text())
     c = json.loads((tmp_path / "candidates.json").read_text())
-    assert c["verdict"] == s["verdict"] and c["generated_utc"] == s["generated_utc"]
+    assert c["verdict"] == current["verdict"] == s["verdict"]
+    assert c["generated_utc"] == current["generated_utc"] == clock[0]
+    assert current["generated_utc"] != s["generated_utc"]
+    assert current["funnel"] == s["funnel"]
+    assert current["vetstar"]["n_vetted"] == 5
+    assert check_consistency(tmp_path) == []
 
 
 def test_an_extra_demotion_token_is_never_appended_twice(tmp_path):

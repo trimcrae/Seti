@@ -621,7 +621,8 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
             r["lc_file"] = str(out / "lc" / src.name)
     write_json(out / "summary.json", summary)
     write_json(out / "candidates.json", {"generated_utc": summary["generated_utc"],
-                                         "threshold": thr["threshold"], "candidates": above,
+                                         "threshold": thr["threshold"], "null_threshold": thr,
+                                         "candidates": above,
                                          "gate_passing_below_threshold": below})
     # compact per-unit table and every injection trial (the full shard files are artifacts)
     compact_keys = ("refinement", "refinement_status", "budget_exceeded", "unit", "tier", "dchi2", "dchi2_anti", "regime", "u_c", "rejections",

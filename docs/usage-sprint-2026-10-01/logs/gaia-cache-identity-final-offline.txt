@@ -1,0 +1,721 @@
+﻿2026-10-02T14:35:02.0820559Z Current runner version: '2.337.0'
+2026-10-02T14:35:02.0856989Z ##[group]Runner Image Provisioner
+2026-10-02T14:35:02.0858497Z Hosted Compute Agent
+2026-10-02T14:35:02.0859474Z Version: 20260901.588
+2026-10-02T14:35:02.0860411Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-02T14:35:02.0861583Z Build Date: 2026-09-01T19:56:44Z
+2026-10-02T14:35:02.0862614Z Worker ID: {5d82e26a-9a9b-49b6-bf05-3b0c5f26cc4c}
+2026-10-02T14:35:02.0863675Z Azure Region: northcentralus
+2026-10-02T14:35:02.0864678Z ##[endgroup]
+2026-10-02T14:35:02.0866654Z ##[group]Operating System
+2026-10-02T14:35:02.0867825Z Ubuntu
+2026-10-02T14:35:02.0868921Z 24.04.5
+2026-10-02T14:35:02.0869661Z LTS
+2026-10-02T14:35:02.0870728Z ##[endgroup]
+2026-10-02T14:35:02.0871595Z ##[group]Runner Image
+2026-10-02T14:35:02.0872648Z Image: ubuntu-24.04
+2026-10-02T14:35:02.0873554Z Version: 20260927.320.1
+2026-10-02T14:35:02.0875613Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-02T14:35:02.0878446Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+2026-10-02T14:35:02.0880063Z ##[endgroup]
+2026-10-02T14:35:02.0881925Z ##[group]GITHUB_TOKEN Permissions
+2026-10-02T14:35:02.0885293Z Contents: read
+2026-10-02T14:35:02.0886284Z Metadata: read
+2026-10-02T14:35:02.0887151Z Packages: read
+2026-10-02T14:35:02.0888271Z ##[endgroup]
+2026-10-02T14:35:02.0890935Z Secret source: Actions
+2026-10-02T14:35:02.0892563Z Cache mode: write
+2026-10-02T14:35:02.0893865Z Prepare workflow directory
+2026-10-02T14:35:02.1265762Z Prepare all required actions
+2026-10-02T14:35:02.1336192Z Getting action download info
+2026-10-02T14:35:02.3988729Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-02T14:35:02.4864054Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-10-02T14:35:02.5669993Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-02T14:35:02.7900900Z Complete job name: offline
+2026-10-02T14:35:02.8670836Z ##[group]Run actions/checkout@v4
+2026-10-02T14:35:02.8671664Z with:
+2026-10-02T14:35:02.8672101Z   repository: trimcrae/Seti
+2026-10-02T14:35:02.8676234Z   token: ***
+2026-10-02T14:35:02.8676670Z   ssh-strict: true
+2026-10-02T14:35:02.8677113Z   ssh-user: git
+2026-10-02T14:35:02.8677882Z   persist-credentials: true
+2026-10-02T14:35:02.8678371Z   clean: true
+2026-10-02T14:35:02.8678826Z   sparse-checkout-cone-mode: true
+2026-10-02T14:35:02.8679343Z   fetch-depth: 1
+2026-10-02T14:35:02.8679778Z   fetch-tags: false
+2026-10-02T14:35:02.8680221Z   show-progress: true
+2026-10-02T14:35:02.8680670Z   lfs: false
+2026-10-02T14:35:02.8681084Z   submodules: false
+2026-10-02T14:35:02.8681533Z   set-safe-directory: true
+2026-10-02T14:35:02.8682040Z   allow-unsafe-pr-checkout: false
+2026-10-02T14:35:02.8682784Z ##[endgroup]
+2026-10-02T14:35:02.9711294Z Syncing repository: trimcrae/Seti
+2026-10-02T14:35:02.9713113Z ##[group]Getting Git version info
+2026-10-02T14:35:02.9713816Z Working directory is '/home/runner/work/Seti/Seti'
+2026-10-02T14:35:02.9714743Z [command]/usr/bin/git version
+2026-10-02T14:35:02.9816906Z git version 2.55.0
+2026-10-02T14:35:02.9838660Z ##[endgroup]
+2026-10-02T14:35:02.9853844Z Temporarily overriding HOME='/home/runner/work/_temp/a540fe4d-94c0-4eb5-a396-1b043dd0f46b' before making global git config changes
+2026-10-02T14:35:02.9856460Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-02T14:35:02.9859251Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Seti/Seti
+2026-10-02T14:35:02.9910815Z Deleting the contents of '/home/runner/work/Seti/Seti'
+2026-10-02T14:35:02.9920518Z ##[group]Initializing the repository
+2026-10-02T14:35:02.9928248Z [command]/usr/bin/git init /home/runner/work/Seti/Seti
+2026-10-02T14:35:03.0025433Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-02T14:35:03.0027686Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-02T14:35:03.0032025Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-02T14:35:03.0033235Z hint: call:
+2026-10-02T14:35:03.0033849Z hint:
+2026-10-02T14:35:03.0034628Z hint: 	git config --global init.defaultBranch <name>
+2026-10-02T14:35:03.0035598Z hint:
+2026-10-02T14:35:03.0036490Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-02T14:35:03.0038132Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-02T14:35:03.0039709Z hint:
+2026-10-02T14:35:03.0040357Z hint: 	git branch -m <name>
+2026-10-02T14:35:03.0041105Z hint:
+2026-10-02T14:35:03.0042069Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-02T14:35:03.0043482Z Initialized empty Git repository in /home/runner/work/Seti/Seti/.git/
+2026-10-02T14:35:03.0045575Z [command]/usr/bin/git remote add origin https://github.com/trimcrae/Seti
+2026-10-02T14:35:03.0089429Z ##[endgroup]
+2026-10-02T14:35:03.0090999Z ##[group]Disabling automatic garbage collection
+2026-10-02T14:35:03.0093235Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-02T14:35:03.0127484Z ##[endgroup]
+2026-10-02T14:35:03.0128583Z ##[group]Setting up auth
+2026-10-02T14:35:03.0134261Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-02T14:35:03.0171396Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-02T14:35:03.0590879Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-02T14:35:03.0643002Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-02T14:35:03.0899296Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-02T14:35:03.0940470Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-02T14:35:03.1206090Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-02T14:35:03.1255799Z ##[endgroup]
+2026-10-02T14:35:03.1266124Z ##[group]Fetching the repository
+2026-10-02T14:35:03.1269142Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a57690c5ff7cc34a5fc844c2b3acf58e1c568f82:refs/remotes/origin/codex/usage-sprint-2026-10-01-gaia-cache-identity
+2026-10-02T14:35:27.4069986Z From https://github.com/trimcrae/Seti
+2026-10-02T14:35:27.4071603Z  * [new ref]         a57690c5ff7cc34a5fc844c2b3acf58e1c568f82 -> origin/codex/usage-sprint-2026-10-01-gaia-cache-identity
+2026-10-02T14:35:27.4074130Z ##[endgroup]
+2026-10-02T14:35:27.4074847Z ##[group]Determining the checkout info
+2026-10-02T14:35:27.4076249Z ##[endgroup]
+2026-10-02T14:35:27.4083038Z [command]/usr/bin/git sparse-checkout disable
+2026-10-02T14:35:27.4151614Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-02T14:35:27.4189615Z ##[group]Checking out the ref
+2026-10-02T14:35:27.4205018Z [command]/usr/bin/git checkout --progress --force -B codex/usage-sprint-2026-10-01-gaia-cache-identity refs/remotes/origin/codex/usage-sprint-2026-10-01-gaia-cache-identity
+2026-10-02T14:35:28.9072131Z Updating files:  12% (951/7728)
+2026-10-02T14:35:28.9220826Z Updating files:  13% (1005/7728)
+2026-10-02T14:35:28.9377735Z Updating files:  14% (1082/7728)
+2026-10-02T14:35:29.0206833Z Updating files:  15% (1160/7728)
+2026-10-02T14:35:29.0443897Z Updating files:  16% (1237/7728)
+2026-10-02T14:35:29.1552125Z Updating files:  17% (1314/7728)
+2026-10-02T14:35:29.1695698Z Updating files:  18% (1392/7728)
+2026-10-02T14:35:29.1908157Z Updating files:  19% (1469/7728)
+2026-10-02T14:35:29.2362062Z Updating files:  20% (1546/7728)
+2026-10-02T14:35:29.2808682Z Updating files:  21% (1623/7728)
+2026-10-02T14:35:29.3266812Z Updating files:  22% (1701/7728)
+2026-10-02T14:35:29.3658842Z Updating files:  23% (1778/7728)
+2026-10-02T14:35:29.4129457Z Updating files:  24% (1855/7728)
+2026-10-02T14:35:29.4335276Z Updating files:  25% (1932/7728)
+2026-10-02T14:35:29.4533400Z Updating files:  25% (1974/7728)
+2026-10-02T14:35:29.4717674Z Updating files:  26% (2010/7728)
+2026-10-02T14:35:29.4767715Z Updating files:  27% (2087/7728)
+2026-10-02T14:35:29.4915325Z Updating files:  28% (2164/7728)
+2026-10-02T14:35:29.6163478Z Updating files:  29% (2242/7728)
+2026-10-02T14:35:29.7486696Z Updating files:  30% (2319/7728)
+2026-10-02T14:35:29.7758754Z Updating files:  31% (2396/7728)
+2026-10-02T14:35:29.8229504Z Updating files:  32% (2473/7728)
+2026-10-02T14:35:29.8649341Z Updating files:  33% (2551/7728)
+2026-10-02T14:35:29.8735150Z Updating files:  34% (2628/7728)
+2026-10-02T14:35:29.8844739Z Updating files:  35% (2705/7728)
+2026-10-02T14:35:29.8906789Z Updating files:  36% (2783/7728)
+2026-10-02T14:35:29.9209798Z Updating files:  37% (2860/7728)
+2026-10-02T14:35:29.9315943Z Updating files:  38% (2937/7728)
+2026-10-02T14:35:29.9435534Z Updating files:  39% (3014/7728)
+2026-10-02T14:35:29.9551686Z Updating files:  40% (3092/7728)
+2026-10-02T14:35:29.9630693Z Updating files:  41% (3169/7728)
+2026-10-02T14:35:29.9704079Z Updating files:  42% (3246/7728)
+2026-10-02T14:35:29.9811011Z Updating files:  43% (3324/7728)
+2026-10-02T14:35:29.9856953Z Updating files:  44% (3401/7728)
+2026-10-02T14:35:29.9974211Z Updating files:  45% (3478/7728)
+2026-10-02T14:35:30.0228086Z Updating files:  46% (3555/7728)
+2026-10-02T14:35:30.0848654Z Updating files:  47% (3633/7728)
+2026-10-02T14:35:30.1271235Z Updating files:  48% (3710/7728)
+2026-10-02T14:35:30.1590497Z Updating files:  49% (3787/7728)
+2026-10-02T14:35:30.1791718Z Updating files:  50% (3864/7728)
+2026-10-02T14:35:30.2196381Z Updating files:  51% (3942/7728)
+2026-10-02T14:35:30.2462229Z Updating files:  52% (4019/7728)
+2026-10-02T14:35:30.2553957Z Updating files:  53% (4096/7728)
+2026-10-02T14:35:30.2735054Z Updating files:  54% (4174/7728)
+2026-10-02T14:35:30.2939666Z Updating files:  55% (4251/7728)
+2026-10-02T14:35:30.4329722Z Updating files:  56% (4328/7728)
+2026-10-02T14:35:30.4764812Z Updating files:  56% (4376/7728)
+2026-10-02T14:35:30.6235905Z Updating files:  57% (4405/7728)
+2026-10-02T14:35:30.6317672Z Updating files:  58% (4483/7728)
+2026-10-02T14:35:30.6474158Z Updating files:  59% (4560/7728)
+2026-10-02T14:35:30.6599163Z Updating files:  60% (4637/7728)
+2026-10-02T14:35:30.6722005Z Updating files:  61% (4715/7728)
+2026-10-02T14:35:30.6995158Z Updating files:  62% (4792/7728)
+2026-10-02T14:35:30.7155832Z Updating files:  63% (4869/7728)
+2026-10-02T14:35:30.7210291Z Updating files:  64% (4946/7728)
+2026-10-02T14:35:30.7297727Z Updating files:  65% (5024/7728)
+2026-10-02T14:35:30.7412956Z Updating files:  66% (5101/7728)
+2026-10-02T14:35:30.7664763Z Updating files:  67% (5178/7728)
+2026-10-02T14:35:30.7873318Z Updating files:  68% (5256/7728)
+2026-10-02T14:35:30.8695850Z Updating files:  69% (5333/7728)
+2026-10-02T14:35:30.9960614Z Updating files:  70% (5410/7728)
+2026-10-02T14:35:31.0606249Z Updating files:  71% (5487/7728)
+2026-10-02T14:35:31.1202191Z Updating files:  72% (5565/7728)
+2026-10-02T14:35:31.1286441Z Updating files:  73% (5642/7728)
+2026-10-02T14:35:31.1464264Z Updating files:  74% (5719/7728)
+2026-10-02T14:35:31.1690235Z Updating files:  75% (5796/7728)
+2026-10-02T14:35:31.1943318Z Updating files:  76% (5874/7728)
+2026-10-02T14:35:31.2353599Z Updating files:  77% (5951/7728)
+2026-10-02T14:35:31.2409393Z Updating files:  78% (6028/7728)
+2026-10-02T14:35:31.2463578Z Updating files:  79% (6106/7728)
+2026-10-02T14:35:31.2841653Z Updating files:  80% (6183/7728)
+2026-10-02T14:35:31.3288927Z Updating files:  81% (6260/7728)
+2026-10-02T14:35:31.3853833Z Updating files:  82% (6337/7728)
+2026-10-02T14:35:31.4323426Z Updating files:  83% (6415/7728)
+2026-10-02T14:35:31.4324452Z Updating files:  83% (6491/7728)
+2026-10-02T14:35:31.4528037Z Updating files:  84% (6492/7728)
+2026-10-02T14:35:31.4674338Z Updating files:  85% (6569/7728)
+2026-10-02T14:35:31.4745469Z Updating files:  86% (6647/7728)
+2026-10-02T14:35:31.4913308Z Updating files:  87% (6724/7728)
+2026-10-02T14:35:31.5157053Z Updating files:  88% (6801/7728)
+2026-10-02T14:35:31.5572618Z Updating files:  89% (6878/7728)
+2026-10-02T14:35:31.5962461Z Updating files:  90% (6956/7728)
+2026-10-02T14:35:31.6035520Z Updating files:  91% (7033/7728)
+2026-10-02T14:35:31.6136580Z Updating files:  92% (7110/7728)
+2026-10-02T14:35:31.6215017Z Updating files:  93% (7188/7728)
+2026-10-02T14:35:31.6319393Z Updating files:  94% (7265/7728)
+2026-10-02T14:35:31.6423792Z Updating files:  95% (7342/7728)
+2026-10-02T14:35:31.6529213Z Updating files:  96% (7419/7728)
+2026-10-02T14:35:31.6655953Z Updating files:  97% (7497/7728)
+2026-10-02T14:35:31.6764714Z Updating files:  98% (7574/7728)
+2026-10-02T14:35:31.6882575Z Updating files:  99% (7651/7728)
+2026-10-02T14:35:31.6882896Z Updating files: 100% (7728/7728)
+2026-10-02T14:35:31.6883171Z Updating files: 100% (7728/7728), done.
+2026-10-02T14:35:31.6968546Z Switched to a new branch 'codex/usage-sprint-2026-10-01-gaia-cache-identity'
+2026-10-02T14:35:31.6974194Z branch 'codex/usage-sprint-2026-10-01-gaia-cache-identity' set up to track 'origin/codex/usage-sprint-2026-10-01-gaia-cache-identity'.
+2026-10-02T14:35:31.7085284Z ##[endgroup]
+2026-10-02T14:35:31.7157614Z [command]/usr/bin/git log -1 --format=%H
+2026-10-02T14:35:31.7189756Z a57690c5ff7cc34a5fc844c2b3acf58e1c568f82
+2026-10-02T14:35:31.7463622Z ##[group]Run actions/setup-python@v5
+2026-10-02T14:35:31.7463909Z with:
+2026-10-02T14:35:31.7464117Z   python-version: 3.11
+2026-10-02T14:35:31.7464432Z   check-latest: false
+2026-10-02T14:35:31.7467028Z   token: ***
+2026-10-02T14:35:31.7467392Z   update-environment: true
+2026-10-02T14:35:31.7467651Z   allow-prereleases: false
+2026-10-02T14:35:31.7467878Z   freethreaded: false
+2026-10-02T14:35:31.7468113Z ##[endgroup]
+2026-10-02T14:35:31.8841345Z ##[group]Installed versions
+2026-10-02T14:35:31.8941639Z (node:2302) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-02T14:35:31.8942709Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-02T14:35:31.8943332Z Successfully set up CPython (3.11.16)
+2026-10-02T14:35:31.8944035Z ##[endgroup]
+2026-10-02T14:35:31.9142990Z ##[group]Run python -m pip install --upgrade pip
+2026-10-02T14:35:31.9143455Z [36;1mpython -m pip install --upgrade pip[0m
+2026-10-02T14:35:31.9143782Z [36;1mpip install -e ".[dev]"[0m
+2026-10-02T14:35:31.9453876Z shell: /usr/bin/bash -e {0}
+2026-10-02T14:35:31.9454184Z env:
+2026-10-02T14:35:31.9454482Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:31.9454984Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-10-02T14:35:31.9455421Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:31.9455849Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:31.9456237Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:31.9456611Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-10-02T14:35:31.9456943Z ##[endgroup]
+2026-10-02T14:35:32.6094548Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages (26.2.1)
+2026-10-02T14:35:33.0946232Z Obtaining file:///home/runner/work/Seti/Seti
+2026-10-02T14:35:33.0964075Z   Installing build dependencies: started
+2026-10-02T14:35:33.8041501Z   Installing build dependencies: finished with status 'done'
+2026-10-02T14:35:33.8047554Z   Checking if build backend supports build_editable: started
+2026-10-02T14:35:34.1093800Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-10-02T14:35:34.1101851Z   Getting requirements to build editable: started
+2026-10-02T14:35:34.4379691Z   Getting requirements to build editable: finished with status 'done'
+2026-10-02T14:35:34.4389366Z   Preparing editable metadata (pyproject.toml): started
+2026-10-02T14:35:34.6344743Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-10-02T14:35:34.8805203Z Collecting numpy>=1.24 (from seti-wd==0.1.0)
+2026-10-02T14:35:34.9272388Z   Downloading numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-10-02T14:35:35.0304230Z Collecting scipy>=1.10 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.0344619Z   Downloading scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+2026-10-02T14:35:35.1530987Z Collecting pandas>=2.0 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.1570648Z   Downloading pandas-3.0.6-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+2026-10-02T14:35:35.2638297Z Collecting pyarrow>=12.0 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.2676245Z   Downloading pyarrow-25.0.1-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (3.0 kB)
+2026-10-02T14:35:35.3813977Z Collecting matplotlib>=3.7 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.3852002Z   Downloading matplotlib-3.11.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (80 kB)
+2026-10-02T14:35:35.4934400Z Collecting astropy>=5.3 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.4996833Z   Downloading astropy-8.0.1-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (11 kB)
+2026-10-02T14:35:35.5221336Z Collecting astroquery>=0.4.7 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.5257771Z   Downloading astroquery-0.4.11-py3-none-any.whl.metadata (6.5 kB)
+2026-10-02T14:35:35.5402484Z Collecting pyvo>=1.4 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.5437658Z   Downloading pyvo-1.9.1-py3-none-any.whl.metadata (4.2 kB)
+2026-10-02T14:35:35.5732217Z Collecting pyyaml>=6.0 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.5768395Z   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-10-02T14:35:35.5964986Z Collecting requests>=2.28 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.6051355Z   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-10-02T14:35:35.6290767Z Collecting pytest>=7.0 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.6353150Z   Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+2026-10-02T14:35:35.6498137Z Collecting pytest-xdist>=3.0 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.6539070Z   Downloading pytest_xdist-3.8.0-py3-none-any.whl.metadata (3.0 kB)
+2026-10-02T14:35:35.9563388Z Collecting ruff>=0.1 (from seti-wd==0.1.0)
+2026-10-02T14:35:35.9604167Z   Downloading ruff-0.16.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (20 kB)
+2026-10-02T14:35:35.9848810Z Collecting astropy-iers-data>=0.2026.6.22.1.23.34 (from astropy>=5.3->seti-wd==0.1.0)
+2026-10-02T14:35:35.9885765Z   Downloading astropy_iers_data-0.2026.9.28.0.59.37-py3-none-any.whl.metadata (3.4 kB)
+2026-10-02T14:35:35.9991584Z Collecting packaging>=25.0 (from astropy>=5.3->seti-wd==0.1.0)
+2026-10-02T14:35:36.0005562Z   Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-10-02T14:35:36.0202263Z Collecting pyerfa>=2.0.1.3 (from astropy>=5.3->seti-wd==0.1.0)
+2026-10-02T14:35:36.0238344Z   Downloading pyerfa-2.0.1.5-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.7 kB)
+2026-10-02T14:35:36.0436510Z Collecting beautifulsoup4>=4.8 (from astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.0473859Z   Downloading beautifulsoup4-4.15.0-py3-none-any.whl.metadata (3.8 kB)
+2026-10-02T14:35:36.0578744Z Collecting html5lib>=0.999 (from astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.0610800Z   Downloading html5lib-1.1-py2.py3-none-any.whl.metadata (16 kB)
+2026-10-02T14:35:36.0859595Z Collecting keyring>=15.0 (from astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.0894365Z   Downloading keyring-25.7.0-py3-none-any.whl.metadata (21 kB)
+2026-10-02T14:35:36.1063603Z Collecting soupsieve>=1.6.1 (from beautifulsoup4>=4.8->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.1096236Z   Downloading soupsieve-2.10-py3-none-any.whl.metadata (4.4 kB)
+2026-10-02T14:35:36.1234587Z Collecting typing-extensions>=4.0.0 (from beautifulsoup4>=4.8->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.1268125Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-10-02T14:35:36.1381664Z Collecting six>=1.9 (from html5lib>=0.999->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.1428587Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-10-02T14:35:36.1515712Z Collecting webencodings (from html5lib>=0.999->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.1548122Z   Downloading webencodings-0.6.1-py3-none-any.whl.metadata (3.4 kB)
+2026-10-02T14:35:36.1679340Z Collecting SecretStorage>=3.2 (from keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.1730744Z   Downloading secretstorage-3.5.0-py3-none-any.whl.metadata (4.0 kB)
+2026-10-02T14:35:36.1836230Z Collecting jeepney>=0.4.2 (from keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.1877977Z   Downloading jeepney-0.9.0-py3-none-any.whl.metadata (1.2 kB)
+2026-10-02T14:35:36.2104920Z Collecting importlib_metadata>=4.11.4 (from keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.2144817Z   Downloading importlib_metadata-9.0.1-py3-none-any.whl.metadata (4.5 kB)
+2026-10-02T14:35:36.2258057Z Collecting jaraco.classes (from keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.2292184Z   Downloading jaraco.classes-3.4.0-py3-none-any.whl.metadata (2.6 kB)
+2026-10-02T14:35:36.2429978Z Collecting jaraco.functools (from keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.2468674Z   Downloading jaraco_functools-4.6.0-py3-none-any.whl.metadata (2.9 kB)
+2026-10-02T14:35:36.2593493Z Collecting jaraco.context (from keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.2627628Z   Downloading jaraco_context-6.1.2-py3-none-any.whl.metadata (4.2 kB)
+2026-10-02T14:35:36.2770497Z Collecting zipp>=3.20 (from importlib_metadata>=4.11.4->keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.2805922Z   Downloading zipp-4.1.0-py3-none-any.whl.metadata (3.6 kB)
+2026-10-02T14:35:36.3594652Z Collecting contourpy>=1.0.1 (from matplotlib>=3.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.3639477Z   Downloading contourpy-1.3.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.5 kB)
+2026-10-02T14:35:36.3749921Z Collecting cycler>=0.10 (from matplotlib>=3.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.3783211Z   Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+2026-10-02T14:35:36.5052118Z Collecting fonttools>=4.28.2 (from matplotlib>=3.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.5090402Z   Downloading fonttools-4.66.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (130 kB)
+2026-10-02T14:35:36.5729281Z Collecting kiwisolver>=1.3.1 (from matplotlib>=3.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.5765064Z   Downloading kiwisolver-1.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.2 kB)
+2026-10-02T14:35:36.7215382Z Collecting pillow>=9 (from matplotlib>=3.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.7252620Z   Downloading pillow-12.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+2026-10-02T14:35:36.7761955Z Collecting pyparsing>=3 (from matplotlib>=3.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.7805031Z   Downloading pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+2026-10-02T14:35:36.7917672Z Collecting python-dateutil>=2.7 (from matplotlib>=3.7->seti-wd==0.1.0)
+2026-10-02T14:35:36.7952609Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-10-02T14:35:36.8154333Z Collecting iniconfig>=1.0.1 (from pytest>=7.0->seti-wd==0.1.0)
+2026-10-02T14:35:36.8190728Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-02T14:35:36.8301121Z Collecting pluggy<2,>=1.5 (from pytest>=7.0->seti-wd==0.1.0)
+2026-10-02T14:35:36.8338636Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-10-02T14:35:36.8489747Z Collecting pygments>=2.7.2 (from pytest>=7.0->seti-wd==0.1.0)
+2026-10-02T14:35:36.8524020Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-02T14:35:36.8646348Z Collecting execnet>=2.1 (from pytest-xdist>=3.0->seti-wd==0.1.0)
+2026-10-02T14:35:36.8679389Z   Downloading execnet-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+2026-10-02T14:35:36.9771299Z Collecting charset_normalizer<4,>=2 (from requests>=2.28->seti-wd==0.1.0)
+2026-10-02T14:35:36.9808840Z   Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+2026-10-02T14:35:36.9955461Z Collecting idna<4,>=2.5 (from requests>=2.28->seti-wd==0.1.0)
+2026-10-02T14:35:36.9991929Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+2026-10-02T14:35:37.0173205Z Collecting urllib3<3,>=1.26 (from requests>=2.28->seti-wd==0.1.0)
+2026-10-02T14:35:37.0208242Z   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+2026-10-02T14:35:37.0359717Z Collecting certifi>=2023.5.7 (from requests>=2.28->seti-wd==0.1.0)
+2026-10-02T14:35:37.0395825Z   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+2026-10-02T14:35:37.2022676Z Collecting cryptography>=2.0 (from SecretStorage>=3.2->keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:37.2060155Z   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.4 kB)
+2026-10-02T14:35:37.3359593Z Collecting cffi>=2.0.0 (from cryptography>=2.0->SecretStorage>=3.2->keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:37.3396398Z   Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.5 kB)
+2026-10-02T14:35:37.3500270Z Collecting pycparser (from cffi>=2.0.0->cryptography>=2.0->SecretStorage>=3.2->keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:37.3533622Z   Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-10-02T14:35:37.3690623Z Collecting more-itertools (from jaraco.classes->keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:37.3726261Z   Downloading more_itertools-11.1.0-py3-none-any.whl.metadata (41 kB)
+2026-10-02T14:35:37.3830544Z Collecting backports.tarfile (from jaraco.context->keyring>=15.0->astroquery>=0.4.7->seti-wd==0.1.0)
+2026-10-02T14:35:37.3862761Z   Downloading backports.tarfile-1.2.0-py3-none-any.whl.metadata (2.0 kB)
+2026-10-02T14:35:37.3963163Z Downloading astropy-8.0.1-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (10.5 MB)
+2026-10-02T14:35:37.4420820Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.5/10.5 MB 246.7 MB/s  0:00:00
+2026-10-02T14:35:37.4460751Z Downloading astropy_iers_data-0.2026.9.28.0.59.37-py3-none-any.whl (2.0 MB)
+2026-10-02T14:35:37.4542411Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 294.5 MB/s  0:00:00
+2026-10-02T14:35:37.4616966Z Downloading astroquery-0.4.11-py3-none-any.whl (11.1 MB)
+2026-10-02T14:35:37.5147087Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.1/11.1 MB 215.1 MB/s  0:00:00
+2026-10-02T14:35:37.5191183Z Downloading beautifulsoup4-4.15.0-py3-none-any.whl (109 kB)
+2026-10-02T14:35:37.5278202Z Downloading html5lib-1.1-py2.py3-none-any.whl (112 kB)
+2026-10-02T14:35:37.5330922Z Downloading keyring-25.7.0-py3-none-any.whl (39 kB)
+2026-10-02T14:35:37.5378703Z Downloading importlib_metadata-9.0.1-py3-none-any.whl (27 kB)
+2026-10-02T14:35:37.5427372Z Downloading jeepney-0.9.0-py3-none-any.whl (49 kB)
+2026-10-02T14:35:37.5482873Z Downloading matplotlib-3.11.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.9 MB)
+2026-10-02T14:35:37.5774141Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 365.0 MB/s  0:00:00
+2026-10-02T14:35:37.5809410Z Downloading contourpy-1.3.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (355 kB)
+2026-10-02T14:35:37.5869158Z Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+2026-10-02T14:35:37.5917059Z Downloading fonttools-4.66.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.4 MB)
+2026-10-02T14:35:37.6100217Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 320.9 MB/s  0:00:00
+2026-10-02T14:35:37.6137144Z Downloading kiwisolver-1.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.4 MB)
+2026-10-02T14:35:37.6217897Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 192.8 MB/s  0:00:00
+2026-10-02T14:35:37.6254316Z Downloading numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+2026-10-02T14:35:37.6900851Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.9/16.9 MB 267.0 MB/s  0:00:00
+2026-10-02T14:35:37.6915838Z Using cached packaging-26.3-py3-none-any.whl (129 kB)
+2026-10-02T14:35:37.6951643Z Downloading pandas-3.0.6-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (11.1 MB)
+2026-10-02T14:35:37.7286168Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.1/11.1 MB 351.9 MB/s  0:00:00
+2026-10-02T14:35:37.7325803Z Downloading pillow-12.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (6.9 MB)
+2026-10-02T14:35:37.7544615Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.9/6.9 MB 339.9 MB/s  0:00:00
+2026-10-02T14:35:37.7581963Z Downloading pyarrow-25.0.1-cp311-cp311-manylinux_2_28_x86_64.whl (50.1 MB)
+2026-10-02T14:35:37.8937738Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 374.0 MB/s  0:00:00
+2026-10-02T14:35:37.8975862Z Downloading pyerfa-2.0.1.5-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (738 kB)
+2026-10-02T14:35:37.9030984Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 738.7/738.7 kB 155.9 MB/s  0:00:00
+2026-10-02T14:35:37.9066087Z Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+2026-10-02T14:35:37.9118396Z Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-10-02T14:35:37.9177806Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-10-02T14:35:37.9227947Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-10-02T14:35:37.9278916Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-10-02T14:35:37.9339936Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 248.2 MB/s  0:00:00
+2026-10-02T14:35:37.9375836Z Downloading pytest_xdist-3.8.0-py3-none-any.whl (46 kB)
+2026-10-02T14:35:37.9427484Z Downloading execnet-2.1.2-py3-none-any.whl (40 kB)
+2026-10-02T14:35:37.9478616Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-10-02T14:35:37.9560191Z Downloading pyvo-1.9.1-py3-none-any.whl (1.2 MB)
+2026-10-02T14:35:37.9616665Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 249.2 MB/s  0:00:00
+2026-10-02T14:35:37.9652984Z Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2026-10-02T14:35:37.9700951Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 191.7 MB/s  0:00:00
+2026-10-02T14:35:37.9733757Z Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+2026-10-02T14:35:37.9789085Z Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (269 kB)
+2026-10-02T14:35:37.9849518Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-10-02T14:35:37.9905065Z Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+2026-10-02T14:35:37.9956709Z Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+2026-10-02T14:35:38.0012806Z Downloading ruff-0.16.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (10.4 MB)
+2026-10-02T14:35:38.0328098Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.4/10.4 MB 346.8 MB/s  0:00:00
+2026-10-02T14:35:38.0366040Z Downloading scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.3 MB)
+2026-10-02T14:35:38.1405558Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.3/35.3 MB 345.6 MB/s  0:00:00
+2026-10-02T14:35:38.1443872Z Downloading secretstorage-3.5.0-py3-none-any.whl (15 kB)
+2026-10-02T14:35:38.1509409Z Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+2026-10-02T14:35:38.1708501Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 255.8 MB/s  0:00:00
+2026-10-02T14:35:38.1749425Z Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+2026-10-02T14:35:38.1806197Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-10-02T14:35:38.1864574Z Downloading soupsieve-2.10-py3-none-any.whl (38 kB)
+2026-10-02T14:35:38.1936905Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-10-02T14:35:38.1999411Z Downloading zipp-4.1.0-py3-none-any.whl (10 kB)
+2026-10-02T14:35:38.2047313Z Downloading jaraco.classes-3.4.0-py3-none-any.whl (6.8 kB)
+2026-10-02T14:35:38.2096575Z Downloading jaraco_context-6.1.2-py3-none-any.whl (7.9 kB)
+2026-10-02T14:35:38.2146771Z Downloading backports.tarfile-1.2.0-py3-none-any.whl (30 kB)
+2026-10-02T14:35:38.2196387Z Downloading jaraco_functools-4.6.0-py3-none-any.whl (11 kB)
+2026-10-02T14:35:38.2245249Z Downloading more_itertools-11.1.0-py3-none-any.whl (72 kB)
+2026-10-02T14:35:38.2295334Z Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+2026-10-02T14:35:38.2346435Z Downloading webencodings-0.6.1-py3-none-any.whl (8.7 kB)
+2026-10-02T14:35:38.5599173Z Building wheels for collected packages: seti-wd
+2026-10-02T14:35:38.5607662Z   Building editable for seti-wd (pyproject.toml): started
+2026-10-02T14:35:38.8049880Z   Building editable for seti-wd (pyproject.toml): finished with status 'done'
+2026-10-02T14:35:38.8055107Z   Created wheel for seti-wd: filename=seti_wd-0.1.0-0.editable-py3-none-any.whl size=9654 sha256=ffe10086983be9e962d99408518dc31f38c4a105b7e91ebfe0119fe661d210c3
+2026-10-02T14:35:38.8056835Z   Stored in directory: /tmp/pip-ephem-wheel-cache-5p0bu16h/wheels/2c/4b/14/996965e1573649f221f467c671c7f655a43c7d569030254f06
+2026-10-02T14:35:38.8075818Z Successfully built seti-wd
+2026-10-02T14:35:38.9424279Z Installing collected packages: zipp, webencodings, urllib3, typing-extensions, soupsieve, six, ruff, pyyaml, pyparsing, pygments, pycparser, pyarrow, pluggy, pillow, packaging, numpy, more-itertools, kiwisolver, jeepney, iniconfig, idna, fonttools, execnet, cycler, charset_normalizer, certifi, backports.tarfile, astropy-iers-data, scipy, requests, python-dateutil, pytest, pyerfa, jaraco.functools, jaraco.context, jaraco.classes, importlib_metadata, html5lib, contourpy, cffi, beautifulsoup4, pytest-xdist, pandas, matplotlib, cryptography, astropy, SecretStorage, pyvo, keyring, astroquery, seti-wd
+2026-10-02T14:35:59.7530976Z 
+2026-10-02T14:35:59.7560594Z Successfully installed SecretStorage-3.5.0 astropy-8.0.1 astropy-iers-data-0.2026.9.28.0.59.37 astroquery-0.4.11 backports.tarfile-1.2.0 beautifulsoup4-4.15.0 certifi-2026.7.22 cffi-2.1.1 charset_normalizer-3.5.2 contourpy-1.3.3 cryptography-50.0.2 cycler-0.12.1 execnet-2.1.2 fonttools-4.66.1 html5lib-1.1 idna-3.20 importlib_metadata-9.0.1 iniconfig-2.3.0 jaraco.classes-3.4.0 jaraco.context-6.1.2 jaraco.functools-4.6.0 jeepney-0.9.0 keyring-25.7.0 kiwisolver-1.5.1 matplotlib-3.11.2 more-itertools-11.1.0 numpy-2.4.6 packaging-26.3 pandas-3.0.6 pillow-12.3.0 pluggy-1.6.0 pyarrow-25.0.1 pycparser-3.0 pyerfa-2.0.1.5 pygments-2.21.0 pyparsing-3.3.3 pytest-9.1.1 pytest-xdist-3.8.0 python-dateutil-2.9.0.post0 pyvo-1.9.1 pyyaml-6.0.3 requests-2.34.2 ruff-0.16.10 scipy-1.17.1 seti-wd-0.1.0 six-1.17.0 soupsieve-2.10 typing-extensions-4.16.0 urllib3-2.8.0 webencodings-0.6.1 zipp-4.1.0
+2026-10-02T14:35:59.9798701Z ##[group]Run python scripts/make_bergeron_asset.py
+2026-10-02T14:35:59.9799124Z [36;1mpython scripts/make_bergeron_asset.py[0m
+2026-10-02T14:35:59.9799447Z [36;1mpython -m seti.cli make-sample[0m
+2026-10-02T14:35:59.9871605Z shell: /usr/bin/bash -e {0}
+2026-10-02T14:35:59.9871866Z env:
+2026-10-02T14:35:59.9872157Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:59.9872607Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-10-02T14:35:59.9873033Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:59.9873412Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:59.9873801Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:35:59.9874175Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-10-02T14:35:59.9874514Z ##[endgroup]
+2026-10-02T14:36:00.5631155Z wrote 222 rows -> /home/runner/work/Seti/Seti/src/seti/data_assets/bergeron_synthetic_wise.ecsv
+2026-10-02T14:36:02.2330623Z wrote 353 rows -> /home/runner/work/Seti/Seti/data/sample/wd_sample.parquet
+2026-10-02T14:36:02.3841925Z ##[group]Run ruff check src tests scripts
+2026-10-02T14:36:02.3842275Z [36;1mruff check src tests scripts[0m
+2026-10-02T14:36:02.3911929Z shell: /usr/bin/bash -e {0}
+2026-10-02T14:36:02.3912187Z env:
+2026-10-02T14:36:02.3912470Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.3912923Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-10-02T14:36:02.3913352Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.3913728Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.3914107Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.3914487Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-10-02T14:36:02.3914829Z ##[endgroup]
+2026-10-02T14:36:02.6389231Z All checks passed!
+2026-10-02T14:36:02.6477774Z ##[group]Run pytest -q -n auto
+2026-10-02T14:36:02.6478099Z [36;1mpytest -q -n auto[0m
+2026-10-02T14:36:02.6545953Z shell: /usr/bin/bash -e {0}
+2026-10-02T14:36:02.6546201Z env:
+2026-10-02T14:36:02.6546475Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.6546937Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-10-02T14:36:02.6547477Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.6547865Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.6548244Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:36:02.6548617Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-10-02T14:36:02.6548936Z ##[endgroup]
+2026-10-02T14:36:30.8528586Z bringing up nodes...
+2026-10-02T14:36:30.8558247Z bringing up nodes...
+2026-10-02T14:36:30.8577622Z 
+2026-10-02T14:36:31.2798857Z ........................................................................ [  1%]
+2026-10-02T14:36:32.3383702Z ........................................................................ [  2%]
+2026-10-02T14:36:33.1528348Z ........................................................................ [  4%]
+2026-10-02T14:36:34.6582354Z ........................................................................ [  5%]
+2026-10-02T14:36:35.0578316Z ........................................................................ [  6%]
+2026-10-02T14:36:39.1442257Z ........................................................................ [  8%]
+2026-10-02T14:36:41.5478577Z ........................................................................ [  9%]
+2026-10-02T14:36:43.2290763Z ........................................................................ [ 11%]
+2026-10-02T14:36:45.7702188Z ........................................................................ [ 12%]
+2026-10-02T14:36:49.4662699Z ........................................................................ [ 13%]
+2026-10-02T14:36:50.7068453Z ........................................................................ [ 15%]
+2026-10-02T14:36:54.7265927Z ........................................................................ [ 16%]
+2026-10-02T14:37:01.3278259Z ........................................................................ [ 18%]
+2026-10-02T14:37:06.9403839Z ........................................................................ [ 19%]
+2026-10-02T14:37:19.6408248Z ........................................................................ [ 20%]
+2026-10-02T14:37:29.7740208Z ........................................................................ [ 22%]
+2026-10-02T14:38:01.9708331Z ........................................................................ [ 23%]
+2026-10-02T14:38:10.7088173Z ........................................................................ [ 25%]
+2026-10-02T14:41:01.7348588Z ........................................................................ [ 26%]
+2026-10-02T14:41:06.0643508Z ........................................................................ [ 27%]
+2026-10-02T14:41:10.2398359Z ........................................................................ [ 29%]
+2026-10-02T14:41:30.9018307Z ........................................................................ [ 30%]
+2026-10-02T14:41:42.0136511Z ...................s.................................................... [ 32%]
+2026-10-02T14:41:45.1325468Z ........................................................................ [ 33%]
+2026-10-02T14:41:52.3086883Z ........................................................................ [ 34%]
+2026-10-02T14:42:19.0888446Z ........................................................................ [ 36%]
+2026-10-02T14:42:24.7914345Z ........................................................................ [ 37%]
+2026-10-02T14:42:37.5108358Z ........................................................................ [ 39%]
+2026-10-02T14:42:46.2508331Z ........................................................................ [ 40%]
+2026-10-02T14:42:46.6239052Z ........................................................................ [ 41%]
+2026-10-02T14:43:11.4888400Z ........................................................................ [ 43%]
+2026-10-02T14:43:12.6898320Z ........................................................................ [ 44%]
+2026-10-02T14:43:14.9668735Z ........................................................................ [ 46%]
+2026-10-02T14:43:19.8788991Z ........................................................................ [ 47%]
+2026-10-02T14:43:31.3360342Z ........................................................................ [ 48%]
+2026-10-02T14:43:42.0536984Z ........................................................................ [ 50%]
+2026-10-02T14:43:55.1740068Z ........................................................................ [ 51%]
+2026-10-02T14:44:18.2028433Z ........................................................................ [ 52%]
+2026-10-02T14:44:23.2088691Z .............................................................s.......... [ 54%]
+2026-10-02T14:45:08.1508297Z ........................................................................ [ 55%]
+2026-10-02T14:45:17.9258442Z ............................................................ssss........ [ 57%]
+2026-10-02T14:46:28.5391040Z ........................................................................ [ 58%]
+2026-10-02T14:46:59.3398331Z ........................................................................ [ 59%]
+2026-10-02T14:47:18.4965309Z ........................................................................ [ 61%]
+2026-10-02T14:47:21.3356664Z ........................................................................ [ 62%]
+2026-10-02T14:47:23.2988335Z ........................................................................ [ 64%]
+2026-10-02T14:47:33.7608270Z ........................................................................ [ 65%]
+2026-10-02T14:47:42.4078381Z ........................................................................ [ 66%]
+2026-10-02T14:48:01.6259858Z ........................................................................ [ 68%]
+2026-10-02T14:48:02.2748387Z ........................................................................ [ 69%]
+2026-10-02T14:48:02.9054314Z ........................................................................ [ 71%]
+2026-10-02T14:48:28.5541325Z ........................................................................ [ 72%]
+2026-10-02T14:48:43.9098289Z ........................................................................ [ 73%]
+2026-10-02T14:48:54.3898282Z ........................................................................ [ 75%]
+2026-10-02T14:49:26.3908339Z ........................................................................ [ 76%]
+2026-10-02T14:50:40.3255820Z ........................................................................ [ 78%]
+2026-10-02T14:50:41.8648437Z ........................................................................ [ 79%]
+2026-10-02T14:50:42.9518217Z ........................................................................ [ 80%]
+2026-10-02T14:50:45.0268245Z ........................................................................ [ 82%]
+2026-10-02T14:50:46.4418316Z ....................sssss.ssssssssssssssss.ssss.ssssssssssssssssssssssss [ 83%]
+2026-10-02T14:50:48.3688425Z ssssssssssssss..ss.sssssssssssssssssssss..sssss.sssssssssssss.ss..ssssss [ 85%]
+2026-10-02T14:50:49.7788382Z ssss.sssssss.ssssssssssssssss.ssss.sssssssssssssssssssssssssssssssssssss [ 86%]
+2026-10-02T14:50:51.4598595Z s..ss.sssssssssssssssssssss..sssss.sssssssssssss.ss..ssssssssss.ss.sssss [ 87%]
+2026-10-02T14:50:52.9468512Z ssssssssssssssssssssss.sssssssssssssssssssssssssssssssssssssssssssssssss [ 89%]
+2026-10-02T14:50:54.1479769Z sssssssssssssssssssssssssssssssssssssssssssssssssss.ss.................. [ 90%]
+2026-10-02T14:50:55.7734851Z ........................................................................ [ 92%]
+2026-10-02T14:52:16.7568699Z ........................................................................ [ 93%]
+2026-10-02T14:54:23.5608563Z ........................................................................ [ 94%]
+2026-10-02T14:55:04.6678146Z ........................................................................ [ 96%]
+2026-10-02T14:55:42.1958204Z ........................................................................ [ 97%]
+2026-10-02T14:55:53.3260101Z ........................................................................ [ 99%]
+2026-10-02T14:56:28.7184485Z ...................................................                      [100%]
+2026-10-02T14:56:28.7185294Z =============================== warnings summary ===============================
+2026-10-02T14:56:28.7186115Z tests/test_ring.py::test_ring_flux_is_bolometrically_consistent
+2026-10-02T14:56:28.7186991Z   /home/runner/work/Seti/Seti/tests/test_ring.py:53: RuntimeWarning: overflow encountered in expm1
+2026-10-02T14:56:28.7188054Z     bnu = (2 * H_PLANCK * nu ** 3 / C_LIGHT ** 2) / np.expm1(x)
+2026-10-02T14:56:28.7188414Z 
+2026-10-02T14:56:28.7188731Z tests/test_spark.py::test_spherex_end_to_end_recovers_an_injected_channel
+2026-10-02T14:56:28.7189431Z tests/test_spark.py::test_spherex_null_world_and_empty_obscore
+2026-10-02T14:56:28.7189992Z tests/test_spark.py::test_probe_on_the_fake_spherex_archive_describes_products
+2026-10-02T14:56:28.7190513Z tests/test_spark.py::test_probe_on_the_fake_spherex_archive_describes_products
+2026-10-02T14:56:28.7191022Z tests/test_spark.py::test_fits_roundtrip_of_the_fake_cutout_is_readable_by_the_pipeline
+2026-10-02T14:56:28.7191938Z   /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/astropy/wcs/wcs.py:694: FITSFixedWarning: The WCS transformation has more axes (3) than the image it is associated with (2)
+2026-10-02T14:56:28.7192684Z     warnings.warn(
+2026-10-02T14:56:28.7192821Z 
+2026-10-02T14:56:28.7193091Z tests/test_sextant_run.py::test_a_legacy_shard_is_repaired_and_assessed_not_reported_as_no_data
+2026-10-02T14:56:28.7194091Z tests/test_sextant_run.py::test_the_new_writer_round_trips_commas_quotes_and_newlines
+2026-10-02T14:56:28.7194863Z   /home/runner/work/Seti/Seti/src/seti/sextant/run.py:1829: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+2026-10-02T14:56:28.7195540Z     rho = spearmanr(np.abs(a2[m] / err[m]), x[m]).correlation
+2026-10-02T14:56:28.7195773Z 
+2026-10-02T14:56:28.7195937Z tests/test_vigil.py::test_sweep_recovers_the_signal_end_to_end
+2026-10-02T14:56:28.7197351Z   /home/runner/work/Seti/Seti/src/seti/vigil/run.py:580: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+2026-10-02T14:56:28.7198577Z     d["field_dir"] = Path(fp).parent.name
+2026-10-02T14:56:28.7198759Z 
+2026-10-02T14:56:28.7198969Z tests/test_tidemark.py::test_channel_declared_covariates_are_actually_used
+2026-10-02T14:56:28.7199467Z tests/test_tidemark.py::test_missing_magnitude_covariate_is_flagged_not_ignored
+2026-10-02T14:56:28.7200057Z   /home/runner/work/Seti/Seti/src/seti/tidemark/inject.py:132: RuntimeWarning: All-NaN slice encountered
+2026-10-02T14:56:28.7200603Z     z = strength * (0.9 * (g - np.nanmedian(g)) + 3.0 * np.nan_to_num(ebv)
+2026-10-02T14:56:28.7200852Z 
+2026-10-02T14:56:28.7201063Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-10-02T14:56:29.0582562Z ##[group]Run python -m seti.cli analyze
+2026-10-02T14:56:29.0582923Z [36;1mpython -m seti.cli analyze[0m
+2026-10-02T14:56:29.0583213Z [36;1mpython -m seti.cli completeness[0m
+2026-10-02T14:56:29.0583495Z [36;1mpython -m seti.cli forecast[0m
+2026-10-02T14:56:29.0583791Z [36;1mpython -m seti.cli contamination-budget[0m
+2026-10-02T14:56:29.0584097Z [36;1mpython -m seti.cli figures[0m
+2026-10-02T14:56:29.0584385Z [36;1mpython -m seti.cli paper-numbers[0m
+2026-10-02T14:56:29.0653190Z shell: /usr/bin/bash -e {0}
+2026-10-02T14:56:29.0653446Z env:
+2026-10-02T14:56:29.0653729Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:29.0654165Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-10-02T14:56:29.0654600Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:29.0654981Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:29.0655394Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:29.0655762Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-10-02T14:56:29.0656081Z ##[endgroup]
+2026-10-02T14:56:30.2354803Z {
+2026-10-02T14:56:30.2355377Z   "counts": {
+2026-10-02T14:56:30.2355931Z     "parent": 353,
+2026-10-02T14:56:30.2356434Z     "searchable": 324,
+2026-10-02T14:56:30.2356940Z     "with_excess": 49,
+2026-10-02T14:56:30.2357566Z     "clean": 324,
+2026-10-02T14:56:30.2358077Z     "clean_excess": 26,
+2026-10-02T14:56:30.2358560Z     "known_disk": 22,
+2026-10-02T14:56:30.2359028Z     "candidates": 4
+2026-10-02T14:56:30.2359477Z   },
+2026-10-02T14:56:30.2359902Z   "funnel_counts": {
+2026-10-02T14:56:30.2360369Z     "input": 353,
+2026-10-02T14:56:30.2360826Z     "astrometry": 353,
+2026-10-02T14:56:30.2361308Z     "wise_quality": 353,
+2026-10-02T14:56:30.2361797Z     "crowding": 345,
+2026-10-02T14:56:30.2362257Z     "comovement": 331,
+2026-10-02T14:56:30.2362730Z     "extragalactic": 324
+2026-10-02T14:56:30.2363204Z   },
+2026-10-02T14:56:30.2363645Z   "occurrence_limit": {
+2026-10-02T14:56:30.2364121Z     "k_candidates": 4,
+2026-10-02T14:56:30.2364581Z     "n_eff": 324.0,
+2026-10-02T14:56:30.2365038Z     "confidence": 0.95,
+2026-10-02T14:56:30.2365521Z     "f_upper": 0.028251601934066586,
+2026-10-02T14:56:30.2366060Z     "f_point": 0.012345679012345678
+2026-10-02T14:56:30.2366568Z   }
+2026-10-02T14:56:30.2366973Z }
+2026-10-02T14:56:31.6189303Z wrote completeness map (25 cells) -> /home/runner/work/Seti/Seti/results/tables/completeness.parquet
+2026-10-02T14:56:33.1256960Z {
+2026-10-02T14:56:33.1257686Z   "headline_limit": {
+2026-10-02T14:56:33.1258045Z     "f_upper_95": 0.0003150870486360118,
+2026-10-02T14:56:33.1258433Z     "at_t_dust_k": 500.0,
+2026-10-02T14:56:33.1258891Z     "at_tau": 0.3,
+2026-10-02T14:56:33.1259175Z     "n_eff": 9507.6338,
+2026-10-02T14:56:33.1259503Z     "n_detected_real": 9507.6338
+2026-10-02T14:56:33.1259821Z   },
+2026-10-02T14:56:33.1260087Z   "n_cells": 25,
+2026-10-02T14:56:33.1260379Z   "n_detected_real": 9507.6338
+2026-10-02T14:56:33.1260735Z }
+2026-10-02T14:56:34.3742286Z {
+2026-10-02T14:56:34.3742820Z   "lambda_per_wd": 0.10035643198967395,
+2026-10-02T14:56:34.3743371Z   "n_wd_detected_draw": 6338,
+2026-10-02T14:56:34.3743881Z   "chance_aligned_before_draw": 636.0590659505535,
+2026-10-02T14:56:34.3744467Z   "chance_aligned_after_draw": 348.43753186814797,
+2026-10-02T14:56:34.3745010Z   "rejection_factor": 1.8254608294930876,
+2026-10-02T14:56:34.3745545Z   "removed_fraction": 0.4521931208583149,
+2026-10-02T14:56:34.3746067Z   "chance_aligned_before_real": 954.1522048324254,
+2026-10-02T14:56:34.3746656Z   "chance_aligned_after_real": 522.6911415554088,
+2026-10-02T14:56:34.3747669Z   "median_pm_mas_yr": 145.82387761515844
+2026-10-02T14:56:34.3748096Z }
+2026-10-02T14:56:37.1053516Z wrote /home/runner/work/Seti/Seti/results/figures/chi_distribution.pdf
+2026-10-02T14:56:37.1054341Z wrote /home/runner/work/Seti/Seti/results/figures/color_color_locus.pdf
+2026-10-02T14:56:37.1055171Z wrote /home/runner/work/Seti/Seti/results/figures/funnel.pdf
+2026-10-02T14:56:37.1055616Z wrote /home/runner/work/Seti/Seti/results/figures/forecast_limit.pdf
+2026-10-02T14:56:37.1056095Z wrote /home/runner/work/Seti/Seti/results/figures/completeness_heatmap.pdf
+2026-10-02T14:56:37.1056585Z wrote /home/runner/work/Seti/Seti/results/figures/comovement_efficacy.pdf
+2026-10-02T14:56:38.9989212Z wrote /home/runner/work/Seti/Seti/paper/numbers.tex
+2026-10-02T14:56:39.1598694Z ##[group]Run actions/upload-artifact@v4
+2026-10-02T14:56:39.1599011Z with:
+2026-10-02T14:56:39.1599219Z   name: analysis-outputs
+2026-10-02T14:56:39.1599456Z   path: results/
+2026-10-02T14:56:39.1599669Z   if-no-files-found: warn
+2026-10-02T14:56:39.1599906Z   compression-level: 6
+2026-10-02T14:56:39.1600133Z   overwrite: false
+2026-10-02T14:56:39.1600355Z   include-hidden-files: false
+2026-10-02T14:56:39.1600591Z env:
+2026-10-02T14:56:39.1600847Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:39.1601276Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-10-02T14:56:39.1601689Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:39.1602065Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:39.1602437Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-10-02T14:56:39.1602866Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-10-02T14:56:39.1603249Z ##[endgroup]
+2026-10-02T14:56:39.3255221Z (node:5501) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-02T14:56:39.3256363Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-02T14:56:40.0448923Z With the provided path, there will be 6745 files uploaded
+2026-10-02T14:56:40.0454577Z Artifact name is valid!
+2026-10-02T14:56:40.0455294Z Root directory input is valid!
+2026-10-02T14:56:40.3671121Z Beginning upload of artifact content to blob storage
+2026-10-02T14:56:41.4170478Z (node:5501) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-02T14:56:41.9045706Z Uploaded bytes 8388608
+2026-10-02T14:56:42.6320461Z Uploaded bytes 16777216
+2026-10-02T14:56:43.4381464Z Uploaded bytes 25165824
+2026-10-02T14:56:44.1815479Z Uploaded bytes 33554432
+2026-10-02T14:56:44.9715906Z Uploaded bytes 41943040
+2026-10-02T14:56:45.8292292Z Uploaded bytes 50331648
+2026-10-02T14:56:46.4585560Z Uploaded bytes 58720256
+2026-10-02T14:56:46.8045419Z Uploaded bytes 67108864
+2026-10-02T14:56:47.0830643Z Uploaded bytes 75497472
+2026-10-02T14:56:47.4983798Z Uploaded bytes 83886080
+2026-10-02T14:56:47.7971210Z Uploaded bytes 92274688
+2026-10-02T14:56:48.1943060Z Uploaded bytes 100663296
+2026-10-02T14:56:48.5079547Z Uploaded bytes 109051904
+2026-10-02T14:56:48.8502850Z Uploaded bytes 117440512
+2026-10-02T14:56:49.2290901Z Uploaded bytes 125829120
+2026-10-02T14:56:49.6416213Z Uploaded bytes 134217728
+2026-10-02T14:56:50.0266094Z Uploaded bytes 142606336
+2026-10-02T14:56:50.3758373Z Uploaded bytes 150994944
+2026-10-02T14:56:50.8381821Z Uploaded bytes 159383552
+2026-10-02T14:56:51.2188425Z Uploaded bytes 167772160
+2026-10-02T14:56:51.5557754Z Uploaded bytes 176160768
+2026-10-02T14:56:52.7142627Z Uploaded bytes 184549376
+2026-10-02T14:56:53.3657592Z Uploaded bytes 192937984
+2026-10-02T14:56:53.6579280Z Uploaded bytes 201326592
+2026-10-02T14:56:54.8626609Z Uploaded bytes 209715200
+2026-10-02T14:56:55.9170282Z Uploaded bytes 218103808
+2026-10-02T14:56:57.0373886Z Uploaded bytes 226492416
+2026-10-02T14:56:58.1293994Z Uploaded bytes 234881024
+2026-10-02T14:56:59.1405319Z Uploaded bytes 243269632
+2026-10-02T14:57:00.1792126Z Uploaded bytes 251658240
+2026-10-02T14:57:00.8612963Z Uploaded bytes 260046848
+2026-10-02T14:57:02.0470004Z Uploaded bytes 268435456
+2026-10-02T14:57:02.8771312Z Uploaded bytes 276824064
+2026-10-02T14:57:03.9991015Z Uploaded bytes 285212672
+2026-10-02T14:57:05.1698852Z Uploaded bytes 293601280
+2026-10-02T14:57:06.3257442Z Uploaded bytes 301989888
+2026-10-02T14:57:06.8960983Z Uploaded bytes 310378496
+2026-10-02T14:57:08.0563916Z Uploaded bytes 318767104
+2026-10-02T14:57:08.6994319Z Uploaded bytes 327155712
+2026-10-02T14:57:09.4035324Z Uploaded bytes 335544320
+2026-10-02T14:57:10.4515104Z Uploaded bytes 343932928
+2026-10-02T14:57:10.9985533Z Uploaded bytes 352321536
+2026-10-02T14:57:11.8675769Z Uploaded bytes 360710144
+2026-10-02T14:57:12.3651497Z Uploaded bytes 369098752
+2026-10-02T14:57:12.6364358Z Uploaded bytes 377487360
+2026-10-02T14:57:13.1288907Z Uploaded bytes 385875968
+2026-10-02T14:57:14.3698525Z Uploaded bytes 394264576
+2026-10-02T14:57:15.4860555Z Uploaded bytes 402653184
+2026-10-02T14:57:15.8922522Z Uploaded bytes 410350136
+2026-10-02T14:57:15.9334291Z Finished uploading artifact content to blob storage!
+2026-10-02T14:57:15.9337908Z SHA256 digest of uploaded artifact zip is b033171fb2f3e1bd36bbf08f15af2651e08677eeaac154060e347c307188ea30
+2026-10-02T14:57:15.9339886Z Finalizing artifact upload
+2026-10-02T14:57:16.2487503Z Artifact analysis-outputs.zip successfully finalized. Artifact ID 11234128522
+2026-10-02T14:57:16.2488274Z Artifact analysis-outputs has been successfully uploaded! Final size is 410350136 bytes. Artifact ID is 11234128522
+2026-10-02T14:57:16.2494794Z Artifact download URL: https://github.com/trimcrae/Seti/actions/runs/37020870332/artifacts/11234128522
+2026-10-02T14:57:16.2894106Z Post job cleanup.
+2026-10-02T14:57:16.4131138Z (node:5517) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-02T14:57:16.4131901Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-02T14:57:16.4351045Z Post job cleanup.
+2026-10-02T14:57:16.5264252Z [command]/usr/bin/git version
+2026-10-02T14:57:16.5307382Z git version 2.55.0
+2026-10-02T14:57:16.5343278Z Temporarily overriding HOME='/home/runner/work/_temp/1de7d00c-e668-4e36-8343-b800ff7d9efd' before making global git config changes
+2026-10-02T14:57:16.5344537Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-02T14:57:16.5349138Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Seti/Seti
+2026-10-02T14:57:16.5390799Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-02T14:57:16.5426870Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-02T14:57:16.5711921Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-02T14:57:16.5747892Z http.https://github.com/.extraheader
+2026-10-02T14:57:16.5755072Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-02T14:57:16.5793092Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-02T14:57:16.6160767Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-02T14:57:16.6195532Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-02T14:57:16.6696218Z Cleaning up orphan processes
+2026-10-02T14:57:16.7006383Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

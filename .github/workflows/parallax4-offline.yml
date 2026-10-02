@@ -35,6 +35,6 @@ jobs:
       - name: Install
         run: pip install -e ".[dev]"
       - name: Lint changed PARALLAX4 code
-        run: ruff check src/seti/parallax4/cohorts.py src/seti/parallax4/run.py tests/test_parallax4_cohorts.py src/seti/parallax4/deepvet.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py
+        run: ruff check src/seti/parallax4/cohorts.py src/seti/parallax4/run.py tests/test_parallax4_cohorts.py src/seti/parallax4/deepvet.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py tests/test_parallax4_vsx_association.py
       - name: Offline PARALLAX4 science and cohort regressions
-        run: python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py -o addopts="" -q -p no:cacheprovider
+        run: python -m pytest tests/test_parallax4.py tests/test_parallax4_cohorts.py tests/test_parallax4_ztf_identity.py tests/test_parallax4_ztf_phase.py tests/test_parallax4_vsx_association.py -o addopts="" -q -s -p no:cacheprovider

@@ -113,12 +113,44 @@ def drift_case(joint):
         "max_abs_analytic_null_row_residual": float(np.max(np.abs(design @ nulls.T))),
         "max_abs_hidden_parameterization_difference_mas": float(
             np.max(np.abs(design @ hidden))),
-        "native_whitened_design_rank": int(np.linalg.matrix_rank(
+        "synthetic_whitened_design_rank": int(np.linalg.matrix_rank(
             design / synthetic["sx_al"].to_numpy(float)[:, None])),
-        "native_whitened_design_columns": 8,
+        "synthetic_whitened_design_columns": 8,
         "cancelled_hidden_blend_result": P.fit_photocentre(cancelled),
         "sky_only_injection_result": P.fit_photocentre(sky_only),
     }
+
+
+def independent_flux_cases(joint):
+    """Predeclared non-affine and near-affine controls; no verdict tuning."""
+    j = np.arange(len(joint), dtype=float)
+    modulation = np.sin(2 * np.pi * j * ((np.sqrt(5) - 1) / 2))
+    t = joint["t_yr"].to_numpy(float)
+    affine = DRIFT_A_PER_YR * (t - np.median(t))
+    cases = {}
+    for name, psi_input, zero_pf, zero_centroid in [
+        ("nondegenerate_sky_positive", 0.2 * modulation, False, False),
+        ("nuisance_only_parallax_null_positive", 0.2 * modulation, True, False),
+        ("near_affine_zero_centroid", affine + 1e-6 * modulation, False, True),
+    ]:
+        synthetic = joint.copy()
+        if np.any(1 - psi_input <= 0):
+            raise ValueError("PREDECLARED_SYNTHETIC_FLUX_NOT_POSITIVE")
+        phi_input = psi_input / (1 - psi_input)
+        M = float(np.median(phi_input))
+        psi_final = (1 + M) * psi_input - M
+        synthetic["phi"], synthetic["sphi"] = phi_input, 0.001
+        if zero_pf:
+            synthetic["pf_al"] = 0.0  # explicitly synthetic nuisance-only column loss
+        synthetic["x_al"] = (0.0 if zero_centroid else psi_final * (
+            HIDDEN_D_MAS[0] * np.sin(synthetic["theta"])
+            + HIDDEN_D_MAS[1] * np.cos(synthetic["theta"])))
+        cases[name] = {"synthetic_changes": {
+            "flux_sequence": "SIN_2PI_CHRONOLOGICAL_INDEX_GOLDEN_RATIO_FRACTION",
+            "psi_modulation_amplitude": 1e-6 if zero_centroid else 0.2,
+            "affine_drift_added": zero_centroid, "parallax_factor_set_zero": zero_pf,
+            "centroid_set_zero": zero_centroid}, "result": P.fit_photocentre(synthetic)}
+    return cases
 
 
 def _json_ready(value):
@@ -147,6 +179,7 @@ def build_report() -> dict:
         "schema_version": 1, "result_kind": "CONDITIONAL_SYNTHETIC_SPATIAL_CONTROL",
         "ai_authorship": "OpenAI Codex; independent review recorded in handoff",
         "source": source, "native_geometry_rows": records, "affine_drift_control": drift_case(joint),
+        "independent_flux_controls": independent_flux_cases(joint),
         "limitations": [
             "Injected flux/centroid are synthetic; native observing geometry/errors are preserved.",
             "Analytic D null directions show conditional model nonidentifiability, not a sky blend.",

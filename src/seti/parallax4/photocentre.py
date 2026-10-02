@@ -39,6 +39,10 @@ Systematics that correlate photometry and astrometry by scan direction:
 
 Verdicts, in precedence order: INSUFFICIENT, NO_FLUX_VARIATION, SCAN_ANGLE_FLUX, DETECTOR_FRAME,
 SECTOR_INCONSISTENT, BLEND_NEIGHBOUR, BLEND_UNRESOLVED, ON_TARGET, AMBIGUOUS.
+Finite D confidence requires both sky coefficients to be estimable modulo all nuisance
+columns in the same direct weighted SVD used for the fit/covariance. Missing sky
+directions return INSUFFICIENT, without a finite D upper bound. Nuisance-only
+rank deficiency can leave D estimable.
 ON_TARGET means: no photocentre motion, and the varying light lies within
 ``ul95`` mas (x (1-beta)^-1) of the photocentre.
 """
@@ -92,23 +96,64 @@ def _f_sf(f: float, d1: int, d2: int) -> float:
     return float(fdist.sf(f, d1, d2))
 
 
-def _wls(X, y, s):
-    w = 1.0 / s
-    A = X * w[:, None]
-    b = y * w
-    beta, *_ = np.linalg.lstsq(A, b, rcond=None)
-    cov = np.linalg.pinv(A.T @ A)
-    r = y - X @ beta
-    chi2 = float(np.sum((r * w) ** 2))
-    return beta, cov, r, chi2
+def _weighted_svd(X, y, s):
+    """One direct, column-scaled weighted SVD for fit, covariance and estimability.
 
+    Squaring the design in normal equations can discard near-null directions
+    before lstsq does. This uses the same retained singular directions for all
+    three quantities and maps coefficients/covariance back to physical units.
+    A finite pseudoinverse variance is NOT a bound on a nonestimable coefficient.
+    """
+    X, y, s = np.asarray(X, float), np.asarray(y, float), np.asarray(s, float)
+    if X.ndim != 2 or y.shape != (len(X),) or s.shape != (len(X),) \
+            or not np.isfinite(X).all() or not np.isfinite(y).all() \
+            or not np.isfinite(s).all() or np.any(s <= 0):
+        raise ValueError("weighted design requires finite data and positive uncertainties")
+    A, b = X / s[:, None], y / s
+    scale = np.linalg.norm(A, axis=0)
+    scale = np.where(scale > 0, scale, 1.0)  # zero nuisance columns remain explicit
+    B = A / scale
+    u, singular, vt = np.linalg.svd(B, full_matrices=False)
+    cutoff = np.finfo(float).eps * max(B.shape) * (singular[0] if len(singular) else 0.0)
+    keep = singular > cutoff
+    v = vt[keep].T
+    gamma = v @ ((u[:, keep].T @ b) / singular[keep])
+    beta = gamma / scale
+    inverse_basis = v / singular[keep]
+    cov_scaled = inverse_basis @ inverse_basis.T
+    cov = cov_scaled / (scale[:, None] * scale[None, :])
+    rank = int(keep.sum())
+    # I - V_retained V_retained^T includes missing directions even when N < p.
+    null_projector = np.eye(X.shape[1]) - v @ v.T
+    null_norm = np.linalg.norm(null_projector, axis=1)
+    # Dimensionless orthogonal-projector roundoff allowance, NOT a physical
+    # leverage threshold. The physical uncertainty floor remains cfg unchanged.
+    projector_tol = np.finfo(float).eps * max(B.shape) * X.shape[1]
+    estimable = (null_norm <= projector_tol) if rank < X.shape[1] else np.ones(
+        X.shape[1], dtype=bool)
+    residual = y - X @ beta
+    chi2 = float(np.sum((residual / s) ** 2))
+    diagnostic = {
+        "method": "DIRECT_COLUMN_SCALED_WEIGHTED_SVD",
+        "rank": rank, "n_columns": int(X.shape[1]), "rank_tolerance": float(cutoff),
+        "scaled_singular_values": singular.tolist(), "column_scales": scale.tolist(),
+        "coefficient_estimable": estimable.tolist(),
+        "coefficient_null_projection_norm": null_norm.tolist(),
+        "projector_roundoff_tolerance": float(projector_tol),
+    }
+    return beta, cov, residual, chi2, diagnostic
+
+
+def _wls(X, y, s):
+    beta, cov, residual, chi2, _ = _weighted_svd(X, y, s)
+    return beta, cov, residual, chi2
 
 def _jitter(X, y, s0):
     """Extra per-transit noise making chi^2/nu = 1 (0 if already <= 1)."""
-    dof = len(y) - X.shape[1]
+    _, _, _, c0, design = _weighted_svd(X, y, s0)
+    dof = len(y) - design["rank"]
     if dof <= 0:
         return 0.0
-    _, _, _, c0 = _wls(X, y, s0)
     if c0 / dof <= 1.0:
         return 0.0
     lo, hi = 0.0, float(np.std(y) * 10 + np.max(s0) * 10 + 1.0)
@@ -188,6 +233,9 @@ def fit_photocentre(tr: pd.DataFrame, *, target_flux_g: float | None = None,
     y = d["x_al"].to_numpy(float)
     s0 = d["sx_al"].to_numpy(float)
     phi_raw = d["phi"].to_numpy(float)
+    if np.any(1.0 + phi_raw <= 0) or np.any(s0 <= 0):
+        out["reasons"].append("nonpositive total flux or centroid uncertainty")
+        return out
     phi_raw = (1.0 + phi_raw) / (1.0 + np.median(phi_raw)) - 1.0     # re-referenced to the median
     # The exact blend regressor.  With F the total flux, phi = F/F_med - 1:
     # neighbour varies -> offset = rho beta_med + rho (1 - beta_med) psi,
@@ -197,9 +245,21 @@ def fit_photocentre(tr: pd.DataFrame, *, target_flux_g: float | None = None,
     phi = phi_raw / (1.0 + phi_raw)
     base = np.column_stack([s, c, pf, t * s, t * c])
     X = np.column_stack([base, phi * s, phi * c, phi])
+    _, _, _, _, design = _weighted_svd(X, y, s0)
+    out["astrometric_design"] = design
+    if not all(design["coefficient_estimable"][5:7]):
+        out["D_estimability"] = "NON_ESTIMABLE"
+        out["reasons"].append("sky-blend coefficients are not identifiable modulo nuisance parameters")
+        return out
     jit = _jitter(X, y, s0)
     sig = np.sqrt(s0 ** 2 + jit ** 2)
-    beta, cov, r, chi2 = _wls(X, y, sig)
+    beta, cov, r, chi2, design = _weighted_svd(X, y, sig)
+    out["astrometric_design"] = design
+    if not all(design["coefficient_estimable"][5:7]):
+        out["D_estimability"] = "NON_ESTIMABLE"
+        out["reasons"].append("sky-blend coefficients lost estimability in the jitter-weighted design")
+        return out
+    out["D_estimability"] = "ESTIMABLE"
     D = beta[5:7]
     cD = cov[5:7, 5:7]
     b_det, sb = float(beta[7]), float(np.sqrt(cov[7, 7]))
@@ -212,13 +272,15 @@ def fit_photocentre(tr: pd.DataFrame, *, target_flux_g: float | None = None,
     sig_max = float(np.sqrt(max(ev.max(), 0.0)))
     Dmag = float(np.hypot(*D))
     ul95 = Dmag + float(np.sqrt(5.991)) * sig_max
-    out.update(jitter_mas=float(jit), chi2=chi2, dof=int(n - X.shape[1]),
+    out.update(jitter_mas=float(jit), chi2=chi2, dof=int(n - design["rank"]),
                D_ra_mas=float(D[0]), D_dec_mas=float(D[1]), D_mas=Dmag,
                D_pa_deg=float(np.degrees(np.arctan2(D[0], D[1])) % 360.0),
                sigma_D_ra=float(np.sqrt(cD[0, 0])), sigma_D_dec=float(np.sqrt(cD[1, 1])),
                sigma_D_max=sig_max, dchi2_D=dchi, p_D=p_D, ul95_mas=ul95,
-               b_detector_mas=b_det, z_detector=b_det / sb if sb > 0 else np.nan,
-               parallax_mas=float(beta[2]), pmra=float(beta[3]), pmdec=float(beta[4]),
+               b_detector_mas=b_det, z_detector=(b_det / sb if sb > 0 and design["coefficient_estimable"][7] else np.nan),
+               parallax_mas=float(beta[2]) if design["coefficient_estimable"][2] else None,
+               pmra=float(beta[3]) if design["coefficient_estimable"][3] else None,
+               pmdec=float(beta[4]) if design["coefficient_estimable"][4] else None,
                phi_rms=float(np.std(phi_raw)))
     # --- flux predictable from scan angle? -------------------------------
     H = [np.ones(n)]

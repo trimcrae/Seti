@@ -136,6 +136,7 @@ def test_legacy_and_budget_states_are_reported_separately():
     assert D.refinement_status(legacy) == "UNKNOWN_LEGACY"
     threshold = R.empirical_threshold([legacy, incomplete, measured], 50)
     assert threshold["n_null"] == 1 and threshold["anti_max"] == 0.0
+    assert threshold["status"] == "PARTIAL"
     assert threshold["n_unknown_legacy"] == threshold["n_incomplete"] == 1
     assert "refinement" not in legacy  # no retroactive completion invented
 
@@ -158,14 +159,17 @@ def test_reducer_withholds_legacy_and_partial_candidates_and_preserves_receipts(
     ]
     partial = dict(_complete(20), unit="partial", tier=D.TIER_CANDIDATE, dchi2=800)
     partial["refinement"]["anti"].update(attempted=1, usable=1, finished=False)
+    partial["refinement_status"] = "INCOMPLETE"
     rows.append(partial)
     before = copy.deepcopy(rows)
     _write_assess_input(tmp_path, rows)
     out = R.stage_assess(tmp_path, {}, 1)
-    assert out["verdict"] == "CANDIDATES_TO_VET:1"
+    assert out["verdict"] == "ANTI_NULL_PARTIAL -- no candidate promotion"
+    assert out["null_threshold"]["status"] == "PARTIAL"
     assert out["null_threshold"]["n_null"] == 2
     assert out["null_threshold"]["threshold"] == 70.0
-    assert [r["unit"] for r in out["candidates"]] == ["completed-zero"]
+    assert out["candidates"] == []
+    assert out["funnel"]["complete_gate_passing_withheld_for_partial_null"] == 1
     assert out["funnel"]["unverified_gate_passing_withheld"] == 2
     with gzip.open(tmp_path / "screen_compact.jsonl.gz", "rt") as fh:
         compact = [json.loads(line) for line in fh]
@@ -255,3 +259,16 @@ def test_injection_trials_keep_completion_and_unmeasured_anti(monkeypatch):
     assert trial["dchi2_anti"] is None
     assert trial["refinement_status"] == "INCOMPLETE"
     assert trial["recovered"] is False
+
+
+def test_full_eligible_null_coverage_keeps_candidate_positive(tmp_path):
+    rows = [
+        dict(_complete(), unit="candidate", tier=D.TIER_CANDIDATE, dchi2=500),
+        dict(_complete(70), unit="null", tier=D.TIER_NO_OCC, dchi2=1),
+    ]
+    _write_assess_input(tmp_path, rows)
+    out = R.stage_assess(tmp_path, {}, 1)
+    assert out["null_threshold"]["status"] == "MEASURED"
+    assert out["null_threshold"]["n_null"] == out["null_threshold"]["n_eligible"] == 2
+    assert out["verdict"] == "CANDIDATES_TO_VET:1"
+    assert [r["unit"] for r in out["candidates"]] == ["candidate"]

@@ -497,13 +497,16 @@ def empirical_threshold(recs: list, floor: float) -> dict:
                 if r.get("tier") not in (D.TIER_NO_DATA, D.TIER_NOT_LENSING, "ERROR", None)]
     measured = [r for r in eligible if D.refinement_status(r) == "COMPLETE"]
     anti = np.array([r["dchi2_anti"] for r in measured], dtype=float)
+    missing = len(eligible) - len(measured)
     coverage = {
-        "status": "MEASURED" if anti.size else "UNMEASURED",
+        "status": "UNMEASURED" if not anti.size else ("PARTIAL" if missing else "MEASURED"),
         "n_null": int(anti.size),
         "n_eligible": len(eligible),
         "n_incomplete": sum(D.refinement_status(r) == "INCOMPLETE" for r in eligible),
         "n_unknown_legacy": sum(D.refinement_status(r) == "UNKNOWN_LEGACY" for r in eligible),
     }
+    # The same-event maximum needs full eligible search coverage. An observed
+    # subset supplies diagnostics only; missing higher anti values are unknown.
     if anti.size == 0:
         return {"threshold": floor, **coverage}
     q = {f"q{int(p * 1000)}": float(np.quantile(anti, p)) for p in (0.5, 0.9, 0.99, 0.999)}
@@ -563,6 +566,7 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
         "refinement_unknown_legacy": thr["n_unknown_legacy"],
         "complete_comparisons": thr["n_null"],
         "unverified_gate_passing_withheld": len(raw_cands) - len(cands),
+        "complete_gate_passing_withheld_for_partial_null": len(cands) if thr["status"] != "MEASURED" else 0,
         "gate_passing_below_null_threshold": len(below),
         "gate_passing_above_null_threshold": len(above),
     }
@@ -576,8 +580,8 @@ def stage_assess(out: Path, cfg: dict, n_shards: int) -> dict:
         verdict = "NO_DATA_REACHED"
     elif not ctl_ok:
         verdict = f"CONTROLS_NOT_PASSED({controls.get('verdict')}) -- nothing downstream is believed"
-    elif thr["status"] == "UNMEASURED":
-        verdict = "ANTI_NULL_UNMEASURED -- no candidate promotion"
+    elif thr["status"] != "MEASURED":
+        verdict = f"ANTI_NULL_{thr['status']} -- no candidate promotion"
     elif above:
         verdict = f"CANDIDATES_TO_VET:{len(above)}"
     elif thr["n_incomplete"] or thr["n_unknown_legacy"]:

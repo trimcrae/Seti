@@ -52,6 +52,9 @@ def classify_fate(row: dict) -> tuple[str, list[str]]:
     if row.get("reproduced") is False:
         flags.append("episode_not_reproduced_on_refetch")
     zc = row.get("ztf_class")
+    identity_gap = zc in ("ZTF_AMBIGUOUS_OBJECTS", "ZTF_IDENTITY_UNRESOLVED")
+    if identity_gap:
+        flags.append("ztf_object_identity_unresolved")
     if zc == "ZTF_ECLIPSING_PHASED":
         return f"ECLIPSING_BINARY(ZTF P={row.get('ztf_period_d'):.5f} d, Gaia dips in phase)", flags
     if zc in ("ZTF_ECLIPSING_PHASE_AMBIGUOUS", "ZTF_PERIODIC_NOT_PHASED"):
@@ -69,6 +72,8 @@ def classify_fate(row: dict) -> tuple[str, list[str]]:
         return "KNOWN_VARIABLE(VSX:" + vsx + ")", flags
     if "episode_not_reproduced_on_refetch" in flags:
         return "NOT_REPRODUCED", flags
+    if identity_gap:
+        return "EVIDENCE_INCOMPLETE(ZTF_OBJECT_IDENTITY)", flags
     return "UNEXPLAINED", flags
 
 
@@ -124,7 +129,9 @@ def fetch_ztf(ra: float, dec: float, *, radius_arcsec: float = 1.5, http=None) -
                                     "FORMAT": "csv"}, timeout=120.0, retries=2)
     if st != 200 or not body:
         return pd.DataFrame()
-    df = pd.read_csv(_io.BytesIO(body))
+    # Catalogue identifiers are opaque keys. Mixed/null CSV columns otherwise
+    # become float64 and can silently merge distinct identifiers above 2**53.
+    df = pd.read_csv(_io.BytesIO(body), dtype={"oid": "string"})
     if not len(df) or "mjd" not in df:
         return pd.DataFrame()
     if "catflags" in df:
@@ -132,10 +139,50 @@ def fetch_ztf(ra: float, dec: float, *, radius_arcsec: float = 1.5, http=None) -
     return df
 
 
+
+def _ztf_object_identity(z: pd.DataFrame) -> dict:
+    """One coherent catalogue light curve; not proof of Gaia association.
+
+    ZTF may represent one physical source with several field-specific IDs.
+    Resolving those requires separate astrometric evidence, so neither the
+    nearest row nor a shared magnitude is enough to combine them here.
+    """
+    base = {"ztf_n_band": int(len(z)),
+            "ztf_target_association": "NOT_ESTABLISHED_BY_OBJECT_ID"}
+    if "oid" not in z:
+        return {**base, "ztf_identity_status": "MISSING_OBJECT_ID",
+                "ztf_n_invalid_ids": int(len(z)), "ztf_n_objects": None,
+                "ztf_object_ids": []}
+    ids, invalid = [], 0
+    for value in z["oid"]:
+        # Accept exact integer keys and their CSV spellings, never floats:
+        # even an integral float may already have been rounded.
+        if isinstance(value, (bool, np.bool_)):
+            invalid += 1
+            continue
+        if isinstance(value, (int, np.integer)):
+            value = str(value)
+        if not isinstance(value, str) or not re.fullmatch(r"[0-9]+", value) \
+                or not value.strip("0"):
+            invalid += 1
+            continue
+        ids.append(value)
+    unique = sorted(set(ids))
+    base.update(ztf_n_invalid_ids=invalid, ztf_n_objects=len(unique),
+                ztf_object_ids=unique)
+    if invalid:
+        return {**base, "ztf_identity_status": "MALFORMED_OBJECT_ID"}
+    if len(unique) != 1:
+        return {**base, "ztf_identity_status": "MULTIPLE_OBJECT_IDS"}
+    return {**base, "ztf_identity_status": "SINGLE_OBJECT_ID",
+            "ztf_object_id": unique[0]}
+
+
 def ztf_eclipse_test(ztf: pd.DataFrame, gaia_dip_t: list[float], *, min_points: int = 60,
                      sde_min: float = 9.0, phase_tol: float = 0.03) -> dict:
     """Box-least-squares on the ZTF light curve (the band with more points),
-    then: do the Gaia dip episodes fall in the ZTF eclipse at that period (or
+    after requiring one exact catalogue object ID in that band; then: do the
+    Gaia dip episodes fall in the ZTF eclipse at that period (or
     its double, for primary+secondary)?  ``gaia_dip_t`` in Gaia days
     (BJD - 2455197.5); ZTF MJD are converted (barycentric vs geocentric
     differs by <= 8.3 min, well inside ``phase_tol`` for P > 0.2 d)."""
@@ -146,6 +193,12 @@ def ztf_eclipse_test(ztf: pd.DataFrame, gaia_dip_t: list[float], *, min_points: 
         return out
     band = ztf["filtercode"].value_counts().idxmax() if "filtercode" in ztf else None
     z = ztf[ztf["filtercode"] == band] if band is not None else ztf
+    out.update(ztf_band=str(band), **_ztf_object_identity(z))
+    if out["ztf_identity_status"] != "SINGLE_OBJECT_ID":
+        out["ztf_class"] = ("ZTF_AMBIGUOUS_OBJECTS"
+                            if out["ztf_identity_status"] == "MULTIPLE_OBJECT_IDS"
+                            else "ZTF_IDENTITY_UNRESOLVED")
+        return out
     t = z["mjd"].to_numpy(float) - GAIA_T0_MJD
     f = 10 ** (-0.4 * (z["mag"].to_numpy(float) - np.median(z["mag"])))
     e = np.clip(z["magerr"].to_numpy(float) * 0.921 * f, 1e-4, None)

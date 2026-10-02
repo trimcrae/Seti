@@ -1,0 +1,38 @@
+name: PARALLAX4 VSX input provenance
+on:
+  push:
+    branches: [main, codex/usage-sprint-2026-10-01-vsx-native-evidence]
+    paths:
+      - tools/parallax4-vsx-input-gap.mjs
+      - tests/parallax4-vsx-input-gap.test.mjs
+      - research/parallax4/vsx-native-evidence-2026-10-02/evidence.json
+      - research/parallax4/vsx-native-evidence-2026-10-02/*.raw.*
+      - .github/workflows/parallax4-vsx-input-evidence.yml
+  pull_request:
+    paths:
+      - tools/parallax4-vsx-input-gap.mjs
+      - tests/parallax4-vsx-input-gap.test.mjs
+      - research/parallax4/vsx-native-evidence-2026-10-02/evidence.json
+      - research/parallax4/vsx-native-evidence-2026-10-02/*.raw.*
+      - .github/workflows/parallax4-vsx-input-evidence.yml
+permissions:
+  contents: read
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check tools/parallax4-vsx-input-gap.mjs
+          node --check tests/parallax4-vsx-input-gap.test.mjs
+      - name: Native input precision and provenance controls
+        run: node --test tests/parallax4-vsx-input-gap.test.mjs
+      - name: Verify original repository bytes and missing-input outcome
+        run: node tools/parallax4-vsx-input-gap.mjs --check
+      - name: Confirm preserved science files
+        run: git diff --exit-code -- results/parallax4 STATUS.md config/parallax4.yaml src/seti/parallax4

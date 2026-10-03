@@ -1,18 +1,18 @@
 {
- "checked_at_utc": "2026-10-03T12:30:47Z",
+ "checked_at_utc": "2026-10-03T16:42:29Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
-  "head_sha": "9e21b4b7f11fee7da2853c33a886ab653dc1fc8c",
-  "run_id": 37121567153,
-  "run_started_at": "2026-10-03T12:02:09Z",
+  "head_sha": "1481f783cdb2f5e7fa6336df9ecab25d4e66ad02",
+  "run_id": 37123255316,
+  "run_started_at": "2026-10-03T12:33:27Z",
   "run_status": "completed",
-  "run_url": "https://github.com/trimcrae/Seti/actions/runs/37121567153",
+  "run_url": "https://github.com/trimcrae/Seti/actions/runs/37123255316",
   "status": "GREEN",
   "workflow": "ci.yml"
  },
  "n_dispatched": 1,
- "n_overdue": 1,
+ "n_overdue": 2,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -35,28 +35,27 @@
   },
   {
    "cadence_hours": 1.0,
-   "catchup_dispatched_utc": "2026-10-03T12:30:47Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-03T12:17:00Z",
+   "expected_last_fire_utc": "2026-10-03T16:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 0.23,
-   "hours_since_last_run": 5.97,
-   "last_scheduled_run_utc": "2026-10-03T06:32:19Z",
+   "hours_late": 0.42,
+   "hours_since_last_run": 4.15,
+   "last_scheduled_run_utc": "2026-10-03T12:33:27Z",
    "missed_by": "silence",
    "missed_cadence_hours": 1.0,
    "missed_cron": "17 * * * *",
-   "missed_fire_utc": "2026-10-03T10:17:00Z",
+   "missed_fire_utc": "2026-10-03T14:17:00Z",
    "missed_grace_hours": 2.0,
-   "missed_hours_late": 2.23,
+   "missed_hours_late": 2.42,
    "name": "ci",
-   "note": "ci has not run on its schedule for 5.97 h (measured from its last run). Its firing at 2026-10-03T10:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-03T12:17:00Z cannot erase that miss.",
+   "note": "ci has not run on its schedule for 4.15 h (measured from its last run). Its firing at 2026-10-03T14:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-03T16:17:00Z cannot erase that miss.",
    "overdue": true,
-   "silence_hours": 5.97,
-   "silent_since_utc": "2026-10-03T06:32:19Z",
+   "silence_hours": 4.15,
+   "silent_since_utc": "2026-10-03T12:33:27Z",
    "status": "MISSED",
    "workflow": "ci.yml"
   },
@@ -66,12 +65,13 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-03T06:43:00Z",
+   "expected_last_fire_utc": "2026-10-03T12:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-03T12:00:39Z",
+   "last_scheduled_run_utc": "2026-10-03T16:41:59Z",
    "name": "cronwatch",
+   "note": "this sweep is running inside it",
    "overdue": false,
    "status": "OK",
    "workflow": "cronwatch.yml"
@@ -125,21 +125,19 @@
    "workflow": "loom.yml"
   },
   {
-   "cadence_hours": 744.0,
+   "cadence_hours": 720.0,
    "cron_matched": "17 13 3 * *",
    "crons": [
     "17 13 3 * *"
    ],
-   "expected_last_fire_utc": "2026-09-03T13:17:00Z",
+   "expected_last_fire_utc": "2026-10-03T13:17:00Z",
    "grace_hours": 12.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": null,
    "name": "roman",
-   "note": "the firing at 2026-09-03T13:17:00Z predates the last change to roman.yml (2026-09-24T12:19:02Z), so this schedule never had that slot",
    "overdue": false,
-   "schedule_changed_at_utc": "2026-09-24T12:19:02Z",
-   "status": "SCHEDULE_TOO_NEW",
+   "status": "WITHIN_GRACE",
    "workflow": "roman.yml"
   },
   {
@@ -192,19 +190,19 @@
   },
   {
    "cadence_hours": 12.0,
-   "cron_matched": "25 3 * * *",
+   "cron_matched": "25 15 * * *",
    "crons": [
     "25 15 * * *",
     "25 3 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-03T03:25:00Z",
+   "expected_last_fire_utc": "2026-10-03T15:25:00Z",
    "grace_hours": 3.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-03T09:17:59Z",
    "name": "tocsin-ztf",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -213,31 +211,41 @@
    "crons": [
     "10 14 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-02T14:10:00Z",
+   "expected_last_fire_utc": "2026-10-03T14:10:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-02T19:10:19Z",
    "name": "tocsin",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin.yml"
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-03T16:42:29Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-03T12:17:00Z",
+   "expected_last_fire_utc": "2026-10-03T16:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.42,
+   "hours_since_last_run": 4.2,
    "last_scheduled_run_utc": "2026-10-03T12:30:13Z",
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-10-03T14:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.42,
    "name": "watchdog",
-   "note": "this sweep is running inside it",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 4.20 h (measured from its last run). Its firing at 2026-10-03T14:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-03T16:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "silence_hours": 4.2,
+   "silent_since_utc": "2026-10-03T12:30:13Z",
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

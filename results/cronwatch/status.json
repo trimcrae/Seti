@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-03T21:44:44Z",
+ "checked_at_utc": "2026-10-03T23:01:08Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -35,18 +35,29 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-03T23:01:08Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-03T21:17:00Z",
+   "expected_last_fire_utc": "2026-10-03T22:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.74,
+   "hours_since_last_run": 3.05,
    "last_scheduled_run_utc": "2026-10-03T19:57:51Z",
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-10-03T20:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.74,
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 3.05 h (measured from its last run). Its firing at 2026-10-03T20:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-03T22:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "silence_hours": 3.05,
+   "silent_since_utc": "2026-10-03T19:57:51Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -61,7 +72,6 @@
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-03T21:44:14Z",
    "name": "cronwatch",
-   "note": "this sweep is running inside it",
    "overdue": false,
    "status": "OK",
    "workflow": "cronwatch.yml"
@@ -156,10 +166,10 @@
    "grace_hours": 12.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-03T21:45:37Z",
+   "last_scheduled_run_utc": "2026-10-03T22:12:34Z",
    "name": "sextant-probe",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "sextant-probe.yml"
   },
   {
@@ -172,10 +182,10 @@
    "grace_hours": 12.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-30T22:36:38Z",
+   "last_scheduled_run_utc": "2026-10-03T21:44:58Z",
    "name": "tocsin-altfeeds",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "tocsin-altfeeds.yml"
   },
   {
@@ -217,14 +227,15 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-03T21:17:00Z",
+   "expected_last_fire_utc": "2026-10-03T22:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-03T19:50:10Z",
+   "last_scheduled_run_utc": "2026-10-03T23:00:33Z",
    "name": "watchdog",
+   "note": "this sweep is running inside it",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "watchdog.yml"
   }
  ]

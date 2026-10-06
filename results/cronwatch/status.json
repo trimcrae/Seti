@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-06T06:51:03Z",
+ "checked_at_utc": "2026-10-06T06:51:49Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 1,
- "n_overdue": 3,
+ "n_dispatched": 2,
+ "n_overdue": 2,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -35,6 +35,7 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-06T06:51:49Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
@@ -42,19 +43,19 @@
    "expected_last_fire_utc": "2026-10-06T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 0.57,
-   "hours_since_last_run": 6.04,
+   "hours_late": 0.58,
+   "hours_since_last_run": 6.05,
    "last_scheduled_run_utc": "2026-10-06T00:48:56Z",
    "missed_by": "silence",
    "missed_cadence_hours": 1.0,
    "missed_cron": "17 * * * *",
    "missed_fire_utc": "2026-10-06T04:17:00Z",
    "missed_grace_hours": 2.0,
-   "missed_hours_late": 2.57,
+   "missed_hours_late": 2.58,
    "name": "ci",
-   "note": "ci has not run on its schedule for 6.04 h (measured from its last run). Its firing at 2026-10-06T04:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-06T06:17:00Z cannot erase that miss.",
+   "note": "ci has not run on its schedule for 6.05 h (measured from its last run). Its firing at 2026-10-06T04:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-06T06:17:00Z cannot erase that miss.",
    "overdue": true,
-   "silence_hours": 6.04,
+   "silence_hours": 6.05,
    "silent_since_utc": "2026-10-06T00:48:56Z",
    "status": "MISSED",
    "workflow": "ci.yml"
@@ -71,7 +72,6 @@
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-06T06:50:20Z",
    "name": "cronwatch",
-   "note": "this sweep is running inside it",
    "overdue": false,
    "status": "OK",
    "workflow": "cronwatch.yml"
@@ -190,6 +190,7 @@
   },
   {
    "cadence_hours": 12.0,
+   "catchup_dispatched_utc": "2026-10-06T06:51:49Z",
    "cron_matched": "25 3 * * *",
    "crons": [
     "25 15 * * *",
@@ -198,19 +199,19 @@
    "expected_last_fire_utc": "2026-10-06T03:25:00Z",
    "grace_hours": 3.0,
    "has_dispatch": true,
-   "hours_late": 3.43,
-   "hours_since_last_run": 8.77,
+   "hours_late": 3.45,
+   "hours_since_last_run": 8.78,
    "last_scheduled_run_utc": "2026-10-05T22:04:44Z",
    "missed_by": "grace",
    "missed_cadence_hours": 12.0,
    "missed_cron": "25 3 * * *",
    "missed_fire_utc": "2026-10-06T03:25:00Z",
    "missed_grace_hours": 3.0,
-   "missed_hours_late": 3.43,
+   "missed_hours_late": 3.45,
    "name": "tocsin-ztf",
    "note": "tocsin-ztf should have fired at 2026-10-06T03:25:00Z (cron '25 3 * * *') and its last scheduled run was 2026-10-05T22:04:44Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
    "overdue": true,
-   "silence_hours": 8.77,
+   "silence_hours": 8.78,
    "silent_since_utc": "2026-10-05T22:04:44Z",
    "status": "MISSED",
    "workflow": "tocsin-ztf.yml"
@@ -233,7 +234,6 @@
   },
   {
    "cadence_hours": 1.0,
-   "catchup_dispatched_utc": "2026-10-06T06:51:03Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
@@ -241,21 +241,12 @@
    "expected_last_fire_utc": "2026-10-06T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 0.57,
-   "hours_since_last_run": 606.72,
-   "last_scheduled_run_utc": "2026-09-11T00:08:04Z",
-   "missed_by": "silence",
-   "missed_cadence_hours": 1.0,
-   "missed_cron": "17 * * * *",
-   "missed_fire_utc": "2026-10-06T04:17:00Z",
-   "missed_grace_hours": 2.0,
-   "missed_hours_late": 2.57,
+   "hours_late": null,
+   "last_scheduled_run_utc": "2026-10-06T00:46:51Z",
    "name": "watchdog",
-   "note": "watchdog has not run on its schedule for 606.72 h (measured from its last run). Its firing at 2026-10-06T04:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-06T06:17:00Z cannot erase that miss.",
-   "overdue": true,
-   "silence_hours": 606.72,
-   "silent_since_utc": "2026-09-11T00:08:04Z",
-   "status": "MISSED",
+   "note": "this sweep is running inside it",
+   "overdue": false,
+   "status": "OK",
    "workflow": "watchdog.yml"
   }
  ]

@@ -34,9 +34,10 @@ exactly "alerted last night".  For a backfill the object is met once, in the
 window of its last alert, and its FULL history comes with it; an event on an
 earlier night is folded if that night has already been screened (its trials are
 in the ledger) and is otherwise left for the sweep to reach.  Numerator and
-denominator therefore always cover the same nights.  The window never advances
-past the exposure table's own frontier, so no night is folded without its
-trials.
+denominator therefore always cover the same nights.  The stream and ingest lag
+cap the window at a complete observing-night boundary.  Nights fully covered by
+the exposure table use exact quadrant trials; later nights use the detection
+footprint proxy.
 
 Everything network-facing is guarded; a failed leg degrades a run to a named
 verdict, never to a quiet null.
@@ -113,8 +114,8 @@ DEFAULTS: dict = {
     "backfill_start_mjd": 61235.0,
     "max_nights_per_run": 3.0,
     "lookback_nights": 1.0,
-    #: The stream is served within hours; the exposure table lags more, and it
-    #: is the exposure table that caps the window (see `frontier`).
+    #: Wait this long behind the wall clock for stream ingestion, then screen
+    #: only whole observing nights.  IRSA's frontier selects the denominator.
     "ingest_lag_days": 0.3,
     "max_run_seconds": 5400.0,
     #: Only public-survey quadrants issue public alerts (IRSA `ipac_gid` = 1).
@@ -1159,8 +1160,16 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
                     "nights": sorted({night_of(lo), night_of(hi - 1e-6)})})
     if hi <= lo:
         summary["verdict"] = "NO_NEW_DATA"
-        summary["notes"].append("the watermark has caught up with the newest epoch both "
-                                "services hold; nothing to screen until they advance")
+        if explicit:
+            summary["notes"].append("the requested window is empty or reversed; "
+                                    "nothing was screened")
+        else:
+            summary["notes"].append(
+                f"the watermark (MJD {lo:.5f}) has reached the latest complete-night "
+                f"boundary (MJD {hi:.5f}) allowed by the stream frontier and ingest "
+                f"lag; waiting for the next complete observing night. IRSA's "
+                f"exposure frontier selects the denominator and does not cap the "
+                f"screen window")
         _write_json(out / "summary.json", summary)
         print(f"[tocsin-ztf] NO_NEW_DATA (watermark {lo:.3f} >= frontier {hi:.3f})")
         return summary

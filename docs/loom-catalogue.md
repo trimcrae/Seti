@@ -2,16 +2,27 @@
 
 *Two objects above a ceiling mean nothing without a denominator.*
 
-**Channel status:** built, offline-tested (68 tests), **not yet run against live
-data**. Runner-only (`.github/workflows/loom-catalogue.yml`, `workflow_dispatch`);
-the development sandbox has no egress to JPL.
+**Channel status (2026-10-08 reconciliation):** live results exist. The committed
+October 2 `results/loom-catalogue/catalogue.json` reports 1,393 fetched rows,
+977 unique objects and `TAIL_SPARSE_SURVIVORS_PRESENT`. Acquisition runs in
+`.github/workflows/loom-catalogue.yml`; the historical opening account below
+does not describe current source availability.
+
+**Literature update:** NASA/JPL's
+[2026-07-16 account](https://www.nasa.gov/solar-system/comets/nasa-study-finds-near-earth-asteroid-is-actually-comet/)
+confirms cometary activity for 1998 SH2 and gives the additional designation
+P/1998 SH2. [The study](https://doi.org/10.1038/s41550-026-02913-7) is already
+recorded in both committed LOOM literature checks as
+`EXPLAINED_BY_PUBLISHED_RESOLUTION`. The older arXiv-only non-match below is
+superseded. 2006 VC remains an assumption-sensitive scientific `interest`,
+with unmeasured size/albedo and no artificiality discriminator.
 
 ---
 
 ## 1. The question
 
-LOOM carries two standing exceedances. From `results/loom/calibration.json`
-(2026-07-30):
+Historical opening snapshot: two standing exceedances from
+`results/loom/calibration.json` (2026-07-30):
 
 | object | eps_eff | S/N | arc | n_obs | U | T_J | literature |
 |---|---|---|---|---|---|---|---|
@@ -366,8 +377,9 @@ that decides whether it is a lead at all. It writes to
 about the object, and the dark-comet population is *known* to be incomplete — so
 an object absent from the literature is not thereby unexplained. That is why
 `875163 (1998 SH2)`'s `T_J = 2.913` matters: it is comet-like dynamics, and the
-honest reading of an unexplained acceleration on such an orbit is a dark comet
-nobody has published yet. `428209 (2006 VC)` at `T_J = 3.720` is asteroidal,
+initial reading of its acceleration was an unpublished dark comet; the
+published cometary confirmation now supersedes that inference.
+`428209 (2006 VC)` at `T_J = 3.720` is asteroidal,
 which is the harder case to explain away and the more interesting one — and also
 the one with `S/N = 3.8`, barely over the reliability gate.
 

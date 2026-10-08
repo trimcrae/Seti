@@ -1116,6 +1116,70 @@ def test_the_ztf_probe_asks_a_bounded_question():
     assert c.timeout <= 60.0
 
 
+@pytest.mark.parametrize(("covered", "control", "verdict", "usable"), [
+    ("timeout", "empty", "UNDETERMINED", False),
+    ("rows", "timeout", "UNDETERMINED", False),
+    ("rows", "html", "UNDETERMINED", False),
+    ("rows", "empty", "OK", True),
+    ("empty", "empty", "NO_ROWS_ANYWHERE", False),
+    ("rows", "rows", "CONE_IGNORED", False),
+])
+def test_ztf_probe_requires_measured_csv_controls(
+        monkeypatch, covered, control, verdict, usable):
+    """A failed request cannot prove zero rows or a working position filter."""
+    bodies = {"rows": ZTF_CSV, "empty": ZTF_CSV.splitlines()[0] + "\n",
+              "html": "<html>service unavailable</html>"}
+
+    class Session:
+        def get(self, url, params):
+            which = control if float(params["POS"].split()[2]) == -80.0 else covered
+            if which == "timeout":
+                raise TimeoutError("probe read timed out")
+
+            class Response:
+                status_code = 200
+                headers = {"content-type": "text/csv"}
+                text = bodies[which]
+                content = text.encode()
+            return Response()
+
+    monkeypatch.setattr(A, "_session", lambda timeout: Session())
+    rec = A.ZtfIrsa().describe()
+    assert rec["position_filter_verdict"] == verdict
+    assert rec["usable"] is usable
+    for path, outcome in (("covered_csv", covered), ("uncovered_control", control)):
+        if outcome == "timeout":
+            assert rec["paths"][path]["error"] == "probe read timed out"
+            assert "n_rows" not in rec["paths"][path]
+            assert f"paths.{path}" in rec["unusable_reason"]
+    if covered == "timeout":
+        assert "covered-field rows: 0" not in rec["unusable_reason"]
+        assert "missing columns" not in rec["unusable_reason"]
+    if covered == control == "empty":
+        assert "covered-field rows: 0; missing columns: none" in rec["unusable_reason"]
+
+
+def test_ztf_probe_budget_skipping_the_control_cannot_mark_feed_usable(monkeypatch):
+    """Even valid covered rows need a measured negative control."""
+    class Session:
+        def get(self, url, params):
+            class Response:
+                status_code = 200
+                headers = {"content-type": "text/csv"}
+                text = ZTF_CSV
+                content = text.encode()
+            return Response()
+
+    clock = iter((0.0, 0.0, 0.0, 101.0))
+    monkeypatch.setattr(A.time, "monotonic", lambda: next(clock))
+    monkeypatch.setattr(A, "_session", lambda timeout: Session())
+    rec = A.ZtfIrsa(probe_timeout=25.0).describe()
+    assert rec["paths"]["covered_csv"]["n_rows"] > 0
+    assert "skipped" in rec["paths"]["uncovered_control"]
+    assert rec["position_filter_verdict"] == "UNDETERMINED"
+    assert rec["usable"] is False
+
+
 # The probe of 2026-08-26 recorded IRSA's real columns and one real hazard in
 # them: some integer columns arrive in hex (`ccdid: "0x1"`).
 ZTF_CSV_REAL = (

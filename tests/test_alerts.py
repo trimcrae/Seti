@@ -839,7 +839,33 @@ def test_a_feed_that_answers_but_cannot_serve_a_light_curve_alerts(tmp_path):
     got = feed_alerts(tmp_path)
     assert [a.channel for a in got] == ["tocsin_altfeeds"]
     assert "ASASSN" in got[0].title
+    assert "reached its service but" in got[0].body
     assert "no cone request was accepted" in got[0].body
+
+
+@pytest.mark.parametrize(("reached", "status"), [
+    (False, "could not reach its service"),
+    (None, "the probe did not establish service reachability"),
+])
+def test_unusable_feed_alert_does_not_claim_unmeasured_reachability(
+        tmp_path, reached, status):
+    """Connection failures and older probes cannot establish host reachability."""
+    from seti.alerts import feed_alerts
+
+    block = {"usable": False, "unusable_reason": "connection timed out"}
+    if reached is not None:
+        block["reached"] = reached
+    _write(tmp_path, "results/tocsin_altfeeds/probe.json", {"surveys": {
+        "asassn": block,
+        "atlas": {"reached": True, "usable": True, "verdict": "OK"},
+    }})
+
+    got = feed_alerts(tmp_path)
+    assert len(got) == 1
+    assert status in got[0].body
+    assert "reached its service but" not in got[0].body
+    assert "connection timed out" in got[0].body
+    assert got[0].detail["reached"] is reached
 
 
 def test_a_feed_alert_is_keyed_by_the_reason_so_a_new_break_re_notifies(tmp_path):

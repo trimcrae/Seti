@@ -2464,25 +2464,47 @@ class ZtfIrsa:
 
         covered = rec["paths"].get("covered_csv") or {}
         control = rec["paths"].get("uncovered_control") or {}
-        n_here = int(covered.get("n_rows") or 0)
-        n_there = int(control.get("n_rows") or 0)
-        rec["position_filter_verdict"] = (
-            "OK" if n_here > 0 and n_there == 0 else
-            "NO_ROWS_ANYWHERE" if n_here == 0 and n_there == 0 else
-            "CONE_IGNORED" if n_there > 0 else "UNDETERMINED")
+        needed = {"mjd", "mag", "magerr"}
+        have = set(covered.get("columns") or [])
+        # A timeout, skipped request, or HTTP error is an unmeasured field,
+        # not a measured empty one.  Both CSV probes must return the expected
+        # schema before their row counts establish that the cone was honoured.
+        covered_received = (covered.get("status") == 200
+                            and isinstance(covered.get("n_rows"), int))
+        control_received = (control.get("status") == 200
+                            and isinstance(control.get("n_rows"), int))
+        covered_measured = covered_received and needed <= have
+        control_measured = control_received and needed <= set(control.get("columns") or [])
+        n_here = int(covered["n_rows"]) if covered_received else None
+        n_there = int(control["n_rows"]) if control_received else None
+        if not (covered_measured and control_measured):
+            rec["position_filter_verdict"] = "UNDETERMINED"
+        elif n_there > 0:
+            rec["position_filter_verdict"] = "CONE_IGNORED"
+        elif n_here > 0:
+            rec["position_filter_verdict"] = "OK"
+        else:
+            rec["position_filter_verdict"] = "NO_ROWS_ANYWHERE"
         # USABLE means a light curve can actually be read: rows came back for a
         # covered field, with the columns this module needs, and the cone was
         # honoured.  Reachability alone is what made the ASAS-SN probe report OK
         # while every query failed.
-        needed = {"mjd", "mag", "magerr"}
-        have = set(covered.get("columns") or [])
-        rec["usable"] = bool(n_here > 0 and needed <= have
-                             and rec["position_filter_verdict"] == "OK")
+        rec["usable"] = rec["position_filter_verdict"] == "OK"
         if not rec["usable"]:
-            missing = sorted(needed - have)
-            rec["unusable_reason"] = (
-                f"covered-field rows: {n_here}; missing columns: {missing or 'none'}; "
-                f"position filter: {rec['position_filter_verdict']}")
+            reasons = []
+            if covered_received:
+                missing = sorted(needed - have)
+                reasons.append(f"covered-field rows: {n_here}; "
+                               f"missing columns: {missing or 'none'}")
+            else:
+                reasons.append("covered-field CSV was not measured; "
+                               "see paths.covered_csv for the response or error")
+            if not control_measured:
+                reasons.append("uncovered-control CSV did not establish position "
+                               "filtering; see paths.uncovered_control for the "
+                               "response or error")
+            reasons.append(f"position filter: {rec['position_filter_verdict']}")
+            rec["unusable_reason"] = "; ".join(reasons)
         return rec
 
     #: Most segments one target may be split into.  A 3 arcsec/yr star needs 52

@@ -3,12 +3,30 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-23.
+next. Last updated: 2026-10-08.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### LOOM literature reconciliation, 2026-10-08
+
+**1998 SH2 is explained by observed cometary activity.** NASA/JPL's
+[2026-07-16 account](https://www.nasa.gov/solar-system/comets/nasa-study-finds-near-earth-asteroid-is-actually-comet/)
+reports a weak tail and the additional comet designation **P/1998 SH2**.
+The corresponding study is [Farnocchia et al. 2026](https://doi.org/10.1038/s41550-026-02913-7),
+already recorded as `EXPLAINED_BY_PUBLISHED_RESOLUTION` in
+`results/loom/litcheck.json`. This supersedes the older July 30 arXiv-only
+"not found" statements below; an arXiv non-match did not establish absence
+from published literature.
+
+**2006 VC remains scientific `interest`.** The October 2 catalogue reports
+an H-derived diameter, nominal epsilon 1.294 at assumed density 2,000 kg/m³,
+and density/albedo sensitivity 0.484–3.247 (`robust_above_ceiling=false`).
+Magnitude alone supplies neither an anomalous area-to-mass ratio nor a
+distance-law discriminator. Resolve its physical and source uncertainties
+before stronger interpretation; this is not evidence of artificiality.
 
 ### PARALLAX4: Gaia DR4 intake built; DR3 grey-dip half run on all 11.75 M light curves, 2026-09-24
 

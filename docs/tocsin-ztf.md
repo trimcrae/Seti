@@ -35,7 +35,7 @@ module only *acquires* and *normalises*, against two public services:
 | service | role | shape |
 |---|---|---|
 | **ALeRCE ZTF API** `api.alerce.online/ztf/v1` | the numerator | `/objects` by `lastmjd` window; `/objects/{oid}/detections`; `/objects/{oid}/non_detections` |
-| **IRSA TAP** `ztf.ztf_current_meta_sci` | the denominator | every public science quadrant: `obsjd, fid, ra, dec, ra1..dec4, maglimit, programid` |
+| **IRSA TAP** `ztf.ztf_current_meta_sci` | the exact denominator for nights its metadata fully covers | every public science quadrant: `obsjd, fid, ra, dec, ra1..dec4, maglimit, programid` |
 
 Neither needs a credential. Both are documentation-derived until the workflow's
 probe (`tocsin-ztf-probe`, first step, always) records their live shapes into
@@ -62,7 +62,7 @@ already in the ledger and is otherwise **deferred** for the sweep to reach
 (`events_deferred_to_sweep` in the summary). Numerator and denominator
 therefore always cover the same set of nights.
 
-## 3. The denominator: quadrants, not proxies
+## 3. The denominator: quadrants where current, detection proxy beyond
 
 Rubin's channel had to reconstruct "which stars were looked at" from a
 1-degree binning of where detections happened, because the broker's forced
@@ -86,11 +86,21 @@ history and limits but **never added as trials**: the footprint already counts
 those star-nights, and counting them twice is the denominator bug the
 alternative feeds had (`docs/tocsin-altfeeds.md` §12.4).
 
-**The window never advances past the exposure table's frontier**
-(`frontiers.irsa_exposures_mjd`). IRSA's metadata lags the stream by more than
-the brokers do, and a night folded without its trials would count events
-against nothing; the cap costs only that the newest night or two is screened on
-the next run.
+**The live window follows the alert stream and includes only complete observing
+nights.** Its upper edge is the earlier of ALeRCE's newest ZTF epoch
+(`frontiers.alerce_ztf_mjd`) and the wall clock minus `ingest_lag_days` (0.3 days
+by default), rounded down to a 16:00 UTC night boundary. `NO_NEW_DATA` means
+that no complete night remains after the watermark within this cap, even when
+the broker already holds some alerts from the next night.
+
+IRSA's exposure frontier (`frontiers.irsa_exposures_mjd`) selects the
+denominator; it does not cap the live window. A night uses exact quadrant
+trials only when the exposure table has reached that night's end. Later nights
+use the detection-footprint proxy: targets in 1-degree bins containing alerted
+objects that night, without per-visit limits or band coverage. Each night's
+choice is recorded in `denominator_by_night`. This keeps the screen current
+while IRSA's exposure metadata lags by about 60 days, and makes the reduced
+coverage information explicit.
 
 ## 4. Normalisation choices that decide the physics
 

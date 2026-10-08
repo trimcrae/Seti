@@ -499,6 +499,42 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
     assert rec3["verdict"] == "NO_NEW_DATA"
 
 
+def test_a_current_stream_waits_for_a_complete_night_then_uses_stale_irsa_proxy(
+        tmp_path, monkeypatch):
+    """The October 7 frontier is current but still inside the next whole night."""
+    cfg, tp = _prepare(tmp_path)
+    watermark = Z.night_start(61319.8)
+    out = tmp_path / "out"
+    ledger = Z.Ledger(last_mjd_screened=watermark)
+    ledger.save(out / "ledger.json")
+    before = (out / "ledger.json").read_bytes()
+    epoch = 61320.3
+    api = FakeApi([{"oid": "ZTFa", "meanra": 150.0, "meandec": 30.0,
+                    "lastmjd": epoch}], {"ZTFa": [_det(epoch)]}, {},
+                  frontier=61320.54173609987)
+    irsa = FakeIrsa([], frontier=61260.51072920021)
+    monkeypatch.setattr(Z, "_now_mjd", lambda: 61320.865)
+
+    waiting = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
+    assert waiting["verdict"] == "NO_NEW_DATA"
+    assert waiting["mjd_lo"] == waiting["mjd_hi"] == round(watermark, 5)
+    note = " ".join(waiting["notes"])
+    assert "complete-night boundary" in note
+    assert "stream frontier and ingest lag" in note
+    assert "does not cap the screen window" in note
+    assert "newest epoch both services hold" not in note
+    assert (out / "ledger.json").read_bytes() == before
+
+    # Once a full night fits under both caps, the same stale exposure frontier
+    # permits a fold using the detection proxy rather than holding the walk up.
+    api._frontier = 61321.2
+    monkeypatch.setattr(Z, "_now_mjd", lambda: 61321.3)
+    screened = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
+    assert screened["verdict"] == "OK"
+    assert screened["watermark_mjd"] == pytest.approx(watermark + 1.0)
+    assert set(screened["denominator_by_night"].values()) == {"detection_proxy"}
+
+
 def test_a_saturated_star_and_a_bogus_alert_are_rejected_by_name_in_a_window(tmp_path):
     """End to end through screen_window: the two failure modes of run 17."""
     cfg, tp = _prepare(tmp_path)

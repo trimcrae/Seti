@@ -18,6 +18,15 @@ is network-guarded: see `tests/conftest.py`).
 Index compiled 2026-09-01 from the files on `main` (rows for METRONOME, LANTERN, FALLOUT and BAFFLE added 2026-09-06); re-verify a verdict
 against the result file before quoting it elsewhere.
 
+## Proposed research tracks (not executable channels)
+
+These entries have no package, CLI, workflow, results or measured verdict.
+Their status describes planning readiness, not sky coverage or a scientific null.
+
+| Track | Question | Candidate data | Design | Status / next gate |
+|---|---|---|---|---|
+| **Archival high-energy technosignature searches** | Can a bounded archival X-ray/gamma-ray sample support calibrated tests of quiet-host flashes, compact-object timing or X-ray-binary dips? Population deficits are deferred | XMM-Newton event/processed products first; Swift 2SXPS and Fermi later; individual product access/suitability unmeasured | [high-energy.md](high-energy.md) | **EXPLORATORY_ARCHIVAL_RESEARCH_CANDIDATE** — sources reviewed 2026-10-08; freeze XMM neutron-star/XRB sample and validate product/null requirements; no data acquired |
+
 ## Waste heat and energy budget
 
 | Channel | Question | Data | CLI | Workflow | Doc | Results → current verdict |

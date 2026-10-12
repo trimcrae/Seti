@@ -37,7 +37,7 @@
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61235.41918367943,
-    "lag_days": 90.50452736195602,
+    "lag_days": 90.54601202030092,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:1",
@@ -49,7 +49,7 @@
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 90.50743676127315,
+    "lag_days": 90.54892141961805,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:1",
@@ -62,7 +62,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T10:26:40Z",
     "frontier_mjd": 61235.41918,
-    "frozen_days": 74.48852585619213,
+    "frozen_days": 74.53001051453703,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -71,7 +71,7 @@
    },
    "key": "tocsin:frontier_stalled:3",
    "severity": "health",
-   "title": "TOCSIN's data frontier has not advanced in 74 days"
+   "title": "TOCSIN's data frontier has not advanced in 75 days"
   },
   {
    "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 74.4 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-10-12 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-10-10 via archive), so `tocsin-altfeeds` has a current feed to lean on.",
@@ -79,7 +79,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 74.37248418952547,
+    "frozen_days": 74.41396884787036,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -171,17 +171,17 @@
    "title": "ZTF cannot serve light curves"
   }
  ],
- "alert": true,
+ "alert": false,
  "by_severity": {
   "candidate": 0,
-  "health": 2,
+  "health": 0,
   "milestone": 0
  },
- "checked_at_utc": "2026-10-12T22:10:08Z",
+ "checked_at_utc": "2026-10-12T23:09:52Z",
  "frontier": {
   "loom": {
-   "frozen_days": 74.372,
-   "lag_days": 90.507,
+   "frozen_days": 74.414,
+   "lag_days": 90.549,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -189,8 +189,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 74.489,
-   "lag_days": 90.505,
+   "frozen_days": 74.53,
+   "lag_days": 90.546,
    "mjd": 61235.41918,
    "observed_advance_days": {
     "n_advances": 0
@@ -199,61 +199,6 @@
   }
  },
  "n_active": 9,
- "n_new": 2,
- "new": [
-  {
-   "body": "GitHub's scheduler did not start `tocsin-ztf.yml` at its scheduled firing of 2026-10-12T15:25:00Z (cron `25 15 * * *`, cadence 12.0 h), and it is now 4.86 h past that slot. Its last scheduled run was 2026-10-12T11:07:34Z.\n\nA catch-up run was dispatched automatically at 2026-10-12T20:16:49Z; check that it finished.\n\nScheduled runs on GitHub are best effort and are dropped under load. A dropped firing leaves no failed run for the watchdog to retry and no stale result until the staleness window expires days later, which is why it is watched separately.",
-   "channel": "cronwatch",
-   "detail": {
-    "cadence_hours": 12.0,
-    "catchup_dispatched_utc": "2026-10-12T20:16:49Z",
-    "catchup_error": null,
-    "cron_matched": "25 15 * * *",
-    "expected_last_fire_utc": "2026-10-12T15:25:00Z",
-    "grace_hours": 3.0,
-    "has_dispatch": true,
-    "hours_late": 4.86,
-    "last_scheduled_run_utc": "2026-10-12T11:07:34Z",
-    "missed_by": "grace",
-    "missed_cadence_hours": 12.0,
-    "missed_cron": "25 15 * * *",
-    "missed_fire_utc": "2026-10-12T15:25:00Z",
-    "missed_grace_hours": 3.0,
-    "missed_hours_late": 4.86,
-    "silence_hours": 9.15,
-    "silent_since_utc": "2026-10-12T11:07:34Z",
-    "workflow": "tocsin-ztf.yml"
-   },
-   "key": "cron:tocsin-ztf.yml:2026-10-12T15:25:00Z",
-   "severity": "health",
-   "title": "tocsin-ztf did not fire at 2026-10-12T15:25:00Z"
-  },
-  {
-   "body": "GitHub's scheduler did not start `tocsin.yml` at its scheduled firing of 2026-10-12T14:10:00Z (cron `10 14 * * *`, cadence 24.0 h), and it is now 6.11 h past that slot. Its last scheduled run was 2026-10-11T18:46:58Z.\n\nA catch-up run was dispatched automatically at 2026-10-12T20:16:49Z; check that it finished.\n\nScheduled runs on GitHub are best effort and are dropped under load. A dropped firing leaves no failed run for the watchdog to retry and no stale result until the staleness window expires days later, which is why it is watched separately.",
-   "channel": "cronwatch",
-   "detail": {
-    "cadence_hours": 24.0,
-    "catchup_dispatched_utc": "2026-10-12T20:16:49Z",
-    "catchup_error": null,
-    "cron_matched": "10 14 * * *",
-    "expected_last_fire_utc": "2026-10-12T14:10:00Z",
-    "grace_hours": 6.0,
-    "has_dispatch": true,
-    "hours_late": 6.11,
-    "last_scheduled_run_utc": "2026-10-11T18:46:58Z",
-    "missed_by": "grace",
-    "missed_cadence_hours": 24.0,
-    "missed_cron": "10 14 * * *",
-    "missed_fire_utc": "2026-10-12T14:10:00Z",
-    "missed_grace_hours": 6.0,
-    "missed_hours_late": 6.11,
-    "silence_hours": 25.5,
-    "silent_since_utc": "2026-10-11T18:46:58Z",
-    "workflow": "tocsin.yml"
-   },
-   "key": "cron:tocsin.yml:2026-10-12T14:10:00Z",
-   "severity": "health",
-   "title": "tocsin did not fire at 2026-10-12T14:10:00Z"
-  }
- ]
+ "n_new": 0,
+ "new": []
 }

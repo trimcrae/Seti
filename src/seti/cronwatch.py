@@ -60,6 +60,10 @@ MAX_CATCHUPS_PER_SWEEP = 3
 
 DEFAULT_RESULTS_DIR = "results/cronwatch"
 
+# Accepted dispatches are not completed work. Give self-healing a bounded
+# window, then notify once for the unresolved incident rather than every slot.
+RECOVERY_WAIT_HOURS = 2.0
+
 
 # ---------------------------------------------------------------------------
 # 1. cron arithmetic
@@ -222,6 +226,7 @@ class ScheduledWorkflow:
     name: str
     crons: list[str] = field(default_factory=list)
     has_dispatch: bool = False
+    recovery_wait_hours: float = RECOVERY_WAIT_HOURS
 
 
 def _on_block(doc: dict) -> dict:
@@ -263,9 +268,24 @@ def read_schedules(root: Path | str = ".") -> list[ScheduledWorkflow]:
                  if isinstance(e, dict) and e.get("cron")]
         if not crons:
             continue
+        timeouts = []
+        for job in (doc.get("jobs") or {}).values():
+            if not isinstance(job, dict):
+                continue
+            try:
+                # GitHub's default job timeout is six hours. Add one hour for
+                # queuing/API visibility, while keeping the wait bounded.
+                minutes = float(job.get("timeout-minutes", 360))
+            except (TypeError, ValueError):
+                minutes = 360.0
+            timeouts.append(minutes)
+        recovery_wait = max(RECOVERY_WAIT_HOURS, min(
+            MAX_GRACE.total_seconds() / 3600.0,
+            max(timeouts, default=60.0) / 60.0 + 1.0))
         out.append(ScheduledWorkflow(
             file=path.name, name=str(doc.get("name") or path.stem),
-            crons=crons, has_dispatch="workflow_dispatch" in on))
+            crons=crons, has_dispatch="workflow_dispatch" in on,
+            recovery_wait_hours=recovery_wait))
     return out
 
 
@@ -323,6 +343,7 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
                "grace_hours": round(grace.total_seconds() / 3600.0, 3),
                "expected_last_fire_utc": _iso(expected),
                "last_scheduled_run_utc": _iso(last),
+               "recovery_wait_hours": wf.recovery_wait_hours,
                "has_dispatch": wf.has_dispatch,
                "status": "OK", "overdue": False, "hours_late": None}
         if wf.file in running:
@@ -603,6 +624,8 @@ def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
             state["caught_up"][_catchup_key(rec)] = _iso(now)
             fired.append(rec)
 
+    _record_recovery(findings, state, api, now, ref)
+
     # Keep the ledger from growing without bound: a missed firing older than a
     # season is history, not state.
     cutoff = now - timedelta(days=120)
@@ -623,6 +646,114 @@ def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
     (out / "status.json").write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
     state_path.write_text(json.dumps(state, indent=1, sort_keys=True) + "\n")
     return report
+
+
+def _record_recovery(findings: list[dict], state: dict, api, now: datetime,
+                     ref: str) -> None:
+    """Keep dispatch/outcome evidence and a single identity across missed slots.
+
+    The recent-run query is read-only and shared by all workflows. A successful
+    run is execution evidence, not a claim about its scientific output; the
+    separate result-freshness and feed checks still apply.
+    """
+    incidents = state.setdefault("scheduler_incidents", {})
+    successes = state.setdefault("successful_executions", {})
+    try:
+        runs = api.recent_runs() if api and hasattr(api, "recent_runs") else None
+        read_error = None
+    except Exception as exc:                                  # noqa: BLE001
+        runs = None
+        read_error = str(exc)[:200]
+    for rec in findings:
+        file = rec["workflow"]
+        candidates = []
+        for run in runs or []:
+            path = str(run.get("path") or "").split("@", 1)[0]
+            stamp = _parse_iso(str(run.get("run_started_at") or run.get("created_at")))
+            if (Path(path).name == file and run.get("head_branch") == ref
+                    and run.get("event") in ("schedule", "workflow_dispatch")
+                    # Manual dispatches can be probe-only or partial. Only
+                    # scheduled runs and this repository's automatic token
+                    # dispatches establish unattended recovery.
+                    and (run.get("event") == "schedule"
+                         or (run.get("actor") or {}).get("login") == "github-actions[bot]")
+                    and stamp is not None):
+                candidates.append((stamp, run))
+        successful = [(stamp, run) for stamp, run in candidates
+                      if run.get("status") == "completed"
+                      and run.get("conclusion") == "success"]
+        last_success = max(successful, key=lambda item: item[0], default=None)
+        execution_key = f"{ref}:{file}"
+        saved_success = _parse_iso(str(successes.get(execution_key, "")))
+        if last_success and (saved_success is None or last_success[0] > saved_success):
+            successes[execution_key] = _iso(last_success[0])
+            saved_success = last_success[0]
+        if candidates:
+            stamp, run = max(candidates, key=lambda item: item[0])
+            rec["latest_execution"] = {key: run.get(key) for key in (
+                "id", "event", "status", "conclusion", "html_url", "head_branch")}
+            rec["latest_execution"]["started_at_utc"] = _iso(stamp)
+        if saved_success:
+            rec["last_successful_execution_utc"] = _iso(saved_success)
+        incident = incidents.get(file)
+        # A completed execution ends the old outage even if a later slot was
+        # subsequently missed. This is how a genuinely new outage re-arms.
+        incident_since = _parse_iso(str((incident or {}).get("since_utc", "")))
+        if (incident and saved_success and incident_since
+                and saved_success >= incident_since):
+            incidents.pop(file, None)
+            incident = None
+        if not rec.get("overdue"):
+            # A scheduled start, including one that failed, satisfies the cron
+            # clock but must not re-arm the notification for an ongoing outage.
+            continue
+        missed = rec.get("missed_fire_utc") or rec.get("expected_last_fire_utc")
+        if not missed:
+            continue
+        dispatched = state["caught_up"].get(_catchup_key(rec))
+        if dispatched:
+            # Rehydrate it even when this sweep did not dispatch anything.
+            rec["catchup_dispatched_utc"] = dispatched
+        if saved_success and saved_success >= _parse_iso(missed):
+            rec["recovery_status"] = "RECOVERED"
+            incidents.pop(file, None)
+            continue
+        if incident is None:
+            since = (rec.get("silent_since_utc") or rec.get("last_scheduled_run_utc")
+                     or missed) if rec.get("missed_by") == "silence" else missed
+            if rec.get("missed_by") == "silence" and saved_success:
+                prior = _parse_iso(str(since))
+                if prior is None or saved_success > prior:
+                    # Successful catch-ups also re-arm hourly incidents even
+                    # when the schedule itself has not fired again.
+                    since = _iso(saved_success)
+            key = (f"cron:{file}:silent-since:{since}"
+                   if rec.get("missed_by") == "silence" else f"cron:{file}:{since}")
+            incident = {"since_utc": missed, "key": key}
+            incidents[file] = incident
+        rec["scheduler_incident_key"] = incident["key"]
+        rec["scheduler_incident_since_utc"] = incident["since_utc"]
+        if dispatched:
+            incident.setdefault("first_dispatched_utc", dispatched)
+        first = _parse_iso(incident.get("first_dispatched_utc", ""))
+        wait_hours = float(rec.get("recovery_wait_hours") or RECOVERY_WAIT_HOURS)
+        rec["recovery_age_hours"] = (None if first is None else round(
+            (now - first).total_seconds() / 3600.0, 3))
+        if read_error:
+            rec["recovery_error"] = read_error
+        # A dispatch error or lack of automatic recovery remains actionable.
+        # Pending/unknown evidence receives grace, never a success label, and
+        # later dispatches cannot restart the incident's waiting clock.
+        latest = rec.get("latest_execution") or {}
+        latest_stamp = _parse_iso(str(latest.get("started_at_utc", "")))
+        failed = (latest.get("status") == "completed"
+                  and latest.get("conclusion") not in (None, "success", "neutral", "skipped")
+                  and latest_stamp is not None and first is not None
+                  and latest_stamp >= first)
+        rec["recovery_status"] = ("PENDING" if first is not None
+                                  and now - first < timedelta(hours=wait_hours)
+                                  and not rec.get("catchup_error") and not failed
+                                  else "UNRESOLVED")
 
 
 def _parse_iso(s: str) -> datetime | None:

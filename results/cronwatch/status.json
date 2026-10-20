@@ -1,18 +1,18 @@
 {
- "checked_at_utc": "2026-10-20T17:31:11Z",
+ "checked_at_utc": "2026-10-20T19:12:50Z",
  "gate": {
   "branch": "main",
-  "conclusion": "success",
-  "head_sha": "ab5a8629c353e8f7781e030310ab14cc87971ecb",
-  "run_id": 39445199304,
-  "run_started_at": "2026-10-20T15:05:23Z",
-  "run_status": "completed",
-  "run_url": "https://github.com/trimcrae/Seti/actions/runs/39445199304",
-  "status": "GREEN",
+  "conclusion": null,
+  "head_sha": "bcc9a0716a7f7ef2ea75f173ea2ca27c6909e88e",
+  "run_id": 39481538894,
+  "run_started_at": "2026-10-20T19:13:02Z",
+  "run_status": "queued",
+  "run_url": "https://github.com/trimcrae/Seti/actions/runs/39481538894",
+  "status": "PENDING",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 2,
+ "n_overdue": 2,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -35,18 +35,29 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-20T19:12:50Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-20T17:17:00Z",
+   "expected_last_fire_utc": "2026-10-20T18:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.93,
+   "hours_since_last_run": 4.12,
    "last_scheduled_run_utc": "2026-10-20T15:05:23Z",
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-10-20T16:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.93,
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 4.12 h (measured from its last run). Its firing at 2026-10-20T16:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-20T18:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "silence_hours": 4.12,
+   "silent_since_utc": "2026-10-20T15:05:23Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -55,15 +66,14 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-20T12:43:00Z",
+   "expected_last_fire_utc": "2026-10-20T18:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-20T17:30:31Z",
    "name": "cronwatch",
-   "note": "this sweep is running inside it",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "cronwatch.yml"
   },
   {
@@ -180,6 +190,7 @@
   },
   {
    "cadence_hours": 12.0,
+   "catchup_dispatched_utc": "2026-10-20T19:12:50Z",
    "cron_matched": "25 15 * * *",
    "crons": [
     "25 15 * * *",
@@ -188,11 +199,21 @@
    "expected_last_fire_utc": "2026-10-20T15:25:00Z",
    "grace_hours": 3.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 3.8,
+   "hours_since_last_run": 10.49,
    "last_scheduled_run_utc": "2026-10-20T08:43:42Z",
+   "missed_by": "grace",
+   "missed_cadence_hours": 12.0,
+   "missed_cron": "25 15 * * *",
+   "missed_fire_utc": "2026-10-20T15:25:00Z",
+   "missed_grace_hours": 3.0,
+   "missed_hours_late": 3.8,
    "name": "tocsin-ztf",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "tocsin-ztf should have fired at 2026-10-20T15:25:00Z (cron '25 15 * * *') and its last scheduled run was 2026-10-20T08:43:42Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "silence_hours": 10.49,
+   "silent_since_utc": "2026-10-20T08:43:42Z",
+   "status": "MISSED",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -205,10 +226,10 @@
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-19T19:47:26Z",
+   "last_scheduled_run_utc": "2026-10-20T18:25:16Z",
    "name": "tocsin",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "tocsin.yml"
   },
   {
@@ -217,14 +238,15 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-20T17:17:00Z",
+   "expected_last_fire_utc": "2026-10-20T18:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-20T15:01:49Z",
+   "last_scheduled_run_utc": "2026-10-20T19:12:11Z",
    "name": "watchdog",
+   "note": "this sweep is running inside it",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "watchdog.yml"
   }
  ]

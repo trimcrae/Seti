@@ -1,18 +1,18 @@
 {
- "checked_at_utc": "2026-10-21T00:38:26Z",
+ "checked_at_utc": "2026-10-21T05:17:56Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
-  "head_sha": "221b4660ff6baae51392cc07a3bd38fbaa8a2908",
-  "run_id": 39507601909,
-  "run_started_at": "2026-10-20T22:22:16Z",
+  "head_sha": "710f6bd04cb5873eae16e3ff831644c92c2ae3b2",
+  "run_id": 39528188915,
+  "run_started_at": "2026-10-21T01:35:17Z",
   "run_status": "completed",
-  "run_url": "https://github.com/trimcrae/Seti/actions/runs/39507601909",
+  "run_url": "https://github.com/trimcrae/Seti/actions/runs/39528188915",
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 2,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -39,14 +39,24 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-21T00:17:00Z",
+   "expected_last_fire_utc": "2026-10-21T05:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-20T22:22:16Z",
+   "hours_late": 0.02,
+   "hours_since_last_run": 3.71,
+   "last_scheduled_run_utc": "2026-10-21T01:35:17Z",
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-10-21T03:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.02,
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 3.71 h (measured from its last run). Its firing at 2026-10-21T03:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-21T05:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "silence_hours": 3.71,
+   "silent_since_utc": "2026-10-21T01:35:17Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -55,12 +65,13 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-20T18:43:00Z",
+   "expected_last_fire_utc": "2026-10-21T00:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-20T21:51:20Z",
+   "last_scheduled_run_utc": "2026-10-21T05:17:23Z",
    "name": "cronwatch",
+   "note": "this sweep is running inside it",
    "overdue": false,
    "status": "OK",
    "workflow": "cronwatch.yml"
@@ -179,19 +190,19 @@
   },
   {
    "cadence_hours": 12.0,
-   "cron_matched": "25 15 * * *",
+   "cron_matched": "25 3 * * *",
    "crons": [
     "25 15 * * *",
     "25 3 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-20T15:25:00Z",
+   "expected_last_fire_utc": "2026-10-21T03:25:00Z",
    "grace_hours": 3.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-20T19:23:52Z",
    "name": "tocsin-ztf",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -212,19 +223,29 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-21T05:17:56Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-21T00:17:00Z",
+   "expected_last_fire_utc": "2026-10-21T05:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.02,
+   "hours_since_last_run": 4.67,
    "last_scheduled_run_utc": "2026-10-21T00:37:48Z",
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-10-21T03:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.02,
    "name": "watchdog",
-   "note": "this sweep is running inside it",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 4.67 h (measured from its last run). Its firing at 2026-10-21T03:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-21T05:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "silence_hours": 4.67,
+   "silent_since_utc": "2026-10-21T00:37:48Z",
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

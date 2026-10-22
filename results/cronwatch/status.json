@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-22T10:09:23Z",
+ "checked_at_utc": "2026-10-22T12:23:37Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -12,7 +12,7 @@
   "workflow": "ci.yml"
  },
  "n_dispatched": 0,
- "n_overdue": 0,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -39,14 +39,24 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-22T09:17:00Z",
+   "expected_last_fire_utc": "2026-10-22T12:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.11,
+   "hours_since_last_run": 4.81,
    "last_scheduled_run_utc": "2026-10-22T07:34:56Z",
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-10-22T10:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.11,
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 4.81 h (measured from its last run). Its firing at 2026-10-22T10:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-22T12:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "silence_hours": 4.81,
+   "silent_since_utc": "2026-10-22T07:34:56Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -59,7 +69,7 @@
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-22T05:20:16Z",
+   "last_scheduled_run_utc": "2026-10-22T12:23:05Z",
    "name": "cronwatch",
    "note": "this sweep is running inside it",
    "overdue": false,
@@ -217,14 +227,14 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-22T09:17:00Z",
+   "expected_last_fire_utc": "2026-10-22T12:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-22T10:07:57Z",
    "name": "watchdog",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "watchdog.yml"
   }
  ]

@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-24T11:37:21Z",
+ "checked_at_utc": "2026-10-24T14:29:50Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -35,18 +35,29 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-10-24T14:29:50Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-24T11:17:00Z",
+   "expected_last_fire_utc": "2026-10-24T14:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.21,
+   "hours_since_last_run": 3.51,
    "last_scheduled_run_utc": "2026-10-24T10:59:03Z",
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-10-24T12:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.21,
    "name": "ci",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "ci has not run on its schedule for 3.51 h (measured from its last run). Its firing at 2026-10-24T12:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-10-24T14:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "silence_hours": 3.51,
+   "silent_since_utc": "2026-10-24T10:59:03Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -55,15 +66,14 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-24T06:43:00Z",
+   "expected_last_fire_utc": "2026-10-24T12:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-24T11:36:56Z",
    "name": "cronwatch",
-   "note": "this sweep is running inside it",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "cronwatch.yml"
   },
   {
@@ -201,14 +211,14 @@
    "crons": [
     "10 14 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-23T14:10:00Z",
+   "expected_last_fire_utc": "2026-10-24T14:10:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-10-23T18:14:23Z",
    "name": "tocsin",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin.yml"
   },
   {
@@ -217,14 +227,15 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-24T11:17:00Z",
+   "expected_last_fire_utc": "2026-10-24T14:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-24T10:53:23Z",
+   "last_scheduled_run_utc": "2026-10-24T14:29:17Z",
    "name": "watchdog",
+   "note": "this sweep is running inside it",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "watchdog.yml"
   }
  ]

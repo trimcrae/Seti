@@ -1104,13 +1104,15 @@ def scheduler_alerts(root: Path) -> list[Alert]:
     token and network, both of which the hourly watchdog has and this evaluation
     does not.
 
-    Two kinds of miss, two dedup keys.  A slot miss (``missed_by == "grace"``,
-    the slow channels) is keyed by the missed firing, so one dropped Wednesday
-    notifies once.  A silence miss (the hourly channels) is keyed by the last
-    run the silence is measured from, so one outage notifies once however many
-    hourly slots it swallows -- and only once it has lasted
-    :data:`SILENCE_ALERT_HOURS`; shorter gaps are re-fired by the sweep and
-    recorded in ``status.json`` without a message.
+    The sweep keeps a stable incident key until a completed successful
+    unattended execution ends the incident. Accepted dispatches receive a
+    bounded workflow-runtime window, not a success label. Recovered gaps and pending
+    self-healing are recorded without an assigned issue. Failed, missing or
+    unresolved recovery notifies once, even across later missed slots.
+
+    Older reports retain their original slot/silence keys. Hourly silence
+    still requires :data:`SILENCE_ALERT_HOURS`, so its ordinary short gaps
+    remain operational status rather than email.
     """
     rec = _load(root / "results" / "cronwatch" / "status.json")
     if not isinstance(rec, dict):
@@ -1118,6 +1120,11 @@ def scheduler_alerts(root: Path) -> list[Alert]:
     out: list[Alert] = []
     for wf in rec.get("workflows") or []:
         if not wf.get("overdue"):
+            continue
+        # A dropped slot that is already recovered, or is still within the
+        # bounded self-healing window, is operational status, not an email.
+        # Dispatch acceptance alone never counts as successful execution.
+        if wf.get("recovery_status") in ("RECOVERED", "PENDING"):
             continue
         name = wf.get("name") or wf.get("workflow")
         fired = wf.get("catchup_dispatched_utc")
@@ -1147,6 +1154,11 @@ def scheduler_alerts(root: Path) -> list[Alert]:
                     f"{missed_cadence} h), and it is now "
                     f"{missed_hours_late} h past that slot. Its last "
                     f"scheduled run was {last or 'never'}.")
+        key = wf.get("scheduler_incident_key") or key
+        if wf.get("recovery_status") == "UNRESOLVED":
+            what += ("\n\nAutomatic recovery has not established a successful "
+                     "execution. This is one unresolved incident; later missed "
+                     "slots will not generate another notification.")
         out.append(Alert(
             key=key, severity="health", channel="cronwatch", title=title,
             body=(what + "\n\n"
@@ -1169,7 +1181,10 @@ def scheduler_alerts(root: Path) -> list[Alert]:
                 "missed_fire_utc", "missed_cron", "missed_cadence_hours",
                 "missed_grace_hours", "missed_hours_late",
                 "missed_by", "silence_hours", "silent_since_utc",
-                "has_dispatch", "catchup_dispatched_utc", "catchup_error")}))
+                "has_dispatch", "catchup_dispatched_utc", "catchup_error",
+                "recovery_status", "recovery_age_hours", "recovery_wait_hours",
+                "recovery_error", "latest_execution", "last_successful_execution_utc",
+                "scheduler_incident_key", "scheduler_incident_since_utc")}))
     return out
 
 

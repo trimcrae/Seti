@@ -744,12 +744,20 @@ def _record_recovery(findings: list[dict], state: dict, api, now: datetime,
         # A dispatch error or lack of automatic recovery remains actionable.
         # Pending/unknown evidence receives grace, never a success label, and
         # later dispatches cannot restart the incident's waiting clock.
-        latest = rec.get("latest_execution") or {}
-        latest_stamp = _parse_iso(str(latest.get("started_at_utc", "")))
-        failed = (latest.get("status") == "completed"
-                  and latest.get("conclusion") not in (None, "success", "neutral", "skipped")
-                  and latest_stamp is not None and first is not None
-                  and latest_stamp >= first)
+        # A newer queued attempt or a limited history page cannot erase a
+        # failure already observed for this incident. Only success clears it.
+        failures = [(stamp, run) for stamp, run in candidates
+                    if first is not None and stamp >= first
+                    and run.get("status") == "completed"
+                    and run.get("conclusion") not in (None, "success", "neutral", "skipped")]
+        if failures:
+            stamp, run = max(failures, key=lambda item: item[0])
+            incident["failed_execution"] = {key: run.get(key) for key in (
+                "id", "conclusion", "html_url")}
+            incident["failed_execution"]["started_at_utc"] = _iso(stamp)
+        failed = incident.get("failed_execution")
+        if failed:
+            rec["failed_execution"] = failed
         rec["recovery_status"] = ("PENDING" if first is not None
                                   and now - first < timedelta(hours=wait_hours)
                                   and not rec.get("catchup_error") and not failed

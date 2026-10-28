@@ -128,6 +128,8 @@ dispatches may be probe-only or partial and cannot silently close an outage.
 Success evidence and dispatch times survive later sweeps and limited run-history
 pages. An unread outcome is not labelled success and receives only the same
 bounded waiting window.
+An observed failed recovery remains actionable across later queued attempts or
+limited history pages until a completed successful execution resolves it.
 
 Workflow success establishes execution, not usable science output. Result
 freshness, feed failures, candidate promotions and the failed-run watchdog

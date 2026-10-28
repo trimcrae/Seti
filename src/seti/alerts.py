@@ -1183,7 +1183,7 @@ def scheduler_alerts(root: Path) -> list[Alert]:
                 "missed_by", "silence_hours", "silent_since_utc",
                 "has_dispatch", "catchup_dispatched_utc", "catchup_error",
                 "recovery_status", "recovery_age_hours", "recovery_wait_hours",
-                "recovery_error", "latest_execution", "last_successful_execution_utc",
+                "recovery_error", "latest_execution", "failed_execution", "last_successful_execution_utc",
                 "scheduler_incident_key", "scheduler_incident_since_utc")}))
     return out
 

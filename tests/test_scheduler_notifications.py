@@ -109,6 +109,21 @@ def test_new_slots_and_new_dispatches_do_not_restart_one_outage(tmp_path):
     assert check(root, now=NOW + timedelta(days=1))["n_new"] == 0
 
 
+@pytest.mark.parametrize("later_runs", [[], [run(status="in_progress", conclusion=None)]])
+def test_failed_recovery_stays_actionable_until_confirmed_success(tmp_path, later_runs):
+    root, api = repo(tmp_path), Api()
+    sweep(root, api=api, now=NOW)
+    api.runs = [run(conclusion="failure")]
+    failed = workflow(sweep(root, api=api, now=NOW + timedelta(minutes=20)))
+    assert failed["recovery_status"] == "UNRESOLVED"
+    api.runs = later_runs
+    later = workflow(sweep(root, api=api, now=NOW + timedelta(minutes=30)))
+    assert later["recovery_status"] == "UNRESOLVED"
+    assert len(scheduler_alerts(root)) == 1
+    api.runs = [run(stamp=NOW + timedelta(minutes=35))]
+    assert workflow(sweep(root, api=api, now=NOW + timedelta(minutes=40)))["recovery_status"] == "RECOVERED"
+
+
 def test_recovery_rearms_a_genuinely_new_outage(tmp_path):
     root, api = repo(tmp_path), Api()
     first = workflow(sweep(root, api=api, now=NOW))["scheduler_incident_key"]

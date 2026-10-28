@@ -105,7 +105,39 @@ resolved.
 To deliberately re-raise something: dispatch `alerts` with `rearm: true`, or
 delete its key from `state.json`.
 
-### It notices silence
+### Scheduler catch-ups are quiet unless recovery needs a person
+
+`cronwatch` still checks missed slots and dispatches catch-up runs. A delayed
+slot is operational status, not an assigned issue while self-healing is under
+way. `results/cronwatch/status.json` records the dispatch, latest execution,
+last completed successful execution, recovery state, and incident key.
+
+Dispatch acceptance is not completion. A catch-up gets the workflow's longest
+job timeout plus one hour for queuing/API visibility, bounded between two and
+twelve hours (three hours for TOCSIN-ZTF, five for the four-hour altfeed job).
+An unspecified job timeout uses GitHub's six-hour default. A completed failure,
+a refused/unavailable dispatch, or recovery still
+unresolved after that window raises one health issue for the incident. Later
+missed slots and further dispatches retain the same key and do not restart the
+waiting clock. A completed successful unattended execution ends the incident;
+a later real outage can notify again. Existing keys are reused on migration.
+
+Only the same workflow on the target branch counts. Scheduled runs and
+automatic `github-actions[bot]` dispatches can establish recovery; manual
+dispatches may be probe-only or partial and cannot silently close an outage.
+Success evidence and dispatch times survive later sweeps and limited run-history
+pages. An unread outcome is not labelled success and receives only the same
+bounded waiting window.
+An observed failed recovery remains actionable across later queued attempts or
+limited history pages until a completed successful execution resolves it.
+
+Workflow success establishes execution, not usable science output. Result
+freshness, feed failures, candidate promotions and the failed-run watchdog
+remain independently checked. Recovery does not open a routine recovery issue.
+The waiting bound covers the longest job, not the sum of sequential jobs;
+"unresolved" means recovery is unconfirmed, not that a queued/running job failed.
+
+### Result freshness remains independently checked
 
 A screen that has silently died and a sky with nothing in it produce the same
 unchanging results directory. `watchdog` catches runs that **fail**; nothing

@@ -33,11 +33,11 @@
    "title": "LOOM: new unexplained exceedance 428209 (2006 VC)"
   },
   {
-   "body": "The most recent Rubin data `tocsin` has reached is MJD 61249.42, which is 94.4 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-10-26 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-10-26 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "The most recent Rubin data `tocsin` has reached is MJD 61249.42, which is 94.5 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-10-26 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-10-26 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61249.41918367943,
-    "lag_days": 94.38946978699074,
+    "lag_days": 94.47391001002315,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:1",
@@ -45,11 +45,11 @@
    "title": "TOCSIN is screening data 94 days old"
   },
   {
-   "body": "The most recent Rubin data `loom` has reached is MJD 61235.42, which is 108.4 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-10-26 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-10-26 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "The most recent Rubin data `loom` has reached is MJD 61235.42, which is 108.5 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-10-26 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-10-26 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 108.39237918630788,
+    "lag_days": 108.47681940934028,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:1",
@@ -62,7 +62,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 92.25742661456017,
+    "frozen_days": 92.34186683759259,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -72,26 +72,6 @@
    "key": "loom:frontier_stalled:3",
    "severity": "health",
    "title": "LOOM's data frontier has not advanced in 92 days"
-  },
-  {
-   "body": "`tocsin` has advanced from MJD 61235.41918 to MJD 61343.30987 \u2014 107.9 days of sky \u2014 after sitting still since 2026-07-30T10:26:40Z.\n\nThe stall was confirmed across 91.5 days of sightings; the advance itself happened between 2026-10-29T21:44:10Z and now, so the interval between successive frontier values is 92.4 days. That is an UPPER BOUND on the mirror's true ingest gap \u2014 this repository samples the frontier about once a day and cannot see a change finer than that.\n\nThe frontier is now 0.5 days behind the wall clock, inside the 30-day limit, so the age alert clears. That is not the same as current: the mirror's ordinary lag is ~16 days, and anything above that is still backlog.\n\nThis is the cadence datum `FRONTIER_STALL_DAYS` has never had \u2014 it was set to 7 by guesswork because no advance had ever been observed here. Recalibrate it against `observed_advance_days` in `results/alerts/frontier.json` now that there is one.\n\nNote that the nights lost to the stall are ABSENT, not null: they were never observed, so they add nothing to the screen's trial count and must not be counted as clean sky.",
-   "channel": "tocsin",
-   "detail": {
-    "advance_interval_days": 92.37346828122685,
-    "caught_up": true,
-    "channel": "tocsin",
-    "first_seen_utc": "2026-07-30T10:26:40Z",
-    "frontier_mjd": 61343.30987,
-    "lag_days": 0.498783466412037,
-    "last_seen_utc": "2026-10-29T21:44:10Z",
-    "previous_mjd": 61235.41918,
-    "sky_days_gained": 107.89069000000018,
-    "source": "summary.json:broker_frontier_mjd",
-    "stall_confirmed_days": 91.47048611111111
-   },
-   "key": "tocsin:frontier_recovered:61343.30987",
-   "severity": "milestone",
-   "title": "TOCSIN's data frontier is moving again (+107.9 days of sky)"
   },
   {
    "body": "The `asassn` adapter reached its service but has no usable path to a light curve.\n\nReason recorded by the probe: no cone request was accepted (every variant and format in the matrix above), and the vendor client cannot be imported here -- so there is no path to a light curve, only to metadata\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records responses and connection errors.",
@@ -120,17 +100,17 @@
    "title": "ZTF cannot serve light curves"
   }
  ],
- "alert": true,
+ "alert": false,
  "by_severity": {
   "candidate": 0,
   "health": 0,
-  "milestone": 1
+  "milestone": 0
  },
- "checked_at_utc": "2026-10-30T19:24:27Z",
+ "checked_at_utc": "2026-10-30T21:26:03Z",
  "frontier": {
   "loom": {
-   "frozen_days": 92.257,
-   "lag_days": 108.392,
+   "frozen_days": 92.342,
+   "lag_days": 108.477,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -138,8 +118,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 0.0,
-   "lag_days": 0.499,
+   "frozen_days": 0.084,
+   "lag_days": 0.583,
    "mjd": 61343.30987,
    "observed_advance_days": {
     "max_days": 92.373,
@@ -149,28 +129,7 @@
    "source": "summary.json:broker_frontier_mjd"
   }
  },
- "n_active": 7,
- "n_new": 1,
- "new": [
-  {
-   "body": "`tocsin` has advanced from MJD 61235.41918 to MJD 61343.30987 \u2014 107.9 days of sky \u2014 after sitting still since 2026-07-30T10:26:40Z.\n\nThe stall was confirmed across 91.5 days of sightings; the advance itself happened between 2026-10-29T21:44:10Z and now, so the interval between successive frontier values is 92.4 days. That is an UPPER BOUND on the mirror's true ingest gap \u2014 this repository samples the frontier about once a day and cannot see a change finer than that.\n\nThe frontier is now 0.5 days behind the wall clock, inside the 30-day limit, so the age alert clears. That is not the same as current: the mirror's ordinary lag is ~16 days, and anything above that is still backlog.\n\nThis is the cadence datum `FRONTIER_STALL_DAYS` has never had \u2014 it was set to 7 by guesswork because no advance had ever been observed here. Recalibrate it against `observed_advance_days` in `results/alerts/frontier.json` now that there is one.\n\nNote that the nights lost to the stall are ABSENT, not null: they were never observed, so they add nothing to the screen's trial count and must not be counted as clean sky.",
-   "channel": "tocsin",
-   "detail": {
-    "advance_interval_days": 92.37346828122685,
-    "caught_up": true,
-    "channel": "tocsin",
-    "first_seen_utc": "2026-07-30T10:26:40Z",
-    "frontier_mjd": 61343.30987,
-    "lag_days": 0.498783466412037,
-    "last_seen_utc": "2026-10-29T21:44:10Z",
-    "previous_mjd": 61235.41918,
-    "sky_days_gained": 107.89069000000018,
-    "source": "summary.json:broker_frontier_mjd",
-    "stall_confirmed_days": 91.47048611111111
-   },
-   "key": "tocsin:frontier_recovered:61343.30987",
-   "severity": "milestone",
-   "title": "TOCSIN's data frontier is moving again (+107.9 days of sky)"
-  }
- ]
+ "n_active": 6,
+ "n_new": 0,
+ "new": []
 }

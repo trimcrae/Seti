@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-10-31T06:16:38Z",
+ "checked_at_utc": "2026-10-31T06:57:56Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -50,7 +50,7 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-31T05:17:00Z",
+   "expected_last_fire_utc": "2026-10-31T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
@@ -68,7 +68,7 @@
    "name": "ci",
    "overdue": false,
    "recovery_wait_hours": 7.0,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "ci.yml"
   },
   {
@@ -77,7 +77,7 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-10-31T00:43:00Z",
+   "expected_last_fire_utc": "2026-10-31T06:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
@@ -95,7 +95,7 @@
    "name": "cronwatch",
    "overdue": false,
    "recovery_wait_hours": 2.0,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "cronwatch.yml"
   },
   {
@@ -231,6 +231,7 @@
   },
   {
    "cadence_hours": 12.0,
+   "catchup_dispatched_utc": "2026-10-31T06:57:56Z",
    "cron_matched": "25 3 * * *",
    "crons": [
     "25 15 * * *",
@@ -239,22 +240,36 @@
    "expected_last_fire_utc": "2026-10-31T03:25:00Z",
    "grace_hours": 3.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 3.55,
+   "hours_since_last_run": 11.01,
    "last_scheduled_run_utc": "2026-10-30T19:57:23Z",
    "last_successful_execution_utc": "2026-10-30T19:57:23Z",
    "latest_execution": {
-    "conclusion": "success",
-    "event": "schedule",
+    "conclusion": null,
+    "event": "workflow_dispatch",
     "head_branch": "main",
-    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41119421996",
-    "id": 41119421996,
-    "started_at_utc": "2026-10-30T19:57:23Z",
-    "status": "completed"
+    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41178696804",
+    "id": 41178696804,
+    "started_at_utc": "2026-10-31T06:58:09Z",
+    "status": "queued"
    },
+   "missed_by": "grace",
+   "missed_cadence_hours": 12.0,
+   "missed_cron": "25 3 * * *",
+   "missed_fire_utc": "2026-10-31T03:25:00Z",
+   "missed_grace_hours": 3.0,
+   "missed_hours_late": 3.55,
    "name": "tocsin-ztf",
-   "overdue": false,
+   "note": "tocsin-ztf should have fired at 2026-10-31T03:25:00Z (cron '25 3 * * *') and its last scheduled run was 2026-10-30T19:57:23Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "recovery_age_hours": 0.0,
+   "recovery_status": "PENDING",
    "recovery_wait_hours": 3.0,
-   "status": "WITHIN_GRACE",
+   "scheduler_incident_key": "cron:tocsin-ztf.yml:2026-10-31T03:25:00Z",
+   "scheduler_incident_since_utc": "2026-10-31T03:25:00Z",
+   "silence_hours": 11.01,
+   "silent_since_utc": "2026-10-30T19:57:23Z",
+   "status": "MISSED",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -290,19 +305,19 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-10-31T05:17:00Z",
+   "expected_last_fire_utc": "2026-10-31T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-10-31T00:44:10Z",
-   "last_successful_execution_utc": "2026-10-31T00:44:10Z",
+   "last_scheduled_run_utc": "2026-10-31T06:57:28Z",
+   "last_successful_execution_utc": "2026-10-31T06:16:07Z",
    "latest_execution": {
     "conclusion": null,
-    "event": "workflow_dispatch",
+    "event": "schedule",
     "head_branch": "main",
-    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41175892404",
-    "id": 41175892404,
-    "started_at_utc": "2026-10-31T06:16:07Z",
+    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41178653909",
+    "id": 41178653909,
+    "started_at_utc": "2026-10-31T06:57:28Z",
     "status": "in_progress"
    },
    "name": "watchdog",

@@ -122,14 +122,41 @@ jobs:
         run: |
           python -m seti.cli alert-check \
             --dry-run \
-            --write-issue "$RUNNER_TEMP/alert.md" \
             --repo-url "${{ github.server_url }}/${{ github.repository }}"
 
+      # Operational health and milestones remain in latest.json and logs.
+      # Only externally routed findings may create an issue or assignment.
+      - name: Route external notifications
+        id: notifications
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from seti.alerts import issue_body, issue_labels, issue_title
+
+          report = json.loads(Path("results/alerts/latest.json").read_text())
+          publish = [a for a in report["new"]
+                     if a["severity"] not in {"health", "milestone"}]
+          Path(os.environ["RUNNER_TEMP"], "alert.md").write_text(
+              issue_body(publish, os.environ["REPO_URL"]), encoding="utf-8")
+          outputs = {"alert": str(bool(publish)).lower(),
+                     "title": issue_title(publish),
+                     "labels": ",".join(issue_labels(publish))}
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              for key, value in outputs.items():
+                  print(f"{key}={value}", file=out)
+          print(f"External notifications: {len(publish)}; "
+                f"internal-only: {len(report['new']) - len(publish)}")
+          PY
+
       - name: Ensure the labels exist
-        if: steps.alerts.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
+        if: steps.notifications.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LABELS: ${{ steps.alerts.outputs.labels }}
+          LABELS: ${{ steps.notifications.outputs.labels }}
         run: |
           # `gh issue create --label` FAILS on a label that does not exist, and
           # that failure would swallow the whole notification.
@@ -158,15 +185,15 @@ jobs:
 
       - name: Open an issue and assign it
         id: issue
-        if: steps.alerts.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
+        if: steps.notifications.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Through the environment, NOT through ${{ }} interpolation into the
           # shell: the title is generated from object designations and verdicts,
           # and one quote in it would turn this into a broken command rather
           # than a notification.
-          TITLE: ${{ steps.alerts.outputs.title }}
-          LABELS: ${{ steps.alerts.outputs.labels }}
+          TITLE: ${{ steps.notifications.outputs.title }}
+          LABELS: ${{ steps.notifications.outputs.labels }}
           OWNER: ${{ github.repository_owner }}
         run: |
           # ASSIGNMENT is the part that reaches an inbox: GitHub emails an
@@ -179,8 +206,8 @@ jobs:
           echo "opened $url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      # PASS 2 --- now that the human has actually been told, consume the alerts
-      # so the same finding never notifies twice.
+      # PASS 2 --- record internal-only findings, or externally routed findings
+      # after successful notification, so unchanged findings do not repeat.
       #
       # THE GUARD MATTERS.  This must NOT run when there were new alerts and the
       # issue step did not succeed: recording them then marks as "already
@@ -190,7 +217,8 @@ jobs:
       - name: Record what was raised
         if: >-
           always() &&
-          (steps.alerts.outputs.alert != 'true' ||
+          steps.notifications.conclusion == 'success' &&
+          (steps.notifications.outputs.alert != 'true' ||
            steps.issue.conclusion == 'success' ||
            github.event.inputs.no_issue == 'true')
         run: |

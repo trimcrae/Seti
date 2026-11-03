@@ -33,18 +33,6 @@
    "title": "LOOM: new unexplained exceedance 428209 (2006 VC)"
   },
   {
-   "body": "The most recent Rubin data `tocsin` has reached is MJD 61305.42, which is 41.6 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-11-02 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-10-31; fink 2026-10-31), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-11-02 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
-   "channel": "tocsin",
-   "detail": {
-    "frontier_mjd": 61305.41918367943,
-    "lag_days": 41.57468718428241,
-    "limit_days": 30.0
-   },
-   "key": "tocsin:data_frontier:0",
-   "severity": "health",
-   "title": "TOCSIN is screening data 42 days old"
-  },
-  {
    "body": "The `asassn` adapter reached its service but has no usable path to a light curve.\n\nReason recorded by the probe: no cone request was accepted (every variant and format in the matrix above), and the vendor client cannot be imported here -- so there is no path to a light curve, only to metadata\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records responses and connection errors.",
    "channel": "tocsin_altfeeds",
    "detail": {
@@ -64,11 +52,11 @@
   "health": 0,
   "milestone": 0
  },
- "checked_at_utc": "2026-11-02T23:51:10Z",
+ "checked_at_utc": "2026-11-03T20:49:31Z",
  "frontier": {
   "loom": {
-   "frozen_days": 0.008,
-   "lag_days": 2.675,
+   "frozen_days": 0.882,
+   "lag_days": 3.549,
    "mjd": 61344.31880673277,
    "observed_advance_days": {
     "max_days": 95.434,
@@ -78,8 +66,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 2.216,
-   "lag_days": 2.675,
+   "frozen_days": 3.09,
+   "lag_days": 3.549,
    "mjd": 61344.31881,
    "observed_advance_days": {
     "max_days": 92.373,
@@ -89,7 +77,7 @@
    "source": "summary.json:broker_frontier_mjd"
   }
  },
- "n_active": 3,
+ "n_active": 2,
  "n_new": 0,
  "new": []
 }

@@ -1,10 +1,10 @@
 {
- "written_utc": "2026-10-03T17:28:30Z",
+ "written_utc": "2026-11-03T20:15:16Z",
  "data_state": "SIMULATIONS_ONLY",
  "data_state_evidence": [
   "s3:openuniverse2024: simulation bucket nasa-irsa-simulations/openuniverse2024/roman/ lists 2 prefix(es), 0 key(s)",
   "sim:roman_ipac_home: index page and its crawl expose 59 data link(s)",
-  "sim:rmdc26: index page and its crawl expose 12 data link(s)",
+  "sim:rmdc26: index page and its crawl expose 11 data link(s)",
   "sim:roman_exoplanet_data_challenges: index page and its crawl expose 62 data link(s)",
   "hf:RGES-PIT/Beginner: Hugging Face dataset RGES-PIT/Beginner lists 3 file(s) (simulation / data challenge)",
   "hf:RGES-PIT/Experienced: Hugging Face dataset RGES-PIT/Experienced lists 3 file(s) (simulation / data challenge)",
@@ -16,10 +16,10 @@
    "name": "irsa_tap",
    "kind": "irsa_tap",
    "url": "https://irsa.ipac.caltech.edu/TAP/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+table_name%2C+description+FROM+TAP_SCHEMA.tables+WHERE+LOWER%28table_name%29+LIKE+%27%25roman%25%27+OR+LOWER%28description%29+LIKE+%27%25roman%25%27+OR+LOWER%28table_name%29+LIKE+%27%25wfi%25%27+OR+LOWER%28description%29+LIKE+%27%25wfi%25%27+OR+LOWER%28table_name%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28description%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hltds%25%27+OR+LOWER%28description%29+LIKE+%27%25hltds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28description%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28table_name%29+LIKE+%27%25openuniverse%25%27+OR+LOWER%28description%29+LIKE+%27%25openuniverse%25%27",
-   "status": "ok",
-   "http_status": 200,
-   "latency_s": 0.177,
-   "error": null,
+   "status": "http_error",
+   "http_status": 504,
+   "latency_s": 10.232,
+   "error": "<html>\r\n<head><title>504 Gateway Time-out</title></head>\r\n<body>\r\n<center><h1>504 Gateway Time-out</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n",
    "tables": []
   },
   "irsa_sia2": {
@@ -28,7 +28,7 @@
    "url": "https://irsa.ipac.caltech.edu/SIA?POS=circle+266.4+-28.9+0.01&MAXREC=1",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.198,
+   "latency_s": 7.922,
    "error": null,
    "content_type": "application/x-votable+xml"
   },
@@ -37,12 +37,12 @@
    "kind": "irsa_data_root",
    "url": "https://irsa.ipac.caltech.edu/data/Roman/",
    "status": "http_error",
-   "http_status": 404,
-   "latency_s": 0.028,
+   "http_status": 504,
+   "latency_s": 10.053,
    "error": null,
    "links": [],
-   "head_status": 404,
-   "content_type": "text/html; charset=iso-8859-1"
+   "head_status": 504,
+   "content_type": "text/html"
   },
   "s3:openuniverse2024": {
    "name": "s3:openuniverse2024",
@@ -50,7 +50,7 @@
    "url": "https://nasa-irsa-simulations.s3.amazonaws.com/?list-type=2&prefix=openuniverse2024/roman/&max-keys=200&delimiter=%2F",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.271,
+   "latency_s": 0.209,
    "error": null,
    "bucket": "nasa-irsa-simulations",
    "prefix": "openuniverse2024/roman/",
@@ -69,7 +69,7 @@
    "url": "https://nasa-irsa-roman.s3.amazonaws.com/?list-type=2&prefix=&max-keys=200&delimiter=%2F",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.239,
+   "latency_s": 0.152,
    "error": "NoSuchBucket: The specified bucket does not exist",
    "bucket": "nasa-irsa-roman",
    "prefix": "",
@@ -85,7 +85,7 @@
    "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.445,
+   "latency_s": 0.519,
    "error": null,
    "collection": "Roman",
    "count": 0,
@@ -96,7 +96,7 @@
      "form": "top1",
      "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
      "http_status": 200,
-     "latency_s": 0.445,
+     "latency_s": 0.519,
      "error": null,
      "error_body": null,
      "votable_info": []
@@ -110,7 +110,7 @@
    "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27ROMAN%27",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.153,
+   "latency_s": 0.17,
    "error": null,
    "collection": "ROMAN",
    "count": 0,
@@ -121,7 +121,7 @@
      "form": "top1",
      "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27ROMAN%27",
      "http_status": 200,
-     "latency_s": 0.153,
+     "latency_s": 0.17,
      "error": null,
      "error_body": null,
      "votable_info": []
@@ -135,7 +135,7 @@
    "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.133,
+   "latency_s": 0.499,
    "error": null,
    "collection": "RomanSim",
    "count": 0,
@@ -146,7 +146,7 @@
      "form": "top1",
      "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
      "http_status": 200,
-     "latency_s": 0.133,
+     "latency_s": 0.499,
      "error": null,
      "error_body": null,
      "votable_info": []
@@ -160,16 +160,16 @@
    "url": "https://roman.ipac.caltech.edu/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.427,
+   "latency_s": 0.479,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html; charset=utf-8",
-   "bytes": 27468,
+   "bytes": 27708,
    "title": "Roman",
    "data_links": [],
    "crawl": {
-    "n_links_total": 71,
-    "n_links_matched": 58,
+    "n_links_total": 72,
+    "n_links_matched": 59,
     "n_pages_fetched": 43,
     "capped": true,
     "links_matched": [
@@ -224,11 +224,12 @@
      "https://asd.gsfc.nasa.gov/roman/comm_forum/",
      "https://roman-docs.stsci.edu/",
      "https://outerspace.stsci.edu/display/RSCPUB/Roman+Science+Collaboration+(RSC)+Public+Page+Home",
+     "https://roman-science-collaboration.github.io/roman-rally/",
      "https://roman.ipac.caltech.edu/event/oct-2026-lecture",
      "https://roman.ipac.caltech.edu/page/previous-updates",
      "https://roman-docs.stsci.edu/roman-community-defined-surveys",
      "https://science.nasa.gov/mission/roman-space-telescope/science-teams",
-     "https://roman.ipac.caltech.edu/news/nasa-checks-roman-guidance-system-takes-first-coronagraph-observation",
+     "https://roman.ipac.caltech.edu/news/nasa-s-roman-space-telescope-enters-final-commissioning-phase",
      "https://stsci.service-now.com/roman",
      "https://roman.gsfc.nasa.gov"
     ],
@@ -706,7 +707,7 @@
    "url": "https://roman.ipac.caltech.edu/sims/",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.03,
+   "latency_s": 0.053,
    "error": null,
    "sim_kind": "page",
    "content_type": "text/html; charset=utf-8",
@@ -720,289 +721,17 @@
    "name": "sim:openuniverse_irsa_page",
    "kind": "simulation_page",
    "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
-   "status": "ok",
-   "http_status": 200,
-   "latency_s": 0.031,
+   "status": "http_error",
+   "http_status": 504,
+   "latency_s": 10.051,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html",
-   "bytes": 8708,
-   "title": "OpenUniverse 2024 Simulated Roman & Rubin Images",
+   "bytes": 160,
+   "title": "504 Gateway Time-out",
    "data_links": [],
-   "crawl": {
-    "n_links_total": 16,
-    "n_links_matched": 9,
-    "n_pages_fetched": 33,
-    "capped": false,
-    "links_matched": [
-     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/index.html",
-     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
-     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
-     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
-     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
-     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
-     "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
-     "https://irsa.ipac.caltech.edu/cloud_access/",
-     "https://roman.gsfc.nasa.gov/"
-    ],
-    "pages": [
-     {
-      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/index.html",
-      "anchor_text": "Roman DC2 Simulated Image Data Access",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "text/html",
-      "title": "OpenUniverse 2024 Simulated Roman & Rubin Images",
-      "is_data_file": false,
-      "data_links": [],
-      "error": null,
-      "subpages": [
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/roman",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/rubin",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
-        "http_status": 200,
-        "title": "Simulated Data Information",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
-        "http_status": 405,
-        "title": "Human Verification",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/cloud_access/",
-        "http_status": 200,
-        "title": "Cloud Data Access",
-        "data_links": []
-       }
-      ]
-     },
-     {
-      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
-      "anchor_text": "",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "image/png",
-      "title": null,
-      "is_data_file": false,
-      "data_links": [],
-      "error": null,
-      "subpages": []
-     },
-     {
-      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
-      "anchor_text": "Browseable directories of Roman simulated data",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "text/html;charset=UTF-8",
-      "title": "Index of /data/theory/openuniverse2024/roman",
-      "is_data_file": false,
-      "data_links": [],
-      "error": null,
-      "subpages": [
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=N;O=D",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/roman",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=M;O=A",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/roman",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=S;O=A",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/roman",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=D;O=A",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/roman",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/preview/",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/roman/preview",
-        "data_links": []
-       }
-      ]
-     },
-     {
-      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
-      "anchor_text": "Browseable directories of Rubin simulated data",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "text/html;charset=UTF-8",
-      "title": "Index of /data/theory/openuniverse2024/rubin",
-      "is_data_file": false,
-      "data_links": [],
-      "error": null,
-      "subpages": [
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=N;O=D",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/rubin",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=M;O=A",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/rubin",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=S;O=A",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/rubin",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=D;O=A",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/rubin",
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/preview/",
-        "http_status": 200,
-        "title": "Index of /data/theory/openuniverse2024/rubin/preview",
-        "data_links": []
-       }
-      ]
-     },
-     {
-      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
-      "anchor_text": "Download Scripts",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "text/html",
-      "title": "Simulated Data Information",
-      "is_data_file": false,
-      "data_links": [],
-      "error": null,
-      "subpages": [
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-F184.sh",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-H158.sh",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-J129.sh",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-K213.sh",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-R062.sh",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-Y106.sh",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       },
-       {
-        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-Z087.sh",
-        "http_status": 200,
-        "title": null,
-        "data_links": []
-       }
-      ]
-     },
-     {
-      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
-      "anchor_text": "Description of OpenUniverse 2024 data preview",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "application/pdf",
-      "title": null,
-      "is_data_file": false,
-      "data_links": [],
-      "error": null,
-      "subpages": []
-     },
-     {
-      "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
-      "anchor_text": "OpenUniverse et al. (2025)",
-      "http_status": 405,
-      "head_status": 405,
-      "content_type": "text/html; charset=UTF-8",
-      "title": "Human Verification",
-      "is_data_file": false,
-      "data_links": [],
-      "error": null
-     },
-     {
-      "url": "https://irsa.ipac.caltech.edu/cloud_access/",
-      "anchor_text": "Cloud data access",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "text/html",
-      "title": "Cloud Data Access",
-      "is_data_file": false,
-      "data_links": [],
-      "error": null
-     },
-     {
-      "url": "https://roman.gsfc.nasa.gov/",
-      "anchor_text": "",
-      "http_status": 200,
-      "head_status": 200,
-      "content_type": "text/html",
-      "title": null,
-      "is_data_file": false,
-      "data_links": [],
-      "error": null
-     }
-    ],
-    "data_links": []
-   },
-   "head_status": 200
+   "crawl": null,
+   "head_status": 504
   },
   "sim:rmdc26": {
    "name": "sim:rmdc26",
@@ -1010,7 +739,7 @@
    "url": "https://rges-pit.org/data-challenge/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.003,
+   "latency_s": 0.012,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html; charset=utf-8",
@@ -1091,7 +820,7 @@
       "http_status": 200,
       "head_status": 200,
       "content_type": "text/html; charset=utf-8",
-      "title": "Microlensing Data Challenge Submission Toolkit &mdash; microlens-submit 0.17.9 documentation",
+      "title": "microlens-submit &mdash; microlens-submit 0.17.9 documentation",
       "is_data_file": false,
       "data_links": [
        "https://microlens-submit.readthedocs.io/en/latest/_sources/index.rst.txt"
@@ -1164,7 +893,7 @@
        {
         "url": "https://microlens-submit.readthedocs.io/en/latest/index.html",
         "http_status": 200,
-        "title": "Microlensing Data Challenge Submission Toolkit &mdash; microlens-submit 0.17.9 documentation",
+        "title": "microlens-submit &mdash; microlens-submit 0.17.9 documentation",
         "data_links": [
          "https://microlens-submit.readthedocs.io/en/latest/_sources/index.rst.txt"
         ]
@@ -1274,12 +1003,6 @@
         ]
        },
        {
-        "url": "https://github.com/login?return_to=%2FAmberLee2427%2FTheMicrolensersGuideToTheGalaxy",
-        "http_status": 200,
-        "title": "Sign in to GitHub \u00b7 GitHub",
-        "data_links": []
-       },
-       {
         "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/issues",
         "http_status": 200,
         "title": "Issues \u00b7 AmberLee2427/TheMicrolensersGuideToTheGalaxy \u00b7 GitHub",
@@ -1295,6 +1018,12 @@
         "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/discussions",
         "http_status": 200,
         "title": "AmberLee2427/TheMicrolensersGuideToTheGalaxy \u00b7 Discussions \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/actions",
+        "http_status": 200,
+        "title": "All Workflow Runs \u00b7 GitHub",
         "data_links": []
        }
       ]
@@ -1386,27 +1115,27 @@
         ]
        },
        {
-        "url": "https://github.com/rges-pit/microlens-submit/issues?q=is%3Aissue+state%3Aopen",
+        "url": "https://github.com/rges-pit/microlens-submit/pulls",
         "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
+        "title": "Pull requests \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
         "data_links": []
        },
        {
-        "url": "https://github.com/rges-pit/microlens-submit/issues?q=is%3Aissue+state%3Aopen+assignee%3A%40me",
+        "url": "https://github.com/rges-pit/microlens-submit/actions",
         "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
+        "title": "All Workflow Runs \u00b7 GitHub",
         "data_links": []
        },
        {
-        "url": "https://github.com/rges-pit/microlens-submit/issues?q=is%3Aissue+state%3Aopen+author%3A%40me",
-        "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
+        "url": "https://github.com/rges-pit/microlens-submit/projects",
+        "http_status": 400,
+        "title": null,
         "data_links": []
        },
        {
-        "url": "https://github.com/rges-pit/microlens-submit/issues?q=is%3Aissue+state%3Aopen+mentions%3A%40me",
+        "url": "https://github.com/rges-pit/microlens-submit/security",
         "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
+        "title": "Overview \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
         "data_links": []
        }
       ]
@@ -1575,11 +1304,9 @@
        },
        {
         "url": "https://microlens-submit.readthedocs.io/en/latest/tutorial.html",
-        "http_status": 200,
-        "title": "Getting Started: A Step-by-Step Tutorial &mdash; microlens-submit 0.17.9 documentation",
-        "data_links": [
-         "https://microlens-submit.readthedocs.io/en/latest/_sources/tutorial.rst.txt"
-        ]
+        "http_status": 404,
+        "title": "Documentation page not found - Read the Docs Community",
+        "data_links": []
        },
        {
         "url": "https://rges-pit.org/data-challenge/roman_notebooks/markdown/teams.md",
@@ -1622,27 +1349,27 @@
         ]
        },
        {
-        "url": "https://github.com/rges-pit/data-challenge-notebooks/issues?q=is%3Aissue+state%3Aopen",
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/pulls",
         "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+        "title": "Pull requests \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
         "data_links": []
        },
        {
-        "url": "https://github.com/rges-pit/data-challenge-notebooks/issues?q=is%3Aissue+state%3Aopen+assignee%3A%40me",
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/discussions",
         "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+        "title": "rges-pit/data-challenge-notebooks \u00b7 Discussions \u00b7 GitHub",
         "data_links": []
        },
        {
-        "url": "https://github.com/rges-pit/data-challenge-notebooks/issues?q=is%3Aissue+state%3Aopen+author%3A%40me",
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/actions",
         "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+        "title": "All Workflow Runs \u00b7 GitHub",
         "data_links": []
        },
        {
-        "url": "https://github.com/rges-pit/data-challenge-notebooks/issues?q=is%3Aissue+state%3Aopen+mentions%3A%40me",
-        "http_status": 200,
-        "title": "Issues \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/projects",
+        "http_status": 400,
+        "title": null,
         "data_links": []
        }
       ]
@@ -1680,7 +1407,6 @@
      "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/blob/main/requirements.txt",
      "https://github.com/rges-pit/microlens-submit/blob/main/requirements-dev.txt",
      "https://raw.githubusercontent.com/rges-pit/data-challenge-notebooks/refs/heads/main/requirements.txt",
-     "https://microlens-submit.readthedocs.io/en/latest/_sources/tutorial.rst.txt",
      "https://github.com/rges-pit/data-challenge-notebooks/blob/main/requirements.txt",
      "https://github.com/rges-pit/data-challenge-notebooks/blob/main/zenodo.txt"
     ]
@@ -1693,7 +1419,7 @@
    "url": "https://roman.ipac.caltech.edu/page/exoplanet-data-challenges-html",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.222,
+   "latency_s": 0.221,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html; charset=utf-8",
@@ -2333,11 +2059,11 @@
    "url": "https://roman-docs.stsci.edu/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.326,
+   "latency_s": 0.55,
    "error": null,
    "sim_kind": "documentation",
    "content_type": "text/html;charset=UTF-8",
-   "bytes": 116856,
+   "bytes": 127826,
    "title": "Roman Documentation Home - Roman User Documentation",
    "data_links": [],
    "crawl": null,
@@ -2349,7 +2075,7 @@
    "url": "https://huggingface.co/api/datasets/RGES-PIT/Beginner/tree/main",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.244,
+   "latency_s": 0.078,
    "error": null,
    "repo": "RGES-PIT/Beginner",
    "survey": "GBTDS",
@@ -2383,7 +2109,7 @@
    "url": "https://huggingface.co/api/datasets/RGES-PIT/Experienced/tree/main",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.111,
+   "latency_s": 0.191,
    "error": null,
    "repo": "RGES-PIT/Experienced",
    "survey": "GBTDS",
@@ -2417,7 +2143,7 @@
    "url": "https://huggingface.co/api/datasets/RGES-PIT/test/tree/main",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.179,
+   "latency_s": 0.183,
    "error": null,
    "repo": "RGES-PIT/test",
    "survey": "GBTDS",
@@ -2511,7 +2237,7 @@
    "url": "https://huggingface.co/api/datasets/RGES-PIT/MachineLearning/tree/main",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.102,
+   "latency_s": 0.076,
    "error": null,
    "repo": "RGES-PIT/MachineLearning",
    "survey": "GBTDS",
@@ -2557,7 +2283,7 @@
    "url": "https://huggingface.co/api/datasets?author=RGES-PIT&limit=100",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.071,
+   "latency_s": 0.053,
    "error": null,
    "author": "RGES-PIT",
    "datasets": [
@@ -2565,23 +2291,23 @@
     "RGES-PIT/Beginner",
     "RGES-PIT/test",
     "RGES-PIT/MachineLearning",
-    "RGES-PIT/MDwarfFlares1"
+    "RGES-PIT/FalsePositives"
    ],
    "n_datasets": 5,
    "simulated": true,
    "new_datasets": [
-    "RGES-PIT/MDwarfFlares1"
+    "RGES-PIT/FalsePositives"
    ]
   }
  },
  "packages": {
   "asdf": {
    "importable": true,
-   "version": "5.4.0"
+   "version": "6.0.0"
   },
   "roman_datamodels": {
    "importable": true,
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "gwcs": {
    "importable": true,

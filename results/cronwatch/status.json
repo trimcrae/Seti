@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-11-04T02:17:42Z",
+ "checked_at_utc": "2026-11-04T06:58:02Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 3,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -50,10 +50,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-11-04T02:17:00Z",
+   "expected_last_fire_utc": "2026-11-04T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.68,
+   "hours_since_last_run": 5.63,
    "last_scheduled_run_utc": "2026-11-04T01:20:07Z",
    "last_successful_execution_utc": "2026-11-04T01:20:07Z",
    "latest_execution": {
@@ -65,10 +66,23 @@
     "started_at_utc": "2026-11-04T01:20:07Z",
     "status": "completed"
    },
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-11-04T04:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.68,
    "name": "ci",
-   "overdue": false,
+   "note": "ci has not run on its schedule for 5.63 h (measured from its last run). Its firing at 2026-11-04T04:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-11-04T06:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "recovery_age_hours": null,
+   "recovery_status": "UNRESOLVED",
    "recovery_wait_hours": 7.0,
-   "status": "WITHIN_GRACE",
+   "scheduler_incident_key": "cron:ci.yml:silent-since:2026-11-04T01:20:07Z",
+   "scheduler_incident_since_utc": "2026-11-04T04:17:00Z",
+   "silence_hours": 5.63,
+   "silent_since_utc": "2026-11-04T01:20:07Z",
+   "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
@@ -77,25 +91,26 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-11-04T00:43:00Z",
+   "expected_last_fire_utc": "2026-11-04T06:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-11-03T19:47:25Z",
+   "last_scheduled_run_utc": "2026-11-04T06:57:33Z",
    "last_successful_execution_utc": "2026-11-03T19:47:25Z",
    "latest_execution": {
-    "conclusion": "success",
+    "conclusion": null,
     "event": "schedule",
     "head_branch": "main",
-    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41706526638",
-    "id": 41706526638,
-    "started_at_utc": "2026-11-03T19:47:25Z",
-    "status": "completed"
+    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41788954179",
+    "id": 41788954179,
+    "started_at_utc": "2026-11-04T06:57:33Z",
+    "status": "in_progress"
    },
    "name": "cronwatch",
+   "note": "this sweep is running inside it",
    "overdue": false,
    "recovery_wait_hours": 2.0,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -289,15 +304,16 @@
   },
   {
    "cadence_hours": 12.0,
-   "cron_matched": "25 15 * * *",
+   "cron_matched": "25 3 * * *",
    "crons": [
     "25 15 * * *",
     "25 3 * * *"
    ],
-   "expected_last_fire_utc": "2026-11-03T15:25:00Z",
+   "expected_last_fire_utc": "2026-11-04T03:25:00Z",
    "grace_hours": 3.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 3.55,
+   "hours_since_last_run": 9.84,
    "last_scheduled_run_utc": "2026-11-03T21:07:47Z",
    "last_successful_execution_utc": "2026-11-03T21:07:47Z",
    "latest_execution": {
@@ -309,10 +325,23 @@
     "started_at_utc": "2026-11-03T21:07:47Z",
     "status": "completed"
    },
+   "missed_by": "grace",
+   "missed_cadence_hours": 12.0,
+   "missed_cron": "25 3 * * *",
+   "missed_fire_utc": "2026-11-04T03:25:00Z",
+   "missed_grace_hours": 3.0,
+   "missed_hours_late": 3.55,
    "name": "tocsin-ztf",
-   "overdue": false,
+   "note": "tocsin-ztf should have fired at 2026-11-04T03:25:00Z (cron '25 3 * * *') and its last scheduled run was 2026-11-03T21:07:47Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "recovery_age_hours": null,
+   "recovery_status": "UNRESOLVED",
    "recovery_wait_hours": 3.0,
-   "status": "OK",
+   "scheduler_incident_key": "cron:tocsin-ztf.yml:2026-11-04T03:25:00Z",
+   "scheduler_incident_since_utc": "2026-11-04T03:25:00Z",
+   "silence_hours": 9.84,
+   "silent_since_utc": "2026-11-03T21:07:47Z",
+   "status": "MISSED",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -344,30 +373,44 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-11-04T06:58:02Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-11-04T02:17:00Z",
+   "expected_last_fire_utc": "2026-11-04T06:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.68,
+   "hours_since_last_run": 4.68,
    "last_scheduled_run_utc": "2026-11-04T02:17:12Z",
-   "last_successful_execution_utc": "2026-11-03T21:44:14Z",
+   "last_successful_execution_utc": "2026-11-04T02:17:12Z",
    "latest_execution": {
     "conclusion": null,
-    "event": "schedule",
+    "event": "workflow_dispatch",
     "head_branch": "main",
-    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41759733142",
-    "id": 41759733142,
-    "started_at_utc": "2026-11-04T02:17:12Z",
-    "status": "in_progress"
+    "html_url": "https://github.com/trimcrae/Seti/actions/runs/41789025821",
+    "id": 41789025821,
+    "started_at_utc": "2026-11-04T06:58:14Z",
+    "status": "queued"
    },
+   "missed_by": "silence",
+   "missed_cadence_hours": 1.0,
+   "missed_cron": "17 * * * *",
+   "missed_fire_utc": "2026-11-04T04:17:00Z",
+   "missed_grace_hours": 2.0,
+   "missed_hours_late": 2.68,
    "name": "watchdog",
-   "note": "this sweep is running inside it",
-   "overdue": false,
+   "note": "watchdog has not run on its schedule for 4.68 h (measured from its last run). Its firing at 2026-11-04T04:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-11-04T06:17:00Z cannot erase that miss.",
+   "overdue": true,
+   "recovery_age_hours": 0.0,
+   "recovery_status": "PENDING",
    "recovery_wait_hours": 2.0,
-   "status": "OK",
+   "scheduler_incident_key": "cron:watchdog.yml:silent-since:2026-11-04T02:17:12Z",
+   "scheduler_incident_since_utc": "2026-11-04T04:17:00Z",
+   "silence_hours": 4.68,
+   "silent_since_utc": "2026-11-04T02:17:12Z",
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

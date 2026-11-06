@@ -2402,6 +2402,37 @@ class ZtfIrsa:
             params["COLLECTION"] = self.collection
         return params
 
+    def _get_lightcurve(self, params: dict, *, deadline: float | None = None,
+                        clock=None):
+        """Retry one transient transport/service failure, retaining the same query.
+
+        IRSA's cone requests intermittently timed out while ID retrieval and
+        later identical cones succeeded (issue #45). A broker's alert history
+        is not interchangeable with matchfile photometry. Retry the original
+        archive query once instead; never turn a failed attempt into no rows.
+        The caller's budget still prevents starting a retry after its deadline.
+        """
+        import requests
+
+        now = clock or time.monotonic
+        for attempt in range(2):
+            if attempt and deadline is not None and now() >= deadline:
+                raise AltFeedError("ZTF retry budget exhausted; request unmeasured")
+            try:
+                response = self._sess().get(self.endpoint, params=params)
+                self.calls += 1
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+                if attempt:
+                    raise
+                self.notes.append(f"ztf transient {type(exc).__name__}; retrying identical query")
+                continue
+            if attempt == 0 and response.status_code in (502, 503, 504):
+                self.notes.append(f"ztf transient HTTP {response.status_code}; "
+                                  "retrying identical query")
+                continue
+            return response
+        raise AltFeedError("ZTF acquisition failed; request unmeasured")
+
     def describe(self) -> dict:
         """Record what the live service serves, verbatim, before anything reads it.
 
@@ -2551,7 +2582,6 @@ class ZtfIrsa:
         now = clock or _time.monotonic
         th = th or LightCurveThresholds()
         out: dict[str, LightCurve] = {}
-        s = self._sess()
         lo_default = float(mjd_lo) if mjd_lo is not None else 58194.0   # ZTF from 2018-03
         hi_default = float(mjd_hi) if mjd_hi is not None else 70000.0
         deadline = now() + float(max_seconds)
@@ -2585,12 +2615,12 @@ class ZtfIrsa:
                                       f"than folded into a gappy light curve")
                     break
                 try:
-                    r = s.get(self.endpoint,
-                              params=self._params(float(seg["ra"]), float(seg["dec"]),
+                    r = self._get_lightcurve(
+                              self._params(float(seg["ra"]), float(seg["dec"]),
                                                   radius_arcsec,
                                                   mjd_lo=seg["mjd_lo"],
-                                                  mjd_hi=seg["mjd_hi"]))
-                    self.calls += 1
+                                                  mjd_hi=seg["mjd_hi"]),
+                              deadline=deadline, clock=now)
                     if r.status_code >= 400:
                         self.notes.append(f"{tid}: HTTP {r.status_code} "
                                           f"{(r.text or '')[:120]}")

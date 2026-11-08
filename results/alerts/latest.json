@@ -46,30 +46,43 @@
    "title": "LOOM: new unexplained exceedance 428209 (2006 VC)"
   },
   {
-   "body": "The `asassn` adapter reached its service but has no usable path to a light curve.\n\nReason recorded by the probe: no cone request was accepted (every variant and format in the matrix above), and the vendor client cannot be imported here -- so there is no path to a light curve, only to metadata\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records responses and connection errors.",
+   "body": "The `asassn` adapter could not reach its service and has no usable path to a light curve.\n\nReason recorded by the probe: no cone request was accepted (every variant and format in the matrix above), and the vendor client cannot be imported here -- so there is no path to a light curve, only to metadata\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records responses and connection errors.",
    "channel": "tocsin_altfeeds",
    "detail": {
     "accepted_request": null,
-    "reached": true,
+    "reached": false,
     "survey": "asassn",
     "verdict": null
    },
    "key": "tocsin_altfeeds:feed_unusable:asassn:a64bf78e",
    "severity": "health",
    "title": "ASASSN cannot serve light curves"
+  },
+  {
+   "body": "The `ztf` adapter reached its service but has no usable path to a light curve.\n\nReason recorded by the probe: covered-field rows: 282; missing columns: none; uncovered-control CSV did not establish position filtering; see paths.uncovered_control for the response or error; position filter: UNDETERMINED\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records responses and connection errors.",
+   "channel": "tocsin_altfeeds",
+   "detail": {
+    "accepted_request": null,
+    "reached": true,
+    "survey": "ztf",
+    "verdict": null
+   },
+   "key": "tocsin_altfeeds:feed_unusable:ztf:1381fdb5",
+   "severity": "health",
+   "title": "ZTF cannot serve light curves"
   }
  ],
- "alert": false,
+ "alert": true,
  "by_severity": {
   "candidate": 0,
-  "health": 0,
+  "health": 1,
   "milestone": 0
  },
- "checked_at_utc": "2026-11-07T20:48:04Z",
+ "checked_at_utc": "2026-11-08T18:50:56Z",
  "frontier": {
   "loom": {
-   "frozen_days": 4.881,
-   "lag_days": 7.548,
+   "frozen_days": 5.8,
+   "lag_days": 8.467,
    "mjd": 61344.31880673277,
    "observed_advance_days": {
     "max_days": 95.434,
@@ -79,18 +92,32 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 1.01,
-   "lag_days": 1.636,
-   "mjd": 61350.23045,
+   "frozen_days": 0.0,
+   "lag_days": 0.44,
+   "mjd": 61352.34554,
    "observed_advance_days": {
     "max_days": 92.373,
-    "median_days": 3.04,
-    "n_advances": 4
+    "median_days": 1.928,
+    "n_advances": 5
    },
    "source": "summary.json:broker_frontier_mjd"
   }
  },
- "n_active": 3,
- "n_new": 0,
- "new": []
+ "n_active": 4,
+ "n_new": 1,
+ "new": [
+  {
+   "body": "The `ztf` adapter reached its service but has no usable path to a light curve.\n\nReason recorded by the probe: covered-field rows: 282; missing columns: none; uncovered-control CSV did not establish position filtering; see paths.uncovered_control for the response or error; position filter: UNDETERMINED\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records responses and connection errors.",
+   "channel": "tocsin_altfeeds",
+   "detail": {
+    "accepted_request": null,
+    "reached": true,
+    "survey": "ztf",
+    "verdict": null
+   },
+   "key": "tocsin_altfeeds:feed_unusable:ztf:1381fdb5",
+   "severity": "health",
+   "title": "ZTF cannot serve light curves"
+  }
+ ]
 }

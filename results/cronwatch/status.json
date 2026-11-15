@@ -1,18 +1,18 @@
 {
- "checked_at_utc": "2026-11-15T17:04:53Z",
+ "checked_at_utc": "2026-11-15T17:05:38Z",
  "gate": {
   "branch": "main",
   "conclusion": null,
   "head_sha": "d4fea102bed590e973bbd22dd3456bd5840e7cc8",
   "run_id": 43739081452,
   "run_started_at": "2026-11-15T17:05:04Z",
-  "run_status": "queued",
+  "run_status": "in_progress",
   "run_url": "https://github.com/trimcrae/Seti/actions/runs/43739081452",
   "status": "PENDING",
   "workflow": "ci.yml"
  },
- "n_dispatched": 2,
- "n_overdue": 2,
+ "n_dispatched": 0,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 13,
  "ref": "main",
@@ -23,7 +23,7 @@
    "crons": [
     "5 17 * * *"
    ],
-   "expected_last_fire_utc": "2026-11-14T17:05:00Z",
+   "expected_last_fire_utc": "2026-11-15T17:05:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
@@ -41,12 +41,11 @@
    "name": "alerts",
    "overdue": false,
    "recovery_wait_hours": 2.0,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "alerts.yml"
   },
   {
    "cadence_hours": 1.0,
-   "catchup_dispatched_utc": "2026-11-15T17:04:53Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
@@ -54,8 +53,8 @@
    "expected_last_fire_utc": "2026-11-15T16:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 0.8,
-   "hours_since_last_run": 7.66,
+   "hours_late": 0.81,
+   "hours_since_last_run": 7.67,
    "last_scheduled_run_utc": "2026-11-15T09:25:15Z",
    "last_successful_execution_utc": "2026-11-15T09:25:15Z",
    "latest_execution": {
@@ -65,30 +64,29 @@
     "html_url": "https://github.com/trimcrae/Seti/actions/runs/43739081452",
     "id": 43739081452,
     "started_at_utc": "2026-11-15T17:05:04Z",
-    "status": "queued"
+    "status": "in_progress"
    },
    "missed_by": "silence",
    "missed_cadence_hours": 1.0,
    "missed_cron": "17 * * * *",
    "missed_fire_utc": "2026-11-15T14:17:00Z",
    "missed_grace_hours": 2.0,
-   "missed_hours_late": 2.8,
+   "missed_hours_late": 2.81,
    "name": "ci",
-   "note": "ci has not run on its schedule for 7.66 h (measured from its last run). Its firing at 2026-11-15T14:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-11-15T16:17:00Z cannot erase that miss.",
+   "note": "ci has not run on its schedule for 7.67 h (measured from its last run). Its firing at 2026-11-15T14:17:00Z (cron '17 * * * *') is past its own grace of 2.00 h. The fresh slot at 2026-11-15T16:17:00Z cannot erase that miss.",
    "overdue": true,
-   "recovery_age_hours": 0.0,
-   "recovery_status": "PENDING",
+   "recovery_age_hours": null,
+   "recovery_status": "UNRESOLVED",
    "recovery_wait_hours": 7.0,
    "scheduler_incident_key": "cron:ci.yml:silent-since:2026-11-15T09:25:15Z",
    "scheduler_incident_since_utc": "2026-11-15T14:17:00Z",
-   "silence_hours": 7.66,
+   "silence_hours": 7.67,
    "silent_since_utc": "2026-11-15T09:25:15Z",
    "status": "MISSED",
    "workflow": "ci.yml"
   },
   {
    "cadence_hours": 6.0,
-   "catchup_dispatched_utc": "2026-11-15T17:04:53Z",
    "cron_matched": "43 */6 * * *",
    "crons": [
     "43 */6 * * *"
@@ -96,8 +94,7 @@
    "expected_last_fire_utc": "2026-11-15T12:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 4.36,
-   "hours_since_last_run": 9.92,
+   "hours_late": null,
    "last_scheduled_run_utc": "2026-11-15T07:09:34Z",
    "last_successful_execution_utc": "2026-11-15T07:09:34Z",
    "latest_execution": {
@@ -107,25 +104,13 @@
     "html_url": "https://github.com/trimcrae/Seti/actions/runs/43739083475",
     "id": 43739083475,
     "started_at_utc": "2026-11-15T17:05:05Z",
-    "status": "queued"
+    "status": "in_progress"
    },
-   "missed_by": "grace",
-   "missed_cadence_hours": 6.0,
-   "missed_cron": "43 */6 * * *",
-   "missed_fire_utc": "2026-11-15T12:43:00Z",
-   "missed_grace_hours": 2.0,
-   "missed_hours_late": 4.36,
    "name": "cronwatch",
-   "note": "cronwatch should have fired at 2026-11-15T12:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-11-15T07:09:34Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
-   "overdue": true,
-   "recovery_age_hours": 0.0,
-   "recovery_status": "PENDING",
+   "note": "this sweep is running inside it",
+   "overdue": false,
    "recovery_wait_hours": 2.0,
-   "scheduler_incident_key": "cron:cronwatch.yml:2026-11-15T12:43:00Z",
-   "scheduler_incident_since_utc": "2026-11-15T12:43:00Z",
-   "silence_hours": 9.92,
-   "silent_since_utc": "2026-11-15T07:09:34Z",
-   "status": "MISSED",
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -329,18 +314,17 @@
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-11-15T17:04:24Z",
-   "last_successful_execution_utc": "2026-11-15T09:17:44Z",
+   "last_successful_execution_utc": "2026-11-15T17:04:24Z",
    "latest_execution": {
-    "conclusion": null,
+    "conclusion": "success",
     "event": "schedule",
     "head_branch": "main",
     "html_url": "https://github.com/trimcrae/Seti/actions/runs/43739017278",
     "id": 43739017278,
     "started_at_utc": "2026-11-15T17:04:24Z",
-    "status": "in_progress"
+    "status": "completed"
    },
    "name": "watchdog",
-   "note": "this sweep is running inside it",
    "overdue": false,
    "recovery_wait_hours": 2.0,
    "status": "OK",

@@ -1,38 +1,40 @@
 {
  "auth_env": "ATLAS_TOKEN",
  "counts": {
-  "alerts_in": 64,
-  "associated": 20,
-  "epochs_total": 291,
-  "events_kept": 13,
-  "events_kept_after_native_tests": 13,
-  "lightcurves": 13,
-  "positionally_matched": 20,
-  "quality_passed": 22,
-  "rejected_bad_pixels": 10,
-  "rejected_chromatic_native_nondetection": 0,
-  "star_nights_observed": 66,
-  "star_nights_two_band": 0,
-  "structurally_valid": 32,
-  "target_nights_screened": 66,
-  "targets_usable": 13,
-  "two_band_night_fraction": 0.0
+  "alerts_in": 7072,
+  "associated": 3162,
+  "epochs_total": 20914,
+  "events_kept": 1473,
+  "events_kept_after_native_tests": 1463,
+  "lightcurves": 20,
+  "positionally_matched": 3162,
+  "quality_passed": 3162,
+  "rejected_bad_pixels": 372,
+  "rejected_chromatic_native_nondetection": 10,
+  "rejected_trailed": 2,
+  "star_nights_observed": 4868,
+  "star_nights_two_band": 37,
+  "structurally_valid": 3536,
+  "target_nights_screened": 4868,
+  "targets_unusable": 2,
+  "targets_usable": 18,
+  "two_band_night_fraction": 0.0076
  },
  "denominator": "forced_photometry_exact",
  "forced_coverage_fraction": 1.0,
  "ledger": {
-  "alerts_seen": 46088,
-  "cumulative_target_visits": 36489,
-  "ensemble_rate_per_target_visit": 0.24659486420565102,
-  "events_kept": 8998,
+  "alerts_seen": 53160,
+  "cumulative_target_visits": 41357,
+  "ensemble_rate_per_target_visit": 0.2529438789080446,
+  "events_kept": 10461,
   "fdr_threshold": null,
-  "nights": 3471,
-  "targets_with_events": 45,
+  "nights": 3486,
+  "targets_with_events": 50,
   "tier_counts": {
    "alarm": 0,
    "candidate": 0,
    "interest": 13,
-   "none": 26,
+   "none": 31,
    "watch": 6
   },
   "version": 2
@@ -40,11 +42,17 @@
  "n_targets_total": 139706,
  "notes": [
   "29784 targets are outside atlas's usable magnitude range in every native band (saturated or below the per-epoch limit) and are not requested at all",
-  "10 walked targets are current to within 7 d of the request frontier (MJD 61355.95) and were not re-requested",
+  "23 walked targets are current to within 7 d of the request frontier (MJD 61360.03) and were not re-requested",
   "46 targets were unusable on their last full walk and are not due a re-walk yet",
-  "stopped starting targets with 966s left: the median target has taken 1287s and would not finish",
-  "atlas scheduler: concurrency 2, 13 tasks submitted, 13 finished, 5.5 tasks/h, 13 targets completed, 0 abandoned; server runtime median 10s, achieved parallelism 0.03",
-  "atlas: walked 13 of 229 targets (29 refresh, 200 full), 13 light curves"
+  "3915363693944966528: task diff[0] failed: ATLAS task failed: No data returned",
+  "6153483658836320384: task diff[0] failed: ATLAS task failed: No data returned",
+  "3677448412989388032: task diff[0] failed: ATLAS task failed: No data returned",
+  "6104139604209342464: task diff[0] failed: ATLAS task failed: No data returned",
+  "4477025122831072768: walk deadline reached with 5 of 11 tasks unfinished; discarded rather than folded into a gappy light curve",
+  "191 planned targets were never started (walk deadline)",
+  "atlas scheduler: concurrency 2, 56 tasks submitted, 50 finished, 20.0 tasks/h, 20 targets completed, 1 abandoned; server runtime median 172s, achieved parallelism 1.70",
+  "fetch budget of 9000s exhausted after 24 of 216 targets; this slice is SHORT and the ledger's denominator counts only what was walked",
+  "atlas: walked 24 of 216 targets (16 refresh, 200 full), 20 light curves"
  ],
  "reachability": {
   "assumption": "background_limited_noise",
@@ -168,7 +176,7 @@
   "survey": "atlas",
   "verdict": "OK"
  },
- "run_at_utc": "2026-11-14T22:47:08Z",
+ "run_at_utc": "2026-11-19T00:47:27Z",
  "signature_transfer": {
   "achromaticity": "available only when both filters fall on the same night; the fraction is measured per run as two_band_night_fraction",
   "astrometric_offset": "UNAVAILABLE: photometry is forced at the requested position, so the separation is zero by construction",
@@ -188,10 +196,11 @@
  "verdict": "OK",
  "walk": {
   "archive_frontier_mjd": null,
-  "n_usable": 39,
-  "n_walked": 85,
+  "n_usable": 42,
+  "n_walked": 93,
   "this_run": {
-   "refresh": 13
+   "full": 8,
+   "refresh": 12
   }
  }
 }

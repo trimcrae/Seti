@@ -57,6 +57,69 @@ def workflow(report):
     return report["workflows"][0]
 
 
+def late_tocsin_snapshot(root):
+    directory = root / ".github" / "workflows"
+    directory.mkdir(parents=True)
+    (directory / "tocsin.yml").write_text(
+        "name: tocsin\non:\n  schedule:\n    - cron: '10 14 * * *'\n"
+        "  workflow_dispatch:\n")
+    api = Api()
+    api.last = datetime.fromisoformat("2026-11-19T22:05:12+00:00")
+    report = sweep(root, api=api, dispatch=False,
+                   now=datetime.fromisoformat("2026-11-20T20:42:39+00:00"))
+    assert workflow(report)["recovery_status"] == "UNRESOLVED"
+    return api
+
+
+def late_tocsin_completion(**extra):
+    return {
+        "action": "completed",
+        "repository": {"default_branch": "main"},
+        "workflow_run": run(
+            stamp=datetime.fromisoformat("2026-11-20T21:45:02+00:00"),
+            id=44823059256, event="schedule",
+            path=".github/workflows/tocsin.yml",
+        ) | extra,
+    }
+
+
+def test_late_success_reconciles_stale_snapshot_until_next_sweep(tmp_path):
+    api = late_tocsin_snapshot(tmp_path)
+    now = datetime.fromisoformat("2026-11-20T21:52:41+00:00")
+    event = late_tocsin_completion()
+    assert check(tmp_path, now=now)["n_active"] == 1
+    assert check(tmp_path, now=now, record=False, workflow_run_event=event)["n_active"] == 0
+    assert check(tmp_path, now=now, record=False)["n_active"] == 1
+    assert check(tmp_path, now=now, workflow_run_event=event)["n_active"] == 0
+    assert check(tmp_path, now=now + timedelta(hours=1))["n_active"] == 0
+
+    snapshot = json.loads((tmp_path / "results/cronwatch/status.json").read_text())
+    assert workflow(snapshot)["missed_fire_utc"] == "2026-11-20T14:10:00Z"
+    assert workflow(snapshot)["recovery_status"] == "UNRESOLVED"
+    api.last = datetime.fromisoformat(event["workflow_run"]["run_started_at"])
+    api.runs = [event["workflow_run"]]
+    later = now + timedelta(days=1)
+    sweep(tmp_path, api=api, now=later, dispatch=False)
+    report = check(tmp_path, now=later)
+    assert [alert["key"] for alert in report["new"]] == [
+        "cron:tocsin.yml:2026-11-21T14:10:00Z"]
+
+
+@pytest.mark.parametrize("run_fields", [
+    {"conclusion": "failure"},
+    {"status": "in_progress", "conclusion": None},
+    {"head_branch": "research"},
+    {"path": ".github/workflows/other.yml"},
+    {"event": "workflow_dispatch", "actor": {"login": "trimcrae"}},
+    {"run_started_at": "2026-11-19T22:05:12Z"},
+])
+def test_completion_without_matching_success_leaves_alert_active(tmp_path, run_fields):
+    late_tocsin_snapshot(tmp_path)
+    report = check(tmp_path, workflow_run_event=late_tocsin_completion(**run_fields))
+    assert report["n_new"] == 1
+    assert report["new"][0]["detail"]["recovery_status"] == "UNRESOLVED"
+
+
 def test_dispatch_is_pending_not_success_and_survives_repeated_sweeps(tmp_path):
     root, api = repo(tmp_path), Api()
     first = workflow(sweep(root, api=api, now=NOW))

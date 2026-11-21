@@ -901,7 +901,8 @@ def _cmd_alert_check(args, cfg):
     from .alerts import check, issue_body, issue_labels, issue_title
 
     root = _Path(cfg.root) if cfg is not None else _Path.cwd()
-    rep = check(root, record=not args.dry_run)
+    event = json.loads(_Path(args.event_file).read_text()) if args.event_file else None
+    rep = check(root, record=not args.dry_run, workflow_run_event=event)
     print(f"[alerts] active={rep['n_active']} new={rep['n_new']} "
           f"by_severity={rep['by_severity']}")
     # Printed whether or not anything alerts: below the stall threshold a frozen
@@ -1871,6 +1872,8 @@ def main(argv=None):
                             "key so the same finding never notifies twice")
     p.add_argument("--dry-run", action="store_true",
                    help="evaluate without consuming the alerts")
+    p.add_argument("--event-file", default=None,
+                   help="GitHub Actions event JSON for scheduler recovery evidence")
     p.add_argument("--write-issue", default=None,
                    help="write issue markdown to this path when anything is new")
     p.add_argument("--repo-url", default=None)

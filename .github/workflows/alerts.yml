@@ -122,6 +122,7 @@ jobs:
         run: |
           python -m seti.cli alert-check \
             --dry-run \
+            --event-file "$GITHUB_EVENT_PATH" \
             --repo-url "${{ github.server_url }}/${{ github.repository }}"
 
       # Operational health and milestones remain in latest.json and logs.
@@ -223,6 +224,7 @@ jobs:
            github.event.inputs.no_issue == 'true')
         run: |
           python -m seti.cli alert-check \
+            --event-file "$GITHUB_EVENT_PATH" \
             --repo-url "${{ github.server_url }}/${{ github.repository }}"
 
       - name: Commit the alert state

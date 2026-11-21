@@ -648,6 +648,20 @@ def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
     return report
 
 
+def unattended_execution_start(run: dict, ref: str) -> datetime | None:
+    """Return the start of an execution eligible to establish recovery."""
+    if run.get("head_branch") != ref:
+        return None
+    event = run.get("event")
+    # Manual dispatches can be probe-only or partial.
+    if event != "schedule" and not (
+        event == "workflow_dispatch"
+        and (run.get("actor") or {}).get("login") == "github-actions[bot]"
+    ):
+        return None
+    return _parse_iso(str(run.get("run_started_at") or run.get("created_at")))
+
+
 def _record_recovery(findings: list[dict], state: dict, api, now: datetime,
                      ref: str) -> None:
     """Keep dispatch/outcome evidence and a single identity across missed slots.
@@ -669,15 +683,10 @@ def _record_recovery(findings: list[dict], state: dict, api, now: datetime,
         candidates = []
         for run in runs or []:
             path = str(run.get("path") or "").split("@", 1)[0]
-            stamp = _parse_iso(str(run.get("run_started_at") or run.get("created_at")))
-            if (Path(path).name == file and run.get("head_branch") == ref
-                    and run.get("event") in ("schedule", "workflow_dispatch")
-                    # Manual dispatches can be probe-only or partial. Only
-                    # scheduled runs and this repository's automatic token
-                    # dispatches establish unattended recovery.
-                    and (run.get("event") == "schedule"
-                         or (run.get("actor") or {}).get("login") == "github-actions[bot]")
-                    and stamp is not None):
+            if Path(path).name != file:
+                continue
+            stamp = unattended_execution_start(run, ref)
+            if stamp is not None:
                 candidates.append((stamp, run))
         successful = [(stamp, run) for stamp, run in candidates
                       if run.get("status") == "completed"

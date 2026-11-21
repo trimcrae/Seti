@@ -49,6 +49,8 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from .cronwatch import unattended_execution_start
+
 SEVERITIES = ("candidate", "health", "milestone")
 
 # How stale a channel's results may get before silence is treated as failure.
@@ -1090,7 +1092,8 @@ def feed_alerts(root: Path) -> list[Alert]:
 SILENCE_ALERT_HOURS = 12.0
 
 
-def scheduler_alerts(root: Path) -> list[Alert]:
+def scheduler_alerts(root: Path, *,
+                     workflow_run_successes: dict[str, str] | None = None) -> list[Alert]:
     """A cron that never fired, as reported by ``seti.cronwatch``.
 
     This is the gap every other check in this module leaves open.  ``STALE_DAYS``
@@ -1102,7 +1105,7 @@ def scheduler_alerts(root: Path) -> list[Alert]:
 
     The finding is read rather than computed here: asking the Actions API needs a
     token and network, both of which the hourly watchdog has and this evaluation
-    does not.
+    does not. Successful completion events can confirm recovery between sweeps.
 
     The sweep keeps a stable incident key until a completed successful
     unattended execution ends the incident. Accepted dispatches receive a
@@ -1117,6 +1120,8 @@ def scheduler_alerts(root: Path) -> list[Alert]:
     rec = _load(root / "results" / "cronwatch" / "status.json")
     if not isinstance(rec, dict):
         return []
+    ref = rec.get("ref") or "main"
+    successes = workflow_run_successes or {}
     out: list[Alert] = []
     for wf in rec.get("workflows") or []:
         if not wf.get("overdue"):
@@ -1131,6 +1136,10 @@ def scheduler_alerts(root: Path) -> list[Alert]:
         last = wf.get("last_scheduled_run_utc")
         silence = wf.get("silence_hours", wf.get("hours_since_last_run"))
         missed_fire = wf.get("missed_fire_utc") or wf.get("expected_last_fire_utc")
+        missed_at = _parse_stamp(missed_fire)
+        success = _parse_stamp(successes.get(f"{ref}:{wf.get('workflow')}"))
+        if success is not None and missed_at is not None and success >= missed_at:
+            continue
         missed_cron = wf.get("missed_cron") or wf.get("cron_matched")
         missed_cadence = wf.get("missed_cadence_hours", wf.get("cadence_hours"))
         missed_hours_late = wf.get("missed_hours_late", wf.get("hours_late"))
@@ -1191,16 +1200,36 @@ def scheduler_alerts(root: Path) -> list[Alert]:
 # ---------------------------------------------------------------------------
 # Orchestration and deduplication
 # ---------------------------------------------------------------------------
-def evaluate(root: Path, now: datetime | None = None) -> list[Alert]:
+def evaluate(root: Path, now: datetime | None = None, *,
+             workflow_run_successes: dict[str, str] | None = None) -> list[Alert]:
     """Every alert condition, evaluated against whatever results exist."""
     return [*tocsin_alerts(root), *tocsin_ztf_alerts(root), *loom_alerts(root),
             *roman_alerts(root), *health_alerts(root, now),
-            *frontier_recovery_alerts(root, now), *scheduler_alerts(root),
+            *frontier_recovery_alerts(root, now),
+            *scheduler_alerts(root, workflow_run_successes=workflow_run_successes),
             *feed_alerts(root), *gate_alerts(root)]
 
 
+def _record_workflow_run_success(successes: dict[str, str], event: dict) -> None:
+    """Remember a completed Actions event until subsequent checks can see it."""
+    run = event.get("workflow_run") or {}
+    ref = (event.get("repository") or {}).get("default_branch")
+    if (event.get("action") != "completed" or not ref
+            or run.get("status") != "completed" or run.get("conclusion") != "success"):
+        return
+    started = unattended_execution_start(run, ref)
+    path = Path(str(run.get("path") or "").split("@", 1)[0])
+    if started is None or path.parent != Path(".github/workflows"):
+        return
+    key = f"{ref}:{path.name}"
+    previous = _parse_stamp(successes.get(key))
+    if previous is None or started > previous:
+        successes[key] = started.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def check(root: Path, state_path: Path | None = None,
-          now: datetime | None = None, record: bool = True) -> dict:
+          now: datetime | None = None, record: bool = True, *,
+          workflow_run_event: dict | None = None) -> dict:
     """Evaluate, drop anything already raised, and record what is new.
 
     Returns a report with ``new`` — the alerts a human has not yet been told
@@ -1211,12 +1240,15 @@ def check(root: Path, state_path: Path | None = None,
     state_path = state_path or (root / "results" / "alerts" / "state.json")
     state = _load(state_path) or {"seen": {}}
     seen = dict(state.get("seen") or {})
+    successes = dict(state.get("workflow_run_successes") or {})
+    if workflow_run_event:
+        _record_workflow_run_success(successes, workflow_run_event)
 
     # EVALUATE BEFORE RECORDING THE FRONTIER, always.  record_frontier stamps
     # the moment a frontier value was first seen, and that stamp is what the
     # stall check measures against; folding today's sighting in first would
     # move the clock forward on every run and the stall could never fire.
-    alerts = evaluate(root, now)
+    alerts = evaluate(root, now, workflow_run_successes=successes)
     new = [a for a in alerts if a.key not in seen]
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     if record:
@@ -1256,7 +1288,10 @@ def check(root: Path, state_path: Path | None = None,
                     seen.pop(k, None)
 
         state_path.parent.mkdir(parents=True, exist_ok=True)
-        state_path.write_text(json.dumps({"seen": seen}, indent=1,
+        state["seen"] = seen
+        if successes:
+            state["workflow_run_successes"] = successes
+        state_path.write_text(json.dumps(state, indent=1,
                                          sort_keys=True) + "\n")
         record_frontier(root, now)
 

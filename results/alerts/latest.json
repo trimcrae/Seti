@@ -46,12 +46,12 @@
    "title": "LOOM: new unexplained exceedance 428209 (2006 VC)"
   },
   {
-   "body": "`tocsin` has reported the same newest epoch, MJD 61359.23189, on every run since 2026-11-15T19:49:44Z \u2014 9.2 days, against a limit of 7. Source: `results/tocsin/summary.json` \u2192 `broker_frontier_mjd`.\n\nObserved cadence so far: 12 advance(s), median 1.014 d, longest gap 92.373 d.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-11-24 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-11-15; fink 2026-11-15), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-11-23 via archive), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "`tocsin` has reported the same newest epoch, MJD 61359.23189, on every run since 2026-11-15T19:49:44Z \u2014 10.1 days, against a limit of 7. Source: `results/tocsin/summary.json` \u2192 `broker_frontier_mjd`.\n\nObserved cadence so far: 12 advance(s), median 1.014 d, longest gap 92.373 d.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-11-24 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-11-15; fink 2026-11-15), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-11-23 via archive), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "tocsin",
    "detail": {
     "first_seen_utc": "2026-11-15T19:49:44Z",
     "frontier_mjd": 61359.23189,
-    "frozen_days": 9.229541326967594,
+    "frozen_days": 10.139255829259259,
     "limit_days": 7.0,
     "observed_advance_days": {
      "max_days": 92.373,
@@ -62,15 +62,15 @@
    },
    "key": "tocsin:frontier_stalled:0",
    "severity": "health",
-   "title": "TOCSIN's data frontier has not advanced in 9 days"
+   "title": "TOCSIN's data frontier has not advanced in 10 days"
   },
   {
-   "body": "`loom` has reported the same newest epoch, MJD 61359.23043, on every run since 2026-11-17T00:27:16Z \u2014 8.0 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nObserved cadence so far: 3 advance(s), median 7.033 d, longest gap 95.434 d.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-11-24 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-11-15; fink 2026-11-15), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-11-23 via archive), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "`loom` has reported the same newest epoch, MJD 61359.23043, on every run since 2026-11-17T00:27:16Z \u2014 8.9 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nObserved cadence so far: 3 advance(s), median 7.033 d, longest gap 95.434 d.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-11-24 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-11-15; fink 2026-11-15), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-11-23 via archive), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "loom",
    "detail": {
     "first_seen_utc": "2026-11-17T00:27:16Z",
     "frontier_mjd": 61359.230434937825,
-    "frozen_days": 8.036809845486111,
+    "frozen_days": 8.946524347777778,
     "limit_days": 7.0,
     "observed_advance_days": {
      "max_days": 95.434,
@@ -81,7 +81,7 @@
    },
    "key": "loom:frontier_stalled:0",
    "severity": "health",
-   "title": "LOOM's data frontier has not advanced in 8 days"
+   "title": "LOOM's data frontier has not advanced in 9 days"
   },
   {
    "body": "The `asassn` adapter reached its service but has no usable path to a light curve.\n\nReason recorded by the probe: no cone request was accepted (every variant and format in the matrix above), and the vendor client cannot be imported here -- so there is no path to a light curve, only to metadata\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records responses and connection errors.",
@@ -97,33 +97,33 @@
    "title": "ASASSN cannot serve light curves"
   },
   {
-   "body": "The newest `ci.yml` run on `main` concluded **failure** at commit `c3ab7f770af9`.\n\nhttps://github.com/trimcrae/Seti/actions/runs/45503989313\n\nNothing retries this on purpose -- a failing test suite is a result, not a flake -- but nothing was reading it either until now: CI sat red on `main` from 2026-07-31 to 2026-08-22 over a single lint error. Every screen in this repository rests on these tests.",
+   "body": "The newest `ci.yml` run on `main` concluded **failure** at commit `b68bd6de4d1b`.\n\nhttps://github.com/trimcrae/Seti/actions/runs/45689925003\n\nNothing retries this on purpose -- a failing test suite is a result, not a flake -- but nothing was reading it either until now: CI sat red on `main` from 2026-07-31 to 2026-08-22 over a single lint error. Every screen in this repository rests on these tests.",
    "channel": "cronwatch",
    "detail": {
     "branch": "main",
     "conclusion": "failure",
-    "head_sha": "c3ab7f770af967631f5f6b7f92c27bd6636e2940",
-    "run_id": 45503989313,
-    "run_started_at": "2026-11-24T22:46:10Z",
-    "run_url": "https://github.com/trimcrae/Seti/actions/runs/45503989313",
+    "head_sha": "b68bd6de4d1ba6c6c108e89223219d037d665b91",
+    "run_id": 45689925003,
+    "run_started_at": "2026-11-25T19:55:26Z",
+    "run_url": "https://github.com/trimcrae/Seti/actions/runs/45689925003",
     "workflow": "ci.yml"
    },
-   "key": "gate:red:c3ab7f770af9",
+   "key": "gate:red:b68bd6de4d1b",
    "severity": "health",
    "title": "CI is failure on main"
   }
  ],
- "alert": false,
+ "alert": true,
  "by_severity": {
   "candidate": 0,
-  "health": 0,
+  "health": 1,
   "milestone": 0
  },
- "checked_at_utc": "2026-11-25T01:20:16Z",
+ "checked_at_utc": "2026-11-25T23:10:15Z",
  "frontier": {
   "loom": {
-   "frozen_days": 8.037,
-   "lag_days": 9.825,
+   "frozen_days": 8.947,
+   "lag_days": 10.735,
    "mjd": 61359.230434937825,
    "observed_advance_days": {
     "max_days": 95.434,
@@ -133,8 +133,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 9.23,
-   "lag_days": 9.824,
+   "frozen_days": 10.139,
+   "lag_days": 10.734,
    "mjd": 61359.23189,
    "observed_advance_days": {
     "max_days": 92.373,
@@ -145,6 +145,23 @@
   }
  },
  "n_active": 6,
- "n_new": 0,
- "new": []
+ "n_new": 1,
+ "new": [
+  {
+   "body": "The newest `ci.yml` run on `main` concluded **failure** at commit `b68bd6de4d1b`.\n\nhttps://github.com/trimcrae/Seti/actions/runs/45689925003\n\nNothing retries this on purpose -- a failing test suite is a result, not a flake -- but nothing was reading it either until now: CI sat red on `main` from 2026-07-31 to 2026-08-22 over a single lint error. Every screen in this repository rests on these tests.",
+   "channel": "cronwatch",
+   "detail": {
+    "branch": "main",
+    "conclusion": "failure",
+    "head_sha": "b68bd6de4d1ba6c6c108e89223219d037d665b91",
+    "run_id": 45689925003,
+    "run_started_at": "2026-11-25T19:55:26Z",
+    "run_url": "https://github.com/trimcrae/Seti/actions/runs/45689925003",
+    "workflow": "ci.yml"
+   },
+   "key": "gate:red:b68bd6de4d1b",
+   "severity": "health",
+   "title": "CI is failure on main"
+  }
+ ]
 }
